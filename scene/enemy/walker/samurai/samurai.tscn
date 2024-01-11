@@ -1,0 +1,12 @@
+[gd_scene load_steps=3 format=3 uid="uid://bhqa4klmnwjoj"]
+
+[ext_resource type="PackedScene" uid="uid://ck730mtu8o5o8" path="res://scene/enemy/walker/walker.tscn" id="1_xht5c"]
+[ext_resource type="SpriteFrames" uid="uid://dljg77urgr0py" path="res://scene/enemy/walker/samurai/samurai.tres" id="2_mblwc"]
+
+[node name="spartan" instance=ExtResource("1_xht5c")]
+speed = 3.0
+
+[node name="Walker" parent="." index="1"]
+sprite_frames = ExtResource("2_mblwc")
+frame_progress = 0.0
+speed_scale = 1.5

@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://ckgx8r2itxy2s"]
+
+[ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="1_0vonh"]
+
+[node name="Car" instance=ExtResource("1_0vonh")]
+max_engine_power = 45
+max_steering_degrees = 40
+brakes = 30.0

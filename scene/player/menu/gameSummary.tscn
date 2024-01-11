@@ -1,0 +1,153 @@
+[gd_scene load_steps=5 format=3 uid="uid://cmq25gqd8rdxw"]
+
+[ext_resource type="Theme" uid="uid://co40pijjc7hbw" path="res://style/roadRogue.tres" id="1_88ve0"]
+[ext_resource type="Script" path="res://scene/player/menu/gameSummary.gd" id="1_exyns"]
+[ext_resource type="PackedScene" uid="uid://bepxjqhida0n8" path="res://scene/player/ui/roadButton.tscn" id="2_llr28"]
+[ext_resource type="AudioStream" uid="uid://chsan1o1ku2c7" path="res://sound/music/abstract-world-127012.mp3" id="4_dohqh"]
+
+[node name="GameSummary" type="CanvasLayer"]
+script = ExtResource("1_exyns")
+
+[node name="Panel" type="Panel" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel2" type="Panel" parent="Panel"]
+custom_minimum_size = Vector2(500, 500)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -250.0
+offset_top = -250.0
+offset_right = 250.0
+offset_bottom = 250.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_88ve0")
+
+[node name="continue" parent="Panel/Panel2" instance=ExtResource("2_llr28")]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+offset_left = -85.0
+offset_top = -70.0
+offset_right = 85.0
+offset_bottom = -24.0
+grow_vertical = 0
+text = "Continue"
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel/Panel2"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 72.0
+offset_top = 56.0
+offset_right = -95.0
+offset_bottom = -166.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="HBoxContainer7" type="HBoxContainer" parent="Panel/Panel2/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Panel/Panel2/VBoxContainer/HBoxContainer7"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Top Speed"
+
+[node name="time" type="Label" parent="Panel/Panel2/VBoxContainer/HBoxContainer7"]
+layout_mode = 2
+size_flags_horizontal = 10
+theme_override_font_sizes/font_size = 24
+text = "0
+"
+
+[node name="HBoxContainer6" type="HBoxContainer" parent="Panel/Panel2/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Panel/Panel2/VBoxContainer/HBoxContainer6"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Goons Crushed"
+
+[node name="goonsCrushed" type="Label" parent="Panel/Panel2/VBoxContainer/HBoxContainer6"]
+layout_mode = 2
+size_flags_horizontal = 10
+theme_override_font_sizes/font_size = 24
+text = "2"
+
+[node name="HBoxContainer3" type="HBoxContainer" parent="Panel/Panel2/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Panel/Panel2/VBoxContainer/HBoxContainer3"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Top Speed"
+
+[node name="topSpeed" type="Label" parent="Panel/Panel2/VBoxContainer/HBoxContainer3"]
+layout_mode = 2
+size_flags_horizontal = 10
+theme_override_font_sizes/font_size = 24
+text = "0
+"
+
+[node name="HSeparator" type="HSeparator" parent="Panel/Panel2/VBoxContainer"]
+modulate = Color(1, 1, 1, 0)
+custom_minimum_size = Vector2(0, 15)
+layout_mode = 2
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="Panel/Panel2/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Panel/Panel2/VBoxContainer/HBoxContainer2"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Coins"
+
+[node name="coinsCollected" type="Label" parent="Panel/Panel2/VBoxContainer/HBoxContainer2"]
+layout_mode = 2
+size_flags_horizontal = 10
+theme_override_font_sizes/font_size = 24
+text = "2"
+
+[node name="HBoxContainer4" type="HBoxContainer" parent="Panel/Panel2/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Panel/Panel2/VBoxContainer/HBoxContainer4"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Powerups"
+
+[node name="powerups" type="Label" parent="Panel/Panel2/VBoxContainer/HBoxContainer4"]
+layout_mode = 2
+size_flags_horizontal = 10
+theme_override_font_sizes/font_size = 24
+text = "0"
+
+[node name="HBoxContainer5" type="HBoxContainer" parent="Panel/Panel2/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Panel/Panel2/VBoxContainer/HBoxContainer5"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Gems"
+
+[node name="gems" type="Label" parent="Panel/Panel2/VBoxContainer/HBoxContainer5"]
+layout_mode = 2
+size_flags_horizontal = 10
+theme_override_font_sizes/font_size = 24
+text = "0"
+
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("4_dohqh")
+
+[connection signal="pressed" from="Panel/Panel2/continue" to="." method="_on_continue_pressed"]

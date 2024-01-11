@@ -1,0 +1,8 @@
+[gd_resource type="Theme" load_steps=3 format=3 uid="uid://co40pijjc7hbw"]
+
+[ext_resource type="StyleBox" uid="uid://dl1e0qtgp13cj" path="res://style/style_box_basic.tres" id="1_j042g"]
+[ext_resource type="FontFile" uid="uid://h8ar8yno4sha" path="res://style/font/Tektur/Tektur-SemiBold.ttf" id="2_rg3in"]
+
+[resource]
+default_font = ExtResource("2_rg3in")
+Panel/styles/panel = ExtResource("1_j042g")

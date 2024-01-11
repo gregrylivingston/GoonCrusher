@@ -1,0 +1,22 @@
+[gd_scene load_steps=3 format=3 uid="uid://cvuiarwiynwx7"]
+
+[ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="1_150xb"]
+[ext_resource type="Texture2D" uid="uid://dfa1wuwohdn01" path="res://scene/car/pickup/Mini_truck.png" id="2_36nav"]
+
+[node name="Car" instance=ExtResource("1_150xb")]
+max_engine_power = 15
+max_steering_degrees = 10
+armor = 6
+
+[node name="sprite" parent="." index="4"]
+position = Vector2(3, 7)
+texture = ExtResource("2_36nav")
+
+[node name="tireLocation2" parent="sprite" index="1"]
+position = Vector2(-47.9998, 67.0002)
+
+[node name="tireLocation3" parent="sprite" index="2"]
+position = Vector2(26.9998, -60.0001)
+
+[node name="tireLocation4" parent="sprite" index="3"]
+position = Vector2(-44.0002, -59.9998)

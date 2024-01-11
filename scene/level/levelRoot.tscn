@@ -1,0 +1,82 @@
+[gd_scene load_steps=14 format=3 uid="uid://dqcrli42u3gia"]
+
+[ext_resource type="Script" path="res://scene/level/levelRoot.gd" id="1_65p74"]
+[ext_resource type="PackedScene" uid="uid://brhh6ifac5qvc" path="res://scene/scenery/rocks.tscn" id="2_5ujut"]
+[ext_resource type="Texture2D" uid="uid://v5bd3cd45oop" path="res://texture/backgroundTexture.png" id="2_ebgys"]
+[ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="2_v78xq"]
+[ext_resource type="PackedScene" uid="uid://pgobm7erc1f0" path="res://scene/player/playerRoot.tscn" id="3_sf05p"]
+[ext_resource type="PackedScene" uid="uid://d274ibi53fekt" path="res://scene/player/spawner.tscn" id="5_4um6i"]
+[ext_resource type="AudioStream" uid="uid://mwmiy2un7jgn" path="res://sound/fx/tubular-bell-of-death-89485.mp3" id="7_ihcdj"]
+[ext_resource type="AudioStream" uid="uid://chsan1o1ku2c7" path="res://sound/music/abstract-world-127012.mp3" id="8_r1kd8"]
+[ext_resource type="PackedScene" uid="uid://cj1bw767v5imn" path="res://scene/powerup/health.tscn" id="9_20fdc"]
+[ext_resource type="PackedScene" uid="uid://bvivg0dx8wkea" path="res://scene/powerup/fuel.tscn" id="10_djbco"]
+[ext_resource type="PackedScene" uid="uid://ctu8kn88lhjpn" path="res://scene/powerup/engine.tscn" id="11_eyh6h"]
+[ext_resource type="PackedScene" uid="uid://c3nj8qlsr0clb" path="res://scene/powerup/coin.tscn" id="12_ufw4g"]
+[ext_resource type="PackedScene" uid="uid://bogdlh0ch1tuf" path="res://scene/powerup/purse.tscn" id="13_65wfl"]
+
+[node name="LevelRoot" type="Node2D" groups=["levelRoot"]]
+script = ExtResource("1_65p74")
+
+[node name="TextureRect" type="TextureRect" parent="."]
+custom_minimum_size = Vector2(999999, 999999)
+offset_left = -4932.0
+offset_top = -5015.0
+offset_right = 995067.0
+offset_bottom = 994984.0
+texture = ExtResource("2_ebgys")
+stretch_mode = 1
+
+[node name="Rocks" parent="." instance=ExtResource("2_5ujut")]
+position = Vector2(872, 103)
+
+[node name="Car" parent="." instance=ExtResource("2_v78xq")]
+position = Vector2(662, 405)
+
+[node name="Spawner" parent="Car" instance=ExtResource("5_4um6i")]
+position = Vector2(3000, 0)
+
+[node name="Spawner2" parent="Car" instance=ExtResource("5_4um6i")]
+position = Vector2(3000, 3000)
+
+[node name="Spawner3" parent="Car" instance=ExtResource("5_4um6i")]
+position = Vector2(-3000, 0)
+
+[node name="Spawner4" parent="Car" instance=ExtResource("5_4um6i")]
+position = Vector2(-3000, -3000)
+
+[node name="Spawner5" parent="Car" instance=ExtResource("5_4um6i")]
+position = Vector2(0, -3000)
+
+[node name="Spawner6" parent="Car" instance=ExtResource("5_4um6i")]
+position = Vector2(0, 3000)
+
+[node name="Rocks2" parent="." instance=ExtResource("2_5ujut")]
+position = Vector2(315, 477)
+polygon = PackedVector2Array(-73, -20, -57, 41, -32, 66, 15, 59, 70, 49, 91, 0, 72, -63, 19, -68, -40, -59)
+
+[node name="PlayerRoot" parent="." instance=ExtResource("3_sf05p")]
+
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("7_ihcdj")
+volume_db = 2.0
+autoplay = true
+
+[node name="AudioStreamPlayer2" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("8_r1kd8")
+volume_db = -4.0
+autoplay = true
+
+[node name="Powerup" parent="." instance=ExtResource("9_20fdc")]
+position = Vector2(1101, -334)
+
+[node name="Powerup2" parent="." instance=ExtResource("10_djbco")]
+position = Vector2(-308, -233)
+
+[node name="Powerup3" parent="." instance=ExtResource("11_eyh6h")]
+position = Vector2(1522, -208)
+
+[node name="Powerup4" parent="." instance=ExtResource("12_ufw4g")]
+position = Vector2(2023, -317)
+
+[node name="Powerup5" parent="." instance=ExtResource("13_65wfl")]
+position = Vector2(1295, 1249)

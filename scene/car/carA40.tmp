@@ -1,0 +1,38 @@
+[gd_scene load_steps=4 format=3 uid="uid://dbkp41oxg03o6"]
+
+[ext_resource type="Script" path="res://lib/overhead_car_2d/overhead_car_body_2d.gd" id="1_ibwir"]
+[ext_resource type="Texture2D" uid="uid://dthtmohgw8u1f" path="res://texture/car/Audi.png" id="2_33x0l"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_f6v2r"]
+size = Vector2(213, 85)
+
+[node name="Car" type="CharacterBody2D"]
+script = ExtResource("1_ibwir")
+
+[node name="TextureRect" type="TextureRect" parent="."]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = 128.0
+offset_top = -128.0
+offset_right = 384.0
+offset_bottom = 128.0
+grow_horizontal = 2
+grow_vertical = 2
+rotation = 1.5708
+texture = ExtResource("2_33x0l")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+zoom = Vector2(0.5, 0.5)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(-6.5, -0.5)
+shape = SubResource("RectangleShape2D_f6v2r")
+
+[node name="Line2D" type="Line2D" parent="."]
+
+[node name="tireLocation" type="Node2D" parent="."]
+position = Vector2(50, 50)
+rotation = -0.0057266

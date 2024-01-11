@@ -1,0 +1,27 @@
+[gd_scene load_steps=3 format=3 uid="uid://1bi7flsw4h78"]
+
+[ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="1_v41dt"]
+[ext_resource type="Texture2D" uid="uid://cbltnt4310fcd" path="res://scene/car/taxi/taxi.png" id="2_mdy3n"]
+
+[node name="Car" instance=ExtResource("1_v41dt")]
+max_engine_power = 22
+max_steering_degrees = 18
+brakes = 5.0
+armor = 2
+
+[node name="sprite" parent="." index="4"]
+position = Vector2(-11, 7)
+scale = Vector2(1.1, 1.1)
+texture = ExtResource("2_mdy3n")
+
+[node name="tireLocation" parent="sprite" index="0"]
+position = Vector2(20.9093, 69.9999)
+
+[node name="tireLocation2" parent="sprite" index="1"]
+position = Vector2(-37.2725, 68.1819)
+
+[node name="tireLocation3" parent="sprite" index="2"]
+position = Vector2(26.9998, -60.0001)
+
+[node name="tireLocation4" parent="sprite" index="3"]
+position = Vector2(-44.0002, -59.9998)

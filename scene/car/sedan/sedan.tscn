@@ -1,0 +1,20 @@
+[gd_scene load_steps=3 format=3 uid="uid://bkypbefgkke6a"]
+
+[ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="1_ehr7y"]
+[ext_resource type="Texture2D" uid="uid://cmhhtyl83kii2" path="res://scene/car/sedan/Car.png" id="2_g6grg"]
+
+[node name="Car" instance=ExtResource("1_ehr7y")]
+max_engine_power = 19
+max_steering_degrees = 15
+
+[node name="CollisionShape2D" parent="." index="2"]
+position = Vector2(4, -2.5)
+
+[node name="sprite" parent="." index="4"]
+texture = ExtResource("2_g6grg")
+
+[node name="tireLocation" parent="sprite" index="0"]
+position = Vector2(34.9999, 58)
+
+[node name="tireLocation2" parent="sprite" index="1"]
+position = Vector2(-34.9998, 50.0001)

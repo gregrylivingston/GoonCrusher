@@ -1,0 +1,31 @@
+[gd_resource type="SpriteFrames" load_steps=5 format=3 uid="uid://lyldd0udb2f"]
+
+[ext_resource type="Texture2D" uid="uid://8neuy7nuqdff" path="res://scene/enemy/walker/devil/texture/0002.png" id="1_i88fl"]
+[ext_resource type="Texture2D" uid="uid://cnx1rje88adou" path="res://scene/enemy/walker/devil/texture/0080.png" id="1_s5lq5"]
+[ext_resource type="Texture2D" uid="uid://r6nqp2khheft" path="res://scene/enemy/walker/devil/texture/0081.png" id="2_yfcek"]
+[ext_resource type="Texture2D" uid="uid://drbxlvylqo4ek" path="res://scene/enemy/walker/devil/texture/0004.png" id="3_3ieup"]
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_s5lq5")
+}, {
+"duration": 60.0,
+"texture": ExtResource("2_yfcek")
+}],
+"loop": true,
+"name": &"death",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 2.0,
+"texture": ExtResource("1_i88fl")
+}, {
+"duration": 2.0,
+"texture": ExtResource("3_3ieup")
+}],
+"loop": true,
+"name": &"default",
+"speed": 5.0
+}]

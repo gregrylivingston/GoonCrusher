@@ -1,0 +1,26 @@
+[gd_scene load_steps=6 format=3 uid="uid://b7r4ro32w40xi"]
+
+[ext_resource type="Material" uid="uid://b2nnqweaskeli" path="res://shader/shader_edgeglow.tres" id="1_bejnl"]
+[ext_resource type="Script" path="res://scene/powerup/powerup.gd" id="2_2bp38"]
+[ext_resource type="Texture2D" uid="uid://bwlwtwutv2vx1" path="res://texture/icon/gas.png" id="2_a675s"]
+[ext_resource type="AudioStream" uid="uid://78ld7kj5444p" path="res://sound/fx/short-success-sound-glockenspie.mp3" id="4_y3svm"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_3mcnq"]
+size = Vector2(35, 32)
+
+[node name="Powerup" type="Sprite2D"]
+material = ExtResource("1_bejnl")
+scale = Vector2(2, 2)
+texture = ExtResource("2_a675s")
+script = ExtResource("2_2bp38")
+
+[node name="Area2D" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D"]
+position = Vector2(0.5, 1)
+shape = SubResource("RectangleShape2D_3mcnq")
+
+[node name="AudioStreamReward" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("4_y3svm")
+
+[connection signal="body_entered" from="Area2D" to="." method="_on_area_2d_body_entered"]

@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://bvivg0dx8wkea"]
+
+[ext_resource type="PackedScene" uid="uid://b7r4ro32w40xi" path="res://scene/powerup/powerup.tscn" id="1_5ckdx"]
+
+[node name="Powerup" instance=ExtResource("1_5ckdx")]
+powerup = "fuel"
+quantity = 20.0

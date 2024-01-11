@@ -1,0 +1,31 @@
+[gd_resource type="SpriteFrames" load_steps=5 format=3 uid="uid://dljg77urgr0py"]
+
+[ext_resource type="Texture2D" uid="uid://bqobqe2g2newr" path="res://scene/enemy/walker/samurai/texture/0050.png" id="1_8mw2u"]
+[ext_resource type="Texture2D" uid="uid://brwr3h6iqyjx5" path="res://scene/enemy/walker/samurai/texture/0052.png" id="2_t0r23"]
+[ext_resource type="Texture2D" uid="uid://miw4yaj8u6hb" path="res://scene/enemy/walker/samurai/texture/0002.png" id="3_buink"]
+[ext_resource type="Texture2D" uid="uid://55njggulqgov" path="res://scene/enemy/walker/samurai/texture/0004.png" id="4_ak3wy"]
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_8mw2u")
+}, {
+"duration": 60.0,
+"texture": ExtResource("2_t0r23")
+}],
+"loop": true,
+"name": &"death",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("3_buink")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_ak3wy")
+}],
+"loop": true,
+"name": &"default",
+"speed": 5.0
+}]

@@ -1,0 +1,130 @@
+[gd_scene load_steps=11 format=3 uid="uid://cpkgnhvksrqs3"]
+
+[ext_resource type="Script" path="res://scene/player/menu/main/mainMenu.gd" id="1_sonwu"]
+[ext_resource type="PackedScene" uid="uid://bepxjqhida0n8" path="res://scene/player/ui/roadButton.tscn" id="2_1mco8"]
+[ext_resource type="Theme" uid="uid://co40pijjc7hbw" path="res://style/roadRogue.tres" id="2_caw0b"]
+[ext_resource type="StyleBox" uid="uid://dl1e0qtgp13cj" path="res://style/style_box_basic.tres" id="2_jk1p0"]
+[ext_resource type="AudioStream" uid="uid://chsan1o1ku2c7" path="res://sound/music/abstract-world-127012.mp3" id="3_gyg28"]
+[ext_resource type="FontFile" uid="uid://2t7kmagg0mqm" path="res://style/font/Tektur/Tektur-ExtraBold.ttf" id="3_h66a4"]
+[ext_resource type="Texture2D" uid="uid://dthtmohgw8u1f" path="res://scene/car/audi/Audi.png" id="5_gfgo3"]
+[ext_resource type="PackedScene" uid="uid://clx3q1jksnuoc" path="res://scene/player/menu/main/car_stats_container.tscn" id="6_g6ev1"]
+[ext_resource type="Script" path="res://scene/player/menu/main/car_stats_container.gd" id="7_7di5e"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_trnok"]
+bg_color = Color(0.0588235, 0.545098, 0.552941, 0)
+
+[node name="MainMenu" type="CanvasLayer"]
+script = ExtResource("1_sonwu")
+
+[node name="TextureRect" type="TextureRect" parent="."]
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("3_gyg28")
+volume_db = -4.0
+autoplay = true
+
+[node name="TabContainer" type="TabContainer" parent="."]
+anchors_preset = 11
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -403.0
+offset_top = 68.0
+offset_right = -11.0
+offset_bottom = -81.0
+grow_horizontal = 0
+grow_vertical = 2
+theme_override_styles/tab_selected = ExtResource("2_jk1p0")
+theme_override_styles/panel = SubResource("StyleBoxFlat_trnok")
+
+[node name="Ride" type="ScrollContainer" parent="TabContainer"]
+layout_mode = 2
+vertical_scroll_mode = 0
+
+[node name="carGrid" type="GridContainer" parent="TabContainer/Ride"]
+layout_mode = 2
+size_flags_horizontal = 0
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 10
+columns = 2
+
+[node name="HSeparator" type="HSeparator" parent="TabContainer/Ride/carGrid"]
+self_modulate = Color(1, 1, 1, 0)
+layout_mode = 2
+
+[node name="HSeparator2" type="HSeparator" parent="TabContainer/Ride/carGrid"]
+self_modulate = Color(1, 1, 1, 0)
+layout_mode = 2
+
+[node name="carSpawnTarget" type="TextureRect" parent="."]
+self_modulate = Color(1, 1, 1, 0)
+offset_left = 583.0
+offset_top = 371.0
+offset_right = 898.0
+offset_bottom = 608.0
+texture = ExtResource("5_gfgo3")
+
+[node name="carStatsContainer" parent="." instance=ExtResource("6_g6ev1")]
+script = ExtResource("7_7di5e")
+
+[node name="Panel" type="Panel" parent="."]
+offset_left = -157.0
+offset_top = -17.0
+offset_right = 331.0
+offset_bottom = 176.0
+theme = ExtResource("2_caw0b")
+
+[node name="Title" type="Label" parent="Panel"]
+layout_mode = 0
+offset_left = 169.0
+offset_top = 118.0
+offset_right = 470.0
+offset_bottom = 184.0
+theme = ExtResource("2_caw0b")
+theme_override_fonts/font = ExtResource("3_h66a4")
+theme_override_font_sizes/font_size = 50
+text = "Road Rogue"
+
+[node name="Panel2" type="Panel" parent="."]
+offset_left = 13.0
+offset_top = 184.0
+offset_right = 329.0
+offset_bottom = 475.0
+theme = ExtResource("2_caw0b")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel2"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = -14.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="beginButton" parent="Panel2/VBoxContainer" instance=ExtResource("2_1mco8")]
+layout_mode = 2
+size_flags_vertical = 3
+text = "Begin"
+
+[node name="achievements" parent="Panel2/VBoxContainer" instance=ExtResource("2_1mco8")]
+layout_mode = 2
+size_flags_vertical = 3
+text = "Achievements"
+
+[node name="settingsButton" parent="Panel2/VBoxContainer" instance=ExtResource("2_1mco8")]
+layout_mode = 2
+size_flags_vertical = 3
+text = "Settings"
+
+[node name="quitButton" parent="Panel2/VBoxContainer" instance=ExtResource("2_1mco8")]
+layout_mode = 2
+size_flags_vertical = 3
+text = "Quit"
+
+[connection signal="pressed" from="Panel2/VBoxContainer/beginButton" to="." method="_on_begin_button_pressed"]
+[connection signal="pressed" from="Panel2/VBoxContainer/quitButton" to="." method="_on_quit_button_pressed"]

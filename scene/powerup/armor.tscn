@@ -1,0 +1,9 @@
+[gd_scene load_steps=3 format=3 uid="uid://cm5on5eth74e2"]
+
+[ext_resource type="PackedScene" uid="uid://b7r4ro32w40xi" path="res://scene/powerup/powerup.tscn" id="1_banu8"]
+[ext_resource type="Texture2D" uid="uid://ckvii7iuglgha" path="res://texture/icon/shield.png" id="2_wo6b0"]
+
+[node name="Powerup" instance=ExtResource("1_banu8")]
+texture = ExtResource("2_wo6b0")
+powerup = "armor"
+quantity = 1.0

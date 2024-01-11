@@ -1,0 +1,5 @@
+[gd_scene load_steps=2 format=3 uid="uid://cqllipvx1ub5a"]
+
+[ext_resource type="PackedScene" uid="uid://ck730mtu8o5o8" path="res://scene/enemy/walker/walker.tscn" id="1_p4ndb"]
+
+[node name="devil" instance=ExtResource("1_p4ndb")]

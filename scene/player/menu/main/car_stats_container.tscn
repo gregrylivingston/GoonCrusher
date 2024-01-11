@@ -1,0 +1,33 @@
+[gd_scene load_steps=6 format=3 uid="uid://clx3q1jksnuoc"]
+
+[ext_resource type="PackedScene" uid="uid://i0goedbwsro6" path="res://scene/player/ui/attribute_indicator.tscn" id="1_awv6k"]
+[ext_resource type="Texture2D" uid="uid://b3g3a2usedskp" path="res://texture/icon/steering.png" id="2_ekr1k"]
+[ext_resource type="Texture2D" uid="uid://b282uef7te4fk" path="res://texture/icon/wheel.png" id="3_gtqp7"]
+[ext_resource type="Texture2D" uid="uid://b40eqkba0jho8" path="res://texture/icon/engine.png" id="4_3l7yx"]
+[ext_resource type="Texture2D" uid="uid://ckvii7iuglgha" path="res://texture/icon/shield.png" id="5_1k2du"]
+
+[node name="carStatsContainer" type="VBoxContainer"]
+offset_left = 420.0
+offset_top = 357.0
+offset_right = 532.0
+offset_bottom = 593.0
+
+[node name="steering" parent="." instance=ExtResource("1_awv6k")]
+layout_mode = 2
+size_flags_vertical = 3
+myIcon = ExtResource("2_ekr1k")
+
+[node name="aero" parent="." instance=ExtResource("1_awv6k")]
+layout_mode = 2
+size_flags_vertical = 3
+myIcon = ExtResource("3_gtqp7")
+
+[node name="engine" parent="." instance=ExtResource("1_awv6k")]
+layout_mode = 2
+size_flags_vertical = 3
+myIcon = ExtResource("4_3l7yx")
+
+[node name="armor" parent="." instance=ExtResource("1_awv6k")]
+layout_mode = 2
+size_flags_vertical = 3
+myIcon = ExtResource("5_1k2du")

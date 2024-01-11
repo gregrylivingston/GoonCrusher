@@ -1,0 +1,9 @@
+[gd_scene load_steps=3 format=3 uid="uid://cj1bw767v5imn"]
+
+[ext_resource type="PackedScene" uid="uid://b7r4ro32w40xi" path="res://scene/powerup/powerup.tscn" id="1_uxtcd"]
+[ext_resource type="Texture2D" uid="uid://bipfb4etolpw2" path="res://texture/icon/heart.png" id="2_ro20u"]
+
+[node name="Powerup" instance=ExtResource("1_uxtcd")]
+texture = ExtResource("2_ro20u")
+powerup = "health"
+quantity = 20.0

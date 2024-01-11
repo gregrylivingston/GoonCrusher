@@ -1,0 +1,15 @@
+[gd_scene load_steps=3 format=3 uid="uid://brhh6ifac5qvc"]
+
+[ext_resource type="Script" path="res://scene/scenery/rocks.gd" id="1_q8q40"]
+
+[sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_x7f3q"]
+
+[node name="Rocks" type="Polygon2D"]
+color = Color(0.396078, 0.396078, 0.396078, 1)
+polygon = PackedVector2Array(-73, -20, -57, 41, -32, 66, 15, 59, 56, 51, 63, 0, 63, -48, 16, -58, -22, -58)
+script = ExtResource("1_q8q40")
+
+[node name="StaticBody2D" type="StaticBody2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D"]
+shape = SubResource("ConvexPolygonShape2D_x7f3q")

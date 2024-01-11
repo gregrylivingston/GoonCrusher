@@ -1,0 +1,9 @@
+[gd_scene load_steps=3 format=3 uid="uid://ctu8kn88lhjpn"]
+
+[ext_resource type="PackedScene" uid="uid://b7r4ro32w40xi" path="res://scene/powerup/powerup.tscn" id="1_oc2qo"]
+[ext_resource type="Texture2D" uid="uid://b40eqkba0jho8" path="res://texture/icon/engine.png" id="2_y74qo"]
+
+[node name="Powerup" instance=ExtResource("1_oc2qo")]
+texture = ExtResource("2_y74qo")
+powerup = "max_engine_power"
+quantity = 1.0
