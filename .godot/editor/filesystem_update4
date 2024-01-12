@@ -1,8 +1,9 @@
 res://scene/car/car.tscn
 res://shader/edgeGlow.gdshader
 res://style/style_box_basic.tres
-res://style/roadRogue.tres
 res://style/style_box_basic_hover.tres
+res://scene/player/save/playerData.gd
+res://style/roadRogue.tres
 res://shader/fog.gdshader
 res://shader/shadow.gdshader
 res://shader/liquid.gdshader
@@ -16,3 +17,7 @@ res://scene/player/menu/main/mainMenu.tscn
 res://scene/player/menu/gameSummary.tscn
 res://scene/powerup/purse.tscn
 res://scene/powerup/powerup.tscn
+res://scene/player/ui/attribute_indicator.tscn
+res://scripts/global/root.gd
+res://scene/player/menu/main/mainMenu.gd
+res://scene/car/menuCar.tscn

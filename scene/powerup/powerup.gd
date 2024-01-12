@@ -6,11 +6,11 @@ class_name Powerup extends Sprite2D
 func _on_area_2d_body_entered(body):
 	if body.get_class() == "CharacterBody2D":
 		if body.isPlayer: 
-			$AudioStreamReward.play()
 			$Area2D.queue_free()
 			sendReward(body)
 
 func sendReward(body):
+	$AudioStreamReward.play()
 	uiControlNode = get_tree().get_first_node_in_group(powerup+"ui")
 	startPosition = global_position
 	get_tree().create_tween().tween_method(flyToUi, 0.0, 1.0, 0.3)

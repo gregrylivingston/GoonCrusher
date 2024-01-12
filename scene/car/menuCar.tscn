@@ -8,7 +8,7 @@
 [ext_resource type="AudioStream" uid="uid://bmxxnqvrvdch4" path="res://sound/ui/click.wav" id="5_bnvnq"]
 
 [node name="MenuCar" type="Button"]
-custom_minimum_size = Vector2(128, 128)
+custom_minimum_size = Vector2(100, 100)
 offset_right = 8.0
 offset_bottom = 8.0
 theme_override_styles/normal = ExtResource("1_b3b1k")
@@ -24,13 +24,13 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -64.0
-offset_top = -64.0
-offset_right = 192.0
-offset_bottom = 192.0
+offset_left = -39.0
+offset_top = -39.0
+offset_right = 217.0
+offset_bottom = 217.0
 grow_horizontal = 2
 grow_vertical = 2
-scale = Vector2(0.5, 0.5)
+scale = Vector2(0.3, 0.3)
 texture = ExtResource("2_fvjic")
 
 [node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]

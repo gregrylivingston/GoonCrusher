@@ -1,3 +1,5 @@
+res://scene/player/save
+res://scripts/global
 res://texture/icon
 res://shader
 res://texture/fx
@@ -8,7 +10,6 @@ res://scene/player/menu/main
 res://scene/car/audi
 D:/Godot/AutoSurvivor/scene/enemy/walker/devil/texture
 res://scene/enemy/walker
-res://scripts/global
 res://scene/enemy/walker/devil
 D:/Godot/AutoSurvivor
 res://scene/powerup

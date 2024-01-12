@@ -18,6 +18,7 @@ config/icon="res://icon.svg"
 [autoload]
 
 Root="*res://scripts/global/root.gd"
+SaveManager="*res://scripts/global/saveManager.gd"
 
 [display]
 

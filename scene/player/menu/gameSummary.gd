@@ -11,7 +11,7 @@ func _ready():
 	
 	$Panel/Panel2/VBoxContainer/HBoxContainer2/coinsCollected.text = str(Root.playerCar.coin)
 	$Panel/Panel2/VBoxContainer/HBoxContainer4/powerups.text = str( Root.playerCar.powerupsCollected )
-	
+	$Panel/Panel2/VBoxContainer/HBoxContainer5/gems.text = str(Root.playerCar.gem)
 	
 	
 # Called every frame. 'delta' is the elapsed time since the previous frame.

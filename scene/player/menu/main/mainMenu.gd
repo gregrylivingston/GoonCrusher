@@ -3,10 +3,18 @@ extends CanvasLayer
 var carPanel = preload("res://scene/car/menuCar.tscn")
 
 
-# Called when the node enters the scene tree for the first time.
 func _ready():
 	Root.mainMenu = self
-	pass # Replace with function body.
+	createCarArray()
+	selectCar(Root.cars.sedan)
+
+	$myCoins.setValue( SaveManager.playerData.coin )
+	$myGems.setValue ( SaveManager.playerData.gem )
+
+func _process(delta):
+	pass
+
+func createCarArray():
 	for car in Root.cars:
 		var newPanel = carPanel.instantiate()
 		newPanel.carData = Root.cars[car]
@@ -15,15 +23,8 @@ func _ready():
 		newPanel.setTexture(newCar.get_node("sprite").texture )
 		newCar.queue_free()
 	
-		newPanel.scale = Vector2(.5,.5)
+		newPanel.scale = Vector2(.3,.3)
 		$TabContainer/Ride/carGrid.add_child(newPanel)
-		
-	selectCar(Root.cars.sedan)
-
-
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta):
-	pass
 
 
 func _on_begin_button_pressed():

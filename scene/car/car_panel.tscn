@@ -161,9 +161,11 @@ expand_mode = 1
 
 [node name="HBoxContainer" type="HBoxContainer" parent="."]
 layout_mode = 1
+anchors_preset = -1
+anchor_right = 0.5
 offset_left = 185.0
 offset_top = 6.0
-offset_right = 562.0
+offset_right = -120.0
 offset_bottom = 36.0
 size_flags_horizontal = 0
 
@@ -178,9 +180,11 @@ show_percentage = false
 
 [node name="HBoxContainer2" type="HBoxContainer" parent="."]
 layout_mode = 1
+anchors_preset = -1
+anchor_right = 0.5
 offset_left = 161.0
 offset_top = 40.0
-offset_right = 560.0
+offset_right = -118.0
 offset_bottom = 64.0
 
 [node name="VSeparator2" type="VSeparator" parent="HBoxContainer2"]

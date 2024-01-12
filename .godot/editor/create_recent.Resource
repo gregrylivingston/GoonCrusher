@@ -1,3 +1,4 @@
+Resource
 Theme
 StyleBoxFlat
 SpriteFrames

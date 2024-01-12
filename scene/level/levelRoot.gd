@@ -19,12 +19,12 @@ func _ready():
 	Root.playerCar.ui.get_node("carPanel").setTexture( Root.playerCar.get_node("sprite").texture )
 	Root.playerCar.ui.updateStats()
 	
-	newSpawner( Vector2i(3000,250))
-	newSpawner( Vector2i(3000,-250))
-	newSpawner( Vector2i(3000,250))
-	newSpawner( Vector2i(2500,1500))
-	newSpawner( Vector2i(2500,-1500))
-	newSpawner( Vector2i(-2500,0))	
+	newSpawner( Vector2i(4000,250))
+	newSpawner( Vector2i(4000,-250))
+	newSpawner( Vector2i(4000,250))
+	newSpawner( Vector2i(3500,1500))
+	newSpawner( Vector2i(3500,-1500))
+	newSpawner( Vector2i(-3500,0))
 	
 func newSpawner( spawnerPosition: Vector2i ):
 	var newSpawner = spawnerScene.instantiate()

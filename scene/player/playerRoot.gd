@@ -5,6 +5,7 @@ extends CanvasLayer
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	$Panel2/HBoxContainer/coins.add_to_group("coinui")
+	$Panel4/HBoxContainer/TextureRect.add_to_group("gemui")
 	if is_instance_valid(Root.playerCar):
 		updateStats()
 	else: await get_tree().create_timer(1).timeout
