@@ -9,7 +9,7 @@ max_steering_degrees = 10
 armor = 6
 
 [node name="sprite" parent="." index="4"]
-position = Vector2(3, 7)
+position = Vector2(3, 3)
 texture = ExtResource("2_36nav")
 
 [node name="tireLocation2" parent="sprite" index="1"]

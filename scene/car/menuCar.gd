@@ -18,4 +18,6 @@ func _on_pressed():
 func setTexture(texture):
 	$TextureRect.texture = texture
 	
-
+func setLocked():
+	$TextureRect.modulate = Color(0,0,0,1)
+	$TextureRect2.visible = true

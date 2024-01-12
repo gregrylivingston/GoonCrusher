@@ -3,8 +3,13 @@ extends Node
 var playerCar: OverheadCarBody2D
 var selectedCar
 var mainMenu: CanvasLayer
-
 var levelRoot
+
+var isRunActive: bool = false
+var earnedCoins: int
+var earnedGems: int
+
+
 var color = [
 	Color("#8E9B90"),
 	Color("#93C0A4"),

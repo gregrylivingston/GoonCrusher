@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3 uid="uid://cpkgnhvksrqs3"]
+[gd_scene load_steps=13 format=3 uid="uid://cpkgnhvksrqs3"]
 
 [ext_resource type="Script" path="res://scene/player/menu/main/mainMenu.gd" id="1_sonwu"]
 [ext_resource type="PackedScene" uid="uid://bepxjqhida0n8" path="res://scene/player/ui/roadButton.tscn" id="2_1mco8"]
@@ -10,6 +10,7 @@
 [ext_resource type="Script" path="res://scene/player/menu/main/car_stats_container.gd" id="7_7di5e"]
 [ext_resource type="PackedScene" uid="uid://i0goedbwsro6" path="res://scene/player/ui/attribute_indicator.tscn" id="10_7n51g"]
 [ext_resource type="Texture2D" uid="uid://w03tvhxtmrv4" path="res://texture/icon/icons8-coin-48 (1).png" id="11_labbq"]
+[ext_resource type="PackedScene" uid="uid://maftjaqqaasp" path="res://scene/player/menu/main/statUpgradeButton.tscn" id="12_75cgo"]
 [ext_resource type="Texture2D" uid="uid://clb0tyqiwegeo" path="res://texture/icon/icons8-gem-48.png" id="12_baips"]
 
 [node name="MainMenu" type="CanvasLayer"]
@@ -28,7 +29,7 @@ autoplay = true
 anchors_preset = 10
 anchor_right = 1.0
 offset_left = 479.0
-offset_right = -363.0
+offset_right = -430.0
 offset_bottom = 120.0
 grow_horizontal = 2
 theme = ExtResource("2_caw0b")
@@ -63,20 +64,24 @@ offset_bottom = 608.0
 texture = ExtResource("5_gfgo3")
 
 [node name="carStatsContainer" parent="." instance=ExtResource("6_g6ev1")]
-offset_left = -4.0
-offset_top = 192.0
-offset_right = 132.0
-offset_bottom = 428.0
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 0.0
+offset_top = -260.0
+offset_right = 136.0
+offset_bottom = 86.0
+grow_vertical = 2
 script = ExtResource("7_7di5e")
 
-[node name="Panel" type="Panel" parent="."]
+[node name="titlePanel" type="Panel" parent="."]
 offset_left = -157.0
 offset_top = -17.0
 offset_right = 331.0
 offset_bottom = 176.0
 theme = ExtResource("2_caw0b")
 
-[node name="Title" type="Label" parent="Panel"]
+[node name="Title" type="Label" parent="titlePanel"]
 layout_mode = 0
 offset_left = 169.0
 offset_top = 118.0
@@ -130,7 +135,7 @@ layout_mode = 2
 size_flags_vertical = 3
 text = "Quit"
 
-[node name="myCoins" parent="." instance=ExtResource("10_7n51g")]
+[node name="myCoins" parent="." groups=["coinui"] instance=ExtResource("10_7n51g")]
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
@@ -141,7 +146,7 @@ offset_bottom = 55.0
 grow_horizontal = 0
 myIcon = ExtResource("11_labbq")
 
-[node name="myGems" parent="." instance=ExtResource("10_7n51g")]
+[node name="myGems" parent="." groups=["gemui"] instance=ExtResource("10_7n51g")]
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
@@ -152,7 +157,7 @@ offset_bottom = 55.0
 grow_horizontal = 0
 myIcon = ExtResource("12_baips")
 
-[node name="RoadButton" parent="." instance=ExtResource("2_1mco8")]
+[node name="freeMoneyButton" parent="." instance=ExtResource("2_1mco8")]
 anchors_preset = 1
 anchor_left = 1.0
 anchor_bottom = 0.0
@@ -164,5 +169,40 @@ grow_horizontal = 0
 grow_vertical = 1
 text = "Free Money"
 
+[node name="carStatUpgrades" type="VBoxContainer" parent="."]
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 141.0
+offset_top = -260.0
+offset_right = 481.0
+offset_bottom = 86.0
+grow_vertical = 2
+
+[node name="Panel" type="Panel" parent="carStatUpgrades"]
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+theme = ExtResource("2_caw0b")
+
+[node name="statUpgrade" parent="carStatUpgrades" instance=ExtResource("12_75cgo")]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="statUpgrade2" parent="carStatUpgrades" instance=ExtResource("12_75cgo")]
+layout_mode = 2
+size_flags_vertical = 3
+text = "+1 Engine   300"
+
+[node name="statUpgrade3" parent="carStatUpgrades" instance=ExtResource("12_75cgo")]
+layout_mode = 2
+size_flags_vertical = 3
+text = "+1 Wheel   300"
+
+[node name="statUpgrade4" parent="carStatUpgrades" instance=ExtResource("12_75cgo")]
+layout_mode = 2
+size_flags_vertical = 3
+text = "+1 Steering   300"
+
 [connection signal="pressed" from="Panel2/VBoxContainer/beginButton" to="." method="_on_begin_button_pressed"]
 [connection signal="pressed" from="Panel2/VBoxContainer/quitButton" to="." method="_on_quit_button_pressed"]
+[connection signal="pressed" from="freeMoneyButton" to="." method="_on_free_money_button_pressed"]

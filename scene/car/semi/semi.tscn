@@ -4,7 +4,7 @@
 [ext_resource type="Texture2D" uid="uid://cmg5tl48id0af" path="res://scene/car/semi/truck.png" id="2_0owyo"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_8s7dq"]
-size = Vector2(309, 107)
+size = Vector2(309, 115)
 
 [node name="Car" instance=ExtResource("1_16fys")]
 max_engine_power = 16
@@ -13,10 +13,11 @@ brakes = 5.0
 armor = 30
 
 [node name="CollisionShape2D" parent="." index="2"]
-position = Vector2(3.5, -14.5)
+position = Vector2(3.5, -1.5)
 shape = SubResource("RectangleShape2D_8s7dq")
 
 [node name="sprite" parent="." index="4"]
+position = Vector2(0, 10)
 scale = Vector2(1.5, 1.5)
 texture = ExtResource("2_0owyo")
 

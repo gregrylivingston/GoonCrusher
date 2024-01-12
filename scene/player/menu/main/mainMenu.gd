@@ -1,19 +1,26 @@
 extends CanvasLayer
 
-var carPanel = preload("res://scene/car/menuCar.tscn")
+
 
 
 func _ready():
 	Root.mainMenu = self
 	createCarArray()
 	selectCar(Root.cars.sedan)
+	await get_tree().process_frame
+	if Root.isRunActive:
+		Root.isRunActive = false
+		SaveManager.addCoins( Root.earnedCoins )
+		SaveManager.addGems( Root.earnedGems )
+		Root.earnedCoins = 0
+		Root.earnedGems = 0
+	uiUpdate()
 
-	$myCoins.setValue( SaveManager.playerData.coin )
-	$myGems.setValue ( SaveManager.playerData.gem )
 
 func _process(delta):
 	pass
 
+var carPanel = preload("res://scene/car/menuCar.tscn")
 func createCarArray():
 	for car in Root.cars:
 		var newPanel = carPanel.instantiate()
@@ -22,6 +29,9 @@ func createCarArray():
 		var newCar = Root.cars[car].scene.instantiate()
 		newPanel.setTexture(newCar.get_node("sprite").texture )
 		newCar.queue_free()
+	
+		if SaveManager.playerData.cars[car].cost != 0:
+			newPanel.setLocked()
 	
 		newPanel.scale = Vector2(.3,.3)
 		$TabContainer/Ride/carGrid.add_child(newPanel)
@@ -51,4 +61,13 @@ func selectCar(car):
 	get_parent().add_child(Root.playerCar)
 	$carStatsContainer.updateStats()
 
+func uiUpdate():
+	$myCoins.setValue( SaveManager.playerData.coin )
+	$myGems.setValue ( SaveManager.playerData.gem )
 
+
+func _on_free_money_button_pressed():
+	SaveManager.addGems( 25 )
+	SaveManager.addCoins( 1000 )
+
+	

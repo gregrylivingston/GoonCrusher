@@ -14,6 +14,7 @@ func _ready():
 	add_child(Root.playerCar)
 
 	Root.levelRoot = self
+	Root.isRunActive = true
 	
 	Root.playerCar.ui = get_tree().get_nodes_in_group("playerGameUi")[0]
 	Root.playerCar.ui.get_node("carPanel").setTexture( Root.playerCar.get_node("sprite").texture )

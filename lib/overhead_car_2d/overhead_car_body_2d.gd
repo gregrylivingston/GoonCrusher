@@ -196,8 +196,9 @@ func reward(powerup: String , quantity):
 	health = clamp(health, -10.0, 100.0)
 	fuel = clamp(fuel, -10.0, 100.0)
 	if powerup != "coin" && powerup != "health" && powerup != "fuel" && powerup != "gem": powerupsCollected += 1
-	if not is_instance_valid(ui): ui = get_tree().get_nodes_in_group("playerGameUi")[0]
-	ui.updateStats()
+	if Root.isRunActive:
+		if not is_instance_valid(ui): ui = get_tree().get_nodes_in_group("playerGameUi")[0]
+		ui.updateStats()
 
 
 func damage(damage: float):

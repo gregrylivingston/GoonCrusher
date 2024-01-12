@@ -1,10 +1,12 @@
-[gd_scene load_steps=6 format=3 uid="uid://clx3q1jksnuoc"]
+[gd_scene load_steps=8 format=3 uid="uid://clx3q1jksnuoc"]
 
 [ext_resource type="PackedScene" uid="uid://i0goedbwsro6" path="res://scene/player/ui/attribute_indicator.tscn" id="1_awv6k"]
 [ext_resource type="Texture2D" uid="uid://b3g3a2usedskp" path="res://texture/icon/steering.png" id="2_ekr1k"]
 [ext_resource type="Texture2D" uid="uid://b282uef7te4fk" path="res://texture/icon/wheel.png" id="3_gtqp7"]
 [ext_resource type="Texture2D" uid="uid://b40eqkba0jho8" path="res://texture/icon/engine.png" id="4_3l7yx"]
 [ext_resource type="Texture2D" uid="uid://ckvii7iuglgha" path="res://texture/icon/shield.png" id="5_1k2du"]
+[ext_resource type="Theme" uid="uid://co40pijjc7hbw" path="res://style/roadRogue.tres" id="6_v36os"]
+[ext_resource type="Texture2D" uid="uid://iwn5n3c7e4vw" path="res://scene/car/sedan/char_sedan.png" id="7_d3v8e"]
 
 [node name="carStatsContainer" type="VBoxContainer"]
 offset_left = 420.0
@@ -12,22 +14,42 @@ offset_top = 357.0
 offset_right = 532.0
 offset_bottom = 593.0
 
-[node name="steering" parent="." instance=ExtResource("1_awv6k")]
+[node name="Panel" type="Panel" parent="."]
+custom_minimum_size = Vector2(0, 100)
 layout_mode = 2
-size_flags_vertical = 3
-myIcon = ExtResource("2_ekr1k")
+theme = ExtResource("6_v36os")
 
-[node name="aero" parent="." instance=ExtResource("1_awv6k")]
+[node name="TextureRect" type="TextureRect" parent="Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 2.0
+offset_top = 2.0
+offset_right = -5.0
+offset_bottom = -5.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("7_d3v8e")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="armor" parent="." instance=ExtResource("1_awv6k")]
 layout_mode = 2
 size_flags_vertical = 3
-myIcon = ExtResource("3_gtqp7")
+myIcon = ExtResource("5_1k2du")
 
 [node name="engine" parent="." instance=ExtResource("1_awv6k")]
 layout_mode = 2
 size_flags_vertical = 3
 myIcon = ExtResource("4_3l7yx")
 
-[node name="armor" parent="." instance=ExtResource("1_awv6k")]
+[node name="aero" parent="." instance=ExtResource("1_awv6k")]
 layout_mode = 2
 size_flags_vertical = 3
-myIcon = ExtResource("5_1k2du")
+myIcon = ExtResource("3_gtqp7")
+
+[node name="steering" parent="." instance=ExtResource("1_awv6k")]
+layout_mode = 2
+size_flags_vertical = 3
+myIcon = ExtResource("2_ekr1k")

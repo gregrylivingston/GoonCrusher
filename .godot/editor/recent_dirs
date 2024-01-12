@@ -1,3 +1,4 @@
+res://scene/player/menu/main
 res://scene/player/save
 res://scripts/global
 res://texture/icon
@@ -6,7 +7,6 @@ res://texture/fx
 res://style
 res://
 res://scene/car
-res://scene/player/menu/main
 res://scene/car/audi
 D:/Godot/AutoSurvivor/scene/enemy/walker/devil/texture
 res://scene/enemy/walker

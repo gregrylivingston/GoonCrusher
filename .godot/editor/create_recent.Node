@@ -1,11 +1,11 @@
 Panel
+TextureRect
+VBoxContainer
 roadButton
 AudioStreamPlayer
 HSeparator
 Label
 HBoxContainer
-VBoxContainer
-TextureRect
 Button
 CanvasLayer
 AudioStreamPlayer2D
