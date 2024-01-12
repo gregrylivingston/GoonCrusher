@@ -6,6 +6,13 @@
 class_name OverheadCarBody2D extends CharacterBody2D
 
 
+#voices 
+#taxi - okole
+#van - jessie
+#sedan - patrick
+
+
+
 @export var max_engine_power = 25  # Forward acceleration force.
 @export var max_steering_degrees = 12  # Amount that front wheel turns, in degrees
 @export var brakes = 4.0   #brakes and turn-rate-increase
@@ -19,8 +26,6 @@ class_name OverheadCarBody2D extends CharacterBody2D
 @export var traction_slow = 0.7  # Low-speed traction
 @export var wheel_base = 70  # Distance from front to rear wheel
 
-
-
 var health = 100.0
 var fuel = 100.0
 var coin = 0
@@ -28,9 +33,14 @@ var gem = 0
 
 @onready var rewardAudioPlayer = $"AudioStream-Reward"
 
-
 @export var isPlayer = true
 var isDestroyed: bool = false
+
+@export var profilePic: Texture2D
+@export var charName: String = "Hi"
+@export var carId:String
+
+@export var introAudio: Array[AudioStreamMP3] = []
 
 
 class CarInput:

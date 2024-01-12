@@ -9,27 +9,27 @@ var cars = {
 		"cost":0,
 	},
 	"van":{
-		"cost":200,
+		"cost":500,
 	},
 	"taxi":{
-		"cost":200,
+		"cost":1000,
 	},	
 	"pickup":{
-		"cost":200,
+		"cost":2000,
 	},
 	"semi":{
-		"cost":200,
+		"cost":5000,
 	},
 	"audi":{
-		"cost":200,
+		"cost":20000,
 	},
 	"racer":{
-		"cost":200,
+		"cost":20000,
 	},
 	"police":{
-		"cost":200,
+		"cost":50000,
 	},
 	"ambulance":{
-		"cost":200,
+		"cost":100000,
 	}
 }

@@ -1,12 +1,25 @@
-[gd_scene load_steps=3 format=3 uid="uid://cvuiarwiynwx7"]
+[gd_scene load_steps=12 format=3 uid="uid://cvuiarwiynwx7"]
 
 [ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="1_150xb"]
 [ext_resource type="Texture2D" uid="uid://dfa1wuwohdn01" path="res://scene/car/pickup/Mini_truck.png" id="2_36nav"]
+[ext_resource type="Texture2D" uid="uid://ddf1ijlmxrb6t" path="res://scene/car/pickup/char_pickup.png" id="2_m38a1"]
+[ext_resource type="AudioStream" uid="uid://c7tykiomm82io" path="res://scene/car/pickup/audio/pickup_intro_1.mp3" id="3_gf7v4"]
+[ext_resource type="AudioStream" uid="uid://chda6qshy02fg" path="res://scene/car/pickup/audio/pickup_intro_2.mp3" id="4_57w67"]
+[ext_resource type="AudioStream" uid="uid://dy14pxuvdlu4t" path="res://scene/car/pickup/audio/pickup_intro_3.mp3" id="5_okret"]
+[ext_resource type="AudioStream" uid="uid://b31ctawrtr4rr" path="res://scene/car/pickup/audio/pickup_intro_4.mp3" id="6_go2a3"]
+[ext_resource type="AudioStream" uid="uid://bmm7o56pay30j" path="res://scene/car/pickup/audio/pickup_intro_5.mp3" id="7_7wal3"]
+[ext_resource type="AudioStream" uid="uid://bq5n538wq16u" path="res://scene/car/pickup/audio/pickup_intro_6.mp3" id="8_svqtx"]
+[ext_resource type="AudioStream" uid="uid://bfvu8be8cvpcr" path="res://scene/car/pickup/audio/pickup_intro_7.mp3" id="9_0wwoi"]
+[ext_resource type="AudioStream" uid="uid://b4rf8s2i8u2wa" path="res://scene/car/pickup/audio/pickup_intro_8.mp3" id="10_iv8ox"]
 
 [node name="Car" instance=ExtResource("1_150xb")]
 max_engine_power = 15
 max_steering_degrees = 10
 armor = 6
+profilePic = ExtResource("2_m38a1")
+charName = "Karen"
+carId = "pickup"
+introAudio = Array[AudioStreamMP3]([ExtResource("3_gf7v4"), ExtResource("4_57w67"), ExtResource("5_okret"), ExtResource("6_go2a3"), ExtResource("7_7wal3"), ExtResource("8_svqtx"), ExtResource("9_0wwoi"), ExtResource("10_iv8ox")])
 
 [node name="sprite" parent="." index="4"]
 position = Vector2(3, 3)

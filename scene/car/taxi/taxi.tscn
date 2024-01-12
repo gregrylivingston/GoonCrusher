@@ -1,13 +1,26 @@
-[gd_scene load_steps=3 format=3 uid="uid://1bi7flsw4h78"]
+[gd_scene load_steps=12 format=3 uid="uid://1bi7flsw4h78"]
 
 [ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="1_v41dt"]
+[ext_resource type="Texture2D" uid="uid://bxguuhssna7ol" path="res://scene/car/taxi/char_taxi.png" id="2_e55go"]
 [ext_resource type="Texture2D" uid="uid://cbltnt4310fcd" path="res://scene/car/taxi/taxi.png" id="2_mdy3n"]
+[ext_resource type="AudioStream" uid="uid://dyrgkn4mg3hw4" path="res://scene/car/taxi/audio/taxi_intro_1.mp3" id="3_anhg2"]
+[ext_resource type="AudioStream" uid="uid://ov2qw2mn78qp" path="res://scene/car/taxi/audio/taxi_intro_2.mp3" id="4_qknie"]
+[ext_resource type="AudioStream" uid="uid://b0po47xa4g8th" path="res://scene/car/taxi/audio/taxi_intro_3.mp3" id="5_sxudr"]
+[ext_resource type="AudioStream" uid="uid://tdeq55gai72d" path="res://scene/car/taxi/audio/taxi_intro_4.mp3" id="6_230wo"]
+[ext_resource type="AudioStream" uid="uid://cpy07yaos7t27" path="res://scene/car/taxi/audio/taxi_intro_5.mp3" id="7_agd4o"]
+[ext_resource type="AudioStream" uid="uid://dsee22vcg84we" path="res://scene/car/taxi/audio/taxi_intro_6.mp3" id="8_di5uq"]
+[ext_resource type="AudioStream" uid="uid://cm4rl434c3n6w" path="res://scene/car/taxi/audio/taxi_intro_7.mp3" id="9_oqruo"]
+[ext_resource type="AudioStream" uid="uid://cqacqnl7nyjja" path="res://scene/car/taxi/audio/taxi_intro_8.mp3" id="10_a7xbb"]
 
 [node name="Car" instance=ExtResource("1_v41dt")]
 max_engine_power = 22
 max_steering_degrees = 18
 brakes = 5.0
 armor = 2
+profilePic = ExtResource("2_e55go")
+charName = "Andrew"
+carId = "taxi"
+introAudio = Array[AudioStreamMP3]([ExtResource("3_anhg2"), ExtResource("4_qknie"), ExtResource("5_sxudr"), ExtResource("6_230wo"), ExtResource("7_agd4o"), ExtResource("8_di5uq"), ExtResource("9_oqruo"), ExtResource("10_a7xbb")])
 
 [node name="sprite" parent="." index="4"]
 position = Vector2(-11, 7)

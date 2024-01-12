@@ -1,11 +1,24 @@
-[gd_scene load_steps=3 format=3 uid="uid://bkypbefgkke6a"]
+[gd_scene load_steps=12 format=3 uid="uid://bkypbefgkke6a"]
 
 [ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="1_ehr7y"]
 [ext_resource type="Texture2D" uid="uid://cmhhtyl83kii2" path="res://scene/car/sedan/Car.png" id="2_g6grg"]
+[ext_resource type="Texture2D" uid="uid://iwn5n3c7e4vw" path="res://scene/car/sedan/char_sedan.png" id="2_yxeex"]
+[ext_resource type="AudioStream" uid="uid://yo38kmloe6f4" path="res://scene/car/sedan/audio/sedan_intro_1.mp3" id="3_glpud"]
+[ext_resource type="AudioStream" uid="uid://33dd8itlvanf" path="res://scene/car/sedan/audio/sedan_intro_2.mp3" id="4_dej0h"]
+[ext_resource type="AudioStream" uid="uid://drhfky5ie2rq8" path="res://scene/car/sedan/audio/sedan_intro_3.mp3" id="5_x5qy0"]
+[ext_resource type="AudioStream" uid="uid://c8tjwnheipx8b" path="res://scene/car/sedan/audio/sedan_intro_4.mp3" id="6_m4tbq"]
+[ext_resource type="AudioStream" uid="uid://t2ds6uoy7f0j" path="res://scene/car/sedan/audio/sedan_intro_5.mp3" id="7_nnnw6"]
+[ext_resource type="AudioStream" uid="uid://b4bwfsodjipsg" path="res://scene/car/sedan/audio/sedan_intro_6.mp3" id="8_hst6b"]
+[ext_resource type="AudioStream" uid="uid://dfm4bf6vdirml" path="res://scene/car/sedan/audio/sedan_intro_7.mp3" id="9_0rox2"]
+[ext_resource type="AudioStream" uid="uid://bh1lw7ex5e3h1" path="res://scene/car/sedan/audio/sedan_intro_8.mp3" id="10_d4hvs"]
 
 [node name="Car" instance=ExtResource("1_ehr7y")]
 max_engine_power = 19
 max_steering_degrees = 15
+profilePic = ExtResource("2_yxeex")
+charName = "Anthony"
+carId = "sedan"
+introAudio = Array[AudioStreamMP3]([ExtResource("3_glpud"), ExtResource("4_dej0h"), ExtResource("5_x5qy0"), ExtResource("6_m4tbq"), ExtResource("7_nnnw6"), ExtResource("8_hst6b"), ExtResource("9_0rox2"), ExtResource("10_d4hvs")])
 
 [node name="CollisionShape2D" parent="." index="2"]
 position = Vector2(4, -2.5)

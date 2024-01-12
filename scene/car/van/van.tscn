@@ -1,13 +1,26 @@
-[gd_scene load_steps=3 format=3 uid="uid://67a8ek6j834x"]
+[gd_scene load_steps=12 format=3 uid="uid://67a8ek6j834x"]
 
 [ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="1_p428k"]
 [ext_resource type="Texture2D" uid="uid://pjglsxpdyhov" path="res://scene/car/van/Mini_van.png" id="2_1lxhl"]
+[ext_resource type="Texture2D" uid="uid://dvrl2jhxnp73k" path="res://scene/car/van/char_van.png" id="2_xl250"]
+[ext_resource type="AudioStream" uid="uid://2y27m3a76lg8" path="res://scene/car/van/audio/van_intro_1.mp3" id="3_g5fq5"]
+[ext_resource type="AudioStream" uid="uid://dxdueob7e784t" path="res://scene/car/van/audio/van_intro_2.mp3" id="4_fk622"]
+[ext_resource type="AudioStream" uid="uid://t8r53c38oa7e" path="res://scene/car/van/audio/van_intro_3.mp3" id="5_ql0xt"]
+[ext_resource type="AudioStream" uid="uid://ggl2rfyrjkgv" path="res://scene/car/van/audio/van_intro_4.mp3" id="6_b4fkq"]
+[ext_resource type="AudioStream" uid="uid://cnoukt5wj16of" path="res://scene/car/van/audio/van_intro_5.mp3" id="7_gfvg0"]
+[ext_resource type="AudioStream" uid="uid://becd1waw7b712" path="res://scene/car/van/audio/van_intro_6.mp3" id="8_3r3lt"]
+[ext_resource type="AudioStream" uid="uid://ds6vbnjymx132" path="res://scene/car/van/audio/van_intro_7.mp3" id="9_l6463"]
+[ext_resource type="AudioStream" uid="uid://coefix2xox74e" path="res://scene/car/van/audio/van_intro_8.mp3" id="10_rilhi"]
 
 [node name="Car" instance=ExtResource("1_p428k")]
 max_engine_power = 12
 max_steering_degrees = 10
 brakes = 3.0
 armor = 10
+profilePic = ExtResource("2_xl250")
+charName = "Lester"
+carId = "van"
+introAudio = Array[AudioStreamMP3]([ExtResource("3_g5fq5"), ExtResource("4_fk622"), ExtResource("5_ql0xt"), ExtResource("6_b4fkq"), ExtResource("7_gfvg0"), ExtResource("8_3r3lt"), ExtResource("9_l6463"), ExtResource("10_rilhi")])
 
 [node name="sprite" parent="." index="4"]
 position = Vector2(-11, 7)

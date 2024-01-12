@@ -1,7 +1,8 @@
-[gd_scene load_steps=4 format=3 uid="uid://7utqen5eg62p"]
+[gd_scene load_steps=5 format=3 uid="uid://7utqen5eg62p"]
 
 [ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="1_16fys"]
 [ext_resource type="Texture2D" uid="uid://cmg5tl48id0af" path="res://scene/car/semi/truck.png" id="2_0owyo"]
+[ext_resource type="Texture2D" uid="uid://c5oxriecuxj4l" path="res://scene/car/semi/char_semi.png" id="2_u7uhp"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_8s7dq"]
 size = Vector2(309, 115)
@@ -11,6 +12,9 @@ max_engine_power = 16
 max_steering_degrees = 8
 brakes = 5.0
 armor = 30
+profilePic = ExtResource("2_u7uhp")
+charName = "Tiffany"
+carId = "semi"
 
 [node name="CollisionShape2D" parent="." index="2"]
 position = Vector2(3.5, -1.5)

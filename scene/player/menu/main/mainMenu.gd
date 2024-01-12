@@ -60,6 +60,23 @@ func selectCar(car):
 	
 	get_parent().add_child(Root.playerCar)
 	$carStatsContainer.updateStats()
+	$carStatUpgrades/Panel/charName.text = Root.playerCar.charName
+	
+	if Root.playerCar.introAudio.size() > 0:
+		$voicePlayer.stream = Root.playerCar.introAudio[randi_range(0 , Root.playerCar.introAudio.size()-1)]
+		$voicePlayer.play()
+		
+	var statUpgradeButtons = [$carStatUpgrades/statUpgrade, $carStatUpgrades/statUpgrade2, $carStatUpgrades/statUpgrade3, $carStatUpgrades/statUpgrade4]
+	var unlockButton = $carStatUpgrades/unlockButton
+	
+	if SaveManager.playerData.cars[Root.playerCar.carId].cost != 0:
+		for i in statUpgradeButtons:i.visible = false
+		unlockButton.visible = true
+		unlockButton.text = "Unlock      " + str( SaveManager.playerData.cars[Root.playerCar.carId].cost )
+	else:
+		for i in statUpgradeButtons:i.visible = true
+		unlockButton.visible = false
+		
 
 func uiUpdate():
 	$myCoins.setValue( SaveManager.playerData.coin )

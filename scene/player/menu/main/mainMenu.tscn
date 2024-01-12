@@ -22,7 +22,7 @@ offset_bottom = 40.0
 
 [node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("3_gyg28")
-volume_db = -4.0
+volume_db = -6.0
 autoplay = true
 
 [node name="TabContainer" type="Panel" parent="."]
@@ -184,24 +184,49 @@ custom_minimum_size = Vector2(0, 100)
 layout_mode = 2
 theme = ExtResource("2_caw0b")
 
+[node name="charName" type="Label" parent="carStatUpgrades/Panel"]
+layout_mode = 0
+offset_left = 17.0
+offset_top = 7.0
+offset_right = 323.0
+offset_bottom = 92.0
+theme = ExtResource("2_caw0b")
+theme_override_font_sizes/font_size = 60
+text = "Andre"
+
 [node name="statUpgrade" parent="carStatUpgrades" instance=ExtResource("12_75cgo")]
+visible = false
 layout_mode = 2
 size_flags_vertical = 3
 
 [node name="statUpgrade2" parent="carStatUpgrades" instance=ExtResource("12_75cgo")]
+visible = false
 layout_mode = 2
 size_flags_vertical = 3
 text = "+1 Engine   300"
 
 [node name="statUpgrade3" parent="carStatUpgrades" instance=ExtResource("12_75cgo")]
+visible = false
 layout_mode = 2
 size_flags_vertical = 3
 text = "+1 Wheel   300"
 
 [node name="statUpgrade4" parent="carStatUpgrades" instance=ExtResource("12_75cgo")]
+visible = false
 layout_mode = 2
 size_flags_vertical = 3
 text = "+1 Steering   300"
+
+[node name="unlockButton" parent="carStatUpgrades" instance=ExtResource("2_1mco8")]
+layout_mode = 2
+size_flags_vertical = 3
+text = "Unlock      200"
+icon = ExtResource("11_labbq")
+alignment = 2
+icon_alignment = 2
+
+[node name="voicePlayer" type="AudioStreamPlayer" parent="."]
+volume_db = 2.0
 
 [connection signal="pressed" from="Panel2/VBoxContainer/beginButton" to="." method="_on_begin_button_pressed"]
 [connection signal="pressed" from="Panel2/VBoxContainer/quitButton" to="." method="_on_quit_button_pressed"]

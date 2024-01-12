@@ -6,3 +6,5 @@
 max_engine_power = 45
 max_steering_degrees = 40
 brakes = 30.0
+charName = "Snake"
+carId = "audi"
