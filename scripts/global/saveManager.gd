@@ -58,3 +58,16 @@ func unlockCar():
 		save_character_data()
 		return true
 	else: return false
+	
+func requestStatCost(statString: String):
+	return pow( playerData.cars[Root.playerCar.carId].upgrades[statString] + 1 , 2 ) * 50
+
+func requestStatUpgrade(statString: String):
+	var requestCost = requestStatCost(statString)
+	if playerData.coin >= requestCost:
+		playerData.coin -= requestCost
+		playerData.cars[Root.playerCar.carId].upgrades[statString] += 1
+		save_character_data()
+		Root.mainMenu.uiUpdate()
+		return true
+	else: return false

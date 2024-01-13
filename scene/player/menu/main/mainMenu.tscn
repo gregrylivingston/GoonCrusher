@@ -197,21 +197,25 @@ text = "Andre"
 [node name="statUpgrade" parent="carStatUpgrades" instance=ExtResource("12_75cgo")]
 layout_mode = 2
 size_flags_vertical = 3
+myStat = "armor"
 
 [node name="statUpgrade2" parent="carStatUpgrades" instance=ExtResource("12_75cgo")]
 layout_mode = 2
 size_flags_vertical = 3
 text = "+1 Engine   300"
+myStat = "engine"
 
 [node name="statUpgrade3" parent="carStatUpgrades" instance=ExtResource("12_75cgo")]
 layout_mode = 2
 size_flags_vertical = 3
 text = "+1 Traction   300"
+myStat = "traction"
 
 [node name="statUpgrade4" parent="carStatUpgrades" instance=ExtResource("12_75cgo")]
 layout_mode = 2
 size_flags_vertical = 3
 text = "+1 Steering   300"
+myStat = "steering"
 
 [node name="unlockButton" parent="carStatUpgrades" instance=ExtResource("2_1mco8")]
 visible = false

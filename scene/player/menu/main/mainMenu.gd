@@ -80,6 +80,7 @@ func selectCar(car):
 func uiUpdate():
 	$myCoins.setValue( SaveManager.playerData.coin )
 	$myGems.setValue ( SaveManager.playerData.gem )
+	for i in [$carStatUpgrades/statUpgrade, $carStatUpgrades/statUpgrade2, $carStatUpgrades/statUpgrade3, $carStatUpgrades/statUpgrade4]:i.refresh()
 
 
 func _on_free_money_button_pressed():
@@ -94,3 +95,5 @@ func _on_unlock_button_pressed():
 		createCarArray()
 		selectCar(Root.cars[Root.playerCar.carId])
 		uiUpdate()
+
+	

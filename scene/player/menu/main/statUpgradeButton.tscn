@@ -8,3 +8,6 @@
 text = "300   +1 Armor"
 icon = ExtResource("2_v7bbs")
 script = ExtResource("3_57udn")
+myStat = ""
+
+[connection signal="pressed" from="." to="." method="_on_upgrade_pressed"]
