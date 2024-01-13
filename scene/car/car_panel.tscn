@@ -121,25 +121,25 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = -4
 
-[node name="attributeIndicator_engine" parent="VBoxContainer/Panel/HBoxContainer" instance=ExtResource("1_sbnje")]
+[node name="attributeIndicator_engine" parent="VBoxContainer/Panel/HBoxContainer" groups=["engineui"] instance=ExtResource("1_sbnje")]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 6
 myIcon = ExtResource("6_i8q0m")
 
-[node name="attributeIndicator_steering" parent="VBoxContainer/Panel/HBoxContainer" instance=ExtResource("1_sbnje")]
+[node name="attributeIndicator_steering" parent="VBoxContainer/Panel/HBoxContainer" groups=["steeringui"] instance=ExtResource("1_sbnje")]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 6
 myIcon = ExtResource("5_h3pqn")
 
-[node name="attributeIndicator_aero" parent="VBoxContainer/Panel/HBoxContainer" instance=ExtResource("1_sbnje")]
+[node name="attributeIndicator_aero" parent="VBoxContainer/Panel/HBoxContainer" groups=["tractionui"] instance=ExtResource("1_sbnje")]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 6
 myIcon = ExtResource("7_y38vu")
 
-[node name="attributeIndicator_armor" parent="VBoxContainer/Panel/HBoxContainer" instance=ExtResource("1_sbnje")]
+[node name="attributeIndicator_armor" parent="VBoxContainer/Panel/HBoxContainer" groups=["armorui"] instance=ExtResource("1_sbnje")]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 6

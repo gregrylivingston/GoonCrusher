@@ -12,7 +12,7 @@ func _process(delta):
 
 func updateStats():
 	$Panel/TextureRect.texture = Root.playerCar.profilePic
-	$engine.setValue(Root.playerCar.max_engine_power )
-	$steering.setValue(Root.playerCar.max_steering_degrees)
-	$aero.setValue(Root.playerCar.brakes)
+	$engine.setValue(Root.playerCar.engine )
+	$steering.setValue(Root.playerCar.steering)
+	$aero.setValue(Root.playerCar.traction)
 	$armor.setValue(Root.playerCar.armor)

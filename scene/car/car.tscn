@@ -56,3 +56,6 @@ stream = ExtResource("4_jbkbo")
 
 [node name="AudioStream-Crash" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("5_pn0ef")
+
+[node name="AudioStream-Voice" type="AudioStreamPlayer" parent="."]
+volume_db = 4.0

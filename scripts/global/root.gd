@@ -27,6 +27,7 @@ var color = [
 	"coin":preload("res://scene/powerup/coin.tscn"),
 	"purse":preload("res://scene/powerup/purse.tscn"),
 	"gem":preload("res://scene/powerup/gem.tscn"),
+	"brakes":preload("res://scene/powerup/brakes.tscn"),
 }
 
 @onready var goon = {
@@ -82,13 +83,14 @@ func _process(delta):
 
 func getPowerup():
 	var randomizer = randf_range(0,100)
-	if randomizer > 60:return powerup.coin.instantiate()
+	if randomizer > 58:return powerup.coin.instantiate()
 	elif randomizer > 52: return powerup.purse.instantiate()
 	elif randomizer > 50: return powerup.gem.instantiate()	
 	elif randomizer > 30: return powerup.health.instantiate()
 	elif randomizer > 10: return powerup.fuel.instantiate()	
-	elif randomizer > 6.6: return powerup.engine.instantiate()
-	elif randomizer > 3.3: return powerup.steering.instantiate()		
+	elif randomizer > 7.5: return powerup.engine.instantiate()
+	elif randomizer > 5.0: return powerup.steering.instantiate()
+	elif randomizer > 2.5: return powerup.brakes.instantiate()		
 	else: return powerup.armor.instantiate()
 	
 func getGoon():

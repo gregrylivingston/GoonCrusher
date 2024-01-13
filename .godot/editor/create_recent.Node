@@ -1,4 +1,6 @@
 AudioStreamPlayer
+AudioStreamPlayer2D
+AudioListener2D
 Label
 Panel
 TextureRect
@@ -8,7 +10,5 @@ HSeparator
 HBoxContainer
 Button
 CanvasLayer
-AudioStreamPlayer2D
 AnimatedSprite2D
 OverheadCarBody2D
-Camera2D

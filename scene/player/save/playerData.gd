@@ -7,29 +7,38 @@ var gem = 0
 var cars = {
 	"sedan":{
 		"cost":0,
+		"upgrades":[0,0,0,0],
 	},
 	"van":{
-		"cost":500,
+		"cost":1000,
+		"upgrades":[0,0,0,0],
 	},
 	"taxi":{
-		"cost":1000,
+		"cost":5000,
+		"upgrades":[0,0,0,0],
 	},	
 	"pickup":{
-		"cost":2000,
+		"cost":10000,
+		"upgrades":[0,0,0,0],
 	},
 	"semi":{
-		"cost":5000,
+		"cost":25000,
+		"upgrades":[0,0,0,0],
 	},
 	"audi":{
-		"cost":20000,
+		"cost":50000,
+		"upgrades":[0,0,0,0],
 	},
 	"racer":{
-		"cost":20000,
+		"cost":50000,
+		"upgrades":[0,0,0,0],
 	},
 	"police":{
-		"cost":50000,
+		"cost":99999,
+		"upgrades":[0,0,0,0],
 	},
 	"ambulance":{
-		"cost":100000,
+		"cost":99999,
+		"upgrades":[0,0,0,0],
 	}
 }

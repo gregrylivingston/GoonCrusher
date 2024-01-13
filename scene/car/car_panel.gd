@@ -16,9 +16,9 @@ func _process(delta):
 		$HBoxContainer2/ProgressBar_Fuel.value = Root.playerCar.fuel
 
 func updateStats():
-	$VBoxContainer/Panel/HBoxContainer/attributeIndicator_engine.setValue(Root.playerCar.max_engine_power)
-	$VBoxContainer/Panel/HBoxContainer/attributeIndicator_steering.setValue(Root.playerCar.max_steering_degrees)
-	$VBoxContainer/Panel/HBoxContainer/attributeIndicator_aero.setValue( Root.playerCar.brakes )
+	$VBoxContainer/Panel/HBoxContainer/attributeIndicator_engine.setValue(Root.playerCar.engine)
+	$VBoxContainer/Panel/HBoxContainer/attributeIndicator_steering.setValue(Root.playerCar.steering)
+	$VBoxContainer/Panel/HBoxContainer/attributeIndicator_aero.setValue( Root.playerCar.traction )
 	$VBoxContainer/Panel/HBoxContainer/attributeIndicator_armor.setValue(Root.playerCar.armor)
 	
 func setTexture(texture):

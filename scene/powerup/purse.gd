@@ -11,4 +11,5 @@ func sendReward(body):
 		get_parent().add_child(newCoin)
 		newCoin.sendReward(body)
 		await get_tree().process_frame
+	body.playPurseRewardAudio()	
 	queue_free()

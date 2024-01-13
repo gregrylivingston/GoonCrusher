@@ -1,8 +1,16 @@
-[gd_scene load_steps=5 format=3 uid="uid://7utqen5eg62p"]
+[gd_scene load_steps=13 format=3 uid="uid://7utqen5eg62p"]
 
 [ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="1_16fys"]
 [ext_resource type="Texture2D" uid="uid://cmg5tl48id0af" path="res://scene/car/semi/truck.png" id="2_0owyo"]
 [ext_resource type="Texture2D" uid="uid://c5oxriecuxj4l" path="res://scene/car/semi/char_semi.png" id="2_u7uhp"]
+[ext_resource type="AudioStream" uid="uid://cdww3688ioft2" path="res://scene/car/semi/audio/semi_intro_3.mp3" id="3_vp8ws"]
+[ext_resource type="AudioStream" uid="uid://dtodco1sw7b4j" path="res://scene/car/semi/audio/semi_intro_1.mp3" id="4_nujw2"]
+[ext_resource type="AudioStream" uid="uid://cq24pxttrnstb" path="res://scene/car/semi/audio/semi_intro_2.mp3" id="4_tijah"]
+[ext_resource type="AudioStream" uid="uid://8xyfpybgh5ne" path="res://scene/car/semi/audio/semi_intro_4.mp3" id="6_t0nwr"]
+[ext_resource type="AudioStream" uid="uid://1rx6uujvt5uu" path="res://scene/car/semi/audio/semi_intro_5.mp3" id="7_b7g3a"]
+[ext_resource type="AudioStream" uid="uid://b54utlyaht6an" path="res://scene/car/semi/audio/semi_intro_6.mp3" id="8_olvqb"]
+[ext_resource type="AudioStream" uid="uid://1i5y7f5gutow" path="res://scene/car/semi/audio/semi_intro_7.mp3" id="9_mkr5q"]
+[ext_resource type="AudioStream" uid="uid://c18ldenh81trw" path="res://scene/car/semi/audio/semi_intro_8.mp3" id="10_vqa1h"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_8s7dq"]
 size = Vector2(309, 115)
@@ -15,6 +23,7 @@ armor = 30
 profilePic = ExtResource("2_u7uhp")
 charName = "Tiffany"
 carId = "semi"
+introAudio = Array[AudioStreamMP3]([ExtResource("4_nujw2"), ExtResource("4_tijah"), ExtResource("3_vp8ws"), ExtResource("6_t0nwr"), ExtResource("7_b7g3a"), ExtResource("8_olvqb"), ExtResource("9_mkr5q"), ExtResource("10_vqa1h")])
 
 [node name="CollisionShape2D" parent="." index="2"]
 position = Vector2(3.5, -1.5)

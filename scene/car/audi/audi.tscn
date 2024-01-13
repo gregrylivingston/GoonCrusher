@@ -1,6 +1,14 @@
-[gd_scene load_steps=2 format=3 uid="uid://ckgx8r2itxy2s"]
+[gd_scene load_steps=10 format=3 uid="uid://ckgx8r2itxy2s"]
 
 [ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="1_0vonh"]
+[ext_resource type="AudioStream" uid="uid://fbgsdkg8wc1x" path="res://scene/car/audi/audio/audi_intro_1.mp3" id="2_h46eo"]
+[ext_resource type="AudioStream" uid="uid://cxkihwwlfcslc" path="res://scene/car/audi/audio/audi_intro_2.mp3" id="3_m3p6c"]
+[ext_resource type="AudioStream" uid="uid://dev4dk27givs4" path="res://scene/car/audi/audio/audi_intro_3.mp3" id="4_bpqde"]
+[ext_resource type="AudioStream" uid="uid://pnpo4eqepk2p" path="res://scene/car/audi/audio/audi_intro_4.mp3" id="5_peerr"]
+[ext_resource type="AudioStream" uid="uid://bskatwroyipws" path="res://scene/car/audi/audio/audi_intro_5.mp3" id="6_qlobn"]
+[ext_resource type="AudioStream" uid="uid://ubvq3n7ibmq7" path="res://scene/car/audi/audio/audi_intro_6.mp3" id="7_jqmce"]
+[ext_resource type="AudioStream" uid="uid://di25r882viv6a" path="res://scene/car/audi/audio/audi_intro_7.mp3" id="8_ew31w"]
+[ext_resource type="AudioStream" uid="uid://cl6ytrrw0j63j" path="res://scene/car/audi/audio/audi_intro_8.mp3" id="9_fgfbn"]
 
 [node name="Car" instance=ExtResource("1_0vonh")]
 max_engine_power = 45
@@ -8,3 +16,4 @@ max_steering_degrees = 40
 brakes = 30.0
 charName = "Snake"
 carId = "audi"
+introAudio = Array[AudioStreamMP3]([ExtResource("2_h46eo"), ExtResource("3_m3p6c"), ExtResource("4_bpqde"), ExtResource("5_peerr"), ExtResource("6_qlobn"), ExtResource("7_jqmce"), ExtResource("8_ew31w"), ExtResource("9_fgfbn")])

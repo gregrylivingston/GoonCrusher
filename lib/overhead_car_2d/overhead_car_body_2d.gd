@@ -10,12 +10,14 @@ class_name OverheadCarBody2D extends CharacterBody2D
 #taxi - okole
 #van - jessie
 #sedan - patrick
+#pickup - karen
+#semi - tiffany
 
 
 
-@export var max_engine_power = 25  # Forward acceleration force.
-@export var max_steering_degrees = 12  # Amount that front wheel turns, in degrees
-@export var brakes = 4.0   #brakes and turn-rate-increase
+@export var engine = 25  # Forward acceleration force.
+@export var steering = 12  # Amount that front wheel turns, in degrees
+@export var traction = 4.0   #brakes and turn-rate-increase
 @export var armor = 1
 
 @export var friction = 0.9
@@ -41,7 +43,8 @@ var isDestroyed: bool = false
 @export var carId:String
 
 @export var introAudio: Array[AudioStreamMP3] = []
-
+@export var purseAudio: Array[AudioStreamMP3] = []
+@export var powerupAudio: Array[AudioStreamMP3] = []
 
 class CarInput:
 	var steering := 0.0      # -1.0 (left) to 1.0 (right)
@@ -75,8 +78,8 @@ func _physics_process(delta):
 	if fuel <= 0 || isDestroyed: _car_input.acceleration = 0.0
 	
 	# Base steering wheel angle and acceleration
-	var steer_angle = _car_input.steering * deg_to_rad( 5 + ( max_steering_degrees / 4.0 ) )
-	var acceleration = _car_input.acceleration * transform.x * max_engine_power * 70 
+	var steer_angle = _car_input.steering * deg_to_rad( 5 + ( steering / 4.0 ) )
+	var acceleration = _car_input.acceleration * transform.x * engine * 70 
 
 	# Apply friction
 	if velocity.length() < 5:
@@ -87,7 +90,7 @@ func _physics_process(delta):
 		friction_force *= 3
 	acceleration += drag_force + friction_force
 	if _car_input.braking:
-		acceleration += velocity * - ( brakes / 10.0 )
+		acceleration += velocity * - ( traction / 10.0 )
 	
 	# Calculate steering
 	var rear_wheel = position - transform.x * wheel_base / 2.0 + velocity * delta
@@ -100,7 +103,7 @@ func _physics_process(delta):
 	if d > 0:
 		velocity = velocity.lerp(new_heading * velocity.length(), traction)
 	if d < 0:
-		velocity = -new_heading * min(velocity.length(), max_engine_power * 10)
+		velocity = -new_heading * min(velocity.length(), engine * 10)
 	
 	# Update the physics engine
 	rotation = new_heading.angle()
@@ -205,10 +208,21 @@ func reward(powerup: String , quantity):
 	self[powerup] += quantity
 	health = clamp(health, -10.0, 100.0)
 	fuel = clamp(fuel, -10.0, 100.0)
-	if powerup != "coin" && powerup != "health" && powerup != "fuel" && powerup != "gem": powerupsCollected += 1
+	if powerup != "coin" && powerup != "health" && powerup != "fuel": 
+		if powerup != "gem": powerupsCollected += 1
+		if  powerupAudio.size() > 0 && $"AudioStream-Voice".playing == false:
+			await get_tree().create_timer(.25).timeout
+			$"AudioStream-Voice".stream = powerupAudio[ randi_range(0, powerupAudio.size()-1)]
+			$"AudioStream-Voice".play()
 	if Root.isRunActive:
 		if not is_instance_valid(ui): ui = get_tree().get_nodes_in_group("playerGameUi")[0]
 		ui.updateStats()
+
+func playPurseRewardAudio():
+	if  purseAudio.size() > 0 && $"AudioStream-Voice".playing == false:
+		$"AudioStream-Voice".stream = purseAudio[ randi_range(0, purseAudio.size()-1)]
+		await get_tree().create_timer(.25).timeout
+		$"AudioStream-Voice".play()
 
 
 func damage(damage: float):

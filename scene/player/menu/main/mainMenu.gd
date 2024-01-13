@@ -16,12 +16,9 @@ func _ready():
 		Root.earnedGems = 0
 	uiUpdate()
 
-
-func _process(delta):
-	pass
-
 var carPanel = preload("res://scene/car/menuCar.tscn")
 func createCarArray():
+	for i in $TabContainer/Ride/carGrid.get_children():i.queue_free()
 	for car in Root.cars:
 		var newPanel = carPanel.instantiate()
 		newPanel.carData = Root.cars[car]
@@ -73,9 +70,11 @@ func selectCar(car):
 		for i in statUpgradeButtons:i.visible = false
 		unlockButton.visible = true
 		unlockButton.text = "Unlock      " + str( SaveManager.playerData.cars[Root.playerCar.carId].cost )
+		$Panel2/VBoxContainer/beginButton.disabled = true
 	else:
 		for i in statUpgradeButtons:i.visible = true
 		unlockButton.visible = false
+		$Panel2/VBoxContainer/beginButton.disabled = false
 		
 
 func uiUpdate():
@@ -88,3 +87,10 @@ func _on_free_money_button_pressed():
 	SaveManager.addCoins( 1000 )
 
 	
+
+
+func _on_unlock_button_pressed():
+	if SaveManager.unlockCar():
+		createCarArray()
+		selectCar(Root.cars[Root.playerCar.carId])
+		uiUpdate()

@@ -5,5 +5,5 @@
 
 [node name="Powerup" instance=ExtResource("1_oc2qo")]
 texture = ExtResource("2_y74qo")
-powerup = "max_engine_power"
+powerup = "engine"
 quantity = 1.0

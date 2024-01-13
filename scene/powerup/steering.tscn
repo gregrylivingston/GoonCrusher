@@ -5,5 +5,5 @@
 
 [node name="Powerup" instance=ExtResource("1_yexo8")]
 texture = ExtResource("2_6drx6")
-powerup = "max_steering_degrees"
+powerup = "steering"
 quantity = 1.0

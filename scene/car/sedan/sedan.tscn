@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3 uid="uid://bkypbefgkke6a"]
+[gd_scene load_steps=21 format=3 uid="uid://bkypbefgkke6a"]
 
 [ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="1_ehr7y"]
 [ext_resource type="Texture2D" uid="uid://cmhhtyl83kii2" path="res://scene/car/sedan/Car.png" id="2_g6grg"]
@@ -11,6 +11,15 @@
 [ext_resource type="AudioStream" uid="uid://b4bwfsodjipsg" path="res://scene/car/sedan/audio/sedan_intro_6.mp3" id="8_hst6b"]
 [ext_resource type="AudioStream" uid="uid://dfm4bf6vdirml" path="res://scene/car/sedan/audio/sedan_intro_7.mp3" id="9_0rox2"]
 [ext_resource type="AudioStream" uid="uid://bh1lw7ex5e3h1" path="res://scene/car/sedan/audio/sedan_intro_8.mp3" id="10_d4hvs"]
+[ext_resource type="AudioStream" uid="uid://byufsf1nqsg52" path="res://scene/car/sedan/audio/sedan_purse_1.mp3" id="11_gu8k6"]
+[ext_resource type="AudioStream" uid="uid://h7ma0eb1kyaw" path="res://scene/car/sedan/audio/sedan_purse_2.mp3" id="12_yinuw"]
+[ext_resource type="AudioStream" uid="uid://be4i8cnboh5vu" path="res://scene/car/sedan/audio/sedan_powerup_1.mp3" id="13_hc8j0"]
+[ext_resource type="AudioStream" uid="uid://o2x372x0cy71" path="res://scene/car/sedan/audio/sedan_powerup_2.mp3" id="14_vkjss"]
+[ext_resource type="AudioStream" uid="uid://dp18rj4wxxquu" path="res://scene/car/sedan/audio/sedan_powerup_3.mp3" id="15_a1prs"]
+[ext_resource type="AudioStream" uid="uid://u0mrw3ecpn62" path="res://scene/car/sedan/audio/sedan_joy_1.mp3" id="15_j7glh"]
+[ext_resource type="AudioStream" uid="uid://wlk8cmduqxmo" path="res://scene/car/sedan/audio/sedan_joy_2.mp3" id="16_gvr3q"]
+[ext_resource type="AudioStream" uid="uid://c3jyovkjlatfq" path="res://scene/car/sedan/audio/sedan_powerup_4.mp3" id="16_t8po1"]
+[ext_resource type="AudioStream" uid="uid://88bkbtxex6aa" path="res://scene/car/sedan/audio/sedan_joy_3.mp3" id="17_8xiul"]
 
 [node name="Car" instance=ExtResource("1_ehr7y")]
 max_engine_power = 19
@@ -19,6 +28,8 @@ profilePic = ExtResource("2_yxeex")
 charName = "Anthony"
 carId = "sedan"
 introAudio = Array[AudioStreamMP3]([ExtResource("3_glpud"), ExtResource("4_dej0h"), ExtResource("5_x5qy0"), ExtResource("6_m4tbq"), ExtResource("7_nnnw6"), ExtResource("8_hst6b"), ExtResource("9_0rox2"), ExtResource("10_d4hvs")])
+purseAudio = Array[AudioStreamMP3]([ExtResource("11_gu8k6"), ExtResource("12_yinuw"), ExtResource("15_a1prs"), ExtResource("16_t8po1"), ExtResource("15_j7glh"), ExtResource("16_gvr3q"), ExtResource("17_8xiul")])
+powerupAudio = Array[AudioStreamMP3]([ExtResource("13_hc8j0"), ExtResource("14_vkjss"), ExtResource("15_a1prs"), ExtResource("16_t8po1"), ExtResource("15_j7glh"), ExtResource("16_gvr3q"), ExtResource("17_8xiul")])
 
 [node name="CollisionShape2D" parent="." index="2"]
 position = Vector2(4, -2.5)

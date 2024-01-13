@@ -1,0 +1,9 @@
+[gd_scene load_steps=3 format=3 uid="uid://bgogx6yxekbjp"]
+
+[ext_resource type="PackedScene" uid="uid://b7r4ro32w40xi" path="res://scene/powerup/powerup.tscn" id="1_t1p0h"]
+[ext_resource type="Texture2D" uid="uid://b282uef7te4fk" path="res://texture/icon/wheel.png" id="2_8dqe8"]
+
+[node name="Powerup" instance=ExtResource("1_t1p0h")]
+texture = ExtResource("2_8dqe8")
+powerup = "traction"
+quantity = 1.0

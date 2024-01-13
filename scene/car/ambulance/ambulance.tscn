@@ -1,8 +1,16 @@
-[gd_scene load_steps=4 format=3 uid="uid://b7vyfnv77wwfw"]
+[gd_scene load_steps=12 format=3 uid="uid://b7vyfnv77wwfw"]
 
 [ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="1_oirr4"]
 [ext_resource type="Texture2D" uid="uid://c4it7ulsvl3bx" path="res://scene/car/ambulance/Ambulance.png" id="2_86vbp"]
 [ext_resource type="Texture2D" uid="uid://0syxn8yxaprk" path="res://scene/car/ambulance/char_ambulance.png" id="2_fowyq"]
+[ext_resource type="AudioStream" uid="uid://tn1rhvv3xfe3" path="res://scene/car/ambulance/audio/ambulance_intro_1.mp3" id="3_txlrx"]
+[ext_resource type="AudioStream" uid="uid://brfesiqxiuhy1" path="res://scene/car/ambulance/audio/ambulance_intro_2.mp3" id="4_o64rm"]
+[ext_resource type="AudioStream" uid="uid://cl4lw46arffsh" path="res://scene/car/ambulance/audio/ambulance_intro_3.mp3" id="5_8lwbb"]
+[ext_resource type="AudioStream" uid="uid://b1o3xphnfk3i4" path="res://scene/car/ambulance/audio/ambulance_intro_4.mp3" id="6_7ctxv"]
+[ext_resource type="AudioStream" uid="uid://d2l8ih405hq1x" path="res://scene/car/ambulance/audio/ambulance_intro_5.mp3" id="7_rio81"]
+[ext_resource type="AudioStream" uid="uid://bw46gbi3ca5lj" path="res://scene/car/ambulance/audio/ambulance_intro_6.mp3" id="8_vf216"]
+[ext_resource type="AudioStream" uid="uid://cq1u55gna2d14" path="res://scene/car/ambulance/audio/ambulance_intro_7.mp3" id="9_membe"]
+[ext_resource type="AudioStream" uid="uid://bcd4sf6yhua60" path="res://scene/car/ambulance/audio/ambulance_intro_8.mp3" id="10_nxecm"]
 
 [node name="Car" instance=ExtResource("1_oirr4")]
 max_engine_power = 24
@@ -10,8 +18,9 @@ max_steering_degrees = 24
 brakes = 20.0
 armor = 40
 profilePic = ExtResource("2_fowyq")
-charName = "Ali"
+charName = "Xavier"
 carId = "ambulance"
+introAudio = Array[AudioStreamMP3]([ExtResource("3_txlrx"), ExtResource("4_o64rm"), ExtResource("5_8lwbb"), ExtResource("6_7ctxv"), ExtResource("7_rio81"), ExtResource("8_vf216"), ExtResource("9_membe"), ExtResource("10_nxecm")])
 
 [node name="sprite" parent="." index="4"]
 position = Vector2(-3, -1)
@@ -29,3 +38,5 @@ position = Vector2(26.9998, -60.0001)
 
 [node name="tireLocation4" parent="sprite" index="3"]
 position = Vector2(-44.0002, -59.9998)
+
+[node name="AudioStream-Voice2" type="AudioStreamPlayer2D" parent="." index="8"]

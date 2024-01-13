@@ -51,3 +51,10 @@ func addGems(num: int):
 		await get_tree().process_frame
 	save_character_data()
 
+func unlockCar():
+	if playerData.coin >= playerData.cars[Root.playerCar.carId].cost:
+		playerData.coin -= playerData.cars[Root.playerCar.carId].cost
+		playerData.cars[Root.playerCar.carId].cost = 0
+		save_character_data()
+		return true
+	else: return false
