@@ -51,3 +51,5 @@ res://scene/player/menu/pauseMenu.tscn
 res://scene/level/levelRoot.gd
 res://scene/enemy/walker/walker.tscn
 res://scene/enemy/walker/walker.gd
+res://scene/powerup/coin.tscn
+res://scene/powerup/gem.tscn

@@ -6,6 +6,7 @@
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_f2dft"]
 
 [node name="Powerup" instance=ExtResource("1_6sqci")]
+visible = false
 material = SubResource("ShaderMaterial_f2dft")
 texture = ExtResource("2_po3lq")
 powerup = "gem"
