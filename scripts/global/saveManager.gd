@@ -60,7 +60,7 @@ func unlockCar():
 	else: return false
 	
 func requestStatCost(statString: String):
-	return pow( playerData.cars[Root.playerCar.carId].upgrades[statString] + 1 , 2 ) * 50
+	return pow( playerData.cars[Root.playerCar.carId].upgrades[statString] + 1 , 2 ) * 25
 
 func requestStatUpgrade(statString: String):
 	var requestCost = requestStatCost(statString)

@@ -27,7 +27,7 @@ var color = [
 	"coin":preload("res://scene/powerup/coin.tscn"),
 	"purse":preload("res://scene/powerup/purse.tscn"),
 	"gem":preload("res://scene/powerup/gem.tscn"),
-	"brakes":preload("res://scene/powerup/brakes.tscn"),
+	"brakes":preload("res://scene/powerup/traction.tscn"),
 }
 
 @onready var goon = {

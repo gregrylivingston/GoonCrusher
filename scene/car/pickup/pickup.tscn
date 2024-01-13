@@ -13,9 +13,9 @@
 [ext_resource type="AudioStream" uid="uid://b4rf8s2i8u2wa" path="res://scene/car/pickup/audio/pickup_intro_8.mp3" id="10_iv8ox"]
 
 [node name="Car" instance=ExtResource("1_150xb")]
-max_engine_power = 15
-max_steering_degrees = 10
-armor = 6
+engine = 19
+steering = 10
+armor = 12
 profilePic = ExtResource("2_m38a1")
 charName = "Karen"
 carId = "pickup"

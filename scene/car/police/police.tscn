@@ -13,9 +13,9 @@
 [ext_resource type="AudioStream" uid="uid://csj5cc0mio728" path="res://scene/car/police/audio/police_intro_8.mp3" id="10_ovhbp"]
 
 [node name="Car" instance=ExtResource("1_qtyvp")]
-max_engine_power = 40
-max_steering_degrees = 30
-brakes = 20.0
+engine = 35
+steering = 25
+traction = 20.0
 armor = 10
 profilePic = ExtResource("2_hmbi1")
 charName = "Nikita"

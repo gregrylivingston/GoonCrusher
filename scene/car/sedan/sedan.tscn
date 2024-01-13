@@ -22,8 +22,7 @@
 [ext_resource type="AudioStream" uid="uid://88bkbtxex6aa" path="res://scene/car/sedan/audio/sedan_joy_3.mp3" id="17_8xiul"]
 
 [node name="Car" instance=ExtResource("1_ehr7y")]
-max_engine_power = 19
-max_steering_degrees = 15
+engine = 15
 profilePic = ExtResource("2_yxeex")
 charName = "Anthony"
 carId = "sedan"

@@ -66,7 +66,10 @@ func _ready():
 	if isPlayer:
 		add_to_group("playerCar")
 		Root.playerCar = self
-
+		engine += SaveManager.playerData.cars[carId].upgrades.engine
+		steering += SaveManager.playerData.cars[carId].upgrades.steering
+		traction += SaveManager.playerData.cars[carId].upgrades.traction
+		armor += SaveManager.playerData.cars[carId].upgrades.armor
 
 func _physics_process(delta):
 	if _path_follow:
@@ -204,8 +207,8 @@ func follow_path(path_follow: OverheadCarPathFollow2D):
 
 var ui
 var powerupsCollected = 0
-func reward(powerup: String , quantity):
-	self[powerup] += quantity
+func reward(powerup: String , quantity, forShowOnly: bool = false):
+	if not forShowOnly: self[powerup] += quantity
 	health = clamp(health, -10.0, 100.0)
 	fuel = clamp(fuel, -10.0, 100.0)
 	if powerup != "coin" && powerup != "health" && powerup != "fuel": 

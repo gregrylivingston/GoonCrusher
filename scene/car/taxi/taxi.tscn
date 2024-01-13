@@ -13,10 +13,8 @@
 [ext_resource type="AudioStream" uid="uid://cqacqnl7nyjja" path="res://scene/car/taxi/audio/taxi_intro_8.mp3" id="10_a7xbb"]
 
 [node name="Car" instance=ExtResource("1_v41dt")]
-max_engine_power = 22
-max_steering_degrees = 18
-brakes = 5.0
-armor = 2
+engine = 20
+steering = 18
 profilePic = ExtResource("2_e55go")
 charName = "Andrew"
 carId = "taxi"

@@ -13,7 +13,7 @@
 [ext_resource type="PackedScene" uid="uid://ctu8kn88lhjpn" path="res://scene/powerup/engine.tscn" id="11_eyh6h"]
 [ext_resource type="PackedScene" uid="uid://c3nj8qlsr0clb" path="res://scene/powerup/coin.tscn" id="12_ufw4g"]
 [ext_resource type="PackedScene" uid="uid://bogdlh0ch1tuf" path="res://scene/powerup/purse.tscn" id="13_65wfl"]
-[ext_resource type="PackedScene" uid="uid://bgogx6yxekbjp" path="res://scene/powerup/brakes.tscn" id="14_d48sd"]
+[ext_resource type="PackedScene" uid="uid://bgogx6yxekbjp" path="res://scene/powerup/traction.tscn" id="14_d48sd"]
 
 [node name="LevelRoot" type="Node2D" groups=["levelRoot"]]
 script = ExtResource("1_65p74")
@@ -32,20 +32,7 @@ position = Vector2(872, 103)
 
 [node name="Car" parent="." instance=ExtResource("2_v78xq")]
 position = Vector2(662, 405)
-traction = 4.0
-armor = 1
-friction = 0.9
-drag = 0.0015
-slip_speed = 400
-traction_fast = 0.1
-traction_slow = 0.7
-wheel_base = 70
-isPlayer = true
-charName = "Hi"
-carId = ""
-introAudio = Array[AudioStreamMP3]([])
-purseAudio = Array[AudioStreamMP3]([])
-powerupAudio = Array[AudioStreamMP3]([])
+carId = "sedan"
 
 [node name="Spawner" parent="Car" instance=ExtResource("5_4um6i")]
 position = Vector2(3000, 0)

@@ -158,14 +158,13 @@ grow_horizontal = 0
 myIcon = ExtResource("12_baips")
 
 [node name="freeMoneyButton" parent="." instance=ExtResource("2_1mco8")]
-anchors_preset = 1
-anchor_left = 1.0
+self_modulate = Color(1, 1, 1, 0)
+anchors_preset = 0
+anchor_right = 0.0
 anchor_bottom = 0.0
-offset_left = -228.0
-offset_top = 79.0
-offset_right = -17.0
-offset_bottom = 125.0
-grow_horizontal = 0
+offset_right = 308.0
+offset_bottom = 93.0
+grow_horizontal = 1
 grow_vertical = 1
 text = "Free Money"
 
@@ -194,24 +193,24 @@ theme = ExtResource("2_caw0b")
 theme_override_font_sizes/font_size = 60
 text = "Andre"
 
-[node name="statUpgrade" parent="carStatUpgrades" instance=ExtResource("12_75cgo")]
+[node name="statUpgrade" parent="carStatUpgrades" groups=["armorui"] instance=ExtResource("12_75cgo")]
 layout_mode = 2
 size_flags_vertical = 3
 myStat = "armor"
 
-[node name="statUpgrade2" parent="carStatUpgrades" instance=ExtResource("12_75cgo")]
+[node name="statUpgrade2" parent="carStatUpgrades" groups=["engineui"] instance=ExtResource("12_75cgo")]
 layout_mode = 2
 size_flags_vertical = 3
 text = "+1 Engine   300"
 myStat = "engine"
 
-[node name="statUpgrade3" parent="carStatUpgrades" instance=ExtResource("12_75cgo")]
+[node name="statUpgrade3" parent="carStatUpgrades" groups=["tractionui"] instance=ExtResource("12_75cgo")]
 layout_mode = 2
 size_flags_vertical = 3
 text = "+1 Traction   300"
 myStat = "traction"
 
-[node name="statUpgrade4" parent="carStatUpgrades" instance=ExtResource("12_75cgo")]
+[node name="statUpgrade4" parent="carStatUpgrades" groups=["steeringui"] instance=ExtResource("12_75cgo")]
 layout_mode = 2
 size_flags_vertical = 3
 text = "+1 Steering   300"
@@ -230,6 +229,7 @@ icon_alignment = 2
 volume_db = 2.0
 
 [connection signal="pressed" from="Panel2/VBoxContainer/beginButton" to="." method="_on_begin_button_pressed"]
+[connection signal="pressed" from="Panel2/VBoxContainer/settingsButton" to="." method="_on_settings_button_pressed"]
 [connection signal="pressed" from="Panel2/VBoxContainer/quitButton" to="." method="_on_quit_button_pressed"]
 [connection signal="pressed" from="freeMoneyButton" to="." method="_on_free_money_button_pressed"]
 [connection signal="pressed" from="carStatUpgrades/unlockButton" to="." method="_on_unlock_button_pressed"]

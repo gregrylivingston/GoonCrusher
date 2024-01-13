@@ -13,8 +13,9 @@
 [ext_resource type="AudioStream" uid="uid://yw1tml0bor3p" path="res://scene/car/racer/audio/Racer_Intro_8.mp3" id="10_b3qsk"]
 
 [node name="Car" instance=ExtResource("1_kgqi5")]
-max_engine_power = 60
-brakes = 16.0
+engine = 50
+steering = 10
+traction = 10.0
 profilePic = ExtResource("2_wgnyl")
 charName = "Kim"
 carId = "racer"

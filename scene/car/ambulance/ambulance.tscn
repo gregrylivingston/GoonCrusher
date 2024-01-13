@@ -13,10 +13,10 @@
 [ext_resource type="AudioStream" uid="uid://bcd4sf6yhua60" path="res://scene/car/ambulance/audio/ambulance_intro_8.mp3" id="10_nxecm"]
 
 [node name="Car" instance=ExtResource("1_oirr4")]
-max_engine_power = 24
-max_steering_degrees = 24
-brakes = 20.0
-armor = 40
+engine = 30
+steering = 20
+traction = 20.0
+armor = 20
 profilePic = ExtResource("2_fowyq")
 charName = "Xavier"
 carId = "ambulance"

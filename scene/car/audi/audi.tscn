@@ -11,9 +11,9 @@
 [ext_resource type="AudioStream" uid="uid://cl6ytrrw0j63j" path="res://scene/car/audi/audio/audi_intro_8.mp3" id="9_fgfbn"]
 
 [node name="Car" instance=ExtResource("1_0vonh")]
-max_engine_power = 45
-max_steering_degrees = 40
-brakes = 30.0
+engine = 40
+steering = 15
+traction = 15.0
 charName = "Snake"
 carId = "audi"
 introAudio = Array[AudioStreamMP3]([ExtResource("2_h46eo"), ExtResource("3_m3p6c"), ExtResource("4_bpqde"), ExtResource("5_peerr"), ExtResource("6_qlobn"), ExtResource("7_jqmce"), ExtResource("8_ew31w"), ExtResource("9_fgfbn")])

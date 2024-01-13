@@ -16,10 +16,10 @@
 size = Vector2(309, 115)
 
 [node name="Car" instance=ExtResource("1_16fys")]
-max_engine_power = 16
-max_steering_degrees = 8
-brakes = 5.0
-armor = 30
+engine = 20
+steering = 10
+traction = 7.0
+armor = 40
 profilePic = ExtResource("2_u7uhp")
 charName = "Tiffany"
 carId = "semi"

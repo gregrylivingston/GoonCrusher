@@ -13,9 +13,8 @@
 [ext_resource type="AudioStream" uid="uid://coefix2xox74e" path="res://scene/car/van/audio/van_intro_8.mp3" id="10_rilhi"]
 
 [node name="Car" instance=ExtResource("1_p428k")]
-max_engine_power = 12
-max_steering_degrees = 10
-brakes = 3.0
+engine = 12
+steering = 10
 armor = 10
 profilePic = ExtResource("2_xl250")
 charName = "Lester"

@@ -62,7 +62,11 @@ func selectCar(car):
 	if Root.playerCar.introAudio.size() > 0:
 		$voicePlayer.stream = Root.playerCar.introAudio[randi_range(0 , Root.playerCar.introAudio.size()-1)]
 		$voicePlayer.play()
-		
+	
+	uiCarStatsUpdate()
+
+
+func uiCarStatsUpdate():
 	var statUpgradeButtons = [$carStatUpgrades/statUpgrade, $carStatUpgrades/statUpgrade2, $carStatUpgrades/statUpgrade3, $carStatUpgrades/statUpgrade4]
 	var unlockButton = $carStatUpgrades/unlockButton
 	
@@ -75,20 +79,18 @@ func selectCar(car):
 		for i in statUpgradeButtons:i.visible = true
 		unlockButton.visible = false
 		$Panel2/VBoxContainer/beginButton.disabled = false
-		
+
 
 func uiUpdate():
+	await get_tree().create_timer(.3).timeout
 	$myCoins.setValue( SaveManager.playerData.coin )
 	$myGems.setValue ( SaveManager.playerData.gem )
 	for i in [$carStatUpgrades/statUpgrade, $carStatUpgrades/statUpgrade2, $carStatUpgrades/statUpgrade3, $carStatUpgrades/statUpgrade4]:i.refresh()
-
+	$carStatsContainer.updateStats()
 
 func _on_free_money_button_pressed():
 	SaveManager.addGems( 25 )
 	SaveManager.addCoins( 1000 )
-
-	
-
 
 func _on_unlock_button_pressed():
 	if SaveManager.unlockCar():
@@ -97,3 +99,7 @@ func _on_unlock_button_pressed():
 		uiUpdate()
 
 	
+
+
+func _on_settings_button_pressed():
+	add_child(load("res://scene/player/menu/settings/settings.tscn").instantiate())
