@@ -63,4 +63,5 @@ text = "Quit"
 
 [connection signal="pressed" from="Panel/VBoxContainer/continue" to="." method="_on_continue_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/abandon" to="." method="_on_abandon_pressed"]
+[connection signal="pressed" from="Panel/VBoxContainer/settings" to="." method="_on_settings_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/quit" to="." method="_on_quit_pressed"]

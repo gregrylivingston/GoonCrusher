@@ -46,3 +46,8 @@ res://scene/player/menu/settings/settings.tscn
 res://scene/player/menu/settings/settings.gd
 res://scene/player/menu/settings/settings_sound.tscn
 res://scene/player/menu/settings/settings_sound.gd
+res://scene/player/menu/pauseMenu.gd
+res://scene/player/menu/pauseMenu.tscn
+res://scene/level/levelRoot.gd
+res://scene/enemy/walker/walker.tscn
+res://scene/enemy/walker/walker.gd

@@ -4,7 +4,7 @@ var spawnerScene = preload("res://scene/player/spawner.tscn")
 var playerCar
 
 func _ready():
-	
+	updateAudioLevels()
 	#add my car
 	var newPosition = $Car.position
 	$Car.queue_free()
@@ -32,7 +32,5 @@ func newSpawner( spawnerPosition: Vector2i ):
 	newSpawner.position = spawnerPosition
 	Root.playerCar.add_child(newSpawner)
 	
-
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta):
-	pass
+func updateAudioLevels():
+	$AudioStreamPlayer2.volume_db = -8 + SaveManager.getVolume( "music" )

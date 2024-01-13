@@ -255,7 +255,7 @@ func destroy():
 			queue_free()
 
 func updateAudioLevels():
-	$"AudioStream-Engine".volume_db = 2 + SaveManager.getVolume("fx")
+	$"AudioStream-Engine".volume_db =  SaveManager.getVolume("fx")
 	$"AudioStream-Tires".volume_db = 	SaveManager.getVolume("fx")
 	$"AudioStream-Crash".volume_db = 	SaveManager.getVolume("fx")
 	$"AudioStream-Voice".volume_db = 2 + SaveManager.getVolume("voice")

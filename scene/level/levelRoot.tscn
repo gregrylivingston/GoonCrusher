@@ -64,6 +64,7 @@ volume_db = 2.0
 autoplay = true
 
 [node name="AudioStreamPlayer2" type="AudioStreamPlayer" parent="."]
+process_mode = 3
 stream = ExtResource("8_r1kd8")
 volume_db = -6.0
 autoplay = true

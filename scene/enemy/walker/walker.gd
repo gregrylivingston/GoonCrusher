@@ -23,10 +23,10 @@ func destroy():
 	alive = false
 	$Walker.animation = "death"
 	Root.currentGoonsCrushed += 1
-	$AudioStreamPlayer2D2.volume_db = randf_range(2.0,8.0)
+	$AudioStreamPlayer2D2.volume_db = randf_range(0.0,5.0) + SaveManager.getVolume("fx")
 	$AudioStreamPlayer2D2.pitch_scale = randf_range(0.95,1.05)
 	$AudioStreamPlayer2D2.play()
-	$AudioStreamPlayer2D.volume_db = randf_range(2.0,12.0)
+	$AudioStreamPlayer2D.volume_db = randf_range(0.0,8.0) + SaveManager.getVolume("fx")
 	$AudioStreamPlayer2D.pitch_scale = randf_range(0.95,1.05)
 	$AudioStreamPlayer2D.play()
 	
