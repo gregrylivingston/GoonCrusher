@@ -1,0 +1,73 @@
+[gd_scene load_steps=3 format=3 uid="uid://48smkfhy81d"]
+
+[ext_resource type="Theme" uid="uid://co40pijjc7hbw" path="res://style/roadRogue.tres" id="1_qweey"]
+[ext_resource type="Script" path="res://scene/player/menu/settings/settings_sound.gd" id="2_ae8pr"]
+
+[node name="Sound" type="VBoxContainer"]
+theme = ExtResource("1_qweey")
+script = ExtResource("2_ae8pr")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
+custom_minimum_size = Vector2(400, 0)
+layout_mode = 2
+
+[node name="Label" type="Label" parent="HBoxContainer"]
+layout_mode = 2
+text = "Master Volume"
+
+[node name="masterVolume" type="HSlider" parent="HBoxContainer"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+size_flags_horizontal = 10
+min_value = -40.0
+max_value = 10.0
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="."]
+custom_minimum_size = Vector2(400, 0)
+layout_mode = 2
+
+[node name="Label" type="Label" parent="HBoxContainer2"]
+layout_mode = 2
+text = "    Music"
+
+[node name="musicVolume" type="HSlider" parent="HBoxContainer2"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+size_flags_horizontal = 10
+min_value = -40.0
+max_value = 10.0
+
+[node name="HBoxContainer3" type="HBoxContainer" parent="."]
+custom_minimum_size = Vector2(400, 0)
+layout_mode = 2
+
+[node name="Label" type="Label" parent="HBoxContainer3"]
+layout_mode = 2
+text = "    Voice"
+
+[node name="voiceVolume" type="HSlider" parent="HBoxContainer3"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+size_flags_horizontal = 10
+min_value = -40.0
+max_value = 10.0
+
+[node name="HBoxContainer4" type="HBoxContainer" parent="."]
+custom_minimum_size = Vector2(400, 0)
+layout_mode = 2
+
+[node name="Label" type="Label" parent="HBoxContainer4"]
+layout_mode = 2
+text = "    FX"
+
+[node name="fxVolume" type="HSlider" parent="HBoxContainer4"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+size_flags_horizontal = 10
+min_value = -40.0
+max_value = 10.0
+
+[connection signal="value_changed" from="HBoxContainer/masterVolume" to="." method="_on_master_volume_value_changed"]
+[connection signal="value_changed" from="HBoxContainer2/musicVolume" to="." method="_on_music_volume_value_changed"]
+[connection signal="value_changed" from="HBoxContainer3/voiceVolume" to="." method="_on_voice_volume_value_changed"]
+[connection signal="value_changed" from="HBoxContainer4/fxVolume" to="." method="_on_fx_volume_value_changed"]

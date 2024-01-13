@@ -42,3 +42,9 @@ var cars = {
 		"upgrades":{"traction":0,"engine":0,"armor":0,"steering":0},
 	}
 }
+
+var settings = {
+	"volume":{
+		"master":0,"voice":0,"music":0,"fx":0,
+	}
+}

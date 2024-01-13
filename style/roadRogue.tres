@@ -1,8 +1,38 @@
-[gd_resource type="Theme" load_steps=3 format=3 uid="uid://co40pijjc7hbw"]
+[gd_resource type="Theme" load_steps=5 format=3 uid="uid://co40pijjc7hbw"]
 
 [ext_resource type="StyleBox" uid="uid://dl1e0qtgp13cj" path="res://style/style_box_basic.tres" id="1_j042g"]
 [ext_resource type="FontFile" uid="uid://h8ar8yno4sha" path="res://style/font/Tektur/Tektur-SemiBold.ttf" id="2_rg3in"]
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dmii3"]
+content_margin_left = 40.0
+content_margin_top = 40.0
+content_margin_right = 40.0
+bg_color = Color(0.92549, 0.603922, 0.160784, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 5
+border_width_bottom = 5
+border_color = Color(0.658824, 0.12549, 0.101961, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_qngjy"]
+content_margin_left = 20.0
+content_margin_right = 20.0
+bg_color = Color(0.92549, 0.603922, 0.160784, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 5
+border_color = Color(0.658824, 0.12549, 0.101961, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
 [resource]
 default_font = ExtResource("2_rg3in")
 Panel/styles/panel = ExtResource("1_j042g")
+TabContainer/styles/panel = SubResource("StyleBoxFlat_dmii3")
+TabContainer/styles/tab_selected = SubResource("StyleBoxFlat_qngjy")

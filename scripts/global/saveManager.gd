@@ -71,3 +71,11 @@ func requestStatUpgrade(statString: String):
 		Root.mainMenu.uiUpdate()
 		return true
 	else: return false
+
+
+func setVolume(settingName: String , value: int):
+	playerData.settings.volume[settingName] = value
+	save_character_data()
+
+func getVolume(settingName: String):
+	return playerData.settings.volume[settingName]

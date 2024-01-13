@@ -63,6 +63,7 @@ func _init():
 
 func _ready():
 	_connect_car_areas(get_tree().root)
+	updateAudioLevels()
 	if isPlayer:
 		add_to_group("playerCar")
 		Root.playerCar = self
@@ -252,3 +253,24 @@ func destroy():
 			get_parent().add_child( load("res://scene/player/menu/gameSummary.tscn").instantiate() )
 		else:
 			queue_free()
+
+func updateAudioLevels():
+	$"AudioStream-Engine".volume_db = 2 + SaveManager.getVolume("fx")
+	$"AudioStream-Tires".volume_db = 	SaveManager.getVolume("fx")
+	$"AudioStream-Crash".volume_db = 	SaveManager.getVolume("fx")
+	$"AudioStream-Voice".volume_db = 2 + SaveManager.getVolume("voice")
+	
+func playRandomFxSound():
+	var randomizer = randi_range(0,1)
+	if randomizer == 0: 
+		$"AudioStream-Crash".play()
+		await get_tree().create_timer(0.5).timeout
+		$"AudioStream-Crash".stop()
+	elif randomizer == 1: 
+		$"AudioStream-Tires".play()
+		await get_tree().create_timer(0.5).timeout
+		$"AudioStream-Tires".stop()
+	else: 
+		$"AudioStream-Engine".play()
+		await get_tree().create_timer(0.5).timeout
+		$"AudioStream-Engine".stop()
