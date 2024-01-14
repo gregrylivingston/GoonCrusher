@@ -1,11 +1,12 @@
-AudioStreamPlayer
-VBoxContainer
-Button
+CheckButton
 Label
+HBoxContainer
+VBoxContainer
+AudioStreamPlayer
+Button
 HSeparator
 TextureRect
 ColorRect
-HBoxContainer
 Panel
 VSeparator
 HSlider

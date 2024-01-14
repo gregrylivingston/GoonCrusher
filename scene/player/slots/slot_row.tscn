@@ -10,7 +10,7 @@ bg_color = Color(1, 1, 1, 1)
 
 [node name="slotRow" type="Panel"]
 clip_contents = true
-custom_minimum_size = Vector2(150, 300)
+custom_minimum_size = Vector2(150, 450)
 size_flags_horizontal = 6
 theme_override_styles/panel = SubResource("StyleBoxFlat_ml7ts")
 script = ExtResource("1_4i20n")
