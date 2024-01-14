@@ -34,3 +34,9 @@ func newSpawner( spawnerPosition: Vector2i ):
 	
 func updateAudioLevels():
 	$AudioStreamPlayer2.volume_db = -8 + SaveManager.getVolume( "music" )
+	
+func reduceMusic():
+	$AudioStreamPlayer2.volume_db = -18 + SaveManager.getVolume( "music" )
+	
+func playMusic():
+	$AudioStreamPlayer2.volume_db = -8 + SaveManager.getVolume( "music" )

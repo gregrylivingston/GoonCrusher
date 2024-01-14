@@ -1,0 +1,163 @@
+[gd_scene load_steps=11 format=3 uid="uid://c1rm1o0bg6ous"]
+
+[ext_resource type="StyleBox" uid="uid://cgcjmjg4qdbt2" path="res://style/style_box_semitransparent.tres" id="1_83yg1"]
+[ext_resource type="Script" path="res://scene/player/slots/slotMachine.gd" id="1_lo6kv"]
+[ext_resource type="Theme" uid="uid://co40pijjc7hbw" path="res://style/roadRogue.tres" id="2_sqmqf"]
+[ext_resource type="StyleBox" uid="uid://dp4qdn22d3ua6" path="res://style/style_box_thick.tres" id="3_ns1em"]
+[ext_resource type="PackedScene" uid="uid://dkwmaqrde7ne5" path="res://scene/player/slots/slot_row.tscn" id="4_e175g"]
+[ext_resource type="AudioStream" uid="uid://dj5d70cqn1f2t" path="res://sound/fx/slotmachine/slotmachine.mp3" id="6_bvdc6"]
+[ext_resource type="AudioStream" uid="uid://cv82k8fnavddt" path="res://sound/fx/slotmachine/slotlever.mp3" id="6_pqh6i"]
+[ext_resource type="PackedScene" uid="uid://bepxjqhida0n8" path="res://scene/player/ui/roadButton.tscn" id="6_vjuwu"]
+[ext_resource type="Texture2D" uid="uid://clb0tyqiwegeo" path="res://texture/icon/icons8-gem-48.png" id="7_wnnpu"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wfh4x"]
+content_margin_left = 20.0
+content_margin_right = 20.0
+bg_color = Color(0.92549, 0.603922, 0.160784, 1)
+border_width_left = 2
+border_width_top = 10
+border_width_right = 5
+border_width_bottom = 5
+border_color = Color(0.658824, 0.12549, 0.101961, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+
+[node name="SlotMachine" type="CanvasLayer"]
+process_mode = 3
+script = ExtResource("1_lo6kv")
+
+[node name="Panel" type="Panel" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = ExtResource("1_83yg1")
+
+[node name="Panel" type="Panel" parent="Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 270.0
+offset_top = 61.0
+offset_right = -228.0
+offset_bottom = -78.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_sqmqf")
+theme_override_styles/panel = ExtResource("3_ns1em")
+
+[node name="Panel" type="Panel" parent="Panel/Panel"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -181.0
+offset_right = 182.0
+offset_bottom = 55.0
+grow_horizontal = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_wfh4x")
+
+[node name="Label" type="Label" parent="Panel/Panel/Panel"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -86.5
+offset_top = -10.5
+offset_right = 86.5
+offset_bottom = 10.5
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 24
+text = "Goon Crusher - Level 1"
+
+[node name="Panel2" type="Panel" parent="Panel/Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 239.0
+offset_top = 91.0
+offset_right = -26.0
+offset_bottom = -165.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = ExtResource("3_ns1em")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Panel/Panel/Panel2"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 40.0
+offset_top = 66.0
+offset_right = -45.0
+offset_bottom = -70.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="slotRow" parent="Panel/Panel/Panel2/HBoxContainer" instance=ExtResource("4_e175g")]
+layout_mode = 2
+
+[node name="slotRow2" parent="Panel/Panel/Panel2/HBoxContainer" instance=ExtResource("4_e175g")]
+layout_mode = 2
+
+[node name="slotRow3" parent="Panel/Panel/Panel2/HBoxContainer" instance=ExtResource("4_e175g")]
+layout_mode = 2
+
+[node name="exit_button" type="Button" parent="Panel/Panel"]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -29.0
+offset_right = 39.0
+grow_vertical = 0
+text = "Exit"
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel/Panel"]
+layout_mode = 1
+anchors_preset = 9
+anchor_bottom = 1.0
+offset_left = 40.0
+offset_top = 93.0
+offset_right = 216.0
+offset_bottom = -166.0
+grow_vertical = 2
+
+[node name="play_button" parent="Panel/Panel/VBoxContainer" instance=ExtResource("6_vjuwu")]
+layout_mode = 2
+size_flags_vertical = 3
+text = "Play"
+
+[node name="reroll_button" parent="Panel/Panel/VBoxContainer" instance=ExtResource("6_vjuwu")]
+layout_mode = 2
+size_flags_vertical = 3
+disabled = true
+text = "Reroll"
+icon = ExtResource("7_wnnpu")
+
+[node name="claim_button" parent="Panel/Panel/VBoxContainer" instance=ExtResource("6_vjuwu")]
+layout_mode = 2
+size_flags_vertical = 3
+disabled = true
+text = "Claim"
+
+[node name="slotMahineSound" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("6_bvdc6")
+
+[node name="slotMahineLever" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("6_pqh6i")
+pitch_scale = 0.6
+
+[node name="slotMachineBonusSound" type="AudioStreamPlayer" parent="."]
+
+[connection signal="pressed" from="Panel/Panel/exit_button" to="." method="_on_exit_button_pressed"]
+[connection signal="pressed" from="Panel/Panel/VBoxContainer/play_button" to="." method="_on_play_button_pressed"]
+[connection signal="pressed" from="Panel/Panel/VBoxContainer/reroll_button" to="." method="_on_reroll_button_pressed"]

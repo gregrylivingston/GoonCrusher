@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3 uid="uid://dqcrli42u3gia"]
+[gd_scene load_steps=16 format=3 uid="uid://dqcrli42u3gia"]
 
 [ext_resource type="Script" path="res://scene/level/levelRoot.gd" id="1_65p74"]
 [ext_resource type="PackedScene" uid="uid://brhh6ifac5qvc" path="res://scene/scenery/rocks.tscn" id="2_5ujut"]
@@ -14,6 +14,7 @@
 [ext_resource type="PackedScene" uid="uid://c3nj8qlsr0clb" path="res://scene/powerup/coin.tscn" id="12_ufw4g"]
 [ext_resource type="PackedScene" uid="uid://bogdlh0ch1tuf" path="res://scene/powerup/purse.tscn" id="13_65wfl"]
 [ext_resource type="PackedScene" uid="uid://bgogx6yxekbjp" path="res://scene/powerup/traction.tscn" id="14_d48sd"]
+[ext_resource type="PackedScene" uid="uid://xwhhgw0qwlsm" path="res://scene/powerup/slotMachine.tscn" id="15_hppr6"]
 
 [node name="LevelRoot" type="Node2D" groups=["levelRoot"]]
 script = ExtResource("1_65p74")
@@ -86,3 +87,9 @@ position = Vector2(1295, 1249)
 
 [node name="Powerup6" parent="." instance=ExtResource("14_d48sd")]
 position = Vector2(2022, -77)
+
+[node name="Powerup7" parent="." instance=ExtResource("15_hppr6")]
+position = Vector2(1842, 710)
+
+[node name="Powerup8" parent="." instance=ExtResource("15_hppr6")]
+position = Vector2(654, 1110)

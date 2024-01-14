@@ -28,6 +28,7 @@ var color = [
 	"purse":preload("res://scene/powerup/purse.tscn"),
 	"gem":preload("res://scene/powerup/gem.tscn"),
 	"brakes":preload("res://scene/powerup/traction.tscn"),
+	"slotMachine":preload("res://scene/powerup/slotMachine.tscn")
 }
 
 @onready var goon = {
@@ -83,7 +84,8 @@ func _process(delta):
 
 func getPowerup():
 	var randomizer = randf_range(0,100)
-	if randomizer > 58:return powerup.coin.instantiate()
+	if randomizer > 80:return powerup.coin.instantiate()
+	elif randomizer > 60: return powerup.slotMachine.instantiate()	
 	elif randomizer > 52: return powerup.purse.instantiate()
 	elif randomizer > 50: return powerup.gem.instantiate()	
 	elif randomizer > 30: return powerup.health.instantiate()
