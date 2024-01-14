@@ -66,3 +66,5 @@ res://scene/powerup/slotMachine.tscn
 res://scene/powerup/slotMachine.gd
 res://sources.txt
 res://scene/player/spawner.tscn
+res://scene/player/slots/slot_award_icon.gd
+res://scene/powerup/traction.tscn

@@ -27,7 +27,7 @@ var color = [
 	"coin":preload("res://scene/powerup/coin.tscn"),
 	"purse":preload("res://scene/powerup/purse.tscn"),
 	"gem":preload("res://scene/powerup/gem.tscn"),
-	"brakes":preload("res://scene/powerup/traction.tscn"),
+	"traction":preload("res://scene/powerup/traction.tscn"),
 	"slotMachine":preload("res://scene/powerup/slotMachine.tscn")
 }
 
@@ -84,16 +84,19 @@ func _process(delta):
 
 func getPowerup():
 	var randomizer = randf_range(0,100)
-	if randomizer > 80:return powerup.coin.instantiate()
-	elif randomizer > 60: return powerup.slotMachine.instantiate()	
-	elif randomizer > 52: return powerup.purse.instantiate()
-	elif randomizer > 50: return powerup.gem.instantiate()	
-	elif randomizer > 30: return powerup.health.instantiate()
-	elif randomizer > 10: return powerup.fuel.instantiate()	
-	elif randomizer > 7.5: return powerup.engine.instantiate()
-	elif randomizer > 5.0: return powerup.steering.instantiate()
-	elif randomizer > 2.5: return powerup.brakes.instantiate()		
+	if randomizer > 50:return powerup.coin.instantiate()
+	elif randomizer > 48: return powerup.slotMachine.instantiate()	
+	elif randomizer > 46: return powerup.purse.instantiate()
+	elif randomizer > 44: return powerup.gem.instantiate()	
+	elif randomizer > 39: return powerup.health.instantiate()
+	elif randomizer > 14: return powerup.fuel.instantiate()	
+	elif randomizer > 11: return powerup.engine.instantiate()
+	elif randomizer > 8: return powerup.steering.instantiate()
+	elif randomizer > 4: return powerup.traction.instantiate()		
 	else: return powerup.armor.instantiate()
+	
+func getSpecificPowerup(pName: String):
+	return powerup[pName].instantiate()
 	
 func getGoon():
 	var randomizer = randf_range(0,100)

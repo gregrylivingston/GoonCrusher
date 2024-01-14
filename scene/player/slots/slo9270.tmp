@@ -1,0 +1,116 @@
+[gd_scene load_steps=10 format=3 uid="uid://dkwmaqrde7ne5"]
+
+[ext_resource type="Script" path="res://scene/player/slots/slot_row.gd" id="1_4i20n"]
+[ext_resource type="Texture2D" uid="uid://ckvii7iuglgha" path="res://texture/icon/shield.png" id="2_00tok"]
+[ext_resource type="PackedScene" uid="uid://b5tlxv0rpgobo" path="res://scene/player/slots/slot_award_icon.tscn" id="2_k51nk"]
+[ext_resource type="Texture2D" uid="uid://clb0tyqiwegeo" path="res://texture/icon/icons8-gem-48.png" id="3_hyjy8"]
+[ext_resource type="Texture2D" uid="uid://b282uef7te4fk" path="res://texture/icon/wheel.png" id="4_5nxbv"]
+[ext_resource type="Texture2D" uid="uid://b3g3a2usedskp" path="res://texture/icon/steering.png" id="5_170y8"]
+[ext_resource type="Texture2D" uid="uid://w03tvhxtmrv4" path="res://texture/icon/icons8-coin-48 (1).png" id="6_qiej4"]
+[ext_resource type="Texture2D" uid="uid://c85uvqgpmca0e" path="res://scene/player/slots/slot_row_gradient.tres" id="8_m7djd"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ml7ts"]
+bg_color = Color(1, 1, 1, 1)
+
+[node name="slotRow" type="Panel"]
+clip_contents = true
+custom_minimum_size = Vector2(150, 300)
+size_flags_horizontal = 6
+theme_override_styles/panel = SubResource("StyleBoxFlat_ml7ts")
+script = ExtResource("1_4i20n")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 950.0
+grow_horizontal = 2
+theme_override_constants/separation = 105
+
+[node name="HSeparator" type="HSeparator" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 25)
+layout_mode = 2
+
+[node name="slotAwardIcon" parent="VBoxContainer" instance=ExtResource("2_k51nk")]
+layout_mode = 2
+
+[node name="TextureRect2" type="TextureRect" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 75)
+layout_mode = 2
+size_flags_vertical = 0
+texture = ExtResource("2_00tok")
+stretch_mode = 5
+
+[node name="TextureRect3" type="TextureRect" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 75)
+layout_mode = 2
+size_flags_vertical = 0
+texture = ExtResource("3_hyjy8")
+stretch_mode = 5
+
+[node name="TextureRect4" type="TextureRect" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 75)
+layout_mode = 2
+size_flags_vertical = 0
+texture = ExtResource("4_5nxbv")
+stretch_mode = 5
+
+[node name="TextureRect5" type="TextureRect" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 75)
+layout_mode = 2
+size_flags_vertical = 0
+texture = ExtResource("5_170y8")
+stretch_mode = 5
+
+[node name="TextureRect6" type="TextureRect" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 75)
+layout_mode = 2
+size_flags_vertical = 0
+texture = ExtResource("6_qiej4")
+stretch_mode = 5
+
+[node name="TextureRect7" type="TextureRect" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 75)
+layout_mode = 2
+size_flags_vertical = 0
+texture = ExtResource("4_5nxbv")
+stretch_mode = 5
+
+[node name="TextureRect8" type="TextureRect" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 75)
+layout_mode = 2
+size_flags_vertical = 0
+texture = ExtResource("5_170y8")
+stretch_mode = 5
+
+[node name="TextureRect9" type="TextureRect" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 75)
+layout_mode = 2
+size_flags_vertical = 0
+texture = ExtResource("6_qiej4")
+stretch_mode = 5
+
+[node name="ColorRect" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 150.0
+offset_right = 150.0
+offset_bottom = 150.0
+grow_horizontal = 2
+rotation = 1.5708
+texture = ExtResource("8_m7djd")
+
+[node name="ColorRect2" type="TextureRect" parent="."]
+custom_minimum_size = Vector2(150, 150)
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 2.0
+offset_bottom = 152.0
+grow_horizontal = 2
+grow_vertical = 0
+rotation = -1.5708
+texture = ExtResource("8_m7djd")

@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3 uid="uid://dqcrli42u3gia"]
+[gd_scene load_steps=17 format=3 uid="uid://dqcrli42u3gia"]
 
 [ext_resource type="Script" path="res://scene/level/levelRoot.gd" id="1_65p74"]
 [ext_resource type="PackedScene" uid="uid://brhh6ifac5qvc" path="res://scene/scenery/rocks.tscn" id="2_5ujut"]
@@ -15,6 +15,7 @@
 [ext_resource type="PackedScene" uid="uid://bogdlh0ch1tuf" path="res://scene/powerup/purse.tscn" id="13_65wfl"]
 [ext_resource type="PackedScene" uid="uid://bgogx6yxekbjp" path="res://scene/powerup/traction.tscn" id="14_d48sd"]
 [ext_resource type="PackedScene" uid="uid://xwhhgw0qwlsm" path="res://scene/powerup/slotMachine.tscn" id="15_hppr6"]
+[ext_resource type="PackedScene" uid="uid://4lh7dd54kbqe" path="res://scene/powerup/gem.tscn" id="16_5gmm7"]
 
 [node name="LevelRoot" type="Node2D" groups=["levelRoot"]]
 script = ExtResource("1_65p74")
@@ -71,25 +72,26 @@ volume_db = -6.0
 autoplay = true
 
 [node name="Powerup" parent="." instance=ExtResource("9_20fdc")]
-position = Vector2(1101, -334)
+position = Vector2(680, 90)
 
 [node name="Powerup2" parent="." instance=ExtResource("10_djbco")]
 position = Vector2(-308, -233)
 
 [node name="Powerup3" parent="." instance=ExtResource("11_eyh6h")]
-position = Vector2(1522, -208)
+position = Vector2(-349, 1146)
 
 [node name="Powerup4" parent="." instance=ExtResource("12_ufw4g")]
-position = Vector2(2023, -317)
+position = Vector2(1406, 830)
 
 [node name="Powerup5" parent="." instance=ExtResource("13_65wfl")]
-position = Vector2(1295, 1249)
+position = Vector2(1266, 1962)
 
 [node name="Powerup6" parent="." instance=ExtResource("14_d48sd")]
-position = Vector2(2022, -77)
+position = Vector2(2443, -861)
 
 [node name="Powerup7" parent="." instance=ExtResource("15_hppr6")]
-position = Vector2(1842, 710)
+position = Vector2(2466, 1868)
 
-[node name="Powerup8" parent="." instance=ExtResource("15_hppr6")]
-position = Vector2(654, 1110)
+[node name="Powerup9" parent="." instance=ExtResource("16_5gmm7")]
+visible = true
+position = Vector2(3801, 611)

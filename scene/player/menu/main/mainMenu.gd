@@ -59,7 +59,7 @@ func selectCar(car):
 	$carStatsContainer.updateStats()
 	$carStatUpgrades/Panel/charName.text = Root.playerCar.charName
 	
-	if Root.playerCar.introAudio.size() > 0:
+	if Root.playerCar.introAudio.size() > 0 && not Root.isRunActive:
 		$voicePlayer.stream = Root.playerCar.introAudio[randi_range(0 , Root.playerCar.introAudio.size()-1)]
 		$voicePlayer.play()
 	

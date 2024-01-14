@@ -228,6 +228,12 @@ func playPurseRewardAudio():
 		await get_tree().create_timer(.25).timeout
 		$"AudioStream-Voice".play()
 
+func spendGems(numOfGems: int):
+	if gem >= numOfGems:
+		gem -= numOfGems
+		return true
+	else:
+		return false
 
 func damage(damage: float):
 	health -= damage

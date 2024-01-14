@@ -1,9 +1,11 @@
-[gd_scene load_steps=2 format=3 uid="uid://b5tlxv0rpgobo"]
+[gd_scene load_steps=3 format=3 uid="uid://b5tlxv0rpgobo"]
 
 [ext_resource type="Texture2D" uid="uid://clvv6qdf7lboq" path="res://texture/icon/purse.png" id="1_tyy7r"]
+[ext_resource type="Script" path="res://scene/player/slots/slot_award_icon.gd" id="2_his67"]
 
 [node name="slotAwardIcon" type="TextureRect"]
 custom_minimum_size = Vector2(0, 75)
 size_flags_vertical = 0
 texture = ExtResource("1_tyy7r")
 stretch_mode = 5
+script = ExtResource("2_his67")
