@@ -45,6 +45,8 @@ var isDestroyed: bool = false
 @export var introAudio: Array[AudioStreamMP3] = []
 @export var purseAudio: Array[AudioStreamMP3] = []
 @export var powerupAudio: Array[AudioStreamMP3] = []
+@export var lowGasAudio: Array[AudioStreamMP3] = []
+@export var lowHealthAudio: Array[AudioStreamMP3] = []
 
 class CarInput:
 	var steering := 0.0      # -1.0 (left) to 1.0 (right)
@@ -62,6 +64,7 @@ func _init():
 
 
 func _ready():
+	purseAudio.append_array(powerupAudio)
 	_connect_car_areas(get_tree().root)
 	updateAudioLevels()
 	if isPlayer:
@@ -72,6 +75,28 @@ func _ready():
 		traction += SaveManager.playerData.cars[carId].upgrades.traction
 		armor += SaveManager.playerData.cars[carId].upgrades.armor
 
+var gasWarningGiven = false
+func resetGasWarning(): gasWarningGiven = false
+
+func makeGasWarning():
+	gasWarningGiven = true
+	$"AudioStream-Voice".stream = lowGasAudio[ randi_range(0, lowGasAudio.size()-1)]
+	$"AudioStream-Voice".play()
+	await get_tree().create_timer(200).timeout
+	resetGasWarning()
+	
+var healthWarningGiven = false
+func resetHealthWarning(): healthWarningGiven = false
+
+func makeHealthWarning():
+	healthWarningGiven = true
+	$"AudioStream-Voice".stream = lowHealthAudio[ randi_range(0, lowHealthAudio.size()-1)]
+	$"AudioStream-Voice".play()
+	await get_tree().create_timer(200).timeout
+	resetHealthWarning()
+
+
+
 func _physics_process(delta):
 	if _path_follow:
 		_path_follow.provide_input(self)
@@ -80,6 +105,12 @@ func _physics_process(delta):
 	_car_input.steering = clamp(_car_input.steering, -1.0, 1.0)
 	_car_input.acceleration = clamp(_car_input.acceleration, -1.0, 1.0)
 	if fuel <= 0 || isDestroyed: _car_input.acceleration = 0.0
+	
+	if fuel <= 25 && not gasWarningGiven && not $"AudioStream-Voice".playing && isPlayer:makeGasWarning()
+	if health <= 25 && not healthWarningGiven && not $"AudioStream-Voice".playing && isPlayer:makeHealthWarning()
+
+		
+
 	
 	# Base steering wheel angle and acceleration
 	var steer_angle = _car_input.steering * deg_to_rad( 5 + ( steering / 4.0 ) )
@@ -253,6 +284,8 @@ func destroy():
 			$sprite.modulate = Color(modColor,modColor,modColor,1.0)
 			add_child(newExplosion)
 		if isPlayer:
+			$"AudioStream-Voice".stream = lowHealthAudio[ randi_range(0, lowHealthAudio.size()-1)]
+			$"AudioStream-Voice".play()
 			$sprite.modulate = Color(0.5,0.5,0.5,1.0)
 			await get_tree().create_timer(1).timeout
 			get_tree().paused = true

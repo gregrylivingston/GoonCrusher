@@ -1,12 +1,17 @@
-[gd_scene load_steps=9 format=3 uid="uid://dbkp41oxg03o6"]
+[gd_scene load_steps=14 format=3 uid="uid://dbkp41oxg03o6"]
 
 [ext_resource type="Script" path="res://lib/overhead_car_2d/overhead_car_body_2d.gd" id="1_ibwir"]
 [ext_resource type="Texture2D" uid="uid://dthtmohgw8u1f" path="res://scene/car/audi/Audi.png" id="2_33x0l"]
 [ext_resource type="Texture2D" uid="uid://bwgjsd327ch8p" path="res://scene/car/audi/char_audi.png" id="2_au1uh"]
 [ext_resource type="PackedScene" uid="uid://cl3halv7uu2tw" path="res://scene/player/controller/playerCarController.tscn" id="2_idgy8"]
 [ext_resource type="AudioStream" uid="uid://dahxhxgy1qfrn" path="res://sound/fx/engine/rally-car2.mp3" id="3_hfwa2"]
+[ext_resource type="AudioStream" uid="uid://8qsyi304qe46" path="res://scene/car/sedan/audio/sedan_lowgas_2.mp3" id="3_ppeu7"]
+[ext_resource type="AudioStream" uid="uid://bdjiqvxap6ace" path="res://scene/car/sedan/audio/sedan_lowgas_3.mp3" id="4_13r4l"]
 [ext_resource type="AudioStream" uid="uid://dd240qte30ido" path="res://sound/fx/tires_squal_loop.wav" id="4_jbkbo"]
+[ext_resource type="AudioStream" uid="uid://bf0uamij3v2mg" path="res://scene/car/sedan/audio/sedan_lowhealth_3.mp3" id="5_d8xnv"]
 [ext_resource type="AudioStream" uid="uid://dlbojdancbkl3" path="res://sound/fx/crash-6711.mp3" id="5_pn0ef"]
+[ext_resource type="AudioStream" uid="uid://cijpx0mgh1lje" path="res://scene/car/sedan/audio/sedan_lowhealth_4.mp3" id="6_mg8jc"]
+[ext_resource type="AudioStream" uid="uid://o51m6bd6j6l7" path="res://scene/car/sedan/audio/sedan_lowhealth_5.mp3" id="7_anyhl"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_f6v2r"]
 size = Vector2(212, 95)
@@ -15,6 +20,8 @@ size = Vector2(212, 95)
 z_index = 1
 script = ExtResource("1_ibwir")
 profilePic = ExtResource("2_au1uh")
+lowGasAudio = Array[AudioStreamMP3]([ExtResource("3_ppeu7"), ExtResource("4_13r4l")])
+lowHealthAudio = Array[AudioStreamMP3]([ExtResource("5_d8xnv"), ExtResource("6_mg8jc"), ExtResource("7_anyhl")])
 
 [node name="Camera2D" type="Camera2D" parent="."]
 zoom = Vector2(0.5, 0.5)
