@@ -70,3 +70,4 @@ res://scene/player/slots/slot_award_icon.gd
 res://scene/powerup/traction.tscn
 res://scene/player/menu/settings/graphics.tscn
 res://scene/player/menu/settings/graphics.gd
+res://scene/player/playerRoot.gd

@@ -17,3 +17,10 @@ func _on_full_screen_pressed():
 	else: # Fullscreen
 		get_tree().root.set_mode(Window.MODE_WINDOWED)
 
+
+
+func _on_vsync_pressed():
+	if $VBoxContainer/HBoxContainer/fullScreen.button_pressed: # Disabled (default)
+		DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ADAPTIVE)
+	else: # Fullscreen
+		DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)

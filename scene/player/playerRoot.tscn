@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://pgobm7erc1f0"]
+[gd_scene load_steps=9 format=3 uid="uid://pgobm7erc1f0"]
 
 [ext_resource type="Script" path="res://scene/player/playerRoot.gd" id="1_csk4w"]
 [ext_resource type="PackedScene" uid="uid://bf1f5117fhyd2" path="res://scene/car/car_panel.tscn" id="2_gx8xt"]
@@ -8,19 +8,23 @@
 [ext_resource type="Texture2D" uid="uid://w03tvhxtmrv4" path="res://texture/icon/icons8-coin-48 (1).png" id="5_bieyt"]
 [ext_resource type="Texture2D" uid="uid://clb0tyqiwegeo" path="res://texture/icon/icons8-gem-48.png" id="6_domly"]
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wdwqq"]
+bg_color = Color(0.658824, 0.12549, 0.101961, 1)
+
 [node name="PlayerRoot" type="CanvasLayer" groups=["playerGameUi"]]
+process_mode = 3
 script = ExtResource("1_csk4w")
 
 [node name="carPanel" parent="." instance=ExtResource("2_gx8xt")]
 
 [node name="Panel" type="Panel" parent="."]
-anchors_preset = 5
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = 197.5
-offset_right = 378.5
-offset_bottom = 40.0
-grow_horizontal = 2
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -265.0
+offset_top = 80.0
+offset_bottom = 128.0
+grow_horizontal = 0
 size_flags_horizontal = 3
 theme = ExtResource("4_xbt3u")
 theme_override_styles/panel = ExtResource("3_eocbu")
@@ -36,14 +40,35 @@ grow_vertical = 2
 [node name="Label" type="Label" parent="Panel/HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 0
+theme = ExtResource("4_xbt3u")
+theme_override_font_sizes/font_size = 24
 text = "  Goons Crushed: "
 horizontal_alignment = 1
 
 [node name="crushedGoons" type="Label" parent="Panel/HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 6
-text = "10"
+theme = ExtResource("4_xbt3u")
+theme_override_font_sizes/font_size = 24
+text = "0"
 horizontal_alignment = 1
+
+[node name="ProgressBar" type="ProgressBar" parent="Panel"]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 1.0
+offset_top = -12.0
+offset_right = -3.0
+offset_bottom = -4.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_styles/fill = SubResource("StyleBoxFlat_wdwqq")
+max_value = 5.0
+value = 5.0
+show_percentage = false
 
 [node name="Panel2" type="Panel" parent="."]
 anchors_preset = 1
@@ -87,8 +112,8 @@ horizontal_alignment = 1
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -237.0
-offset_right = -127.0
+offset_left = -268.0
+offset_right = -135.0
 offset_bottom = 52.0
 grow_horizontal = 0
 size_flags_horizontal = 3

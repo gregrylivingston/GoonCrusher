@@ -1,3 +1,4 @@
+ProgressBar
 CheckButton
 Label
 HBoxContainer
@@ -12,4 +13,3 @@ VSeparator
 HSlider
 TabContainer
 CanvasLayer
-AudioStreamPlayer2D

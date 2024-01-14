@@ -86,7 +86,7 @@ func _on_claim_button_pressed():
 		var newPowerup = Root.getSpecificPowerup(slot.getActiveType())
 		newPowerup.global_position = Root.playerCar.global_position
 		Root.levelRoot.add_child(newPowerup)
-		newPowerup.sendReward(Root.playerCar, false)
+		#newPowerup.sendReward(Root.playerCar, false)
 	Root.levelRoot.playMusic()
 	queue_free()
 		

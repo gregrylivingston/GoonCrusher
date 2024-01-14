@@ -22,7 +22,6 @@ func destroy():
 	$CollisionShape2D.queue_free()
 	alive = false
 	$Walker.animation = "death"
-	Root.currentGoonsCrushed += 1
 	$AudioStreamPlayer2D2.volume_db = randf_range(0.0,5.0) + SaveManager.getVolume("fx")
 	$AudioStreamPlayer2D2.pitch_scale = randf_range(0.95,1.05)
 	$AudioStreamPlayer2D2.play()

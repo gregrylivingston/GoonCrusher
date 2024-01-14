@@ -20,4 +20,19 @@ text = "Fullscreen
 layout_mode = 2
 size_flags_horizontal = 10
 
+[node name="HBoxContainer2" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBoxContainer/HBoxContainer2"]
+layout_mode = 2
+text = "V-Sync
+
+"
+
+[node name="vsync" type="CheckButton" parent="VBoxContainer/HBoxContainer2"]
+layout_mode = 2
+size_flags_horizontal = 10
+button_pressed = true
+
 [connection signal="pressed" from="VBoxContainer/HBoxContainer/fullScreen" to="." method="_on_full_screen_pressed"]
+[connection signal="pressed" from="VBoxContainer/HBoxContainer2/vsync" to="." method="_on_vsync_pressed"]

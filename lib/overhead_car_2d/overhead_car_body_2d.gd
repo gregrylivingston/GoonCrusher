@@ -151,14 +151,15 @@ func _physics_process(delta):
 	for i in get_slide_collision_count():
 		var collider = get_slide_collision ( i ).get_collider()
 		#print(collider.get_class())
+		##colide with an unmovable static object like a rock
 		if velocity.length() > 0.01 && collider.get_class() == "StaticBody2D":
 			if not $"AudioStream-Crash".playing: $"AudioStream-Crash".play()
 			damage( ( velocity.length() / 500 ) / armor )
 			velocity *= 0.9
 		elif collider.get_class() == "CharacterBody2D":
 			damage(0.5)
-			if velocity.length() > 500:	collider.destroy()
-			
+			if velocity.length() > 500:crushGoon(collider)
+
 
 
 	
@@ -167,6 +168,10 @@ func _physics_process(delta):
 	else:
 		activeCarEffects()
 
+func crushGoon(collider):
+	collider.destroy()
+	Root.currentGoonsCrushed += 1
+	ui.updateGoonsCrushed()
 
 #sound and graphics for running car
 func activeCarEffects():
