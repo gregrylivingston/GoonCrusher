@@ -45,7 +45,7 @@ theme_override_font_sizes/font_size = 24
 text = "  Goons Crushed: "
 horizontal_alignment = 1
 
-[node name="crushedGoons" type="Label" parent="Panel/HBoxContainer"]
+[node name="crushedGoons" type="Label" parent="Panel/HBoxContainer" groups=["currentGoonsCrushedui"]]
 layout_mode = 2
 size_flags_horizontal = 6
 theme = ExtResource("4_xbt3u")

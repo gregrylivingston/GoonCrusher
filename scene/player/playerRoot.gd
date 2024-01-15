@@ -29,9 +29,9 @@ var nextCrushingAward = awardBase
 @onready var crushProgressBar = $Panel/ProgressBar
 
 func updateGoonsCrushed():
-	$Panel/HBoxContainer/crushedGoons.text = str( Root.currentGoonsCrushed )
-	crushProgressBar.value = Root.currentGoonsCrushed
-	if Root.currentGoonsCrushed >= nextCrushingAward:
+	$Panel/HBoxContainer/crushedGoons.text = str( Root.playerCar.currentGoonsCrushed )
+	crushProgressBar.value = Root.playerCar.currentGoonsCrushed
+	if Root.playerCar.currentGoonsCrushed >= nextCrushingAward:
 		crushProgressBar.min_value = nextCrushingAward
 		crushingAwardLevel += 1 
 		nextCrushingAward = pow(( crushingAwardLevel + 1 ), 1.8) * awardBase

@@ -32,6 +32,7 @@ var health = 100.0
 var fuel = 100.0
 var coin = 0
 var gem = 0
+var currentGoonsCrushed = 0
 
 @onready var rewardAudioPlayer = $"AudioStream-Reward"
 
@@ -170,7 +171,10 @@ func _physics_process(delta):
 
 func crushGoon(collider):
 	collider.destroy()
-	Root.currentGoonsCrushed += 1
+	var newPowerup = Root.getSpecificPowerup("currentGoonsCrushed")
+	newPowerup.global_position = global_position
+	Root.levelRoot.add_child(newPowerup)
+	#currentGoonsCrushed += 1
 	ui.updateGoonsCrushed()
 
 #sound and graphics for running car

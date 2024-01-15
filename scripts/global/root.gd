@@ -28,7 +28,8 @@ var color = [
 	"purse":preload("res://scene/powerup/purse.tscn"),
 	"gem":preload("res://scene/powerup/gem.tscn"),
 	"traction":preload("res://scene/powerup/traction.tscn"),
-	"slotMachine":preload("res://scene/powerup/slotMachine.tscn")
+	"slotMachine":preload("res://scene/powerup/slotMachine.tscn"),
+	"currentGoonsCrushed":preload("res://scene/powerup/currentGoonsCrushed.tscn"),
 }
 
 @onready var goon = {
@@ -68,7 +69,7 @@ var color = [
 
 }
 
-var currentGoonsCrushed = 0
+
 var selectedCarType
 
 

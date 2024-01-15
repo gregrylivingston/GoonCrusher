@@ -1,8 +1,6 @@
 extends CanvasLayer
 
 
-
-
 func _ready():
 	Root.mainMenu = self
 	createCarArray()
@@ -37,7 +35,6 @@ func createCarArray():
 
 
 func _on_begin_button_pressed():
-	Root.currentGoonsCrushed = 0
 	get_tree().change_scene_to_file("res://scene/level/levelRoot.tscn")
 
 

@@ -1,0 +1,9 @@
+[gd_scene load_steps=3 format=3 uid="uid://cxou5fktxqhvn"]
+
+[ext_resource type="PackedScene" uid="uid://b7r4ro32w40xi" path="res://scene/powerup/powerup.tscn" id="1_k58dp"]
+[ext_resource type="Texture2D" uid="uid://r6nqp2khheft" path="res://scene/enemy/walker/devil/texture/0081.png" id="2_eumlk"]
+
+[node name="Powerup" instance=ExtResource("1_k58dp")]
+texture = ExtResource("2_eumlk")
+powerup = "currentGoonsCrushed"
+quantity = 1.0
