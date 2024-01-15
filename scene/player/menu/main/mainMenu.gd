@@ -6,7 +6,9 @@ extends CanvasLayer
 func _ready():
 	Root.mainMenu = self
 	createCarArray()
-	selectCar(Root.cars.sedan)
+	if Root.selectedCar != null:
+		selectCar( Root.selectedCar )
+	else: selectCar(Root.cars.sedan)
 	await get_tree().process_frame
 	if Root.isRunActive:
 		Root.isRunActive = false
