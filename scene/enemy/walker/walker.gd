@@ -13,9 +13,11 @@ var target: Vector2
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
 	if alive && is_instance_valid( Root.playerCar ):
-		target.x = clamp( Root.playerCar.position.x - position.x , -speed , speed)
-		target.y = clamp(  Root.playerCar.position.y - position.y , -speed , speed)	
-		move_and_collide( target )
+		
+#		print()
+#		target.x = clamp( Root.playerCar.position.x - position.x , -speed , speed)
+#		target.y = clamp(  Root.playerCar.position.y - position.y , -speed , speed)	
+		move_and_collide( position.direction_to( Root.playerCar.position ) * speed )
 
 
 func destroy():

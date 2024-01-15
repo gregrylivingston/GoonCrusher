@@ -259,7 +259,7 @@ func reward(powerup: String , quantity, forShowOnly: bool = false):
 		ui.updateStats()
 
 func playPurseRewardAudio():
-	if  purseAudio.size() > 0 && $"AudioStream-Voice".playing == false:
+	if  purseAudio.size() > 0:# && $"AudioStream-Voice".playing == false:
 		$"AudioStream-Voice".stream = purseAudio[ randi_range(0, purseAudio.size()-1)]
 		await get_tree().create_timer(.25).timeout
 		$"AudioStream-Voice".play()
@@ -289,8 +289,6 @@ func destroy():
 			$sprite.modulate = Color(modColor,modColor,modColor,1.0)
 			add_child(newExplosion)
 		if isPlayer:
-			$"AudioStream-Voice".stream = lowHealthAudio[ randi_range(0, lowHealthAudio.size()-1)]
-			$"AudioStream-Voice".play()
 			$sprite.modulate = Color(0.5,0.5,0.5,1.0)
 			await get_tree().create_timer(1).timeout
 			get_tree().paused = true

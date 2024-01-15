@@ -10,11 +10,11 @@ var cars = {
 		"upgrades":{"traction":0,"engine":0,"armor":0,"steering":0},
 	},
 	"van":{
-		"cost":1000,
+		"cost":0,
 		"upgrades":{"traction":0,"engine":0,"armor":0,"steering":0},
 	},
 	"taxi":{
-		"cost":5000,
+		"cost":0,
 		"upgrades":{"traction":0,"engine":0,"armor":0,"steering":0},
 	},	
 	"pickup":{

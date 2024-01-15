@@ -7,19 +7,22 @@ extends CanvasLayer
 var isPlaying: bool = true
 var isReady: bool = false
 var inactiveSlots = []
+var slotDelayTime = 1.8
 
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
+	$Panel/Panel/VBoxContainer/play_button.disabled = true
 	if is_instance_valid(Root.playerCar):
 		Root.playerCar.playPurseRewardAudio()
 	$slotMahineSound.volume_db = SaveManager.getVolume("fx") - 12.0
 	$slotMahineLever.volume_db = SaveManager.getVolume("fx") + 4
 	$slotMachineBonusSound.volume_db = SaveManager.getVolume("fx") + 4
-	await get_tree().create_timer(1.8).timeout
+	await get_tree().create_timer( slotDelayTime ).timeout
 	Root.levelRoot.reduceMusic()
 	$slotMahineSound.play()
 	isReady = true
+	$Panel/Panel/VBoxContainer/play_button.disabled = false
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
@@ -70,11 +73,11 @@ func _on_reroll_button_pressed():
 
 		$Panel/Panel/VBoxContainer/reroll_button.disabled = true
 		$Panel/Panel/VBoxContainer/claim_button.disabled = true
-		$Panel/Panel/VBoxContainer/play_button.disabled = false
 	inactiveSlots = []
 	if is_instance_valid(Root.playerCar):
 		Root.playerCar.playPurseRewardAudio()
-	await get_tree().create_timer(1.8).timeout
+	await get_tree().create_timer( slotDelayTime ).timeout
+	$Panel/Panel/VBoxContainer/play_button.disabled = false
 	$slotMahineSound.play()
 	isReady = true
 

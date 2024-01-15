@@ -35,6 +35,7 @@ func createCarArray():
 
 
 func _on_begin_button_pressed():
+	Root.currentGoonsCrushed = 0
 	get_tree().change_scene_to_file("res://scene/level/levelRoot.tscn")
 
 
@@ -76,7 +77,9 @@ func uiCarStatsUpdate():
 		unlockButton.text = "Unlock      " + str( SaveManager.playerData.cars[Root.playerCar.carId].cost )
 		$Panel2/VBoxContainer/beginButton.disabled = true
 	else:
-		for i in statUpgradeButtons:i.visible = true
+		for i in statUpgradeButtons:
+			i.visible = true
+			i.refresh()
 		unlockButton.visible = false
 		$Panel2/VBoxContainer/beginButton.disabled = false
 
