@@ -1,4 +1,4 @@
-[gd_scene load_steps=39 format=3 uid="uid://1bi7flsw4h78"]
+[gd_scene load_steps=34 format=3 uid="uid://1bi7flsw4h78"]
 
 [ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="1_v41dt"]
 [ext_resource type="Texture2D" uid="uid://bxguuhssna7ol" path="res://scene/car/taxi/char_taxi.png" id="2_e55go"]
@@ -21,20 +21,15 @@
 [ext_resource type="AudioStream" uid="uid://s22etes4muku" path="res://scene/car/taxi/audio/taxi_joy_3.mp3" id="18_rewgt"]
 [ext_resource type="AudioStream" uid="uid://bf2g55p5rqirk" path="res://scene/car/taxi/audio/taxi_joy_4.mp3" id="19_1wv2m"]
 [ext_resource type="AudioStream" uid="uid://hpq7o1wu18c6" path="res://scene/car/taxi/audio/taxi_joy_5.mp3" id="20_isjie"]
-[ext_resource type="AudioStream" uid="uid://8qsyi304qe46" path="res://scene/car/sedan/audio/sedan_lowgas_2.mp3" id="21_1vqe1"]
 [ext_resource type="AudioStream" uid="uid://dt5eem54gq1o7" path="res://scene/car/taxi/audio/taxi_joy7.mp3" id="21_262ig"]
 [ext_resource type="AudioStream" uid="uid://hlej4x4257d7" path="res://scene/car/taxi/audio/taxi_joy8.mp3" id="22_e71w7"]
-[ext_resource type="AudioStream" uid="uid://bdjiqvxap6ace" path="res://scene/car/sedan/audio/sedan_lowgas_3.mp3" id="22_eyxoo"]
 [ext_resource type="AudioStream" uid="uid://daae5oi5o1tt2" path="res://scene/car/taxi/audio/taxi_lowgas_1.mp3" id="23_bidcd"]
 [ext_resource type="AudioStream" uid="uid://dbw1m34km4x0b" path="res://scene/car/taxi/audio/taxi_joy9.mp3" id="23_iadqi"]
 [ext_resource type="AudioStream" uid="uid://ccqwc2fanq00p" path="res://scene/car/taxi/audio/taxi_joy10.mp3" id="24_m4n6e"]
 [ext_resource type="AudioStream" uid="uid://sixxnxyfhbiw" path="res://scene/car/taxi/audio/taxi_lowgas_2.mp3" id="24_tibav"]
 [ext_resource type="AudioStream" uid="uid://xt3sof0688r4" path="res://scene/car/taxi/audio/taxi_joy11.mp3" id="25_tc7g5"]
-[ext_resource type="AudioStream" uid="uid://bf0uamij3v2mg" path="res://scene/car/sedan/audio/sedan_lowhealth_3.mp3" id="25_xihsq"]
 [ext_resource type="AudioStream" uid="uid://jb58k3jfx5t0" path="res://scene/car/taxi/audio/taxi_joy12.mp3" id="26_7k88k"]
-[ext_resource type="AudioStream" uid="uid://cijpx0mgh1lje" path="res://scene/car/sedan/audio/sedan_lowhealth_4.mp3" id="26_f20jf"]
 [ext_resource type="AudioStream" uid="uid://dll0pn6wxeoij" path="res://scene/car/taxi/audio/taxi_joy13.mp3" id="27_17fi7"]
-[ext_resource type="AudioStream" uid="uid://o51m6bd6j6l7" path="res://scene/car/sedan/audio/sedan_lowhealth_5.mp3" id="27_g7gks"]
 [ext_resource type="AudioStream" uid="uid://cgpwaym0dtn0u" path="res://scene/car/taxi/audio/taxi_lowhealth_1.mp3" id="28_j8yn4"]
 [ext_resource type="AudioStream" uid="uid://b3dqh7acgg1bg" path="res://scene/car/taxi/audio/taxi_joy_6.mp3" id="28_nl07w"]
 [ext_resource type="AudioStream" uid="uid://bl1k15t5dtd3v" path="res://scene/car/taxi/audio/taxi_lowhealth_2.mp3" id="29_gutk2"]
@@ -48,8 +43,8 @@ carId = "taxi"
 introAudio = Array[AudioStreamMP3]([ExtResource("3_anhg2"), ExtResource("4_qknie"), ExtResource("5_sxudr"), ExtResource("6_230wo"), ExtResource("7_agd4o"), ExtResource("8_di5uq"), ExtResource("9_oqruo"), ExtResource("10_a7xbb")])
 purseAudio = Array[AudioStreamMP3]([ExtResource("11_4on1j"), ExtResource("12_dwy4e"), ExtResource("13_yur0t"), ExtResource("14_edsgb"), ExtResource("15_3kv3q")])
 powerupAudio = Array[AudioStreamMP3]([ExtResource("16_pahbg"), ExtResource("17_7l0fa"), ExtResource("18_rewgt"), ExtResource("19_1wv2m"), ExtResource("20_isjie"), ExtResource("21_262ig"), ExtResource("22_e71w7"), ExtResource("23_iadqi"), ExtResource("24_m4n6e"), ExtResource("25_tc7g5"), ExtResource("26_7k88k"), ExtResource("27_17fi7"), ExtResource("28_nl07w")])
-lowGasAudio = Array[AudioStreamMP3]([ExtResource("21_1vqe1"), ExtResource("22_eyxoo"), ExtResource("23_bidcd"), ExtResource("24_tibav")])
-lowHealthAudio = Array[AudioStreamMP3]([ExtResource("25_xihsq"), ExtResource("26_f20jf"), ExtResource("27_g7gks"), ExtResource("28_j8yn4"), ExtResource("29_gutk2")])
+lowGasAudio = Array[AudioStreamMP3]([ExtResource("23_bidcd"), ExtResource("24_tibav")])
+lowHealthAudio = Array[AudioStreamMP3]([ExtResource("28_j8yn4"), ExtResource("29_gutk2")])
 
 [node name="sprite" parent="." index="4"]
 position = Vector2(-11, 7)

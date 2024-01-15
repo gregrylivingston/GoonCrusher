@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3 uid="uid://cvuiarwiynwx7"]
+[gd_scene load_steps=28 format=3 uid="uid://cvuiarwiynwx7"]
 
 [ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="1_150xb"]
 [ext_resource type="Texture2D" uid="uid://dfa1wuwohdn01" path="res://scene/car/pickup/Mini_truck.png" id="2_36nav"]
@@ -11,6 +11,22 @@
 [ext_resource type="AudioStream" uid="uid://bq5n538wq16u" path="res://scene/car/pickup/audio/pickup_intro_6.mp3" id="8_svqtx"]
 [ext_resource type="AudioStream" uid="uid://bfvu8be8cvpcr" path="res://scene/car/pickup/audio/pickup_intro_7.mp3" id="9_0wwoi"]
 [ext_resource type="AudioStream" uid="uid://b4rf8s2i8u2wa" path="res://scene/car/pickup/audio/pickup_intro_8.mp3" id="10_iv8ox"]
+[ext_resource type="AudioStream" uid="uid://cjc6djo0c0yhn" path="res://scene/car/pickup/audio/pickup_joy_1.mp3" id="11_01t5h"]
+[ext_resource type="AudioStream" uid="uid://gajox5leno0w" path="res://scene/car/pickup/audio/pickup_joy_2.mp3" id="12_libsm"]
+[ext_resource type="AudioStream" uid="uid://kiv4jtj1eew1" path="res://scene/car/pickup/audio/pickup_joy_3.mp3" id="13_3ksbf"]
+[ext_resource type="AudioStream" uid="uid://df6vxuy2r52aq" path="res://scene/car/pickup/audio/pickup_joy_4.mp3" id="14_q4hv0"]
+[ext_resource type="AudioStream" uid="uid://br1s2flo4ukif" path="res://scene/car/pickup/audio/pickup_joy_5.mp3" id="15_iv1yi"]
+[ext_resource type="AudioStream" uid="uid://w4arc54nf72b" path="res://scene/car/pickup/audio/pickup_joy_6.mp3" id="16_g2ua3"]
+[ext_resource type="AudioStream" uid="uid://dvpbed417m36u" path="res://scene/car/pickup/audio/pickup_joy_7.mp3" id="17_ireah"]
+[ext_resource type="AudioStream" uid="uid://3lmhya4u5777" path="res://scene/car/pickup/audio/pickup_joy_8.mp3" id="18_ty8uw"]
+[ext_resource type="AudioStream" uid="uid://blsomixotdjia" path="res://scene/car/pickup/audio/pickup_joy_9.mp3" id="19_yvkl7"]
+[ext_resource type="AudioStream" uid="uid://6no3utlnkdkc" path="res://scene/car/pickup/audio/pickup_joy_10.mp3" id="20_4xfjq"]
+[ext_resource type="AudioStream" uid="uid://cpj7unigayjrc" path="res://scene/car/pickup/audio/pickup_joy_11.mp3" id="21_sxtnt"]
+[ext_resource type="AudioStream" uid="uid://ydbwyer6c0mu" path="res://scene/car/pickup/audio/pickup_joy_12.mp3" id="22_atv5c"]
+[ext_resource type="AudioStream" uid="uid://c55gjy6wv8h3n" path="res://scene/car/pickup/audio/pick_lowgas_1.mp3" id="23_73te5"]
+[ext_resource type="AudioStream" uid="uid://dgpwho8on7dnx" path="res://scene/car/pickup/audio/pick_lowgas_2.mp3" id="24_cyqhs"]
+[ext_resource type="AudioStream" uid="uid://dkpbevqn4077n" path="res://scene/car/pickup/audio/pickup_lowhealth1.mp3" id="25_yxhmr"]
+[ext_resource type="AudioStream" uid="uid://b82pkrwo1n5m8" path="res://scene/car/pickup/audio/pickup_lowhealth2.mp3" id="26_4efuk"]
 
 [node name="Car" instance=ExtResource("1_150xb")]
 engine = 19
@@ -19,7 +35,10 @@ armor = 12
 profilePic = ExtResource("2_m38a1")
 charName = "Karen"
 carId = "pickup"
-introAudio = Array[AudioStreamMP3]([ExtResource("3_gf7v4"), ExtResource("4_57w67"), ExtResource("5_okret"), ExtResource("6_go2a3"), ExtResource("7_7wal3"), ExtResource("8_svqtx"), ExtResource("9_0wwoi"), ExtResource("10_iv8ox")])
+introAudio = Array[AudioStreamMP3]([ExtResource("3_gf7v4"), ExtResource("4_57w67"), ExtResource("5_okret"), ExtResource("6_go2a3"), ExtResource("7_7wal3"), ExtResource("8_svqtx"), ExtResource("9_0wwoi"), ExtResource("10_iv8ox"), ExtResource("11_01t5h"), ExtResource("21_sxtnt")])
+powerupAudio = Array[AudioStreamMP3]([ExtResource("11_01t5h"), ExtResource("12_libsm"), ExtResource("13_3ksbf"), ExtResource("14_q4hv0"), ExtResource("15_iv1yi"), ExtResource("16_g2ua3"), ExtResource("17_ireah"), ExtResource("18_ty8uw"), ExtResource("19_yvkl7"), ExtResource("20_4xfjq"), ExtResource("21_sxtnt"), ExtResource("22_atv5c")])
+lowGasAudio = Array[AudioStreamMP3]([ExtResource("23_73te5"), ExtResource("24_cyqhs"), ExtResource("7_7wal3")])
+lowHealthAudio = Array[AudioStreamMP3]([ExtResource("25_yxhmr"), ExtResource("26_4efuk"), ExtResource("5_okret")])
 
 [node name="sprite" parent="." index="4"]
 position = Vector2(3, 3)
