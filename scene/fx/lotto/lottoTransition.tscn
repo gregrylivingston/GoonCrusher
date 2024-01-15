@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://b5frsmnroylx6"]
+
+[ext_resource type="Script" path="res://scene/fx/lotto/lottoTransition.gd" id="1_emsin"]
+
+[node name="LottoTransition" type="CanvasLayer"]
+process_mode = 3
+script = ExtResource("1_emsin")

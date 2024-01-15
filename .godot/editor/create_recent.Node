@@ -1,3 +1,5 @@
+CanvasLayer
+Control
 ProgressBar
 CheckButton
 Label
@@ -10,6 +12,3 @@ TextureRect
 ColorRect
 Panel
 VSeparator
-HSlider
-TabContainer
-CanvasLayer

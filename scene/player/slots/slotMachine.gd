@@ -9,9 +9,21 @@ var isReady: bool = false
 var inactiveSlots = []
 var slotDelayTime = 1.8
 
-
+var myBackground 
+var slotTransition = preload("res://scene/fx/lotto/lottoTransition.tscn")
 # Called when the node enters the scene tree for the first time.
 func _ready():
+	$slotMachineBonusSound.stream = load(winSound[ randi_range( 0 , winSound.size() -1 ) ] )
+	$slotMachineBonusSound.play()
+	myBackground = slotTransition.instantiate()
+	Root.levelRoot.add_child( myBackground )
+
+	$Panel.position.y = get_viewport().size.y
+	var tween = get_tree().create_tween()
+	tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS) 
+	tween.tween_property($Panel , "position" , Vector2(0.0,0.0) , 1.1)
+
+	
 	$Panel/Panel/VBoxContainer/play_button.disabled = true
 	if is_instance_valid(Root.playerCar):
 		Root.playerCar.playPurseRewardAudio()
@@ -84,6 +96,7 @@ func _on_reroll_button_pressed():
 
 func _on_claim_button_pressed():
 	get_tree().paused = false
+	myBackground.destory()
 	visible = false
 	for slot in [$Panel/Panel/Panel2/HBoxContainer/slotRow, $Panel/Panel/Panel2/HBoxContainer/slotRow2, $Panel/Panel/Panel2/HBoxContainer/slotRow3]:
 		var newPowerup = Root.getSpecificPowerup(slot.getActiveType())

@@ -52,7 +52,7 @@ func _ready():
 
 var spinFrameTracker = 0 #icons are 75px, 75px in between, every 150 frams is one cycle
 var spins = 7
-var slotAwardIcon = preload("res://scene/player/slots/slot_award_icon.tscn")
+
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
@@ -64,6 +64,7 @@ func _process(delta):
 			spins += 1
 			addNewIcon()
 		#	
+var slotAwardIcon = preload("res://scene/player/slots/slot_award_icon.tscn")
 func addNewIcon():
 	var newIcon = slotAwardIcon.instantiate()
 	var myFlavor = randi_range(0,slotContents.size()-1)
