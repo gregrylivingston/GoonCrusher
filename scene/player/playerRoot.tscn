@@ -13,6 +13,7 @@ bg_color = Color(0.658824, 0.12549, 0.101961, 1)
 
 [node name="PlayerRoot" type="CanvasLayer" groups=["playerGameUi"]]
 process_mode = 3
+layer = 3
 script = ExtResource("1_csk4w")
 
 [node name="carPanel" parent="." instance=ExtResource("2_gx8xt")]

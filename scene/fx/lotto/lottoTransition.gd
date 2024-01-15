@@ -3,11 +3,28 @@ extends CanvasLayer
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
-	fillFromTop()
+	var columns = get_viewport().size.x / 40
+	var rows = get_viewport().size.y / 40
+	var picker = randi_range(0,2)
+	if picker == 0:fillFromTop(columns, rows)
+	elif picker == 1: fillFromBottom(columns , rows)
+	elif picker == 2: fillFromLeft(columns , rows)
 
-func fillFromTop():
-	for y in 50:
-		for x in 50:
+func fillFromTop(columns , rows):
+	for y in rows:
+		for x in columns:
+			createIcon( Vector2( x * 40 , y * 40 - 20) )
+		await get_tree().process_frame
+
+func fillFromBottom(columns, rows):
+	for y in rows:
+		for x in columns:
+			createIcon( Vector2( (columns-1-x) * 40 , (rows-1-y) * 40 - 20) )
+		await get_tree().process_frame
+
+func fillFromLeft(columns , rows):
+	for x in columns:
+		for y in rows:
 			createIcon( Vector2( x * 40 , y * 40 - 20) )
 		await get_tree().process_frame
 
