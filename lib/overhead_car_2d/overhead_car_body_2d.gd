@@ -170,12 +170,12 @@ func _physics_process(delta):
 		activeCarEffects()
 
 func crushGoon(collider):
-	collider.destroy()
 	var newPowerup = Root.getSpecificPowerup("currentGoonsCrushed")
-	newPowerup.global_position = global_position
+	newPowerup.global_position = collider.global_position
 	Root.levelRoot.add_child(newPowerup)
+	collider.destroy()
 	#currentGoonsCrushed += 1
-	ui.updateGoonsCrushed()
+
 
 #sound and graphics for running car
 func activeCarEffects():
@@ -252,7 +252,7 @@ func reward(powerup: String , quantity, forShowOnly: bool = false):
 	if not forShowOnly: self[powerup] += quantity
 	health = clamp(health, -10.0, 100.0)
 	fuel = clamp(fuel, -10.0, 100.0)
-	if powerup != "coin" && powerup != "health" && powerup != "fuel": 
+	if powerup != "coin" && powerup != "health" && powerup != "fuel" && powerup != "currentGoonsCrushed": 
 		if powerup != "gem": powerupsCollected += 1
 		if  powerupAudio.size() > 0 && $"AudioStream-Voice".playing == false:
 			await get_tree().create_timer(.25).timeout
@@ -261,6 +261,8 @@ func reward(powerup: String , quantity, forShowOnly: bool = false):
 	if Root.isRunActive:
 		if not is_instance_valid(ui): ui = get_tree().get_nodes_in_group("playerGameUi")[0]
 		ui.updateStats()
+	if powerup == "currentGoonsCrushed": ui.updateGoonsCrushed()
+
 
 func playPurseRewardAudio():
 	if  purseAudio.size() > 0:# && $"AudioStream-Voice".playing == false:
