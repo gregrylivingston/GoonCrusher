@@ -165,13 +165,10 @@ func _physics_process(delta):
 			damage(0.5)
 			if velocity.length() > 500:crushGoon(collider)
 
-
-
-	
 	if velocity.length() == 0:
 		if $"AudioStream-Engine".playing:  $"AudioStream-Engine".stop()
 	else:
-		activeCarEffects()
+		activeCarEffects(delta)
 
 func crushGoon(collider):
 	var newPowerup = Root.getSpecificPowerup("currentGoonsCrushed")
@@ -180,12 +177,25 @@ func crushGoon(collider):
 	collider.destroy()
 	#currentGoonsCrushed += 1
 
+var isVibratingLeft = 2
+var vibrationSteps = 0
+var vibrationFrequency = 5
+@onready var spriteStartingPosition = $sprite.position
 
 #sound and graphics for running car
-func activeCarEffects():
+func activeCarEffects(delta):
 	if not $"AudioStream-Engine".playing: $"AudioStream-Engine".play()
 	$"AudioStream-Engine".pitch_scale = 1  +  ( velocity.length() / 400 ) 
 	fuel -= velocity.length() / 50000
+
+	vibrationSteps += 1
+	if vibrationSteps % vibrationFrequency == 0:
+		vibrationFrequency = clampi( 10 -  int(velocity.length() / 500) , 2 , 10 )
+		if vibrationFrequency > 2: print(vibrationFrequency)
+		vibrationSteps = 0
+		isVibratingLeft = -isVibratingLeft
+		get_tree().create_tween().tween_property( $sprite , "position" , spriteStartingPosition + Vector2(0 , isVibratingLeft * velocity.length() / 1700) ,  vibrationFrequency * delta)
+
 
 	##FX and Audio
 	if ( _car_input.braking && velocity.length() > 200.0) || ( velocity.length() > 800.0 && abs(_car_input.steering) > 0.2):
