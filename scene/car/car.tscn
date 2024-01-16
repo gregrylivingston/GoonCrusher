@@ -15,6 +15,7 @@ size = Vector2(212, 95)
 z_index = 1
 script = ExtResource("1_ibwir")
 profilePic = ExtResource("2_au1uh")
+engineNoise = ExtResource("3_hfwa2")
 
 [node name="Camera2D" type="Camera2D" parent="."]
 zoom = Vector2(0.5, 0.5)

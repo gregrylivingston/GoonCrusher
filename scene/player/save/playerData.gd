@@ -18,11 +18,11 @@ var cars = {
 		"upgrades":{"traction":0,"engine":0,"armor":0,"steering":0},
 	},	
 	"pickup":{
-		"cost":10000,#10000,
+		"cost":10000,
 		"upgrades":{"traction":0,"engine":0,"armor":0,"steering":0},
 	},
 	"semi":{
-		"cost":0,#25000,
+		"cost":25000,
 		"upgrades":{"traction":0,"engine":0,"armor":0,"steering":0},
 	},
 	"audi":{

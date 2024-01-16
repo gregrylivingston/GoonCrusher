@@ -48,6 +48,7 @@ var isDestroyed: bool = false
 @export var powerupAudio: Array[AudioStreamMP3] = []
 @export var lowGasAudio: Array[AudioStreamMP3] = []
 @export var lowHealthAudio: Array[AudioStreamMP3] = []
+@export var engineNoise: AudioStreamMP3
 
 class CarInput:
 	var steering := 0.0      # -1.0 (left) to 1.0 (right)
@@ -68,6 +69,8 @@ func _ready():
 	purseAudio.append_array(powerupAudio)
 	_connect_car_areas(get_tree().root)
 	updateAudioLevels()
+	$"AudioStream-Engine".stream = engineNoise
+	$"AudioStream-Engine".play()
 	if isPlayer:
 		add_to_group("playerCar")
 		Root.playerCar = self

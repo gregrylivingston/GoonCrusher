@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3 uid="uid://b7vyfnv77wwfw"]
+[gd_scene load_steps=13 format=3 uid="uid://b7vyfnv77wwfw"]
 
 [ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="1_oirr4"]
 [ext_resource type="Texture2D" uid="uid://c4it7ulsvl3bx" path="res://scene/car/ambulance/Ambulance.png" id="2_86vbp"]
@@ -11,6 +11,7 @@
 [ext_resource type="AudioStream" uid="uid://bw46gbi3ca5lj" path="res://scene/car/ambulance/audio/ambulance_intro_6.mp3" id="8_vf216"]
 [ext_resource type="AudioStream" uid="uid://cq1u55gna2d14" path="res://scene/car/ambulance/audio/ambulance_intro_7.mp3" id="9_membe"]
 [ext_resource type="AudioStream" uid="uid://bcd4sf6yhua60" path="res://scene/car/ambulance/audio/ambulance_intro_8.mp3" id="10_nxecm"]
+[ext_resource type="AudioStream" uid="uid://dmlptibuqjawg" path="res://sound/fx/engine/engine1.mp3" id="11_es0hc"]
 
 [node name="Car" instance=ExtResource("1_oirr4")]
 engine = 30
@@ -21,6 +22,7 @@ profilePic = ExtResource("2_fowyq")
 charName = "Xavier"
 carId = "ambulance"
 introAudio = Array[AudioStreamMP3]([ExtResource("3_txlrx"), ExtResource("4_o64rm"), ExtResource("5_8lwbb"), ExtResource("6_7ctxv"), ExtResource("7_rio81"), ExtResource("8_vf216"), ExtResource("9_membe"), ExtResource("10_nxecm")])
+engineNoise = ExtResource("11_es0hc")
 
 [node name="sprite" parent="." index="4"]
 position = Vector2(-3, -1)

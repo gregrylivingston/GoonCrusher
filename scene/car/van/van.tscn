@@ -1,4 +1,4 @@
-[gd_scene load_steps=28 format=3 uid="uid://67a8ek6j834x"]
+[gd_scene load_steps=29 format=3 uid="uid://67a8ek6j834x"]
 
 [ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="1_p428k"]
 [ext_resource type="Texture2D" uid="uid://pjglsxpdyhov" path="res://scene/car/van/Mini_van.png" id="2_1lxhl"]
@@ -25,6 +25,7 @@
 [ext_resource type="AudioStream" uid="uid://c2ncnfxl3td4l" path="res://scene/car/van/audio/van_lowgas_1.mp3" id="24_67hac"]
 [ext_resource type="AudioStream" uid="uid://b7x5n0ohpn201" path="res://scene/car/van/audio/van_lowgas_2.mp3" id="25_rpm3l"]
 [ext_resource type="AudioStream" uid="uid://j0c6hg4k7e2o" path="res://scene/car/van/audio/van_lowgas_3.mp3" id="26_kuhoo"]
+[ext_resource type="AudioStream" uid="uid://bd47djk1k5exh" path="res://sound/fx/engine/engine2.mp3" id="27_be5lo"]
 [ext_resource type="AudioStream" uid="uid://dawqa2bvv647c" path="res://scene/car/van/audio/van_lowhealth_1.mp3" id="30_co8o0"]
 [ext_resource type="AudioStream" uid="uid://cidnoei82mwvw" path="res://scene/car/van/audio/van_lowhealth_2.mp3" id="31_b7jwg"]
 
@@ -40,6 +41,7 @@ purseAudio = Array[AudioStreamMP3]([ExtResource("11_o65b5"), ExtResource("12_8d6
 powerupAudio = Array[AudioStreamMP3]([ExtResource("3_0haua"), ExtResource("16_gtuau"), ExtResource("17_br3r6"), ExtResource("18_yusay"), ExtResource("19_x8ew0"), ExtResource("20_lfsll"), ExtResource("21_xfa01")])
 lowGasAudio = Array[AudioStreamMP3]([ExtResource("24_67hac"), ExtResource("25_rpm3l"), ExtResource("26_kuhoo")])
 lowHealthAudio = Array[AudioStreamMP3]([ExtResource("30_co8o0"), ExtResource("31_b7jwg")])
+engineNoise = ExtResource("27_be5lo")
 
 [node name="sprite" parent="." index="4"]
 position = Vector2(-11, 7)

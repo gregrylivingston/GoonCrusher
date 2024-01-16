@@ -1,4 +1,4 @@
-[gd_scene load_steps=27 format=3 uid="uid://7utqen5eg62p"]
+[gd_scene load_steps=28 format=3 uid="uid://7utqen5eg62p"]
 
 [ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="1_16fys"]
 [ext_resource type="Texture2D" uid="uid://cmg5tl48id0af" path="res://scene/car/semi/truck.png" id="2_0owyo"]
@@ -25,6 +25,7 @@
 [ext_resource type="AudioStream" uid="uid://r06pokath0cx" path="res://scene/car/semi/audio/semi_lowgas_2.mp3" id="22_47v1i"]
 [ext_resource type="AudioStream" uid="uid://e0kiqmki0gt1" path="res://scene/car/semi/audio/semi_lowhealth_1.mp3" id="23_43kt5"]
 [ext_resource type="AudioStream" uid="uid://c3hhd0u8brvvp" path="res://scene/car/semi/audio/semi_lowhealth_2.mp3" id="24_w2g4c"]
+[ext_resource type="AudioStream" uid="uid://dmlptibuqjawg" path="res://sound/fx/engine/engine1.mp3" id="25_yd7s4"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_8s7dq"]
 size = Vector2(309, 115)
@@ -42,6 +43,7 @@ purseAudio = Array[AudioStreamMP3]([ExtResource("13_u22q5"), ExtResource("14_dmw
 powerupAudio = Array[AudioStreamMP3]([ExtResource("17_2alti"), ExtResource("18_vgc5m"), ExtResource("12_aq20n"), ExtResource("11_v7qt4"), ExtResource("19_4afom"), ExtResource("20_31uva"), ExtResource("10_vqa1h"), ExtResource("4_nujw2")])
 lowGasAudio = Array[AudioStreamMP3]([ExtResource("21_nb5bo"), ExtResource("22_47v1i")])
 lowHealthAudio = Array[AudioStreamMP3]([ExtResource("23_43kt5"), ExtResource("24_w2g4c"), ExtResource("6_t0nwr")])
+engineNoise = ExtResource("25_yd7s4")
 
 [node name="CollisionShape2D" parent="." index="2"]
 position = Vector2(3.5, -1.5)

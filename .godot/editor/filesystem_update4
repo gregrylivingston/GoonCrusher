@@ -27,3 +27,7 @@ res://scene/fx/lotto/lottoTransition.gd
 res://scene/player/slots/slot_row.tscn
 res://scene/player/slots/slot_row.gd
 res://scene/player/slots/slotMachine.gd
+res://lib/overhead_car_2d/overhead_car_body_2d.gd
+res://scene/car/sedan/sedan.tscn
+res://scene/car/semi/semi.tscn
+res://scene/car/ambulance/ambulance.tscn
