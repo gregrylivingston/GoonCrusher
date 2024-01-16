@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://dbkp41oxg03o6"]
+[gd_scene load_steps=10 format=3 uid="uid://dbkp41oxg03o6"]
 
 [ext_resource type="Script" path="res://lib/overhead_car_2d/overhead_car_body_2d.gd" id="1_ibwir"]
 [ext_resource type="Texture2D" uid="uid://dthtmohgw8u1f" path="res://scene/car/audi/Audi.png" id="2_33x0l"]
@@ -7,6 +7,7 @@
 [ext_resource type="AudioStream" uid="uid://dahxhxgy1qfrn" path="res://sound/fx/engine/rally-car2.mp3" id="3_hfwa2"]
 [ext_resource type="AudioStream" uid="uid://dd240qte30ido" path="res://sound/fx/tires_squal_loop.wav" id="4_jbkbo"]
 [ext_resource type="AudioStream" uid="uid://dlbojdancbkl3" path="res://sound/fx/crash-6711.mp3" id="5_pn0ef"]
+[ext_resource type="AudioStream" uid="uid://tuaawqdwftov" path="res://sound/fx/car-damage1.mp3" id="8_qq4uq"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_f6v2r"]
 size = Vector2(212, 95)
@@ -60,3 +61,8 @@ stream = ExtResource("5_pn0ef")
 
 [node name="AudioStream-Voice" type="AudioStreamPlayer" parent="."]
 volume_db = 4.0
+
+[node name="AudioStream-CarDamage" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("8_qq4uq")
+volume_db = -5.0
+pitch_scale = 2.0

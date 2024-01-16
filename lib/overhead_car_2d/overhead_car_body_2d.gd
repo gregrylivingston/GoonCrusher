@@ -97,6 +97,8 @@ func makeHealthWarning():
 	healthWarningGiven = true
 	$"AudioStream-Voice".stream = lowHealthAudio[ randi_range(0, lowHealthAudio.size()-1)]
 	$"AudioStream-Voice".play()
+	$"AudioStream-CarDamage".pitch_scale = randf_range(0.5,2.0)
+	$"AudioStream-CarDamage".play()
 	await get_tree().create_timer(200).timeout
 	resetHealthWarning()
 
@@ -166,7 +168,8 @@ func _physics_process(delta):
 			if velocity.length() > 500:crushGoon(collider)
 
 	if velocity.length() == 0:
-		if $"AudioStream-Engine".playing:  $"AudioStream-Engine".stop()
+		if $"AudioStream-Engine".playing:$"AudioStream-Engine".stop()
+		if $"AudioStream-CarDamage".playing:$"AudioStream-CarDamage".stop()
 	else:
 		activeCarEffects(delta)
 
@@ -185,13 +188,13 @@ var vibrationFrequency = 5
 #sound and graphics for running car
 func activeCarEffects(delta):
 	if not $"AudioStream-Engine".playing: $"AudioStream-Engine".play()
+	if not $"AudioStream-CarDamage".playing && healthWarningGiven: $"AudioStream-CarDamage".play()
 	$"AudioStream-Engine".pitch_scale = 1  +  ( velocity.length() / 400 ) 
 	fuel -= velocity.length() / 50000
 
 	vibrationSteps += 1
 	if vibrationSteps % vibrationFrequency == 0:
 		vibrationFrequency = clampi( 10 -  int(velocity.length() / 500) , 2 , 10 )
-		if vibrationFrequency > 2: print(vibrationFrequency)
 		vibrationSteps = 0
 		isVibratingLeft = -isVibratingLeft
 		get_tree().create_tween().tween_property( $sprite , "position" , spriteStartingPosition + Vector2(0 , isVibratingLeft * velocity.length() / 1700) ,  vibrationFrequency * delta)
