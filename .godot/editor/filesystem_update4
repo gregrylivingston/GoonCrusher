@@ -29,3 +29,8 @@ res://scene/enemy/walker/walker.tscn
 res://scene/car/taxi/taxi.tscn
 res://scripts/global/saveManager.gd
 res://lib/overhead_car_2d/overhead_car_body_2d.gd
+res://texture/animation/smoke.tscn
+res://texture/animation/smoke.gd
+res://scene/car/semi/semi.tscn
+res://scene/car/racer/racer.tscn
+res://scene/car/police/police.tscn

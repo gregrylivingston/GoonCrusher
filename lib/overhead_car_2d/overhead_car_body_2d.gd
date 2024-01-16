@@ -97,8 +97,8 @@ func makeHealthWarning():
 	healthWarningGiven = true
 	$"AudioStream-Voice".stream = lowHealthAudio[ randi_range(0, lowHealthAudio.size()-1)]
 	$"AudioStream-Voice".play()
-	$"AudioStream-CarDamage".pitch_scale = randf_range(0.5,2.0)
-	$"AudioStream-CarDamage".play()
+	#$"AudioStream-CarDamage".pitch_scale = randf_range(0.5,2.0)
+	#$"AudioStream-CarDamage".play()
 	await get_tree().create_timer(200).timeout
 	resetHealthWarning()
 
@@ -168,10 +168,14 @@ func _physics_process(delta):
 			if velocity.length() > 500:crushGoon(collider)
 
 	if velocity.length() == 0:
-		if $"AudioStream-Engine".playing:$"AudioStream-Engine".stop()
-		if $"AudioStream-CarDamage".playing:$"AudioStream-CarDamage".stop()
+		stopCarFX()
 	else:
 		activeCarEffects(delta)
+		
+func stopCarFX():
+	if $"AudioStream-Engine".playing:$"AudioStream-Engine".stop()
+	if $"AudioStream-CarDamage".playing:$"AudioStream-CarDamage".stop()
+	$sprite/exhaust.visible = false
 
 func crushGoon(collider):
 	var newPowerup = Root.getSpecificPowerup("currentGoonsCrushed")
@@ -187,6 +191,7 @@ var vibrationFrequency = 5
 
 #sound and graphics for running car
 func activeCarEffects(delta):
+	$sprite/exhaust.visible = true
 	if not $"AudioStream-Engine".playing: $"AudioStream-Engine".play()
 	if not $"AudioStream-CarDamage".playing && healthWarningGiven: $"AudioStream-CarDamage".play()
 	$"AudioStream-Engine".pitch_scale = 1  +  ( velocity.length() / 400 ) 
@@ -324,6 +329,7 @@ func updateAudioLevels():
 	$"AudioStream-Tires".volume_db = 	SaveManager.getVolume("fx")
 	$"AudioStream-Crash".volume_db = 	SaveManager.getVolume("fx")
 	$"AudioStream-Voice".volume_db = 2 + SaveManager.getVolume("voice")
+	$"AudioStream-CarDamage".volume_db = -5 + SaveManager.getVolume("fx")
 	
 func playRandomFxSound():
 	var randomizer = randi_range(0,1)

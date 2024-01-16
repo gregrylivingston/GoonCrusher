@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3 uid="uid://26c7khgh5lqa"]
+[gd_scene load_steps=13 format=3 uid="uid://26c7khgh5lqa"]
 
 [ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="1_kgqi5"]
 [ext_resource type="Texture2D" uid="uid://3ntiq5bget7n" path="res://scene/car/racer/Black_viper.png" id="2_7a10q"]
@@ -11,6 +11,7 @@
 [ext_resource type="AudioStream" uid="uid://cmvgf7lrmvv3" path="res://scene/car/racer/audio/Racer_Intro_6.mp3" id="8_7yb6i"]
 [ext_resource type="AudioStream" uid="uid://brnxpy4gfoq8a" path="res://scene/car/racer/audio/Racer_Intro_7.mp3" id="9_42fym"]
 [ext_resource type="AudioStream" uid="uid://yw1tml0bor3p" path="res://scene/car/racer/audio/Racer_Intro_8.mp3" id="10_b3qsk"]
+[ext_resource type="PackedScene" uid="uid://551dlp73phd4" path="res://texture/animation/smoke.tscn" id="12_ivv6c"]
 
 [node name="Car" instance=ExtResource("1_kgqi5")]
 engine = 50
@@ -37,3 +38,6 @@ position = Vector2(26.9998, -60.0001)
 
 [node name="tireLocation4" parent="sprite" index="3"]
 position = Vector2(-44.0002, -59.9998)
+
+[node name="Smoke2" parent="sprite/exhaust" index="1" instance=ExtResource("12_ivv6c")]
+position = Vector2(-35.4542, 105.455)

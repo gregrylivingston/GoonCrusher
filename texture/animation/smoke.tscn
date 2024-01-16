@@ -1,0 +1,126 @@
+[gd_scene load_steps=19 format=3 uid="uid://551dlp73phd4"]
+
+[ext_resource type="Texture2D" uid="uid://oyldnasiiwbd" path="res://texture/spritesheet/Smoke15Frames.png" id="1_nm8hl"]
+[ext_resource type="Script" path="res://texture/animation/smoke.gd" id="2_kl6bd"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_sfspj"]
+atlas = ExtResource("1_nm8hl")
+region = Rect2(0, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_6gstc"]
+atlas = ExtResource("1_nm8hl")
+region = Rect2(256, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_x10t6"]
+atlas = ExtResource("1_nm8hl")
+region = Rect2(512, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_w58v0"]
+atlas = ExtResource("1_nm8hl")
+region = Rect2(768, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_3in7w"]
+atlas = ExtResource("1_nm8hl")
+region = Rect2(1024, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_774ap"]
+atlas = ExtResource("1_nm8hl")
+region = Rect2(0, 256, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_lanjv"]
+atlas = ExtResource("1_nm8hl")
+region = Rect2(256, 256, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_toag0"]
+atlas = ExtResource("1_nm8hl")
+region = Rect2(512, 256, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_aq374"]
+atlas = ExtResource("1_nm8hl")
+region = Rect2(768, 256, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_yk4x5"]
+atlas = ExtResource("1_nm8hl")
+region = Rect2(1024, 256, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_s3hxr"]
+atlas = ExtResource("1_nm8hl")
+region = Rect2(0, 512, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_eu68l"]
+atlas = ExtResource("1_nm8hl")
+region = Rect2(256, 512, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_wihfn"]
+atlas = ExtResource("1_nm8hl")
+region = Rect2(512, 512, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_v6c6p"]
+atlas = ExtResource("1_nm8hl")
+region = Rect2(768, 512, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4fp18"]
+atlas = ExtResource("1_nm8hl")
+region = Rect2(1024, 512, 256, 256)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_gj86m"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sfspj")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_6gstc")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_x10t6")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_w58v0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_3in7w")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_774ap")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_lanjv")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_toag0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_aq374")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_yk4x5")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_s3hxr")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_eu68l")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_wihfn")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_v6c6p")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_4fp18")
+}],
+"loop": true,
+"name": &"new_animation",
+"speed": 15.0
+}]
+
+[node name="Smoke" type="AnimatedSprite2D"]
+self_modulate = Color(1, 1, 1, 0.396078)
+scale = Vector2(0.5, 0.5)
+sprite_frames = SubResource("SpriteFrames_gj86m")
+animation = &"new_animation"
+frame = 6
+frame_progress = 0.184024
+script = ExtResource("2_kl6bd")

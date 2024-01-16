@@ -1,3 +1,5 @@
+Node2D
+AnimatedSprite2D
 AudioStreamPlayer2D
 CanvasLayer
 Control
@@ -11,5 +13,3 @@ Button
 HSeparator
 TextureRect
 ColorRect
-Panel
-VSeparator

@@ -1,3 +1,4 @@
+AnimatedTexture
 Resource
 Theme
 StyleBoxFlat

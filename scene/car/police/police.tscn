@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3 uid="uid://dfqbeth5jspt5"]
+[gd_scene load_steps=13 format=3 uid="uid://dfqbeth5jspt5"]
 
 [ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="1_qtyvp"]
 [ext_resource type="Texture2D" uid="uid://disw6kafapd1m" path="res://scene/car/police/Police.png" id="2_7cb7w"]
@@ -11,6 +11,7 @@
 [ext_resource type="AudioStream" uid="uid://bpdb8jguevfuk" path="res://scene/car/police/audio/police_intro_6.mp3" id="8_qb8pj"]
 [ext_resource type="AudioStream" uid="uid://bfdhnb3ug7pau" path="res://scene/car/police/audio/police_intro_7.mp3" id="9_rcvls"]
 [ext_resource type="AudioStream" uid="uid://csj5cc0mio728" path="res://scene/car/police/audio/police_intro_8.mp3" id="10_ovhbp"]
+[ext_resource type="PackedScene" uid="uid://551dlp73phd4" path="res://texture/animation/smoke.tscn" id="12_7x7a1"]
 
 [node name="Car" instance=ExtResource("1_qtyvp")]
 engine = 35
@@ -24,3 +25,6 @@ introAudio = Array[AudioStreamMP3]([ExtResource("3_iw1cs"), ExtResource("4_i3uqm
 
 [node name="sprite" parent="." index="4"]
 texture = ExtResource("2_7cb7w")
+
+[node name="Smoke2" parent="sprite/exhaust" index="1" instance=ExtResource("12_7x7a1")]
+position = Vector2(-23.9996, 109)

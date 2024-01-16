@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://dbkp41oxg03o6"]
+[gd_scene load_steps=11 format=3 uid="uid://dbkp41oxg03o6"]
 
 [ext_resource type="Script" path="res://lib/overhead_car_2d/overhead_car_body_2d.gd" id="1_ibwir"]
 [ext_resource type="Texture2D" uid="uid://dthtmohgw8u1f" path="res://scene/car/audi/Audi.png" id="2_33x0l"]
@@ -7,6 +7,7 @@
 [ext_resource type="AudioStream" uid="uid://dahxhxgy1qfrn" path="res://sound/fx/engine/rally-car2.mp3" id="3_hfwa2"]
 [ext_resource type="AudioStream" uid="uid://dd240qte30ido" path="res://sound/fx/tires_squal_loop.wav" id="4_jbkbo"]
 [ext_resource type="AudioStream" uid="uid://dlbojdancbkl3" path="res://sound/fx/crash-6711.mp3" id="5_pn0ef"]
+[ext_resource type="PackedScene" uid="uid://551dlp73phd4" path="res://texture/animation/smoke.tscn" id="6_ynfn4"]
 [ext_resource type="AudioStream" uid="uid://tuaawqdwftov" path="res://sound/fx/car-damage1.mp3" id="8_qq4uq"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_f6v2r"]
@@ -48,6 +49,11 @@ rotation = -1.5708
 [node name="tireLocation4" type="Node2D" parent="sprite"]
 position = Vector2(-35, -70)
 rotation = -1.57652
+
+[node name="exhaust" type="Node2D" parent="sprite"]
+
+[node name="Smoke" parent="sprite/exhaust" instance=ExtResource("6_ynfn4")]
+position = Vector2(24.0004, 109)
 
 [node name="AudioStream-Engine" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("3_hfwa2")
