@@ -33,6 +33,7 @@ var fuel = 100.0
 var coin = 0
 var gem = 0
 var currentGoonsCrushed = 0
+var slotMachines = 0
 
 @onready var rewardAudioPlayer = $"AudioStream-Reward"
 

@@ -229,6 +229,7 @@ autoplay = true
 volume_db = 2.0
 
 [connection signal="pressed" from="Panel2/VBoxContainer/beginButton" to="." method="_on_begin_button_pressed"]
+[connection signal="pressed" from="Panel2/VBoxContainer/achievements" to="." method="_on_achievements_pressed"]
 [connection signal="pressed" from="Panel2/VBoxContainer/settingsButton" to="." method="_on_settings_button_pressed"]
 [connection signal="pressed" from="Panel2/VBoxContainer/quitButton" to="." method="_on_quit_button_pressed"]
 [connection signal="pressed" from="freeMoneyButton" to="." method="_on_free_money_button_pressed"]

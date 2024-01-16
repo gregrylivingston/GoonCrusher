@@ -109,3 +109,9 @@ func _on_settings_button_pressed():
 func updateAudioLevels():
 	$AudioStreamPlayer.volume_db = -8 + SaveManager.getVolume( "music" )
 	$voicePlayer.volume_db = 2 + SaveManager.getVolume( "voice" )
+
+
+func _on_achievements_pressed():
+	var scene = load("res://scene/player/menu/gameSummary.tscn").instantiate()
+	scene.isGameSummary = false
+	add_child(scene)
