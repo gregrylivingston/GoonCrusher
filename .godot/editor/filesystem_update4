@@ -31,3 +31,7 @@ res://lib/overhead_car_2d/overhead_car_body_2d.gd
 res://scene/car/sedan/sedan.tscn
 res://scene/car/semi/semi.tscn
 res://scene/car/ambulance/ambulance.tscn
+res://scene/fx/tiremark.tscn
+res://scene/fx/tiremark.gd
+res://scene/enemy/walker/walker.tscn
+res://scene/enemy/walker/walker.gd
