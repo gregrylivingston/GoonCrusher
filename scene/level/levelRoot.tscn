@@ -105,7 +105,6 @@ position = Vector2(2443, -861)
 position = Vector2(2466, 1868)
 
 [node name="Powerup9" parent="." instance=ExtResource("16_5gmm7")]
-visible = true
 position = Vector2(3801, 611)
 
 [node name="SpawnManager" parent="." instance=ExtResource("17_3wer8")]

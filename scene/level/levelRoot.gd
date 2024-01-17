@@ -33,7 +33,7 @@ func _ready():
 
 
 func setNighttime():
-	get_tree().create_tween().tween_property($CanvasModulate , "color" , Color(.05,.05,.05,1.0) , 10)
+	get_tree().create_tween().tween_property($CanvasModulate , "color" , Color(.0,.0,.0,1.0) , 10)
 	await get_tree().create_timer(5).timeout
 	$AudioStreamPlayer_wolf.play()
 	await get_tree().create_timer(2).timeout

@@ -8,4 +8,4 @@ speed = 2.0
 
 [node name="Walker" parent="." index="1"]
 sprite_frames = ExtResource("2_ml8tv")
-frame_progress = 0.0
+frame_progress = 0.0089844

@@ -191,7 +191,7 @@ func crushGoon(collider):
 	collider.destroy()
 	#currentGoonsCrushed += 1
 
-var isVibratingLeft = 2
+var isVibratingLeft = 4
 var vibrationSteps = 0
 var vibrationFrequency = 5
 @onready var spriteStartingPosition = $sprite.position
@@ -209,7 +209,8 @@ func activeCarEffects(delta):
 		vibrationFrequency = clampi( 10 -  int(velocity.length() / 500) , 2 , 10 )
 		vibrationSteps = 0
 		isVibratingLeft = -isVibratingLeft
-		get_tree().create_tween().tween_property( $sprite , "position" , spriteStartingPosition + Vector2(0 , isVibratingLeft * velocity.length() / 1700) ,  vibrationFrequency * delta)
+		var vibrationTarget = spriteStartingPosition + Vector2(0 , isVibratingLeft * velocity.length() / 2000)
+		get_tree().create_tween().tween_property( $sprite , "position" , vibrationTarget ,  vibrationFrequency * delta)
 
 
 	##FX and Audio
@@ -221,8 +222,8 @@ func activeCarEffects(delta):
 		tiremark = {}
 
 	#zoom out if going fast
-	if velocity.length() > 500.0 && isPlayer && is_instance_valid($Camera2D):
-		var myZoomFactor = 0.6 - velocity.length() / 5000.0
+	if velocity.length() > 350.0 && isPlayer && is_instance_valid($Camera2D):
+		var myZoomFactor = 0.6 - velocity.length() / 3500.0
 		$Camera2D.zoom = Vector2(myZoomFactor, myZoomFactor)
 	else:
 		$Camera2D.zoom = Vector2(0.5,0.5)
@@ -240,15 +241,7 @@ func createTiremarks(i):
 	else:
 		tiremark[i.get_instance_id()] = tiremarkScene.instantiate()
 		tiremark[i.get_instance_id()].position = i.global_position
-		#tiremark[i.get_instance_id()].rotation = rotation
 		get_parent().add_child(tiremark[i.get_instance_id()])
-
-		
-
-
-
-#	position + $tireLocation.position
-
 
 
 func _update_output(_speed_factor: float, _acceleration_factor: float):
@@ -256,8 +249,6 @@ func _update_output(_speed_factor: float, _acceleration_factor: float):
 
 
 var _highest_measured_speed = 0
-
-
 func _do_update_output(acceleration):
 	var speed = velocity.length()
 	if speed > _highest_measured_speed:

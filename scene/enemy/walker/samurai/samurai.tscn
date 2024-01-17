@@ -8,5 +8,5 @@ speed = 3.2
 
 [node name="Walker" parent="." index="1"]
 sprite_frames = ExtResource("2_mblwc")
-frame_progress = 0.0
+frame_progress = 0.478109
 speed_scale = 1.5
