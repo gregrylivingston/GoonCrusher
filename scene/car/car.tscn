@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3 uid="uid://dbkp41oxg03o6"]
+[gd_scene load_steps=13 format=3 uid="uid://dbkp41oxg03o6"]
 
 [ext_resource type="Script" path="res://lib/overhead_car_2d/overhead_car_body_2d.gd" id="1_ibwir"]
 [ext_resource type="Texture2D" uid="uid://dthtmohgw8u1f" path="res://scene/car/audi/Audi.png" id="2_33x0l"]
@@ -8,10 +8,14 @@
 [ext_resource type="AudioStream" uid="uid://dd240qte30ido" path="res://sound/fx/tires_squal_loop.wav" id="4_jbkbo"]
 [ext_resource type="AudioStream" uid="uid://dlbojdancbkl3" path="res://sound/fx/crash-6711.mp3" id="5_pn0ef"]
 [ext_resource type="PackedScene" uid="uid://551dlp73phd4" path="res://texture/animation/smoke.tscn" id="6_ynfn4"]
+[ext_resource type="Texture2D" uid="uid://d1wyv3es8rac3" path="res://texture/fx/headlamp.png" id="7_d5bwr"]
 [ext_resource type="AudioStream" uid="uid://tuaawqdwftov" path="res://sound/fx/car-damage1.mp3" id="8_qq4uq"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_f6v2r"]
 size = Vector2(212, 95)
+
+[sub_resource type="OccluderPolygon2D" id="OccluderPolygon2D_77a4r"]
+polygon = PackedVector2Array(-107, -46, -108, 43, 72, 42, 74, -52)
 
 [node name="Car" type="CharacterBody2D"]
 z_index = 1
@@ -55,6 +59,32 @@ rotation = -1.57652
 [node name="Smoke" parent="sprite/exhaust" instance=ExtResource("6_ynfn4")]
 position = Vector2(24.0004, 109)
 
+[node name="PointLight2D2" type="PointLight2D" parent="sprite"]
+visible = false
+modulate = Color(100, 100, 100, 1)
+z_index = -1
+position = Vector2(63.9997, -81.0002)
+rotation = -1.5708
+scale = Vector2(6, 3)
+color = Color(1, 1, 1, 0.47451)
+shadow_enabled = true
+shadow_color = Color(0, 0, 0, 0.0980392)
+texture = ExtResource("7_d5bwr")
+offset = Vector2(256, 0)
+
+[node name="PointLight2D3" type="PointLight2D" parent="sprite"]
+visible = false
+modulate = Color(100, 100, 100, 1)
+z_index = -1
+position = Vector2(4.99973, -74)
+rotation = -1.5708
+scale = Vector2(6, 3)
+color = Color(1, 1, 1, 0.47451)
+shadow_enabled = true
+shadow_color = Color(0, 0, 0, 0.0980392)
+texture = ExtResource("7_d5bwr")
+offset = Vector2(256, 0)
+
 [node name="AudioStream-Engine" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("3_hfwa2")
 volume_db = 2.0
@@ -72,3 +102,6 @@ volume_db = 4.0
 stream = ExtResource("8_qq4uq")
 volume_db = -5.0
 pitch_scale = 2.0
+
+[node name="LightOccluder2D" type="LightOccluder2D" parent="."]
+occluder = SubResource("OccluderPolygon2D_77a4r")

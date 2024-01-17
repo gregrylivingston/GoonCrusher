@@ -1,3 +1,11 @@
+AudioStreamPlayer
+AudioStreamPlayer3D
+LightOccluder2D
+Sprite2D
+PointLight2D
+TextureRect
+DirectionalLight2D
+WorldEnvironment
 Node
 Node2D
 AnimatedSprite2D
@@ -5,11 +13,3 @@ AudioStreamPlayer2D
 CanvasLayer
 Control
 ProgressBar
-CheckButton
-Label
-HBoxContainer
-VBoxContainer
-AudioStreamPlayer
-Button
-HSeparator
-TextureRect

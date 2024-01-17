@@ -1,8 +1,9 @@
-[gd_scene load_steps=18 format=3 uid="uid://dqcrli42u3gia"]
+[gd_scene load_steps=21 format=3 uid="uid://dqcrli42u3gia"]
 
 [ext_resource type="Script" path="res://scene/level/levelRoot.gd" id="1_65p74"]
 [ext_resource type="PackedScene" uid="uid://brhh6ifac5qvc" path="res://scene/scenery/rocks.tscn" id="2_5ujut"]
 [ext_resource type="Texture2D" uid="uid://v5bd3cd45oop" path="res://texture/backgroundTexture.png" id="2_ebgys"]
+[ext_resource type="Texture2D" uid="uid://dvpt6fq7vitdb" path="res://texture/sand.png" id="2_tickn"]
 [ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="2_v78xq"]
 [ext_resource type="PackedScene" uid="uid://pgobm7erc1f0" path="res://scene/player/playerRoot.tscn" id="3_sf05p"]
 [ext_resource type="PackedScene" uid="uid://d274ibi53fekt" path="res://scene/player/spawner.tscn" id="5_4um6i"]
@@ -17,16 +18,32 @@
 [ext_resource type="PackedScene" uid="uid://xwhhgw0qwlsm" path="res://scene/powerup/slotMachine.tscn" id="15_hppr6"]
 [ext_resource type="PackedScene" uid="uid://4lh7dd54kbqe" path="res://scene/powerup/gem.tscn" id="16_5gmm7"]
 [ext_resource type="PackedScene" uid="uid://b6x6nemyty8wb" path="res://scene/enemy/spawnManager.tscn" id="17_3wer8"]
+[ext_resource type="AudioStream" uid="uid://bqf1c80fb8cpl" path="res://sound/fx/duskwolf-101348.mp3" id="19_b5cat"]
+
+[sub_resource type="Environment" id="Environment_mn5m8"]
+background_mode = 3
+glow_enabled = true
+glow_blend_mode = 0
+adjustment_enabled = true
 
 [node name="LevelRoot" type="Node2D" groups=["levelRoot"]]
 script = ExtResource("1_65p74")
 
 [node name="TextureRect" type="TextureRect" parent="."]
 custom_minimum_size = Vector2(999999, 999999)
-offset_left = -4932.0
-offset_top = -5015.0
-offset_right = 995067.0
-offset_bottom = 994984.0
+offset_left = -4904.0
+offset_top = -4960.0
+offset_right = 995095.0
+offset_bottom = 995039.0
+texture = ExtResource("2_tickn")
+stretch_mode = 1
+
+[node name="TextureRect2" type="TextureRect" parent="."]
+custom_minimum_size = Vector2(999999, 999999)
+offset_left = -4904.0
+offset_top = -4960.0
+offset_right = 995095.0
+offset_bottom = 995039.0
 texture = ExtResource("2_ebgys")
 stretch_mode = 1
 
@@ -98,3 +115,9 @@ visible = true
 position = Vector2(3801, 611)
 
 [node name="SpawnManager" parent="." instance=ExtResource("17_3wer8")]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_mn5m8")
+
+[node name="AudioStreamPlayer_wolf" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("19_b5cat")

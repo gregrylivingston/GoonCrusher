@@ -3,6 +3,7 @@ extends Node2D
 var spawnerScene = preload("res://scene/player/spawner.tscn")
 var playerCar: OverheadCarBody2D
 var playerController
+var seconds = 0
 
 func _ready():
 	updateAudioLevels()
@@ -27,6 +28,14 @@ func _ready():
 	newSpawner( Vector2i(3500,1500))
 	newSpawner( Vector2i(3500,-1500))
 	newSpawner( Vector2i(-3500,0))
+	
+
+
+
+func setNighttime():
+	$WorldEnvironment.environment.adjustment_brightness = 0.3
+	$AudioStreamPlayer_wolf.play()
+	Root.playerCar.turnOnHeadlights()
 	
 func newSpawner( spawnerPosition: Vector2i ):
 	var newSpawner = spawnerScene.instantiate()

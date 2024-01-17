@@ -359,3 +359,7 @@ func playRandomFxSound():
 		$"AudioStream-Engine".play()
 		await get_tree().create_timer(0.5).timeout
 		$"AudioStream-Engine".stop()
+		
+func turnOnHeadlights():
+	$sprite/PointLight2D2.visible = true
+	$sprite/PointLight2D3.visible = true

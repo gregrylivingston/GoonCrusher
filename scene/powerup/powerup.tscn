@@ -1,4 +1,4 @@
-[gd_scene load_steps=6 format=3 uid="uid://b7r4ro32w40xi"]
+[gd_scene load_steps=7 format=3 uid="uid://b7r4ro32w40xi"]
 
 [ext_resource type="Material" uid="uid://b2nnqweaskeli" path="res://shader/shader_edgeglow.tres" id="1_bejnl"]
 [ext_resource type="Script" path="res://scene/powerup/powerup.gd" id="2_2bp38"]
@@ -7,6 +7,9 @@
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_3mcnq"]
 size = Vector2(35, 32)
+
+[sub_resource type="OccluderPolygon2D" id="OccluderPolygon2D_mbp6k"]
+polygon = PackedVector2Array(-6.5, -13.5, -8.5, 15, 8, 15, 9, -14.5)
 
 [node name="Powerup" type="Sprite2D"]
 material = ExtResource("1_bejnl")
@@ -24,5 +27,8 @@ shape = SubResource("RectangleShape2D_3mcnq")
 [node name="AudioStreamReward" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("4_y3svm")
 volume_db = 2.0
+
+[node name="LightOccluder2D" type="LightOccluder2D" parent="."]
+occluder = SubResource("OccluderPolygon2D_mbp6k")
 
 [connection signal="body_entered" from="Area2D" to="." method="_on_area_2d_body_entered"]

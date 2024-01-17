@@ -43,3 +43,7 @@ res://scene/enemy/walker/devil/devil.tscn
 res://scene/enemy/walker/samurai/samurai.tscn
 res://scene/enemy/walker/spartan/spartan.tscn
 res://scene/fx/tiremark.gd
+res://scene/scenery/rocks.tscn
+res://scene/powerup/powerup.tscn
+res://scene/player/Timer.gd
+res://scene/level/levelRoot.gd
