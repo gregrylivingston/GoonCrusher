@@ -47,3 +47,12 @@ res://scene/scenery/rocks.tscn
 res://scene/powerup/powerup.tscn
 res://scene/player/Timer.gd
 res://scene/level/levelRoot.gd
+res://scene/powerup/purse.tscn
+res://scene/powerup/traction.tscn
+res://scene/powerup/steering.tscn
+res://scene/powerup/slotMachine.tscn
+res://scene/powerup/health.tscn
+res://scene/powerup/gem.tscn
+res://scene/powerup/engine.tscn
+res://scene/powerup/coin.tscn
+res://scene/powerup/armor.tscn

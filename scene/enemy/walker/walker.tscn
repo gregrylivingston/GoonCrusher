@@ -9,6 +9,7 @@
 size = Vector2(32, 39)
 
 [sub_resource type="OccluderPolygon2D" id="OccluderPolygon2D_iva72"]
+cull_mode = 1
 polygon = PackedVector2Array(-19, -14, -17, 11, 13, 8, 10, -20)
 
 [node name="CharacterBody2D" type="CharacterBody2D"]

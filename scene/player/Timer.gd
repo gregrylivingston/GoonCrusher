@@ -14,6 +14,6 @@ func _process(delta):
 	if clockSeconds < 10: clockSeconds = "0" + str(clockSeconds)
 	text = str(int(Root.levelRoot.seconds /60)) + " : " + str(clockSeconds)
 	
-	if int(Root.levelRoot.seconds )==60 && isDaytime:
+	if int(Root.levelRoot.seconds )== 10 && isDaytime:
 		isDaytime = false
 		Root.levelRoot.setNighttime()

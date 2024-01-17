@@ -73,13 +73,19 @@ func _ready():
 	updateAudioLevels()
 	$"AudioStream-Engine".stream = engineNoise
 	$"AudioStream-Engine".play()
+
 	if isPlayer:
 		add_to_group("playerCar")
 		Root.playerCar = self
 		engine += SaveManager.playerData.cars[carId].upgrades.engine
 		steering += SaveManager.playerData.cars[carId].upgrades.steering
 		traction += SaveManager.playerData.cars[carId].upgrades.traction
-		armor += SaveManager.playerData.cars[carId].upgrades.armor
+		armor += SaveManager.playerData.cars[carId].upgrades.armor	
+		
+		$headlamps/carhighlight.texture = $sprite.texture
+		$headlamps/carhighlight.position = $sprite.position
+	else: 
+		$headlamps/carhighlight.queue_free()
 
 var gasWarningGiven = false
 func resetGasWarning(): gasWarningGiven = false
@@ -360,6 +366,7 @@ func playRandomFxSound():
 		await get_tree().create_timer(0.5).timeout
 		$"AudioStream-Engine".stop()
 		
+@onready var headlamps = $headlamps
 func turnOnHeadlights():
-	$sprite/PointLight2D2.visible = true
-	$sprite/PointLight2D3.visible = true
+	headlamps.visible = true
+	

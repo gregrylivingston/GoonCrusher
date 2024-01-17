@@ -5,6 +5,7 @@
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_x7f3q"]
 
 [sub_resource type="OccluderPolygon2D" id="OccluderPolygon2D_qiruc"]
+cull_mode = 2
 polygon = PackedVector2Array(-72, -20, -23, -58, 17, -58, 63, -48, 62, 1, 54, 50, -31, 66, -56, 40)
 
 [node name="Rocks" type="Polygon2D"]

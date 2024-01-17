@@ -1,9 +1,16 @@
-[gd_scene load_steps=3 format=3 uid="uid://bgogx6yxekbjp"]
+[gd_scene load_steps=4 format=3 uid="uid://bgogx6yxekbjp"]
 
 [ext_resource type="PackedScene" uid="uid://b7r4ro32w40xi" path="res://scene/powerup/powerup.tscn" id="1_w67np"]
 [ext_resource type="Texture2D" uid="uid://b282uef7te4fk" path="res://texture/icon/wheel.png" id="2_j6qei"]
+
+[sub_resource type="OccluderPolygon2D" id="OccluderPolygon2D_slg3i"]
+cull_mode = 1
+polygon = PackedVector2Array(-15.5, -11, -19.5, 1, -13, 17, -0.5, 20, 14, 16.5, 19.5, 0, 16, -9, 9.5, -18.5, -10, -18)
 
 [node name="Powerup" instance=ExtResource("1_w67np")]
 texture = ExtResource("2_j6qei")
 powerup = "traction"
 quantity = 1.0
+
+[node name="LightOccluder2D" parent="." index="2"]
+occluder = SubResource("OccluderPolygon2D_slg3i")

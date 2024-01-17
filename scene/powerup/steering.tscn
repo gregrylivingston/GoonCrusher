@@ -1,9 +1,16 @@
-[gd_scene load_steps=3 format=3 uid="uid://cpqcnyyj1j7c5"]
+[gd_scene load_steps=4 format=3 uid="uid://cpqcnyyj1j7c5"]
 
 [ext_resource type="PackedScene" uid="uid://b7r4ro32w40xi" path="res://scene/powerup/powerup.tscn" id="1_yexo8"]
 [ext_resource type="Texture2D" uid="uid://b3g3a2usedskp" path="res://texture/icon/steering.png" id="2_6drx6"]
+
+[sub_resource type="OccluderPolygon2D" id="OccluderPolygon2D_6poo6"]
+cull_mode = 1
+polygon = PackedVector2Array(-17, -23, -27, -13, -28.5, 6.5, -19, 23.5, 5.5, 29, 25, 17, 29.5, -3.5, 23.5, -18, 9.5, -27.5, -5.5, -29)
 
 [node name="Powerup" instance=ExtResource("1_yexo8")]
 texture = ExtResource("2_6drx6")
 powerup = "steering"
 quantity = 1.0
+
+[node name="LightOccluder2D" parent="." index="2"]
+occluder = SubResource("OccluderPolygon2D_6poo6")

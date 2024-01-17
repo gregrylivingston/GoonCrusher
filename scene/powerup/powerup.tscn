@@ -8,8 +8,9 @@
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_3mcnq"]
 size = Vector2(35, 32)
 
-[sub_resource type="OccluderPolygon2D" id="OccluderPolygon2D_mbp6k"]
-polygon = PackedVector2Array(-6.5, -13.5, -8.5, 15, 8, 15, 9, -14.5)
+[sub_resource type="OccluderPolygon2D" id="OccluderPolygon2D_ch67q"]
+cull_mode = 1
+polygon = PackedVector2Array(-12, 15.5, 2, 20, 14, 16, 13.5, -17, 2, -19, -11, -17)
 
 [node name="Powerup" type="Sprite2D"]
 material = ExtResource("1_bejnl")
@@ -29,6 +30,6 @@ stream = ExtResource("4_y3svm")
 volume_db = 2.0
 
 [node name="LightOccluder2D" type="LightOccluder2D" parent="."]
-occluder = SubResource("OccluderPolygon2D_mbp6k")
+occluder = SubResource("OccluderPolygon2D_ch67q")
 
 [connection signal="body_entered" from="Area2D" to="." method="_on_area_2d_body_entered"]

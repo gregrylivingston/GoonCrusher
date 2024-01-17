@@ -33,8 +33,10 @@ func _ready():
 
 
 func setNighttime():
-	$WorldEnvironment.environment.adjustment_brightness = 0.3
+	get_tree().create_tween().tween_property($CanvasModulate , "color" , Color(.05,.05,.05,1.0) , 10)
+	await get_tree().create_timer(5).timeout
 	$AudioStreamPlayer_wolf.play()
+	await get_tree().create_timer(2).timeout
 	Root.playerCar.turnOnHeadlights()
 	
 func newSpawner( spawnerPosition: Vector2i ):

@@ -1,10 +1,14 @@
-[gd_scene load_steps=5 format=3 uid="uid://xwhhgw0qwlsm"]
+[gd_scene load_steps=6 format=3 uid="uid://xwhhgw0qwlsm"]
 
 [ext_resource type="PackedScene" uid="uid://b7r4ro32w40xi" path="res://scene/powerup/powerup.tscn" id="1_4golh"]
 [ext_resource type="Texture2D" uid="uid://dt60dhhtejv7k" path="res://texture/icon/slotMachine.png" id="2_iumps"]
 [ext_resource type="Script" path="res://scene/powerup/slotMachine.gd" id="3_g3jg2"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_f2dft"]
+
+[sub_resource type="OccluderPolygon2D" id="OccluderPolygon2D_mjxyq"]
+cull_mode = 1
+polygon = PackedVector2Array(-21, -37, -38, -19, -40, 39, 22, 38, 22, -17, 17, -29, -2, -41)
 
 [node name="Powerup" instance=ExtResource("1_4golh")]
 material = SubResource("ShaderMaterial_f2dft")
@@ -13,3 +17,6 @@ texture = ExtResource("2_iumps")
 script = ExtResource("3_g3jg2")
 powerup = "slotmachine"
 quantity = 1.0
+
+[node name="LightOccluder2D" parent="." index="2"]
+occluder = SubResource("OccluderPolygon2D_mjxyq")
