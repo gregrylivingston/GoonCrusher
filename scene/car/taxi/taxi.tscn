@@ -1,4 +1,4 @@
-[gd_scene load_steps=35 format=3 uid="uid://1bi7flsw4h78"]
+[gd_scene load_steps=36 format=3 uid="uid://1bi7flsw4h78"]
 
 [ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="1_v41dt"]
 [ext_resource type="Texture2D" uid="uid://bxguuhssna7ol" path="res://scene/car/taxi/char_taxi.png" id="2_e55go"]
@@ -34,6 +34,7 @@
 [ext_resource type="AudioStream" uid="uid://b3dqh7acgg1bg" path="res://scene/car/taxi/audio/taxi_joy_6.mp3" id="28_nl07w"]
 [ext_resource type="AudioStream" uid="uid://bl1k15t5dtd3v" path="res://scene/car/taxi/audio/taxi_lowhealth_2.mp3" id="29_gutk2"]
 [ext_resource type="AudioStream" uid="uid://dk8dxgulkdxvl" path="res://sound/fx/engine/rally-car1.mp3" id="33_3ogwm"]
+[ext_resource type="Texture2D" uid="uid://duef53a4dv754" path="res://scene/car/taxi/taxi1.png" id="34_1ynbo"]
 
 [node name="Car" instance=ExtResource("1_v41dt")]
 engine = 20
@@ -47,6 +48,7 @@ powerupAudio = Array[AudioStreamMP3]([ExtResource("16_pahbg"), ExtResource("17_7
 lowGasAudio = Array[AudioStreamMP3]([ExtResource("23_bidcd"), ExtResource("24_tibav")])
 lowHealthAudio = Array[AudioStreamMP3]([ExtResource("28_j8yn4"), ExtResource("29_gutk2")])
 engineNoise = ExtResource("33_3ogwm")
+carDamagedTexture = ExtResource("34_1ynbo")
 
 [node name="sprite" parent="." index="4"]
 position = Vector2(-11, 7)

@@ -34,3 +34,11 @@ res://texture/animation/smoke.gd
 res://scene/car/semi/semi.tscn
 res://scene/car/racer/racer.tscn
 res://scene/car/police/police.tscn
+res://scene/car/audi/audi.tscn
+res://scene/enemy/walker/walker.gd
+res://scripts/global/root.gd
+res://scene/enemy/spawnManager.tscn
+res://scene/enemy/spawnManager.gd
+res://scene/enemy/walker/devil/devil.tscn
+res://scene/enemy/walker/samurai/samurai.tscn
+res://scene/enemy/walker/spartan/spartan.tscn

@@ -21,6 +21,7 @@ profilePic = ExtResource("2_wgnyl")
 charName = "Kim"
 carId = "racer"
 introAudio = Array[AudioStreamMP3]([ExtResource("3_i2n8g"), ExtResource("4_cxp0d"), ExtResource("5_8phvd"), ExtResource("6_326da"), ExtResource("7_7445v"), ExtResource("8_7yb6i"), ExtResource("9_42fym"), ExtResource("10_b3qsk")])
+carDamagedTexture = ExtResource("2_7a10q")
 
 [node name="sprite" parent="." index="4"]
 position = Vector2(-11, 7)

@@ -23,6 +23,7 @@ charName = "Xavier"
 carId = "ambulance"
 introAudio = Array[AudioStreamMP3]([ExtResource("3_txlrx"), ExtResource("4_o64rm"), ExtResource("5_8lwbb"), ExtResource("6_7ctxv"), ExtResource("7_rio81"), ExtResource("8_vf216"), ExtResource("9_membe"), ExtResource("10_nxecm")])
 engineNoise = ExtResource("11_es0hc")
+carDamagedTexture = ExtResource("2_86vbp")
 
 [node name="sprite" parent="." index="4"]
 position = Vector2(-3, -1)

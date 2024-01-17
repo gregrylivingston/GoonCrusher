@@ -45,6 +45,7 @@ powerupAudio = Array[AudioStreamMP3]([ExtResource("17_2alti"), ExtResource("18_v
 lowGasAudio = Array[AudioStreamMP3]([ExtResource("21_nb5bo"), ExtResource("22_47v1i")])
 lowHealthAudio = Array[AudioStreamMP3]([ExtResource("23_43kt5"), ExtResource("24_w2g4c"), ExtResource("6_t0nwr")])
 engineNoise = ExtResource("25_yd7s4")
+carDamagedTexture = ExtResource("2_0owyo")
 
 [node name="CollisionShape2D" parent="." index="2"]
 position = Vector2(3.5, -1.5)

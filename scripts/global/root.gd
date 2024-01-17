@@ -2,21 +2,18 @@ extends Node
 
 var playerCar: OverheadCarBody2D
 var selectedCar
+
+
 var mainMenu: CanvasLayer
 var levelRoot
+var spawnManager
+
+
 
 var isRunActive: bool = false
 var earnedCoins: int
 var earnedGems: int
 
-
-var color = [
-	Color("#8E9B90"),
-	Color("#93C0A4"),
-	Color("#B6C4A2"),
-	Color("#D4CDAB"),
-	Color("#DCE2BD"),
-]
 
 @onready var powerup = {
 	"health":preload("res://scene/powerup/health.tscn"),
@@ -32,11 +29,7 @@ var color = [
 	"currentGoonsCrushed":preload("res://scene/powerup/currentGoonsCrushed.tscn"),
 }
 
-@onready var goon = {
-	"devil":preload("res://scene/enemy/walker/devil/devil.tscn"),
-	"spartan":preload("res://scene/enemy/walker/spartan/spartan.tscn"),
-	"samurai":preload("res://scene/enemy/walker/samurai/samurai.tscn"),
-}
+
 
 @onready var cars = {
 	"sedan":{
@@ -70,7 +63,7 @@ var color = [
 }
 
 
-var selectedCarType
+
 
 
 # Called when the node enters the scene tree for the first time.
@@ -98,10 +91,8 @@ func getPowerup():
 	
 func getSpecificPowerup(pName: String):
 	return powerup[pName].instantiate()
+
+
+func getGoon():return spawnManager.getGoon()
+
 	
-func getGoon():
-	var randomizer = randf_range(0,100)
-	if randomizer > 30:return goon.devil.instantiate()
-	elif randomizer > 10: return goon.spartan.instantiate()
-	else: return goon.samurai.instantiate()
-		

@@ -50,6 +50,7 @@ var isDestroyed: bool = false
 @export var lowGasAudio: Array[AudioStreamMP3] = []
 @export var lowHealthAudio: Array[AudioStreamMP3] = []
 @export var engineNoise: AudioStreamMP3
+@export var carDamagedTexture: Texture2D
 
 class CarInput:
 	var steering := 0.0      # -1.0 (left) to 1.0 (right)
@@ -97,8 +98,8 @@ func makeHealthWarning():
 	healthWarningGiven = true
 	$"AudioStream-Voice".stream = lowHealthAudio[ randi_range(0, lowHealthAudio.size()-1)]
 	$"AudioStream-Voice".play()
-	#$"AudioStream-CarDamage".pitch_scale = randf_range(0.5,2.0)
-	#$"AudioStream-CarDamage".play()
+	$"AudioStream-CarDamage".play()
+	$sprite.texture = carDamagedTexture
 	await get_tree().create_timer(200).timeout
 	resetHealthWarning()
 
@@ -113,8 +114,8 @@ func _physics_process(delta):
 	_car_input.acceleration = clamp(_car_input.acceleration, -1.0, 1.0)
 	if fuel <= 0 || isDestroyed: _car_input.acceleration = 0.0
 	
-	if fuel <= 25 && not gasWarningGiven && not $"AudioStream-Voice".playing && isPlayer:makeGasWarning()
-	if health <= 25 && not healthWarningGiven && not $"AudioStream-Voice".playing && isPlayer:makeHealthWarning()
+	if fuel <= 35 && not gasWarningGiven && not $"AudioStream-Voice".playing && isPlayer:makeGasWarning()
+	if health <= 50 && not healthWarningGiven && not $"AudioStream-Voice".playing && isPlayer:makeHealthWarning()
 
 		
 

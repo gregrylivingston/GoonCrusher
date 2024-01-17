@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://ckgx8r2itxy2s"]
+[gd_scene load_steps=11 format=3 uid="uid://ckgx8r2itxy2s"]
 
 [ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="1_0vonh"]
 [ext_resource type="AudioStream" uid="uid://fbgsdkg8wc1x" path="res://scene/car/audi/audio/audi_intro_1.mp3" id="2_h46eo"]
@@ -9,6 +9,7 @@
 [ext_resource type="AudioStream" uid="uid://ubvq3n7ibmq7" path="res://scene/car/audi/audio/audi_intro_6.mp3" id="7_jqmce"]
 [ext_resource type="AudioStream" uid="uid://di25r882viv6a" path="res://scene/car/audi/audio/audi_intro_7.mp3" id="8_ew31w"]
 [ext_resource type="AudioStream" uid="uid://cl6ytrrw0j63j" path="res://scene/car/audi/audio/audi_intro_8.mp3" id="9_fgfbn"]
+[ext_resource type="Texture2D" uid="uid://dthtmohgw8u1f" path="res://scene/car/audi/Audi.png" id="10_uci38"]
 
 [node name="Car" instance=ExtResource("1_0vonh")]
 engine = 40
@@ -17,3 +18,4 @@ traction = 15.0
 charName = "Snake"
 carId = "audi"
 introAudio = Array[AudioStreamMP3]([ExtResource("2_h46eo"), ExtResource("3_m3p6c"), ExtResource("4_bpqde"), ExtResource("5_peerr"), ExtResource("6_qlobn"), ExtResource("7_jqmce"), ExtResource("8_ew31w"), ExtResource("9_fgfbn")])
+carDamagedTexture = ExtResource("10_uci38")

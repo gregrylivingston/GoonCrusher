@@ -8,9 +8,15 @@ var isPlayer: bool = false
 @export var coinDropChance: int = 70
 @export var speed: float = 1.0
 
+var isGiant: bool = false
 var target: Vector2
 
-# Called every frame. 'delta' is the elapsed time since the previous frame.
+func _ready():
+	if isGiant:
+		scale = Vector2(1.2,1.3)
+		speed = speed * 1.8
+
+
 func _process(delta):
 	if alive && is_instance_valid( Root.playerCar ):
 		if global_position.distance_to( Root.playerCar.global_position ) > 8000: queue_free()

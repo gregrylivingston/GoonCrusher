@@ -22,6 +22,7 @@ profilePic = ExtResource("2_hmbi1")
 charName = "Nikita"
 carId = "police"
 introAudio = Array[AudioStreamMP3]([ExtResource("3_iw1cs"), ExtResource("4_i3uqm"), ExtResource("5_kj4sh"), ExtResource("6_7lced"), ExtResource("7_fn2fs"), ExtResource("8_qb8pj"), ExtResource("9_rcvls"), ExtResource("10_ovhbp")])
+carDamagedTexture = ExtResource("2_7cb7w")
 
 [node name="sprite" parent="." index="4"]
 texture = ExtResource("2_7cb7w")

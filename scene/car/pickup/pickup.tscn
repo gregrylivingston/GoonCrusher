@@ -39,6 +39,7 @@ introAudio = Array[AudioStreamMP3]([ExtResource("3_gf7v4"), ExtResource("4_57w67
 powerupAudio = Array[AudioStreamMP3]([ExtResource("11_01t5h"), ExtResource("12_libsm"), ExtResource("13_3ksbf"), ExtResource("14_q4hv0"), ExtResource("15_iv1yi"), ExtResource("16_g2ua3"), ExtResource("17_ireah"), ExtResource("18_ty8uw"), ExtResource("19_yvkl7"), ExtResource("20_4xfjq"), ExtResource("21_sxtnt"), ExtResource("22_atv5c")])
 lowGasAudio = Array[AudioStreamMP3]([ExtResource("23_73te5"), ExtResource("24_cyqhs"), ExtResource("7_7wal3")])
 lowHealthAudio = Array[AudioStreamMP3]([ExtResource("25_yxhmr"), ExtResource("26_4efuk"), ExtResource("5_okret")])
+carDamagedTexture = ExtResource("2_36nav")
 
 [node name="sprite" parent="." index="4"]
 position = Vector2(3, 3)

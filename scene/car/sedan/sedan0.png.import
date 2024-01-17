@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cmhhtyl83kii2"
-path="res://.godot/imported/Car.png-eae34c98ec0267dd9eb928f817b712b0.ctex"
+uid="uid://ltiunalnocyg"
+path="res://.godot/imported/sedan0.png-7e3c7f72c531105f99c921964eb183df.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://scene/car/sedan/Car.png"
-dest_files=["res://.godot/imported/Car.png-eae34c98ec0267dd9eb928f817b712b0.ctex"]
+source_file="res://scene/car/sedan/sedan0.png"
+dest_files=["res://.godot/imported/sedan0.png-7e3c7f72c531105f99c921964eb183df.ctex"]
 
 [params]
 

@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3 uid="uid://dqcrli42u3gia"]
+[gd_scene load_steps=18 format=3 uid="uid://dqcrli42u3gia"]
 
 [ext_resource type="Script" path="res://scene/level/levelRoot.gd" id="1_65p74"]
 [ext_resource type="PackedScene" uid="uid://brhh6ifac5qvc" path="res://scene/scenery/rocks.tscn" id="2_5ujut"]
@@ -16,6 +16,7 @@
 [ext_resource type="PackedScene" uid="uid://bgogx6yxekbjp" path="res://scene/powerup/traction.tscn" id="14_d48sd"]
 [ext_resource type="PackedScene" uid="uid://xwhhgw0qwlsm" path="res://scene/powerup/slotMachine.tscn" id="15_hppr6"]
 [ext_resource type="PackedScene" uid="uid://4lh7dd54kbqe" path="res://scene/powerup/gem.tscn" id="16_5gmm7"]
+[ext_resource type="PackedScene" uid="uid://b6x6nemyty8wb" path="res://scene/enemy/spawnManager.tscn" id="17_3wer8"]
 
 [node name="LevelRoot" type="Node2D" groups=["levelRoot"]]
 script = ExtResource("1_65p74")
@@ -95,3 +96,5 @@ position = Vector2(2466, 1868)
 [node name="Powerup9" parent="." instance=ExtResource("16_5gmm7")]
 visible = true
 position = Vector2(3801, 611)
+
+[node name="SpawnManager" parent="." instance=ExtResource("17_3wer8")]
