@@ -358,6 +358,6 @@ func playRandomFxSound():
 		$"AudioStream-Engine".stop()
 		
 @onready var headlamps = $headlamps
-func turnOnHeadlights():
-	headlamps.visible = true
+func turnOnHeadlights(status: bool):
+	headlamps.visible = status
 	

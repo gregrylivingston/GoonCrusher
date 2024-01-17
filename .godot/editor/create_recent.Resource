@@ -1,3 +1,4 @@
+TileSet
 AnimatedTexture
 Resource
 Theme

@@ -1,6 +1,7 @@
+CanvasModulate
+TileMap
 PointLight2D
 Node2D
-CanvasModulate
 AudioStreamPlayer
 AudioStreamPlayer3D
 LightOccluder2D
@@ -11,4 +12,3 @@ WorldEnvironment
 Node
 AnimatedSprite2D
 AudioStreamPlayer2D
-CanvasLayer

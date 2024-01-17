@@ -1,3 +1,4 @@
+res://texture/atlas
 res://scene/level
 res://texture/spritesheet
 res://texture/animation
@@ -19,4 +20,3 @@ res://scene/enemy/walker
 res://scene/enemy/walker/devil
 D:/Godot/AutoSurvivor
 res://scene/powerup
-res://scene/player/ui

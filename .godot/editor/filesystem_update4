@@ -56,3 +56,5 @@ res://scene/powerup/gem.tscn
 res://scene/powerup/engine.tscn
 res://scene/powerup/coin.tscn
 res://scene/powerup/armor.tscn
+res://texture/atlas/landscapeTiles.tres
+res://scene/level/terrain/landscapeMap.tscn
