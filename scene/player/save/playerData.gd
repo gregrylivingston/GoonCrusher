@@ -17,7 +17,7 @@ var cars = {
 	},
 	"taxi":{
 		"cost":0,
-		"upgrades":{"traction":0,"engine":0,"armor":0,"steering":0},
+		"upgrades":{"traction":0,"engine":8,"armor":0,"steering":8},
 		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,},
 	},	
 	"pickup":{

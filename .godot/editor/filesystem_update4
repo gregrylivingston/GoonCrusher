@@ -42,3 +42,4 @@ res://scene/enemy/spawnManager.gd
 res://scene/enemy/walker/devil/devil.tscn
 res://scene/enemy/walker/samurai/samurai.tscn
 res://scene/enemy/walker/spartan/spartan.tscn
+res://scene/fx/tiremark.gd

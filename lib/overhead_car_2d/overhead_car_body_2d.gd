@@ -210,7 +210,9 @@ func activeCarEffects(delta):
 	if ( _car_input.braking && velocity.length() > 200.0) || ( velocity.length() > 800.0 && abs(_car_input.steering) > 0.2):
 		for i in tires: createTiremarks(i)
 		if not $"AudioStream-Tires".playing: $"AudioStream-Tires".play()
-	else: $"AudioStream-Tires".stop()
+	else: 
+		$"AudioStream-Tires".stop()
+		tiremark = {}
 
 	#zoom out if going fast
 	if velocity.length() > 500.0 && isPlayer && is_instance_valid($Camera2D):
@@ -222,14 +224,25 @@ func activeCarEffects(delta):
 
 
 
-var tiremark = preload("res://scene/fx/tiremark.tscn")
+var tiremarkScene = preload("res://scene/fx/tiremark.tscn")
+var tiremark = {}
+
 @onready var tires = [$sprite/tireLocation, $sprite/tireLocation2, $sprite/tireLocation3, $sprite/tireLocation4]
 func createTiremarks(i):
-	var newLine = tiremark.instantiate()
-	newLine.position = i.global_position
-	newLine.rotation = rotation
+	if tiremark.has(i.get_instance_id()):
+		tiremark[i.get_instance_id()].update(i.global_position)
+	else:
+		tiremark[i.get_instance_id()] = tiremarkScene.instantiate()
+		tiremark[i.get_instance_id()].position = i.global_position
+		#tiremark[i.get_instance_id()].rotation = rotation
+		get_parent().add_child(tiremark[i.get_instance_id()])
+
+		
+
+
+
 #	position + $tireLocation.position
-	get_parent().add_child(newLine)
+
 
 
 func _update_output(_speed_factor: float, _acceleration_factor: float):

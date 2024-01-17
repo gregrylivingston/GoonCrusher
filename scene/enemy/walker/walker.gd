@@ -15,11 +15,16 @@ func _ready():
 	if isGiant:
 		scale = Vector2(1.2,1.3)
 		speed = speed * 1.8
+	await get_tree().create_timer(20).timeout
+	checkDestroyDistance()
 
+func checkDestroyDistance():
+	if global_position.distance_to( Root.playerCar.global_position ) > 8000: queue_free()
+	await get_tree().create_timer(10).timeout
+	checkDestroyDistance()
 
 func _process(delta):
-	if alive && is_instance_valid( Root.playerCar ):
-		if global_position.distance_to( Root.playerCar.global_position ) > 8000: queue_free()
+	if alive:# && is_instance_valid( Root.playerCar ):
 		move_and_collide( position.direction_to( Root.playerCar.position ) * speed )
 
 
