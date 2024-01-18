@@ -1,9 +1,10 @@
-[gd_scene load_steps=13 format=3 uid="uid://26c7khgh5lqa"]
+[gd_scene load_steps=14 format=3 uid="uid://26c7khgh5lqa"]
 
 [ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="1_kgqi5"]
 [ext_resource type="Texture2D" uid="uid://3ntiq5bget7n" path="res://scene/car/racer/Black_viper.png" id="2_7a10q"]
 [ext_resource type="Texture2D" uid="uid://t3uorfxptpy2" path="res://scene/car/racer/char_racer.png" id="2_wgnyl"]
 [ext_resource type="AudioStream" uid="uid://bbhgnuxjyv0xi" path="res://scene/car/racer/audio/Racer_Intro_1.mp3" id="3_i2n8g"]
+[ext_resource type="Texture2D" uid="uid://d3vh036wpa2l0" path="res://scene/car/racer/racer_background.png" id="3_mbmk4"]
 [ext_resource type="AudioStream" uid="uid://cp4fkdgydt43a" path="res://scene/car/racer/audio/Racer_Intro_2.mp3" id="4_cxp0d"]
 [ext_resource type="AudioStream" uid="uid://tuv15tske4bt" path="res://scene/car/racer/audio/Racer_Intro_3.mp3" id="5_8phvd"]
 [ext_resource type="AudioStream" uid="uid://c4rj3b65g0tfb" path="res://scene/car/racer/audio/Racer_Intro_4.mp3" id="6_326da"]
@@ -18,6 +19,7 @@ engine = 50
 steering = 10
 traction = 10.0
 profilePic = ExtResource("2_wgnyl")
+backgroundPic = ExtResource("3_mbmk4")
 charName = "Kim"
 carId = "racer"
 introAudio = Array[AudioStreamMP3]([ExtResource("3_i2n8g"), ExtResource("4_cxp0d"), ExtResource("5_8phvd"), ExtResource("6_326da"), ExtResource("7_7445v"), ExtResource("8_7yb6i"), ExtResource("9_42fym"), ExtResource("10_b3qsk")])

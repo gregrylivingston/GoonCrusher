@@ -55,6 +55,7 @@ size_flags_vertical = 3
 myIcon = ExtResource("9_lbbgn")
 
 [node name="HBoxContainer2" type="HBoxContainer" parent="."]
+visible = false
 layout_mode = 2
 
 [node name="armor2" parent="HBoxContainer2" instance=ExtResource("1_awv6k")]

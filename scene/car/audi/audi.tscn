@@ -1,6 +1,7 @@
-[gd_scene load_steps=11 format=3 uid="uid://ckgx8r2itxy2s"]
+[gd_scene load_steps=12 format=3 uid="uid://ckgx8r2itxy2s"]
 
 [ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="1_0vonh"]
+[ext_resource type="Texture2D" uid="uid://5bhp0uvyaltt" path="res://scene/car/audi/audi_backgrond.png" id="2_ds5mp"]
 [ext_resource type="AudioStream" uid="uid://fbgsdkg8wc1x" path="res://scene/car/audi/audio/audi_intro_1.mp3" id="2_h46eo"]
 [ext_resource type="AudioStream" uid="uid://cxkihwwlfcslc" path="res://scene/car/audi/audio/audi_intro_2.mp3" id="3_m3p6c"]
 [ext_resource type="AudioStream" uid="uid://dev4dk27givs4" path="res://scene/car/audi/audio/audi_intro_3.mp3" id="4_bpqde"]
@@ -15,6 +16,7 @@
 engine = 40
 steering = 15
 traction = 15.0
+backgroundPic = ExtResource("2_ds5mp")
 charName = "Snake"
 carId = "audi"
 introAudio = Array[AudioStreamMP3]([ExtResource("2_h46eo"), ExtResource("3_m3p6c"), ExtResource("4_bpqde"), ExtResource("5_peerr"), ExtResource("6_qlobn"), ExtResource("7_jqmce"), ExtResource("8_ew31w"), ExtResource("9_fgfbn")])

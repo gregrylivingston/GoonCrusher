@@ -28,18 +28,6 @@ shader_parameter/angle = 125.0
 [node name="Main2" type="CanvasLayer"]
 script = ExtResource("1_cc7gi")
 
-[node name="backgroundTexture2" type="TextureRect" parent="."]
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -5.0
-offset_right = -424.0
-grow_horizontal = 2
-grow_vertical = 2
-texture = ExtResource("1_edrys")
-expand_mode = 1
-stretch_mode = 6
-
 [node name="backgroundTexture" type="TextureRect" parent="."]
 anchors_preset = 15
 anchor_right = 1.0
@@ -50,16 +38,48 @@ texture = ExtResource("1_edrys")
 expand_mode = 1
 stretch_mode = 6
 
-[node name="charTexture" type="TextureRect" parent="."]
+[node name="backgroundTexture2" type="TextureRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("1_edrys")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="Control" type="Control" parent="."]
+layout_mode = 3
 anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -710.0
-offset_top = -819.0
+offset_left = -733.0
+offset_top = -818.0
 grow_horizontal = 0
 grow_vertical = 0
+
+[node name="charTexture" type="TextureRect" parent="Control"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2_g16c3")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="charTexture2" type="TextureRect" parent="Control"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 texture = ExtResource("2_g16c3")
 expand_mode = 1
 stretch_mode = 6
@@ -147,7 +167,7 @@ self_modulate = Color(1, 1, 1, 0)
 anchors_preset = 9
 anchor_bottom = 1.0
 offset_left = 81.0
-offset_top = 499.0
+offset_top = 473.0
 offset_right = 642.0
 offset_bottom = -95.0
 grow_vertical = 2
@@ -175,11 +195,11 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_font_sizes/font_size = 50
-text = "Start Run"
+text = "  RIDE"
 
 [node name="VSeparator" type="VSeparator" parent="Panel2/VBoxContainer/HBoxContainer2"]
 self_modulate = Color(1, 1, 1, 0)
-custom_minimum_size = Vector2(80, 0)
+custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
 
 [node name="HBoxContainer3" type="HBoxContainer" parent="Panel2/VBoxContainer"]
@@ -188,18 +208,38 @@ size_flags_vertical = 3
 
 [node name="VSeparator3" type="VSeparator" parent="Panel2/VBoxContainer/HBoxContainer3"]
 self_modulate = Color(1, 1, 1, 0)
-custom_minimum_size = Vector2(40, 0)
+custom_minimum_size = Vector2(33, 0)
 layout_mode = 2
 
 [node name="beginButton" parent="Panel2/VBoxContainer/HBoxContainer3" instance=ExtResource("4_f12ks")]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-text = "Settings"
+text = "  Records"
 
 [node name="VSeparator4" type="VSeparator" parent="Panel2/VBoxContainer/HBoxContainer3"]
 self_modulate = Color(1, 1, 1, 0)
-custom_minimum_size = Vector2(40, 0)
+custom_minimum_size = Vector2(66, 0)
+layout_mode = 2
+
+[node name="HBoxContainer5" type="HBoxContainer" parent="Panel2/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="VSeparator3" type="VSeparator" parent="Panel2/VBoxContainer/HBoxContainer5"]
+self_modulate = Color(1, 1, 1, 0)
+custom_minimum_size = Vector2(66, 0)
+layout_mode = 2
+
+[node name="beginButton" parent="Panel2/VBoxContainer/HBoxContainer5" instance=ExtResource("4_f12ks")]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "  Settings"
+
+[node name="VSeparator4" type="VSeparator" parent="Panel2/VBoxContainer/HBoxContainer5"]
+self_modulate = Color(1, 1, 1, 0)
+custom_minimum_size = Vector2(33, 0)
 layout_mode = 2
 
 [node name="HBoxContainer4" type="HBoxContainer" parent="Panel2/VBoxContainer"]
@@ -208,14 +248,14 @@ size_flags_vertical = 3
 
 [node name="VSeparator2" type="VSeparator" parent="Panel2/VBoxContainer/HBoxContainer4"]
 self_modulate = Color(1, 1, 1, 0)
-custom_minimum_size = Vector2(80, 0)
+custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
 
 [node name="beginButton" parent="Panel2/VBoxContainer/HBoxContainer4" instance=ExtResource("4_f12ks")]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-text = "Quit"
+text = "  Quit"
 
 [node name="HBoxContainer" type="HBoxContainer" parent="."]
 anchors_preset = -1
@@ -247,13 +287,19 @@ layout_mode = 2
 
 [node name="driverName" type="Label" parent="HBoxContainer/Panel"]
 layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -137.0
+offset_top = -39.0
+offset_right = 137.0
+offset_bottom = 39.0
 grow_horizontal = 2
 grow_vertical = 2
 theme = ExtResource("1_badde")
-theme_override_font_sizes/font_size = 60
+theme_override_font_sizes/font_size = 50
 text = "ANTHONY"
 horizontal_alignment = 1
 vertical_alignment = 1

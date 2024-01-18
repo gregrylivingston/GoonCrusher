@@ -1,8 +1,9 @@
-[gd_scene load_steps=13 format=3 uid="uid://b7vyfnv77wwfw"]
+[gd_scene load_steps=14 format=3 uid="uid://b7vyfnv77wwfw"]
 
 [ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="1_oirr4"]
 [ext_resource type="Texture2D" uid="uid://c4it7ulsvl3bx" path="res://scene/car/ambulance/Ambulance.png" id="2_86vbp"]
 [ext_resource type="Texture2D" uid="uid://0syxn8yxaprk" path="res://scene/car/ambulance/char_ambulance.png" id="2_fowyq"]
+[ext_resource type="Texture2D" uid="uid://bjorcsaxu41ge" path="res://scene/car/ambulance/ambulance_background.png" id="3_3jiuq"]
 [ext_resource type="AudioStream" uid="uid://tn1rhvv3xfe3" path="res://scene/car/ambulance/audio/ambulance_intro_1.mp3" id="3_txlrx"]
 [ext_resource type="AudioStream" uid="uid://brfesiqxiuhy1" path="res://scene/car/ambulance/audio/ambulance_intro_2.mp3" id="4_o64rm"]
 [ext_resource type="AudioStream" uid="uid://cl4lw46arffsh" path="res://scene/car/ambulance/audio/ambulance_intro_3.mp3" id="5_8lwbb"]
@@ -19,6 +20,7 @@ steering = 20
 traction = 20.0
 armor = 20
 profilePic = ExtResource("2_fowyq")
+backgroundPic = ExtResource("3_3jiuq")
 charName = "Xavier"
 carId = "ambulance"
 introAudio = Array[AudioStreamMP3]([ExtResource("3_txlrx"), ExtResource("4_o64rm"), ExtResource("5_8lwbb"), ExtResource("6_7ctxv"), ExtResource("7_rio81"), ExtResource("8_vf216"), ExtResource("9_membe"), ExtResource("10_nxecm")])
