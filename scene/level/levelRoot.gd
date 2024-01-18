@@ -34,7 +34,8 @@ func _ready():
 
 func setNighttime(isNighttime: bool):
 	if isNighttime:
-		get_tree().create_tween().tween_property($CanvasModulate , "color" , Color(.09,.09,.09,1.0) , 10)
+		get_tree().create_tween().tween_property($CanvasModulate , "color" , Color(.05,.05,.05,1.0) , 10)
+			#if canvasmodulate this is set to .05 powerups and giants glow at night.  If set to 0 they don't
 		await get_tree().create_timer(5).timeout
 		$AudioStreamPlayer_wolf.play()
 		await get_tree().create_timer(2).timeout

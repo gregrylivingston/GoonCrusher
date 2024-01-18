@@ -5,7 +5,7 @@ extends Label
 func _ready():
 	pass
 
-var daylength = 30
+var daylength = 60
 var isDaytime: bool = true
 var reset: bool = false
 
