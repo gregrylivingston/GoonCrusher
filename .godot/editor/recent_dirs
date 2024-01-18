@@ -1,3 +1,5 @@
+res://sound
+res://style
 res://shader
 res://texture/atlas
 res://scene/level
@@ -6,7 +8,6 @@ res://texture/animation
 res://scene/car/sedan
 res://scene/player/menu/settings
 res://scene/player/slots
-res://style
 res://scene/player/menu/main
 res://scene/player/save
 res://scripts/global
@@ -19,4 +20,3 @@ D:/Godot/AutoSurvivor/scene/enemy/walker/devil/texture
 res://scene/enemy/walker
 res://scene/enemy/walker/devil
 D:/Godot/AutoSurvivor
-res://scene/powerup

@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3 uid="uid://cpkgnhvksrqs3"]
+[gd_scene load_steps=12 format=3 uid="uid://cpkgnhvksrqs3"]
 
 [ext_resource type="Script" path="res://scene/player/menu/main/mainMenu.gd" id="1_sonwu"]
 [ext_resource type="PackedScene" uid="uid://bepxjqhida0n8" path="res://scene/player/ui/roadButton.tscn" id="2_1mco8"]
@@ -7,7 +7,6 @@
 [ext_resource type="FontFile" uid="uid://2t7kmagg0mqm" path="res://style/font/Tektur/Tektur-ExtraBold.ttf" id="3_h66a4"]
 [ext_resource type="Texture2D" uid="uid://dthtmohgw8u1f" path="res://scene/car/audi/Audi.png" id="5_gfgo3"]
 [ext_resource type="PackedScene" uid="uid://clx3q1jksnuoc" path="res://scene/player/menu/main/car_stats_container.tscn" id="6_g6ev1"]
-[ext_resource type="Script" path="res://scene/player/menu/main/car_stats_container.gd" id="7_7di5e"]
 [ext_resource type="PackedScene" uid="uid://i0goedbwsro6" path="res://scene/player/ui/attribute_indicator.tscn" id="10_7n51g"]
 [ext_resource type="Texture2D" uid="uid://w03tvhxtmrv4" path="res://texture/icon/icons8-coin-48 (1).png" id="11_labbq"]
 [ext_resource type="PackedScene" uid="uid://maftjaqqaasp" path="res://scene/player/menu/main/statUpgradeButton.tscn" id="12_75cgo"]
@@ -67,7 +66,6 @@ offset_top = -260.0
 offset_right = 136.0
 offset_bottom = 86.0
 grow_vertical = 2
-script = ExtResource("7_7di5e")
 
 [node name="titlePanel" type="Panel" parent="."]
 offset_left = -157.0
@@ -191,23 +189,39 @@ text = "Andre"
 [node name="statUpgrade" parent="carStatUpgrades" groups=["armorui"] instance=ExtResource("12_75cgo")]
 layout_mode = 2
 size_flags_vertical = 3
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
+theme_override_colors/font_focus_color = Color(1, 1, 1, 1)
 myStat = "armor"
 
 [node name="statUpgrade2" parent="carStatUpgrades" groups=["engineui"] instance=ExtResource("12_75cgo")]
 layout_mode = 2
 size_flags_vertical = 3
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
+theme_override_colors/font_focus_color = Color(1, 1, 1, 1)
 text = "+1 Engine   300"
 myStat = "engine"
 
 [node name="statUpgrade3" parent="carStatUpgrades" groups=["tractionui"] instance=ExtResource("12_75cgo")]
 layout_mode = 2
 size_flags_vertical = 3
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
+theme_override_colors/font_focus_color = Color(1, 1, 1, 1)
 text = "+1 Traction   300"
 myStat = "traction"
 
 [node name="statUpgrade4" parent="carStatUpgrades" groups=["steeringui"] instance=ExtResource("12_75cgo")]
 layout_mode = 2
 size_flags_vertical = 3
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
+theme_override_colors/font_focus_color = Color(1, 1, 1, 1)
 text = "+1 Steering   300"
 myStat = "steering"
 

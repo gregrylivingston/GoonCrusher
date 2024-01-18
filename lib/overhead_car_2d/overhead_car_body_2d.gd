@@ -43,6 +43,7 @@ var isDestroyed: bool = false
 func getIsPlayer():return isPlayer
 
 @export var profilePic: Texture2D
+@export var backgroundPic: Texture2D
 @export var charName: String = "Hi"
 @export var carId:String
 

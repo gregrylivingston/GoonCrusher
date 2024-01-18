@@ -15,6 +15,10 @@ run/main_scene="res://scene/player/menu/main/mainMenuCamera.tscn"
 config/features=PackedStringArray("4.2", "Mobile")
 config/icon="res://icon.svg"
 
+[audio]
+
+buses/default_bus_layout="res://sound/new_audio_bus_layout.tres"
+
 [autoload]
 
 Root="*res://scripts/global/root.gd"

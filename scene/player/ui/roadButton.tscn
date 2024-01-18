@@ -14,15 +14,12 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme = ExtResource("1_gduxt")
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
-theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
-theme_override_colors/font_focus_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 30
 theme_override_styles/normal = ExtResource("1_w5jvw")
 theme_override_styles/hover = ExtResource("2_1brjr")
 theme_override_styles/pressed = ExtResource("2_1brjr")
 theme_override_styles/focus = ExtResource("2_1brjr")
+text = "fdf"
 alignment = 0
 script = ExtResource("2_itot7")
 

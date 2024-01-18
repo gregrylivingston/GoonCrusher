@@ -1,0 +1,289 @@
+[gd_scene load_steps=15 format=3 uid="uid://btm8fh8tutk2x"]
+
+[ext_resource type="Theme" uid="uid://co40pijjc7hbw" path="res://style/roadRogue.tres" id="1_badde"]
+[ext_resource type="Script" path="res://scene/player/menu/main/main2.gd" id="1_cc7gi"]
+[ext_resource type="Texture2D" uid="uid://bvdwjuygu0evc" path="res://scene/car/van/van_background.png" id="1_edrys"]
+[ext_resource type="FontFile" uid="uid://dis65h8wxc3f2" path="res://addons/gut/fonts/LobsterTwo-Italic.ttf" id="2_5o1ri"]
+[ext_resource type="Texture2D" uid="uid://nnbrmbv4q73i" path="res://scene/car/van/char_van3.png" id="2_g16c3"]
+[ext_resource type="StyleBox" uid="uid://bbt1ii3ktk0v6" path="res://style/skewedPanel.tres" id="2_qamlo"]
+[ext_resource type="Shader" path="res://shader/rainbowfill.gdshader" id="3_w77gt"]
+[ext_resource type="FontFile" uid="uid://hf5rdg67jcwc" path="res://addons/gut/fonts/AnonymousPro-Italic.ttf" id="4_b1dqc"]
+[ext_resource type="PackedScene" uid="uid://bepxjqhida0n8" path="res://scene/player/ui/roadButton.tscn" id="4_f12ks"]
+[ext_resource type="FontFile" uid="uid://c106tp6lo578e" path="res://style/font/Tektur/Tektur-Bold.ttf" id="5_00nh6"]
+[ext_resource type="PackedScene" uid="uid://clx3q1jksnuoc" path="res://scene/player/menu/main/car_stats_container.tscn" id="11_wos04"]
+[ext_resource type="AudioStream" uid="uid://chsan1o1ku2c7" path="res://sound/music/abstract-world-127012.mp3" id="12_3e52h"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_noll7"]
+shader = ExtResource("3_w77gt")
+shader_parameter/strength = 1.0
+shader_parameter/speed = 0.15
+shader_parameter/angle = 125.0
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_2gwjm"]
+shader = ExtResource("3_w77gt")
+shader_parameter/strength = 1.0
+shader_parameter/speed = 0.15
+shader_parameter/angle = 125.0
+
+[node name="Main2" type="CanvasLayer"]
+script = ExtResource("1_cc7gi")
+
+[node name="backgroundTexture2" type="TextureRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -5.0
+offset_right = -424.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("1_edrys")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="backgroundTexture" type="TextureRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("1_edrys")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="charTexture" type="TextureRect" parent="."]
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -710.0
+offset_top = -819.0
+grow_horizontal = 0
+grow_vertical = 0
+texture = ExtResource("2_g16c3")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="Panel" type="Panel" parent="."]
+anchors_preset = 9
+anchor_bottom = 1.0
+offset_right = 640.0
+grow_vertical = 2
+theme = ExtResource("1_badde")
+theme_override_styles/panel = ExtResource("2_qamlo")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel"]
+layout_mode = 0
+offset_left = 74.0
+offset_top = 228.0
+offset_right = 502.0
+offset_bottom = 382.0
+theme_override_constants/separation = -15
+
+[node name="Label" type="Label" parent="Panel/VBoxContainer"]
+material = SubResource("ShaderMaterial_noll7")
+layout_mode = 2
+theme_override_constants/outline_size = 2
+theme_override_fonts/font = ExtResource("2_5o1ri")
+theme_override_font_sizes/font_size = 24
+text = "Gregry Boyd's"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Panel/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 10
+
+[node name="Label" type="Label" parent="Panel/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.92549, 0.603922, 0.160784, 1)
+theme_override_colors/font_outline_color = Color(0.658824, 0.12549, 0.101961, 1)
+theme_override_constants/outline_size = 20
+theme_override_fonts/font = ExtResource("4_b1dqc")
+theme_override_font_sizes/font_size = 65
+text = "RIDE"
+
+[node name="Label2" type="Label" parent="Panel/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.92549, 0.603922, 0.160784, 1)
+theme_override_colors/font_outline_color = Color(0.658824, 0.12549, 0.101961, 1)
+theme_override_constants/outline_size = 20
+theme_override_fonts/font = ExtResource("4_b1dqc")
+theme_override_font_sizes/font_size = 65
+text = "'N'"
+horizontal_alignment = 1
+
+[node name="Label3" type="Label" parent="Panel/VBoxContainer/HBoxContainer"]
+material = SubResource("ShaderMaterial_2gwjm")
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/outline_size = 10
+theme_override_fonts/font = ExtResource("4_b1dqc")
+theme_override_font_sizes/font_size = 65
+text = "PRIZE"
+horizontal_alignment = 2
+
+[node name="Label3" type="Label" parent="Panel/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 2
+theme_override_colors/font_color = Color(0.92549, 0.603922, 0.160784, 1)
+theme_override_colors/font_outline_color = Color(0.658824, 0.12549, 0.101961, 1)
+theme_override_constants/outline_size = 25
+theme_override_fonts/font = ExtResource("5_00nh6")
+theme_override_font_sizes/font_size = 60
+text = "GOONCRUSHER"
+
+[node name="Label4" type="Label" parent="Panel/VBoxContainer"]
+visible = false
+material = SubResource("ShaderMaterial_2gwjm")
+layout_mode = 2
+theme_override_constants/outline_size = 10
+theme_override_fonts/font = ExtResource("4_b1dqc")
+theme_override_font_sizes/font_size = 60
+text = "PRIZE"
+
+[node name="Panel2" type="Panel" parent="."]
+self_modulate = Color(1, 1, 1, 0)
+anchors_preset = 9
+anchor_bottom = 1.0
+offset_left = 81.0
+offset_top = 499.0
+offset_right = 642.0
+offset_bottom = -95.0
+grow_vertical = 2
+theme = ExtResource("1_badde")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel2"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = -14.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 10
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="Panel2/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="beginButton" parent="Panel2/VBoxContainer/HBoxContainer2" instance=ExtResource("4_f12ks")]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 50
+text = "Start Run"
+
+[node name="VSeparator" type="VSeparator" parent="Panel2/VBoxContainer/HBoxContainer2"]
+self_modulate = Color(1, 1, 1, 0)
+custom_minimum_size = Vector2(80, 0)
+layout_mode = 2
+
+[node name="HBoxContainer3" type="HBoxContainer" parent="Panel2/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="VSeparator3" type="VSeparator" parent="Panel2/VBoxContainer/HBoxContainer3"]
+self_modulate = Color(1, 1, 1, 0)
+custom_minimum_size = Vector2(40, 0)
+layout_mode = 2
+
+[node name="beginButton" parent="Panel2/VBoxContainer/HBoxContainer3" instance=ExtResource("4_f12ks")]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "Settings"
+
+[node name="VSeparator4" type="VSeparator" parent="Panel2/VBoxContainer/HBoxContainer3"]
+self_modulate = Color(1, 1, 1, 0)
+custom_minimum_size = Vector2(40, 0)
+layout_mode = 2
+
+[node name="HBoxContainer4" type="HBoxContainer" parent="Panel2/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="VSeparator2" type="VSeparator" parent="Panel2/VBoxContainer/HBoxContainer4"]
+self_modulate = Color(1, 1, 1, 0)
+custom_minimum_size = Vector2(80, 0)
+layout_mode = 2
+
+[node name="beginButton" parent="Panel2/VBoxContainer/HBoxContainer4" instance=ExtResource("4_f12ks")]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "Quit"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
+anchors_preset = -1
+anchor_left = 0.473
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 91.2
+offset_top = -116.0
+offset_right = -94.0
+offset_bottom = -49.0
+grow_horizontal = 2
+grow_vertical = 0
+size_flags_horizontal = 10
+theme = ExtResource("1_badde")
+theme_override_constants/separation = 20
+
+[node name="previousCarButton" type="Button" parent="HBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(50, 50)
+layout_mode = 2
+size_flags_vertical = 4
+theme = ExtResource("1_badde")
+text = "<"
+
+[node name="Panel" type="Panel" parent="HBoxContainer"]
+custom_minimum_size = Vector2(500, 0)
+layout_mode = 2
+
+[node name="driverName" type="Label" parent="HBoxContainer/Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_badde")
+theme_override_font_sizes/font_size = 60
+text = "ANTHONY"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="nextCarButton" type="Button" parent="HBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(50, 50)
+layout_mode = 2
+size_flags_vertical = 4
+theme = ExtResource("1_badde")
+text = ">"
+
+[node name="carStatsContainer" parent="." instance=ExtResource("11_wos04")]
+anchors_preset = -1
+anchor_left = 0.5
+anchor_right = 1.0
+offset_left = -208.0
+offset_top = 35.0
+offset_right = -102.0
+offset_bottom = 143.0
+grow_horizontal = 2
+
+[node name="voicePlayer" type="AudioStreamPlayer" parent="."]
+bus = &"Voice"
+
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("12_3e52h")
+volume_db = -8.0
+autoplay = true
+bus = &"Music"
+
+[connection signal="pressed" from="HBoxContainer/previousCarButton" to="." method="_on_previous_car_button_pressed"]
+[connection signal="pressed" from="HBoxContainer/nextCarButton" to="." method="_on_next_car_button_pressed"]

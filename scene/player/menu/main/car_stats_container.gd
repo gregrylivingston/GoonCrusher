@@ -11,8 +11,9 @@ func _process(delta):
 	pass
 
 func updateStats():
-	$Panel/TextureRect.texture = Root.playerCar.profilePic
-	$engine.setValue(Root.playerCar.engine )
-	$steering.setValue(Root.playerCar.steering)
-	$aero.setValue(Root.playerCar.traction)
-	$armor.setValue(Root.playerCar.armor)
+	$HBoxContainer/engine.setValue(Root.playerCar.engine )
+	$HBoxContainer/steering.setValue(Root.playerCar.steering)
+	$HBoxContainer/traction.setValue(Root.playerCar.traction)
+	$HBoxContainer/armor.setValue(Root.playerCar.armor)
+	$HBoxContainer/coin.setValue( SaveManager.playerData.coin )
+	$HBoxContainer2/gem.setValue ( SaveManager.playerData.gem )

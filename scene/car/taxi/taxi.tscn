@@ -1,9 +1,10 @@
-[gd_scene load_steps=36 format=3 uid="uid://1bi7flsw4h78"]
+[gd_scene load_steps=37 format=3 uid="uid://1bi7flsw4h78"]
 
 [ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="1_v41dt"]
-[ext_resource type="Texture2D" uid="uid://bxguuhssna7ol" path="res://scene/car/taxi/char_taxi.png" id="2_e55go"]
+[ext_resource type="Texture2D" uid="uid://wvrtktlo2l0e" path="res://scene/car/taxi/char_taxi_transparent.png" id="2_3d4qt"]
 [ext_resource type="Texture2D" uid="uid://cbltnt4310fcd" path="res://scene/car/taxi/taxi.png" id="2_mdy3n"]
 [ext_resource type="AudioStream" uid="uid://dyrgkn4mg3hw4" path="res://scene/car/taxi/audio/taxi_intro_1.mp3" id="3_anhg2"]
+[ext_resource type="Texture2D" uid="uid://yvicqwcnp1dm" path="res://scene/car/taxi/taxi_background.png" id="3_lelbi"]
 [ext_resource type="AudioStream" uid="uid://ov2qw2mn78qp" path="res://scene/car/taxi/audio/taxi_intro_2.mp3" id="4_qknie"]
 [ext_resource type="AudioStream" uid="uid://b0po47xa4g8th" path="res://scene/car/taxi/audio/taxi_intro_3.mp3" id="5_sxudr"]
 [ext_resource type="AudioStream" uid="uid://tdeq55gai72d" path="res://scene/car/taxi/audio/taxi_intro_4.mp3" id="6_230wo"]
@@ -39,7 +40,8 @@
 [node name="Car" instance=ExtResource("1_v41dt")]
 engine = 20
 steering = 18
-profilePic = ExtResource("2_e55go")
+profilePic = ExtResource("2_3d4qt")
+backgroundPic = ExtResource("3_lelbi")
 charName = "Andrew"
 carId = "taxi"
 introAudio = Array[AudioStreamMP3]([ExtResource("3_anhg2"), ExtResource("4_qknie"), ExtResource("5_sxudr"), ExtResource("6_230wo"), ExtResource("7_agd4o"), ExtResource("8_di5uq"), ExtResource("9_oqruo"), ExtResource("10_a7xbb")])
