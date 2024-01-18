@@ -58,3 +58,6 @@ res://scene/powerup/coin.tscn
 res://scene/powerup/armor.tscn
 res://texture/atlas/landscapeTiles.tres
 res://scene/level/terrain/landscapeMap.tscn
+res://shader/shader_edgeglow.tres
+res://shader/shine.gdshader
+res://scene/powerup/powerup.gd

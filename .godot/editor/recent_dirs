@@ -1,3 +1,4 @@
+res://shader
 res://texture/atlas
 res://scene/level
 res://texture/spritesheet
@@ -10,7 +11,6 @@ res://scene/player/menu/main
 res://scene/player/save
 res://scripts/global
 res://texture/icon
-res://shader
 res://texture/fx
 res://
 res://scene/car

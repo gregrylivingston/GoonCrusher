@@ -188,6 +188,7 @@ func crushGoon(collider):
 	var newPowerup = Root.getSpecificPowerup("currentGoonsCrushed")
 	newPowerup.global_position = collider.global_position
 	Root.levelRoot.add_child(newPowerup)
+	newPowerup._on_area_2d_body_entered(self)
 	collider.destroy()
 	#currentGoonsCrushed += 1
 

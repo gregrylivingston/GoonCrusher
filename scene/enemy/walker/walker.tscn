@@ -22,7 +22,7 @@ shape = SubResource("RectangleShape2D_je6xf")
 [node name="Walker" type="AnimatedSprite2D" parent="."]
 sprite_frames = ExtResource("1_mmdcr")
 autoplay = "default"
-frame_progress = 0.00208849
+frame_progress = 0.961331
 
 [node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("3_8yt8i")

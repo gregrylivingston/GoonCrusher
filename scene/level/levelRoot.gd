@@ -3,7 +3,7 @@ extends Node2D
 var spawnerScene = preload("res://scene/player/spawner.tscn")
 var playerCar: OverheadCarBody2D
 var playerController
-var seconds = 0
+var seconds = 1
 
 func _ready():
 	updateAudioLevels()

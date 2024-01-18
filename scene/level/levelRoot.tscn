@@ -1,4 +1,4 @@
-[gd_scene load_steps=21 format=3 uid="uid://dqcrli42u3gia"]
+[gd_scene load_steps=22 format=3 uid="uid://dqcrli42u3gia"]
 
 [ext_resource type="Script" path="res://scene/level/levelRoot.gd" id="1_65p74"]
 [ext_resource type="PackedScene" uid="uid://brhh6ifac5qvc" path="res://scene/scenery/rocks.tscn" id="2_5ujut"]
@@ -21,6 +21,11 @@
 [ext_resource type="PackedScene" uid="uid://b6x6nemyty8wb" path="res://scene/enemy/spawnManager.tscn" id="17_3wer8"]
 [ext_resource type="AudioStream" uid="uid://bqf1c80fb8cpl" path="res://sound/fx/duskwolf-101348.mp3" id="19_b5cat"]
 
+[sub_resource type="Environment" id="Environment_ax5w4"]
+background_mode = 3
+glow_enabled = true
+glow_blend_mode = 0
+
 [node name="LevelRoot" type="Node2D" groups=["levelRoot"]]
 script = ExtResource("1_65p74")
 
@@ -35,6 +40,7 @@ texture = ExtResource("2_tickn")
 stretch_mode = 1
 
 [node name="LandscapeMap" parent="." instance=ExtResource("3_atuom")]
+z_index = -1
 y_sort_enabled = true
 position = Vector2(7.12493, 41.9996)
 layer_0/y_sort_enabled = true
@@ -120,3 +126,6 @@ position = Vector2(3801, 611)
 stream = ExtResource("19_b5cat")
 
 [node name="CanvasModulate" type="CanvasModulate" parent="."]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_ax5w4")

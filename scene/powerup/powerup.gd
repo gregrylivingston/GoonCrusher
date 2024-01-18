@@ -3,6 +3,11 @@ class_name Powerup extends Sprite2D
 @export var powerup: String
 @export var quantity: float
 
+var hasShinyShader: bool = true
+
+func _ready():
+	if not hasShinyShader:
+		set_material(null)
 
 
 
@@ -13,6 +18,7 @@ func _on_area_2d_body_entered(body):
 			sendReward(body)
 
 func sendReward(body, forShowOnly: bool = false):
+	set_material(null)
 	$AudioStreamReward.play()
 	uiControlNode = get_tree().get_first_node_in_group(powerup+"ui")
 	startPosition = global_position

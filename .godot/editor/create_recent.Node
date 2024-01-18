@@ -1,3 +1,4 @@
+WorldEnvironment
 CanvasModulate
 TileMap
 PointLight2D
@@ -8,7 +9,6 @@ LightOccluder2D
 Sprite2D
 TextureRect
 DirectionalLight2D
-WorldEnvironment
 Node
 AnimatedSprite2D
 AudioStreamPlayer2D

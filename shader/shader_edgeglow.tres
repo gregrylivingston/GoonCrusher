@@ -1,3 +1,10 @@
-[gd_resource type="ShaderMaterial" format=3 uid="uid://b2nnqweaskeli"]
+[gd_resource type="ShaderMaterial" load_steps=2 format=3 uid="uid://b2nnqweaskeli"]
+
+[ext_resource type="Shader" path="res://shader/shine.gdshader" id="1_70ny7"]
 
 [resource]
+shader = ExtResource("1_70ny7")
+shader_parameter/shine_color = Color(100, 100, 100, 1)
+shader_parameter/shine_speed = 5.0
+shader_parameter/shine_size = 0.02
+shader_parameter/onoff = 1.0

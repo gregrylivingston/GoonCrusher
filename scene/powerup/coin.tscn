@@ -1,16 +1,13 @@
-[gd_scene load_steps=5 format=3 uid="uid://c3nj8qlsr0clb"]
+[gd_scene load_steps=4 format=3 uid="uid://c3nj8qlsr0clb"]
 
 [ext_resource type="PackedScene" uid="uid://b7r4ro32w40xi" path="res://scene/powerup/powerup.tscn" id="1_r6hoh"]
 [ext_resource type="Texture2D" uid="uid://w03tvhxtmrv4" path="res://texture/icon/icons8-coin-48 (1).png" id="2_pgcic"]
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_f2dft"]
 
 [sub_resource type="OccluderPolygon2D" id="OccluderPolygon2D_ui1hu"]
 cull_mode = 1
 polygon = PackedVector2Array(-12, 15.5, 0.5, 18, 14, 13.5, 18.5, -1, 13, -13, 2, -16.5, -11, -12.5, -18, 1)
 
 [node name="Powerup" instance=ExtResource("1_r6hoh")]
-material = SubResource("ShaderMaterial_f2dft")
 texture = ExtResource("2_pgcic")
 powerup = "coin"
 quantity = 1.0
