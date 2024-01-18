@@ -1,5 +1,6 @@
-[gd_scene load_steps=7 format=3 uid="uid://ck730mtu8o5o8"]
+[gd_scene load_steps=9 format=3 uid="uid://ck730mtu8o5o8"]
 
+[ext_resource type="Shader" path="res://shader/flashiness.gdshader" id="1_1hpc4"]
 [ext_resource type="SpriteFrames" uid="uid://lyldd0udb2f" path="res://scene/enemy/walker/devil/walkingDevil.tres" id="1_mmdcr"]
 [ext_resource type="Script" path="res://scene/enemy/walker/walker.gd" id="2_ogk1f"]
 [ext_resource type="AudioStream" uid="uid://bb2bp4dpqqiv8" path="res://sound/fx/male_hurt7-48124.mp3" id="3_8yt8i"]
@@ -7,6 +8,12 @@
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_je6xf"]
 size = Vector2(32, 39)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ogm8y"]
+shader = ExtResource("1_1hpc4")
+shader_parameter/speed = 1.0
+shader_parameter/tint = Color(128.498, 1, 1, 1)
+shader_parameter/span = 0.231
 
 [sub_resource type="OccluderPolygon2D" id="OccluderPolygon2D_iva72"]
 cull_mode = 1
@@ -20,9 +27,10 @@ position = Vector2(-1, -2.5)
 shape = SubResource("RectangleShape2D_je6xf")
 
 [node name="Walker" type="AnimatedSprite2D" parent="."]
+material = SubResource("ShaderMaterial_ogm8y")
 sprite_frames = ExtResource("1_mmdcr")
 autoplay = "default"
-frame_progress = 0.961331
+frame_progress = 0.0983814
 
 [node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("3_8yt8i")
@@ -33,6 +41,7 @@ stream = ExtResource("4_x7wx2")
 volume_db = 10.0
 
 [node name="LightOccluder2D" type="LightOccluder2D" parent="."]
+visible = false
 occluder = SubResource("OccluderPolygon2D_iva72")
 
 [connection signal="animation_finished" from="Walker" to="." method="_on_walker_animation_finished"]

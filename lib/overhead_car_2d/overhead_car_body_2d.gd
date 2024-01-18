@@ -40,6 +40,8 @@ var slotMachines = 0
 @export var isPlayer = true
 var isDestroyed: bool = false
 
+func getIsPlayer():return isPlayer
+
 @export var profilePic: Texture2D
 @export var charName: String = "Hi"
 @export var carId:String
@@ -163,7 +165,7 @@ func _physics_process(delta):
 	
 	#finding colliders
 	for i in get_slide_collision_count():
-		var collider = get_slide_collision ( i ).get_collider()
+		var collider = get_slide_collision( i ).get_collider()
 		#print(collider.get_class())
 		##colide with an unmovable static object like a rock
 		if velocity.length() > 0.01 && collider.get_class() == "StaticBody2D":
@@ -312,7 +314,7 @@ func spendGems(numOfGems: int):
 		return false
 
 func damage(damage: float):
-	health -= damage
+	health -= damage / armor
 	if health <= 0:
 		destroy()
 

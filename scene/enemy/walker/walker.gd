@@ -13,8 +13,10 @@ var target: Vector2
 
 func _ready():
 	if isGiant:
-		scale = Vector2(1.2,1.3)
-		speed = speed * 1.8
+		scale = Vector2(1.3,1.4)
+		speed = speed * 5.0
+	else: 
+		$Walker.set_material(null)
 	await get_tree().create_timer(20).timeout
 	checkDestroyDistance()
 
@@ -25,10 +27,16 @@ func checkDestroyDistance():
 
 func _process(delta):
 	if alive:# && is_instance_valid( Root.playerCar ):
-		move_and_collide( position.direction_to( Root.playerCar.position ) * speed )
+		var collisions = move_and_collide( position.direction_to( Root.playerCar.position ) * speed )
+		for i in get_slide_collision_count():
+			var collider = get_slide_collision( i ).get_collider()
+			if collider.has_method("getIsPlayer"):
+				if collider.getIsPlayer == true:
+					collider.damage(1.0)
 
 
 func destroy():
+	$Walker.set_material(null)
 	$CollisionShape2D.queue_free()
 	alive = false
 	$Walker.animation = "death"
