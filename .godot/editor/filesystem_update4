@@ -51,3 +51,6 @@ res://scene/car/racer/racer.tscn
 res://scene/car/audi/audi.tscn
 res://scene/car/ambulance/ambulance.tscn
 res://scene/car/police/police.tscn
+res://style/style_box_basic.tres
+res://scene/player/spawner.gd
+res://scene/enemy/spawnManager.gd

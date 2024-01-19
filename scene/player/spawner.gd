@@ -18,5 +18,5 @@ func spawn():
 	newWalker.position = global_position + Vector2(randi_range(-500,500),randi_range(-500,500))
 	Root.levelRoot.add_child(newWalker)
 
-	await get_tree().create_timer(2).timeout
+	await get_tree().create_timer(Root.spawnManager.spawnTimer).timeout
 	spawn()

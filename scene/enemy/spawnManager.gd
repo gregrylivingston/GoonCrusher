@@ -1,5 +1,6 @@
 extends Node
 
+var spawnTimer = 6.0
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
@@ -14,6 +15,8 @@ func _ready():
 
 func increaseGiantOdds():
 	giantOdds += 1
+	giantOdds = clampi(giantOdds, 0 , 50)
+	spawnTimer = clampf(spawnTimer - 0.1 , 1.0, 6.0)
 	await get_tree().create_timer(10).timeout
 	increaseGiantOdds()
 	
@@ -23,7 +26,7 @@ func createGoonScene():
 	elif randomizer > -15: return goon.spartan.instantiate()
 	else: return goon.samurai.instantiate()
 	
-var giantOdds = -1
+var giantOdds = -10
 func getGoon():
 	var goon = createGoonScene()
 	if randi_range(0 , 100) < giantOdds:
