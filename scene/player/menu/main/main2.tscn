@@ -203,6 +203,16 @@ size_flags_vertical = 3
 theme_override_font_sizes/font_size = 50
 text = "  RIDE"
 
+[node name="unlock" parent="mainMenuPanel/VBoxContainer/HBoxContainer2" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
+unique_name_in_owner = true
+visible = false
+material = SubResource("ShaderMaterial_nkj8d")
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 50
+text = "  UNLOCK"
+
 [node name="begin" parent="mainMenuPanel/VBoxContainer/HBoxContainer2" groups=["levelMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
 visible = false
@@ -358,6 +368,7 @@ autoplay = true
 bus = &"Music"
 
 [connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer2/levelSelect" to="." method="_on_level_select_pressed"]
+[connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer2/unlock" to="." method="_on_unlock_pressed"]
 [connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer2/begin" to="." method="_on_begin_pressed"]
 [connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer3/recordsButton" to="." method="_on_records_button_pressed"]
 [connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer3/backButton" to="." method="_on_back_button_pressed"]

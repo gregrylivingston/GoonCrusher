@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://clx3q1jksnuoc"]
+[gd_scene load_steps=11 format=3 uid="uid://clx3q1jksnuoc"]
 
 [ext_resource type="PackedScene" uid="uid://i0goedbwsro6" path="res://scene/player/ui/attribute_indicator.tscn" id="1_awv6k"]
 [ext_resource type="Script" path="res://scene/player/menu/main/car_stats_container.gd" id="1_mv7o5"]
@@ -7,13 +7,15 @@
 [ext_resource type="Texture2D" uid="uid://b40eqkba0jho8" path="res://texture/icon/engine.png" id="4_3l7yx"]
 [ext_resource type="Texture2D" uid="uid://ckvii7iuglgha" path="res://texture/icon/shield.png" id="5_1k2du"]
 [ext_resource type="Texture2D" uid="uid://clb0tyqiwegeo" path="res://texture/icon/icons8-gem-48.png" id="8_5isf4"]
+[ext_resource type="PackedScene" uid="uid://maftjaqqaasp" path="res://scene/player/menu/main/statUpgradeButton.tscn" id="8_neb62"]
+[ext_resource type="Texture2D" uid="uid://s1pejsjjv3o7" path="res://texture/icon/uparrow.png" id="9_adcsu"]
 [ext_resource type="Texture2D" uid="uid://w03tvhxtmrv4" path="res://texture/icon/icons8-coin-48 (1).png" id="9_lbbgn"]
 
 [node name="carStatsContainer" type="VBoxContainer"]
 offset_left = 420.0
 offset_top = 357.0
-offset_right = 880.0
-offset_bottom = 409.0
+offset_right = 1336.0
+offset_bottom = 472.0
 script = ExtResource("1_mv7o5")
 
 [node name="HBoxContainer" type="HBoxContainer" parent="."]
@@ -55,39 +57,48 @@ size_flags_vertical = 3
 myIcon = ExtResource("9_lbbgn")
 
 [node name="HBoxContainer2" type="HBoxContainer" parent="."]
-visible = false
 layout_mode = 2
 
-[node name="armor2" parent="HBoxContainer2" instance=ExtResource("1_awv6k")]
+[node name="statUpgrade" parent="HBoxContainer2" instance=ExtResource("8_neb62")]
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_vertical = 3
-myIcon = ExtResource("5_1k2du")
+text = "300 "
+icon = ExtResource("9_adcsu")
+alignment = 2
+myStat = "armor"
 
-[node name="engine2" parent="HBoxContainer2" instance=ExtResource("1_awv6k")]
+[node name="statUpgrade2" parent="HBoxContainer2" instance=ExtResource("8_neb62")]
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_vertical = 3
-myIcon = ExtResource("4_3l7yx")
+text = "300 "
+icon = ExtResource("9_adcsu")
+alignment = 2
+myStat = "engine"
 
-[node name="aero2" parent="HBoxContainer2" instance=ExtResource("1_awv6k")]
+[node name="statUpgrade3" parent="HBoxContainer2" instance=ExtResource("8_neb62")]
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_vertical = 3
-myIcon = ExtResource("3_gtqp7")
+text = "300 "
+icon = ExtResource("9_adcsu")
+alignment = 2
+myStat = "traction"
 
-[node name="steering2" parent="HBoxContainer2" instance=ExtResource("1_awv6k")]
+[node name="statUpgrade4" parent="HBoxContainer2" instance=ExtResource("8_neb62")]
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_vertical = 3
-myIcon = ExtResource("2_ekr1k")
+text = "300 "
+icon = ExtResource("9_adcsu")
+alignment = 2
+myStat = "steering"
 
 [node name="VSeparator2" type="VSeparator" parent="HBoxContainer2"]
 self_modulate = Color(1, 1, 1, 0)
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
+size_flags_horizontal = 4
 
 [node name="gem" parent="HBoxContainer2" instance=ExtResource("1_awv6k")]
+modulate = Color(1, 1, 1, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3

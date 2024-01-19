@@ -1,7 +1,7 @@
 extends Resource
 class_name playerData
 
-var coin = 0
+var coin = 999
 var gem = 0
 
 var cars = {
@@ -21,32 +21,32 @@ var cars = {
 		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,},
 	},	
 	"pickup":{
-		"cost":10000,
+		"cost":1000,
 		"upgrades":{"traction":0,"engine":0,"armor":0,"steering":0},
 		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,},
 	},
 	"semi":{
-		"cost":25000,
+		"cost":5000,
 		"upgrades":{"traction":0,"engine":0,"armor":0,"steering":0},
 		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,},
 	},
 	"audi":{
-		"cost":50000,
+		"cost":20000,
 		"upgrades":{"traction":0,"engine":0,"armor":0,"steering":0},
 		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,},
 	},
 	"racer":{
-		"cost":50000,
+		"cost":25000,
 		"upgrades":{"traction":0,"engine":0,"armor":0,"steering":0},
 		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,},
 	},
 	"police":{
-		"cost":99999,
+		"cost":50000,
 		"upgrades":{"traction":0,"engine":0,"armor":0,"steering":0},
 		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,},
 	},
 	"ambulance":{
-		"cost":99999,
+		"cost":75000,
 		"upgrades":{"traction":0,"engine":0,"armor":0,"steering":0},
 		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,},
 	}

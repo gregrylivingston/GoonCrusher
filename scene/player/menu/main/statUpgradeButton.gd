@@ -2,21 +2,20 @@ extends roadButton
 
 @export var myStat: String
 
-
-
-
 # Called when the node enters the scene tree for the first time.
 func _ready():
-	await get_tree().process_frame
-	await get_tree().process_frame
 	refresh()
 	
 func refresh():
-	var requestCost = SaveManager.requestStatCost(myStat)
-	text = str(SaveManager.requestStatCost(myStat)) + "  +1 " + myStat
-	if requestCost > SaveManager.playerData.coin: disabled = true
-	else: disabled = false
-
+	if is_instance_valid(Root.playerCar):
+		var requestCost = SaveManager.requestStatCost(myStat)
+		text = str(SaveManager.requestStatCost(myStat))
+		if requestCost > SaveManager.playerData.coin: disabled = true
+		else: disabled = false
+	else:
+		await get_tree().process_frame
+		await get_tree().process_frame
+		refresh()
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
@@ -26,8 +25,8 @@ func _process(delta):
 
 func _on_upgrade_pressed():
 	if SaveManager.requestStatUpgrade(myStat):
-		sendReward(Root.playerCar)
-	
+		#sendReward(Root.playerCar)
+		refresh()
 	
 
 	

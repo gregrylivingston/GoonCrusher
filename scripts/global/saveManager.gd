@@ -68,7 +68,7 @@ func requestStatUpgrade(statString: String):
 		playerData.coin -= requestCost
 		playerData.cars[Root.playerCar.carId].upgrades[statString] += 1
 		save_character_data()
-		Root.mainMenu.uiUpdate()
+		Root.mainMenu.statUpdatesUiUpdate()
 		return true
 	else: return false
 
