@@ -1,7 +1,7 @@
 extends Resource
 class_name playerData
 
-var coin = 999
+var coin = 25
 var gem = 0
 
 var cars = {
@@ -16,12 +16,12 @@ var cars = {
 		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,},
 	},
 	"taxi":{
-		"cost":0,
-		"upgrades":{"traction":0,"engine":8,"armor":0,"steering":8},
+		"cost":1000,
+		"upgrades":{"traction":0,"engine":0,"armor":0,"steering":0},
 		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,},
 	},	
 	"pickup":{
-		"cost":1000,
+		"cost":2500,
 		"upgrades":{"traction":0,"engine":0,"armor":0,"steering":0},
 		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,},
 	},

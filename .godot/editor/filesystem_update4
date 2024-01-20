@@ -57,3 +57,5 @@ res://scene/enemy/spawnManager.gd
 res://scene/player/menu/main/statUpgradeButton.tscn
 res://scene/player/menu/main/statUpgradeButton.gd
 res://scripts/global/saveManager.gd
+res://scene/player/menu/main/mainMenuCamera.tscn
+res://scene/player/menu/gameSummary.gd

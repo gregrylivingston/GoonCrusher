@@ -27,12 +27,12 @@ var coinScene = preload("res://scene/powerup/coin.tscn")
 
 func addCoins(num: int):
 	for i in num/10:
-		var newCoin = coinScene.instantiate()
-		newCoin.global_position = Root.playerCar.global_position + Vector2( randi_range(-100,100) ,randi_range(-100,100) )
-		Root.mainMenu.get_parent().add_child(newCoin)
-		newCoin.sendReward( Root.playerCar )
+#		var newCoin = coinScene.instantiate()
+#		newCoin.global_position = Root.playerCar.global_position + Vector2( randi_range(-100,100) ,randi_range(-100,100) )
+#		Root.mainMenu.get_parent().add_child(newCoin)
+#		newCoin.sendReward( Root.playerCar )
 		playerData.coin += 10
-		Root.mainMenu.uiUpdate()
+		Root.mainMenu.statUpdatesUiUpdate()
 		await get_tree().process_frame
 	playerData.coin += num%10 
 	save_character_data()
@@ -42,12 +42,12 @@ var gemScene = preload("res://scene/powerup/gem.tscn")
 	
 func addGems(num: int):
 	for i in num:
-		var newCoin = gemScene.instantiate()
-		newCoin.global_position = Root.playerCar.global_position + Vector2( randi_range(-100,100) ,randi_range(-100,100) )
-		Root.mainMenu.get_parent().add_child(newCoin)
-		newCoin.sendReward( Root.playerCar )
+#		var newCoin = gemScene.instantiate()
+#		newCoin.global_position = Root.playerCar.global_position + Vector2( randi_range(-100,100) ,randi_range(-100,100) )
+#		Root.mainMenu.get_parent().add_child(newCoin)
+#		newCoin.sendReward( Root.playerCar )
 		playerData.gem += 1
-		Root.mainMenu.uiUpdate()
+		Root.mainMenu.statUpdatesUiUpdate()
 		await get_tree().process_frame
 	save_character_data()
 

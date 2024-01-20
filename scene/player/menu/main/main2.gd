@@ -7,6 +7,12 @@ var menuMode: String = "main"
 func _ready():
 	Root.mainMenu = self
 	selectCar(Root.cars[Root.cars.keys()[Root.selectedCarNum]])
+	if Root.isRunActive:
+		Root.isRunActive = false
+		SaveManager.addCoins( Root.earnedCoins )
+		SaveManager.addGems( Root.earnedGems )
+		Root.earnedCoins = 0
+		Root.earnedGems = 0
 	
 var selectCarDelay = 0.3
 func selectCar(car):

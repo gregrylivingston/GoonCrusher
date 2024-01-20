@@ -12,9 +12,10 @@
 [ext_resource type="Texture2D" uid="uid://w03tvhxtmrv4" path="res://texture/icon/icons8-coin-48 (1).png" id="9_lbbgn"]
 
 [node name="carStatsContainer" type="VBoxContainer"]
+custom_minimum_size = Vector2(919, 0)
 offset_left = 420.0
 offset_top = 357.0
-offset_right = 1336.0
+offset_right = 1339.0
 offset_bottom = 472.0
 script = ExtResource("1_mv7o5")
 
@@ -100,6 +101,6 @@ size_flags_horizontal = 4
 [node name="gem" parent="HBoxContainer2" instance=ExtResource("1_awv6k")]
 modulate = Color(1, 1, 1, 0)
 layout_mode = 2
-size_flags_horizontal = 3
+size_flags_horizontal = 10
 size_flags_vertical = 3
 myIcon = ExtResource("8_5isf4")

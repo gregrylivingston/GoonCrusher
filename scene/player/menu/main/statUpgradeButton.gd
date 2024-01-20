@@ -10,8 +10,12 @@ func refresh():
 	if is_instance_valid(Root.playerCar):
 		var requestCost = SaveManager.requestStatCost(myStat)
 		text = str(SaveManager.requestStatCost(myStat))
-		if requestCost > SaveManager.playerData.coin: disabled = true
-		else: disabled = false
+		if requestCost > SaveManager.playerData.coin: 
+			disabled = true
+			modulate.a = 0.0
+		else: 
+			disabled = false
+			modulate.a = 1.0
 	else:
 		await get_tree().process_frame
 		await get_tree().process_frame
@@ -27,6 +31,7 @@ func _on_upgrade_pressed():
 	if SaveManager.requestStatUpgrade(myStat):
 		#sendReward(Root.playerCar)
 		refresh()
+		Root.mainMenu.statUpdatesUiUpdate()
 	
 
 	
