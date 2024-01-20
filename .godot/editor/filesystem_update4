@@ -59,3 +59,7 @@ res://scene/player/menu/main/statUpgradeButton.gd
 res://scripts/global/saveManager.gd
 res://scene/player/menu/main/mainMenuCamera.tscn
 res://scene/player/menu/gameSummary.gd
+res://scene/player/slots/slotMachine.gd
+res://scene/powerup/powerup.gd
+res://scene/level/levelRoot.gd
+res://scene/player/Timer.gd

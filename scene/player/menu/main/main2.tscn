@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3 uid="uid://btm8fh8tutk2x"]
+[gd_scene load_steps=17 format=3 uid="uid://btm8fh8tutk2x"]
 
 [ext_resource type="Theme" uid="uid://co40pijjc7hbw" path="res://style/roadRogue.tres" id="1_badde"]
 [ext_resource type="Script" path="res://scene/player/menu/main/main2.gd" id="1_cc7gi"]
@@ -10,6 +10,7 @@
 [ext_resource type="FontFile" uid="uid://hf5rdg67jcwc" path="res://addons/gut/fonts/AnonymousPro-Italic.ttf" id="4_b1dqc"]
 [ext_resource type="PackedScene" uid="uid://bepxjqhida0n8" path="res://scene/player/ui/roadButton.tscn" id="4_f12ks"]
 [ext_resource type="FontFile" uid="uid://c106tp6lo578e" path="res://style/font/Tektur/Tektur-Bold.ttf" id="5_00nh6"]
+[ext_resource type="Texture2D" uid="uid://w03tvhxtmrv4" path="res://texture/icon/icons8-coin-48 (1).png" id="11_1oi8i"]
 [ext_resource type="PackedScene" uid="uid://clx3q1jksnuoc" path="res://scene/player/menu/main/car_stats_container.tscn" id="11_wos04"]
 [ext_resource type="AudioStream" uid="uid://chsan1o1ku2c7" path="res://sound/music/abstract-world-127012.mp3" id="12_3e52h"]
 
@@ -212,6 +213,7 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_font_sizes/font_size = 50
 text = "  UNLOCK"
+icon = ExtResource("11_1oi8i")
 
 [node name="begin" parent="mainMenuPanel/VBoxContainer/HBoxContainer2" groups=["levelMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true

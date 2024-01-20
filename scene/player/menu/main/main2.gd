@@ -42,7 +42,8 @@ func disableLockedCars(car):
 	if SaveManager.playerData.cars[Root.playerCar.carId].cost != 0:
 		%levelSelect.visible = false
 		%unlock.visible = true
-		%unlock.text = "Unlock for " + str(SaveManager.playerData.cars[Root.playerCar.carId].cost)
+		var unlockCost = SaveManager.playerData.cars[Root.playerCar.carId].cost
+		%unlock.text = "  " +str(unlockCost)
 		if SaveManager.playerData.cars[Root.playerCar.carId].cost > SaveManager.playerData.coin:%unlock.disabled = true
 		else: %unlock.disabled = false
 	else:

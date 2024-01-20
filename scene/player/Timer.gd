@@ -6,7 +6,6 @@ func _ready():
 	pass
 
 var daylength = 60
-var isDaytime: bool = true
 var reset: bool = false
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -16,13 +15,13 @@ func _process(delta):
 	if clockSeconds < 10: clockSeconds = "0" + str(clockSeconds)
 	text = str(int(Root.levelRoot.seconds /60)) + " : " + str(clockSeconds)
 	
-	if int(Root.levelRoot.seconds )% daylength == 0 && isDaytime && not reset:
-		isDaytime = false
+	if int(Root.levelRoot.seconds )% daylength == 0 && Root.levelRoot.isDaytime && not reset:
+		Root.levelRoot.isDaytime = false
 		reset = true
 		Root.levelRoot.setNighttime(true)
 		resetTimer()
-	elif int(Root.levelRoot.seconds )% daylength == 0 && not isDaytime && not reset:
-		isDaytime = true
+	elif int(Root.levelRoot.seconds )% daylength == 0 && not Root.levelRoot.isDaytime && not reset:
+		Root.levelRoot.isDaytime = true
 		reset = true
 		Root.levelRoot.setNighttime(false)
 		resetTimer()

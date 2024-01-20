@@ -1,8 +1,8 @@
 extends Resource
 class_name playerData
 
-var coin = 25
-var gem = 0
+var coin = 1200
+var gem = 3
 
 var cars = {
 	"sedan":{

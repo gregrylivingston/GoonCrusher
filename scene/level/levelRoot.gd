@@ -5,6 +5,8 @@ var playerCar: OverheadCarBody2D
 var playerController
 var seconds = 1
 
+var isDaytime: bool = true
+
 func _ready():
 	updateAudioLevels()
 	#add my car

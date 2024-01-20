@@ -19,6 +19,9 @@ func _on_area_2d_body_entered(body):
 
 func sendReward(body, forShowOnly: bool = false):
 	set_material(null)
+	if not Root.levelRoot.isDaytime:
+		$PointLight2D.visible = true
+		$PointLight2D.texture = texture
 	$AudioStreamReward.play()
 	uiControlNode = get_tree().get_first_node_in_group(powerup+"ui")
 	startPosition = global_position

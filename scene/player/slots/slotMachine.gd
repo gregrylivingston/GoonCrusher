@@ -37,9 +37,24 @@ func _ready():
 	isReady = true
 	$Panel/Panel/VBoxContainer/play_button.disabled = false
 
+
+func resetKeyPress():
+	await get_tree().create_timer(keyPressDelay).timeout
+	delayKeyPress = false
+
+var keyPressDelay = .25
+var delayKeyPress = false
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
-	pass
+	if Input.is_action_just_pressed("Accelerate") && delayKeyPress == false:
+		if isReady:
+			_on_play_button_pressed()
+			delayKeyPress = true
+			resetKeyPress()
+		elif $Panel/Panel/VBoxContainer/claim_button.disabled == false:
+			_on_claim_button_pressed()
+	if Input.is_action_just_released("Brake") && not isReady &&  $Panel/Panel/VBoxContainer/claim_button.disabled == false:
+		_on_reroll_button_pressed()
 
 
 
