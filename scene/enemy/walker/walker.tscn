@@ -7,7 +7,7 @@
 [ext_resource type="AudioStream" uid="uid://bx5sol7p1e63w" path="res://sound/fx/punch-140236.mp3" id="4_x7wx2"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_je6xf"]
-size = Vector2(32, 39)
+size = Vector2(32, 32)
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_ogm8y"]
 shader = ExtResource("1_1hpc4")
@@ -17,7 +17,7 @@ shader_parameter/span = 0.231
 
 [sub_resource type="OccluderPolygon2D" id="OccluderPolygon2D_iva72"]
 cull_mode = 1
-polygon = PackedVector2Array(-16, -21, -17, 12, -7, 26, 10, 28, 8, 6, 18, 4, 16, -19, 6, -29, -1, -30, -6, -22)
+polygon = PackedVector2Array(-12, -4, -11, 6, -6, 12, 5, 15, 18, 11, 18, 4, 27, -1, 19, -7, 18, -18, 7, -18, -5, -12)
 
 [node name="CharacterBody2D" type="CharacterBody2D"]
 script = ExtResource("2_ogk1f")
@@ -28,9 +28,12 @@ shape = SubResource("RectangleShape2D_je6xf")
 
 [node name="Walker" type="AnimatedSprite2D" parent="."]
 material = SubResource("ShaderMaterial_ogm8y")
+rotation = 1.5708
 sprite_frames = ExtResource("1_mmdcr")
+animation = &"attack"
 autoplay = "default"
-frame_progress = 0.709246
+frame = 2
+frame_progress = 0.0652032
 
 [node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("3_8yt8i")

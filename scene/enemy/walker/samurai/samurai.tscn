@@ -4,9 +4,13 @@
 [ext_resource type="SpriteFrames" uid="uid://dljg77urgr0py" path="res://scene/enemy/walker/samurai/samurai.tres" id="2_mblwc"]
 
 [node name="spartan" instance=ExtResource("1_xht5c")]
-speed = 3.2
+powerupDropChance = 25
+speed = 120.0
+attackSpeedMultiplier = 5.0
+myIdleLength = 7
 
 [node name="Walker" parent="." index="1"]
 sprite_frames = ExtResource("2_mblwc")
+animation = &"death"
+frame = 0
 frame_progress = 0.478109
-speed_scale = 1.5

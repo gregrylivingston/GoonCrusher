@@ -226,8 +226,8 @@ func activeCarEffects(delta):
 		tiremark = {}
 
 	#zoom out if going fast
-	if velocity.length() > 350.0 && isPlayer && is_instance_valid($Camera2D):
-		var myZoomFactor = 0.6 - velocity.length() / 3500.0
+	if velocity.length() > 450.0 && isPlayer && is_instance_valid($Camera2D):
+		var myZoomFactor = 0.6 - velocity.length() / 4500.0
 		$Camera2D.zoom = Vector2(myZoomFactor, myZoomFactor)
 	else:
 		$Camera2D.zoom = Vector2(0.5,0.5)

@@ -4,8 +4,9 @@
 [ext_resource type="SpriteFrames" uid="uid://cgi6qs7i8yq6c" path="res://scene/enemy/walker/spartan/spartan.tres" id="2_ml8tv"]
 
 [node name="spartan" instance=ExtResource("1_2rlkp")]
-speed = 2.0
 
 [node name="Walker" parent="." index="1"]
 sprite_frames = ExtResource("2_ml8tv")
-frame_progress = 0.0089844
+animation = &"default"
+frame = 0
+frame_progress = 0.0

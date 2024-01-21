@@ -30,6 +30,7 @@ stream = ExtResource("4_y3svm")
 volume_db = 2.0
 
 [node name="LightOccluder2D" type="LightOccluder2D" parent="."]
+visible = false
 occluder = SubResource("OccluderPolygon2D_y7o0u")
 
 [node name="PointLight2D" type="PointLight2D" parent="."]

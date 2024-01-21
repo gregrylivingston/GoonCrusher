@@ -40,7 +40,7 @@ texture = ExtResource("2_tickn")
 stretch_mode = 1
 
 [node name="LandscapeMap" parent="." instance=ExtResource("3_atuom")]
-z_index = -1
+z_index = -2
 y_sort_enabled = true
 position = Vector2(7.12493, 41.9996)
 layer_0/y_sort_enabled = true

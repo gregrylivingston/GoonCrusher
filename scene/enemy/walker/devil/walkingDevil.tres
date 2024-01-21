@@ -1,18 +1,60 @@
-[gd_resource type="SpriteFrames" load_steps=5 format=3 uid="uid://lyldd0udb2f"]
+[gd_resource type="SpriteFrames" load_steps=15 format=3 uid="uid://lyldd0udb2f"]
 
-[ext_resource type="Texture2D" uid="uid://8neuy7nuqdff" path="res://scene/enemy/walker/devil/texture/0002.png" id="1_i88fl"]
 [ext_resource type="Texture2D" uid="uid://cnx1rje88adou" path="res://scene/enemy/walker/devil/texture/0080.png" id="1_s5lq5"]
+[ext_resource type="Texture2D" uid="uid://1ro88b6mc6eo" path="res://scene/enemy/walker/devil/texture/0049.png" id="1_xdgqa"]
+[ext_resource type="Texture2D" uid="uid://btdlj7sec8hre" path="res://scene/enemy/walker/devil/texture/0050.png" id="2_l7gk3"]
 [ext_resource type="Texture2D" uid="uid://r6nqp2khheft" path="res://scene/enemy/walker/devil/texture/0081.png" id="2_yfcek"]
-[ext_resource type="Texture2D" uid="uid://drbxlvylqo4ek" path="res://scene/enemy/walker/devil/texture/0004.png" id="3_3ieup"]
+[ext_resource type="Texture2D" uid="uid://82a4x5p2xc5l" path="res://scene/enemy/walker/devil/texture/0051.png" id="3_be0cf"]
+[ext_resource type="Texture2D" uid="uid://bimwjdutu7qgy" path="res://scene/enemy/walker/devil/texture/0021.png" id="3_rp8oh"]
+[ext_resource type="Texture2D" uid="uid://dg41jmais3xqf" path="res://scene/enemy/walker/devil/texture/0052.png" id="4_1wsd5"]
+[ext_resource type="Texture2D" uid="uid://cp62fcgid8m63" path="res://scene/enemy/walker/devil/texture/0024.png" id="4_2snlv"]
+[ext_resource type="Texture2D" uid="uid://cklypsk763sok" path="res://scene/enemy/walker/devil/texture/0053.png" id="5_a44k8"]
+[ext_resource type="Texture2D" uid="uid://c2u4efowao2rm" path="res://scene/enemy/walker/devil/texture/0054.png" id="6_d0e36"]
+[ext_resource type="Texture2D" uid="uid://bfuy0xconttmb" path="res://scene/enemy/walker/samurai/texture/0082.png" id="9_hydkm"]
+[ext_resource type="Texture2D" uid="uid://dke55la4h7pwk" path="res://scene/enemy/walker/samurai/texture/0083.png" id="10_d0jjd"]
+[ext_resource type="Texture2D" uid="uid://ng3ybq4qcj45" path="res://scene/enemy/walker/samurai/texture/0084.png" id="11_2rrg1"]
+[ext_resource type="Texture2D" uid="uid://bbhlbuufcts32" path="res://scene/enemy/walker/devil/texture/0020.png" id="11_37o0b"]
 
 [resource]
 animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_xdgqa")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_l7gk3")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_be0cf")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_1wsd5")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_a44k8")
+}, {
+"duration": 1.0,
+"texture": ExtResource("6_d0e36")
+}],
+"loop": true,
+"name": &"attack",
+"speed": 5.0
+}, {
 "frames": [{
 "duration": 1.0,
 "texture": ExtResource("1_s5lq5")
 }, {
 "duration": 60.0,
 "texture": ExtResource("2_yfcek")
+}, {
+"duration": 60.0,
+"texture": ExtResource("9_hydkm")
+}, {
+"duration": 60.0,
+"texture": ExtResource("10_d0jjd")
+}, {
+"duration": 60.0,
+"texture": ExtResource("11_2rrg1")
 }],
 "loop": true,
 "name": &"death",
@@ -20,12 +62,20 @@ animations = [{
 }, {
 "frames": [{
 "duration": 2.0,
-"texture": ExtResource("1_i88fl")
+"texture": ExtResource("3_rp8oh")
 }, {
 "duration": 2.0,
-"texture": ExtResource("3_3ieup")
+"texture": ExtResource("4_2snlv")
 }],
 "loop": true,
 "name": &"default",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("11_37o0b")
+}],
+"loop": true,
+"name": &"prepare_attack",
 "speed": 5.0
 }]

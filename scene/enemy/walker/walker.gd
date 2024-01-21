@@ -1,12 +1,16 @@
-extends CharacterBody2D
+class_name Goon extends CharacterBody2D
 
-var alive: bool = true
+
 var isPlayer: bool = false
 
+enum mode { MOVE , ATTACK , IDLE , DEAD , PREPAREATTACK}
+var myMode: mode = mode.MOVE
 
-@export var powerupDropChance: int = 90
-@export var coinDropChance: int = 70
-@export var speed: float = 1.0
+@export var powerupDropChance: int = 10
+@export var speed: float = 100.0
+@export var prepareAttackDistance: int = 300
+@export var attackSpeedMultiplier: float = 3.0
+@export var attackDamage: float = 0.1
 
 var isGiant: bool = false
 var target: Vector2
@@ -14,32 +18,105 @@ var target: Vector2
 func _ready():
 	if isGiant:
 		scale = Vector2(1.3,1.4)
-		speed = speed * 5.0
+		speed = speed * 4.0
 	else: 
 		$Walker.set_material(null)
-	await get_tree().create_timer(20).timeout
-	checkDestroyDistance()
+
 
 func checkDestroyDistance():
 	if global_position.distance_to( Root.playerCar.global_position ) > 8000: queue_free()
-	await get_tree().create_timer(10).timeout
-	checkDestroyDistance()
+
+	
+
 
 func _process(delta):
-	if alive:# && is_instance_valid( Root.playerCar ):
-		var collisions = move_and_collide( position.direction_to( Root.playerCar.position ) * speed )
-		for i in get_slide_collision_count():
-			var collider = get_slide_collision( i ).get_collider()
-			if collider.has_method("getIsPlayer"):
-				if collider.getIsPlayer == true:
-					collider.damage(1.0)
+	match myMode:
+		mode.MOVE:moveTowardsPlayer()
+		mode.ATTACK:attack()
+		mode.IDLE:idle()
+		mode.PREPAREATTACK:prepareAttack()
 
+var idleTime = 0
+@export var myIdleLength: int = 5
+func _on_walker_animation_looped():
+	match myMode:
+		mode.DEAD:queue_free()
+		mode.PREPAREATTACK:
+			myMode = mode.ATTACK
+			preparingAttack = false
+		mode.ATTACK:
+			myMode = mode.IDLE
+			$CollisionShape2D.scale = Vector2(1,1)
+			idleTime = 0
+			$Walker.animation = "prepare_attack"
+		mode.IDLE:
+			idleTime += 1
+			if idleTime > myIdleLength:
+				idleTime = 0
+				myMode = mode.MOVE
+				$Walker.animation = "default"
+				checkDestroyDistance()
+				
+				
+
+var preparingAttack = false
+func prepareAttack():
+	look_at(  Root.playerCar.position )
+	if not preparingAttack:
+		preparingAttack = true
+		$Walker.animation = "prepare_attack"
+		
+	
+
+func attack():
+	$Walker.animation = "attack"
+	$CollisionShape2D.scale = Vector2(2,1)
+	var directionToPlayer =  position.direction_to( Root.playerCar.position )
+	look_at(  Root.playerCar.position )
+	velocity =  directionToPlayer * speed * attackSpeedMultiplier
+	move_and_slide()
+	#var collisions = move_and_collide( directionToPlayer * speed * attackSpeedMultiplier )
+	for i in get_slide_collision_count():
+		var collider = get_slide_collision( i ).get_collider()
+		if collider.has_method("getIsPlayer"):
+			if collider.getIsPlayer() == true:
+				collider.damage(attackDamage)
+
+
+func idle():
+	look_at(  Root.playerCar.position )
+
+var moveCounter = randi_range(-100,100)
+func moveTowardsPlayer():
+	moveCounter += 1
+	if moveCounter > 1000:
+		myMode = mode.IDLE
+		moveCounter = randi_range(-100,100)
+		$Walker.animation = "prepare_attack"
+	else:
+		var directionToPlayer =  position.direction_to( Root.playerCar.position )
+		look_at(  Root.playerCar.position )
+		velocity =  directionToPlayer * speed
+		move_and_slide()
+		#var collisions = move_and_collide( directionToPlayer * speed )
+		if position.distance_to( Root.playerCar.position ) < prepareAttackDistance:
+			myMode = mode.PREPAREATTACK
+		#for i in get_slide_collision_count():
+		#	var collider = get_slide_collision( i ).get_collider()
+		#	if collider.has_method("getIsPlayer"):
+		#		if collider.getIsPlayer == true:
+		#			collider.damage(1.0)
+
+	
 
 func destroy():
 	$Walker.set_material(null)
 	$CollisionShape2D.queue_free()
-	alive = false
+	$LightOccluder2D.queue_free()
+	myMode = mode.DEAD
 	$Walker.animation = "death"
+	get_tree().create_tween().tween_property($Walker , "modulate" , Color(1.0,1.0,1.0,0.3) , 20 )
+	z_index -= 1
 	$AudioStreamPlayer2D2.volume_db = randf_range(0.0,5.0) + SaveManager.getVolume("fx")
 	$AudioStreamPlayer2D2.pitch_scale = randf_range(0.95,1.05)
 	$AudioStreamPlayer2D2.play()
@@ -48,16 +125,14 @@ func destroy():
 	$AudioStreamPlayer2D.play()
 	
 	var diceRoll = randi_range(0,100) 
-	if diceRoll > powerupDropChance:
+	if diceRoll < powerupDropChance:
 		await get_tree().create_timer(0.5).timeout
 		var newPowerup = Root.getPowerup()
 		newPowerup.position = global_position
 		Root.levelRoot.add_child(newPowerup)
-	elif diceRoll > coinDropChance:
-		await get_tree().create_timer(0.5).timeout
-		pass
 
 
-func _on_walker_animation_looped():
-	if not alive:queue_free()
+				
+			
+		
 
