@@ -1,0 +1,92 @@
+[gd_resource type="SpriteFrames" load_steps=17 format=3 uid="uid://db8f10p4b001p"]
+
+[ext_resource type="Texture2D" uid="uid://bmh5f8lmxokh7" path="res://scene/enemy/walker/firekin/texture/0060.png" id="1_jfowa"]
+[ext_resource type="Texture2D" uid="uid://b3kuugtbi7oyx" path="res://scene/enemy/walker/firekin/texture/0061.png" id="2_f8rxb"]
+[ext_resource type="Texture2D" uid="uid://dqbk41hnswfxr" path="res://scene/enemy/walker/firekin/texture/0062.png" id="3_2umi7"]
+[ext_resource type="Texture2D" uid="uid://ds6c0tf4gw28g" path="res://scene/enemy/walker/firekin/texture/0063.png" id="4_wapv6"]
+[ext_resource type="Texture2D" uid="uid://df2vt60i7o7u3" path="res://scene/enemy/walker/firekin/texture/0064.png" id="5_mps8x"]
+[ext_resource type="Texture2D" uid="uid://btuayd1vffe0m" path="res://scene/enemy/walker/firekin/texture/0099.png" id="6_riql0"]
+[ext_resource type="Texture2D" uid="uid://bbescuh7m8vjo" path="res://scene/enemy/walker/firekin/texture/0100.png" id="7_wb8gx"]
+[ext_resource type="Texture2D" uid="uid://b4ismqf42v568" path="res://scene/enemy/walker/firekin/texture/0101.png" id="8_rm42w"]
+[ext_resource type="Texture2D" uid="uid://kx01r72lth7a" path="res://scene/enemy/walker/firekin/texture/0032.png" id="11_6n8qo"]
+[ext_resource type="Texture2D" uid="uid://djq3tfk8opk4n" path="res://scene/enemy/walker/firekin/texture/0033.png" id="12_nkvjc"]
+[ext_resource type="Texture2D" uid="uid://dwtge0hdcawra" path="res://scene/enemy/walker/firekin/texture/0034.png" id="13_ysb80"]
+[ext_resource type="Texture2D" uid="uid://bi7k85coevoc" path="res://scene/enemy/walker/firekin/texture/0035.png" id="14_ep7wx"]
+[ext_resource type="Texture2D" uid="uid://bp3ijg5870t2" path="res://scene/enemy/walker/firekin/texture/0036.png" id="15_xrhqx"]
+[ext_resource type="Texture2D" uid="uid://c35ldjbl77vp8" path="res://scene/enemy/walker/firekin/texture/0037.png" id="16_nl4ga"]
+[ext_resource type="Texture2D" uid="uid://d0sjhl8hbc7gc" path="res://scene/enemy/walker/firekin/texture/0038.png" id="17_toslq"]
+[ext_resource type="Texture2D" uid="uid://ds5a6kfyuabfw" path="res://scene/enemy/walker/firekin/texture/0039.png" id="18_3nkmi"]
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_jfowa")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_f8rxb")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_2umi7")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_wapv6")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_mps8x")
+}],
+"loop": true,
+"name": &"attack",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("6_riql0")
+}, {
+"duration": 120.0,
+"texture": ExtResource("7_wb8gx")
+}, {
+"duration": 120.0,
+"texture": ExtResource("8_rm42w")
+}],
+"loop": true,
+"name": &"death",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 2.0,
+"texture": ExtResource("11_6n8qo")
+}, {
+"duration": 1.0,
+"texture": ExtResource("12_nkvjc")
+}, {
+"duration": 1.0,
+"texture": ExtResource("13_ysb80")
+}, {
+"duration": 1.0,
+"texture": ExtResource("14_ep7wx")
+}, {
+"duration": 2.0,
+"texture": ExtResource("15_xrhqx")
+}, {
+"duration": 1.0,
+"texture": ExtResource("16_nl4ga")
+}, {
+"duration": 1.0,
+"texture": ExtResource("17_toslq")
+}, {
+"duration": 1.0,
+"texture": ExtResource("18_3nkmi")
+}],
+"loop": true,
+"name": &"default",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_jfowa")
+}],
+"loop": true,
+"name": &"prepare_attack",
+"speed": 5.0
+}]

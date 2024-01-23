@@ -4,4 +4,5 @@
 
 [node name="TileManager" type="Node2D"]
 process_mode = 3
+z_index = -10
 script = ExtResource("1_an4p7")

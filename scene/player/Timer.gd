@@ -3,6 +3,10 @@ extends Label
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
+	await get_tree().process_frame
+	var clockSeconds = int(Root.levelRoot.seconds )%60
+	if clockSeconds < 10: clockSeconds = "0" + str(clockSeconds)
+	text = str(int(Root.levelRoot.seconds /60)) + " : " + str(clockSeconds)
 	Root.timer = self
 
 var daylength = 60
@@ -10,7 +14,7 @@ var reset: bool = false
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
-	Root.levelRoot.seconds += delta
+	Root.levelRoot.seconds -= delta
 	var clockSeconds = int(Root.levelRoot.seconds )%60
 	if clockSeconds < 10: clockSeconds = "0" + str(clockSeconds)
 	text = str(int(Root.levelRoot.seconds /60)) + " : " + str(clockSeconds)

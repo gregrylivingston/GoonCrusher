@@ -8,8 +8,10 @@ func _ready():
 	increaseGiantOdds()
 
 @onready var goon = {
-	"devil":preload("res://scene/enemy/walker/devil/devil.tscn"),
-	"spartan":preload("res://scene/enemy/walker/spartan/spartan.tscn"),
+	#"devil":preload("res://scene/enemy/walker/devil/devil.tscn"),
+	#"spartan":preload("res://scene/enemy/walker/spartan/spartan.tscn"),
+	"devil":preload("res://scene/enemy/walker/firekin/firekin.tscn"),
+	"spartan":preload("res://scene/enemy/walker/pikeman/pikeman.tscn"),
 	"samurai":preload("res://scene/enemy/walker/samurai/samurai.tscn"),
 }
 

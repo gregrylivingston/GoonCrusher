@@ -3,7 +3,7 @@ class_name Level extends Node2D
 var spawnerScene = preload("res://scene/player/spawner.tscn")
 var playerCar: OverheadCarBody2D
 var playerController
-var seconds = 1
+@export var seconds = 600
 
 var isDaytime: bool = true
 

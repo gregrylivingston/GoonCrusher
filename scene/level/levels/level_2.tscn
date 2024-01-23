@@ -9,6 +9,7 @@
 [ext_resource type="PackedScene" uid="uid://xwhhgw0qwlsm" path="res://scene/powerup/slotMachine.tscn" id="9_smtqc"]
 
 [node name="LevelRoot" instance=ExtResource("1_2efxu")]
+seconds = 420
 
 [node name="TileManager" parent="." index="0"]
 landscapeType = 1
