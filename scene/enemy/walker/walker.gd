@@ -29,7 +29,7 @@ var target: Vector2
 
 func _ready():
 	if isGiant:
-		scale = Vector2(1.3,1.4)
+		scale = Vector2(1.6,1.9)
 		speed = speed * 4.0
 	else: 
 		$Walker.set_material(null)

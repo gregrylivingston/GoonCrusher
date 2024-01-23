@@ -1,0 +1,90 @@
+[gd_scene load_steps=11 format=3 uid="uid://ig2887fq0o3e"]
+
+[ext_resource type="PackedScene" uid="uid://dqcrli42u3gia" path="res://scene/level/levelRoot.tscn" id="1_5yesm"]
+[ext_resource type="PackedScene" uid="uid://brhh6ifac5qvc" path="res://scene/scenery/rocks.tscn" id="2_8ip08"]
+[ext_resource type="PackedScene" uid="uid://cj1bw767v5imn" path="res://scene/powerup/health.tscn" id="3_6n7hk"]
+[ext_resource type="PackedScene" uid="uid://bvivg0dx8wkea" path="res://scene/powerup/fuel.tscn" id="4_h3bso"]
+[ext_resource type="PackedScene" uid="uid://ctu8kn88lhjpn" path="res://scene/powerup/engine.tscn" id="5_n15tc"]
+[ext_resource type="PackedScene" uid="uid://c3nj8qlsr0clb" path="res://scene/powerup/coin.tscn" id="6_f3f1m"]
+[ext_resource type="PackedScene" uid="uid://bogdlh0ch1tuf" path="res://scene/powerup/purse.tscn" id="7_vd3ae"]
+[ext_resource type="PackedScene" uid="uid://bgogx6yxekbjp" path="res://scene/powerup/traction.tscn" id="8_ckr2s"]
+[ext_resource type="PackedScene" uid="uid://xwhhgw0qwlsm" path="res://scene/powerup/slotMachine.tscn" id="9_lx01g"]
+[ext_resource type="PackedScene" uid="uid://4lh7dd54kbqe" path="res://scene/powerup/gem.tscn" id="10_luaca"]
+
+[node name="LevelRoot" instance=ExtResource("1_5yesm")]
+seconds = 300
+
+[node name="SpawnManager" parent="." index="5"]
+basicGoons = Array[int]([0, 0, 1])
+giantOdds = -20
+
+[node name="Rocks3" parent="." index="8" instance=ExtResource("2_8ip08")]
+position = Vector2(872, 103)
+
+[node name="Rocks4" parent="." index="9" instance=ExtResource("2_8ip08")]
+position = Vector2(315, 477)
+polygon = PackedVector2Array(-73, -20, -57, 41, -32, 66, 15, 59, 70, 49, 91, 0, 72, -63, 19, -68, -40, -59)
+
+[node name="Powerup" parent="." index="10" instance=ExtResource("3_6n7hk")]
+process_mode = 0
+position = Vector2(680, 90)
+
+[node name="Powerup2" parent="." index="11" instance=ExtResource("4_h3bso")]
+process_mode = 0
+position = Vector2(-308, -233)
+
+[node name="Powerup3" parent="." index="12" instance=ExtResource("5_n15tc")]
+process_mode = 0
+position = Vector2(-349, 1146)
+
+[node name="Powerup4" parent="." index="13" instance=ExtResource("6_f3f1m")]
+process_mode = 0
+position = Vector2(1406, 830)
+
+[node name="Powerup5" parent="." index="14" instance=ExtResource("7_vd3ae")]
+process_mode = 0
+position = Vector2(1266, 1962)
+
+[node name="Powerup6" parent="." index="15" instance=ExtResource("8_ckr2s")]
+process_mode = 0
+position = Vector2(2443, -861)
+
+[node name="Powerup7" parent="." index="16" instance=ExtResource("9_lx01g")]
+process_mode = 0
+position = Vector2(2466, 1868)
+
+[node name="Powerup9" parent="." index="17" instance=ExtResource("10_luaca")]
+process_mode = 0
+position = Vector2(3801, 611)
+
+[node name="Powerup8" parent="." index="18" instance=ExtResource("3_6n7hk")]
+process_mode = 0
+position = Vector2(680, 90)
+
+[node name="Powerup10" parent="." index="19" instance=ExtResource("4_h3bso")]
+process_mode = 0
+position = Vector2(-308, -233)
+
+[node name="Powerup11" parent="." index="20" instance=ExtResource("5_n15tc")]
+process_mode = 0
+position = Vector2(-349, 1146)
+
+[node name="Powerup12" parent="." index="21" instance=ExtResource("6_f3f1m")]
+process_mode = 0
+position = Vector2(1406, 830)
+
+[node name="Powerup13" parent="." index="22" instance=ExtResource("7_vd3ae")]
+process_mode = 0
+position = Vector2(1266, 1962)
+
+[node name="Powerup14" parent="." index="23" instance=ExtResource("8_ckr2s")]
+process_mode = 0
+position = Vector2(2443, -861)
+
+[node name="Powerup15" parent="." index="24" instance=ExtResource("9_lx01g")]
+process_mode = 0
+position = Vector2(2466, 1868)
+
+[node name="Powerup16" parent="." index="25" instance=ExtResource("10_luaca")]
+process_mode = 0
+position = Vector2(3801, 611)

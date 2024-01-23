@@ -73,10 +73,26 @@ var settings = {
 
 var levels = [
 	{
-		"name":"Fields Of Goonery",
-		"image":"res://scene/level/instances/1. fields_of_goonery/levelbackground_fieldsOfGoonery.png",
+		"name":"1. Goon Park",
+		"image":"res://texture/background/background_level_1.png",
 		"cost":0,
-		"scene":"res://scene/level/levels/level_1.tscn",
+		"scene":"res://scene/level/levels/level_grass_1.tscn",
+		"difficulty":"VERY EASY",
+		"time":"5:00",
+	},
+	{
+		"name":"2. Park Bully",
+		"image":"res://texture/background/background_level_2.png",
+		"cost":0,
+		"scene":"res://scene/level/levels/level_grass_2.tscn",
+		"difficulty":"VERY EASY",
+		"time":"5:00",
+	},
+	{
+		"name":"3. Field of Giants",
+		"image":"res://texture/background/background_grass_3.png",
+		"cost":0,
+		"scene":"res://scene/level/levels/level_grass_3.tscn",
 		"difficulty":"VERY EASY",
 		"time":"5:00",
 	},

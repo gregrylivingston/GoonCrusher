@@ -43,3 +43,6 @@ res://scene/enemy/walker/pikeman/pikeman.tres
 res://scene/enemy/walker/firekin/firekin.tscn
 res://scene/enemy/walker/firekin/firekin.tres
 res://scene/enemy/spawnManager.gd
+res://scene/level/levels/level_grass_1.tscn
+res://scene/level/levels/level_grass_2.tscn
+res://scene/level/levels/level_grass_3.tscn

@@ -320,11 +320,11 @@ offset_bottom = 40.0
 
 [node name="VBoxContainer2" type="VBoxContainer" parent="."]
 anchors_preset = -1
-anchor_left = 0.5
+anchor_left = 0.476
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 39.0
+offset_left = 77.4
 offset_top = -177.0
 offset_right = -72.0
 offset_bottom = -46.0
