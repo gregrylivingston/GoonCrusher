@@ -7,7 +7,7 @@ enum mode { MOVE , ATTACK , IDLE , DEAD , PREPAREATTACK}
 var myMode: mode = mode.MOVE
 
 @export var powerupDropChance: int = 10
-@export var speed: float = 100.0
+@export var speed: int = 6000
 @export var prepareAttackDistance: int = 300
 @export var attackSpeedMultiplier: float = 3.0
 @export var attackDamage: float = 0.1
@@ -41,12 +41,12 @@ func checkDestroyDistance():
 	
 
 
-func _process(delta):
+func _physics_process(delta):
 	match myMode:
-		mode.MOVE:moveTowardsPlayer()
-		mode.ATTACK:attack()
+		mode.MOVE:moveTowardsPlayer(delta)
+		mode.ATTACK:attack(delta)
 		mode.IDLE:idle()
-		mode.PREPAREATTACK:prepareAttack()
+		mode.PREPAREATTACK:prepareAttack(delta)
 
 var idleTime = 0
 @export var myIdleLength: int = 5
@@ -72,7 +72,7 @@ func _on_walker_animation_looped():
 				
 
 var preparingAttack = false
-func prepareAttack():
+func prepareAttack(delta):
 	look_at(  Root.playerCar.position )
 	if not preparingAttack:
 		preparingAttack = true
@@ -80,14 +80,15 @@ func prepareAttack():
 		
 	
 
-func attack():
+func attack(delta):
 	$Walker.animation = "attack"
 	$CollisionShape2D.scale = Vector2(2,1)
 	var directionToPlayer =  position.direction_to( Root.playerCar.position )
 	look_at(  Root.playerCar.position )
-	velocity =  directionToPlayer * speed * attackSpeedMultiplier
+	velocity =  directionToPlayer * speed * attackSpeedMultiplier * delta
 	move_and_slide()
-	#var collisions = move_and_collide( directionToPlayer * speed * attackSpeedMultiplier )
+	#var collision = move_and_collide( directionToPlayer * speed * attackSpeedMultiplier * delta )
+	#if collision:
 	for i in get_slide_collision_count():
 		var collider = get_slide_collision( i ).get_collider()
 		if collider.has_method("getIsPlayer"):
@@ -99,7 +100,7 @@ func idle():
 	look_at(  Root.playerCar.position )
 
 var moveCounter = randi_range(-100,100)
-func moveTowardsPlayer():
+func moveTowardsPlayer(delta):
 	moveCounter += 1
 	if moveCounter > 1000:
 		myMode = mode.IDLE
@@ -108,16 +109,11 @@ func moveTowardsPlayer():
 	else:
 		var directionToPlayer =  position.direction_to( Root.playerCar.position )
 		look_at(  Root.playerCar.position )
-		velocity =  directionToPlayer * speed
+		velocity =  directionToPlayer * speed * delta
 		move_and_slide()
-		#var collisions = move_and_collide( directionToPlayer * speed )
 		if position.distance_to( Root.playerCar.position ) < prepareAttackDistance:
 			myMode = mode.PREPAREATTACK
-		#for i in get_slide_collision_count():
-		#	var collider = get_slide_collision( i ).get_collider()
-		#	if collider.has_method("getIsPlayer"):
-		#		if collider.getIsPlayer == true:
-		#			collider.damage(1.0)
+
 
 	
 

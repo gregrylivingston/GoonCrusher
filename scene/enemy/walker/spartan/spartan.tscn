@@ -5,7 +5,6 @@
 
 [node name="spartan" instance=ExtResource("1_2rlkp")]
 powerupDropChance = 15
-speed = 130.0
 
 [node name="Walker" parent="." index="1"]
 sprite_frames = ExtResource("2_ml8tv")

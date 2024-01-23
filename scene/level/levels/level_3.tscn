@@ -10,37 +10,40 @@
 
 [node name="LevelRoot" instance=ExtResource("1_4bejg")]
 
-[node name="Rocks3" parent="." index="9" instance=ExtResource("2_bf0t7")]
+[node name="TileManager" parent="." index="0"]
+landscapeType = 3
+
+[node name="Rocks3" parent="." index="8" instance=ExtResource("2_bf0t7")]
 position = Vector2(872, 103)
 
-[node name="Rocks4" parent="." index="10" instance=ExtResource("2_bf0t7")]
+[node name="Rocks4" parent="." index="9" instance=ExtResource("2_bf0t7")]
 position = Vector2(598, -233)
 polygon = PackedVector2Array(-73, -20, -57, 41, -32, 66, 15, 59, 70, 49, 91, 0, 72, -63, 19, -68, -40, -59)
 
-[node name="Rocks5" parent="." index="11" instance=ExtResource("2_bf0t7")]
+[node name="Rocks5" parent="." index="10" instance=ExtResource("2_bf0t7")]
 position = Vector2(356, 235)
 polygon = PackedVector2Array(-73, -20, -57, 41, -32, 66, 15, 59, 70, 49, 91, 0, 72, -63, 19, -68, -40, -59)
 
-[node name="Powerup" parent="." index="12" instance=ExtResource("3_kyo2a")]
+[node name="Powerup" parent="." index="11" instance=ExtResource("3_kyo2a")]
 process_mode = 0
 position = Vector2(680, 90)
 
-[node name="Powerup2" parent="." index="13" instance=ExtResource("4_whk3k")]
+[node name="Powerup2" parent="." index="12" instance=ExtResource("4_whk3k")]
 process_mode = 0
 position = Vector2(-308, -233)
 
-[node name="Powerup4" parent="." index="14" instance=ExtResource("5_1iuls")]
+[node name="Powerup4" parent="." index="13" instance=ExtResource("5_1iuls")]
 process_mode = 0
 position = Vector2(1123, 339)
 
-[node name="Powerup8" parent="." index="15" instance=ExtResource("5_1iuls")]
+[node name="Powerup8" parent="." index="14" instance=ExtResource("5_1iuls")]
 process_mode = 0
 position = Vector2(1097, 562)
 
-[node name="Powerup5" parent="." index="16" instance=ExtResource("6_tfon3")]
+[node name="Powerup5" parent="." index="15" instance=ExtResource("6_tfon3")]
 process_mode = 0
 position = Vector2(1266, 1962)
 
-[node name="Powerup7" parent="." index="17" instance=ExtResource("7_ctn2q")]
+[node name="Powerup7" parent="." index="16" instance=ExtResource("7_ctn2q")]
 process_mode = 0
 position = Vector2(2466, 1868)

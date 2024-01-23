@@ -1,8 +1,7 @@
-[gd_scene load_steps=9 format=3 uid="uid://bo64o4vigptpr"]
+[gd_scene load_steps=8 format=3 uid="uid://bo64o4vigptpr"]
 
 [ext_resource type="PackedScene" uid="uid://dqcrli42u3gia" path="res://scene/level/levelRoot.tscn" id="1_2efxu"]
 [ext_resource type="PackedScene" uid="uid://brhh6ifac5qvc" path="res://scene/scenery/rocks.tscn" id="2_1b8av"]
-[ext_resource type="PackedScene" uid="uid://d4c6o8m1s51w1" path="res://scene/level/tileManager.tscn" id="2_f4hy1"]
 [ext_resource type="PackedScene" uid="uid://cj1bw767v5imn" path="res://scene/powerup/health.tscn" id="3_otnbs"]
 [ext_resource type="PackedScene" uid="uid://bvivg0dx8wkea" path="res://scene/powerup/fuel.tscn" id="4_kx6y0"]
 [ext_resource type="PackedScene" uid="uid://c3nj8qlsr0clb" path="res://scene/powerup/coin.tscn" id="6_lecho"]
@@ -11,41 +10,40 @@
 
 [node name="LevelRoot" instance=ExtResource("1_2efxu")]
 
-[node name="TileManager" parent="." index="0" instance=ExtResource("2_f4hy1")]
-z_index = -2
+[node name="TileManager" parent="." index="0"]
 landscapeType = 1
 
-[node name="Rocks3" parent="." index="9" instance=ExtResource("2_1b8av")]
+[node name="Rocks3" parent="." index="8" instance=ExtResource("2_1b8av")]
 position = Vector2(872, 103)
 
-[node name="Rocks4" parent="." index="10" instance=ExtResource("2_1b8av")]
+[node name="Rocks4" parent="." index="9" instance=ExtResource("2_1b8av")]
 position = Vector2(598, -233)
 polygon = PackedVector2Array(-73, -20, -57, 41, -32, 66, 15, 59, 70, 49, 91, 0, 72, -63, 19, -68, -40, -59)
 
-[node name="Rocks5" parent="." index="11" instance=ExtResource("2_1b8av")]
+[node name="Rocks5" parent="." index="10" instance=ExtResource("2_1b8av")]
 position = Vector2(356, 235)
 polygon = PackedVector2Array(-73, -20, -57, 41, -32, 66, 15, 59, 70, 49, 91, 0, 72, -63, 19, -68, -40, -59)
 
-[node name="Powerup" parent="." index="12" instance=ExtResource("3_otnbs")]
+[node name="Powerup" parent="." index="11" instance=ExtResource("3_otnbs")]
 process_mode = 0
 position = Vector2(680, 90)
 
-[node name="Powerup2" parent="." index="13" instance=ExtResource("4_kx6y0")]
+[node name="Powerup2" parent="." index="12" instance=ExtResource("4_kx6y0")]
 process_mode = 0
 position = Vector2(-308, -233)
 
-[node name="Powerup4" parent="." index="14" instance=ExtResource("6_lecho")]
+[node name="Powerup4" parent="." index="13" instance=ExtResource("6_lecho")]
 process_mode = 0
 position = Vector2(1123, 339)
 
-[node name="Powerup8" parent="." index="15" instance=ExtResource("6_lecho")]
+[node name="Powerup8" parent="." index="14" instance=ExtResource("6_lecho")]
 process_mode = 0
 position = Vector2(1097, 562)
 
-[node name="Powerup5" parent="." index="16" instance=ExtResource("7_uucuj")]
+[node name="Powerup5" parent="." index="15" instance=ExtResource("7_uucuj")]
 process_mode = 0
 position = Vector2(1266, 1962)
 
-[node name="Powerup7" parent="." index="17" instance=ExtResource("9_smtqc")]
+[node name="Powerup7" parent="." index="16" instance=ExtResource("9_smtqc")]
 process_mode = 0
 position = Vector2(2466, 1868)

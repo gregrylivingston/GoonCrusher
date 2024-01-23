@@ -1,6 +1,7 @@
-[gd_scene load_steps=9 format=3 uid="uid://dqcrli42u3gia"]
+[gd_scene load_steps=10 format=3 uid="uid://dqcrli42u3gia"]
 
 [ext_resource type="Script" path="res://scene/level/levelRoot.gd" id="1_65p74"]
+[ext_resource type="PackedScene" uid="uid://d4c6o8m1s51w1" path="res://scene/level/tileManager.tscn" id="2_jny74"]
 [ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="2_v78xq"]
 [ext_resource type="PackedScene" uid="uid://pgobm7erc1f0" path="res://scene/player/playerRoot.tscn" id="3_sf05p"]
 [ext_resource type="AudioStream" uid="uid://mwmiy2un7jgn" path="res://sound/fx/tubular-bell-of-death-89485.mp3" id="7_ihcdj"]
@@ -15,6 +16,8 @@ glow_blend_mode = 0
 
 [node name="LevelRoot" type="Node2D" groups=["levelRoot"]]
 script = ExtResource("1_65p74")
+
+[node name="TileManager" parent="." instance=ExtResource("2_jny74")]
 
 [node name="Car" parent="." instance=ExtResource("2_v78xq")]
 position = Vector2(662, 405)

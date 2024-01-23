@@ -104,4 +104,4 @@ Brake={
 [rendering]
 
 renderer/rendering_method="mobile"
-environment/defaults/default_clear_color=Color(0.996078, 0.796078, 0.560784, 1)
+environment/defaults/default_clear_color=Color(1, 1, 1, 1)
