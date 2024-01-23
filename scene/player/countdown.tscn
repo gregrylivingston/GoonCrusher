@@ -1,0 +1,92 @@
+[gd_scene load_steps=7 format=3 uid="uid://djw7lxqiihniw"]
+
+[ext_resource type="Script" path="res://scene/player/countdown.gd" id="1_cpgwf"]
+[ext_resource type="Theme" uid="uid://co40pijjc7hbw" path="res://style/roadRogue.tres" id="2_ueqa7"]
+[ext_resource type="AudioStream" uid="uid://cav5bmw6h4h2q" path="res://sound/ui/countdown.mp3" id="3_k2tqi"]
+
+[sub_resource type="Animation" id="Animation_6m4pn"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:scale")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(1e-05, 1e-05)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath(".:position")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(0, 0)]
+}
+
+[sub_resource type="Animation" id="Animation_ie3ri"]
+resource_name = "countdown"
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:scale")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 1),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Vector2(1e-05, 1e-05), Vector2(1, 1)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath(".:position")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 1),
+"transitions": PackedFloat32Array(1.7411, 3.605),
+"update": 0,
+"values": [Vector2(800, 450), Vector2(0, 0)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_wqk3u"]
+_data = {
+"RESET": SubResource("Animation_6m4pn"),
+"countdown": SubResource("Animation_ie3ri")
+}
+
+[node name="Control" type="CanvasLayer"]
+
+[node name="Label" type="Label" parent="."]
+process_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(1e-05, 1e-05)
+theme = ExtResource("2_ueqa7")
+theme_override_font_sizes/font_size = 500
+text = "3"
+horizontal_alignment = 1
+vertical_alignment = 1
+script = ExtResource("1_cpgwf")
+
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="Label"]
+stream = ExtResource("3_k2tqi")
+volume_db = 4.0
+bus = &"UI"
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="Label"]
+libraries = {
+"": SubResource("AnimationLibrary_wqk3u")
+}

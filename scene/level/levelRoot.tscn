@@ -97,27 +97,35 @@ volume_db = -6.0
 autoplay = true
 
 [node name="Powerup" parent="." instance=ExtResource("9_20fdc")]
+process_mode = 0
 position = Vector2(680, 90)
 
 [node name="Powerup2" parent="." instance=ExtResource("10_djbco")]
+process_mode = 0
 position = Vector2(-308, -233)
 
 [node name="Powerup3" parent="." instance=ExtResource("11_eyh6h")]
+process_mode = 0
 position = Vector2(-349, 1146)
 
 [node name="Powerup4" parent="." instance=ExtResource("12_ufw4g")]
+process_mode = 0
 position = Vector2(1406, 830)
 
 [node name="Powerup5" parent="." instance=ExtResource("13_65wfl")]
+process_mode = 0
 position = Vector2(1266, 1962)
 
 [node name="Powerup6" parent="." instance=ExtResource("14_d48sd")]
+process_mode = 0
 position = Vector2(2443, -861)
 
 [node name="Powerup7" parent="." instance=ExtResource("15_hppr6")]
+process_mode = 0
 position = Vector2(2466, 1868)
 
 [node name="Powerup9" parent="." instance=ExtResource("16_5gmm7")]
+process_mode = 0
 position = Vector2(3801, 611)
 
 [node name="SpawnManager" parent="." instance=ExtResource("17_3wer8")]

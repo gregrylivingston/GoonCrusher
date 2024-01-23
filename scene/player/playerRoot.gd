@@ -13,7 +13,9 @@ func _ready():
 	Root.playerCar.ui = self
 	$Panel/ProgressBar.value = 0
 	$Panel/ProgressBar.max_value = awardBase
-	
+	add_child(load("res://scene/player/countdown.tscn").instantiate())
+
+
 	
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):

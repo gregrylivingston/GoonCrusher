@@ -36,6 +36,7 @@ func _ready():
 	$slotMahineSound.play()
 	isReady = true
 	$Panel/Panel/VBoxContainer/play_button.disabled = false
+	delayKeyPress = false
 
 
 func resetKeyPress():
@@ -43,7 +44,7 @@ func resetKeyPress():
 	delayKeyPress = false
 
 var keyPressDelay = .25
-var delayKeyPress = false
+var delayKeyPress = true
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
 	if Input.is_action_just_pressed("Accelerate") && delayKeyPress == false:
@@ -51,7 +52,7 @@ func _process(delta):
 			_on_play_button_pressed()
 			delayKeyPress = true
 			resetKeyPress()
-		elif $Panel/Panel/VBoxContainer/claim_button.disabled == false:
+		elif $Panel/Panel/VBoxContainer/claim_button.disabled == false && activeSlots.size() == 0 && not claimButtonPressed:
 			_on_claim_button_pressed()
 	if Input.is_action_just_released("Brake") && not isReady &&  $Panel/Panel/VBoxContainer/claim_button.disabled == false:
 		_on_reroll_button_pressed()
@@ -109,9 +110,11 @@ func _on_reroll_button_pressed():
 	$slotMahineSound.play()
 	isReady = true
 
-
+var countdownScreen = load("res://scene/player/countdown.tscn")
+var claimButtonPressed = false
 func _on_claim_button_pressed():
-	get_tree().paused = false
+	claimButtonPressed = true
+
 	myBackground.destory()
 	visible = false
 	for slot in [$Panel/Panel/Panel2/HBoxContainer/slotRow, $Panel/Panel/Panel2/HBoxContainer/slotRow2, $Panel/Panel/Panel2/HBoxContainer/slotRow3]:
@@ -120,5 +123,7 @@ func _on_claim_button_pressed():
 		Root.levelRoot.add_child(newPowerup)
 		#newPowerup.sendReward(Root.playerCar, false)
 	Root.levelRoot.playMusic()
+	Root.playerCar.add_child(countdownScreen.instantiate())
+	get_tree().paused = false
 	queue_free()
 		

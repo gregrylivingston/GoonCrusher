@@ -11,6 +11,18 @@ var myMode: mode = mode.MOVE
 @export var prepareAttackDistance: int = 300
 @export var attackSpeedMultiplier: float = 3.0
 @export var attackDamage: float = 0.1
+@export var powerupDropDict: Dictionary = {
+	"gem":4,
+	"coin":40,
+	"purse":4,
+	"slotMachine":1,
+	"health":10,
+	"fuel":10,
+	"traction":4,
+	"steering":4,
+	"armor":4,
+	"engine":4,
+}
 
 var isGiant: bool = false
 var target: Vector2
@@ -127,7 +139,7 @@ func destroy():
 	var diceRoll = randi_range(0,100) 
 	if diceRoll < powerupDropChance:
 		await get_tree().create_timer(0.5).timeout
-		var newPowerup = Root.getPowerup()
+		var newPowerup = Root.getPowerupFromWeights(powerupDropDict)
 		newPowerup.position = global_position
 		Root.levelRoot.add_child(newPowerup)
 

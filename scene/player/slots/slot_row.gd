@@ -43,8 +43,12 @@ var slotContents =[{
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
+
+	
 	for i in [$VBoxContainer/slotAwardIcon, $VBoxContainer/slotAwardIcon2, $VBoxContainer/slotAwardIcon3, $VBoxContainer/slotAwardIcon4, $VBoxContainer/slotAwardIcon5, $VBoxContainer/slotAwardIcon6, $VBoxContainer/slotAwardIcon7, $VBoxContainer/slotAwardIcon8]:
-		i.texture = load( slotContents[randi_range(0,slotContents.size()-1)].icon )
+		var randomNum = randi_range(0,slotContents.size()-1)
+		i.texture = load( slotContents[randomNum].icon )
+		i.type = slotContents[randomNum].type
 	for i in 100:
 		$VBoxContainer.position.y -= 0.18 * i
 		await get_tree().process_frame

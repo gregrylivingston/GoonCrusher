@@ -13,6 +13,7 @@ cull_mode = 1
 polygon = PackedVector2Array(-13, 18, -0.5, 22, 12.5, 19, 13, -16.5, 0.5, -18.5, -12, -16)
 
 [node name="Powerup" type="Sprite2D"]
+process_mode = 3
 material = ExtResource("1_bejnl")
 scale = Vector2(2, 2)
 texture = ExtResource("2_a675s")

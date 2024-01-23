@@ -77,7 +77,24 @@ func _process(delta):
 	pass
 
 
+var defaultPowerupWeights = {
+	"gem":4,
+	"coin":40,
+	"purse":4,
+	"slotMachine":1,
+	"health":10,
+	"fuel":10,
+	"traction":4,
+	"steering":4,
+	"armor":4,
+	"engine":4,
+}
+
 func getPowerup():
+	return getPowerupFromWeights( defaultPowerupWeights )
+
+	
+func oldGetPowerup():
 	var randomizer = randf_range(0,100)
 	if randomizer > 50:return powerup.coin.instantiate()
 	elif randomizer > 48: return powerup.slotMachine.instantiate()	
@@ -89,6 +106,23 @@ func getPowerup():
 	elif randomizer > 8: return powerup.steering.instantiate()
 	elif randomizer > 4: return powerup.traction.instantiate()		
 	else: return powerup.armor.instantiate()
+	
+func getPowerupFromWeights( powerupWeightDict ):
+	var weightTotal = 0
+	for i in powerupWeightDict:
+		weightTotal += powerupWeightDict[i]
+		print("i")
+		print(i)
+		print("powerupWeightDict[i]")
+		print(powerupWeightDict[i])
+	print("weightTotal")
+	print(weightTotal)
+	var myRandomNumber = randi_range(0 , weightTotal)
+	for i in powerupWeightDict:
+		weightTotal -= powerupWeightDict[i]
+		if weightTotal <= myRandomNumber:
+			return powerup[i].instantiate()
+		
 	
 func getSpecificPowerup(pName: String):
 	return powerup[pName].instantiate()

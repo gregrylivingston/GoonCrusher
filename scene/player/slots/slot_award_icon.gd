@@ -1,6 +1,6 @@
 extends TextureRect
 
-var type
+@export var type: String = "coin"
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	pass # Replace with function body.

@@ -23,3 +23,14 @@ res://scene/powerup/powerup.tscn
 res://scene/enemy/walker/walker.gd
 res://scene/enemy/walker/devil/walkingDevil.tres
 res://scene/enemy/walker/spartan/spartan.tres
+res://scene/player/slots/slotMachine.gd
+res://scripts/global/root.gd
+res://scene/player/countdown.tscn
+res://scene/player/countdown.gd
+res://scene/player/slots/slotMachine.tscn
+res://scene/level/levelRoot.gd
+res://scene/player/playerRoot.gd
+res://scene/player/slots/slot_award_icon.tscn
+res://scene/player/slots/slot_award_icon.gd
+res://scene/player/slots/slot_row.tscn
+res://scene/player/slots/slot_row.gd
