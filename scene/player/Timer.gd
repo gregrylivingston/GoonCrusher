@@ -3,7 +3,7 @@ extends Label
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
-	pass
+	Root.timer = self
 
 var daylength = 60
 var reset: bool = false

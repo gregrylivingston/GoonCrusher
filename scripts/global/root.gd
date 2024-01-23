@@ -2,7 +2,7 @@ extends Node
 
 var playerCar: OverheadCarBody2D
 var selectedCar
-var selectedCarNum = 0
+var timer #the timer during a game run
 
 
 var mainMenu: CanvasLayer
@@ -29,53 +29,6 @@ var earnedGems: int
 	"slotMachine":preload("res://scene/powerup/slotMachine.tscn"),
 	"currentGoonsCrushed":preload("res://scene/powerup/currentGoonsCrushed.tscn"),
 }
-
-
-
-@onready var cars = {
-	"sedan":{
-		"scene":preload("res://scene/car/sedan/sedan.tscn"),
-	},
-	"van":{
-		"scene":preload("res://scene/car/van/van.tscn"),
-	},
-	"taxi":{
-		"scene":preload("res://scene/car/taxi/taxi.tscn"),
-	},	
-	"pickup":{
-		"scene":preload("res://scene/car/pickup/pickup.tscn"),
-	},
-	"semi":{
-		"scene":preload("res://scene/car/semi/semi.tscn"),
-	},
-	"audi":{
-		"scene":preload("res://scene/car/audi/audi.tscn")
-	},
-	"racer":{
-		"scene":preload("res://scene/car/racer/racer.tscn")
-	},
-	"police":{
-		"scene":preload("res://scene/car/police/police.tscn"),
-	},
-	"ambulance":{
-		"scene":preload("res://scene/car/ambulance/ambulance.tscn"),
-	},
-
-}
-
-
-
-
-
-# Called when the node enters the scene tree for the first time.
-func _ready():
-	pass # Replace with function body.
-	
-
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta):
-	pass
-
 
 var defaultPowerupWeights = {
 	"gem":4,

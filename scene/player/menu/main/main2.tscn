@@ -295,61 +295,6 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "  Quit"
 
-[node name="HBoxContainer" type="HBoxContainer" parent="."]
-anchors_preset = -1
-anchor_left = 0.473
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 91.2
-offset_top = -116.0
-offset_right = -94.0
-offset_bottom = -49.0
-grow_horizontal = 2
-grow_vertical = 0
-size_flags_horizontal = 10
-theme = ExtResource("1_badde")
-theme_override_constants/separation = 20
-
-[node name="previousCarButton" type="Button" parent="HBoxContainer"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(50, 50)
-layout_mode = 2
-size_flags_vertical = 4
-theme = ExtResource("1_badde")
-text = "<"
-
-[node name="Panel" type="Panel" parent="HBoxContainer"]
-custom_minimum_size = Vector2(500, 0)
-layout_mode = 2
-
-[node name="driverName" type="Label" parent="HBoxContainer/Panel"]
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -137.0
-offset_top = -39.0
-offset_right = 137.0
-offset_bottom = 39.0
-grow_horizontal = 2
-grow_vertical = 2
-theme = ExtResource("1_badde")
-theme_override_font_sizes/font_size = 50
-text = "ANTHONY"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="nextCarButton" type="Button" parent="HBoxContainer"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(50, 50)
-layout_mode = 2
-size_flags_vertical = 4
-theme = ExtResource("1_badde")
-text = ">"
-
 [node name="carStatsContainer" parent="." groups=["characterMenu"] instance=ExtResource("11_wos04")]
 anchors_preset = -1
 anchor_left = 0.5
@@ -369,6 +314,107 @@ volume_db = -8.0
 autoplay = true
 bus = &"Music"
 
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="VBoxContainer2" type="VBoxContainer" parent="."]
+anchors_preset = -1
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 39.0
+offset_top = -177.0
+offset_right = -72.0
+offset_bottom = -46.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer2"]
+custom_minimum_size = Vector2(0, 75)
+layout_mode = 2
+size_flags_vertical = 3
+theme = ExtResource("1_badde")
+theme_override_constants/separation = 20
+
+[node name="previousCarButton" type="Button" parent="VBoxContainer2/HBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(50, 50)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+theme = ExtResource("1_badde")
+text = "<"
+
+[node name="Panel" type="Panel" parent="VBoxContainer2/HBoxContainer"]
+custom_minimum_size = Vector2(500, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="driverName" type="Label" parent="VBoxContainer2/HBoxContainer/Panel"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -137.0
+offset_top = -39.0
+offset_right = 137.0
+offset_bottom = 39.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_badde")
+theme_override_font_sizes/font_size = 50
+text = "ANTHONY"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="nextCarButton" type="Button" parent="VBoxContainer2/HBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(50, 50)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+theme = ExtResource("1_badde")
+text = ">"
+
+[node name="levelDifficultyPanel" type="HBoxContainer" parent="VBoxContainer2"]
+modulate = Color(1, 1, 1, 0)
+layout_mode = 2
+
+[node name="Control" type="Control" parent="VBoxContainer2/levelDifficultyPanel"]
+custom_minimum_size = Vector2(50, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer2/levelDifficultyPanel"]
+custom_minimum_size = Vector2(500, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 0
+
+[node name="levelDifficulty" type="Label" parent="VBoxContainer2/levelDifficultyPanel/HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+theme = ExtResource("1_badde")
+theme_override_font_sizes/font_size = 24
+text = " VERY EASY"
+
+[node name="levelTime" type="Label" parent="VBoxContainer2/levelDifficultyPanel/HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 10
+theme = ExtResource("1_badde")
+theme_override_font_sizes/font_size = 24
+text = "5:00 "
+
+[node name="Control2" type="Control" parent="VBoxContainer2/levelDifficultyPanel"]
+layout_mode = 2
+size_flags_horizontal = 3
+
 [connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer2/levelSelect" to="." method="_on_level_select_pressed"]
 [connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer2/unlock" to="." method="_on_unlock_pressed"]
 [connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer2/begin" to="." method="_on_begin_pressed"]
@@ -376,5 +422,5 @@ bus = &"Music"
 [connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer3/backButton" to="." method="_on_back_button_pressed"]
 [connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer5/settingsButton" to="." method="_on_settings_button_pressed"]
 [connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer4/quitButton" to="." method="_on_quit_button_pressed"]
-[connection signal="pressed" from="HBoxContainer/previousCarButton" to="." method="_on_previous_car_button_pressed"]
-[connection signal="pressed" from="HBoxContainer/nextCarButton" to="." method="_on_next_car_button_pressed"]
+[connection signal="pressed" from="VBoxContainer2/HBoxContainer/previousCarButton" to="." method="_on_previous_car_button_pressed"]
+[connection signal="pressed" from="VBoxContainer2/HBoxContainer/nextCarButton" to="." method="_on_next_car_button_pressed"]

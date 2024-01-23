@@ -33,3 +33,7 @@ res://scene/level/terrain/landscapeMap3.tscn
 res://scene/level/terrain/landscapeMap4.tscn
 res://scene/level/levels/level_3.tscn
 res://scene/enemy/walker/walker.gd
+res://scene/player/menu/main/main2.gd
+res://scene/player/Timer.gd
+res://scripts/global/root.gd
+res://scripts/global/saveManager.gd

@@ -94,5 +94,15 @@ func selectPreviousLevel():
 	return playerData.levels[playerData.selectedLevel]
 	
 
+func selectNextCar():
+	if playerData.selectedCar < playerData.cars.size() - 1:
+		playerData.selectedCar += 1
+	else: playerData.selectedCar = 0
+	save_character_data()
+	return playerData.cars[playerData.cars.keys()[playerData.selectedCar]]
 	
-	
+func selectPreviousCar():
+	if playerData.selectedCar > 0: playerData.selectedCar -= 1
+	else: playerData.selectedCar = playerData.cars.size() - 1
+	save_character_data()
+	return playerData.cars[playerData.cars.keys()[playerData.selectedCar]]
