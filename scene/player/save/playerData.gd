@@ -57,3 +57,25 @@ var settings = {
 		"master":0,"voice":0,"music":0,"fx":0,
 	}
 }
+
+var selectedLevel = 0
+var levels = [
+	{
+		"name":"Fields Of Goonery",
+		"image":"res://scene/level/instances/1. fields_of_goonery/levelbackground_fieldsOfGoonery.png",
+		"cost":0,
+		"scene":"res://scene/level/levels/level_1.tscn"
+	},
+	{
+		"name":"Giant-Land",
+		"image":"res://texture/background/desertBackground.png",
+		"cost":0,
+		"scene":"res://scene/level/levels/level_2.tscn",
+	},
+	{
+		"name":"Frost-Haven",
+		"image":"res://texture/background/iceBackground.png",
+		"cost":0,
+		"scene":"res://scene/level/levels/level_3.tscn"
+	},
+]

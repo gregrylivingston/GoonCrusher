@@ -1,4 +1,4 @@
-extends Node2D
+class_name Level extends Node2D
 
 var spawnerScene = preload("res://scene/player/spawner.tscn")
 var playerCar: OverheadCarBody2D

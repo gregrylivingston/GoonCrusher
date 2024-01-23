@@ -4,8 +4,6 @@ var countdownSecondLength = 0.9
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
-	await get_tree().process_frame
-	await get_tree().process_frame
 	get_tree().paused = true
 	nextCount("3")
 	$AudioStreamPlayer.play()

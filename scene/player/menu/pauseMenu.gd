@@ -21,7 +21,7 @@ func _on_quit_pressed():
 
 func _on_abandon_pressed():
 	get_tree().paused = false	
-	get_tree().change_scene_to_file("res://scene/player/menu/main/mainMenuCamera.tscn")
+	get_tree().change_scene_to_file("res://scene/player/menu/main/main2.tscn")
 
 
 func _on_settings_pressed():

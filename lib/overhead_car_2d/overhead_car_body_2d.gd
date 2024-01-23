@@ -109,6 +109,7 @@ func makeHealthWarning():
 	$"AudioStream-Voice".play()
 	$"AudioStream-CarDamage".play()
 	$sprite.texture = carDamagedTexture
+	$headlamps/carhighlight.texture = carDamagedTexture
 	await get_tree().create_timer(200).timeout
 	resetHealthWarning()
 

@@ -1,23 +1,10 @@
-[gd_scene load_steps=22 format=3 uid="uid://dqcrli42u3gia"]
+[gd_scene load_steps=9 format=3 uid="uid://dqcrli42u3gia"]
 
 [ext_resource type="Script" path="res://scene/level/levelRoot.gd" id="1_65p74"]
-[ext_resource type="PackedScene" uid="uid://brhh6ifac5qvc" path="res://scene/scenery/rocks.tscn" id="2_5ujut"]
-[ext_resource type="Texture2D" uid="uid://v5bd3cd45oop" path="res://texture/backgroundTexture.png" id="2_ebgys"]
-[ext_resource type="Texture2D" uid="uid://dvpt6fq7vitdb" path="res://texture/sand.png" id="2_tickn"]
 [ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="2_v78xq"]
-[ext_resource type="PackedScene" uid="uid://bnbmnjtuik5wk" path="res://scene/level/terrain/landscapeMap.tscn" id="3_atuom"]
 [ext_resource type="PackedScene" uid="uid://pgobm7erc1f0" path="res://scene/player/playerRoot.tscn" id="3_sf05p"]
-[ext_resource type="PackedScene" uid="uid://d274ibi53fekt" path="res://scene/player/spawner.tscn" id="5_4um6i"]
 [ext_resource type="AudioStream" uid="uid://mwmiy2un7jgn" path="res://sound/fx/tubular-bell-of-death-89485.mp3" id="7_ihcdj"]
 [ext_resource type="AudioStream" uid="uid://chsan1o1ku2c7" path="res://sound/music/abstract-world-127012.mp3" id="8_r1kd8"]
-[ext_resource type="PackedScene" uid="uid://cj1bw767v5imn" path="res://scene/powerup/health.tscn" id="9_20fdc"]
-[ext_resource type="PackedScene" uid="uid://bvivg0dx8wkea" path="res://scene/powerup/fuel.tscn" id="10_djbco"]
-[ext_resource type="PackedScene" uid="uid://ctu8kn88lhjpn" path="res://scene/powerup/engine.tscn" id="11_eyh6h"]
-[ext_resource type="PackedScene" uid="uid://c3nj8qlsr0clb" path="res://scene/powerup/coin.tscn" id="12_ufw4g"]
-[ext_resource type="PackedScene" uid="uid://bogdlh0ch1tuf" path="res://scene/powerup/purse.tscn" id="13_65wfl"]
-[ext_resource type="PackedScene" uid="uid://bgogx6yxekbjp" path="res://scene/powerup/traction.tscn" id="14_d48sd"]
-[ext_resource type="PackedScene" uid="uid://xwhhgw0qwlsm" path="res://scene/powerup/slotMachine.tscn" id="15_hppr6"]
-[ext_resource type="PackedScene" uid="uid://4lh7dd54kbqe" path="res://scene/powerup/gem.tscn" id="16_5gmm7"]
 [ext_resource type="PackedScene" uid="uid://b6x6nemyty8wb" path="res://scene/enemy/spawnManager.tscn" id="17_3wer8"]
 [ext_resource type="AudioStream" uid="uid://bqf1c80fb8cpl" path="res://sound/fx/duskwolf-101348.mp3" id="19_b5cat"]
 
@@ -29,59 +16,9 @@ glow_blend_mode = 0
 [node name="LevelRoot" type="Node2D" groups=["levelRoot"]]
 script = ExtResource("1_65p74")
 
-[node name="TextureRect" type="TextureRect" parent="."]
-visible = false
-custom_minimum_size = Vector2(999999, 999999)
-offset_left = -4904.0
-offset_top = -4960.0
-offset_right = 995095.0
-offset_bottom = 995039.0
-texture = ExtResource("2_tickn")
-stretch_mode = 1
-
-[node name="LandscapeMap" parent="." instance=ExtResource("3_atuom")]
-z_index = -2
-y_sort_enabled = true
-position = Vector2(7.12493, 41.9996)
-layer_0/y_sort_enabled = true
-
-[node name="TextureRect2" type="TextureRect" parent="."]
-custom_minimum_size = Vector2(999999, 999999)
-offset_left = -4904.0
-offset_top = -4960.0
-offset_right = 995095.0
-offset_bottom = 995039.0
-texture = ExtResource("2_ebgys")
-stretch_mode = 1
-
-[node name="Rocks" parent="." instance=ExtResource("2_5ujut")]
-position = Vector2(872, 103)
-
 [node name="Car" parent="." instance=ExtResource("2_v78xq")]
 position = Vector2(662, 405)
 carId = "sedan"
-
-[node name="Spawner" parent="Car" instance=ExtResource("5_4um6i")]
-position = Vector2(3000, 0)
-
-[node name="Spawner2" parent="Car" instance=ExtResource("5_4um6i")]
-position = Vector2(3000, 3000)
-
-[node name="Spawner3" parent="Car" instance=ExtResource("5_4um6i")]
-position = Vector2(-3000, 0)
-
-[node name="Spawner4" parent="Car" instance=ExtResource("5_4um6i")]
-position = Vector2(-3000, -3000)
-
-[node name="Spawner5" parent="Car" instance=ExtResource("5_4um6i")]
-position = Vector2(0, -3000)
-
-[node name="Spawner6" parent="Car" instance=ExtResource("5_4um6i")]
-position = Vector2(0, 3000)
-
-[node name="Rocks2" parent="." instance=ExtResource("2_5ujut")]
-position = Vector2(315, 477)
-polygon = PackedVector2Array(-73, -20, -57, 41, -32, 66, 15, 59, 70, 49, 91, 0, 72, -63, 19, -68, -40, -59)
 
 [node name="PlayerRoot" parent="." instance=ExtResource("3_sf05p")]
 
@@ -95,38 +32,6 @@ process_mode = 3
 stream = ExtResource("8_r1kd8")
 volume_db = -6.0
 autoplay = true
-
-[node name="Powerup" parent="." instance=ExtResource("9_20fdc")]
-process_mode = 0
-position = Vector2(680, 90)
-
-[node name="Powerup2" parent="." instance=ExtResource("10_djbco")]
-process_mode = 0
-position = Vector2(-308, -233)
-
-[node name="Powerup3" parent="." instance=ExtResource("11_eyh6h")]
-process_mode = 0
-position = Vector2(-349, 1146)
-
-[node name="Powerup4" parent="." instance=ExtResource("12_ufw4g")]
-process_mode = 0
-position = Vector2(1406, 830)
-
-[node name="Powerup5" parent="." instance=ExtResource("13_65wfl")]
-process_mode = 0
-position = Vector2(1266, 1962)
-
-[node name="Powerup6" parent="." instance=ExtResource("14_d48sd")]
-process_mode = 0
-position = Vector2(2443, -861)
-
-[node name="Powerup7" parent="." instance=ExtResource("15_hppr6")]
-process_mode = 0
-position = Vector2(2466, 1868)
-
-[node name="Powerup9" parent="." instance=ExtResource("16_5gmm7")]
-process_mode = 0
-position = Vector2(3801, 611)
 
 [node name="SpawnManager" parent="." instance=ExtResource("17_3wer8")]
 

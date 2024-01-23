@@ -111,12 +111,6 @@ func getPowerupFromWeights( powerupWeightDict ):
 	var weightTotal = 0
 	for i in powerupWeightDict:
 		weightTotal += powerupWeightDict[i]
-		print("i")
-		print(i)
-		print("powerupWeightDict[i]")
-		print(powerupWeightDict[i])
-	print("weightTotal")
-	print(weightTotal)
 	var myRandomNumber = randi_range(0 , weightTotal)
 	for i in powerupWeightDict:
 		weightTotal -= powerupWeightDict[i]

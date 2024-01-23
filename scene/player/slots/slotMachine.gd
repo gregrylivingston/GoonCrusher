@@ -124,6 +124,5 @@ func _on_claim_button_pressed():
 		#newPowerup.sendReward(Root.playerCar, false)
 	Root.levelRoot.playMusic()
 	Root.playerCar.add_child(countdownScreen.instantiate())
-	get_tree().paused = false
 	queue_free()
 		

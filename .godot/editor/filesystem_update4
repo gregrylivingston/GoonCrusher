@@ -34,3 +34,16 @@ res://scene/player/slots/slot_award_icon.tscn
 res://scene/player/slots/slot_award_icon.gd
 res://scene/player/slots/slot_row.tscn
 res://scene/player/slots/slot_row.gd
+res://lib/overhead_car_2d/overhead_car_body_2d.gd
+res://scene/player/menu/main/main2.tscn
+res://style/skewedPanel.tres
+res://scripts/global/saveManager.gd
+res://scene/player/menu/main/main2.gd
+res://scene/level/levels/level_1.tscn
+res://scene/level/levels/level_2.tscn
+res://scene/level/terrain/landscapeMap2.tscn
+res://scene/level/tileManager.tscn
+res://scene/level/tileManager.gd
+res://scene/level/terrain/landscapeMap.tscn
+res://scene/player/menu/pauseMenu.tscn
+res://scene/player/menu/pauseMenu.gd

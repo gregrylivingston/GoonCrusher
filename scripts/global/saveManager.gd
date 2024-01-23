@@ -79,3 +79,20 @@ func setVolume(settingName: String , value: int):
 
 func getVolume(settingName: String):
 	return playerData.settings.volume[settingName]
+	
+func selectNextLevel():
+	if playerData.selectedLevel < playerData.levels.size() - 1:
+		playerData.selectedLevel += 1
+	else: playerData.selectedLevel = 0
+	save_character_data()
+	return playerData.levels[playerData.selectedLevel]
+
+func selectPreviousLevel():
+	if playerData.selectedLevel > 0:playerData.selectedLevel -= 1
+	else: playerData.selectedLevel = playerData.levels.size() - 1
+	save_character_data()
+	return playerData.levels[playerData.selectedLevel]
+	
+
+	
+	

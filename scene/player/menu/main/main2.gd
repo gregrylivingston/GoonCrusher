@@ -65,7 +65,7 @@ func _on_next_car_button_pressed():selectNextCar()
 	
 func selectNextCar():
 	if menuMode == "level":
-		pass
+		setupLevel(SaveManager.selectNextLevel())
 	elif menuMode == "main":
 		if Root.selectedCarNum + 1 < Root.cars.keys().size():Root.selectedCarNum += 1
 		else: Root.selectedCarNum = 0
@@ -75,11 +75,17 @@ func _on_previous_car_button_pressed():selectPreviousCar()
 
 func selectPreviousCar():
 	if menuMode == "level":
-		pass
+		setupLevel(SaveManager.selectPreviousLevel())
 	elif menuMode == "main":
 		if Root.selectedCarNum > 0:Root.selectedCarNum -= 1
 		else: Root.selectedCarNum = Root.cars.keys().size() - 1
 		selectCar(Root.cars[Root.cars.keys()[Root.selectedCarNum]])
+
+func setupLevel(level):
+	showNewBackgroundImage(load(level.image))
+	$HBoxContainer/Panel/driverName.text = level.name
+	await get_tree().create_timer( selectCarDelay ).timeout
+	$backgroundTexture.texture = load(level.image)
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
@@ -131,7 +137,8 @@ func _on_back_button_pressed():
 	goToLevelSelect(false)
 
 
-func _on_begin_pressed():get_tree().change_scene_to_file("res://scene/level/levelRoot.tscn")
+func _on_begin_pressed():
+	get_tree().change_scene_to_file( SaveManager.playerData.levels[SaveManager.playerData.selectedLevel].scene)
 
 
 func _on_unlock_pressed():
