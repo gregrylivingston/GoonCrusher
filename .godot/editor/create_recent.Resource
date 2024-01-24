@@ -1,3 +1,4 @@
+AtlasTexture
 AudioBusLayout
 TileSet
 AnimatedTexture

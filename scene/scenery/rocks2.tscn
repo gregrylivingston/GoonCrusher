@@ -1,0 +1,23 @@
+[gd_scene load_steps=5 format=3 uid="uid://c0xcbyhyhfy1y"]
+
+[ext_resource type="Texture2D" uid="uid://tjp2wk67re7a" path="res://texture/rock/rock2.tres" id="1_s20j5"]
+[ext_resource type="Script" path="res://scene/scenery/rocks.gd" id="2_0cxpa"]
+
+[sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_x7f3q"]
+points = PackedVector2Array(0, 7.005, 100, 100)
+
+[sub_resource type="OccluderPolygon2D" id="OccluderPolygon2D_od60g"]
+cull_mode = 2
+polygon = PackedVector2Array(-32, -8, -17, -25, -2, -35, 8, -34, 34, -1, 34, 23, 15, 26, -5, 35, -25, 27, -33, 16)
+
+[node name="Rocks" type="Sprite2D"]
+texture = ExtResource("1_s20j5")
+script = ExtResource("2_0cxpa")
+
+[node name="StaticBody2D" type="StaticBody2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D"]
+shape = SubResource("ConvexPolygonShape2D_x7f3q")
+
+[node name="LightOccluder2D" type="LightOccluder2D" parent="."]
+occluder = SubResource("OccluderPolygon2D_od60g")

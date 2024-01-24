@@ -1,7 +1,7 @@
 [gd_scene load_steps=11 format=3 uid="uid://btb8jvigokgvl"]
 
 [ext_resource type="PackedScene" uid="uid://dqcrli42u3gia" path="res://scene/level/levelRoot.tscn" id="1_noalm"]
-[ext_resource type="PackedScene" uid="uid://brhh6ifac5qvc" path="res://scene/scenery/rocks.tscn" id="2_34v15"]
+[ext_resource type="PackedScene" uid="uid://brhh6ifac5qvc" path="res://scene/scenery/rocks1.tscn" id="2_34v15"]
 [ext_resource type="PackedScene" uid="uid://cj1bw767v5imn" path="res://scene/powerup/health.tscn" id="3_4geju"]
 [ext_resource type="PackedScene" uid="uid://bvivg0dx8wkea" path="res://scene/powerup/fuel.tscn" id="4_g3iw5"]
 [ext_resource type="PackedScene" uid="uid://ctu8kn88lhjpn" path="res://scene/powerup/engine.tscn" id="5_135ts"]
@@ -23,7 +23,6 @@ position = Vector2(872, 103)
 
 [node name="Rocks4" parent="." index="9" instance=ExtResource("2_34v15")]
 position = Vector2(315, 477)
-polygon = PackedVector2Array(-73, -20, -57, 41, -32, 66, 15, 59, 70, 49, 91, 0, 72, -63, 19, -68, -40, -59)
 
 [node name="Powerup" parent="." index="10" instance=ExtResource("3_4geju")]
 process_mode = 0

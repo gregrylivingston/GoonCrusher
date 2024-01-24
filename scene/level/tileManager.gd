@@ -68,14 +68,14 @@ func loadChunk(chunk):
 		newLandscapeMap.global_position = targetPosition
 		loadedLandscapes[chunk] = newLandscapeMap
 		add_child(newLandscapeMap)
-		if randi() % 2 == 0:
-			var newObjectTile = objectTiles[randi() % objectTiles.size()].instantiate()
-			loadedObjects[chunk] = newObjectTile
-			newObjectTile.global_position = targetPosition + (tilesize / 2)
-			var myRotation = randi() % 180
-			newObjectTile.rotation = myRotation
-			for i in newObjectTile.get_children():i.rotation = -myRotation
-			add_child(newObjectTile)
+
+		var newObjectTile = objectTiles[randi() % objectTiles.size()].instantiate()
+		loadedObjects[chunk] = newObjectTile
+		newObjectTile.global_position = targetPosition + (tilesize / 2) + Vector2(randi_range(tilesize.x/-2,tilesize.x/2),0)
+		var myRotation = randi() % 180
+		newObjectTile.rotation = myRotation
+		for i in newObjectTile.get_children():i.rotation = -myRotation
+		add_child(newObjectTile)
 			
 
 

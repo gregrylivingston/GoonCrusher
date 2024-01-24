@@ -1,34 +1,19 @@
-[gd_scene load_steps=4 format=3 uid="uid://r62b6rer3r7l"]
+[gd_scene load_steps=7 format=3 uid="uid://r62b6rer3r7l"]
 
-[ext_resource type="PackedScene" uid="uid://brhh6ifac5qvc" path="res://scene/scenery/rocks.tscn" id="1_uw602"]
+[ext_resource type="PackedScene" uid="uid://brhh6ifac5qvc" path="res://scene/scenery/rocks1.tscn" id="1_j01qs"]
 [ext_resource type="PackedScene" uid="uid://bogdlh0ch1tuf" path="res://scene/powerup/purse.tscn" id="3_lj857"]
 [ext_resource type="PackedScene" uid="uid://c3nj8qlsr0clb" path="res://scene/powerup/coin.tscn" id="3_temed"]
+[ext_resource type="PackedScene" uid="uid://bnet6qb3y8n0b" path="res://scene/scenery/rocks4.tscn" id="4_ck3a3"]
+[ext_resource type="PackedScene" uid="uid://c0xcbyhyhfy1y" path="res://scene/scenery/rocks2.tscn" id="5_22x3r"]
+[ext_resource type="PackedScene" uid="uid://1n5rup2g5iel" path="res://scene/scenery/rocks3.tscn" id="6_k83ye"]
 
 [node name="LevelRocks1" type="Node2D"]
 
-[node name="Rocks3" parent="." instance=ExtResource("1_uw602")]
-position = Vector2(400, -83)
-
-[node name="Rocks8" parent="." instance=ExtResource("1_uw602")]
-position = Vector2(170, -382)
-
-[node name="Rocks9" parent="." instance=ExtResource("1_uw602")]
+[node name="Rocks9" parent="." instance=ExtResource("1_j01qs")]
 position = Vector2(-385, 160)
 
-[node name="Rocks4" parent="." instance=ExtResource("1_uw602")]
-position = Vector2(-428, -133)
-polygon = PackedVector2Array(-73, -20, -57, 41, -32, 66, 15, 59, 70, 49, 91, 0, 72, -63, 19, -68, -40, -59)
-
-[node name="Rocks5" parent="." instance=ExtResource("1_uw602")]
-position = Vector2(293, 246)
-
-[node name="Rocks6" parent="." instance=ExtResource("1_uw602")]
+[node name="Rocks6" parent="." instance=ExtResource("1_j01qs")]
 position = Vector2(-165, -385)
-polygon = PackedVector2Array(-73, -20, -57, 41, -32, 66, 15, 59, 70, 49, 91, 0, 72, -63, 19, -68, -40, -59)
-
-[node name="Rocks7" parent="." instance=ExtResource("1_uw602")]
-position = Vector2(-61, 333)
-polygon = PackedVector2Array(-73, -20, -57, 41, -32, 66, 15, 59, 70, 49, 91, 0, 72, -63, 19, -68, -40, -59)
 
 [node name="Powerup2" parent="." instance=ExtResource("3_temed")]
 position = Vector2(89, 319)
@@ -53,3 +38,18 @@ position = Vector2(374, 97)
 
 [node name="Powerup" parent="." instance=ExtResource("3_lj857")]
 position = Vector2(5, -6)
+
+[node name="Rocks" parent="." instance=ExtResource("4_ck3a3")]
+position = Vector2(-69, 337)
+
+[node name="Rocks2" parent="." instance=ExtResource("5_22x3r")]
+position = Vector2(359, -76)
+
+[node name="Rocks3" parent="." instance=ExtResource("5_22x3r")]
+position = Vector2(168, -347)
+
+[node name="Rocks4" parent="." instance=ExtResource("5_22x3r")]
+position = Vector2(274, 234)
+
+[node name="Rocks5" parent="." instance=ExtResource("6_k83ye")]
+position = Vector2(-370, -148)
