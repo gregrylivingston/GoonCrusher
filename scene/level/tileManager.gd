@@ -18,8 +18,12 @@ var objectTiles = [
 		preload("res://scene/level/levelObjects/level_rocks_1.tscn"),
 		preload("res://scene/level/levelObjects/level_rocks_2.tscn"),
 		preload("res://scene/level/levelObjects/level_rocks_3.tscn"),
+		preload("res://scene/level/levelObjects/level_rocks_4.tscn"),
+		preload("res://scene/level/levelObjects/level_rocks_5.tscn"),
 		preload("res://scene/level/levelObjects/level_coins_1.tscn"),
 		preload("res://scene/level/levelObjects/level_coins_2.tscn"),
+		preload("res://scene/level/levelObjects/level_rocks_fuel_1.tscn"),
+		preload("res://scene/level/levelObjects/level_rocks_purse_1.tscn"),
 	]
 #}
 
@@ -71,7 +75,7 @@ func loadChunk(chunk):
 
 		var newObjectTile = objectTiles[randi() % objectTiles.size()].instantiate()
 		loadedObjects[chunk] = newObjectTile
-		newObjectTile.global_position = targetPosition + (tilesize / 2) + Vector2(randi_range(tilesize.x/-2,tilesize.x/2),0)
+		newObjectTile.global_position = targetPosition + (tilesize / 2) + Vector2(randi_range(tilesize.x/-3,tilesize.x/3),randi_range(-200,200))
 		var myRotation = randi() % 180
 		newObjectTile.rotation = myRotation
 		for i in newObjectTile.get_children():i.rotation = -myRotation

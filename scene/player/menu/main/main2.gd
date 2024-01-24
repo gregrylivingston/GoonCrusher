@@ -112,7 +112,7 @@ func goToLevelSelect(setting: bool): #true if adancing to level select
 	
 	if not setting:
 		menuMode = "main"
-		selectCar(Root.cars[Root.playerCar.carId])
+		selectCar(SaveManager.playerData.cars[Root.playerCar.carId])
 		$VBoxContainer2/levelDifficultyPanel.modulate.a = 0.0
 	
 	get_tree().create_tween().tween_property(%mainMenuPanel, "scale" ,  mainMenuScale  , menuTweenSpeed)

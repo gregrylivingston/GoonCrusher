@@ -26,6 +26,7 @@ carId = "sedan"
 [node name="PlayerRoot" parent="." instance=ExtResource("3_sf05p")]
 
 [node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
+process_mode = 3
 stream = ExtResource("7_ihcdj")
 volume_db = 2.0
 autoplay = true

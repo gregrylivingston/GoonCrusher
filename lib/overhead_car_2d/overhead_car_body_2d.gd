@@ -122,7 +122,8 @@ func _physics_process(delta):
 		_car_input = myController._provide_input(_car_input)
 	_car_input.steering = clamp(_car_input.steering, -1.0, 1.0)
 	_car_input.acceleration = clamp(_car_input.acceleration, -1.0, 1.0)
-	if fuel <= 0 || isDestroyed: _car_input.acceleration = 0.0
+	if isDestroyed: _car_input.acceleration = 0.0
+	if fuel <= 0: outOfFuel()		
 	
 	if fuel <= 35 && not gasWarningGiven && not $"AudioStream-Voice".playing && isPlayer:makeGasWarning()
 	if health <= 50 && not healthWarningGiven && not $"AudioStream-Voice".playing && isPlayer:makeHealthWarning()
@@ -335,8 +336,7 @@ func destroy():
 		if isPlayer:
 			$sprite.modulate = Color(0.5,0.5,0.5,1.0)
 			await get_tree().create_timer(1).timeout
-			get_tree().paused = true
-			get_parent().add_child( load("res://scene/player/menu/gameSummary.tscn").instantiate() )
+			Root.levelRoot.endLevel(false)
 		else:
 			queue_free()
 
@@ -365,4 +365,10 @@ func playRandomFxSound():
 @onready var headlamps = $headlamps
 func turnOnHeadlights(status: bool):
 	headlamps.visible = status
+	
+func outOfFuel():
+	_car_input.acceleration = 0.0
+	await get_tree().create_timer(1).timeout
+	Root.levelRoot.endLevel(false)
+	
 	

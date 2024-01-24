@@ -1,45 +1,30 @@
-[gd_scene load_steps=6 format=3 uid="uid://cx1foiom8wosw"]
+[gd_scene load_steps=5 format=3 uid="uid://cx1foiom8wosw"]
 
 [ext_resource type="PackedScene" uid="uid://brhh6ifac5qvc" path="res://scene/scenery/rocks1.tscn" id="1_01gae"]
-[ext_resource type="PackedScene" uid="uid://bvivg0dx8wkea" path="res://scene/powerup/fuel.tscn" id="2_uq8t4"]
 [ext_resource type="PackedScene" uid="uid://c0xcbyhyhfy1y" path="res://scene/scenery/rocks2.tscn" id="3_xjj5h"]
 [ext_resource type="PackedScene" uid="uid://1n5rup2g5iel" path="res://scene/scenery/rocks3.tscn" id="4_of6f8"]
-[ext_resource type="PackedScene" uid="uid://bnet6qb3y8n0b" path="res://scene/scenery/rocks4.tscn" id="5_hbq2f"]
+[ext_resource type="PackedScene" uid="uid://c6jbfl1cgervf" path="res://scene/scenery/rocks6.tscn" id="5_62mar"]
 
 [node name="LevelRocks1" type="Node2D"]
 
-[node name="Rocks8" parent="." instance=ExtResource("1_01gae")]
-position = Vector2(247, -217)
-
-[node name="Rocks9" parent="." instance=ExtResource("1_01gae")]
-position = Vector2(-96, 203)
-
-[node name="Rocks6" parent="." instance=ExtResource("1_01gae")]
-position = Vector2(-13, -158)
-
-[node name="Powerup" parent="." instance=ExtResource("2_uq8t4")]
-position = Vector2(5, 22)
-
-[node name="Rocks" parent="." instance=ExtResource("3_xjj5h")]
-position = Vector2(-401, 285)
-
-[node name="Rocks2" parent="." instance=ExtResource("4_of6f8")]
-position = Vector2(-50, 491)
-
-[node name="Rocks5" parent="." instance=ExtResource("5_hbq2f")]
-position = Vector2(-206, 342)
-
-[node name="Rocks3" parent="." instance=ExtResource("4_of6f8")]
-position = Vector2(-19, -403)
-
-[node name="Rocks4" parent="." instance=ExtResource("3_xjj5h")]
-position = Vector2(59, -270)
-
 [node name="Rocks7" parent="." instance=ExtResource("1_01gae")]
-position = Vector2(223, 159)
-
-[node name="Rocks10" parent="." instance=ExtResource("5_hbq2f")]
-position = Vector2(285, 330)
+position = Vector2(-424, -13)
+scale = Vector2(3.79268, 3.79268)
 
 [node name="Rocks11" parent="." instance=ExtResource("3_xjj5h")]
-position = Vector2(402, 113)
+position = Vector2(374, -211)
+scale = Vector2(4.65, 4.65)
+
+[node name="Rocks" parent="." instance=ExtResource("5_62mar")]
+position = Vector2(405, -526)
+scale = Vector2(4.2839, 4.2839)
+
+[node name="Rocks2" parent="." instance=ExtResource("5_62mar")]
+position = Vector2(-241, 160)
+scale = Vector2(2.61864, 2.61864)
+
+[node name="Rocks3" parent="." instance=ExtResource("4_of6f8")]
+position = Vector2(-484, -803)
+
+[node name="Rocks4" parent="." instance=ExtResource("1_01gae")]
+position = Vector2(-401, -755)

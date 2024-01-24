@@ -1,0 +1,55 @@
+[gd_scene load_steps=7 format=3 uid="uid://bqx8rfqdarlaw"]
+
+[ext_resource type="PackedScene" uid="uid://brhh6ifac5qvc" path="res://scene/scenery/rocks1.tscn" id="1_3ygo2"]
+[ext_resource type="PackedScene" uid="uid://c3nj8qlsr0clb" path="res://scene/powerup/coin.tscn" id="2_ex3eq"]
+[ext_resource type="PackedScene" uid="uid://bogdlh0ch1tuf" path="res://scene/powerup/purse.tscn" id="3_bi850"]
+[ext_resource type="PackedScene" uid="uid://bnet6qb3y8n0b" path="res://scene/scenery/rocks4.tscn" id="4_b4y3o"]
+[ext_resource type="PackedScene" uid="uid://c0xcbyhyhfy1y" path="res://scene/scenery/rocks2.tscn" id="5_wdk63"]
+[ext_resource type="PackedScene" uid="uid://1n5rup2g5iel" path="res://scene/scenery/rocks3.tscn" id="6_6n273"]
+
+[node name="LevelRocks1" type="Node2D"]
+
+[node name="Rocks9" parent="." instance=ExtResource("1_3ygo2")]
+position = Vector2(-385, 160)
+
+[node name="Rocks6" parent="." instance=ExtResource("1_3ygo2")]
+position = Vector2(-165, -385)
+
+[node name="Powerup2" parent="." instance=ExtResource("2_ex3eq")]
+position = Vector2(89, 319)
+
+[node name="Powerup8" parent="." instance=ExtResource("2_ex3eq")]
+position = Vector2(-219, 279)
+
+[node name="Powerup3" parent="." instance=ExtResource("2_ex3eq")]
+position = Vector2(-293, -298)
+
+[node name="Powerup4" parent="." instance=ExtResource("2_ex3eq")]
+position = Vector2(14, -415)
+
+[node name="Powerup5" parent="." instance=ExtResource("2_ex3eq")]
+position = Vector2(302, -239)
+
+[node name="Powerup6" parent="." instance=ExtResource("2_ex3eq")]
+position = Vector2(-424, 5)
+
+[node name="Powerup7" parent="." instance=ExtResource("2_ex3eq")]
+position = Vector2(374, 97)
+
+[node name="Powerup" parent="." instance=ExtResource("3_bi850")]
+position = Vector2(5, -6)
+
+[node name="Rocks" parent="." instance=ExtResource("4_b4y3o")]
+position = Vector2(-69, 337)
+
+[node name="Rocks2" parent="." instance=ExtResource("5_wdk63")]
+position = Vector2(359, -76)
+
+[node name="Rocks3" parent="." instance=ExtResource("5_wdk63")]
+position = Vector2(168, -347)
+
+[node name="Rocks4" parent="." instance=ExtResource("5_wdk63")]
+position = Vector2(274, 234)
+
+[node name="Rocks5" parent="." instance=ExtResource("6_6n273")]
+position = Vector2(-370, -148)

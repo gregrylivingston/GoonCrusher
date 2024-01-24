@@ -30,6 +30,8 @@ func _process(delta):
 		reset = true
 		Root.levelRoot.setNighttime(false)
 		resetTimer()
+	if Root.levelRoot.seconds <= 0.01:
+		Root.levelRoot.endLevel(true)
 
 func resetTimer():
 	await get_tree().create_timer(20).timeout

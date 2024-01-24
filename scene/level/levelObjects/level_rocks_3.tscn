@@ -1,8 +1,6 @@
-[gd_scene load_steps=7 format=3 uid="uid://r62b6rer3r7l"]
+[gd_scene load_steps=5 format=3 uid="uid://r62b6rer3r7l"]
 
 [ext_resource type="PackedScene" uid="uid://brhh6ifac5qvc" path="res://scene/scenery/rocks1.tscn" id="1_j01qs"]
-[ext_resource type="PackedScene" uid="uid://bogdlh0ch1tuf" path="res://scene/powerup/purse.tscn" id="3_lj857"]
-[ext_resource type="PackedScene" uid="uid://c3nj8qlsr0clb" path="res://scene/powerup/coin.tscn" id="3_temed"]
 [ext_resource type="PackedScene" uid="uid://bnet6qb3y8n0b" path="res://scene/scenery/rocks4.tscn" id="4_ck3a3"]
 [ext_resource type="PackedScene" uid="uid://c0xcbyhyhfy1y" path="res://scene/scenery/rocks2.tscn" id="5_22x3r"]
 [ext_resource type="PackedScene" uid="uid://1n5rup2g5iel" path="res://scene/scenery/rocks3.tscn" id="6_k83ye"]
@@ -14,30 +12,6 @@ position = Vector2(-385, 160)
 
 [node name="Rocks6" parent="." instance=ExtResource("1_j01qs")]
 position = Vector2(-165, -385)
-
-[node name="Powerup2" parent="." instance=ExtResource("3_temed")]
-position = Vector2(89, 319)
-
-[node name="Powerup8" parent="." instance=ExtResource("3_temed")]
-position = Vector2(-219, 279)
-
-[node name="Powerup3" parent="." instance=ExtResource("3_temed")]
-position = Vector2(-293, -298)
-
-[node name="Powerup4" parent="." instance=ExtResource("3_temed")]
-position = Vector2(14, -415)
-
-[node name="Powerup5" parent="." instance=ExtResource("3_temed")]
-position = Vector2(302, -239)
-
-[node name="Powerup6" parent="." instance=ExtResource("3_temed")]
-position = Vector2(-424, 5)
-
-[node name="Powerup7" parent="." instance=ExtResource("3_temed")]
-position = Vector2(374, 97)
-
-[node name="Powerup" parent="." instance=ExtResource("3_lj857")]
-position = Vector2(5, -6)
 
 [node name="Rocks" parent="." instance=ExtResource("4_ck3a3")]
 position = Vector2(-69, 337)

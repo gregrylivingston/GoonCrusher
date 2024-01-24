@@ -62,3 +62,9 @@ func reduceMusic():
 	
 func playMusic():
 	$AudioStreamPlayer2.volume_db = -8 + SaveManager.getVolume( "music" )
+	
+func endLevel(levelCompleted: bool):
+	$AudioStreamPlayer.stream = load("res://sound/fx/slotmachine/winner_3.mp3")
+	$AudioStreamPlayer.play()
+	get_parent().add_child( load("res://scene/player/menu/gameSummary.tscn").instantiate() )
+	get_tree().paused = true

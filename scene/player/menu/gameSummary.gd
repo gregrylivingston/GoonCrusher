@@ -67,4 +67,4 @@ func _on_continue_pressed():
 	if isGameSummary:
 		get_tree().paused = false
 		get_tree().change_scene_to_file("res://scene/player/menu/main/main2.tscn")
-	else: queue_free()
+	queue_free()
