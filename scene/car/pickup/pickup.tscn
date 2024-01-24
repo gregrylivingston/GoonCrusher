@@ -3,8 +3,8 @@
 [ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="1_150xb"]
 [ext_resource type="Texture2D" uid="uid://cd2iqmi4mr7ei" path="res://scene/car/pickup/char_pickup_transparent.png" id="2_6iylb"]
 [ext_resource type="Texture2D" uid="uid://dfa1wuwohdn01" path="res://scene/car/pickup/Mini_truck.png" id="2_36nav"]
-[ext_resource type="Texture2D" uid="uid://c51v6gxfin88m" path="res://scene/car/pickup/pickup_background.png" id="3_3wh3g"]
 [ext_resource type="AudioStream" uid="uid://c7tykiomm82io" path="res://scene/car/pickup/audio/pickup_intro_1.mp3" id="3_gf7v4"]
+[ext_resource type="Texture2D" uid="uid://dfpsihnrh2w0g" path="res://scene/car/pickup/pickup_background_unedited.png" id="3_qtsyo"]
 [ext_resource type="AudioStream" uid="uid://chda6qshy02fg" path="res://scene/car/pickup/audio/pickup_intro_2.mp3" id="4_57w67"]
 [ext_resource type="AudioStream" uid="uid://dy14pxuvdlu4t" path="res://scene/car/pickup/audio/pickup_intro_3.mp3" id="5_okret"]
 [ext_resource type="AudioStream" uid="uid://b31ctawrtr4rr" path="res://scene/car/pickup/audio/pickup_intro_4.mp3" id="6_go2a3"]
@@ -34,7 +34,7 @@ engine = 19
 steering = 10
 armor = 12
 profilePic = ExtResource("2_6iylb")
-backgroundPic = ExtResource("3_3wh3g")
+backgroundPic = ExtResource("3_qtsyo")
 charName = "Karen"
 carId = "pickup"
 introAudio = Array[AudioStreamMP3]([ExtResource("3_gf7v4"), ExtResource("4_57w67"), ExtResource("5_okret"), ExtResource("6_go2a3"), ExtResource("7_7wal3"), ExtResource("8_svqtx"), ExtResource("9_0wwoi"), ExtResource("10_iv8ox"), ExtResource("11_01t5h"), ExtResource("21_sxtnt")])

@@ -2,7 +2,7 @@
 
 [ext_resource type="Theme" uid="uid://co40pijjc7hbw" path="res://style/roadRogue.tres" id="1_badde"]
 [ext_resource type="Script" path="res://scene/player/menu/main/main2.gd" id="1_cc7gi"]
-[ext_resource type="Texture2D" uid="uid://bvdwjuygu0evc" path="res://scene/car/van/van_background.png" id="1_edrys"]
+[ext_resource type="Texture2D" uid="uid://dg2670kuahgqm" path="res://scene/car/van/van_background1.png" id="1_edrys"]
 [ext_resource type="FontFile" uid="uid://dis65h8wxc3f2" path="res://addons/gut/fonts/LobsterTwo-Italic.ttf" id="2_5o1ri"]
 [ext_resource type="Texture2D" uid="uid://nnbrmbv4q73i" path="res://scene/car/van/char_van3.png" id="2_g16c3"]
 [ext_resource type="StyleBox" uid="uid://bbt1ii3ktk0v6" path="res://style/skewedPanel.tres" id="2_qamlo"]

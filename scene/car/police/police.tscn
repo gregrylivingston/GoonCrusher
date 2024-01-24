@@ -3,8 +3,8 @@
 [ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="1_qtyvp"]
 [ext_resource type="Texture2D" uid="uid://disw6kafapd1m" path="res://scene/car/police/Police.png" id="2_7cb7w"]
 [ext_resource type="Texture2D" uid="uid://bfou1crov3m1f" path="res://scene/car/police/char_police.png" id="2_hmbi1"]
-[ext_resource type="Texture2D" uid="uid://cnuv8vqvodsrx" path="res://scene/car/police/police_background.png" id="3_f2edq"]
 [ext_resource type="AudioStream" uid="uid://bs5u6ldb1k1ko" path="res://scene/car/police/audio/police_intro_1.mp3" id="3_iw1cs"]
+[ext_resource type="Texture2D" uid="uid://bialbejgyaaqo" path="res://scene/car/police/police_background_unedited.png" id="3_wde7i"]
 [ext_resource type="AudioStream" uid="uid://dvypnkd1hbu0y" path="res://scene/car/police/audio/police_intro_2.mp3" id="4_i3uqm"]
 [ext_resource type="AudioStream" uid="uid://c5tvsajagayf2" path="res://scene/car/police/audio/police_intro_3.mp3" id="5_kj4sh"]
 [ext_resource type="AudioStream" uid="uid://dwna60l4rv2tu" path="res://scene/car/police/audio/police_intro_4.mp3" id="6_7lced"]
@@ -20,7 +20,7 @@ steering = 25
 traction = 20.0
 armor = 10
 profilePic = ExtResource("2_hmbi1")
-backgroundPic = ExtResource("3_f2edq")
+backgroundPic = ExtResource("3_wde7i")
 charName = "Nikita"
 carId = "police"
 introAudio = Array[AudioStreamMP3]([ExtResource("3_iw1cs"), ExtResource("4_i3uqm"), ExtResource("5_kj4sh"), ExtResource("6_7lced"), ExtResource("7_fn2fs"), ExtResource("8_qb8pj"), ExtResource("9_rcvls"), ExtResource("10_ovhbp")])

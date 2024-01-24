@@ -173,7 +173,7 @@ func _physics_process(delta):
 		##colide with an unmovable static object like a rock
 		if velocity.length() > 0.01 && collider.get_class() == "StaticBody2D":
 			if not $"AudioStream-Crash".playing: $"AudioStream-Crash".play()
-			damage( ( velocity.length() / 500 ) / armor )
+			damage( ( velocity.length() / 10 ) / armor )
 			velocity *= 0.9
 		elif collider.get_class() == "CharacterBody2D":
 			damage(0.5)
