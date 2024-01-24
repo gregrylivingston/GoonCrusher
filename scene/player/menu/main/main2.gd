@@ -83,6 +83,12 @@ func setupLevel(level):
 	%driverName.text = level.name
 	%levelDifficulty.text = level.difficulty
 	%levelTime.text = level.time
+	if level.unlocked:
+		%begin.text = "  BEGIN"
+		%begin.disabled = false
+	else:
+		%begin.text = "  LOCKED"
+		%begin.disabled = true
 	await get_tree().create_timer( selectCarDelay ).timeout
 	$backgroundTexture.texture = load(level.image)
 

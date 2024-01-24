@@ -1,0 +1,51 @@
+[gd_scene load_steps=8 format=3 uid="uid://b7t2at78133cq"]
+
+[ext_resource type="PackedScene" uid="uid://dqcrli42u3gia" path="res://scene/level/levelRoot.tscn" id="1_vfkvh"]
+[ext_resource type="PackedScene" uid="uid://brhh6ifac5qvc" path="res://scene/scenery/rocks1.tscn" id="2_1i0k5"]
+[ext_resource type="PackedScene" uid="uid://cj1bw767v5imn" path="res://scene/powerup/health.tscn" id="3_tfwcd"]
+[ext_resource type="PackedScene" uid="uid://bvivg0dx8wkea" path="res://scene/powerup/fuel.tscn" id="4_6bteg"]
+[ext_resource type="PackedScene" uid="uid://c3nj8qlsr0clb" path="res://scene/powerup/coin.tscn" id="5_ta6og"]
+[ext_resource type="PackedScene" uid="uid://bogdlh0ch1tuf" path="res://scene/powerup/purse.tscn" id="6_7s7je"]
+[ext_resource type="PackedScene" uid="uid://xwhhgw0qwlsm" path="res://scene/powerup/slotMachine.tscn" id="7_4pesd"]
+
+[node name="LevelRoot" instance=ExtResource("1_vfkvh")]
+seconds = 420
+
+[node name="TileManager" parent="." index="0"]
+landscapeType = 1
+
+[node name="SpawnManager" parent="." index="5"]
+basicGoons = Array[int]([3, 3, 3])
+
+[node name="Rocks3" parent="." index="8" instance=ExtResource("2_1i0k5")]
+position = Vector2(872, 103)
+
+[node name="Rocks4" parent="." index="9" instance=ExtResource("2_1i0k5")]
+position = Vector2(598, -233)
+
+[node name="Rocks5" parent="." index="10" instance=ExtResource("2_1i0k5")]
+position = Vector2(356, 235)
+
+[node name="Powerup" parent="." index="11" instance=ExtResource("3_tfwcd")]
+process_mode = 0
+position = Vector2(680, 90)
+
+[node name="Powerup2" parent="." index="12" instance=ExtResource("4_6bteg")]
+process_mode = 0
+position = Vector2(-308, -233)
+
+[node name="Powerup4" parent="." index="13" instance=ExtResource("5_ta6og")]
+process_mode = 0
+position = Vector2(1123, 339)
+
+[node name="Powerup8" parent="." index="14" instance=ExtResource("5_ta6og")]
+process_mode = 0
+position = Vector2(1097, 562)
+
+[node name="Powerup5" parent="." index="15" instance=ExtResource("6_7s7je")]
+process_mode = 0
+position = Vector2(1266, 1962)
+
+[node name="Powerup7" parent="." index="16" instance=ExtResource("7_4pesd")]
+process_mode = 0
+position = Vector2(2466, 1868)

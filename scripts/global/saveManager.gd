@@ -106,3 +106,10 @@ func selectPreviousCar():
 	else: playerData.selectedCar = playerData.cars.size() - 1
 	save_character_data()
 	return playerData.cars[playerData.cars.keys()[playerData.selectedCar]]
+
+
+func currentLevelPassed():
+	if not playerData.levels[playerData.selectedLevel + 1].unlocked:
+		playerData.levels[playerData.selectedLevel + 1].unlocked = true
+		playerData.selectedLevel += 1
+	save_character_data()

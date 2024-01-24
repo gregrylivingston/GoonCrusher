@@ -24,7 +24,7 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -250.0
-offset_top = -250.0
+offset_top = -308.0
 offset_right = 250.0
 offset_bottom = 250.0
 grow_horizontal = 2
@@ -50,11 +50,23 @@ anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 72.0
-offset_top = 56.0
+offset_top = 43.0
 offset_right = -95.0
-offset_bottom = -166.0
+offset_bottom = -112.0
 grow_horizontal = 2
 grow_vertical = 2
+
+[node name="wasSuccessful" type="Label" parent="Panel/Panel2/VBoxContainer"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+text = "LEVEL COMPLETE"
+horizontal_alignment = 1
+
+[node name="HSeparator3" type="HSeparator" parent="Panel/Panel2/VBoxContainer"]
+modulate = Color(1, 1, 1, 0)
+custom_minimum_size = Vector2(0, 15)
+layout_mode = 2
 
 [node name="HBoxContainer7" type="HBoxContainer" parent="Panel/Panel2/VBoxContainer"]
 layout_mode = 2
@@ -85,11 +97,6 @@ size_flags_horizontal = 10
 theme_override_font_sizes/font_size = 24
 text = "0
 "
-
-[node name="HSeparator3" type="HSeparator" parent="Panel/Panel2/VBoxContainer"]
-modulate = Color(1, 1, 1, 0)
-custom_minimum_size = Vector2(0, 15)
-layout_mode = 2
 
 [node name="HBoxContainer6" type="HBoxContainer" parent="Panel/Panel2/VBoxContainer"]
 layout_mode = 2

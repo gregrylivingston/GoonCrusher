@@ -1,6 +1,7 @@
 extends CanvasLayer
 
 var isGameSummary: bool = true #alternative is achievements menu for now
+var levelCompleted: bool = false #did the player successfully complete their run.
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
@@ -10,6 +11,14 @@ func _ready():
 
 	
 func buildGameSummary():
+	
+	%wasSuccessful.visible = true
+	if levelCompleted:
+		SaveManager.currentLevelPassed()
+	else:
+		%wasSuccessful.text = "LEVEL FAILED"
+	
+	
 			#"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,},
 	var crushed = Root.playerCar.currentGoonsCrushed
 	if crushed > SaveManager.playerData.cars[Root.playerCar.carId].records.goonsCrushed: 
