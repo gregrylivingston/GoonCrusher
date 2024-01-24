@@ -91,7 +91,7 @@ var levels = [
 	{
 		"name":"3. Field of Giants",
 		"image":"res://texture/background/background_grass_3.png",
-		"unlocked":true,
+		"unlocked":false,
 		"scene":"res://scene/level/levels/level_grass_3.tscn",
 		"difficulty":"VERY EASY",
 		"time":"8:10",

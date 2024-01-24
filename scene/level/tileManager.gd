@@ -4,6 +4,8 @@ var tilesPerChunk: Vector2 = Vector2(40,40)
 var pixelsPerTile: Vector2 = Vector2(128,64)
 var tilesize: Vector2
 
+
+
 @export_range(0,3) var landscapeType: int = 0 # 0-grass 1-sand 2-dirt 3-snow
 var landscapeMap = [
 	preload("res://scene/level/terrain/landscapeMap.tscn"),
@@ -12,26 +14,36 @@ var landscapeMap = [
 	preload("res://scene/level/terrain/landscapeMap4.tscn")
 ]
 
-enum objectTypes { ROCKS }
-var objectTiles = [
-	#objectTypes.ROCKS:[
+enum objectTypes { ROCKS , COINS , BONUS_ROCKS}
+@export var requestedObjectTiles: Array[objectTypes] = [objectTypes.ROCKS]
+var AllObjectTiles = {
+	objectTypes.ROCKS:[
 		preload("res://scene/level/levelObjects/level_rocks_1.tscn"),
 		preload("res://scene/level/levelObjects/level_rocks_2.tscn"),
 		preload("res://scene/level/levelObjects/level_rocks_3.tscn"),
 		preload("res://scene/level/levelObjects/level_rocks_4.tscn"),
 		preload("res://scene/level/levelObjects/level_rocks_5.tscn"),
+	],
+	objectTypes.COINS:[
 		preload("res://scene/level/levelObjects/level_coins_1.tscn"),
 		preload("res://scene/level/levelObjects/level_coins_2.tscn"),
+	],
+	objectTypes.BONUS_ROCKS:[
 		preload("res://scene/level/levelObjects/level_rocks_fuel_1.tscn"),
 		preload("res://scene/level/levelObjects/level_rocks_purse_1.tscn"),
-	]
-#}
+	],
+}
+
+var objectTiles = []
 
 var loadedLandscapes = {}
 var loadedObjects = {}
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
+	for i in requestedObjectTiles:
+		objectTiles.append_array(AllObjectTiles[i])
+	
 	tilesize = tilesPerChunk * pixelsPerTile
 	getPlayerChunk()
 

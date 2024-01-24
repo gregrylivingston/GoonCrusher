@@ -1,11 +1,7 @@
 extends Node
 
-var spawnTimer = 6.0
+@export var spawnTimer = 6.0
 
-# Called when the node enters the scene tree for the first time.
-func _ready():
-	Root.spawnManager = self
-	increaseGiantOdds()
 
 enum goon { DEVIL , SPARTAN , SAMURAI , FIREKIN, PIKEMAN }
 
@@ -20,6 +16,12 @@ enum goon { DEVIL , SPARTAN , SAMURAI , FIREKIN, PIKEMAN }
 	goon.PIKEMAN:preload("res://scene/enemy/walker/pikeman/pikeman.tscn"),
 	goon.SAMURAI:preload("res://scene/enemy/walker/samurai/samurai.tscn"),
 }
+
+
+# Called when the node enters the scene tree for the first time.
+func _ready():
+	Root.spawnManager = self
+	increaseGiantOdds()
 
 func increaseGiantOdds():
 	giantOdds += 1
