@@ -1,0 +1,21 @@
+[gd_scene load_steps=2 format=3 uid="uid://c3i6wuytjv2ct"]
+
+[ext_resource type="PackedScene" uid="uid://brhh6ifac5qvc" path="res://scene/scenery/rocks.tscn" id="1_18jt8"]
+
+[node name="LevelRocks1" type="Node2D"]
+
+[node name="Rocks3" parent="." instance=ExtResource("1_18jt8")]
+position = Vector2(534, -678)
+
+[node name="Rocks8" parent="." instance=ExtResource("1_18jt8")]
+position = Vector2(534, -678)
+
+[node name="Rocks9" parent="." instance=ExtResource("1_18jt8")]
+position = Vector2(636, 623)
+
+[node name="Rocks5" parent="." instance=ExtResource("1_18jt8")]
+position = Vector2(-301, -360)
+
+[node name="Rocks7" parent="." instance=ExtResource("1_18jt8")]
+position = Vector2(-358, 136)
+polygon = PackedVector2Array(-73, -20, -57, 41, -32, 66, 15, 59, 70, 49, 91, 0, 72, -63, 19, -68, -40, -59)

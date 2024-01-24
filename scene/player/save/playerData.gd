@@ -78,7 +78,7 @@ var levels = [
 		"cost":0,
 		"scene":"res://scene/level/levels/level_grass_1.tscn",
 		"difficulty":"VERY EASY",
-		"time":"5:00",
+		"time":"4:10",
 	},
 	{
 		"name":"2. Park Bully",
@@ -86,7 +86,7 @@ var levels = [
 		"cost":0,
 		"scene":"res://scene/level/levels/level_grass_2.tscn",
 		"difficulty":"VERY EASY",
-		"time":"5:00",
+		"time":"6:10",
 	},
 	{
 		"name":"3. Field of Giants",
@@ -94,7 +94,7 @@ var levels = [
 		"cost":0,
 		"scene":"res://scene/level/levels/level_grass_3.tscn",
 		"difficulty":"VERY EASY",
-		"time":"5:00",
+		"time":"8:10",
 	},
 	{
 		"name":"Giant-Land",

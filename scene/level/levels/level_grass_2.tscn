@@ -12,7 +12,7 @@
 [ext_resource type="PackedScene" uid="uid://4lh7dd54kbqe" path="res://scene/powerup/gem.tscn" id="10_luaca"]
 
 [node name="LevelRoot" instance=ExtResource("1_5yesm")]
-seconds = 300
+seconds = 370
 
 [node name="SpawnManager" parent="." index="5"]
 basicGoons = Array[int]([0, 0, 1])

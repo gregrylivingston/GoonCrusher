@@ -1,0 +1,52 @@
+[gd_scene load_steps=4 format=3 uid="uid://cx1foiom8wosw"]
+
+[ext_resource type="PackedScene" uid="uid://brhh6ifac5qvc" path="res://scene/scenery/rocks.tscn" id="1_jiuil"]
+[ext_resource type="PackedScene" uid="uid://bvivg0dx8wkea" path="res://scene/powerup/fuel.tscn" id="2_uq8t4"]
+[ext_resource type="PackedScene" uid="uid://c3nj8qlsr0clb" path="res://scene/powerup/coin.tscn" id="3_ansk8"]
+
+[node name="LevelRocks1" type="Node2D"]
+
+[node name="Rocks3" parent="." instance=ExtResource("1_jiuil")]
+position = Vector2(421, -481)
+
+[node name="Rocks8" parent="." instance=ExtResource("1_jiuil")]
+position = Vector2(421, -481)
+
+[node name="Rocks9" parent="." instance=ExtResource("1_jiuil")]
+position = Vector2(-43, 182)
+
+[node name="Rocks4" parent="." instance=ExtResource("1_jiuil")]
+position = Vector2(-367, -453)
+polygon = PackedVector2Array(-73, -20, -57, 41, -32, 66, 15, 59, 70, 49, 91, 0, 72, -63, 19, -68, -40, -59)
+
+[node name="Rocks5" parent="." instance=ExtResource("1_jiuil")]
+position = Vector2(-58, 585)
+
+[node name="Rocks6" parent="." instance=ExtResource("1_jiuil")]
+position = Vector2(-13, -158)
+polygon = PackedVector2Array(-73, -20, -57, 41, -32, 66, 15, 59, 70, 49, 91, 0, 72, -63, 19, -68, -40, -59)
+
+[node name="Rocks7" parent="." instance=ExtResource("1_jiuil")]
+position = Vector2(-471, 333)
+polygon = PackedVector2Array(-73, -20, -57, 41, -32, 66, 15, 59, 70, 49, 91, 0, 72, -63, 19, -68, -40, -59)
+
+[node name="Powerup" parent="." instance=ExtResource("2_uq8t4")]
+position = Vector2(5, 22)
+
+[node name="Powerup2" parent="." instance=ExtResource("3_ansk8")]
+position = Vector2(-270, 486)
+
+[node name="Powerup3" parent="." instance=ExtResource("3_ansk8")]
+position = Vector2(-197, -298)
+
+[node name="Powerup4" parent="." instance=ExtResource("3_ansk8")]
+position = Vector2(3, -463)
+
+[node name="Powerup5" parent="." instance=ExtResource("3_ansk8")]
+position = Vector2(219, -298)
+
+[node name="Powerup6" parent="." instance=ExtResource("3_ansk8")]
+position = Vector2(-258, 251)
+
+[node name="Powerup7" parent="." instance=ExtResource("3_ansk8")]
+position = Vector2(3, 391)

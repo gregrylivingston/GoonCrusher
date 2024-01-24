@@ -46,3 +46,11 @@ res://scene/enemy/spawnManager.gd
 res://scene/level/levels/level_grass_1.tscn
 res://scene/level/levels/level_grass_2.tscn
 res://scene/level/levels/level_grass_3.tscn
+res://scene/level/levelObjects/level_rocks_1.tscn
+res://scene/level/tileManager.gd
+res://scene/level/levelObjects/level_rocks_2.tscn
+res://scene/level/levelObjects/level_rocks_3.tscn
+res://scene/level/levelObjects/level_coins_1.tscn
+res://scene/level/levelObjects/level_coins_2.tscn
+res://scene/powerup/purse.tscn
+res://scene/powerup/purse.gd

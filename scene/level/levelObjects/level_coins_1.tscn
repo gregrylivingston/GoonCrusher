@@ -1,0 +1,77 @@
+[gd_scene load_steps=2 format=3 uid="uid://bam37dciwmsrl"]
+
+[ext_resource type="PackedScene" uid="uid://c3nj8qlsr0clb" path="res://scene/powerup/coin.tscn" id="3_4un8y"]
+
+[node name="LevelRocks1" type="Node2D"]
+
+[node name="Powerup2" parent="." instance=ExtResource("3_4un8y")]
+position = Vector2(15, -4)
+
+[node name="Powerup3" parent="." instance=ExtResource("3_4un8y")]
+position = Vector2(325, -700)
+
+[node name="Powerup4" parent="." instance=ExtResource("3_4un8y")]
+position = Vector2(150, -497)
+
+[node name="Powerup5" parent="." instance=ExtResource("3_4un8y")]
+position = Vector2(61, -268)
+
+[node name="Powerup6" parent="." instance=ExtResource("3_4un8y")]
+position = Vector2(777, -976)
+
+[node name="Powerup20" parent="." instance=ExtResource("3_4un8y")]
+position = Vector2(1032, -1012)
+
+[node name="Powerup21" parent="." instance=ExtResource("3_4un8y")]
+position = Vector2(1290, -976)
+
+[node name="Powerup22" parent="." instance=ExtResource("3_4un8y")]
+position = Vector2(1560, -868)
+
+[node name="Powerup23" parent="." instance=ExtResource("3_4un8y")]
+position = Vector2(1752, -721)
+
+[node name="Powerup24" parent="." instance=ExtResource("3_4un8y")]
+position = Vector2(1923, -505)
+
+[node name="Powerup25" parent="." instance=ExtResource("3_4un8y")]
+position = Vector2(2031, -250)
+
+[node name="Powerup8" parent="." instance=ExtResource("3_4un8y")]
+position = Vector2(1039, 1037)
+
+[node name="Powerup14" parent="." instance=ExtResource("3_4un8y")]
+position = Vector2(1327, 1008)
+
+[node name="Powerup15" parent="." instance=ExtResource("3_4un8y")]
+position = Vector2(1579, 881)
+
+[node name="Powerup16" parent="." instance=ExtResource("3_4un8y")]
+position = Vector2(1772, 739)
+
+[node name="Powerup17" parent="." instance=ExtResource("3_4un8y")]
+position = Vector2(1931, 525)
+
+[node name="Powerup18" parent="." instance=ExtResource("3_4un8y")]
+position = Vector2(2035, 288)
+
+[node name="Powerup19" parent="." instance=ExtResource("3_4un8y")]
+position = Vector2(2067, 10)
+
+[node name="Powerup7" parent="." instance=ExtResource("3_4un8y")]
+position = Vector2(541, -866)
+
+[node name="Powerup9" parent="." instance=ExtResource("3_4un8y")]
+position = Vector2(335, 744)
+
+[node name="Powerup10" parent="." instance=ExtResource("3_4un8y")]
+position = Vector2(152, 528)
+
+[node name="Powerup13" parent="." instance=ExtResource("3_4un8y")]
+position = Vector2(46, 275)
+
+[node name="Powerup11" parent="." instance=ExtResource("3_4un8y")]
+position = Vector2(778, 1006)
+
+[node name="Powerup12" parent="." instance=ExtResource("3_4un8y")]
+position = Vector2(531, 901)

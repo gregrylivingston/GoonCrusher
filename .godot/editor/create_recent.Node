@@ -1,8 +1,10 @@
+CollisionShape2D
+Area2D
+Node2D
 Label
 Control
 HBoxContainer
 VBoxContainer
-Node2D
 CanvasLayer
 AnimationPlayer
 AudioStreamPlayer
@@ -11,4 +13,3 @@ CenterContainer
 PointLight2D
 VSeparator
 Panel
-Button

@@ -8,9 +8,10 @@ func _ready():
 	if clockSeconds < 10: clockSeconds = "0" + str(clockSeconds)
 	text = str(int(Root.levelRoot.seconds /60)) + " : " + str(clockSeconds)
 	Root.timer = self
+	resetTimer()
 
-var daylength = 60
-var reset: bool = false
+var daylength = 120
+var reset: bool = true
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
@@ -31,6 +32,6 @@ func _process(delta):
 		resetTimer()
 
 func resetTimer():
-	await get_tree().create_timer(10).timeout
+	await get_tree().create_timer(20).timeout
 	reset = false
 	
