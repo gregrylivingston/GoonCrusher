@@ -47,3 +47,4 @@ res://scene/level/levels/level_snow_1.tscn
 res://scene/enemy/spawnManager.gd
 res://scene/level/tileManager.gd
 res://scene/player/controller/playerCarController.gd
+res://lib/overhead_car_2d/overhead_car_area_2d.gd

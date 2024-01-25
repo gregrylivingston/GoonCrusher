@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://d4hqccgywinq3"]
+[gd_scene load_steps=3 format=3 uid="uid://d4hqccgywinq3"]
 
 [ext_resource type="PackedScene" uid="uid://dqcrli42u3gia" path="res://scene/level/levelRoot.tscn" id="1_s7abj"]
+[ext_resource type="Script" path="res://lib/overhead_car_2d/overhead_car_area_2d.gd" id="2_8k8rs"]
 
 [node name="LevelRoot" instance=ExtResource("1_s7abj")]
 seconds = 250
@@ -11,3 +12,14 @@ requestedObjectTiles = Array[int]([1, 1, 2])
 [node name="SpawnManager" parent="." index="5"]
 basicGoons = Array[int]([0, 0, 1])
 giantOdds = -200
+
+[node name="Polygon2D" type="Polygon2D" parent="." index="9"]
+color = Color(0.25098, 0.25098, 0.25098, 0.407843)
+polygon = PackedVector2Array(1240, 755, 949, 1177, 1717, 1436, 2857, 1468, 3122, 707, 1579, 576)
+
+[node name="Area2D" type="Area2D" parent="Polygon2D" index="0"]
+script = ExtResource("2_8k8rs")
+friction = 1.5
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="Polygon2D/Area2D" index="0"]
+polygon = PackedVector2Array(1579, 579, 1245, 758, 959, 1188, 1697, 1421, 2862, 1482, 3113, 697)

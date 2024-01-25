@@ -23,7 +23,7 @@ class_name OverheadCarBody2D extends CharacterBody2D
 @export var friction = 0.9
 @export var drag = 0.0015
 
-@export var slip_speed = 400  # Speed where traction is reduced
+@export var slip_speed = 100  # Speed where traction is reduced
 @export var traction_fast = 0.1  # High-speed traction
 @export var traction_slow = 0.7  # Low-speed traction
 @export var wheel_base = 70  # Distance from front to rear wheel

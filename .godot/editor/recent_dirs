@@ -1,3 +1,4 @@
+res://lib/overhead_car_2d
 res://scene/car/van
 res://texture/atlas
 res://scene/level/levels
@@ -19,5 +20,4 @@ res://
 res://scene/car
 res://scene/car/audi
 D:/Godot/AutoSurvivor/scene/enemy/walker/devil/texture
-res://scene/enemy/walker
 D:/Godot/AutoSurvivor

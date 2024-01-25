@@ -3,7 +3,7 @@ class_name OverheadCarArea2D extends Area2D
 
 
 @export var friction := 0.0
-@export var drag := 0.0
+@export var drag: float = 0.0
 
 
 signal car_body_entered(body: Node2D, area: OverheadCarArea2D)

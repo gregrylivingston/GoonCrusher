@@ -1,8 +1,10 @@
+Area2D
+CollisionPolygon2D
+Polygon2D
 TextureRect
 Label
 Sprite2D
 CollisionShape2D
-Area2D
 Node2D
 Control
 HBoxContainer
@@ -10,5 +12,3 @@ VBoxContainer
 CanvasLayer
 AnimationPlayer
 AudioStreamPlayer
-CenterContainer
-PointLight2D
