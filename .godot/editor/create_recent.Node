@@ -1,3 +1,4 @@
+TextureRect
 Label
 Sprite2D
 CollisionShape2D
@@ -9,6 +10,5 @@ VBoxContainer
 CanvasLayer
 AnimationPlayer
 AudioStreamPlayer
-TextureRect
 CenterContainer
 PointLight2D

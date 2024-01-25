@@ -80,7 +80,7 @@ func selectPreviousCar():
 func setupLevel(level):
 	$VBoxContainer2/levelDifficultyPanel.modulate.a = 1.0
 	showNewBackgroundImage(load(level.image))
-	%driverName.text = level.name
+	%driverName.text = str(SaveManager.playerData.selectedLevel + 1) + ". " + level.name
 	%levelDifficulty.text = level.difficulty
 	%levelTime.text = level.time
 	if level.unlocked:
@@ -148,7 +148,7 @@ func _on_begin_pressed():
 
 func _on_unlock_pressed():
 	if SaveManager.unlockCar():
-		selectCar(Root.cars[Root.playerCar.carId])
+		selectCar(SaveManager.playerData.cars[Root.playerCar.carId])
 		
 func statUpdatesUiUpdate():
 	$carStatsContainer.updateStats()

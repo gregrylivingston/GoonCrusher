@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3 uid="uid://btm8fh8tutk2x"]
+[gd_scene load_steps=18 format=3 uid="uid://btm8fh8tutk2x"]
 
 [ext_resource type="Theme" uid="uid://co40pijjc7hbw" path="res://style/roadRogue.tres" id="1_badde"]
 [ext_resource type="Script" path="res://scene/player/menu/main/main2.gd" id="1_cc7gi"]
@@ -13,6 +13,7 @@
 [ext_resource type="Texture2D" uid="uid://w03tvhxtmrv4" path="res://texture/icon/icons8-coin-48 (1).png" id="11_1oi8i"]
 [ext_resource type="PackedScene" uid="uid://clx3q1jksnuoc" path="res://scene/player/menu/main/car_stats_container.tscn" id="11_wos04"]
 [ext_resource type="AudioStream" uid="uid://chsan1o1ku2c7" path="res://sound/music/abstract-world-127012.mp3" id="12_3e52h"]
+[ext_resource type="Texture2D" uid="uid://cko3st4beios6" path="res://texture/icon/moon.png" id="14_k0lsc"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_noll7"]
 shader = ExtResource("3_w77gt")
@@ -409,7 +410,14 @@ layout_mode = 2
 size_flags_horizontal = 10
 theme = ExtResource("1_badde")
 theme_override_font_sizes/font_size = 24
-text = "5:00 "
+text = "5"
+
+[node name="TextureRect" type="TextureRect" parent="VBoxContainer2/levelDifficultyPanel/HBoxContainer"]
+custom_minimum_size = Vector2(30, 30)
+layout_mode = 2
+texture = ExtResource("14_k0lsc")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="Control2" type="Control" parent="VBoxContainer2/levelDifficultyPanel"]
 layout_mode = 2

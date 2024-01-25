@@ -326,7 +326,7 @@ var explosion = load("res://scene/fx/explosion.tscn")
 func destroy():
 	if not isDestroyed:
 		isDestroyed = true
-		for i in randi_range(4,10):
+		for i in randi_range(2,6):
 			await get_tree().create_timer(randf_range(0.01 , 1.0)).timeout
 			var newExplosion = explosion.instantiate()
 			newExplosion.position = Vector2( randi_range( -50,50 ) , randi_range( -50,50 ))
@@ -368,7 +368,7 @@ func turnOnHeadlights(status: bool):
 	
 func outOfFuel():
 	_car_input.acceleration = 0.0
-	await get_tree().create_timer(1).timeout
+	await get_tree().create_timer(2.5).timeout
 	Root.levelRoot.endLevel(false)
 	
 	
