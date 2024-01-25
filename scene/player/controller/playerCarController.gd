@@ -12,15 +12,22 @@ func _ready():
 func _process(delta):
 	pass
 
+var reversing = false
 
 func _provide_input(_input):
-	if Input.is_action_pressed("Accelerate"):_input.acceleration = 1.0
+	if Input.is_action_pressed("Accelerate"):
+		_input.acceleration = 1.0
+		reversing = false
 	else: _input.acceleration = 0.0
 	
 	if Input.is_action_pressed("TurnLeft"):		_input.steering -= 0.01 +  ( get_parent().traction / 100.0 )
 	elif Input.is_action_pressed("TurnRight"):		_input.steering += 0.01 + ( get_parent().traction / 100.0 )
 	else: _input.steering *= 0.9
 	
-	if Input.is_action_pressed("Brake"):_input.braking = true
+	if Input.is_action_pressed("Brake"):
+		if get_parent().velocity.length() == 0 || reversing:
+			reversing = true
+			_input.acceleration = -1.0
+		else: _input.braking = true
 	else: _input.braking = false
 	return _input
