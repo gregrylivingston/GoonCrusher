@@ -34,3 +34,4 @@ res://scene/car/carBodyArea.gd
 res://scene/car/van/van.tscn
 res://scene/car/taxi/taxi.tscn
 res://scene/car/pickup/pickup.tscn
+res://scene/enemy/walker/firekin/firekin.tscn

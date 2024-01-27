@@ -8,6 +8,7 @@ size = Vector2(58, 17)
 
 [node name="firekin" instance=ExtResource("1_uvrnl")]
 attackSpeedMultiplier = 1.0
+attackDamage = 10.0
 
 [node name="CollisionShape2D" parent="." index="0"]
 position = Vector2(0, -2.5)
