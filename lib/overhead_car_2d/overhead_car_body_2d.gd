@@ -80,10 +80,11 @@ func _ready():
 	if isPlayer:
 		add_to_group("playerCar")
 		Root.playerCar = self
-		engine += SaveManager.playerData.cars[carId].upgrades.engine
-		steering += SaveManager.playerData.cars[carId].upgrades.steering
-		traction += SaveManager.playerData.cars[carId].upgrades.traction
-		armor += SaveManager.playerData.cars[carId].upgrades.armor	
+		var thisCar = SaveManager.getCarByName(carId)
+		engine += thisCar.upgrades.engine
+		steering += thisCar.upgrades.steering
+		traction += thisCar.upgrades.traction
+		armor += thisCar.upgrades.armor	
 		
 		$headlamps/carhighlight.texture = $sprite.texture
 		$headlamps/carhighlight.position = $sprite.position

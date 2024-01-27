@@ -12,7 +12,7 @@ func refresh():
 		text = str(SaveManager.requestStatCost(myStat))
 		
 		#if the player cannot afford the cost or has not unlocked the car hide and lock this button.
-		if requestCost > SaveManager.playerData.coin || SaveManager.playerData.cars[Root.playerCar.carId].cost != 0: 
+		if requestCost > SaveManager.playerData.coin || SaveManager.getCarByName(Root.playerCar.carId).cost != 0: 
 			disabled = true
 			modulate.a = 0.0
 		else: 

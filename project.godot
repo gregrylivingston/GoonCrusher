@@ -13,6 +13,8 @@ config_version=5
 config/name="AutoSurvivor"
 run/main_scene="res://scene/player/menu/main/main2.tscn"
 config/features=PackedStringArray("4.2", "Mobile")
+boot_splash/show_image=false
+boot_splash/image="res://texture/background/iceBackground.png"
 config/icon="res://icon.svg"
 
 [audio]

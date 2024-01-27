@@ -120,8 +120,9 @@ func _on_claim_button_pressed():
 	for slot in [$Panel/Panel/Panel2/HBoxContainer/slotRow, $Panel/Panel/Panel2/HBoxContainer/slotRow2, $Panel/Panel/Panel2/HBoxContainer/slotRow3]:
 		var newPowerup = Root.getSpecificPowerup(slot.getActiveType())
 		newPowerup.global_position = Root.playerCar.global_position
+		newPowerup.process_mode = Node.PROCESS_MODE_ALWAYS
 		Root.levelRoot.add_child(newPowerup)
-		#newPowerup.sendReward(Root.playerCar, false)
+		newPowerup.sendReward(Root.playerCar, false)
 	Root.levelRoot.playMusic()
 	Root.playerCar.add_child(countdownScreen.instantiate())
 	queue_free()

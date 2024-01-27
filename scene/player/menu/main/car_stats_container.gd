@@ -11,7 +11,7 @@ func _process(delta):
 	pass
 
 func updateStats():
-	var myUpdates =  SaveManager.playerData.cars[Root.playerCar.carId].upgrades
+	var myUpdates =  SaveManager.getCarByName(Root.playerCar.carId).upgrades
 	$HBoxContainer/engine.setValue(Root.playerCar.engine + myUpdates.engine)
 	$HBoxContainer/steering.setValue(Root.playerCar.steering + myUpdates.steering)
 	$HBoxContainer/traction.setValue(Root.playerCar.traction + myUpdates.traction)

@@ -1,0 +1,14 @@
+[gd_scene load_steps=3 format=3 uid="uid://cvuuit81eu21f"]
+
+[ext_resource type="Theme" uid="uid://co40pijjc7hbw" path="res://style/roadRogue.tres" id="1_m2qjq"]
+[ext_resource type="Script" path="res://scene/player/menu/settings/gameplay.gd" id="2_61arv"]
+
+[node name="Gameplay" type="VBoxContainer"]
+theme = ExtResource("1_m2qjq")
+script = ExtResource("2_61arv")
+
+[node name="resetSave" type="Button" parent="."]
+layout_mode = 2
+text = "Reset Save"
+
+[connection signal="pressed" from="resetSave" to="." method="_on_reset_save_pressed"]

@@ -1,8 +1,9 @@
-[gd_scene load_steps=6 format=3 uid="uid://bt4kqynx5rxfe"]
+[gd_scene load_steps=7 format=3 uid="uid://bt4kqynx5rxfe"]
 
 [ext_resource type="Theme" uid="uid://co40pijjc7hbw" path="res://style/roadRogue.tres" id="1_0hbe5"]
 [ext_resource type="StyleBox" uid="uid://cgcjmjg4qdbt2" path="res://style/style_box_semitransparent.tres" id="2_b5vew"]
 [ext_resource type="Script" path="res://scene/player/menu/settings/settings.gd" id="3_wvtpg"]
+[ext_resource type="PackedScene" uid="uid://cvuuit81eu21f" path="res://scene/player/menu/settings/gameplay.tscn" id="4_mm2s2"]
 [ext_resource type="PackedScene" uid="uid://48smkfhy81d" path="res://scene/player/menu/settings/settings_sound.tscn" id="4_qxk5p"]
 [ext_resource type="PackedScene" uid="uid://du3smnopvsi0b" path="res://scene/player/menu/settings/graphics.tscn" id="5_vpq4j"]
 
@@ -45,13 +46,15 @@ grow_vertical = 2
 theme = ExtResource("1_0hbe5")
 theme_override_constants/side_margin = 0
 
+[node name="Gameplay" parent="Panel/TabContainer" instance=ExtResource("4_mm2s2")]
+visible = true
+layout_mode = 2
+
 [node name="Sound" parent="Panel/TabContainer" instance=ExtResource("4_qxk5p")]
+visible = false
 layout_mode = 2
 
 [node name="Graphics" parent="Panel/TabContainer" instance=ExtResource("5_vpq4j")]
-layout_mode = 2
-
-[node name="Gameplay" type="VBoxContainer" parent="Panel/TabContainer"]
 visible = false
 layout_mode = 2
 

@@ -1,15 +1,13 @@
 extends Node
 
 var playerCar: OverheadCarBody2D
-var selectedCar
-var timer #the timer during a game run
+var selectedCar: Dictionary
+var timer: float #the timer during a game run
 
 
 var mainMenu: CanvasLayer
-var levelRoot
+var levelRoot: Node2D
 var spawnManager
-
-
 
 var isRunActive: bool = false
 var earnedCoins: int
@@ -71,7 +69,7 @@ func getPowerupFromWeights( powerupWeightDict ):
 			return powerup[i].instantiate()
 		
 	
-func getSpecificPowerup(pName: String):
+func getSpecificPowerup(pName: String) -> Powerup:
 	return powerup[pName].instantiate()
 
 

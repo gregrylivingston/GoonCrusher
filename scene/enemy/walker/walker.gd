@@ -14,7 +14,7 @@ var myMode: mode = mode.MOVE
 	"purse":4,
 	"slotMachine":1,
 	"health":10,
-	"fuel":10,
+	"fuel":20,
 	"traction":4,
 	"steering":4,
 	"armor":4,

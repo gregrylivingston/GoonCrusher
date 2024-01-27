@@ -7,7 +7,7 @@ func _ready():
 	var clockSeconds = int(Root.levelRoot.seconds )%60
 	if clockSeconds < 10: clockSeconds = "0" + str(clockSeconds)
 	text = str(int(Root.levelRoot.seconds /60)) + " : " + str(clockSeconds)
-	Root.timer = self
+	Root.timer
 	resetTimer()
 
 var daylength = 120

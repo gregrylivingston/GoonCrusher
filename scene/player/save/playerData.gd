@@ -1,77 +1,76 @@
 extends Resource
-class_name playerData
 
-var coin: int = 1200
-var gem: int = 3
-var selectedCar: int = 0
-var selectedLevel: int = 0
+@export var coin: int = 1200
+@export var gem: int = 3
+@export var selectedCar: int = 0
+@export var selectedLevel: int = 0
 
-var cars = {
-	"sedan":{
+@export var cars = [
+	{	"name":"sedan",
 		"cost":0,
 		"upgrades":{"traction":0,"engine":0,"armor":0,"steering":0},
 		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,},
 		"scene":preload("res://scene/car/sedan/sedan.tscn"),
 	},
-	"van":{
+	{	"name":"van",
 		"cost":0,
 		"upgrades":{"traction":0,"engine":0,"armor":0,"steering":0},
 		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,},
 		"scene":preload("res://scene/car/van/van.tscn"),
 	},
-	"taxi":{
+	{	"name":"taxi",
 		"cost":1000,
 		"upgrades":{"traction":0,"engine":0,"armor":0,"steering":0},
 		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,},
 		"scene":preload("res://scene/car/taxi/taxi.tscn"),
 	},	
-	"pickup":{
+	{	"name":"pickup",
 		"cost":2500,
 		"upgrades":{"traction":0,"engine":0,"armor":0,"steering":0},
 		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,},
 		"scene":preload("res://scene/car/pickup/pickup.tscn"),
 	},
-	"semi":{
+	{	"name":"semi",
 		"cost":5000,
 		"upgrades":{"traction":0,"engine":0,"armor":0,"steering":0},
 		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,},
 		"scene":preload("res://scene/car/semi/semi.tscn"),
 	},
-	"audi":{
+	{	"name":"audi",
 		"cost":20000,
 		"upgrades":{"traction":0,"engine":0,"armor":0,"steering":0},
 		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,},
 		"scene":preload("res://scene/car/audi/audi.tscn")
 	},
-	"racer":{
+	{	"name":"racer",
 		"cost":25000,
 		"upgrades":{"traction":0,"engine":0,"armor":0,"steering":0},
 		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,},
 		"scene":preload("res://scene/car/racer/racer.tscn")
 	},
-	"police":{
+	{	"name":"police",
 		"cost":50000,
 		"upgrades":{"traction":0,"engine":0,"armor":0,"steering":0},
 		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,},
 		"scene":preload("res://scene/car/police/police.tscn"),
 	},
-	"ambulance":{
+	{	"name":"ambulance",
 		"cost":75000,
 		"upgrades":{"traction":0,"engine":0,"armor":0,"steering":0},
 		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,},
 		"scene":preload("res://scene/car/ambulance/ambulance.tscn"),
 	}
-}
+]
 
 
-var settings = {
+@export var settings = {
 	"volume":{
 		"master":0,"voice":0,"music":0,"fx":0,
 	}
 }
 
 
-var levels = [
+@export var levels = [
 	{
 		"name":"Goon Park",
 		"image":"res://texture/background/background_level_1.png",

@@ -1,3 +1,7 @@
+res://texture/background
+res://scene/player/menu/settings
+D:/Godot/AutoSurvivor
+res://scene/car/sedan
 res://lib/overhead_car_2d
 res://scene/car/van
 res://texture/atlas
@@ -9,8 +13,6 @@ res://shader
 res://scene/level
 res://texture/spritesheet
 res://texture/animation
-res://scene/car/sedan
-res://scene/player/menu/settings
 res://scene/player/slots
 res://scene/player/save
 res://scripts/global
@@ -18,6 +20,3 @@ res://texture/icon
 res://texture/fx
 res://
 res://scene/car
-res://scene/car/audi
-D:/Godot/AutoSurvivor/scene/enemy/walker/devil/texture
-D:/Godot/AutoSurvivor

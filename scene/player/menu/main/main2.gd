@@ -6,7 +6,7 @@ var menuMode: String = "main"
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	Root.mainMenu = self
-	selectCar(SaveManager.playerData.cars[SaveManager.playerData.cars.keys()[SaveManager.playerData.selectedCar]])
+	selectCar(SaveManager.playerData.cars[SaveManager.playerData.selectedCar])
 	if Root.isRunActive:
 		Root.isRunActive = false
 		SaveManager.addCoins( Root.earnedCoins )
@@ -39,12 +39,13 @@ func selectCar(car):
 	%charTexture2.position = Vector2( 0 , 0 )
 	
 func disableLockedCars(car):
-	if SaveManager.playerData.cars[Root.playerCar.carId].cost != 0:
+	var thisCar =  SaveManager.getCarByName(Root.playerCar.carId)
+	if thisCar.cost != 0:
 		%levelSelect.visible = false
 		%unlock.visible = true
-		var unlockCost = SaveManager.playerData.cars[Root.playerCar.carId].cost
+		var unlockCost = thisCar.cost
 		%unlock.text = "  " +str(unlockCost)
-		if SaveManager.playerData.cars[Root.playerCar.carId].cost > SaveManager.playerData.coin:%unlock.disabled = true
+		if thisCar.cost > SaveManager.playerData.coin:%unlock.disabled = true
 		else: %unlock.disabled = false
 	else:
 		%levelSelect.visible = true
@@ -118,7 +119,7 @@ func goToLevelSelect(setting: bool): #true if adancing to level select
 	
 	if not setting:
 		menuMode = "main"
-		selectCar(SaveManager.playerData.cars[Root.playerCar.carId])
+		selectCar(SaveManager.getCarByName(Root.playerCar.carId))
 		$VBoxContainer2/levelDifficultyPanel.modulate.a = 0.0
 	
 	get_tree().create_tween().tween_property(%mainMenuPanel, "scale" ,  mainMenuScale  , menuTweenSpeed)
@@ -148,7 +149,7 @@ func _on_begin_pressed():
 
 func _on_unlock_pressed():
 	if SaveManager.unlockCar():
-		selectCar(SaveManager.playerData.cars[Root.playerCar.carId])
+		selectCar(SaveManager.getCarByName(Root.playerCar.carId))
 		
 func statUpdatesUiUpdate():
 	$carStatsContainer.updateStats()

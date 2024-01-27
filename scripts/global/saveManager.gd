@@ -9,18 +9,20 @@ func _ready():
 
 
 
-var save_path = "user://userData.save"
+var save_path = "user://userData.tres"
 
 func load_data():
 	if ResourceLoader.exists(save_path):
 		return load(save_path)
-	else:
-		var data = load("res://scene/player/save/playerData.tres")
-		save_character_data()
-		return data
+	else:reset_save()
+
+func reset_save():
+	playerData = load("res://scene/player/save/playerData.tres")
+	save_character_data()
+	return playerData
 
 func save_character_data():
-	ResourceSaver.save(playerData, save_path)
+	var result = ResourceSaver.save(playerData, save_path)
 	
 	
 var coinScene = preload("res://scene/powerup/coin.tscn")
@@ -52,21 +54,22 @@ func addGems(num: int):
 	save_character_data()
 
 func unlockCar():
-	if playerData.coin >= playerData.cars[Root.playerCar.carId].cost:
-		playerData.coin -= playerData.cars[Root.playerCar.carId].cost
-		playerData.cars[Root.playerCar.carId].cost = 0
+	var thisCar = getCarByName(Root.playerCar.carId)
+	if playerData.coin >= thisCar.cost:
+		playerData.coin -= thisCar.cost
+		thisCar.cost = 0
 		save_character_data()
 		return true
 	else: return false
 	
 func requestStatCost(statString: String):
-	return int(pow( playerData.cars[Root.playerCar.carId].upgrades[statString] + 1 , 1.8 ) * 15)
+	return int(pow( getCarByName(Root.playerCar.carId).upgrades[statString] + 1 , 1.8 ) * 15)
 
 func requestStatUpgrade(statString: String):
 	var requestCost = requestStatCost(statString)
 	if playerData.coin >= requestCost:
 		playerData.coin -= requestCost
-		playerData.cars[Root.playerCar.carId].upgrades[statString] += 1
+		getCarByName(Root.playerCar.carId).upgrades[statString] += 1
 		save_character_data()
 		Root.mainMenu.statUpdatesUiUpdate()
 		return true
@@ -99,13 +102,13 @@ func selectNextCar():
 		playerData.selectedCar += 1
 	else: playerData.selectedCar = 0
 	save_character_data()
-	return playerData.cars[playerData.cars.keys()[playerData.selectedCar]]
+	return playerData.cars[playerData.selectedCar]
 	
 func selectPreviousCar():
 	if playerData.selectedCar > 0: playerData.selectedCar -= 1
 	else: playerData.selectedCar = playerData.cars.size() - 1
 	save_character_data()
-	return playerData.cars[playerData.cars.keys()[playerData.selectedCar]]
+	return playerData.cars[playerData.selectedCar]
 
 
 func currentLevelPassed():
@@ -113,3 +116,12 @@ func currentLevelPassed():
 		playerData.levels[playerData.selectedLevel + 1].unlocked = true
 		playerData.selectedLevel += 1
 	save_character_data()
+
+var carNameToFind
+func getCarByName(carName):
+	carNameToFind = carName
+	return playerData.cars.filter(findCar)[0]
+	
+	
+func findCar(car):
+	return car.name == carNameToFind

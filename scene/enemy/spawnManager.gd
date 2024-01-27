@@ -1,6 +1,6 @@
-extends Node
+class_name SpawnManager extends Node
 
-@export var spawnTimer = 6.0
+@export var spawnTimer: float = 6.0
 
 
 enum goon { DEVIL , SPARTAN , SAMURAI , FIREKIN, PIKEMAN }
