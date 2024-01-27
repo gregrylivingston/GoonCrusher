@@ -5,6 +5,7 @@
 [ext_resource type="PackedScene" uid="uid://bepxjqhida0n8" path="res://scene/player/ui/roadButton.tscn" id="2_7fdu8"]
 
 [node name="PauseMenu" type="CanvasLayer"]
+layer = 128
 script = ExtResource("1_b5uvv")
 
 [node name="Panel2" type="Panel" parent="."]

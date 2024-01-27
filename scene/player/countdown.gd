@@ -14,8 +14,8 @@ func _ready():
 	await get_tree().create_timer(countdownSecondLength + 0.1).timeout
 	visible = false
 	get_tree().paused = false
-	await get_tree().create_timer(countdownSecondLength + 0.1).timeout
-	queue_free()
+	await get_tree().process_frame
+	get_parent().queue_free()
 
 func nextCount(num: String):
 	text = num
