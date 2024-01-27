@@ -17,7 +17,7 @@ func load_data():
 	else:reset_save()
 
 func reset_save():
-	playerData = load("res://scene/player/save/playerData.tres")
+	playerData = load("res://scene/player/save/playerData.tres").duplicate()
 	save_character_data()
 	return playerData
 

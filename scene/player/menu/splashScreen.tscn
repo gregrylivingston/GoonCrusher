@@ -1,0 +1,17 @@
+[gd_scene load_steps=3 format=3 uid="uid://drd5oob1axhja"]
+
+[ext_resource type="Script" path="res://scene/player/menu/splashScreen.gd" id="1_ui0t8"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_0n8wd"]
+bg_color = Color(0, 0, 0, 1)
+
+[node name="SplashScreen" type="CanvasLayer"]
+script = ExtResource("1_ui0t8")
+
+[node name="Panel" type="Panel" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_0n8wd")
