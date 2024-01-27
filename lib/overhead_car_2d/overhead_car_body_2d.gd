@@ -118,6 +118,7 @@ func makeHealthWarning():
 func _physics_process(delta):
 	if _path_follow:
 		_path_follow.provide_input(self)
+		pass
 	else:
 		_car_input = myController._provide_input(_car_input)
 	_car_input.steering = clamp(_car_input.steering, -1.0, 1.0)
@@ -190,11 +191,12 @@ func stopCarFX():
 	$sprite/exhaust.visible = false
 
 func crushGoon(collider):
-	var newPowerup = Root.getSpecificPowerup("currentGoonsCrushed")
-	newPowerup.global_position = collider.global_position
-	Root.levelRoot.add_child(newPowerup)
-	newPowerup._on_area_2d_body_entered(self)
-	collider.destroy()
+	if is_instance_valid(collider):
+		var newPowerup = Root.getSpecificPowerup("currentGoonsCrushed")
+		newPowerup.global_position = collider.global_position
+		Root.levelRoot.add_child(newPowerup)
+		newPowerup._on_area_2d_body_entered(self)
+		collider.destroy()
 	#currentGoonsCrushed += 1
 
 var isVibratingLeft = 4

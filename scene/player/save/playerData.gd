@@ -83,7 +83,7 @@ var levels = [
 	{
 		"name":"Park Bully",
 		"image":"res://texture/background/background_level_2.png",
-		"unlocked":false,
+		"unlocked":true,
 		"scene":"res://scene/level/levels/level_grass_2.tscn",
 		"difficulty":"VERY EASY",
 		"time":"1",

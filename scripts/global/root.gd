@@ -32,7 +32,7 @@ var earnedGems: int
 
 var defaultPowerupWeights = {
 	"gem":4,
-	"coin":40,
+	"coin":100,
 	"purse":4,
 	"slotMachine":1,
 	"health":10,

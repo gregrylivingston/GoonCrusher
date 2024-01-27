@@ -13,7 +13,7 @@ func _ready():
 
 func _on_area_2d_body_entered(body):
 	if body.get_class() == "CharacterBody2D":
-		if body.isPlayer: 
+		if body.has_method("getIsPlayer"):
 			$Area2D.queue_free()
 			sendReward(body)
 

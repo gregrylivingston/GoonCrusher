@@ -25,7 +25,7 @@ func _process(delta):
 
 func updateStats():$carPanel.updateStats()
 
-var awardBase = 20
+var awardBase = 25
 var crushingAwardLevel = 0
 var nextCrushingAward = awardBase
 @onready var crushProgressBar = $Panel/ProgressBar
@@ -36,7 +36,7 @@ func updateGoonsCrushed():
 	if Root.playerCar.currentGoonsCrushed >= nextCrushingAward:
 		crushProgressBar.min_value = nextCrushingAward
 		crushingAwardLevel += 1 
-		nextCrushingAward = pow(( crushingAwardLevel + 1 ), 1.8) * awardBase
+		nextCrushingAward = pow(( crushingAwardLevel + 1 ), 1.9) * awardBase
 		crushProgressBar.max_value = nextCrushingAward
 
 		#create award

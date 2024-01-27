@@ -69,5 +69,5 @@ func endLevel(levelCompleted: bool):
 		$AudioStreamPlayer.stream = load("res://sound/fx/slotmachine/winner_3.mp3")
 		$AudioStreamPlayer.play()
 		gameSummary.levelCompleted = true
-	get_parent().add_child( gameSummary )
+	add_child( gameSummary )
 	get_tree().paused = true

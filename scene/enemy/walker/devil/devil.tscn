@@ -3,7 +3,6 @@
 [ext_resource type="PackedScene" uid="uid://ck730mtu8o5o8" path="res://scene/enemy/walker/walker.tscn" id="1_p4ndb"]
 
 [node name="devil" instance=ExtResource("1_p4ndb")]
-speed = 6000
 attackSpeedMultiplier = 1.0
 
 [node name="CollisionShape2D" parent="." index="0"]

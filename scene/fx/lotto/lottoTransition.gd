@@ -11,20 +11,20 @@ func _ready():
 	elif picker == 2: fillFromLeft(columns , rows)
 
 func fillFromTop(columns , rows):
-	for y in rows:
-		for x in columns:
+	for y in rows + 2:
+		for x in columns + 2:
 			createIcon( Vector2( x * 40 , y * 40 - 20) )
 		await get_tree().process_frame
 
 func fillFromBottom(columns, rows):
-	for y in rows:
-		for x in columns:
+	for y in rows + 2:
+		for x in columns + 2:
 			createIcon( Vector2( (columns-1-x) * 40 , (rows-1-y) * 40 - 20) )
 		await get_tree().process_frame
 
 func fillFromLeft(columns , rows):
-	for x in columns:
-		for y in rows:
+	for x in columns + 2:
+		for y in rows + 2:
 			createIcon( Vector2( x * 40 , y * 40 - 20) )
 		await get_tree().process_frame
 

@@ -1,7 +1,4 @@
-class_name Goon extends CharacterBody2D
-
-
-var isPlayer: bool = false
+class_name Walker extends CharacterBody2D
 
 enum mode { MOVE , ATTACK , IDLE , DEAD , PREPAREATTACK}
 var myMode: mode = mode.MOVE
@@ -13,7 +10,7 @@ var myMode: mode = mode.MOVE
 @export var attackDamage: float = 0.1
 @export var powerupDropDict: Dictionary = {
 	"gem":4,
-	"coin":40,
+	"coin":100,
 	"purse":4,
 	"slotMachine":1,
 	"health":10,

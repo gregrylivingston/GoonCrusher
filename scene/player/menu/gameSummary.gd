@@ -73,7 +73,8 @@ func buildAchievementSummary():
 
 
 func _on_continue_pressed():
+	queue_free()
 	if isGameSummary:
 		get_tree().paused = false
 		get_tree().change_scene_to_file("res://scene/player/menu/main/main2.tscn")
-	queue_free()
+	
