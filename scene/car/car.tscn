@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3 uid="uid://dbkp41oxg03o6"]
+[gd_scene load_steps=14 format=3 uid="uid://dbkp41oxg03o6"]
 
 [ext_resource type="Script" path="res://lib/overhead_car_2d/overhead_car_body_2d.gd" id="1_ibwir"]
 [ext_resource type="Texture2D" uid="uid://dthtmohgw8u1f" path="res://scene/car/audi/Audi.png" id="2_33x0l"]
@@ -11,9 +11,10 @@
 [ext_resource type="AudioStream" uid="uid://tuaawqdwftov" path="res://sound/fx/car-damage1.mp3" id="8_qq4uq"]
 [ext_resource type="Texture2D" uid="uid://d2weeqgpbqllf" path="res://sound/fx/triangle.png" id="10_b7mu1"]
 [ext_resource type="Texture2D" uid="uid://ltiunalnocyg" path="res://scene/car/sedan/sedan0.png" id="11_lwi02"]
+[ext_resource type="Script" path="res://scene/car/carBodyArea.gd" id="12_bs61w"]
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_f6v2r"]
-size = Vector2(212, 95)
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_vq4ld"]
+size = Vector2(169.5, 88)
 
 [node name="Car" type="CharacterBody2D"]
 z_index = 1
@@ -26,9 +27,9 @@ zoom = Vector2(0.5, 0.5)
 
 [node name="CarController" parent="." instance=ExtResource("2_idgy8")]
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-position = Vector2(-5, -2.5)
-shape = SubResource("RectangleShape2D_f6v2r")
+[node name="CollisionShape2D" type="CollisionPolygon2D" parent="."]
+position = Vector2(70, -2.5)
+polygon = PackedVector2Array(-24, -43.5, 0, -43.5, 33, -12.5, 34, 13.5, -28, -6.5)
 
 [node name="Line2D" type="Line2D" parent="."]
 
@@ -147,3 +148,12 @@ offset = Vector2(0, 54)
 rotation = 1.5708
 energy = 0.8
 texture = ExtResource("11_lwi02")
+
+[node name="carBodyArea" type="StaticBody2D" parent="."]
+collision_layer = 2
+collision_mask = 2
+script = ExtResource("12_bs61w")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="carBodyArea"]
+position = Vector2(-5, -1)
+shape = SubResource("RectangleShape2D_vq4ld")

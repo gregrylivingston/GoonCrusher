@@ -1,4 +1,4 @@
-[gd_scene load_steps=37 format=3 uid="uid://1bi7flsw4h78"]
+[gd_scene load_steps=38 format=3 uid="uid://1bi7flsw4h78"]
 
 [ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="1_v41dt"]
 [ext_resource type="Texture2D" uid="uid://wvrtktlo2l0e" path="res://scene/car/taxi/char_taxi_transparent.png" id="2_3d4qt"]
@@ -37,9 +37,13 @@
 [ext_resource type="AudioStream" uid="uid://dk8dxgulkdxvl" path="res://sound/fx/engine/rally-car1.mp3" id="33_3ogwm"]
 [ext_resource type="Texture2D" uid="uid://duef53a4dv754" path="res://scene/car/taxi/taxi1.png" id="34_1ynbo"]
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_sc1hy"]
+size = Vector2(216, 103)
+
 [node name="Car" instance=ExtResource("1_v41dt")]
 engine = 20
 steering = 18
+armor = 4
 profilePic = ExtResource("2_3d4qt")
 backgroundPic = ExtResource("3_lelbi")
 charName = "Andrew"
@@ -51,6 +55,9 @@ lowGasAudio = Array[AudioStreamMP3]([ExtResource("23_bidcd"), ExtResource("24_ti
 lowHealthAudio = Array[AudioStreamMP3]([ExtResource("28_j8yn4"), ExtResource("29_gutk2")])
 engineNoise = ExtResource("33_3ogwm")
 carDamagedTexture = ExtResource("34_1ynbo")
+
+[node name="CollisionShape2D" parent="." index="2"]
+polygon = PackedVector2Array(-20, -47.5, 15, -50.5, 45, -31.5, 43, 45.5, 16, 57.5, -20, 57.5, -34, 67.5, -32, -56.5)
 
 [node name="sprite" parent="." index="4"]
 position = Vector2(-11, 7)
@@ -68,3 +75,7 @@ position = Vector2(26.9998, -60.0001)
 
 [node name="tireLocation4" parent="sprite" index="3"]
 position = Vector2(-44.0002, -59.9998)
+
+[node name="CollisionShape2D" parent="carBodyArea" index="0"]
+position = Vector2(-20, 2.5)
+shape = SubResource("RectangleShape2D_sc1hy")

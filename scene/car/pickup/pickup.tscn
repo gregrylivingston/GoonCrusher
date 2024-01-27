@@ -30,9 +30,9 @@
 [ext_resource type="AudioStream" uid="uid://b82pkrwo1n5m8" path="res://scene/car/pickup/audio/pickup_lowhealth2.mp3" id="26_4efuk"]
 
 [node name="Car" instance=ExtResource("1_150xb")]
-engine = 19
+engine = 22
 steering = 10
-armor = 12
+armor = 18
 profilePic = ExtResource("2_6iylb")
 backgroundPic = ExtResource("3_qtsyo")
 charName = "Karen"

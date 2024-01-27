@@ -7,7 +7,7 @@ var myMode: mode = mode.MOVE
 @export var speed: int = 6000
 @export var prepareAttackDistance: int = 300
 @export var attackSpeedMultiplier: float = 3.0
-@export var attackDamage: float = 0.1
+@export var attackDamage: float = 1
 @export var powerupDropDict: Dictionary = {
 	"gem":4,
 	"coin":100,
@@ -55,7 +55,7 @@ func _on_walker_animation_looped():
 			preparingAttack = false
 		mode.ATTACK:
 			myMode = mode.IDLE
-			$CollisionShape2D.scale = Vector2(1,1)
+			#$CollisionShape2D.scale = Vector2(1,1)
 			idleTime = 0
 			$Walker.animation = "prepare_attack"
 		mode.IDLE:
@@ -79,7 +79,7 @@ func prepareAttack(delta):
 
 func attack(delta):
 	$Walker.animation = "attack"
-	$CollisionShape2D.scale = Vector2(2,1)
+	#$CollisionShape2D.scale = Vector2(2,1)
 	var directionToPlayer =  position.direction_to( Root.playerCar.position )
 	look_at(  Root.playerCar.position )
 	velocity =  directionToPlayer * speed * attackSpeedMultiplier * delta
@@ -88,9 +88,9 @@ func attack(delta):
 	#if collision:
 	for i in get_slide_collision_count():
 		var collider = get_slide_collision( i ).get_collider()
-		if collider.has_method("getIsPlayer"):
-			if collider.getIsPlayer() == true:
-				collider.damage(attackDamage)
+		if collider.has_method("damage"):
+			collider.damage(attackDamage)
+	#In your player's set block function or something.
 
 
 func idle():

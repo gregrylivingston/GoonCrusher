@@ -1,4 +1,4 @@
-[gd_scene load_steps=31 format=3 uid="uid://67a8ek6j834x"]
+[gd_scene load_steps=32 format=3 uid="uid://67a8ek6j834x"]
 
 [ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="1_p428k"]
 [ext_resource type="Texture2D" uid="uid://pjglsxpdyhov" path="res://scene/car/van/Mini_van.png" id="2_1lxhl"]
@@ -31,10 +31,13 @@
 [ext_resource type="AudioStream" uid="uid://dawqa2bvv647c" path="res://scene/car/van/audio/van_lowhealth_1.mp3" id="30_co8o0"]
 [ext_resource type="AudioStream" uid="uid://cidnoei82mwvw" path="res://scene/car/van/audio/van_lowhealth_2.mp3" id="31_b7jwg"]
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_mgbn7"]
+size = Vector2(183, 84)
+
 [node name="Car" instance=ExtResource("1_p428k")]
 engine = 12
 steering = 10
-armor = 10
+armor = 14
 profilePic = ExtResource("2_s78ni")
 backgroundPic = ExtResource("3_xnhct")
 charName = "Lester"
@@ -46,6 +49,9 @@ lowGasAudio = Array[AudioStreamMP3]([ExtResource("24_67hac"), ExtResource("25_rp
 lowHealthAudio = Array[AudioStreamMP3]([ExtResource("30_co8o0"), ExtResource("31_b7jwg")])
 engineNoise = ExtResource("27_be5lo")
 carDamagedTexture = ExtResource("28_7e8ei")
+
+[node name="CollisionShape2D" parent="." index="2"]
+polygon = PackedVector2Array(-15, -39.5, 17, -35.5, 31, -23.5, 31, 24.5, 19, 37.5, -13, 42.5, -23, 50.5, -25, -47.5)
 
 [node name="sprite" parent="." index="4"]
 position = Vector2(-11, 7)
@@ -63,3 +69,7 @@ position = Vector2(26.9998, -60.0001)
 
 [node name="tireLocation4" parent="sprite" index="3"]
 position = Vector2(-44.0002, -59.9998)
+
+[node name="CollisionShape2D" parent="carBodyArea" index="0"]
+position = Vector2(-20.5, -1)
+shape = SubResource("RectangleShape2D_mgbn7")

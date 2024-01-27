@@ -37,6 +37,7 @@
 
 [node name="Car" instance=ExtResource("1_ehr7y")]
 engine = 15
+armor = 4
 profilePic = ExtResource("2_uecx8")
 backgroundPic = ExtResource("3_eyh1t")
 charName = "Anthony"
@@ -50,7 +51,8 @@ engineNoise = ExtResource("31_0usg3")
 carDamagedTexture = ExtResource("32_af747")
 
 [node name="CollisionShape2D" parent="." index="2"]
-position = Vector2(4, -2.5)
+position = Vector2(84.09, -2.5)
+polygon = PackedVector2Array(20.91, -36.5, 27.91, 1.5, 19.91, 37.5, -3.09, 44.5, -33.09, 45.5, -33.09, -44.5, -3.09, -43.5)
 
 [node name="sprite" parent="." index="4"]
 texture = ExtResource("32_nbaif")
@@ -60,3 +62,6 @@ position = Vector2(34.9999, 58)
 
 [node name="tireLocation2" parent="sprite" index="1"]
 position = Vector2(-34.9998, 50.0001)
+
+[node name="CollisionShape2D" parent="carBodyArea" index="0"]
+position = Vector2(-10.5, -2)

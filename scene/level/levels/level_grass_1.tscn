@@ -9,25 +9,6 @@ seconds = 250
 [node name="TileManager" parent="." index="0"]
 requestedObjectTiles = Array[int]([1, 1, 2])
 
-[node name="Car" parent="." index="1"]
-engine = 25
-steering = 12
-traction = 4.0
-armor = 1
-friction = 0.9
-drag = 0.0015
-slip_speed = 100
-traction_fast = 0.1
-traction_slow = 0.7
-wheel_base = 70
-isPlayer = true
-charName = "Hi"
-introAudio = Array[AudioStreamMP3]([])
-purseAudio = Array[AudioStreamMP3]([])
-powerupAudio = Array[AudioStreamMP3]([])
-lowGasAudio = Array[AudioStreamMP3]([])
-lowHealthAudio = Array[AudioStreamMP3]([])
-
 [node name="SpawnManager" parent="." index="5"]
 basicGoons = Array[int]([0, 0, 1])
 giantOdds = -200
