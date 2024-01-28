@@ -1,4 +1,4 @@
-[gd_scene load_steps=36 format=3 uid="uid://bkypbefgkke6a"]
+[gd_scene load_steps=43 format=3 uid="uid://bkypbefgkke6a"]
 
 [ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="1_ehr7y"]
 [ext_resource type="Texture2D" uid="uid://cfxhspevh8hl5" path="res://scene/car/sedan/char_sedan_transparent.png" id="2_uecx8"]
@@ -12,9 +12,12 @@
 [ext_resource type="AudioStream" uid="uid://dfm4bf6vdirml" path="res://scene/car/sedan/audio/sedan_lowgas_1.mp3" id="9_6gq7h"]
 [ext_resource type="AudioStream" uid="uid://bh1lw7ex5e3h1" path="res://scene/car/sedan/audio/sedan_lowhealth_2.mp3" id="10_r38dw"]
 [ext_resource type="AudioStream" uid="uid://byufsf1nqsg52" path="res://scene/car/sedan/audio/sedan_purse_1.mp3" id="11_gu8k6"]
+[ext_resource type="AudioStream" uid="uid://np71skqc5o6n" path="res://scene/car/sedan/audio/sedan_intro_9.mp3" id="12_wcuj2"]
 [ext_resource type="AudioStream" uid="uid://h7ma0eb1kyaw" path="res://scene/car/sedan/audio/sedan_purse_2.mp3" id="12_yinuw"]
 [ext_resource type="AudioStream" uid="uid://d1u8u05wbg125" path="res://scene/car/sedan/audio/sedan_purse3.mp3" id="13_24wa3"]
+[ext_resource type="AudioStream" uid="uid://bhkabrh5h5u1b" path="res://scene/car/sedan/audio/sedan_intro_10.mp3" id="13_58508"]
 [ext_resource type="AudioStream" uid="uid://be4i8cnboh5vu" path="res://scene/car/sedan/audio/sedan_joy_4.mp3" id="13_uwfhs"]
+[ext_resource type="AudioStream" uid="uid://deb7uvyrycflv" path="res://scene/car/sedan/audio/sedan_intro_11.mp3" id="14_2rs2v"]
 [ext_resource type="AudioStream" uid="uid://o2x372x0cy71" path="res://scene/car/sedan/audio/sedan_joy_5.mp3" id="14_7wfhv"]
 [ext_resource type="AudioStream" uid="uid://dnx2t2wl06tht" path="res://scene/car/sedan/audio/sedan_purse4.mp3" id="14_ivsmg"]
 [ext_resource type="AudioStream" uid="uid://u0mrw3ecpn62" path="res://scene/car/sedan/audio/sedan_joy_1.mp3" id="15_j7glh"]
@@ -30,10 +33,14 @@
 [ext_resource type="AudioStream" uid="uid://bdjiqvxap6ace" path="res://scene/car/sedan/audio/sedan_lowgas_3.mp3" id="27_cjef7"]
 [ext_resource type="AudioStream" uid="uid://bf0uamij3v2mg" path="res://scene/car/sedan/audio/sedan_lowhealth_3.mp3" id="28_dickn"]
 [ext_resource type="AudioStream" uid="uid://cijpx0mgh1lje" path="res://scene/car/sedan/audio/sedan_lowhealth_4.mp3" id="29_cqd2r"]
+[ext_resource type="AudioStream" uid="uid://b055dyejm270t" path="res://scene/car/sedan/audio/sedan_joy_11.mp3" id="30_coqw3"]
 [ext_resource type="AudioStream" uid="uid://o51m6bd6j6l7" path="res://scene/car/sedan/audio/sedan_lowhealth_5.mp3" id="30_fkxbp"]
 [ext_resource type="AudioStream" uid="uid://dk8dxgulkdxvl" path="res://sound/fx/engine/rally-car1.mp3" id="31_0usg3"]
+[ext_resource type="AudioStream" uid="uid://cact61dubj8r1" path="res://scene/car/sedan/audio/sedan_joy_12.mp3" id="31_in17m"]
 [ext_resource type="Texture2D" uid="uid://4wtuy8w4hpfn" path="res://scene/car/sedan/sedan1.png" id="32_af747"]
 [ext_resource type="Texture2D" uid="uid://ltiunalnocyg" path="res://scene/car/sedan/sedan0.png" id="32_nbaif"]
+[ext_resource type="AudioStream" uid="uid://4cceyga6ii76" path="res://scene/car/sedan/audio/sedan_joy_13.mp3" id="32_t58lr"]
+[ext_resource type="AudioStream" uid="uid://cb4eedoem5ayl" path="res://scene/car/sedan/audio/sedan_joy_14.mp3" id="33_qe272"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_v2r7d"]
 size = Vector2(203, 73)
@@ -45,9 +52,9 @@ profilePic = ExtResource("2_uecx8")
 backgroundPic = ExtResource("3_eyh1t")
 charName = "Anthony"
 carId = "sedan"
-introAudio = Array[AudioStreamMP3]([ExtResource("3_glpud"), ExtResource("4_dej0h"), ExtResource("5_x5qy0"), ExtResource("7_6itbh"), ExtResource("7_nnnw6"), ExtResource("8_hst6b"), ExtResource("9_6gq7h"), ExtResource("10_r38dw")])
+introAudio = Array[AudioStreamMP3]([ExtResource("3_glpud"), ExtResource("4_dej0h"), ExtResource("5_x5qy0"), ExtResource("7_6itbh"), ExtResource("7_nnnw6"), ExtResource("8_hst6b"), ExtResource("9_6gq7h"), ExtResource("10_r38dw"), ExtResource("12_wcuj2"), ExtResource("13_58508"), ExtResource("14_2rs2v")])
 purseAudio = Array[AudioStreamMP3]([ExtResource("11_gu8k6"), ExtResource("12_yinuw"), ExtResource("13_24wa3"), ExtResource("14_ivsmg"), ExtResource("15_vxrri")])
-powerupAudio = Array[AudioStreamMP3]([ExtResource("13_uwfhs"), ExtResource("14_7wfhv"), ExtResource("15_qq8jw"), ExtResource("16_a6dbw"), ExtResource("15_j7glh"), ExtResource("16_gvr3q"), ExtResource("17_8xiul"), ExtResource("23_0p5x0"), ExtResource("24_nt48e"), ExtResource("25_iilfn")])
+powerupAudio = Array[AudioStreamMP3]([ExtResource("13_uwfhs"), ExtResource("14_7wfhv"), ExtResource("15_qq8jw"), ExtResource("16_a6dbw"), ExtResource("15_j7glh"), ExtResource("16_gvr3q"), ExtResource("17_8xiul"), ExtResource("23_0p5x0"), ExtResource("24_nt48e"), ExtResource("25_iilfn"), ExtResource("30_coqw3"), ExtResource("31_in17m"), ExtResource("32_t58lr"), ExtResource("33_qe272")])
 lowGasAudio = Array[AudioStreamMP3]([ExtResource("9_6gq7h"), ExtResource("26_r14mo"), ExtResource("27_cjef7")])
 lowHealthAudio = Array[AudioStreamMP3]([ExtResource("7_6itbh"), ExtResource("10_r38dw"), ExtResource("28_dickn"), ExtResource("29_cqd2r"), ExtResource("30_fkxbp")])
 engineNoise = ExtResource("31_0usg3")

@@ -24,3 +24,8 @@ res://scene/level/tileManager.tscn
 res://texture/animation/smoke.gd
 res://texture/animation/smoke.tscn
 res://lib/overhead_car_2d/overhead_car_body_2d.gd
+res://scene/car/sedan/sedan.tscn
+res://scene/fx/explosion/spriteframes_explosion2.tres
+res://scene/car/van/van.tscn
+res://scene/car/taxi/taxi.tscn
+res://scene/car/pickup/pickup.tscn

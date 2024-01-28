@@ -1,4 +1,4 @@
-[gd_scene load_steps=38 format=3 uid="uid://1bi7flsw4h78"]
+[gd_scene load_steps=45 format=3 uid="uid://1bi7flsw4h78"]
 
 [ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="1_v41dt"]
 [ext_resource type="Texture2D" uid="uid://wvrtktlo2l0e" path="res://scene/car/taxi/char_taxi_transparent.png" id="2_3d4qt"]
@@ -14,11 +14,18 @@
 [ext_resource type="AudioStream" uid="uid://cqacqnl7nyjja" path="res://scene/car/taxi/audio/taxi_intro_8.mp3" id="10_a7xbb"]
 [ext_resource type="AudioStream" uid="uid://bvtvvcoed7uw0" path="res://scene/car/taxi/audio/taxi_purse_1.mp3" id="11_4on1j"]
 [ext_resource type="AudioStream" uid="uid://cpjynothh5p2l" path="res://scene/car/taxi/audio/taxi_purse_2.mp3" id="12_dwy4e"]
+[ext_resource type="AudioStream" uid="uid://clbc6ef60w003" path="res://scene/car/taxi/audio/taxi_intro_9.mp3" id="12_gqo5w"]
+[ext_resource type="AudioStream" uid="uid://d3ae53dgj264d" path="res://scene/car/taxi/audio/taxi_intro_10.mp3" id="13_dool0"]
 [ext_resource type="AudioStream" uid="uid://miqgbifkhbkt" path="res://scene/car/taxi/audio/taxi_purse_3.mp3" id="13_yur0t"]
+[ext_resource type="AudioStream" uid="uid://023x68vt1cop" path="res://scene/car/taxi/audio/taxi_intro_11.mp3" id="14_545bm"]
 [ext_resource type="AudioStream" uid="uid://dxqnb8rupathl" path="res://scene/car/taxi/audio/taxi_purse_4.mp3" id="14_edsgb"]
 [ext_resource type="AudioStream" uid="uid://5pevgv14n07l" path="res://scene/car/taxi/audio/taxi_purse_5.mp3" id="15_3kv3q"]
+[ext_resource type="AudioStream" uid="uid://cr6jhgn7wp2qi" path="res://scene/car/taxi/audio/taxi_intro_12.mp3" id="15_4fip5"]
+[ext_resource type="AudioStream" uid="uid://2802825a65is" path="res://scene/car/taxi/audio/taxi_intro_13.mp3" id="16_56vxl"]
 [ext_resource type="AudioStream" uid="uid://bmtkktqjoe1ln" path="res://scene/car/taxi/audio/taxi_joy_1.mp3" id="16_pahbg"]
+[ext_resource type="AudioStream" uid="uid://lanrp6334xcn" path="res://scene/car/taxi/audio/taxi_intro_14.mp3" id="17_2kvwq"]
 [ext_resource type="AudioStream" uid="uid://dh4ie608h6ncj" path="res://scene/car/taxi/audio/taxi_joy_2.mp3" id="17_7l0fa"]
+[ext_resource type="AudioStream" uid="uid://gyfc1ritjca0" path="res://scene/car/taxi/audio/taxi_intro_15.mp3" id="18_0xjkx"]
 [ext_resource type="AudioStream" uid="uid://s22etes4muku" path="res://scene/car/taxi/audio/taxi_joy_3.mp3" id="18_rewgt"]
 [ext_resource type="AudioStream" uid="uid://bf2g55p5rqirk" path="res://scene/car/taxi/audio/taxi_joy_4.mp3" id="19_1wv2m"]
 [ext_resource type="AudioStream" uid="uid://hpq7o1wu18c6" path="res://scene/car/taxi/audio/taxi_joy_5.mp3" id="20_isjie"]
@@ -48,7 +55,7 @@ profilePic = ExtResource("2_3d4qt")
 backgroundPic = ExtResource("3_lelbi")
 charName = "Andrew"
 carId = "taxi"
-introAudio = Array[AudioStreamMP3]([ExtResource("3_anhg2"), ExtResource("4_qknie"), ExtResource("5_sxudr"), ExtResource("6_230wo"), ExtResource("7_agd4o"), ExtResource("8_di5uq"), ExtResource("9_oqruo"), ExtResource("10_a7xbb")])
+introAudio = Array[AudioStreamMP3]([ExtResource("3_anhg2"), ExtResource("4_qknie"), ExtResource("5_sxudr"), ExtResource("6_230wo"), ExtResource("7_agd4o"), ExtResource("8_di5uq"), ExtResource("9_oqruo"), ExtResource("10_a7xbb"), ExtResource("12_gqo5w"), ExtResource("13_dool0"), ExtResource("14_545bm"), ExtResource("15_4fip5"), ExtResource("16_56vxl"), ExtResource("17_2kvwq"), ExtResource("18_0xjkx")])
 purseAudio = Array[AudioStreamMP3]([ExtResource("11_4on1j"), ExtResource("12_dwy4e"), ExtResource("13_yur0t"), ExtResource("14_edsgb"), ExtResource("15_3kv3q")])
 powerupAudio = Array[AudioStreamMP3]([ExtResource("16_pahbg"), ExtResource("17_7l0fa"), ExtResource("18_rewgt"), ExtResource("19_1wv2m"), ExtResource("20_isjie"), ExtResource("21_262ig"), ExtResource("22_e71w7"), ExtResource("23_iadqi"), ExtResource("24_m4n6e"), ExtResource("25_tc7g5"), ExtResource("26_7k88k"), ExtResource("27_17fi7"), ExtResource("28_nl07w")])
 lowGasAudio = Array[AudioStreamMP3]([ExtResource("23_bidcd"), ExtResource("24_tibav")])

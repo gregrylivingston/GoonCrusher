@@ -1,4 +1,4 @@
-[gd_scene load_steps=30 format=3 uid="uid://67a8ek6j834x"]
+[gd_scene load_steps=41 format=3 uid="uid://67a8ek6j834x"]
 
 [ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="1_p428k"]
 [ext_resource type="Texture2D" uid="uid://pjglsxpdyhov" path="res://scene/car/van/Mini_van.png" id="2_1lxhl"]
@@ -10,10 +10,15 @@
 [ext_resource type="AudioStream" uid="uid://cnoukt5wj16of" path="res://scene/car/van/audio/van_intro_5.mp3" id="7_gfvg0"]
 [ext_resource type="AudioStream" uid="uid://becd1waw7b712" path="res://scene/car/van/audio/van_intro_6.mp3" id="8_3r3lt"]
 [ext_resource type="AudioStream" uid="uid://ds6vbnjymx132" path="res://scene/car/van/audio/van_intro_7.mp3" id="9_l6463"]
+[ext_resource type="AudioStream" uid="uid://r42q75mm06q5" path="res://scene/car/van/audio/van_intro_9.mp3" id="10_xfwkv"]
+[ext_resource type="AudioStream" uid="uid://df8fitmm36q15" path="res://scene/car/van/audio/van_intro_10.mp3" id="11_ev3y1"]
 [ext_resource type="AudioStream" uid="uid://d0l1bu0yaiib4" path="res://scene/car/van/audio/van_purse_1.mp3" id="11_o65b5"]
 [ext_resource type="AudioStream" uid="uid://clih1oxnaimfq" path="res://scene/car/van/audio/van_purse_2.mp3" id="12_8d6d2"]
+[ext_resource type="AudioStream" uid="uid://c2tuarg8mjlay" path="res://scene/car/van/audio/van_intro_11.mp3" id="12_v38dn"]
+[ext_resource type="AudioStream" uid="uid://d542ubygt5ng" path="res://scene/car/van/audio/van_intro_12.mp3" id="13_75f5v"]
 [ext_resource type="AudioStream" uid="uid://vuqpa0m42wwk" path="res://scene/car/van/audio/van_purse_3.mp3" id="13_nwfci"]
 [ext_resource type="AudioStream" uid="uid://sihwsyixxpdy" path="res://scene/car/van/audio/van_purse_4.mp3" id="14_4pqxu"]
+[ext_resource type="AudioStream" uid="uid://cfowfuj1u7unq" path="res://scene/car/van/audio/van_intro_13.mp3" id="14_c70fk"]
 [ext_resource type="AudioStream" uid="uid://cl3xdui0g2u8c" path="res://scene/car/van/audio/van_purse_5.mp3" id="15_k230o"]
 [ext_resource type="AudioStream" uid="uid://dto15f1v6nai4" path="res://scene/car/van/audio/van_joy_2.mp3" id="16_gtuau"]
 [ext_resource type="AudioStream" uid="uid://bwghlxc6am70v" path="res://scene/car/van/audio/van_joy_3.mp3" id="17_br3r6"]
@@ -23,10 +28,16 @@
 [ext_resource type="AudioStream" uid="uid://w4gspyfxn328" path="res://scene/car/van/audio/van_joy_7.mp3" id="21_xfa01"]
 [ext_resource type="AudioStream" uid="uid://c2ncnfxl3td4l" path="res://scene/car/van/audio/van_lowgas_1.mp3" id="24_67hac"]
 [ext_resource type="AudioStream" uid="uid://b7x5n0ohpn201" path="res://scene/car/van/audio/van_lowgas_2.mp3" id="25_rpm3l"]
+[ext_resource type="AudioStream" uid="uid://bghqyb2g1h3nk" path="res://scene/car/van/audio/van_joy_9.mp3" id="26_4ja78"]
 [ext_resource type="AudioStream" uid="uid://j0c6hg4k7e2o" path="res://scene/car/van/audio/van_lowgas_3.mp3" id="26_kuhoo"]
+[ext_resource type="AudioStream" uid="uid://bq7drkwy4vpas" path="res://scene/car/van/audio/van_joy_10.mp3" id="27_456cv"]
 [ext_resource type="AudioStream" uid="uid://bd47djk1k5exh" path="res://sound/fx/engine/engine2.mp3" id="27_be5lo"]
 [ext_resource type="Texture2D" uid="uid://b2vdb5ouwf1e5" path="res://scene/car/van/van1.png" id="28_7e8ei"]
+[ext_resource type="AudioStream" uid="uid://514chx1i2wuo" path="res://scene/car/van/audio/van_joy_11.mp3" id="28_otxdk"]
+[ext_resource type="AudioStream" uid="uid://by6eohbb0nn5t" path="res://scene/car/van/audio/van_joy_12.mp3" id="29_ei015"]
+[ext_resource type="AudioStream" uid="uid://o04ahywb6au8" path="res://scene/car/van/audio/van_joy_13.mp3" id="30_7sv2x"]
 [ext_resource type="AudioStream" uid="uid://dawqa2bvv647c" path="res://scene/car/van/audio/van_lowhealth_1.mp3" id="30_co8o0"]
+[ext_resource type="AudioStream" uid="uid://br1m5vwgv6tg2" path="res://scene/car/van/audio/van_joy_14.mp3" id="31_0cmwq"]
 [ext_resource type="AudioStream" uid="uid://cidnoei82mwvw" path="res://scene/car/van/audio/van_lowhealth_2.mp3" id="31_b7jwg"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_mgbn7"]
@@ -40,9 +51,9 @@ profilePic = ExtResource("2_s78ni")
 backgroundPic = ExtResource("3_xnhct")
 charName = "Lester"
 carId = "van"
-introAudio = Array[AudioStreamMP3]([ExtResource("3_0haua"), ExtResource("5_ql0xt"), ExtResource("6_b4fkq"), ExtResource("7_gfvg0"), ExtResource("8_3r3lt"), ExtResource("9_l6463")])
+introAudio = Array[AudioStreamMP3]([ExtResource("3_0haua"), ExtResource("5_ql0xt"), ExtResource("6_b4fkq"), ExtResource("7_gfvg0"), ExtResource("8_3r3lt"), ExtResource("9_l6463"), ExtResource("10_xfwkv"), ExtResource("11_ev3y1"), ExtResource("12_v38dn"), ExtResource("13_75f5v"), ExtResource("14_c70fk")])
 purseAudio = Array[AudioStreamMP3]([ExtResource("11_o65b5"), ExtResource("12_8d6d2"), ExtResource("13_nwfci"), ExtResource("14_4pqxu"), ExtResource("15_k230o")])
-powerupAudio = Array[AudioStreamMP3]([ExtResource("3_0haua"), ExtResource("16_gtuau"), ExtResource("17_br3r6"), ExtResource("18_yusay"), ExtResource("19_x8ew0"), ExtResource("20_lfsll"), ExtResource("21_xfa01")])
+powerupAudio = Array[AudioStreamMP3]([ExtResource("3_0haua"), ExtResource("16_gtuau"), ExtResource("17_br3r6"), ExtResource("18_yusay"), ExtResource("19_x8ew0"), ExtResource("20_lfsll"), ExtResource("21_xfa01"), ExtResource("26_4ja78"), ExtResource("27_456cv"), ExtResource("28_otxdk"), ExtResource("29_ei015"), ExtResource("30_7sv2x"), ExtResource("31_0cmwq")])
 lowGasAudio = Array[AudioStreamMP3]([ExtResource("24_67hac"), ExtResource("25_rpm3l"), ExtResource("26_kuhoo")])
 lowHealthAudio = Array[AudioStreamMP3]([ExtResource("30_co8o0"), ExtResource("31_b7jwg")])
 engineNoise = ExtResource("27_be5lo")

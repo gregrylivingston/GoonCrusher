@@ -1,4 +1,4 @@
-[gd_scene load_steps=30 format=3 uid="uid://cvuiarwiynwx7"]
+[gd_scene load_steps=41 format=3 uid="uid://cvuiarwiynwx7"]
 
 [ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="1_150xb"]
 [ext_resource type="Texture2D" uid="uid://cd2iqmi4mr7ei" path="res://scene/car/pickup/char_pickup_transparent.png" id="2_6iylb"]
@@ -15,19 +15,30 @@
 [ext_resource type="AudioStream" uid="uid://cjc6djo0c0yhn" path="res://scene/car/pickup/audio/pickup_joy_1.mp3" id="11_01t5h"]
 [ext_resource type="AudioStream" uid="uid://gajox5leno0w" path="res://scene/car/pickup/audio/pickup_joy_2.mp3" id="12_libsm"]
 [ext_resource type="AudioStream" uid="uid://kiv4jtj1eew1" path="res://scene/car/pickup/audio/pickup_joy_3.mp3" id="13_3ksbf"]
+[ext_resource type="AudioStream" uid="uid://d2r7vjjqvwd0h" path="res://scene/car/pickup/audio/pickup_intro_11.mp3" id="14_beqdy"]
 [ext_resource type="AudioStream" uid="uid://df6vxuy2r52aq" path="res://scene/car/pickup/audio/pickup_joy_4.mp3" id="14_q4hv0"]
 [ext_resource type="AudioStream" uid="uid://br1s2flo4ukif" path="res://scene/car/pickup/audio/pickup_joy_5.mp3" id="15_iv1yi"]
+[ext_resource type="AudioStream" uid="uid://br2q6ikoohfwe" path="res://scene/car/pickup/audio/pickup_intro_12.mp3" id="15_rkqjy"]
+[ext_resource type="AudioStream" uid="uid://dbkhh7e67mfl3" path="res://scene/car/pickup/audio/pickup_intro_13.mp3" id="16_e1w2y"]
 [ext_resource type="AudioStream" uid="uid://w4arc54nf72b" path="res://scene/car/pickup/audio/pickup_joy_6.mp3" id="16_g2ua3"]
+[ext_resource type="AudioStream" uid="uid://bw1qkfocm5lun" path="res://scene/car/pickup/audio/pickup_purse_1.mp3" id="17_4jiup"]
 [ext_resource type="AudioStream" uid="uid://dvpbed417m36u" path="res://scene/car/pickup/audio/pickup_joy_7.mp3" id="17_ireah"]
+[ext_resource type="AudioStream" uid="uid://b6g6f5bc7rruj" path="res://scene/car/pickup/audio/pickup_purse_2.mp3" id="18_7dvxa"]
 [ext_resource type="AudioStream" uid="uid://3lmhya4u5777" path="res://scene/car/pickup/audio/pickup_joy_8.mp3" id="18_ty8uw"]
+[ext_resource type="AudioStream" uid="uid://ddeuhipffcmtd" path="res://scene/car/pickup/audio/pickup_purse_3.mp3" id="19_jvl6h"]
 [ext_resource type="AudioStream" uid="uid://blsomixotdjia" path="res://scene/car/pickup/audio/pickup_joy_9.mp3" id="19_yvkl7"]
 [ext_resource type="AudioStream" uid="uid://6no3utlnkdkc" path="res://scene/car/pickup/audio/pickup_joy_10.mp3" id="20_4xfjq"]
+[ext_resource type="AudioStream" uid="uid://bey802jlxnh4l" path="res://scene/car/pickup/audio/pickup_purse_4.mp3" id="20_oatsb"]
+[ext_resource type="AudioStream" uid="uid://f6ovygvkvbbl" path="res://scene/car/pickup/audio/pickup_purse_5.mp3" id="21_sso3c"]
 [ext_resource type="AudioStream" uid="uid://cpj7unigayjrc" path="res://scene/car/pickup/audio/pickup_joy_11.mp3" id="21_sxtnt"]
 [ext_resource type="AudioStream" uid="uid://ydbwyer6c0mu" path="res://scene/car/pickup/audio/pickup_joy_12.mp3" id="22_atv5c"]
+[ext_resource type="AudioStream" uid="uid://q6mog37pdlvr" path="res://scene/car/pickup/audio/pickup_purse_6.mp3" id="22_wlfe2"]
 [ext_resource type="AudioStream" uid="uid://c55gjy6wv8h3n" path="res://scene/car/pickup/audio/pick_lowgas_1.mp3" id="23_73te5"]
 [ext_resource type="AudioStream" uid="uid://dgpwho8on7dnx" path="res://scene/car/pickup/audio/pick_lowgas_2.mp3" id="24_cyqhs"]
 [ext_resource type="AudioStream" uid="uid://dkpbevqn4077n" path="res://scene/car/pickup/audio/pickup_lowhealth1.mp3" id="25_yxhmr"]
 [ext_resource type="AudioStream" uid="uid://b82pkrwo1n5m8" path="res://scene/car/pickup/audio/pickup_lowhealth2.mp3" id="26_4efuk"]
+[ext_resource type="AudioStream" uid="uid://bsvo8fgst4tdv" path="res://scene/car/pickup/audio/pickup_joy_13.mp3" id="33_mc6sl"]
+[ext_resource type="AudioStream" uid="uid://lb8eraxs3ek2" path="res://scene/car/pickup/audio/pickup_joy_14.mp3" id="34_3wios"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_782i6"]
 size = Vector2(192, 81)
@@ -40,8 +51,9 @@ profilePic = ExtResource("2_6iylb")
 backgroundPic = ExtResource("3_qtsyo")
 charName = "Karen"
 carId = "pickup"
-introAudio = Array[AudioStreamMP3]([ExtResource("3_gf7v4"), ExtResource("4_57w67"), ExtResource("5_okret"), ExtResource("6_go2a3"), ExtResource("7_7wal3"), ExtResource("8_svqtx"), ExtResource("9_0wwoi"), ExtResource("10_iv8ox"), ExtResource("11_01t5h"), ExtResource("21_sxtnt")])
-powerupAudio = Array[AudioStreamMP3]([ExtResource("11_01t5h"), ExtResource("12_libsm"), ExtResource("13_3ksbf"), ExtResource("14_q4hv0"), ExtResource("15_iv1yi"), ExtResource("16_g2ua3"), ExtResource("17_ireah"), ExtResource("18_ty8uw"), ExtResource("19_yvkl7"), ExtResource("20_4xfjq"), ExtResource("21_sxtnt"), ExtResource("22_atv5c")])
+introAudio = Array[AudioStreamMP3]([ExtResource("3_gf7v4"), ExtResource("4_57w67"), ExtResource("5_okret"), ExtResource("6_go2a3"), ExtResource("7_7wal3"), ExtResource("8_svqtx"), ExtResource("9_0wwoi"), ExtResource("10_iv8ox"), ExtResource("11_01t5h"), ExtResource("21_sxtnt"), ExtResource("14_beqdy"), ExtResource("15_rkqjy"), ExtResource("16_e1w2y")])
+purseAudio = Array[AudioStreamMP3]([ExtResource("17_4jiup"), ExtResource("18_7dvxa"), ExtResource("19_jvl6h"), ExtResource("20_oatsb"), ExtResource("21_sso3c"), ExtResource("22_wlfe2")])
+powerupAudio = Array[AudioStreamMP3]([ExtResource("11_01t5h"), ExtResource("12_libsm"), ExtResource("13_3ksbf"), ExtResource("14_q4hv0"), ExtResource("15_iv1yi"), ExtResource("16_g2ua3"), ExtResource("17_ireah"), ExtResource("18_ty8uw"), ExtResource("19_yvkl7"), ExtResource("20_4xfjq"), ExtResource("21_sxtnt"), ExtResource("22_atv5c"), ExtResource("33_mc6sl"), ExtResource("34_3wios")])
 lowGasAudio = Array[AudioStreamMP3]([ExtResource("23_73te5"), ExtResource("24_cyqhs"), ExtResource("7_7wal3")])
 lowHealthAudio = Array[AudioStreamMP3]([ExtResource("25_yxhmr"), ExtResource("26_4efuk"), ExtResource("5_okret")])
 carDamagedTexture = ExtResource("2_36nav")
