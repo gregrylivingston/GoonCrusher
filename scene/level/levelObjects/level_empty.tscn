@@ -1,0 +1,27 @@
+[gd_scene load_steps=2 format=3 uid="uid://dtw7lhlu3vkjn"]
+
+[ext_resource type="PackedScene" uid="uid://c3nj8qlsr0clb" path="res://scene/powerup/coin.tscn" id="1_mc1xw"]
+
+[node name="LevelRocks1" type="Node2D"]
+position = Vector2(-568, 10)
+
+[node name="Powerup2" parent="." instance=ExtResource("1_mc1xw")]
+position = Vector2(15, -4)
+
+[node name="Powerup3" parent="." instance=ExtResource("1_mc1xw")]
+position = Vector2(846, -462)
+
+[node name="Powerup4" parent="." instance=ExtResource("1_mc1xw")]
+position = Vector2(293, -482)
+
+[node name="Powerup5" parent="." instance=ExtResource("1_mc1xw")]
+position = Vector2(93, -308)
+
+[node name="Powerup6" parent="." instance=ExtResource("1_mc1xw")]
+position = Vector2(1034, -266)
+
+[node name="Powerup20" parent="." instance=ExtResource("1_mc1xw")]
+position = Vector2(1130, -4)
+
+[node name="Powerup7" parent="." instance=ExtResource("1_mc1xw")]
+position = Vector2(571, -564)

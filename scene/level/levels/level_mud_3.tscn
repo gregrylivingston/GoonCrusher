@@ -13,9 +13,12 @@ seconds = 420
 
 [node name="TileManager" parent="." index="0"]
 landscapeType = 1
+requestedObjectTiles = Array[int]([0, 0, 0])
 
 [node name="SpawnManager" parent="." index="5"]
-basicGoons = Array[int]([3, 3, 3])
+spawnTimer = 4.0
+basicGoons = Array[int]([3, 4, 3])
+giantOdds = 0
 
 [node name="Rocks3" parent="." index="8" instance=ExtResource("2_x8ax5")]
 position = Vector2(872, 103)

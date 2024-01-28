@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3 uid="uid://dfqbeth5jspt5"]
+[gd_scene load_steps=15 format=3 uid="uid://dfqbeth5jspt5"]
 
 [ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="1_qtyvp"]
 [ext_resource type="Texture2D" uid="uid://disw6kafapd1m" path="res://scene/car/police/Police.png" id="2_7cb7w"]
@@ -14,6 +14,9 @@
 [ext_resource type="AudioStream" uid="uid://csj5cc0mio728" path="res://scene/car/police/audio/police_intro_8.mp3" id="10_ovhbp"]
 [ext_resource type="PackedScene" uid="uid://551dlp73phd4" path="res://texture/animation/smoke.tscn" id="12_7x7a1"]
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_cwfv8"]
+size = Vector2(184.75, 88)
+
 [node name="Car" instance=ExtResource("1_qtyvp")]
 engine = 35
 steering = 25
@@ -24,10 +27,21 @@ backgroundPic = ExtResource("3_wde7i")
 charName = "Nikita"
 carId = "police"
 introAudio = Array[AudioStreamMP3]([ExtResource("3_iw1cs"), ExtResource("4_i3uqm"), ExtResource("5_kj4sh"), ExtResource("6_7lced"), ExtResource("7_fn2fs"), ExtResource("8_qb8pj"), ExtResource("9_rcvls"), ExtResource("10_ovhbp")])
+purseAudio = Array[AudioStreamMP3]([ExtResource("3_iw1cs")])
+powerupAudio = Array[AudioStreamMP3]([ExtResource("4_i3uqm")])
+lowGasAudio = Array[AudioStreamMP3]([ExtResource("5_kj4sh")])
+lowHealthAudio = Array[AudioStreamMP3]([ExtResource("6_7lced")])
 carDamagedTexture = ExtResource("2_7cb7w")
+
+[node name="CollisionShape2D" parent="." index="2"]
+polygon = PackedVector2Array(-31, -48.5, -1, -46.5, 16, -33.5, 33, -12.5, 34, 13.5, 21, 31.5, 5, 45.5, -31, 47.5)
 
 [node name="sprite" parent="." index="4"]
 texture = ExtResource("2_7cb7w")
 
 [node name="Smoke2" parent="sprite/exhaust" index="1" instance=ExtResource("12_7x7a1")]
 position = Vector2(-23.9996, 109)
+
+[node name="CollisionShape2D" parent="carBodyArea" index="0"]
+position = Vector2(-16.375, -2)
+shape = SubResource("RectangleShape2D_cwfv8")

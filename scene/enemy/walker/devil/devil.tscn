@@ -4,6 +4,18 @@
 
 [node name="devil" instance=ExtResource("1_p4ndb")]
 attackSpeedMultiplier = 1.0
+powerupDropDict = {
+"armor": 4,
+"coin": 100,
+"engine": 4,
+"fuel": 40,
+"gem": 4,
+"health": 10,
+"purse": 4,
+"slotMachine": 1,
+"steering": 4,
+"traction": 4
+}
 
 [node name="CollisionShape2D" parent="." index="0"]
 position = Vector2(-1, 0)

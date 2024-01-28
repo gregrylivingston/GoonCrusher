@@ -29,8 +29,8 @@
 [ext_resource type="AudioStream" uid="uid://dmlptibuqjawg" path="res://sound/fx/engine/engine1.mp3" id="25_yd7s4"]
 [ext_resource type="PackedScene" uid="uid://551dlp73phd4" path="res://texture/animation/smoke.tscn" id="27_6mbgo"]
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_8s7dq"]
-size = Vector2(309, 115)
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_kaiga"]
+size = Vector2(291, 105)
 
 [node name="Car" instance=ExtResource("1_16fys")]
 engine = 20
@@ -51,7 +51,7 @@ carDamagedTexture = ExtResource("2_0owyo")
 
 [node name="CollisionShape2D" parent="." index="2"]
 position = Vector2(3.5, -1.5)
-shape = SubResource("RectangleShape2D_8s7dq")
+polygon = PackedVector2Array(126.5, -57.5, 146.5, -54.5, 147.5, 52.5, 118.5, 57.5, 77.5, 58.5, 77.5, -58.5)
 
 [node name="sprite" parent="." index="4"]
 position = Vector2(0, 10)
@@ -72,3 +72,7 @@ position = Vector2(12.6667, 5.99995)
 
 [node name="Smoke2" parent="sprite/exhaust" index="1" instance=ExtResource("27_6mbgo")]
 position = Vector2(-30, 7.66672)
+
+[node name="CollisionShape2D" parent="carBodyArea" index="0"]
+position = Vector2(2.5, -4.5)
+shape = SubResource("RectangleShape2D_kaiga")

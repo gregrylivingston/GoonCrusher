@@ -20,8 +20,8 @@ class_name OverheadCarBody2D extends CharacterBody2D
 @export var traction = 4.0   #brakes and turn-rate-increase
 @export var armor = 1
 
-@export var friction = 0.9
-@export var drag = 0.0015
+@export var friction = 0.1 #.9
+@export var drag = 0.0005   #.0015
 
 @export var slip_speed = 100  # Speed where traction is reduced
 @export var traction_fast = 0.1  # High-speed traction
@@ -135,7 +135,8 @@ func _physics_process(delta):
 	
 	# Base steering wheel angle and acceleration
 	var steer_angle = _car_input.steering * deg_to_rad( 5 + ( steering / 4.0 ) )
-	var acceleration = _car_input.acceleration * transform.x * engine * 70 
+	
+	var acceleration = _car_input.acceleration * transform.x * engine * 10 * ( 2.5 - abs(_car_input.steering))
 
 	# Apply friction
 	if velocity.length() < 5:
@@ -146,7 +147,7 @@ func _physics_process(delta):
 		friction_force *= 3
 	acceleration += drag_force + friction_force
 	if _car_input.braking:
-		acceleration += velocity * - ( traction / 10.0 )
+		acceleration += velocity * - ( traction / 4.0 )
 	
 	# Calculate steering
 	var rear_wheel = position - transform.x * wheel_base / 2.0 + velocity * delta
@@ -159,7 +160,7 @@ func _physics_process(delta):
 	if d > 0:
 		velocity = velocity.lerp(new_heading * velocity.length(), traction)
 	if d < 0:
-		velocity = -new_heading * min(velocity.length(), engine * 10)
+		velocity = -new_heading * min(velocity.length(), engine * 30)#10
 	
 	# Update the physics engine
 	rotation = new_heading.angle()
@@ -175,8 +176,8 @@ func _physics_process(delta):
 		##colide with an unmovable static object like a rock
 		if velocity.length() > 0.01 && collider.get_class() == "StaticBody2D":
 			if not $"AudioStream-Crash".playing: $"AudioStream-Crash".play()
-			damage(  velocity.length() / armor )
-			velocity *= 0.9
+			damage(  velocity.length() * 0.5 / armor )
+			velocity *= 0.85
 		elif collider.get_class() == "CharacterBody2D":
 			damage(0.5)
 			if velocity.length() > 100:crushGoon(collider)
@@ -223,7 +224,7 @@ func activeCarEffects(delta):
 
 
 	##FX and Audio
-	if ( _car_input.braking && velocity.length() > 200.0) || ( velocity.length() > 800.0 && abs(_car_input.steering) > 0.2):
+	if ( _car_input.braking && velocity.length() > 200.0) || ( velocity.length() > 500.0 && abs(_car_input.steering) > 0.2):
 		for i in tires: createTiremarks(i)
 		if not $"AudioStream-Tires".playing: $"AudioStream-Tires".play()
 	else: 

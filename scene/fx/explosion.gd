@@ -9,8 +9,8 @@ func _ready():
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
+#	$PointLight2D.texture = sprite_frames.get_frame_texture("default", frame)
 	pass
-
 
 func _on_animation_finished():
 	queue_free()

@@ -13,6 +13,7 @@ seconds = 420
 
 [node name="TileManager" parent="." index="0"]
 landscapeType = 2
+requestedObjectTiles = Array[int]([0, 2, 3])
 
 [node name="SpawnManager" parent="." index="5"]
 basicGoons = Array[int]([3, 3, 3])

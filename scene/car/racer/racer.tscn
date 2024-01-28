@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3 uid="uid://26c7khgh5lqa"]
+[gd_scene load_steps=15 format=3 uid="uid://26c7khgh5lqa"]
 
 [ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="1_kgqi5"]
 [ext_resource type="Texture2D" uid="uid://3ntiq5bget7n" path="res://scene/car/racer/Black_viper.png" id="2_7a10q"]
@@ -14,6 +14,9 @@
 [ext_resource type="AudioStream" uid="uid://yw1tml0bor3p" path="res://scene/car/racer/audio/Racer_Intro_8.mp3" id="10_b3qsk"]
 [ext_resource type="PackedScene" uid="uid://551dlp73phd4" path="res://texture/animation/smoke.tscn" id="12_ivv6c"]
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_l3dom"]
+size = Vector2(205.75, 96)
+
 [node name="Car" instance=ExtResource("1_kgqi5")]
 engine = 50
 steering = 10
@@ -23,7 +26,14 @@ backgroundPic = ExtResource("3_mbmk4")
 charName = "Kim"
 carId = "racer"
 introAudio = Array[AudioStreamMP3]([ExtResource("3_i2n8g"), ExtResource("4_cxp0d"), ExtResource("5_8phvd"), ExtResource("6_326da"), ExtResource("7_7445v"), ExtResource("8_7yb6i"), ExtResource("9_42fym"), ExtResource("10_b3qsk")])
+purseAudio = Array[AudioStreamMP3]([ExtResource("10_b3qsk")])
+powerupAudio = Array[AudioStreamMP3]([ExtResource("7_7445v")])
+lowGasAudio = Array[AudioStreamMP3]([ExtResource("4_cxp0d")])
+lowHealthAudio = Array[AudioStreamMP3]([ExtResource("3_i2n8g")])
 carDamagedTexture = ExtResource("2_7a10q")
+
+[node name="CollisionShape2D" parent="." index="2"]
+polygon = PackedVector2Array(-38, -48.5, 13, -43.5, 34, -29.5, 41, 3.5, 33, 30.5, 14, 43.5, -33, 52.5)
 
 [node name="sprite" parent="." index="4"]
 position = Vector2(-11, 7)
@@ -44,3 +54,7 @@ position = Vector2(-44.0002, -59.9998)
 
 [node name="Smoke2" parent="sprite/exhaust" index="1" instance=ExtResource("12_ivv6c")]
 position = Vector2(-35.4542, 105.455)
+
+[node name="CollisionShape2D" parent="carBodyArea" index="0"]
+position = Vector2(-23.125, -5)
+shape = SubResource("RectangleShape2D_l3dom")

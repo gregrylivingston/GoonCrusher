@@ -7,7 +7,7 @@
 seconds = 250
 
 [node name="TileManager" parent="." index="0"]
-requestedObjectTiles = Array[int]([1, 1, 2])
+requestedObjectTiles = Array[int]([1, 2, 3, 2])
 
 [node name="SpawnManager" parent="." index="5"]
 basicGoons = Array[int]([0, 0, 1])

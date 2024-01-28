@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3 uid="uid://b7vyfnv77wwfw"]
+[gd_scene load_steps=15 format=3 uid="uid://b7vyfnv77wwfw"]
 
 [ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="1_oirr4"]
 [ext_resource type="Texture2D" uid="uid://c4it7ulsvl3bx" path="res://scene/car/ambulance/Ambulance.png" id="2_86vbp"]
@@ -14,6 +14,9 @@
 [ext_resource type="AudioStream" uid="uid://bcd4sf6yhua60" path="res://scene/car/ambulance/audio/ambulance_intro_8.mp3" id="10_nxecm"]
 [ext_resource type="AudioStream" uid="uid://dmlptibuqjawg" path="res://sound/fx/engine/engine1.mp3" id="11_es0hc"]
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_iqugs"]
+size = Vector2(196.75, 88)
+
 [node name="Car" instance=ExtResource("1_oirr4")]
 engine = 30
 steering = 20
@@ -24,8 +27,15 @@ backgroundPic = ExtResource("3_3jiuq")
 charName = "Xavier"
 carId = "ambulance"
 introAudio = Array[AudioStreamMP3]([ExtResource("3_txlrx"), ExtResource("4_o64rm"), ExtResource("5_8lwbb"), ExtResource("6_7ctxv"), ExtResource("7_rio81"), ExtResource("8_vf216"), ExtResource("9_membe"), ExtResource("10_nxecm")])
+purseAudio = Array[AudioStreamMP3]([ExtResource("3_txlrx")])
+powerupAudio = Array[AudioStreamMP3]([ExtResource("6_7ctxv")])
+lowGasAudio = Array[AudioStreamMP3]([ExtResource("8_vf216")])
+lowHealthAudio = Array[AudioStreamMP3]([ExtResource("10_nxecm")])
 engineNoise = ExtResource("11_es0hc")
 carDamagedTexture = ExtResource("2_86vbp")
+
+[node name="CollisionShape2D" parent="." index="2"]
+polygon = PackedVector2Array(-5, -56.5, 2, -49.5, 31, -44.5, 34, 36.5, 1, 41.5, -6, 52.5)
 
 [node name="sprite" parent="." index="4"]
 position = Vector2(-3, -1)
@@ -45,3 +55,7 @@ position = Vector2(26.9998, -60.0001)
 position = Vector2(-44.0002, -59.9998)
 
 [node name="AudioStream-Voice2" type="AudioStreamPlayer2D" parent="." index="8"]
+
+[node name="CollisionShape2D" parent="carBodyArea" index="0"]
+position = Vector2(-20.375, -7)
+shape = SubResource("RectangleShape2D_iqugs")

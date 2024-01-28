@@ -1,4 +1,4 @@
-[gd_scene load_steps=29 format=3 uid="uid://cvuiarwiynwx7"]
+[gd_scene load_steps=30 format=3 uid="uid://cvuiarwiynwx7"]
 
 [ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="1_150xb"]
 [ext_resource type="Texture2D" uid="uid://cd2iqmi4mr7ei" path="res://scene/car/pickup/char_pickup_transparent.png" id="2_6iylb"]
@@ -29,6 +29,9 @@
 [ext_resource type="AudioStream" uid="uid://dkpbevqn4077n" path="res://scene/car/pickup/audio/pickup_lowhealth1.mp3" id="25_yxhmr"]
 [ext_resource type="AudioStream" uid="uid://b82pkrwo1n5m8" path="res://scene/car/pickup/audio/pickup_lowhealth2.mp3" id="26_4efuk"]
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_782i6"]
+size = Vector2(186.75, 86)
+
 [node name="Car" instance=ExtResource("1_150xb")]
 engine = 22
 steering = 10
@@ -43,6 +46,9 @@ lowGasAudio = Array[AudioStreamMP3]([ExtResource("23_73te5"), ExtResource("24_cy
 lowHealthAudio = Array[AudioStreamMP3]([ExtResource("25_yxhmr"), ExtResource("26_4efuk"), ExtResource("5_okret")])
 carDamagedTexture = ExtResource("2_36nav")
 
+[node name="CollisionShape2D" parent="." index="2"]
+polygon = PackedVector2Array(-20, -49.5, 13, -49.5, 24, -41.5, 26, 34.5, 11, 39.5, -19, 39.5, -29, 51.5, -28, -56.5)
+
 [node name="sprite" parent="." index="4"]
 position = Vector2(3, 3)
 texture = ExtResource("2_36nav")
@@ -55,3 +61,7 @@ position = Vector2(26.9998, -60.0001)
 
 [node name="tireLocation4" parent="sprite" index="3"]
 position = Vector2(-44.0002, -59.9998)
+
+[node name="CollisionShape2D" parent="carBodyArea" index="0"]
+position = Vector2(-13.625, -6)
+shape = SubResource("RectangleShape2D_782i6")

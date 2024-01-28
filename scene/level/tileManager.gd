@@ -14,7 +14,7 @@ var landscapeMap = [
 	preload("res://scene/level/terrain/landscapeMap4.tscn")
 ]
 
-enum objectTypes { ROCKS , COINS , BONUS_ROCKS}
+enum objectTypes { ROCKS , COINS , BONUS_ROCKS , EMPTY}
 @export var requestedObjectTiles: Array[objectTypes] = [objectTypes.ROCKS]
 var AllObjectTiles = {
 	objectTypes.ROCKS:[
@@ -27,11 +27,22 @@ var AllObjectTiles = {
 	objectTypes.COINS:[
 		preload("res://scene/level/levelObjects/level_coins_1.tscn"),
 		preload("res://scene/level/levelObjects/level_coins_2.tscn"),
+		preload("res://scene/level/levelObjects/level_coins_3.tscn"),
+		preload("res://scene/level/levelObjects/level_coins_4.tscn"),
+		preload("res://scene/level/levelObjects/level_coins_5.tscn"),
 	],
 	objectTypes.BONUS_ROCKS:[
 		preload("res://scene/level/levelObjects/level_rocks_fuel_1.tscn"),
+		preload("res://scene/level/levelObjects/level_rocks_fuel_2.tscn"),
+		preload("res://scene/level/levelObjects/level_rocks_fuel_3.tscn"),
+		preload("res://scene/level/levelObjects/level_rocks_fuel_4.tscn"),
 		preload("res://scene/level/levelObjects/level_rocks_purse_1.tscn"),
 	],
+	objectTypes.EMPTY:[
+		preload("res://scene/level/levelObjects/level_empty.tscn"),
+		preload("res://scene/level/levelObjects/level_empty.tscn"),
+		preload("res://scene/level/levelObjects/level_empty.tscn"),
+	]
 }
 
 var objectTiles = []
