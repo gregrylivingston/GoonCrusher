@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3 uid="uid://obblqgaoiy5b"]
+[gd_scene load_steps=15 format=3 uid="uid://obblqgaoiy5b"]
 
 [ext_resource type="Texture2D" uid="uid://nn0ybkw4bfei" path="res://scene/fx/spark/textureSequence/sparks_effect_01.png" id="1_jr634"]
 [ext_resource type="Texture2D" uid="uid://da8qxbnyweo7g" path="res://scene/fx/spark/textureSequence/sparks_effect_02.png" id="2_ld7kh"]
@@ -12,6 +12,7 @@
 [ext_resource type="Texture2D" uid="uid://ckgjej5ed3b2l" path="res://scene/fx/spark/textureSequence/sparks_effect_10.png" id="10_4lp1j"]
 [ext_resource type="Texture2D" uid="uid://3bm4d6nuvdos" path="res://scene/fx/spark/textureSequence/sparks_effect_11.png" id="11_3agxb"]
 [ext_resource type="Texture2D" uid="uid://dqdg3s6csevag" path="res://scene/fx/spark/textureSequence/sparks_effect_12.png" id="12_4leki"]
+[ext_resource type="Script" path="res://scene/fx/spark/spark.gd" id="13_t62h5"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_ey881"]
 animations = [{
@@ -58,7 +59,13 @@ animations = [{
 }]
 
 [node name="Spark" type="AnimatedSprite2D"]
+modulate = Color(2, 2, 2, 1)
+scale = Vector2(2, 2)
 sprite_frames = SubResource("SpriteFrames_ey881")
+autoplay = "default"
 frame = 11
 frame_progress = 1.0
 offset = Vector2(0, -30)
+script = ExtResource("13_t62h5")
+
+[connection signal="animation_finished" from="." to="." method="_on_animation_finished"]

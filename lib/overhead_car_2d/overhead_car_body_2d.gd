@@ -175,9 +175,7 @@ func _physics_process(delta):
 		#print(collider.get_class())
 		##colide with an unmovable static object like a rock
 		if velocity.length() > 0.01 && collider.get_class() == "StaticBody2D":
-			if not $"AudioStream-Crash".playing: $"AudioStream-Crash".play()
-			damage(  velocity.length() * 0.5 / armor )
-			velocity *= 0.85
+			collideWithFixedObject( get_slide_collision(i) )
 		elif collider.get_class() == "CharacterBody2D":
 			damage(0.5)
 			if velocity.length() > 100:crushGoon(collider)
@@ -186,7 +184,17 @@ func _physics_process(delta):
 		stopCarFX()
 	else:
 		activeCarEffects(delta)
-		
+
+var sparks = preload("res://scene/fx/spark/spark.tscn")
+func collideWithFixedObject( collision ):
+	if not $"AudioStream-Crash".playing: 
+		$"AudioStream-Crash".play()
+		var spark = sparks.instantiate()
+		spark.global_position = collision.get_position()
+		Root.levelRoot.add_child(spark)
+	damage(  velocity.length() * 0.5 / armor )
+	velocity *= 0.85
+
 func stopCarFX():
 	if $"AudioStream-Engine".playing:$"AudioStream-Engine".stop()
 	if $"AudioStream-CarDamage".playing:$"AudioStream-CarDamage".stop()
