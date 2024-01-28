@@ -1,3 +1,4 @@
+res://texture/spritesheet
 res://scene/fx/explosion
 D:/Godot/AutoSurvivor
 res://texture/atlas
@@ -13,7 +14,6 @@ res://sound
 res://style
 res://shader
 res://scene/level
-res://texture/spritesheet
 res://texture/animation
 res://scene/player/slots
 res://scene/player/save

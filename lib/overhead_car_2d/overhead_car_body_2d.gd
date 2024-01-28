@@ -91,6 +91,8 @@ func _ready():
 	else: 
 		$headlamps/carhighlight.queue_free()
 
+	stopCarFX()
+
 var gasWarningGiven = false
 func resetGasWarning(): gasWarningGiven = false
 
@@ -198,7 +200,7 @@ func collideWithFixedObject( collision ):
 func stopCarFX():
 	if $"AudioStream-Engine".playing:$"AudioStream-Engine".stop()
 	if $"AudioStream-CarDamage".playing:$"AudioStream-CarDamage".stop()
-	$sprite/exhaust.visible = false
+	%Smoke.visible = false
 
 func crushGoon(collider):
 	if is_instance_valid(collider):
@@ -216,7 +218,7 @@ var vibrationFrequency = 5
 
 #sound and graphics for running car
 func activeCarEffects(delta):
-	$sprite/exhaust.visible = true
+	%Smoke.visible = true
 	if not $"AudioStream-Engine".playing: $"AudioStream-Engine".play()
 	if not $"AudioStream-CarDamage".playing && healthWarningGiven: $"AudioStream-CarDamage".play()
 	$"AudioStream-Engine".pitch_scale = 1  +  ( velocity.length() / 400 ) 
@@ -241,10 +243,10 @@ func activeCarEffects(delta):
 		
 	if _car_input.braking || gear == -1:
 		for i in [$headlamps/taillamps/tailLamp1, $headlamps/taillamps/tailLamp2]:i.energy = 0.4
-		for i in [$headlamps/taillamps/tailLamp3, $headlamps/taillamps/tailLamp4]:i.energy = 0.2
+		for i in [$headlamps/taillamps/tailLamp3, $headlamps/taillamps/tailLamp4]:i.energy = 0.15
 	else: 		
 		for i in [$headlamps/taillamps/tailLamp1, $headlamps/taillamps/tailLamp2]:i.energy = 0.1
-		for i in [$headlamps/taillamps/tailLamp3, $headlamps/taillamps/tailLamp4]:i.energy = 0.1
+		for i in [$headlamps/taillamps/tailLamp3, $headlamps/taillamps/tailLamp4]:i.energy = 0.07
 
 	#zoom out if going fast
 	if velocity.length() > 450.0 && isPlayer && is_instance_valid($Camera2D):
