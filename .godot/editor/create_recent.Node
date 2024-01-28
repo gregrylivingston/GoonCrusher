@@ -1,3 +1,4 @@
+Label
 CollisionShape2D
 PointLight2D
 Panel
@@ -10,5 +11,4 @@ RayCast2D
 CharacterBody2D
 Polygon2D
 TextureRect
-Label
 Sprite2D

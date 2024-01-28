@@ -60,7 +60,8 @@ class CarInput:
 	var acceleration := 0.0  # -1.0 (reverse) to 1.0 (accelerate)
 	var braking := false     # True if brakes are engaged
 
-
+var gear: int = 0
+var maxGears: int = 3
 var _car_input := CarInput.new()
 var _path_follow: OverheadCarPathFollow2D = null
 @onready var myController = $CarController
@@ -147,7 +148,7 @@ func _physics_process(delta):
 		friction_force *= 3
 	acceleration += drag_force + friction_force
 	if _car_input.braking:
-		acceleration += velocity * - ( traction / 4.0 )
+		acceleration += - ( traction * 50 / ( velocity.length() + 1)  ) * velocity
 	
 	# Calculate steering
 	var rear_wheel = position - transform.x * wheel_base / 2.0 + velocity * delta
@@ -157,7 +158,7 @@ func _physics_process(delta):
 	if velocity.length() > slip_speed:
 		traction = traction_fast
 	var d = new_heading.dot(velocity.normalized())
-	if d > 0:
+	if d >= 0:
 		velocity = velocity.lerp(new_heading * velocity.length(), traction)
 	if d < 0:
 		velocity = -new_heading * min(velocity.length(), engine * 30)#10

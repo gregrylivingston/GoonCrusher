@@ -176,3 +176,13 @@ theme_override_font_sizes/font_size = 40
 text = "00 : 00"
 horizontal_alignment = 1
 script = ExtResource("3_hepv3")
+
+[node name="gearbox" type="Label" parent="." groups=["gearui"]]
+offset_left = 185.0
+offset_top = 122.0
+offset_right = 214.0
+offset_bottom = 174.0
+theme = ExtResource("4_xbt3u")
+theme_override_constants/outline_size = 2
+theme_override_font_sizes/font_size = 40
+text = "N"

@@ -76,3 +76,5 @@ res://scene/level/levels/level_mud_2.tscn
 res://scene/level/levels/level_mud_3.tscn
 res://scene/level/levels/level_sand_1.tscn
 res://scene/level/levels/level_snow_1.tscn
+res://scene/player/controller/playerCarController.gd
+res://scene/car/car_panel.tscn

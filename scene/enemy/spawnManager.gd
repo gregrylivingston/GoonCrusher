@@ -1,7 +1,7 @@
 class_name SpawnManager extends Node
 
 @export var spawnTimer: float = 6.0
-
+@export var escalationSpeed = 0.07
 
 enum goon { DEVIL , SPARTAN , SAMURAI , FIREKIN, PIKEMAN }
 
@@ -26,7 +26,7 @@ func _ready():
 func increaseGiantOdds():
 	giantOdds += 1
 	gameTimeProgress += 1
-	spawnTimer = clampf(spawnTimer - 0.05 , 1.0, 6.0)
+	spawnTimer = clampf(spawnTimer - escalationSpeed , 1.0, 6.0)
 	await get_tree().create_timer(10).timeout
 	increaseGiantOdds()
 	
