@@ -38,9 +38,6 @@ volume_db = -6.0
 autoplay = true
 
 [node name="SpawnManager" parent="." instance=ExtResource("17_3wer8")]
-spawnTimer = 6.0
-basicGoons = Array[int]([0, 1, 2])
-giantOdds = -10
 
 [node name="AudioStreamPlayer_wolf" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("19_b5cat")

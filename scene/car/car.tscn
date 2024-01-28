@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3 uid="uid://dbkp41oxg03o6"]
+[gd_scene load_steps=15 format=3 uid="uid://dbkp41oxg03o6"]
 
 [ext_resource type="Script" path="res://lib/overhead_car_2d/overhead_car_body_2d.gd" id="1_ibwir"]
 [ext_resource type="Texture2D" uid="uid://dthtmohgw8u1f" path="res://scene/car/audi/Audi.png" id="2_33x0l"]
@@ -10,6 +10,7 @@
 [ext_resource type="PackedScene" uid="uid://551dlp73phd4" path="res://texture/animation/smoke.tscn" id="6_ynfn4"]
 [ext_resource type="AudioStream" uid="uid://tuaawqdwftov" path="res://sound/fx/car-damage1.mp3" id="8_qq4uq"]
 [ext_resource type="Texture2D" uid="uid://d2weeqgpbqllf" path="res://sound/fx/triangle.png" id="10_b7mu1"]
+[ext_resource type="AudioStream" uid="uid://r1f0ifs0q7br" path="res://sound/fx/explosion/explosion-6055.mp3" id="10_hc5pd"]
 [ext_resource type="Texture2D" uid="uid://ltiunalnocyg" path="res://scene/car/sedan/sedan0.png" id="11_lwi02"]
 [ext_resource type="Script" path="res://scene/car/carBodyArea.gd" id="12_bs61w"]
 
@@ -79,6 +80,9 @@ volume_db = 4.0
 stream = ExtResource("8_qq4uq")
 volume_db = -5.0
 pitch_scale = 2.0
+
+[node name="AudioStream-Explosion" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("10_hc5pd")
 
 [node name="headlamps" type="Node2D" parent="."]
 visible = false

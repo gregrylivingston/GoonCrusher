@@ -325,17 +325,18 @@ func damage(damage: float):
 var explosion = load("res://scene/fx/explosion.tscn")
 func destroy():
 	if not isDestroyed:
+		$"AudioStream-Explosion".play()
 		isDestroyed = true
-		for i in randi_range(2,6):
-			await get_tree().create_timer(randf_range(0.01 , 1.0)).timeout
+		for i in randi_range(1,2):
 			var newExplosion = explosion.instantiate()
-			newExplosion.position = Vector2( randi_range( -50,50 ) , randi_range( -50,50 ))
+			newExplosion.position = Vector2( randi_range( 50,90 ) , randi_range( -50,20 ))
 			var modColor = 1.0 - (i/10.0)
 			$sprite.modulate = Color(modColor,modColor,modColor,1.0)
 			add_child(newExplosion)
+			await get_tree().create_timer(randf_range(0.01 , 1.0)).timeout
 		if isPlayer:
-			$sprite.modulate = Color(0.5,0.5,0.5,1.0)
-			await get_tree().create_timer(1).timeout
+			$sprite.modulate = Color(0.8,0.8,0.8,1.0)
+			await get_tree().create_timer(4).timeout
 			Root.levelRoot.endLevel(false)
 		else:
 			queue_free()
