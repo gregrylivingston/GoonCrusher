@@ -342,6 +342,7 @@ func damage(damage: float):
 var explosion = load("res://scene/fx/explosion.tscn")
 func destroy():
 	if not isDestroyed:
+		stopCarFX()
 		$"AudioStream-Explosion".play()
 		isDestroyed = true
 		for i in randi_range(1,2):
