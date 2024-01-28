@@ -157,6 +157,60 @@ rotation = 1.5708
 energy = 0.8
 texture = ExtResource("11_lwi02")
 
+[node name="taillamps" type="Node2D" parent="headlamps"]
+
+[node name="tailLamp1" type="PointLight2D" parent="headlamps/taillamps"]
+modulate = Color(100, 100, 100, 0.784314)
+z_index = -1
+position = Vector2(-107, -32)
+rotation = 1.5708
+scale = Vector2(4, 3)
+color = Color(1, 0, 0, 0.47451)
+energy = 0.2
+shadow_enabled = true
+shadow_color = Color(0, 0, 0, 0.0980392)
+texture = ExtResource("10_b7mu1")
+offset = Vector2(0, 40)
+
+[node name="tailLamp2" type="PointLight2D" parent="headlamps/taillamps"]
+modulate = Color(100, 100, 100, 0.784314)
+z_index = -1
+position = Vector2(-107, 24)
+rotation = 1.5708
+scale = Vector2(4, 3)
+color = Color(1, 0, 0, 0.47451)
+energy = 0.2
+shadow_enabled = true
+shadow_color = Color(0, 0, 0, 0.0980392)
+texture = ExtResource("10_b7mu1")
+offset = Vector2(0, 40)
+
+[node name="tailLamp3" type="PointLight2D" parent="headlamps/taillamps"]
+modulate = Color(100, 100, 100, 0.784314)
+z_index = -1
+position = Vector2(-107, -32)
+rotation = 1.5708
+scale = Vector2(30, 12)
+color = Color(1, 0, 0, 0.47451)
+energy = 0.05
+shadow_enabled = true
+shadow_color = Color(0, 0, 0, 0.0980392)
+texture = ExtResource("10_b7mu1")
+offset = Vector2(0, 40)
+
+[node name="tailLamp4" type="PointLight2D" parent="headlamps/taillamps"]
+modulate = Color(100, 100, 100, 0.784314)
+z_index = -1
+position = Vector2(-107, 24)
+rotation = 1.5708
+scale = Vector2(30, 12)
+color = Color(1, 0, 0, 0.47451)
+energy = 0.05
+shadow_enabled = true
+shadow_color = Color(0, 0, 0, 0.0980392)
+texture = ExtResource("10_b7mu1")
+offset = Vector2(0, 40)
+
 [node name="carBodyArea" type="StaticBody2D" parent="."]
 collision_layer = 2
 collision_mask = 2

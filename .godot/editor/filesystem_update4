@@ -36,3 +36,7 @@ res://lib/overhead_car_2d/overhead_car_body_2d.gd
 res://scene/level/levelObjects/level_sand_fuel_1.tscn
 res://scene/level/tileManager.gd
 res://scene/scenery/groundarea/sand.gd
+res://scene/player/playerRoot.gd
+res://scene/car/sedan/sedan.tscn
+res://scene/car/car_panel.tscn
+res://scene/fx/spark/spark.tscn

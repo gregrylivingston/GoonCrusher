@@ -1,4 +1,4 @@
-[gd_scene load_steps=35 format=3 uid="uid://bkypbefgkke6a"]
+[gd_scene load_steps=36 format=3 uid="uid://bkypbefgkke6a"]
 
 [ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="1_ehr7y"]
 [ext_resource type="Texture2D" uid="uid://cfxhspevh8hl5" path="res://scene/car/sedan/char_sedan_transparent.png" id="2_uecx8"]
@@ -35,6 +35,9 @@
 [ext_resource type="Texture2D" uid="uid://4wtuy8w4hpfn" path="res://scene/car/sedan/sedan1.png" id="32_af747"]
 [ext_resource type="Texture2D" uid="uid://ltiunalnocyg" path="res://scene/car/sedan/sedan0.png" id="32_nbaif"]
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_v2r7d"]
+size = Vector2(203, 73)
+
 [node name="Car" instance=ExtResource("1_ehr7y")]
 engine = 15
 armor = 4
@@ -67,4 +70,5 @@ position = Vector2(34.9999, 58)
 position = Vector2(-34.9998, 50.0001)
 
 [node name="CollisionShape2D" parent="carBodyArea" index="0"]
-position = Vector2(-5.875, -1.5)
+position = Vector2(3.5, -2.5)
+shape = SubResource("RectangleShape2D_v2r7d")

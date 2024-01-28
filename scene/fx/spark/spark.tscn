@@ -1,0 +1,64 @@
+[gd_scene load_steps=14 format=3 uid="uid://obblqgaoiy5b"]
+
+[ext_resource type="Texture2D" uid="uid://nn0ybkw4bfei" path="res://scene/fx/spark/textureSequence/sparks_effect_01.png" id="1_jr634"]
+[ext_resource type="Texture2D" uid="uid://da8qxbnyweo7g" path="res://scene/fx/spark/textureSequence/sparks_effect_02.png" id="2_ld7kh"]
+[ext_resource type="Texture2D" uid="uid://5uenhgrkwgyb" path="res://scene/fx/spark/textureSequence/sparks_effect_03.png" id="3_2wjiv"]
+[ext_resource type="Texture2D" uid="uid://brikvejfkggmt" path="res://scene/fx/spark/textureSequence/sparks_effect_04.png" id="4_w1udd"]
+[ext_resource type="Texture2D" uid="uid://b2jmunbvaivsq" path="res://scene/fx/spark/textureSequence/sparks_effect_05.png" id="5_rt16k"]
+[ext_resource type="Texture2D" uid="uid://bl0ldo18vgyij" path="res://scene/fx/spark/textureSequence/sparks_effect_06.png" id="6_ytx0c"]
+[ext_resource type="Texture2D" uid="uid://c123s5likh7rc" path="res://scene/fx/spark/textureSequence/sparks_effect_07.png" id="7_vnv8g"]
+[ext_resource type="Texture2D" uid="uid://tl2imrecjp8f" path="res://scene/fx/spark/textureSequence/sparks_effect_08.png" id="8_bcav4"]
+[ext_resource type="Texture2D" uid="uid://bgd00gfijd37x" path="res://scene/fx/spark/textureSequence/sparks_effect_09.png" id="9_3xy5c"]
+[ext_resource type="Texture2D" uid="uid://ckgjej5ed3b2l" path="res://scene/fx/spark/textureSequence/sparks_effect_10.png" id="10_4lp1j"]
+[ext_resource type="Texture2D" uid="uid://3bm4d6nuvdos" path="res://scene/fx/spark/textureSequence/sparks_effect_11.png" id="11_3agxb"]
+[ext_resource type="Texture2D" uid="uid://dqdg3s6csevag" path="res://scene/fx/spark/textureSequence/sparks_effect_12.png" id="12_4leki"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_ey881"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_jr634")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_ld7kh")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_2wjiv")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_w1udd")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_rt16k")
+}, {
+"duration": 1.0,
+"texture": ExtResource("6_ytx0c")
+}, {
+"duration": 1.0,
+"texture": ExtResource("7_vnv8g")
+}, {
+"duration": 1.0,
+"texture": ExtResource("8_bcav4")
+}, {
+"duration": 1.0,
+"texture": ExtResource("9_3xy5c")
+}, {
+"duration": 1.0,
+"texture": ExtResource("10_4lp1j")
+}, {
+"duration": 1.0,
+"texture": ExtResource("11_3agxb")
+}, {
+"duration": 1.0,
+"texture": ExtResource("12_4leki")
+}],
+"loop": false,
+"name": &"default",
+"speed": 60.0
+}]
+
+[node name="Spark" type="AnimatedSprite2D"]
+sprite_frames = SubResource("SpriteFrames_ey881")
+frame = 11
+frame_progress = 1.0
+offset = Vector2(0, -30)
