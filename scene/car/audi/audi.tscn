@@ -13,7 +13,7 @@
 [ext_resource type="Texture2D" uid="uid://dthtmohgw8u1f" path="res://scene/car/audi/Audi.png" id="10_uci38"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_oqcx7"]
-size = Vector2(190.75, 88)
+size = Vector2(177, 80)
 
 [node name="Car" instance=ExtResource("1_0vonh")]
 engine = 40
@@ -32,6 +32,9 @@ carDamagedTexture = ExtResource("10_uci38")
 [node name="CollisionShape2D" parent="." index="2"]
 polygon = PackedVector2Array(-33, -47.5, -3.00002, -47.5, 17, -35.5, 33, -12.5, 34, 13.5, 19, 33.5, -1, 47.5, -31, 48.5)
 
+[node name="CollisionShape2D_rear" parent="." index="3"]
+polygon = PackedVector2Array(-30, -29.5, -22, -37.5, -10, -41.5, -11, 45.5, -26, 39.5, -33, 29.5, -38, -2.5)
+
 [node name="CollisionShape2D" parent="carBodyArea" index="0"]
-position = Vector2(-15.625, -1)
+position = Vector2(-6.5, -1)
 shape = SubResource("RectangleShape2D_oqcx7")

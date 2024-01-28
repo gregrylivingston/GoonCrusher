@@ -78,3 +78,13 @@ res://scene/level/levels/level_sand_1.tscn
 res://scene/level/levels/level_snow_1.tscn
 res://scene/player/controller/playerCarController.gd
 res://scene/car/car_panel.tscn
+res://scene/level/terrain/landscapeMap2.tscn
+res://scene/scenery/groundarea/mud.tscn
+res://scene/scenery/groundarea/sand.tscn
+res://texture/atlas/sand.tres
+res://scene/level/terrain/landscapeMap4.tscn
+res://scene/level/terrain/landscapeMap3.tscn
+res://scene/level/terrain/landscapeMap.tscn
+res://scene/level/levelObjects/level_rocksand_1.tscn
+res://scene/level/levelObjects/level_sandtrap_1.tscn
+res://lib/overhead_car_2d/overhead_car_area_2d.gd

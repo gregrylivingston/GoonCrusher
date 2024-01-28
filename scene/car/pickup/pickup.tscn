@@ -30,7 +30,7 @@
 [ext_resource type="AudioStream" uid="uid://b82pkrwo1n5m8" path="res://scene/car/pickup/audio/pickup_lowhealth2.mp3" id="26_4efuk"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_782i6"]
-size = Vector2(186.75, 86)
+size = Vector2(192, 81)
 
 [node name="Car" instance=ExtResource("1_150xb")]
 engine = 22
@@ -49,7 +49,10 @@ carDamagedTexture = ExtResource("2_36nav")
 [node name="CollisionShape2D" parent="." index="2"]
 polygon = PackedVector2Array(-20, -49.5, 13, -49.5, 24, -41.5, 26, 34.5, 11, 39.5, -19, 39.5, -29, 51.5, -28, -56.5)
 
-[node name="sprite" parent="." index="4"]
+[node name="CollisionShape2D_rear" parent="." index="3"]
+polygon = PackedVector2Array(-33, -41.5, -21, -46.5, -8, -45.5, -9, 38.5, -22, 38.5, -32, 33.5)
+
+[node name="sprite" parent="." index="5"]
 position = Vector2(3, 3)
 texture = ExtResource("2_36nav")
 
@@ -63,5 +66,5 @@ position = Vector2(26.9998, -60.0001)
 position = Vector2(-44.0002, -59.9998)
 
 [node name="CollisionShape2D" parent="carBodyArea" index="0"]
-position = Vector2(-13.625, -6)
+position = Vector2(-8, -6.5)
 shape = SubResource("RectangleShape2D_782i6")

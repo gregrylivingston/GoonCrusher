@@ -1,6 +1,6 @@
 extends Resource
 
-@export var coin: int = 1200
+@export var coin: int = 100
 @export var gem: int = 3
 @export var selectedCar: int = 0
 @export var selectedLevel: int = 0
@@ -49,8 +49,8 @@ extends Resource
 		"scene":preload("res://scene/car/racer/racer.tscn")
 	},
 	{	"name":"police",
-		"cost":0,#50000
-		"upgrades":{"traction":0,"engine":25,"armor":0,"steering":0},
+		"cost":50000,
+		"upgrades":{"traction":0,"engine":0,"armor":0,"steering":0},
 		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,},
 		"scene":preload("res://scene/car/police/police.tscn"),
 	},
@@ -82,7 +82,7 @@ extends Resource
 	{
 		"name":"Park Bully",
 		"image":"res://texture/background/background_level_2.png",
-		"unlocked":true,
+		"unlocked":false,
 		"scene":"res://scene/level/levels/level_grass_2.tscn",
 		"difficulty":"VERY EASY",
 		"time":"1",

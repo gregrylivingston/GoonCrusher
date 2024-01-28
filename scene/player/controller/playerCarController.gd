@@ -7,6 +7,7 @@ var ui
 
 func _provide_input(_input):
 	if Input.is_action_pressed("Accelerate"):
+		if car.gear < 1:car.setForwardCollisionMode(true)
 		_input.acceleration = 1.0
 		car.gear = int(car.velocity.length())/300 + 1
 		gearui.text = str(car.gear)
@@ -20,6 +21,7 @@ func _provide_input(_input):
 	
 	if Input.is_action_pressed("Brake"):
 		if car.velocity.length() == 0 || car.gear == -1:
+			if car.gear > -1:car.setForwardCollisionMode(false)
 			car.gear = -1
 			gearui.text = "R"
 			_input.acceleration = -1.0

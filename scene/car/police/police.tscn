@@ -15,7 +15,7 @@
 [ext_resource type="PackedScene" uid="uid://551dlp73phd4" path="res://texture/animation/smoke.tscn" id="12_7x7a1"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_cwfv8"]
-size = Vector2(184.75, 88)
+size = Vector2(174, 77)
 
 [node name="Car" instance=ExtResource("1_qtyvp")]
 engine = 35
@@ -36,12 +36,15 @@ carDamagedTexture = ExtResource("2_7cb7w")
 [node name="CollisionShape2D" parent="." index="2"]
 polygon = PackedVector2Array(-31, -48.5, -1, -46.5, 16, -33.5, 33, -12.5, 34, 13.5, 21, 31.5, 5, 45.5, -31, 47.5)
 
-[node name="sprite" parent="." index="4"]
+[node name="CollisionShape2D_rear" parent="." index="3"]
+polygon = PackedVector2Array(-30, -30.5, -5, -43.5, -4, 47.5, -21, 40.5, -33, 27.5, -36, -1.5)
+
+[node name="sprite" parent="." index="5"]
 texture = ExtResource("2_7cb7w")
 
 [node name="Smoke2" parent="sprite/exhaust" index="1" instance=ExtResource("12_7x7a1")]
 position = Vector2(-23.9996, 109)
 
 [node name="CollisionShape2D" parent="carBodyArea" index="0"]
-position = Vector2(-16.375, -2)
+position = Vector2(-5, -2.5)
 shape = SubResource("RectangleShape2D_cwfv8")

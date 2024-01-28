@@ -15,7 +15,7 @@
 [ext_resource type="AudioStream" uid="uid://dmlptibuqjawg" path="res://sound/fx/engine/engine1.mp3" id="11_es0hc"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_iqugs"]
-size = Vector2(196.75, 88)
+size = Vector2(213.375, 80)
 
 [node name="Car" instance=ExtResource("1_oirr4")]
 engine = 30
@@ -37,7 +37,10 @@ carDamagedTexture = ExtResource("2_86vbp")
 [node name="CollisionShape2D" parent="." index="2"]
 polygon = PackedVector2Array(-5, -56.5, 2, -49.5, 31, -44.5, 34, 36.5, 1, 41.5, -6, 52.5)
 
-[node name="sprite" parent="." index="4"]
+[node name="CollisionShape2D_rear" parent="." index="3"]
+polygon = PackedVector2Array(-48, -39.5, -43, -46.5, 14, -48.5, 17, 41.5, -43, 41.5, -49, 32.5)
+
+[node name="sprite" parent="." index="5"]
 position = Vector2(-3, -1)
 scale = Vector2(1.1, 1.1)
 texture = ExtResource("2_86vbp")
@@ -57,5 +60,5 @@ position = Vector2(-44.0002, -59.9998)
 [node name="AudioStream-Voice2" type="AudioStreamPlayer2D" parent="." index="8"]
 
 [node name="CollisionShape2D" parent="carBodyArea" index="0"]
-position = Vector2(-20.375, -7)
+position = Vector2(-10.6875, -6)
 shape = SubResource("RectangleShape2D_iqugs")

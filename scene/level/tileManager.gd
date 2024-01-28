@@ -14,7 +14,7 @@ var landscapeMap = [
 	preload("res://scene/level/terrain/landscapeMap4.tscn")
 ]
 
-enum objectTypes { ROCKS , COINS , BONUS_ROCKS , EMPTY}
+enum objectTypes { ROCKS , COINS , BONUS_ROCKS , EMPTY , SAND }
 @export var requestedObjectTiles: Array[objectTypes] = [objectTypes.ROCKS]
 var AllObjectTiles = {
 	objectTypes.ROCKS:[
@@ -42,6 +42,11 @@ var AllObjectTiles = {
 		preload("res://scene/level/levelObjects/level_empty.tscn"),
 		preload("res://scene/level/levelObjects/level_empty.tscn"),
 		preload("res://scene/level/levelObjects/level_empty.tscn"),
+	],
+	objectTypes.SAND:[
+		preload("res://scene/level/levelObjects/level_sandtrap_1.tscn"),
+		preload("res://scene/level/levelObjects/level_sand_fuel_1.tscn"),
+		preload("res://scene/level/levelObjects/level_rocksand_1.tscn")
 	]
 }
 

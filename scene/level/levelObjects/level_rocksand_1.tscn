@@ -1,0 +1,45 @@
+[gd_scene load_steps=7 format=3 uid="uid://ctucklu0a816d"]
+
+[ext_resource type="PackedScene" uid="uid://brhh6ifac5qvc" path="res://scene/scenery/rocks1.tscn" id="1_bp5o5"]
+[ext_resource type="PackedScene" uid="uid://c0xcbyhyhfy1y" path="res://scene/scenery/rocks2.tscn" id="2_x81qx"]
+[ext_resource type="PackedScene" uid="uid://c6jbfl1cgervf" path="res://scene/scenery/rocks6.tscn" id="3_p0h1b"]
+[ext_resource type="PackedScene" uid="uid://1n5rup2g5iel" path="res://scene/scenery/rocks3.tscn" id="4_56pv3"]
+[ext_resource type="PackedScene" uid="uid://25m185wafob8" path="res://scene/scenery/groundarea/sand.tscn" id="5_tvacg"]
+[ext_resource type="PackedScene" uid="uid://c0vsrdch6jqgm" path="res://scene/scenery/rocks7.tscn" id="6_tv5i2"]
+
+[node name="LevelRocks1" type="Node2D"]
+
+[node name="Rocks7" parent="." instance=ExtResource("1_bp5o5")]
+position = Vector2(-424, -13)
+scale = Vector2(3.79268, 3.79268)
+
+[node name="Rocks11" parent="." instance=ExtResource("2_x81qx")]
+position = Vector2(374, -211)
+scale = Vector2(4.65, 4.65)
+
+[node name="Rocks" parent="." instance=ExtResource("3_p0h1b")]
+position = Vector2(405, -526)
+scale = Vector2(4.2839, 4.2839)
+
+[node name="Rocks2" parent="." instance=ExtResource("3_p0h1b")]
+position = Vector2(-241, 160)
+scale = Vector2(2.61864, 2.61864)
+
+[node name="Rocks5" parent="." instance=ExtResource("3_p0h1b")]
+position = Vector2(948, 371)
+scale = Vector2(2.61864, 2.61864)
+
+[node name="Rocks3" parent="." instance=ExtResource("4_56pv3")]
+position = Vector2(-484, -803)
+
+[node name="Rocks4" parent="." instance=ExtResource("1_bp5o5")]
+position = Vector2(-401, -755)
+
+[node name="Polygon2D" parent="." instance=ExtResource("5_tvacg")]
+position = Vector2(-313, -675)
+
+[node name="Polygon2D2" parent="." instance=ExtResource("5_tvacg")]
+position = Vector2(122, 83)
+
+[node name="Rocks6" parent="." instance=ExtResource("6_tv5i2")]
+position = Vector2(787, 453)

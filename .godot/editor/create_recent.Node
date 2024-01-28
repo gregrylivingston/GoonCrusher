@@ -1,14 +1,14 @@
-Label
 CollisionShape2D
+TileMap
+CollisionPolygon2D
+Label
 PointLight2D
 Panel
 CanvasLayer
 Button
 StaticBody2D
-CollisionPolygon2D
 Area2D
 RayCast2D
 CharacterBody2D
 Polygon2D
 TextureRect
-Sprite2D

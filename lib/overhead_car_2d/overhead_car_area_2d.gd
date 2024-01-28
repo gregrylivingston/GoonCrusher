@@ -17,9 +17,9 @@ func _ready():
 
 func _on_body_entered(body):
 	if body is OverheadCarBody2D:
-		car_body_entered.emit(body, self)
+		body._on_overhead_car_area_2d_car_body_entered(self)
 
 
 func _on_body_exited(body):
 	if body is OverheadCarBody2D:
-		car_body_exited.emit(body, self)
+		body._on_overhead_car_area_2d_car_body_exited(self)

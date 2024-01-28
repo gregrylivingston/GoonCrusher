@@ -51,7 +51,10 @@ carDamagedTexture = ExtResource("28_7e8ei")
 [node name="CollisionShape2D" parent="." index="2"]
 polygon = PackedVector2Array(-15, -39.5, 17, -35.5, 31, -23.5, 31, 24.5, 19, 37.5, -13, 42.5, -23, 50.5, -25, -47.5)
 
-[node name="sprite" parent="." index="4"]
+[node name="CollisionShape2D_rear" parent="." index="3"]
+polygon = PackedVector2Array(-37, -40.5, -24, -40.5, -26, 43.5, -38, 43.5)
+
+[node name="sprite" parent="." index="5"]
 position = Vector2(-11, 7)
 scale = Vector2(1.1, 1.1)
 texture = ExtResource("2_1lxhl")

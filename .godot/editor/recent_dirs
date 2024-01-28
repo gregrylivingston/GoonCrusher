@@ -1,10 +1,11 @@
 D:/Godot/AutoSurvivor
+res://texture/atlas
+res://scene/scenery/groundarea
 res://scene/car/sedan
 res://texture/background
 res://scene/player/menu/settings
 res://lib/overhead_car_2d
 res://scene/car/van
-res://texture/atlas
 res://scene/level/levels
 res://scene/player/menu/main
 res://sound
@@ -19,4 +20,3 @@ res://scripts/global
 res://texture/icon
 res://texture/fx
 res://
-res://scene/car

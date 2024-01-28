@@ -73,7 +73,6 @@ func _init():
 
 func _ready():
 	purseAudio.append_array(powerupAudio)
-	_connect_car_areas(get_tree().root)
 	updateAudioLevels()
 	$"AudioStream-Engine".stream = engineNoise
 	$"AudioStream-Engine".play()
@@ -247,7 +246,7 @@ var tiremark = {}
 
 @onready var tires = [$sprite/tireLocation, $sprite/tireLocation2, $sprite/tireLocation3, $sprite/tireLocation4]
 func createTiremarks(i):
-	if tiremark.has(i.get_instance_id()):
+	if tiremark.has(i.get_instance_id()) && is_instance_valid(tiremark[i.get_instance_id()]):
 		tiremark[i.get_instance_id()].update(i.global_position)
 	else:
 		tiremark[i.get_instance_id()] = tiremarkScene.instantiate()
@@ -267,21 +266,17 @@ func _do_update_output(acceleration):
 	var speed_factor = speed / _highest_measured_speed if _highest_measured_speed > 0 else 0
 	_update_output(speed_factor, abs(acceleration))
 
-
-func _connect_car_areas(node: Node):
-	for child in node.get_children(true):
-		if child is OverheadCarArea2D:
-			child.car_body_entered.connect(_on_overhead_car_area_2d_car_body_entered)
-			child.car_body_exited.connect(_on_overhead_car_area_2d_car_body_exited)
-		_connect_car_areas(child)
+func connectCarArea(carArea):
+	carArea.car_body_entered.connect(_on_overhead_car_area_2d_car_body_entered)
+	carArea.car_body_exited.connect(_on_overhead_car_area_2d_car_body_exited)
 
 
-func _on_overhead_car_area_2d_car_body_entered(_body, area: OverheadCarArea2D):
+func _on_overhead_car_area_2d_car_body_entered(area: OverheadCarArea2D):
 	friction += area.friction
 	drag += area.drag
 
 
-func _on_overhead_car_area_2d_car_body_exited(_body, area: OverheadCarArea2D):
+func _on_overhead_car_area_2d_car_body_exited(area: OverheadCarArea2D):
 	friction -= area.friction
 	drag -= area.drag
 
@@ -376,4 +371,6 @@ func outOfFuel():
 	await get_tree().create_timer(2.5).timeout
 	Root.levelRoot.endLevel(false)
 	
-	
+func setForwardCollisionMode(setting: bool):#activate or deactive bumper collision based on gear
+	$CollisionShape2D.disabled = not setting
+	$CollisionShape2D_rear.disabled = setting
