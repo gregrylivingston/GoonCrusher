@@ -36,10 +36,12 @@ position = Vector2(-484, -803)
 position = Vector2(-401, -755)
 
 [node name="Polygon2D" parent="." instance=ExtResource("5_tvacg")]
-position = Vector2(-313, -675)
+position = Vector2(-1260, 152)
+rotation = 1.43641
 
 [node name="Polygon2D2" parent="." instance=ExtResource("5_tvacg")]
-position = Vector2(122, 83)
+position = Vector2(1039, -570)
+rotation = -1.56905
 
 [node name="Rocks6" parent="." instance=ExtResource("6_tv5i2")]
 position = Vector2(787, 453)

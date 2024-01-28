@@ -33,3 +33,6 @@ res://scene/scenery/groundarea/sand.tscn
 res://scene/level/levelObjects/level_rocksand_1.tscn
 res://scene/level/levelObjects/level_sandtrap_1.tscn
 res://lib/overhead_car_2d/overhead_car_body_2d.gd
+res://scene/level/levelObjects/level_sand_fuel_1.tscn
+res://scene/level/tileManager.gd
+res://scene/scenery/groundarea/sand.gd

@@ -106,7 +106,8 @@ func loadChunk(chunk):
 		newObjectTile.global_position = targetPosition + (tilesize / 2) + Vector2(randi_range(tilesize.x/-3,tilesize.x/3),randi_range(-200,200))
 		var myRotation = randi() % 180
 		newObjectTile.rotation = myRotation
-		for i in newObjectTile.get_children():i.rotation = -myRotation
+		for i in newObjectTile.get_children():
+			if not i.has_method("isFixed"):i.rotation = -myRotation
 		add_child(newObjectTile)
 			
 
