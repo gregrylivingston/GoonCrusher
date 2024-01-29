@@ -17,7 +17,7 @@ shader_parameter/scale = 1.0
 shader_parameter/shear = Vector2(0, -0.2)
 shader_parameter/slices = 16
 shader_parameter/outline = true
-shader_parameter/outline_width = 2.0
+shader_parameter/outline_width = 1.0
 shader_parameter/show_bound = false
 
 [node name="attributeIndicator" type="Button"]

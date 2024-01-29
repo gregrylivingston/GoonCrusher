@@ -3,8 +3,9 @@
 [ext_resource type="Shader" path="res://shader/3dtext.gdshader" id="1_nbo5a"]
 
 [resource]
+resource_local_to_scene = true
 shader = ExtResource("1_nbo5a")
-shader_parameter/angle = 0.5
+shader_parameter/angle = 0.6
 shader_parameter/thickness = 5.0
 shader_parameter/scale = 1.0
 shader_parameter/shear = Vector2(0, -0.2)

@@ -11,8 +11,8 @@
 [ext_resource type="PackedScene" uid="uid://bepxjqhida0n8" path="res://scene/player/ui/roadButton.tscn" id="4_f12ks"]
 [ext_resource type="FontFile" uid="uid://c106tp6lo578e" path="res://style/font/Tektur/Tektur-Bold.ttf" id="5_00nh6"]
 [ext_resource type="Material" uid="uid://d4nw1uchte7mv" path="res://scene/player/menu/main/3dText_Common.tres" id="8_vdjnf"]
-[ext_resource type="Shader" path="res://shader/3dtext.gdshader" id="9_78e4l"]
 [ext_resource type="Texture2D" uid="uid://dlgpwix6wtodc" path="res://shader/emtpywhitegradient.tres" id="10_8o5bn"]
+[ext_resource type="Shader" uid="uid://c2jd3wjben4p2" path="res://shader/3d_Text_HighlightRight.tres" id="10_l1x4e"]
 [ext_resource type="Texture2D" uid="uid://w03tvhxtmrv4" path="res://texture/icon/icons8-coin-48 (1).png" id="11_1oi8i"]
 [ext_resource type="PackedScene" uid="uid://clx3q1jksnuoc" path="res://scene/player/menu/main/car_stats_container.tscn" id="11_wos04"]
 [ext_resource type="AudioStream" uid="uid://chsan1o1ku2c7" path="res://sound/music/abstract-world-127012.mp3" id="12_3e52h"]
@@ -37,7 +37,7 @@ colors = PackedColorArray(0, 0, 0, 1, 0, 0, 0, 1)
 gradient = SubResource("Gradient_hfest")
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_jhcqm"]
-shader = ExtResource("9_78e4l")
+shader = ExtResource("10_l1x4e")
 shader_parameter/angle = 6.8
 shader_parameter/thickness = 6.0
 shader_parameter/scale = 1.0
@@ -201,7 +201,7 @@ anchor_bottom = 1.0
 offset_left = 115.0
 offset_top = 15.0
 offset_right = 603.6
-offset_bottom = -37.0
+offset_bottom = -45.0
 grow_vertical = 2
 theme = ExtResource("1_badde")
 
@@ -211,12 +211,12 @@ anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 10.0
-offset_top = -40.0
+offset_top = -44.0
 offset_right = -10.0
-offset_bottom = -54.0
+offset_bottom = -65.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 5
 
 [node name="HBoxContainer2" type="HBoxContainer" parent="mainMenuPanel/VBoxContainer"]
 layout_mode = 2

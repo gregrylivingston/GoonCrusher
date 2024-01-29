@@ -22,6 +22,16 @@ func _process(delta):
 
 func _on_mouse_entered():
 	$AudioStreamPlayer.play()
+	get_tree().create_tween().tween_method(set3dAnimationAngle, PI/8, PI , 0.5)
+	#set3dAnimationAngle(PI)
+
+func set3dAnimationAngle(angle):
+	if is_instance_valid($HBoxContainer/TextureRect):
+		if $HBoxContainer/TextureRect.material != null:
+			$HBoxContainer/TextureRect.material.set_shader_parameter("angle" ,  angle )
+	if $HBoxContainer/Label.material != null:
+		$HBoxContainer/Label.material.set_shader_parameter("angle" ,  angle )
+
 
 func _on_pressed():
 	$AudioStreamPlayer2.play()
@@ -34,4 +44,13 @@ func updateIcon(newIcon):
 	$HBoxContainer/TextureRect.material.set_shader_parameter("front_tex" , newIcon)
 	$HBoxContainer/TextureRect.material.set_shader_parameter("back_tex" ,  newIcon )
 	$HBoxContainer/TextureRect.material.set_shader_parameter("side_tex" ,  newIcon )
-	
+	#$HBoxContainer/TextureRect.material.set_shader_parameter("outline_tex" ,  newIcon )
+
+
+func _on_focus_entered():
+	get_tree().create_tween().tween_method(set3dAnimationAngle, PI/8, PI , 0.5)
+
+
+
+func _on_mouse_exited():
+	get_tree().create_tween().tween_method(set3dAnimationAngle, PI, PI/8 , 0.5)

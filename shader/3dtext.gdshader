@@ -52,7 +52,7 @@ void transformRay(inout vec3 p, inout vec3 rd, float _angle, float _scale, vec2 
 	p.xy += p.z * _shear;
 	rd.xy += rd.z * _shear;
 
-	_angle = clamp( _angle * sin(TIME) , 0.0 ,100000);
+	_angle = clamp( _angle * sin(TIME *2.0 ) , -1000000 ,100000);
 	
 	// Apply rotation
 	mat2 R = mat2(vec2(cos(_angle),sin(_angle)),vec2(-sin(_angle),cos(_angle)));
