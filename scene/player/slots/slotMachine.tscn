@@ -1,12 +1,13 @@
-[gd_scene load_steps=19 format=3 uid="uid://c1rm1o0bg6ous"]
+[gd_scene load_steps=18 format=3 uid="uid://c1rm1o0bg6ous"]
 
 [ext_resource type="StyleBox" uid="uid://cgcjmjg4qdbt2" path="res://style/style_box_semitransparent.tres" id="1_83yg1"]
 [ext_resource type="Script" path="res://scene/player/slots/slotMachine.gd" id="1_lo6kv"]
 [ext_resource type="Theme" uid="uid://co40pijjc7hbw" path="res://style/roadRogue.tres" id="2_sqmqf"]
 [ext_resource type="StyleBox" uid="uid://dp4qdn22d3ua6" path="res://style/style_box_thick.tres" id="3_ns1em"]
 [ext_resource type="PackedScene" uid="uid://dkwmaqrde7ne5" path="res://scene/player/slots/slot_row.tscn" id="4_e175g"]
-[ext_resource type="Shader" path="res://shader/3dicon.gdshader" id="5_w68ek"]
+[ext_resource type="Shader" path="res://shader/3dtext.gdshader" id="5_iv5oe"]
 [ext_resource type="AudioStream" uid="uid://dj5d70cqn1f2t" path="res://sound/fx/slotmachine/slotmachine.mp3" id="6_bvdc6"]
+[ext_resource type="Texture2D" uid="uid://dlgpwix6wtodc" path="res://shader/emtpywhitegradient.tres" id="6_falni"]
 [ext_resource type="AudioStream" uid="uid://cv82k8fnavddt" path="res://sound/fx/slotmachine/slotlever.mp3" id="6_pqh6i"]
 [ext_resource type="PackedScene" uid="uid://bepxjqhida0n8" path="res://scene/player/ui/roadButton.tscn" id="6_vjuwu"]
 [ext_resource type="Texture2D" uid="uid://clb0tyqiwegeo" path="res://texture/icon/icons8-gem-48.png" id="7_wnnpu"]
@@ -32,28 +33,22 @@ colors = PackedColorArray(0.0655738, 0.0655738, 0.0655738, 1, 0.877452, 0.877452
 [sub_resource type="GradientTexture2D" id="GradientTexture2D_t0xgh"]
 gradient = SubResource("Gradient_fc7ej")
 
-[sub_resource type="Gradient" id="Gradient_gu60f"]
-offsets = PackedFloat32Array(0, 0.0737705)
-
-[sub_resource type="GradientTexture2D" id="GradientTexture2D_pqt84"]
-gradient = SubResource("Gradient_gu60f")
-
 [sub_resource type="Gradient" id="Gradient_1v6w5"]
 offsets = PackedFloat32Array(0, 0.00819672)
 
 [sub_resource type="GradientTexture2D" id="GradientTexture2D_x6cpn"]
 gradient = SubResource("Gradient_1v6w5")
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_5ojwu"]
-shader = ExtResource("5_w68ek")
-shader_parameter/angle = 6.38
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_waiig"]
+shader = ExtResource("5_iv5oe")
+shader_parameter/angle = 6.26
 shader_parameter/thickness = 2.0
 shader_parameter/scale = 1.0
 shader_parameter/shear = Vector2(0, -0.4)
 shader_parameter/slices = 16
 shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
-shader_parameter/front_tex = SubResource("GradientTexture2D_pqt84")
+shader_parameter/front_tex = ExtResource("6_falni")
 shader_parameter/back_tex = SubResource("GradientTexture2D_t0xgh")
 shader_parameter/side_tex = SubResource("GradientTexture2D_x6cpn")
 shader_parameter/show_bound = false
@@ -89,6 +84,7 @@ theme = ExtResource("2_sqmqf")
 theme_override_styles/panel = ExtResource("3_ns1em")
 
 [node name="Panel" type="Panel" parent="Panel/Panel"]
+self_modulate = Color(1, 1, 1, 0)
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
@@ -100,21 +96,21 @@ grow_horizontal = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_wfh4x")
 
 [node name="Label" type="Label" parent="Panel/Panel/Panel"]
-material = SubResource("ShaderMaterial_5ojwu")
+material = SubResource("ShaderMaterial_waiig")
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -86.5
-offset_top = -10.5
-offset_right = 86.5
-offset_bottom = 10.5
+offset_left = -133.5
+offset_top = -11.5
+offset_right = 133.5
+offset_bottom = 40.5
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_font_sizes/font_size = 24
-text = "Goon Crusher - Level 1"
+theme_override_font_sizes/font_size = 40
+text = "GOONCRUSHER"
 
 [node name="Panel2" type="Panel" parent="Panel/Panel"]
 layout_mode = 1

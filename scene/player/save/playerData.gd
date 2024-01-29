@@ -13,7 +13,7 @@ extends Resource
 		"scene":preload("res://scene/car/sedan/sedan.tscn"),
 	},
 	{	"name":"van",
-		"cost":0,
+		"cost":250,
 		"upgrades":{"traction":0,"engine":0,"armor":0,"steering":0},
 		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,},
 		"scene":preload("res://scene/car/van/van.tscn"),
@@ -90,7 +90,7 @@ extends Resource
 	{
 		"name":"Field of Giants",
 		"image":"res://texture/background/background_grass_3.png",
-		"unlocked":true,
+		"unlocked":false,
 		"scene":"res://scene/level/levels/level_grass_3.tscn",
 		"difficulty":"VERY EASY",
 		"time":"2",

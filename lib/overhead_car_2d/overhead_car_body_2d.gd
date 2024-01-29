@@ -242,11 +242,11 @@ func activeCarEffects(delta):
 		tiremark = {}
 		
 	if _car_input.braking || gear == -1:
-		for i in [$headlamps/taillamps/tailLamp1, $headlamps/taillamps/tailLamp2]:i.energy = 0.4
-		for i in [$headlamps/taillamps/tailLamp3, $headlamps/taillamps/tailLamp4]:i.energy = 0.15
+		for i in [$headlamps/taillamps/tailLamp1, $headlamps/taillamps/tailLamp2]:i.energy = 0.2
+		for i in [$headlamps/taillamps/tailLamp3, $headlamps/taillamps/tailLamp4]:i.energy = 0.1
 	else: 		
-		for i in [$headlamps/taillamps/tailLamp1, $headlamps/taillamps/tailLamp2]:i.energy = 0.1
-		for i in [$headlamps/taillamps/tailLamp3, $headlamps/taillamps/tailLamp4]:i.energy = 0.07
+		for i in [$headlamps/taillamps/tailLamp1, $headlamps/taillamps/tailLamp2]:i.energy = 0.05
+		for i in [$headlamps/taillamps/tailLamp3, $headlamps/taillamps/tailLamp4]:i.energy = 0.03
 
 	#zoom out if going fast
 	if velocity.length() > 450.0 && isPlayer && is_instance_valid($Camera2D):

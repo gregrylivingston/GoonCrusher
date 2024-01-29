@@ -32,6 +32,7 @@ func _process(delta):
 func _on_upgrade_pressed():
 	if SaveManager.requestStatUpgrade(myStat):
 		#sendReward(Root.playerCar)
+		$AudioStreamPlayer3.play()
 		refresh()
 		Root.mainMenu.statUpdatesUiUpdate()
 	

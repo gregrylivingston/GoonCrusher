@@ -8,6 +8,7 @@ func _ready():
 	material.set_shader_parameter("angle" ,randf_range(0,6))
 	material.set_shader_parameter("front_tex" , texture)
 	material.set_shader_parameter("back_tex" ,  texture )
+	material.set_shader_parameter("side_tex" ,  texture )
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):

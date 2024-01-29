@@ -1,13 +1,17 @@
-[gd_scene load_steps=4 format=3 uid="uid://maftjaqqaasp"]
+[gd_scene load_steps=5 format=3 uid="uid://maftjaqqaasp"]
 
 [ext_resource type="PackedScene" uid="uid://bepxjqhida0n8" path="res://scene/player/ui/roadButton.tscn" id="1_w3c8s"]
 [ext_resource type="Texture2D" uid="uid://w03tvhxtmrv4" path="res://texture/icon/icons8-coin-48 (1).png" id="2_v7bbs"]
 [ext_resource type="Script" path="res://scene/player/menu/main/statUpgradeButton.gd" id="3_57udn"]
+[ext_resource type="AudioStream" uid="uid://78ld7kj5444p" path="res://sound/fx/short-success-sound-glockenspie.mp3" id="4_liifr"]
 
 [node name="statUpgrade" instance=ExtResource("1_w3c8s")]
 text = "300   +1 Armor"
 icon = ExtResource("2_v7bbs")
 script = ExtResource("3_57udn")
 myStat = ""
+
+[node name="AudioStreamPlayer3" type="AudioStreamPlayer" parent="." index="2"]
+stream = ExtResource("4_liifr")
 
 [connection signal="pressed" from="." to="." method="_on_upgrade_pressed"]

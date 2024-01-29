@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3 uid="uid://btm8fh8tutk2x"]
+[gd_scene load_steps=23 format=3 uid="uid://btm8fh8tutk2x"]
 
 [ext_resource type="Theme" uid="uid://co40pijjc7hbw" path="res://style/roadRogue.tres" id="1_badde"]
 [ext_resource type="Script" path="res://scene/player/menu/main/main2.gd" id="1_cc7gi"]
@@ -10,6 +10,8 @@
 [ext_resource type="FontFile" uid="uid://hf5rdg67jcwc" path="res://addons/gut/fonts/AnonymousPro-Italic.ttf" id="4_b1dqc"]
 [ext_resource type="PackedScene" uid="uid://bepxjqhida0n8" path="res://scene/player/ui/roadButton.tscn" id="4_f12ks"]
 [ext_resource type="FontFile" uid="uid://c106tp6lo578e" path="res://style/font/Tektur/Tektur-Bold.ttf" id="5_00nh6"]
+[ext_resource type="Shader" path="res://shader/3dtext.gdshader" id="9_78e4l"]
+[ext_resource type="Texture2D" uid="uid://dlgpwix6wtodc" path="res://shader/emtpywhitegradient.tres" id="10_8o5bn"]
 [ext_resource type="Texture2D" uid="uid://w03tvhxtmrv4" path="res://texture/icon/icons8-coin-48 (1).png" id="11_1oi8i"]
 [ext_resource type="PackedScene" uid="uid://clx3q1jksnuoc" path="res://scene/player/menu/main/car_stats_container.tscn" id="11_wos04"]
 [ext_resource type="AudioStream" uid="uid://chsan1o1ku2c7" path="res://sound/music/abstract-world-127012.mp3" id="12_3e52h"]
@@ -26,6 +28,26 @@ shader = ExtResource("3_w77gt")
 shader_parameter/strength = 1.0
 shader_parameter/speed = 0.15
 shader_parameter/angle = 125.0
+
+[sub_resource type="Gradient" id="Gradient_hfest"]
+colors = PackedColorArray(0, 0, 0, 1, 0, 0, 0, 1)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_pwab5"]
+gradient = SubResource("Gradient_hfest")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_jhcqm"]
+shader = ExtResource("9_78e4l")
+shader_parameter/angle = 6.8
+shader_parameter/thickness = 6.0
+shader_parameter/scale = 1.0
+shader_parameter/shear = Vector2(0, -0.4)
+shader_parameter/slices = 64
+shader_parameter/outline = true
+shader_parameter/outline_width = 2.0
+shader_parameter/front_tex = ExtResource("10_8o5bn")
+shader_parameter/back_tex = ExtResource("10_8o5bn")
+shader_parameter/side_tex = SubResource("GradientTexture1D_pwab5")
+shader_parameter/show_bound = false
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_nkj8d"]
 
@@ -102,7 +124,7 @@ offset_left = 74.0
 offset_top = 228.0
 offset_right = 502.0
 offset_bottom = 382.0
-theme_override_constants/separation = -15
+theme_override_constants/separation = -5
 
 [node name="Label" type="Label" parent="Panel/VBoxContainer"]
 material = SubResource("ShaderMaterial_noll7")
@@ -148,11 +170,12 @@ text = "PRIZE"
 horizontal_alignment = 2
 
 [node name="Label3" type="Label" parent="Panel/VBoxContainer"]
+material = SubResource("ShaderMaterial_jhcqm")
 layout_mode = 2
 size_flags_vertical = 2
 theme_override_colors/font_color = Color(0.92549, 0.603922, 0.160784, 1)
 theme_override_colors/font_outline_color = Color(0.658824, 0.12549, 0.101961, 1)
-theme_override_constants/outline_size = 25
+theme_override_constants/outline_size = 20
 theme_override_fonts/font = ExtResource("5_00nh6")
 theme_override_font_sizes/font_size = 60
 text = "GOONCRUSHER"

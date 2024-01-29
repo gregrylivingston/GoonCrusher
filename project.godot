@@ -28,9 +28,9 @@ SaveManager="*res://scripts/global/saveManager.gd"
 
 [display]
 
-window/size/viewport_width=1600
-window/size/viewport_height=900
-window/size/mode=2
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/size/mode=3
 
 [editor_plugins]
 
@@ -106,4 +106,3 @@ Brake={
 [rendering]
 
 renderer/rendering_method="mobile"
-environment/defaults/default_clear_color=Color(1, 1, 1, 1)
