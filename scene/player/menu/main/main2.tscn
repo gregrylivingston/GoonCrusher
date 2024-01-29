@@ -1,4 +1,4 @@
-[gd_scene load_steps=23 format=3 uid="uid://btm8fh8tutk2x"]
+[gd_scene load_steps=26 format=3 uid="uid://btm8fh8tutk2x"]
 
 [ext_resource type="Theme" uid="uid://co40pijjc7hbw" path="res://style/roadRogue.tres" id="1_badde"]
 [ext_resource type="Script" path="res://scene/player/menu/main/main2.gd" id="1_cc7gi"]
@@ -10,6 +10,7 @@
 [ext_resource type="FontFile" uid="uid://hf5rdg67jcwc" path="res://addons/gut/fonts/AnonymousPro-Italic.ttf" id="4_b1dqc"]
 [ext_resource type="PackedScene" uid="uid://bepxjqhida0n8" path="res://scene/player/ui/roadButton.tscn" id="4_f12ks"]
 [ext_resource type="FontFile" uid="uid://c106tp6lo578e" path="res://style/font/Tektur/Tektur-Bold.ttf" id="5_00nh6"]
+[ext_resource type="Material" uid="uid://d4nw1uchte7mv" path="res://scene/player/menu/main/3dText_Common.tres" id="8_vdjnf"]
 [ext_resource type="Shader" path="res://shader/3dtext.gdshader" id="9_78e4l"]
 [ext_resource type="Texture2D" uid="uid://dlgpwix6wtodc" path="res://shader/emtpywhitegradient.tres" id="10_8o5bn"]
 [ext_resource type="Texture2D" uid="uid://w03tvhxtmrv4" path="res://texture/icon/icons8-coin-48 (1).png" id="11_1oi8i"]
@@ -49,7 +50,25 @@ shader_parameter/back_tex = ExtResource("10_8o5bn")
 shader_parameter/side_tex = SubResource("GradientTexture1D_pwab5")
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_nkj8d"]
+[sub_resource type="Gradient" id="Gradient_rrvk5"]
+colors = PackedColorArray(0, 0, 0, 1, 0, 0, 0, 1)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_hpif0"]
+gradient = SubResource("Gradient_rrvk5")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_k3hcm"]
+shader = ExtResource("9_78e4l")
+shader_parameter/angle = 12.0
+shader_parameter/thickness = 5.0
+shader_parameter/scale = 1.0
+shader_parameter/shear = Vector2(0, -0.2)
+shader_parameter/slices = 32
+shader_parameter/outline = true
+shader_parameter/outline_width = 2.0
+shader_parameter/front_tex = ExtResource("11_1oi8i")
+shader_parameter/back_tex = ExtResource("11_1oi8i")
+shader_parameter/side_tex = SubResource("GradientTexture1D_hpif0")
+shader_parameter/show_bound = false
 
 [node name="Main2" type="CanvasLayer"]
 script = ExtResource("1_cc7gi")
@@ -121,9 +140,9 @@ theme_override_styles/panel = ExtResource("2_qamlo")
 [node name="VBoxContainer" type="VBoxContainer" parent="Panel"]
 layout_mode = 0
 offset_left = 74.0
-offset_top = 228.0
-offset_right = 502.0
-offset_bottom = 382.0
+offset_top = 204.0
+offset_right = 503.0
+offset_bottom = 373.0
 theme_override_constants/separation = -5
 
 [node name="Label" type="Label" parent="Panel/VBoxContainer"]
@@ -139,23 +158,25 @@ layout_mode = 2
 size_flags_vertical = 10
 
 [node name="Label" type="Label" parent="Panel/VBoxContainer/HBoxContainer"]
+material = ExtResource("8_vdjnf")
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.92549, 0.603922, 0.160784, 1)
 theme_override_colors/font_outline_color = Color(0.658824, 0.12549, 0.101961, 1)
 theme_override_constants/outline_size = 20
 theme_override_fonts/font = ExtResource("4_b1dqc")
-theme_override_font_sizes/font_size = 65
+theme_override_font_sizes/font_size = 60
 text = "RIDE"
 
 [node name="Label2" type="Label" parent="Panel/VBoxContainer/HBoxContainer"]
+material = ExtResource("8_vdjnf")
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.92549, 0.603922, 0.160784, 1)
 theme_override_colors/font_outline_color = Color(0.658824, 0.12549, 0.101961, 1)
 theme_override_constants/outline_size = 20
 theme_override_fonts/font = ExtResource("4_b1dqc")
-theme_override_font_sizes/font_size = 65
+theme_override_font_sizes/font_size = 60
 text = "'N'"
 horizontal_alignment = 1
 
@@ -165,7 +186,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/outline_size = 10
 theme_override_fonts/font = ExtResource("4_b1dqc")
-theme_override_font_sizes/font_size = 65
+theme_override_font_sizes/font_size = 70
 text = "PRIZE"
 horizontal_alignment = 2
 
@@ -192,13 +213,15 @@ text = "PRIZE"
 [node name="mainMenuPanel" type="Panel" parent="."]
 unique_name_in_owner = true
 self_modulate = Color(1, 1, 1, 0)
-clip_contents = true
-anchors_preset = 9
+custom_minimum_size = Vector2(0, 300)
+anchors_preset = -1
+anchor_top = 0.5
+anchor_right = 0.03
 anchor_bottom = 1.0
-offset_left = 81.0
-offset_top = 473.0
-offset_right = 642.0
-offset_bottom = -95.0
+offset_left = 115.0
+offset_top = 15.0
+offset_right = 603.6
+offset_bottom = -37.0
 grow_vertical = 2
 theme = ExtResource("1_badde")
 
@@ -213,31 +236,102 @@ offset_right = -10.0
 offset_bottom = -14.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 20
 
 [node name="HBoxContainer2" type="HBoxContainer" parent="mainMenuPanel/VBoxContainer"]
 layout_mode = 2
-size_flags_vertical = 3
+size_flags_vertical = 0
 
-[node name="levelSelect" parent="mainMenuPanel/VBoxContainer/HBoxContainer2" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
-unique_name_in_owner = true
-material = SubResource("ShaderMaterial_nkj8d")
+[node name="HBoxContainer" type="HBoxContainer" parent="mainMenuPanel/VBoxContainer/HBoxContainer2"]
+custom_minimum_size = Vector2(0, 75)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_font_sizes/font_size = 50
-text = "  RIDE"
+theme = ExtResource("1_badde")
+theme_override_constants/separation = 20
 
-[node name="unlock" parent="mainMenuPanel/VBoxContainer/HBoxContainer2" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
+[node name="previousCarButton" type="Button" parent="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer"]
+unique_name_in_owner = true
+material = ExtResource("8_vdjnf")
+custom_minimum_size = Vector2(30, 30)
+layout_mode = 2
+size_flags_horizontal = 8
+size_flags_vertical = 4
+theme = ExtResource("1_badde")
+theme_override_font_sizes/font_size = 30
+text = "<"
+
+[node name="unlock" parent="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
+unique_name_in_owner = true
+material = ExtResource("8_vdjnf")
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 60
+text = ""
+
+[node name="HBoxContainer" type="HBoxContainer" parent="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer/unlock"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TextureRect" type="TextureRect" parent="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer/unlock/HBoxContainer"]
+material = SubResource("ShaderMaterial_k3hcm")
+layout_mode = 2
+texture = ExtResource("11_1oi8i")
+stretch_mode = 5
+
+[node name="unlockCost" type="Label" parent="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer/unlock/HBoxContainer"]
+unique_name_in_owner = true
+material = ExtResource("8_vdjnf")
+layout_mode = 2
+theme_override_font_sizes/font_size = 50
+text = "UNLOCK"
+
+[node name="levelSelect" parent="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
 visible = false
-material = SubResource("ShaderMaterial_nkj8d")
+material = ExtResource("8_vdjnf")
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_font_sizes/font_size = 50
-text = "  UNLOCK"
-icon = ExtResource("11_1oi8i")
+text = ""
+
+[node name="driverName" type="Label" parent="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer/levelSelect"]
+unique_name_in_owner = true
+material = ExtResource("8_vdjnf")
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -114.0
+offset_top = -32.5
+offset_right = 114.0
+offset_bottom = 32.5
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_badde")
+theme_override_font_sizes/font_size = 60
+text = "ANTHONY"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="nextCarButton" type="Button" parent="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer"]
+unique_name_in_owner = true
+material = ExtResource("8_vdjnf")
+custom_minimum_size = Vector2(30, 30)
+layout_mode = 2
+size_flags_horizontal = 8
+size_flags_vertical = 4
+theme = ExtResource("1_badde")
+theme_override_font_sizes/font_size = 30
+text = ">"
 
 [node name="begin" parent="mainMenuPanel/VBoxContainer/HBoxContainer2" groups=["levelMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
@@ -245,7 +339,7 @@ visible = false
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_font_sizes/font_size = 50
+theme_override_font_sizes/font_size = 60
 text = "  Begin"
 
 [node name="VSeparator" type="VSeparator" parent="mainMenuPanel/VBoxContainer/HBoxContainer2"]
@@ -255,18 +349,20 @@ layout_mode = 2
 
 [node name="HBoxContainer3" type="HBoxContainer" parent="mainMenuPanel/VBoxContainer"]
 layout_mode = 2
-size_flags_vertical = 3
+size_flags_vertical = 0
 
 [node name="VSeparator3" type="VSeparator" parent="mainMenuPanel/VBoxContainer/HBoxContainer3"]
 self_modulate = Color(1, 1, 1, 0)
-custom_minimum_size = Vector2(33, 0)
+custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
 
 [node name="recordsButton" parent="mainMenuPanel/VBoxContainer/HBoxContainer3" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
+material = ExtResource("8_vdjnf")
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
+theme_override_font_sizes/font_size = 40
 text = "  Records"
 
 [node name="backButton" parent="mainMenuPanel/VBoxContainer/HBoxContainer3" groups=["levelMenu"] instance=ExtResource("4_f12ks")]
@@ -275,6 +371,7 @@ visible = false
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
+theme_override_font_sizes/font_size = 40
 text = "  Return"
 
 [node name="VSeparator4" type="VSeparator" parent="mainMenuPanel/VBoxContainer/HBoxContainer3"]
@@ -284,18 +381,20 @@ layout_mode = 2
 
 [node name="HBoxContainer5" type="HBoxContainer" parent="mainMenuPanel/VBoxContainer"]
 layout_mode = 2
-size_flags_vertical = 3
+size_flags_vertical = 0
 
 [node name="VSeparator3" type="VSeparator" parent="mainMenuPanel/VBoxContainer/HBoxContainer5"]
 self_modulate = Color(1, 1, 1, 0)
-custom_minimum_size = Vector2(66, 0)
+custom_minimum_size = Vector2(110, 0)
 layout_mode = 2
 
 [node name="settingsButton" parent="mainMenuPanel/VBoxContainer/HBoxContainer5" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
+material = ExtResource("8_vdjnf")
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
+theme_override_font_sizes/font_size = 40
 text = "  Settings"
 
 [node name="VSeparator4" type="VSeparator" parent="mainMenuPanel/VBoxContainer/HBoxContainer5"]
@@ -305,18 +404,20 @@ layout_mode = 2
 
 [node name="HBoxContainer4" type="HBoxContainer" parent="mainMenuPanel/VBoxContainer"]
 layout_mode = 2
-size_flags_vertical = 3
+size_flags_vertical = 0
 
 [node name="VSeparator2" type="VSeparator" parent="mainMenuPanel/VBoxContainer/HBoxContainer4"]
 self_modulate = Color(1, 1, 1, 0)
-custom_minimum_size = Vector2(100, 0)
+custom_minimum_size = Vector2(140, 0)
 layout_mode = 2
 
 [node name="quitButton" parent="mainMenuPanel/VBoxContainer/HBoxContainer4" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
+material = ExtResource("8_vdjnf")
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
+theme_override_font_sizes/font_size = 40
 text = "  Quit"
 
 [node name="carStatsContainer" parent="." groups=["characterMenu"] instance=ExtResource("11_wos04")]
@@ -354,56 +455,6 @@ offset_right = -72.0
 offset_bottom = -46.0
 grow_horizontal = 2
 grow_vertical = 0
-
-[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer2"]
-custom_minimum_size = Vector2(0, 75)
-layout_mode = 2
-size_flags_vertical = 3
-theme = ExtResource("1_badde")
-theme_override_constants/separation = 20
-
-[node name="previousCarButton" type="Button" parent="VBoxContainer2/HBoxContainer"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(50, 50)
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 4
-theme = ExtResource("1_badde")
-text = "<"
-
-[node name="Panel" type="Panel" parent="VBoxContainer2/HBoxContainer"]
-custom_minimum_size = Vector2(500, 0)
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="driverName" type="Label" parent="VBoxContainer2/HBoxContainer/Panel"]
-unique_name_in_owner = true
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -137.0
-offset_top = -39.0
-offset_right = 137.0
-offset_bottom = 39.0
-grow_horizontal = 2
-grow_vertical = 2
-theme = ExtResource("1_badde")
-theme_override_font_sizes/font_size = 50
-text = "ANTHONY"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="nextCarButton" type="Button" parent="VBoxContainer2/HBoxContainer"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(50, 50)
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 4
-theme = ExtResource("1_badde")
-text = ">"
 
 [node name="levelDifficultyPanel" type="HBoxContainer" parent="VBoxContainer2"]
 modulate = Color(1, 1, 1, 0)
@@ -446,12 +497,12 @@ stretch_mode = 5
 layout_mode = 2
 size_flags_horizontal = 3
 
-[connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer2/levelSelect" to="." method="_on_level_select_pressed"]
-[connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer2/unlock" to="." method="_on_unlock_pressed"]
+[connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer/previousCarButton" to="." method="_on_previous_car_button_pressed"]
+[connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer/unlock" to="." method="_on_unlock_pressed"]
+[connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer/levelSelect" to="." method="_on_level_select_pressed"]
+[connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer/nextCarButton" to="." method="_on_next_car_button_pressed"]
 [connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer2/begin" to="." method="_on_begin_pressed"]
 [connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer3/recordsButton" to="." method="_on_records_button_pressed"]
 [connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer3/backButton" to="." method="_on_back_button_pressed"]
 [connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer5/settingsButton" to="." method="_on_settings_button_pressed"]
 [connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer4/quitButton" to="." method="_on_quit_button_pressed"]
-[connection signal="pressed" from="VBoxContainer2/HBoxContainer/previousCarButton" to="." method="_on_previous_car_button_pressed"]
-[connection signal="pressed" from="VBoxContainer2/HBoxContainer/nextCarButton" to="." method="_on_next_car_button_pressed"]

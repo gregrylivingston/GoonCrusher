@@ -34,3 +34,5 @@ res://scene/level/terrain/landscapeMap2.tscn
 res://scene/level/terrain/landscapeMap3.tscn
 res://scene/level/terrain/landscapeMap4.tscn
 res://scene/scenery/groundarea/sand.tscn
+res://scene/player/menu/main/3dText_Common.tres
+res://scene/player/menu/main/main2.gd

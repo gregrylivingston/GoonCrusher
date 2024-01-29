@@ -1,0 +1,14 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3 uid="uid://d4nw1uchte7mv"]
+
+[ext_resource type="Shader" path="res://shader/3dtext.gdshader" id="1_nbo5a"]
+
+[resource]
+shader = ExtResource("1_nbo5a")
+shader_parameter/angle = 0.5
+shader_parameter/thickness = 5.0
+shader_parameter/scale = 1.0
+shader_parameter/shear = Vector2(0, -0.2)
+shader_parameter/slices = 16
+shader_parameter/outline = true
+shader_parameter/outline_width = 2.0
+shader_parameter/show_bound = false
