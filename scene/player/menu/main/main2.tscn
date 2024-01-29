@@ -51,7 +51,7 @@ shader_parameter/back_tex = ExtResource("10_8o5bn")
 shader_parameter/side_tex = SubResource("GradientTexture1D_pwab5")
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_vmpra"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_c7dri"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -63,7 +63,7 @@ shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_7i4vk"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_gvgw8"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -75,7 +75,7 @@ shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_yro2b"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_xl3p8"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -87,7 +87,7 @@ shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_kwypi"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_iwk32"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -99,7 +99,7 @@ shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_4ryg1"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_bg0ji"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -291,20 +291,14 @@ size_flags_vertical = 3
 theme = ExtResource("1_badde")
 theme_override_constants/separation = 20
 
-[node name="previousCarButton" type="Button" parent="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer"]
-unique_name_in_owner = true
+[node name="previous_car_button" parent="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer" instance=ExtResource("4_f12ks")]
 material = ExtResource("8_vdjnf")
-custom_minimum_size = Vector2(30, 30)
 layout_mode = 2
-size_flags_horizontal = 8
-size_flags_vertical = 4
-theme = ExtResource("1_badde")
-theme_override_font_sizes/font_size = 30
 text = "<"
 
 [node name="unlock" parent="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
-material = SubResource("ShaderMaterial_vmpra")
+material = SubResource("ShaderMaterial_c7dri")
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -323,22 +317,16 @@ grow_vertical = 2
 [node name="levelSelect" parent="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
 visible = false
-material = SubResource("ShaderMaterial_7i4vk")
+material = SubResource("ShaderMaterial_gvgw8")
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_font_sizes/font_size = 50
 text = ""
 
-[node name="nextCarButton" type="Button" parent="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer"]
-unique_name_in_owner = true
+[node name="next_car_button" parent="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer" instance=ExtResource("4_f12ks")]
 material = ExtResource("8_vdjnf")
-custom_minimum_size = Vector2(30, 30)
 layout_mode = 2
-size_flags_horizontal = 8
-size_flags_vertical = 4
-theme = ExtResource("1_badde")
-theme_override_font_sizes/font_size = 30
 text = ">"
 
 [node name="begin" parent="mainMenuPanel/VBoxContainer/HBoxContainer2" groups=["levelMenu"] instance=ExtResource("4_f12ks")]
@@ -366,7 +354,7 @@ layout_mode = 2
 
 [node name="recordsButton" parent="mainMenuPanel/VBoxContainer/HBoxContainer3" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
-material = SubResource("ShaderMaterial_yro2b")
+material = SubResource("ShaderMaterial_xl3p8")
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -398,7 +386,7 @@ layout_mode = 2
 
 [node name="settingsButton" parent="mainMenuPanel/VBoxContainer/HBoxContainer5" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
-material = SubResource("ShaderMaterial_kwypi")
+material = SubResource("ShaderMaterial_iwk32")
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -421,7 +409,7 @@ layout_mode = 2
 
 [node name="quitButton" parent="mainMenuPanel/VBoxContainer/HBoxContainer4" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
-material = SubResource("ShaderMaterial_4ryg1")
+material = SubResource("ShaderMaterial_bg0ji")
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -501,10 +489,10 @@ stretch_mode = 5
 layout_mode = 2
 size_flags_horizontal = 3
 
-[connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer/previousCarButton" to="." method="_on_previous_car_button_pressed"]
+[connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer/previous_car_button" to="." method="_on_previous_car_button_pressed"]
 [connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer/unlock" to="." method="_on_unlock_pressed"]
 [connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer/levelSelect" to="." method="_on_level_select_pressed"]
-[connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer/nextCarButton" to="." method="_on_next_car_button_pressed"]
+[connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer/next_car_button" to="." method="_on_next_car_button_pressed"]
 [connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer2/begin" to="." method="_on_begin_pressed"]
 [connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer3/recordsButton" to="." method="_on_records_button_pressed"]
 [connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer3/backButton" to="." method="_on_back_button_pressed"]
