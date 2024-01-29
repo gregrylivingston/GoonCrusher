@@ -1,5 +1,7 @@
 class_name roadButton extends Button
 
+var animTransitionTimer = 0.15
+@export var canGrabFocus: bool = true
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
@@ -21,8 +23,10 @@ func _process(delta):
 
 
 func _on_mouse_entered():
+	if canGrabFocus: grab_focus()
+	get_tree().create_tween().tween_property(self , "scale", Vector2(1.0,1.1),  animTransitionTimer)
 	$AudioStreamPlayer.play()
-	get_tree().create_tween().tween_method(set3dAnimationAngle, PI/8, PI , 0.5)
+	get_tree().create_tween().tween_method(set3dAnimationAngle, PI/8, PI , animTransitionTimer)
 	#set3dAnimationAngle(PI)
 
 func set3dAnimationAngle(angle):
@@ -48,9 +52,15 @@ func updateIcon(newIcon):
 
 
 func _on_focus_entered():
-	get_tree().create_tween().tween_method(set3dAnimationAngle, PI/8, PI , 0.5)
+	get_tree().create_tween().tween_method(set3dAnimationAngle, PI/8, PI , animTransitionTimer)
 
 
+func _on_focus_exited():
+	get_tree().create_tween().tween_method(set3dAnimationAngle, PI, PI/8 , animTransitionTimer)
+	get_tree().create_tween().tween_property(self , "scale", Vector2(1.0,1.0),  animTransitionTimer)
 
 func _on_mouse_exited():
-	get_tree().create_tween().tween_method(set3dAnimationAngle, PI, PI/8 , 0.5)
+	if not has_focus():
+		get_tree().create_tween().tween_method(set3dAnimationAngle, PI, PI/8 , animTransitionTimer)
+		get_tree().create_tween().tween_property(self , "scale", Vector2(1.0,1.0),  animTransitionTimer)
+

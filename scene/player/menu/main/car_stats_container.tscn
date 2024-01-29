@@ -28,24 +28,28 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 myIcon = ExtResource("5_1k2du")
+canGrabFocus = null
 
 [node name="engine" parent="HBoxContainer" instance=ExtResource("1_awv6k")]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 myIcon = ExtResource("4_3l7yx")
+canGrabFocus = null
 
 [node name="traction" parent="HBoxContainer" instance=ExtResource("1_awv6k")]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 myIcon = ExtResource("3_gtqp7")
+canGrabFocus = null
 
 [node name="steering" parent="HBoxContainer" instance=ExtResource("1_awv6k")]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 myIcon = ExtResource("2_ekr1k")
+canGrabFocus = null
 
 [node name="VSeparator" type="VSeparator" parent="HBoxContainer"]
 self_modulate = Color(1, 1, 1, 0)
@@ -58,6 +62,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 myIcon = ExtResource("9_lbbgn")
+canGrabFocus = null
 
 [node name="HBoxContainer2" type="HBoxContainer" parent="."]
 layout_mode = 2
@@ -112,6 +117,7 @@ layout_mode = 2
 size_flags_horizontal = 10
 size_flags_vertical = 3
 myIcon = ExtResource("8_5isf4")
+canGrabFocus = null
 
 [connection signal="property_list_changed" from="HBoxContainer2/statUpgrade" to="HBoxContainer2/statUpgrade" method="_on_property_list_changed"]
 [connection signal="property_list_changed" from="HBoxContainer2/statUpgrade2" to="HBoxContainer2/statUpgrade2" method="_on_property_list_changed"]

@@ -1,4 +1,4 @@
-[gd_scene load_steps=23 format=3 uid="uid://btm8fh8tutk2x"]
+[gd_scene load_steps=29 format=3 uid="uid://btm8fh8tutk2x"]
 
 [ext_resource type="Theme" uid="uid://co40pijjc7hbw" path="res://style/roadRogue.tres" id="1_badde"]
 [ext_resource type="Script" path="res://scene/player/menu/main/main2.gd" id="1_cc7gi"]
@@ -11,6 +11,7 @@
 [ext_resource type="PackedScene" uid="uid://bepxjqhida0n8" path="res://scene/player/ui/roadButton.tscn" id="4_f12ks"]
 [ext_resource type="FontFile" uid="uid://c106tp6lo578e" path="res://style/font/Tektur/Tektur-Bold.ttf" id="5_00nh6"]
 [ext_resource type="Material" uid="uid://d4nw1uchte7mv" path="res://scene/player/menu/main/3dText_Common.tres" id="8_vdjnf"]
+[ext_resource type="Shader" path="res://shader/3dtext.gdshader" id="9_78e4l"]
 [ext_resource type="Texture2D" uid="uid://dlgpwix6wtodc" path="res://shader/emtpywhitegradient.tres" id="10_8o5bn"]
 [ext_resource type="Shader" uid="uid://c2jd3wjben4p2" path="res://shader/3d_Text_HighlightRight.tres" id="10_l1x4e"]
 [ext_resource type="Texture2D" uid="uid://w03tvhxtmrv4" path="res://texture/icon/icons8-coin-48 (1).png" id="11_1oi8i"]
@@ -48,6 +49,66 @@ shader_parameter/outline_width = 2.0
 shader_parameter/front_tex = ExtResource("10_8o5bn")
 shader_parameter/back_tex = ExtResource("10_8o5bn")
 shader_parameter/side_tex = SubResource("GradientTexture1D_pwab5")
+shader_parameter/show_bound = false
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_vmpra"]
+resource_local_to_scene = true
+shader = ExtResource("9_78e4l")
+shader_parameter/angle = 0.6
+shader_parameter/thickness = 5.0
+shader_parameter/scale = 1.0
+shader_parameter/shear = Vector2(0, -0.2)
+shader_parameter/slices = 16
+shader_parameter/outline = true
+shader_parameter/outline_width = 2.0
+shader_parameter/show_bound = false
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_7i4vk"]
+resource_local_to_scene = true
+shader = ExtResource("9_78e4l")
+shader_parameter/angle = 0.6
+shader_parameter/thickness = 5.0
+shader_parameter/scale = 1.0
+shader_parameter/shear = Vector2(0, -0.2)
+shader_parameter/slices = 16
+shader_parameter/outline = true
+shader_parameter/outline_width = 2.0
+shader_parameter/show_bound = false
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_yro2b"]
+resource_local_to_scene = true
+shader = ExtResource("9_78e4l")
+shader_parameter/angle = 0.6
+shader_parameter/thickness = 5.0
+shader_parameter/scale = 1.0
+shader_parameter/shear = Vector2(0, -0.2)
+shader_parameter/slices = 16
+shader_parameter/outline = true
+shader_parameter/outline_width = 2.0
+shader_parameter/show_bound = false
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_kwypi"]
+resource_local_to_scene = true
+shader = ExtResource("9_78e4l")
+shader_parameter/angle = 0.6
+shader_parameter/thickness = 5.0
+shader_parameter/scale = 1.0
+shader_parameter/shear = Vector2(0, -0.2)
+shader_parameter/slices = 16
+shader_parameter/outline = true
+shader_parameter/outline_width = 2.0
+shader_parameter/show_bound = false
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_4ryg1"]
+resource_local_to_scene = true
+shader = ExtResource("9_78e4l")
+shader_parameter/angle = 0.6
+shader_parameter/thickness = 5.0
+shader_parameter/scale = 1.0
+shader_parameter/shear = Vector2(0, -0.2)
+shader_parameter/slices = 16
+shader_parameter/outline = true
+shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
 [node name="Main2" type="CanvasLayer"]
@@ -243,7 +304,7 @@ text = "<"
 
 [node name="unlock" parent="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
-material = ExtResource("8_vdjnf")
+material = SubResource("ShaderMaterial_vmpra")
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -262,33 +323,12 @@ grow_vertical = 2
 [node name="levelSelect" parent="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
 visible = false
-material = ExtResource("8_vdjnf")
+material = SubResource("ShaderMaterial_7i4vk")
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_font_sizes/font_size = 50
 text = ""
-
-[node name="driverName" type="Label" parent="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer/levelSelect"]
-unique_name_in_owner = true
-material = ExtResource("8_vdjnf")
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -114.0
-offset_top = -32.5
-offset_right = 114.0
-offset_bottom = 32.5
-grow_horizontal = 2
-grow_vertical = 2
-theme = ExtResource("1_badde")
-theme_override_font_sizes/font_size = 60
-text = "ANTHONY"
-horizontal_alignment = 1
-vertical_alignment = 1
 
 [node name="nextCarButton" type="Button" parent="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer"]
 unique_name_in_owner = true
@@ -326,7 +366,7 @@ layout_mode = 2
 
 [node name="recordsButton" parent="mainMenuPanel/VBoxContainer/HBoxContainer3" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
-material = ExtResource("8_vdjnf")
+material = SubResource("ShaderMaterial_yro2b")
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -358,7 +398,7 @@ layout_mode = 2
 
 [node name="settingsButton" parent="mainMenuPanel/VBoxContainer/HBoxContainer5" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
-material = ExtResource("8_vdjnf")
+material = SubResource("ShaderMaterial_kwypi")
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -381,7 +421,7 @@ layout_mode = 2
 
 [node name="quitButton" parent="mainMenuPanel/VBoxContainer/HBoxContainer4" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
-material = ExtResource("8_vdjnf")
+material = SubResource("ShaderMaterial_4ryg1")
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
