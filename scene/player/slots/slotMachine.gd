@@ -117,12 +117,21 @@ func _on_claim_button_pressed():
 
 	myBackground.destory()
 	visible = false
+	var myIconArray: Array[Texture2D] = []   #used to pass icons to splash
 	for slot in [$Panel/Panel/Panel2/HBoxContainer/slotRow, $Panel/Panel/Panel2/HBoxContainer/slotRow2, $Panel/Panel/Panel2/HBoxContainer/slotRow3]:
+		myIconArray.push_back( slot.getActiveTexture() )
 		var newPowerup = Root.getSpecificPowerup(slot.getActiveType())
 		newPowerup.global_position = Root.playerCar.global_position
 		newPowerup.process_mode = Node.PROCESS_MODE_ALWAYS
 		Root.levelRoot.add_child(newPowerup)
 		newPowerup.sendReward(Root.playerCar, false)
+	
+	var splashScreen = load("res://scene/player/menu/splash/splashscreen_1.tscn").instantiate()
+	splashScreen.myIcons = myIconArray
+	Root.levelRoot.add_child(splashScreen)
+
+	splashScreen.startExplosion()
+	
 	Root.levelRoot.playMusic()
 	Root.playerCar.add_child(countdownScreen.instantiate())
 	queue_free()

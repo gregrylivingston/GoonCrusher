@@ -1,3 +1,4 @@
+res://shader
 D:/Godot/AutoSurvivor
 res://texture/spritesheet
 res://scene/fx/explosion
@@ -12,7 +13,6 @@ res://scene/level/levels
 res://scene/player/menu/main
 res://sound
 res://style
-res://shader
 res://scene/level
 res://texture/animation
 res://scene/player/slots

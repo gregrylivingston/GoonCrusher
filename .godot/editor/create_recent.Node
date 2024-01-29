@@ -1,3 +1,7 @@
+AudioStreamPlayer
+CanvasLayer
+Sprite2D
+Button
 AnimatedSprite2D
 PointLight2D
 DirectionalLight2D
@@ -6,10 +10,6 @@ TileMap
 CollisionPolygon2D
 Label
 Panel
-CanvasLayer
-Button
 StaticBody2D
 Area2D
 RayCast2D
-CharacterBody2D
-Polygon2D

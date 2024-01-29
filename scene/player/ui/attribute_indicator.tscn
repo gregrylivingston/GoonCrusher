@@ -1,38 +1,14 @@
-[gd_scene load_steps=4 format=3 uid="uid://i0goedbwsro6"]
+[gd_scene load_steps=3 format=3 uid="uid://i0goedbwsro6"]
 
 [ext_resource type="Theme" uid="uid://co40pijjc7hbw" path="res://style/roadRogue.tres" id="1_cpiy8"]
 [ext_resource type="Script" path="res://scene/player/ui/attribute_indicator.gd" id="1_enit6"]
-[ext_resource type="StyleBox" uid="uid://dl1e0qtgp13cj" path="res://style/style_box_basic.tres" id="1_jvjwu"]
 
-[node name="attributeIndicator" type="Panel"]
+[node name="attributeIndicator" type="Button"]
 custom_minimum_size = Vector2(52, 52)
 offset_right = 93.0
 offset_bottom = 52.0
 theme = ExtResource("1_cpiy8")
-theme_override_styles/panel = ExtResource("1_jvjwu")
-script = ExtResource("1_enit6")
-
-[node name="HBoxContainer" type="HBoxContainer" parent="."]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 6.0
-offset_top = 4.0
-offset_right = -8.0
-offset_bottom = -8.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="icon" type="TextureRect" parent="HBoxContainer"]
-custom_minimum_size = Vector2(40, 40)
-layout_mode = 2
-size_flags_horizontal = 6
-expand_mode = 1
-stretch_mode = 5
-
-[node name="Label2" type="Label" parent="HBoxContainer"]
-layout_mode = 2
-size_flags_horizontal = 6
 theme_override_font_sizes/font_size = 30
-text = "12"
+alignment = 2
+expand_icon = true
+script = ExtResource("1_enit6")

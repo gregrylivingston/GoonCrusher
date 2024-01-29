@@ -1,10 +1,11 @@
-[gd_scene load_steps=11 format=3 uid="uid://c1rm1o0bg6ous"]
+[gd_scene load_steps=19 format=3 uid="uid://c1rm1o0bg6ous"]
 
 [ext_resource type="StyleBox" uid="uid://cgcjmjg4qdbt2" path="res://style/style_box_semitransparent.tres" id="1_83yg1"]
 [ext_resource type="Script" path="res://scene/player/slots/slotMachine.gd" id="1_lo6kv"]
 [ext_resource type="Theme" uid="uid://co40pijjc7hbw" path="res://style/roadRogue.tres" id="2_sqmqf"]
 [ext_resource type="StyleBox" uid="uid://dp4qdn22d3ua6" path="res://style/style_box_thick.tres" id="3_ns1em"]
 [ext_resource type="PackedScene" uid="uid://dkwmaqrde7ne5" path="res://scene/player/slots/slot_row.tscn" id="4_e175g"]
+[ext_resource type="Shader" path="res://shader/3dicon.gdshader" id="5_w68ek"]
 [ext_resource type="AudioStream" uid="uid://dj5d70cqn1f2t" path="res://sound/fx/slotmachine/slotmachine.mp3" id="6_bvdc6"]
 [ext_resource type="AudioStream" uid="uid://cv82k8fnavddt" path="res://sound/fx/slotmachine/slotlever.mp3" id="6_pqh6i"]
 [ext_resource type="PackedScene" uid="uid://bepxjqhida0n8" path="res://scene/player/ui/roadButton.tscn" id="6_vjuwu"]
@@ -23,6 +24,39 @@ corner_radius_top_left = 2
 corner_radius_top_right = 2
 corner_radius_bottom_right = 20
 corner_radius_bottom_left = 20
+
+[sub_resource type="Gradient" id="Gradient_fc7ej"]
+offsets = PackedFloat32Array(0, 0.0409836, 1)
+colors = PackedColorArray(0.0655738, 0.0655738, 0.0655738, 1, 0.877452, 0.877452, 0.877452, 1, 1, 1, 1, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_t0xgh"]
+gradient = SubResource("Gradient_fc7ej")
+
+[sub_resource type="Gradient" id="Gradient_gu60f"]
+offsets = PackedFloat32Array(0, 0.0737705)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_pqt84"]
+gradient = SubResource("Gradient_gu60f")
+
+[sub_resource type="Gradient" id="Gradient_1v6w5"]
+offsets = PackedFloat32Array(0, 0.00819672)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_x6cpn"]
+gradient = SubResource("Gradient_1v6w5")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_5ojwu"]
+shader = ExtResource("5_w68ek")
+shader_parameter/angle = 6.38
+shader_parameter/thickness = 2.0
+shader_parameter/scale = 1.0
+shader_parameter/shear = Vector2(0, -0.4)
+shader_parameter/slices = 16
+shader_parameter/outline = true
+shader_parameter/outline_width = 2.0
+shader_parameter/front_tex = SubResource("GradientTexture2D_pqt84")
+shader_parameter/back_tex = SubResource("GradientTexture2D_t0xgh")
+shader_parameter/side_tex = SubResource("GradientTexture2D_x6cpn")
+shader_parameter/show_bound = false
 
 [node name="SlotMachine" type="CanvasLayer"]
 process_mode = 3
@@ -45,10 +79,10 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 270.0
-offset_top = 121.0
-offset_right = -228.0
-offset_bottom = -38.0
+offset_left = 242.0
+offset_top = 85.0
+offset_right = -110.0
+offset_bottom = -83.0
 grow_horizontal = 2
 grow_vertical = 2
 theme = ExtResource("2_sqmqf")
@@ -66,6 +100,7 @@ grow_horizontal = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_wfh4x")
 
 [node name="Label" type="Label" parent="Panel/Panel/Panel"]
+material = SubResource("ShaderMaterial_5ojwu")
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
