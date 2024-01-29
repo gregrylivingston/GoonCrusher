@@ -1,4 +1,4 @@
-[gd_scene load_steps=26 format=3 uid="uid://btm8fh8tutk2x"]
+[gd_scene load_steps=23 format=3 uid="uid://btm8fh8tutk2x"]
 
 [ext_resource type="Theme" uid="uid://co40pijjc7hbw" path="res://style/roadRogue.tres" id="1_badde"]
 [ext_resource type="Script" path="res://scene/player/menu/main/main2.gd" id="1_cc7gi"]
@@ -48,26 +48,6 @@ shader_parameter/outline_width = 2.0
 shader_parameter/front_tex = ExtResource("10_8o5bn")
 shader_parameter/back_tex = ExtResource("10_8o5bn")
 shader_parameter/side_tex = SubResource("GradientTexture1D_pwab5")
-shader_parameter/show_bound = false
-
-[sub_resource type="Gradient" id="Gradient_rrvk5"]
-colors = PackedColorArray(0, 0, 0, 1, 0, 0, 0, 1)
-
-[sub_resource type="GradientTexture1D" id="GradientTexture1D_hpif0"]
-gradient = SubResource("Gradient_rrvk5")
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_k3hcm"]
-shader = ExtResource("9_78e4l")
-shader_parameter/angle = 12.0
-shader_parameter/thickness = 5.0
-shader_parameter/scale = 1.0
-shader_parameter/shear = Vector2(0, -0.2)
-shader_parameter/slices = 32
-shader_parameter/outline = true
-shader_parameter/outline_width = 2.0
-shader_parameter/front_tex = ExtResource("11_1oi8i")
-shader_parameter/back_tex = ExtResource("11_1oi8i")
-shader_parameter/side_tex = SubResource("GradientTexture1D_hpif0")
 shader_parameter/show_bound = false
 
 [node name="Main2" type="CanvasLayer"]
@@ -231,16 +211,16 @@ anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 10.0
-offset_top = 10.0
+offset_top = -40.0
 offset_right = -10.0
-offset_bottom = -14.0
+offset_bottom = -54.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 20
+theme_override_constants/separation = 10
 
 [node name="HBoxContainer2" type="HBoxContainer" parent="mainMenuPanel/VBoxContainer"]
 layout_mode = 2
-size_flags_vertical = 0
+size_flags_vertical = 3
 
 [node name="HBoxContainer" type="HBoxContainer" parent="mainMenuPanel/VBoxContainer/HBoxContainer2"]
 custom_minimum_size = Vector2(0, 75)
@@ -269,27 +249,15 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_font_sizes/font_size = 60
 text = ""
+icon = ExtResource("11_1oi8i")
 
-[node name="HBoxContainer" type="HBoxContainer" parent="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer/unlock"]
+[node name="HBoxContainer2" type="HBoxContainer" parent="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer/unlock"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-
-[node name="TextureRect" type="TextureRect" parent="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer/unlock/HBoxContainer"]
-material = SubResource("ShaderMaterial_k3hcm")
-layout_mode = 2
-texture = ExtResource("11_1oi8i")
-stretch_mode = 5
-
-[node name="unlockCost" type="Label" parent="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer/unlock/HBoxContainer"]
-unique_name_in_owner = true
-material = ExtResource("8_vdjnf")
-layout_mode = 2
-theme_override_font_sizes/font_size = 50
-text = "UNLOCK"
 
 [node name="levelSelect" parent="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
@@ -349,11 +317,11 @@ layout_mode = 2
 
 [node name="HBoxContainer3" type="HBoxContainer" parent="mainMenuPanel/VBoxContainer"]
 layout_mode = 2
-size_flags_vertical = 0
+size_flags_vertical = 3
 
 [node name="VSeparator3" type="VSeparator" parent="mainMenuPanel/VBoxContainer/HBoxContainer3"]
 self_modulate = Color(1, 1, 1, 0)
-custom_minimum_size = Vector2(80, 0)
+custom_minimum_size = Vector2(33, 0)
 layout_mode = 2
 
 [node name="recordsButton" parent="mainMenuPanel/VBoxContainer/HBoxContainer3" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
@@ -381,11 +349,11 @@ layout_mode = 2
 
 [node name="HBoxContainer5" type="HBoxContainer" parent="mainMenuPanel/VBoxContainer"]
 layout_mode = 2
-size_flags_vertical = 0
+size_flags_vertical = 3
 
 [node name="VSeparator3" type="VSeparator" parent="mainMenuPanel/VBoxContainer/HBoxContainer5"]
 self_modulate = Color(1, 1, 1, 0)
-custom_minimum_size = Vector2(110, 0)
+custom_minimum_size = Vector2(66, 0)
 layout_mode = 2
 
 [node name="settingsButton" parent="mainMenuPanel/VBoxContainer/HBoxContainer5" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
@@ -404,11 +372,11 @@ layout_mode = 2
 
 [node name="HBoxContainer4" type="HBoxContainer" parent="mainMenuPanel/VBoxContainer"]
 layout_mode = 2
-size_flags_vertical = 0
+size_flags_vertical = 3
 
 [node name="VSeparator2" type="VSeparator" parent="mainMenuPanel/VBoxContainer/HBoxContainer4"]
 self_modulate = Color(1, 1, 1, 0)
-custom_minimum_size = Vector2(140, 0)
+custom_minimum_size = Vector2(99, 0)
 layout_mode = 2
 
 [node name="quitButton" parent="mainMenuPanel/VBoxContainer/HBoxContainer4" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
@@ -424,10 +392,10 @@ text = "  Quit"
 anchors_preset = -1
 anchor_left = 0.5
 anchor_right = 1.0
-offset_left = -208.0
+offset_left = -162.0
 offset_top = 35.0
 offset_right = -102.0
-offset_bottom = 143.0
+offset_bottom = 185.0
 grow_horizontal = 2
 
 [node name="voicePlayer" type="AudioStreamPlayer" parent="."]
@@ -438,10 +406,6 @@ stream = ExtResource("12_3e52h")
 volume_db = -8.0
 autoplay = true
 bus = &"Music"
-
-[node name="VBoxContainer" type="VBoxContainer" parent="."]
-offset_right = 40.0
-offset_bottom = 40.0
 
 [node name="VBoxContainer2" type="VBoxContainer" parent="."]
 anchors_preset = -1

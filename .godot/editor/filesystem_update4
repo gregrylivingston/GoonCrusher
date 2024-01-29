@@ -1,4 +1,4 @@
-res://scene/car/car.tscn
+res://scene/player/ui/attribute_indicator.tscn
 res://shader/shine.gdshader
 res://style/roadRogue.tres
 res://scene/player/slots/slot_row_gradient.tres
@@ -16,6 +16,7 @@ res://shader/fog.gdshader
 res://shader/shadow.gdshader
 res://shader/edgeGlow.gdshader
 res://shader/liquid.gdshader
+res://scene/car/car.tscn
 res://scene/level/levelRoot.tscn
 res://scene/player/playerRoot.tscn
 res://scene/enemy/spawnManager.tscn
@@ -34,5 +35,5 @@ res://scene/level/terrain/landscapeMap2.tscn
 res://scene/level/terrain/landscapeMap3.tscn
 res://scene/level/terrain/landscapeMap4.tscn
 res://scene/scenery/groundarea/sand.tscn
-res://scene/player/menu/main/3dText_Common.tres
-res://scene/player/menu/main/main2.gd
+res://scene/player/ui/roadButton.tscn
+res://scene/player/ui/attribute_indicator.gd

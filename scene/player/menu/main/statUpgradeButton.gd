@@ -4,12 +4,13 @@ extends roadButton
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
+	super()
 	refresh()
 	
 func refresh():
 	if is_instance_valid(Root.playerCar):
 		var requestCost = SaveManager.requestStatCost(myStat)
-		text = str(SaveManager.requestStatCost(myStat))
+		updateText(str(SaveManager.requestStatCost(myStat)))
 		
 		#if the player cannot afford the cost or has not unlocked the car hide and lock this button.
 		if requestCost > SaveManager.playerData.coin || SaveManager.getCarByName(Root.playerCar.carId).cost != 0: 

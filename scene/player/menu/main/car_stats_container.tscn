@@ -1,10 +1,9 @@
-[gd_scene load_steps=12 format=3 uid="uid://clx3q1jksnuoc"]
+[gd_scene load_steps=11 format=3 uid="uid://clx3q1jksnuoc"]
 
 [ext_resource type="PackedScene" uid="uid://i0goedbwsro6" path="res://scene/player/ui/attribute_indicator.tscn" id="1_awv6k"]
 [ext_resource type="Script" path="res://scene/player/menu/main/car_stats_container.gd" id="1_mv7o5"]
 [ext_resource type="Texture2D" uid="uid://b3g3a2usedskp" path="res://texture/icon/steering.png" id="2_ekr1k"]
 [ext_resource type="Texture2D" uid="uid://b282uef7te4fk" path="res://texture/icon/wheel.png" id="3_gtqp7"]
-[ext_resource type="StyleBox" uid="uid://dl1e0qtgp13cj" path="res://style/style_box_basic.tres" id="3_jbp2d"]
 [ext_resource type="Texture2D" uid="uid://b40eqkba0jho8" path="res://texture/icon/engine.png" id="4_3l7yx"]
 [ext_resource type="Texture2D" uid="uid://ckvii7iuglgha" path="res://texture/icon/shield.png" id="5_1k2du"]
 [ext_resource type="Texture2D" uid="uid://clb0tyqiwegeo" path="res://texture/icon/icons8-gem-48.png" id="8_5isf4"]
@@ -13,11 +12,11 @@
 [ext_resource type="Texture2D" uid="uid://w03tvhxtmrv4" path="res://texture/icon/icons8-coin-48 (1).png" id="9_lbbgn"]
 
 [node name="carStatsContainer" type="VBoxContainer"]
-custom_minimum_size = Vector2(919, 0)
-offset_left = 420.0
+custom_minimum_size = Vector2(700, 150)
+offset_left = 556.0
 offset_top = 357.0
-offset_right = 1339.0
-offset_bottom = 476.0
+offset_right = 1447.0
+offset_bottom = 508.0
 script = ExtResource("1_mv7o5")
 
 [node name="HBoxContainer" type="HBoxContainer" parent="."]
@@ -28,41 +27,24 @@ size_flags_vertical = 3
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_styles/hover = ExtResource("3_jbp2d")
-theme_override_styles/pressed = ExtResource("3_jbp2d")
-theme_override_styles/focus = ExtResource("3_jbp2d")
-icon = ExtResource("5_1k2du")
 myIcon = ExtResource("5_1k2du")
 
 [node name="engine" parent="HBoxContainer" instance=ExtResource("1_awv6k")]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_styles/hover = ExtResource("3_jbp2d")
-theme_override_styles/pressed = ExtResource("3_jbp2d")
-theme_override_styles/focus = ExtResource("3_jbp2d")
-icon = ExtResource("4_3l7yx")
 myIcon = ExtResource("4_3l7yx")
 
 [node name="traction" parent="HBoxContainer" instance=ExtResource("1_awv6k")]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_styles/hover = ExtResource("3_jbp2d")
-theme_override_styles/pressed = ExtResource("3_jbp2d")
-theme_override_styles/focus = ExtResource("3_jbp2d")
-icon = ExtResource("3_gtqp7")
 myIcon = ExtResource("3_gtqp7")
 
 [node name="steering" parent="HBoxContainer" instance=ExtResource("1_awv6k")]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_styles/hover = ExtResource("3_jbp2d")
-theme_override_styles/pressed = ExtResource("3_jbp2d")
-theme_override_styles/focus = ExtResource("3_jbp2d")
-text = "2"
-icon = ExtResource("2_ekr1k")
 myIcon = ExtResource("2_ekr1k")
 
 [node name="VSeparator" type="VSeparator" parent="HBoxContainer"]
@@ -71,13 +53,10 @@ custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
 
 [node name="coin" parent="HBoxContainer" instance=ExtResource("1_awv6k")]
+custom_minimum_size = Vector2(160, 52)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_styles/hover = ExtResource("3_jbp2d")
-theme_override_styles/pressed = ExtResource("3_jbp2d")
-theme_override_styles/focus = ExtResource("3_jbp2d")
-icon = ExtResource("9_lbbgn")
 myIcon = ExtResource("9_lbbgn")
 
 [node name="HBoxContainer2" type="HBoxContainer" parent="."]
@@ -85,33 +64,37 @@ layout_mode = 2
 size_flags_vertical = 3
 
 [node name="statUpgrade" parent="HBoxContainer2" instance=ExtResource("8_neb62")]
+custom_minimum_size = Vector2(0, 0)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "300 "
+text = ""
 icon = ExtResource("9_adcsu")
 alignment = 2
 myStat = "armor"
 
 [node name="statUpgrade2" parent="HBoxContainer2" instance=ExtResource("8_neb62")]
+custom_minimum_size = Vector2(0, 0)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "300 "
+text = ""
 icon = ExtResource("9_adcsu")
 alignment = 2
 myStat = "engine"
 
 [node name="statUpgrade3" parent="HBoxContainer2" instance=ExtResource("8_neb62")]
+custom_minimum_size = Vector2(0, 0)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "300 "
+text = ""
 icon = ExtResource("9_adcsu")
 alignment = 2
 myStat = "traction"
 
 [node name="statUpgrade4" parent="HBoxContainer2" instance=ExtResource("8_neb62")]
+custom_minimum_size = Vector2(0, 0)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "300 "
+text = ""
 icon = ExtResource("9_adcsu")
 alignment = 2
 myStat = "steering"
@@ -124,11 +107,13 @@ size_flags_horizontal = 4
 
 [node name="gem" parent="HBoxContainer2" instance=ExtResource("1_awv6k")]
 modulate = Color(1, 1, 1, 0)
+custom_minimum_size = Vector2(160, 52)
 layout_mode = 2
 size_flags_horizontal = 10
 size_flags_vertical = 3
-theme_override_styles/hover = ExtResource("3_jbp2d")
-theme_override_styles/pressed = ExtResource("3_jbp2d")
-theme_override_styles/focus = ExtResource("3_jbp2d")
-icon = ExtResource("8_5isf4")
 myIcon = ExtResource("8_5isf4")
+
+[connection signal="property_list_changed" from="HBoxContainer2/statUpgrade" to="HBoxContainer2/statUpgrade" method="_on_property_list_changed"]
+[connection signal="property_list_changed" from="HBoxContainer2/statUpgrade2" to="HBoxContainer2/statUpgrade2" method="_on_property_list_changed"]
+[connection signal="property_list_changed" from="HBoxContainer2/statUpgrade3" to="HBoxContainer2/statUpgrade3" method="_on_property_list_changed"]
+[connection signal="property_list_changed" from="HBoxContainer2/statUpgrade4" to="HBoxContainer2/statUpgrade4" method="_on_property_list_changed"]
