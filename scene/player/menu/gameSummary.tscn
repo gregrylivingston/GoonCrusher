@@ -1,9 +1,23 @@
-[gd_scene load_steps=5 format=3 uid="uid://cmq25gqd8rdxw"]
+[gd_scene load_steps=8 format=3 uid="uid://cmq25gqd8rdxw"]
 
 [ext_resource type="Theme" uid="uid://co40pijjc7hbw" path="res://style/roadRogue.tres" id="1_88ve0"]
 [ext_resource type="Script" path="res://scene/player/menu/gameSummary.gd" id="1_exyns"]
 [ext_resource type="PackedScene" uid="uid://bepxjqhida0n8" path="res://scene/player/ui/roadButton.tscn" id="2_llr28"]
 [ext_resource type="AudioStream" uid="uid://chsan1o1ku2c7" path="res://sound/music/abstract-world-127012.mp3" id="4_dohqh"]
+[ext_resource type="Material" uid="uid://d4nw1uchte7mv" path="res://scene/player/menu/main/3dText_Common.tres" id="4_iax4v"]
+[ext_resource type="Shader" path="res://shader/3dtext.gdshader" id="4_ngfis"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_47b1p"]
+resource_local_to_scene = true
+shader = ExtResource("4_ngfis")
+shader_parameter/angle = 0.6
+shader_parameter/thickness = 5.0
+shader_parameter/scale = 1.0
+shader_parameter/shear = Vector2(0, -0.2)
+shader_parameter/slices = 16
+shader_parameter/outline = true
+shader_parameter/outline_width = 2.0
+shader_parameter/show_bound = false
 
 [node name="GameSummary" type="CanvasLayer"]
 script = ExtResource("1_exyns")
@@ -23,15 +37,16 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -250.0
-offset_top = -308.0
-offset_right = 250.0
-offset_bottom = 250.0
+offset_left = -323.0
+offset_top = -326.0
+offset_right = 317.0
+offset_bottom = 287.0
 grow_horizontal = 2
 grow_vertical = 2
 theme = ExtResource("1_88ve0")
 
 [node name="continue" parent="Panel/Panel2" instance=ExtResource("2_llr28")]
+material = SubResource("ShaderMaterial_47b1p")
 layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.5
@@ -42,6 +57,7 @@ offset_top = -70.0
 offset_right = 85.0
 offset_bottom = -24.0
 grow_vertical = 0
+theme_override_font_sizes/font_size = 40
 text = "Continue"
 
 [node name="VBoxContainer" type="VBoxContainer" parent="Panel/Panel2"]
@@ -58,9 +74,10 @@ grow_vertical = 2
 
 [node name="wasSuccessful" type="Label" parent="Panel/Panel2/VBoxContainer"]
 unique_name_in_owner = true
-visible = false
+self_modulate = Color(1, 1, 1, 0)
+material = ExtResource("4_iax4v")
 layout_mode = 2
-theme_override_font_sizes/font_size = 40
+theme_override_font_sizes/font_size = 60
 text = "LEVEL COMPLETE"
 horizontal_alignment = 1
 
@@ -73,11 +90,13 @@ layout_mode = 2
 layout_mode = 2
 
 [node name="Label" type="Label" parent="Panel/Panel2/VBoxContainer/HBoxContainer7"]
+material = ExtResource("4_iax4v")
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "Time"
 
 [node name="time" type="Label" parent="Panel/Panel2/VBoxContainer/HBoxContainer7"]
+material = ExtResource("4_iax4v")
 layout_mode = 2
 size_flags_horizontal = 10
 theme_override_font_sizes/font_size = 24
@@ -88,11 +107,13 @@ text = "0
 layout_mode = 2
 
 [node name="Label" type="Label" parent="Panel/Panel2/VBoxContainer/HBoxContainer3"]
+material = ExtResource("4_iax4v")
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "Top Speed"
 
 [node name="topSpeed" type="Label" parent="Panel/Panel2/VBoxContainer/HBoxContainer3"]
+material = ExtResource("4_iax4v")
 layout_mode = 2
 size_flags_horizontal = 10
 theme_override_font_sizes/font_size = 24
@@ -103,11 +124,13 @@ text = "0
 layout_mode = 2
 
 [node name="Label" type="Label" parent="Panel/Panel2/VBoxContainer/HBoxContainer6"]
+material = ExtResource("4_iax4v")
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "Goons Crushed"
 
 [node name="goonsCrushed" type="Label" parent="Panel/Panel2/VBoxContainer/HBoxContainer6"]
+material = ExtResource("4_iax4v")
 layout_mode = 2
 size_flags_horizontal = 10
 theme_override_font_sizes/font_size = 24
@@ -122,11 +145,13 @@ layout_mode = 2
 layout_mode = 2
 
 [node name="Label" type="Label" parent="Panel/Panel2/VBoxContainer/HBoxContainer2"]
+material = ExtResource("4_iax4v")
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "Coins"
 
 [node name="coinsCollected" type="Label" parent="Panel/Panel2/VBoxContainer/HBoxContainer2"]
+material = ExtResource("4_iax4v")
 layout_mode = 2
 size_flags_horizontal = 10
 theme_override_font_sizes/font_size = 24
@@ -136,11 +161,13 @@ text = "2"
 layout_mode = 2
 
 [node name="Label" type="Label" parent="Panel/Panel2/VBoxContainer/HBoxContainer4"]
+material = ExtResource("4_iax4v")
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "Powerups"
 
 [node name="powerups" type="Label" parent="Panel/Panel2/VBoxContainer/HBoxContainer4"]
+material = ExtResource("4_iax4v")
 layout_mode = 2
 size_flags_horizontal = 10
 theme_override_font_sizes/font_size = 24
@@ -150,11 +177,13 @@ text = "0"
 layout_mode = 2
 
 [node name="Label" type="Label" parent="Panel/Panel2/VBoxContainer/HBoxContainer5"]
+material = ExtResource("4_iax4v")
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "Gems"
 
 [node name="gems" type="Label" parent="Panel/Panel2/VBoxContainer/HBoxContainer5"]
+material = ExtResource("4_iax4v")
 layout_mode = 2
 size_flags_horizontal = 10
 theme_override_font_sizes/font_size = 24
@@ -169,11 +198,13 @@ layout_mode = 2
 layout_mode = 2
 
 [node name="Label" type="Label" parent="Panel/Panel2/VBoxContainer/HBoxContainer8"]
+material = ExtResource("4_iax4v")
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "Slot Machines"
 
 [node name="slotMachines" type="Label" parent="Panel/Panel2/VBoxContainer/HBoxContainer8"]
+material = ExtResource("4_iax4v")
 layout_mode = 2
 size_flags_horizontal = 10
 theme_override_font_sizes/font_size = 24

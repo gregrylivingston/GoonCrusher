@@ -40,3 +40,4 @@ res://scene/player/ui/attribute_indicator.tscn
 res://scene/player/menu/main/main2.gd
 res://scene/player/ui/roadButton.gd
 res://scene/player/playerRoot.gd
+res://scene/player/menu/gameSummary.gd
