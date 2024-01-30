@@ -1,14 +1,30 @@
-[gd_scene load_steps=3 format=3 uid="uid://cvuuit81eu21f"]
+[gd_scene load_steps=6 format=3 uid="uid://cvuuit81eu21f"]
 
 [ext_resource type="Theme" uid="uid://co40pijjc7hbw" path="res://style/roadRogue.tres" id="1_m2qjq"]
 [ext_resource type="Script" path="res://scene/player/menu/settings/gameplay.gd" id="2_61arv"]
+[ext_resource type="PackedScene" uid="uid://bepxjqhida0n8" path="res://scene/player/ui/roadButton.tscn" id="3_ltdfo"]
+[ext_resource type="Shader" path="res://shader/3dtext.gdshader" id="4_2xqkm"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_xc6l2"]
+resource_local_to_scene = true
+shader = ExtResource("4_2xqkm")
+shader_parameter/angle = 0.6
+shader_parameter/thickness = 5.0
+shader_parameter/scale = 1.0
+shader_parameter/shear = Vector2(0, -0.2)
+shader_parameter/slices = 16
+shader_parameter/outline = true
+shader_parameter/outline_width = 2.0
+shader_parameter/show_bound = false
 
 [node name="Gameplay" type="VBoxContainer"]
 theme = ExtResource("1_m2qjq")
 script = ExtResource("2_61arv")
 
-[node name="resetSave" type="Button" parent="."]
+[node name="resetSave" parent="." instance=ExtResource("3_ltdfo")]
+material = SubResource("ShaderMaterial_xc6l2")
 layout_mode = 2
+size_flags_horizontal = 0
 text = "Reset Save"
 
 [connection signal="pressed" from="resetSave" to="." method="_on_reset_save_pressed"]

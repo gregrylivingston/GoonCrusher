@@ -41,3 +41,10 @@ res://scene/player/menu/main/main2.gd
 res://scene/player/ui/roadButton.gd
 res://scene/player/playerRoot.gd
 res://scene/player/menu/gameSummary.gd
+res://scene/player/menu/settings/settings.tscn
+res://scene/player/menu/settings/gameplay.tscn
+res://scene/player/menu/settings/settings.gd
+res://scene/player/menu/settings/gameplay.gd
+res://scene/player/menu/settings/settings_sound.tscn
+res://scene/player/menu/settings/graphics.tscn
+res://style/style_box_basic.tres

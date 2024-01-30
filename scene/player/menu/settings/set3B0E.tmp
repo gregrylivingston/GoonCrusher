@@ -132,13 +132,13 @@ text = "Sound"
 material = SubResource("ShaderMaterial_ncns7")
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Graphics"
+text = "Gameplay"
 
 [node name="input" parent="Panel/TabContainer/VBoxContainer2/HBoxContainer" instance=ExtResource("4_abfcl")]
 material = SubResource("ShaderMaterial_ggqks")
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Input"
+text = "Sound"
 
 [node name="HSeparator" type="HSeparator" parent="Panel/TabContainer/VBoxContainer2"]
 self_modulate = Color(1, 1, 1, 0)

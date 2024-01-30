@@ -8,7 +8,7 @@
 [ext_resource type="AudioStream" uid="uid://bmxxnqvrvdch4" path="res://sound/ui/click.wav" id="4_fec5q"]
 [ext_resource type="Material" uid="uid://d4nw1uchte7mv" path="res://scene/player/menu/main/3dText_Common.tres" id="7_pmy3v"]
 
-[sub_resource type="Shader" id="Shader_7bjch"]
+[sub_resource type="Shader" id="Shader_a0oxw"]
 code = "shader_type canvas_item;
 
 //from https://godotshaders.com/shader/cool-3d-text/
@@ -166,16 +166,16 @@ void fragment(){
 	
 }"
 
-[sub_resource type="Gradient" id="Gradient_vc833"]
+[sub_resource type="Gradient" id="Gradient_i0jlm"]
 offsets = PackedFloat32Array(0)
 colors = PackedColorArray(0, 0, 0, 0.52549)
 
-[sub_resource type="GradientTexture1D" id="GradientTexture1D_q62ey"]
-gradient = SubResource("Gradient_vc833")
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_p8ylb"]
+gradient = SubResource("Gradient_i0jlm")
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_v7iif"]
 resource_local_to_scene = true
-shader = SubResource("Shader_7bjch")
+shader = SubResource("Shader_a0oxw")
 shader_parameter/angle = 0.5
 shader_parameter/thickness = 5.0
 shader_parameter/scale = 1.0
@@ -183,7 +183,7 @@ shader_parameter/shear = Vector2(0, -0.2)
 shader_parameter/slices = 32
 shader_parameter/outline = true
 shader_parameter/outline_width = 1.0
-shader_parameter/outline_tex = SubResource("GradientTexture1D_q62ey")
+shader_parameter/outline_tex = SubResource("GradientTexture1D_p8ylb")
 shader_parameter/show_bound = false
 
 [node name="RoadButton" type="Button"]

@@ -1,36 +1,29 @@
-[gd_resource type="Theme" load_steps=6 format=3 uid="uid://co40pijjc7hbw"]
+[gd_resource type="Theme" load_steps=11 format=3 uid="uid://co40pijjc7hbw"]
 
 [ext_resource type="StyleBox" uid="uid://bbchkiamfyybx" path="res://style/style_box_basic_hover.tres" id="1_6c7up"]
 [ext_resource type="StyleBox" uid="uid://dl1e0qtgp13cj" path="res://style/style_box_basic.tres" id="1_j042g"]
 [ext_resource type="FontFile" uid="uid://h8ar8yno4sha" path="res://style/font/Tektur/Tektur-SemiBold.ttf" id="2_rg3in"]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dmii3"]
-content_margin_left = 40.0
-content_margin_top = 40.0
-content_margin_right = 40.0
-bg_color = Color(0.92549, 0.603922, 0.160784, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 5
-border_width_bottom = 5
-border_color = Color(0.658824, 0.12549, 0.101961, 1)
-corner_radius_top_left = 2
-corner_radius_top_right = 2
-corner_radius_bottom_right = 2
-corner_radius_bottom_left = 2
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bqax6"]
+bg_color = Color(0.6, 0.6, 0.6, 0)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_qngjy"]
-content_margin_left = 20.0
-content_margin_right = 20.0
-bg_color = Color(0.92549, 0.603922, 0.160784, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 5
-border_color = Color(0.658824, 0.12549, 0.101961, 1)
-corner_radius_top_left = 2
-corner_radius_top_right = 2
-corner_radius_bottom_right = 2
-corner_radius_bottom_left = 2
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_i7sa2"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_361js"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_4chfl"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_v7fcq"]
+bg_color = Color(0.6, 0.6, 0.6, 0)
+expand_margin_left = 20.0
+expand_margin_right = 20.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8olm2"]
+bg_color = Color(0.6, 0.6, 0.6, 0)
+border_width_left = 30
+border_color = Color(0.8, 0.8, 0.8, 0)
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_i8y7n"]
 
 [resource]
 default_font = ExtResource("2_rg3in")
@@ -49,5 +42,16 @@ Label/colors/font_color = Color(0.92549, 0.603922, 0.160784, 1)
 Label/colors/font_outline_color = Color(0.658824, 0.12549, 0.101961, 1)
 Label/constants/outline_size = 20
 Panel/styles/panel = ExtResource("1_j042g")
-TabContainer/styles/panel = SubResource("StyleBoxFlat_dmii3")
-TabContainer/styles/tab_selected = SubResource("StyleBoxFlat_qngjy")
+TabContainer/colors/font_hovered_color = Color(0.92549, 0.603922, 0.160784, 1)
+TabContainer/colors/font_outline_color = Color(0.658824, 0.12549, 0.101961, 1)
+TabContainer/colors/font_selected_color = Color(0.92549, 0.603922, 0.160784, 1)
+TabContainer/constants/outline_size = 10
+TabContainer/font_sizes/font_size = 25
+TabContainer/fonts/font = ExtResource("2_rg3in")
+TabContainer/styles/panel = SubResource("StyleBoxFlat_bqax6")
+TabContainer/styles/tab_disabled = SubResource("StyleBoxEmpty_i7sa2")
+TabContainer/styles/tab_focus = SubResource("StyleBoxEmpty_361js")
+TabContainer/styles/tab_hovered = SubResource("StyleBoxEmpty_4chfl")
+TabContainer/styles/tab_selected = SubResource("StyleBoxFlat_v7fcq")
+TabContainer/styles/tab_unselected = SubResource("StyleBoxFlat_8olm2")
+TabContainer/styles/tabbar_background = SubResource("StyleBoxEmpty_i8y7n")

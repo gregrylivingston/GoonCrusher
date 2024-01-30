@@ -7,7 +7,7 @@
 [ext_resource type="Material" uid="uid://d4nw1uchte7mv" path="res://scene/player/menu/main/3dText_Common.tres" id="4_iax4v"]
 [ext_resource type="Shader" path="res://shader/3dtext.gdshader" id="4_ngfis"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_47b1p"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_b5wx6"]
 resource_local_to_scene = true
 shader = ExtResource("4_ngfis")
 shader_parameter/angle = 0.6
@@ -46,7 +46,7 @@ grow_vertical = 2
 theme = ExtResource("1_88ve0")
 
 [node name="continue" parent="Panel/Panel2" instance=ExtResource("2_llr28")]
-material = SubResource("ShaderMaterial_47b1p")
+material = SubResource("ShaderMaterial_b5wx6")
 layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.5
