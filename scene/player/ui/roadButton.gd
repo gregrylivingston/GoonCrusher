@@ -12,7 +12,6 @@ func _ready():
 	$HBoxContainer/Label.add_theme_font_size_override("font_size" ,get_theme_font_size("font_size"))
 	if $HBoxContainer/TextureRect.texture == null:
 		$HBoxContainer/TextureRect.visible = false
-		$HBoxContainer/TextureRect.queue_free()
 	else:
 		updateIcon($HBoxContainer/TextureRect.texture)
 
@@ -30,7 +29,7 @@ func _on_mouse_entered():
 	#set3dAnimationAngle(PI)
 
 func set3dAnimationAngle(angle):
-	if is_instance_valid($HBoxContainer/TextureRect):
+	if $HBoxContainer/TextureRect != null:
 		if $HBoxContainer/TextureRect.material != null:
 			$HBoxContainer/TextureRect.material.set_shader_parameter("angle" ,  angle )
 	if $HBoxContainer/Label.material != null:
@@ -47,7 +46,7 @@ func updateIcon(newIcon):
 	$HBoxContainer/TextureRect.texture = newIcon
 	$HBoxContainer/TextureRect.material.set_shader_parameter("front_tex" , newIcon)
 	$HBoxContainer/TextureRect.material.set_shader_parameter("back_tex" ,  newIcon )
-	$HBoxContainer/TextureRect.material.set_shader_parameter("side_tex" ,  newIcon )
+	#$HBoxContainer/TextureRect.material.set_shader_parameter("side_tex" ,  newIcon )
 	#$HBoxContainer/TextureRect.material.set_shader_parameter("outline_tex" ,  newIcon )
 
 

@@ -11,8 +11,8 @@ func _ready():
 	else: await get_tree().create_timer(1).timeout
 	updateStats()
 	Root.playerCar.ui = self
-	$Panel/ProgressBar.value = 0
-	$Panel/ProgressBar.max_value = awardBase
+	%ProgressBar.value = 0
+	%ProgressBar.max_value = awardBase
 	add_child(load("res://scene/player/countdown.tscn").instantiate())
 
 
@@ -25,13 +25,13 @@ func _process(delta):
 
 func updateStats():$carPanel.updateStats()
 
-var awardBase = 25
+var awardBase = 20
 var crushingAwardLevel = 0
 var nextCrushingAward = awardBase
-@onready var crushProgressBar = $Panel/ProgressBar
+@onready var crushProgressBar = %ProgressBar
 
 func updateGoonsCrushed():
-	$Panel/HBoxContainer/crushedGoons.text = str( Root.playerCar.currentGoonsCrushed )
+	$Panel/HBoxContainer/crushedGoons.text = str( int(nextCrushingAward) - Root.playerCar.currentGoonsCrushed )
 	crushProgressBar.value = Root.playerCar.currentGoonsCrushed
 	if Root.playerCar.currentGoonsCrushed >= nextCrushingAward && not Root.playerCar.isDestroyed:
 		crushProgressBar.min_value = nextCrushingAward
