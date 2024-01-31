@@ -1,6 +1,6 @@
 extends Resource
 
-@export var coin: int = 1200
+@export var coin: int = 0
 @export var gem: int = 3
 @export var selectedCar: int = 0
 @export var selectedLevel: int = 0
