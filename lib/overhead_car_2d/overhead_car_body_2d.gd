@@ -127,7 +127,7 @@ func _physics_process(delta):
 	_car_input.steering = clamp(_car_input.steering, -1.0, 1.0)
 	_car_input.acceleration = clamp(_car_input.acceleration, -1.0, 1.0)
 	if isDestroyed: _car_input.acceleration = 0.0
-	if fuel <= 0: outOfFuel()		
+	if fuel <= 0 && not isDestroyed: outOfFuel()		
 	
 	if fuel <= 35 && not gasWarningGiven && not $"AudioStream-Voice".playing && isPlayer:makeGasWarning()
 	if health <= 50 && not healthWarningGiven && not $"AudioStream-Voice".playing && isPlayer:makeHealthWarning()
@@ -141,7 +141,7 @@ func _physics_process(delta):
 	var acceleration = _car_input.acceleration * transform.x * ( engine + 14 ) * 10 * ( 2.2 - abs(_car_input.steering))
 
 	# Apply friction
-	if velocity.length() < 5:
+	if velocity.length() < 3:
 		velocity = Vector2.ZERO
 	var friction_force = velocity * -friction
 	var drag_force = velocity * velocity.length() * -drag
@@ -194,7 +194,7 @@ func collideWithFixedObject( collision ):
 		var spark = sparks.instantiate()
 		spark.global_position = collision.get_position()
 		Root.levelRoot.add_child(spark)
-	damage(  velocity.length()  / ( armor + 10 )  )
+	damage(  velocity.length()  / ( armor + 5 )  )
 	velocity *= 0.85
 
 func stopCarFX():
@@ -332,7 +332,7 @@ func spendGems(numOfGems: int):
 		return false
 
 func damage(damage: float):
-	health -= damage / ( armor + 10.0)
+	health -= damage / ( armor + 5)
 	if health <= 0:
 		destroy()
 

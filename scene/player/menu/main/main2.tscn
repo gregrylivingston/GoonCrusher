@@ -51,7 +51,7 @@ shader_parameter/back_tex = ExtResource("10_8o5bn")
 shader_parameter/side_tex = SubResource("GradientTexture1D_pwab5")
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_slap7"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_hs8hq"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -63,7 +63,7 @@ shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_k6bia"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_dlvri"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -75,7 +75,7 @@ shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_k46vt"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_8btm7"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -87,7 +87,7 @@ shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_w5ylq"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_gtntd"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -99,7 +99,7 @@ shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_ye2qt"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_rn7op"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -111,7 +111,7 @@ shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_1rsg1"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_55k3w"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -123,7 +123,7 @@ shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_sx68f"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_vctim"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -316,7 +316,7 @@ theme = ExtResource("1_badde")
 theme_override_constants/separation = 20
 
 [node name="previous_car_button" parent="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer" instance=ExtResource("4_f12ks")]
-material = SubResource("ShaderMaterial_slap7")
+material = SubResource("ShaderMaterial_hs8hq")
 layout_mode = 2
 text = "<"
 
@@ -334,7 +334,7 @@ text = "  Begin"
 
 [node name="unlock" parent="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
-material = SubResource("ShaderMaterial_k6bia")
+material = SubResource("ShaderMaterial_dlvri")
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -357,7 +357,7 @@ grow_vertical = 2
 [node name="levelSelect" parent="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
 visible = false
-material = SubResource("ShaderMaterial_k46vt")
+material = SubResource("ShaderMaterial_8btm7")
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -369,7 +369,7 @@ theme_override_font_sizes/font_size = 50
 text = ""
 
 [node name="next_car_button" parent="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer" instance=ExtResource("4_f12ks")]
-material = SubResource("ShaderMaterial_w5ylq")
+material = SubResource("ShaderMaterial_gtntd")
 layout_mode = 2
 text = ">"
 
@@ -389,7 +389,7 @@ layout_mode = 2
 
 [node name="recordsButton" parent="mainMenuPanel/VBoxContainer/HBoxContainer3" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
-material = SubResource("ShaderMaterial_ye2qt")
+material = SubResource("ShaderMaterial_rn7op")
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -424,7 +424,7 @@ layout_mode = 2
 
 [node name="settingsButton" parent="mainMenuPanel/VBoxContainer/HBoxContainer5" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
-material = SubResource("ShaderMaterial_1rsg1")
+material = SubResource("ShaderMaterial_55k3w")
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -447,7 +447,7 @@ layout_mode = 2
 
 [node name="quitButton" parent="mainMenuPanel/VBoxContainer/HBoxContainer4" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
-material = SubResource("ShaderMaterial_sx68f")
+material = SubResource("ShaderMaterial_vctim")
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3

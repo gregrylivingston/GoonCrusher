@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3 uid="uid://pgobm7erc1f0"]
+[gd_scene load_steps=20 format=3 uid="uid://pgobm7erc1f0"]
 
 [ext_resource type="Script" path="res://scene/player/playerRoot.gd" id="1_csk4w"]
 [ext_resource type="PackedScene" uid="uid://bf1f5117fhyd2" path="res://scene/car/car_panel.tscn" id="2_gx8xt"]
@@ -9,6 +9,8 @@
 [ext_resource type="Shader" path="res://shader/3dtext.gdshader" id="5_nv3yj"]
 [ext_resource type="Texture2D" uid="uid://clb0tyqiwegeo" path="res://texture/icon/icons8-gem-48.png" id="6_domly"]
 [ext_resource type="Material" uid="uid://d4nw1uchte7mv" path="res://scene/player/menu/main/3dText_Common.tres" id="7_kow26"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_sgloa"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_6d11k"]
 bg_color = Color(0, 0, 0, 0.207843)
@@ -57,6 +59,8 @@ shader_parameter/angle = 358.135
 [sub_resource type="GradientTexture1D" id="GradientTexture1D_bun2y"]
 gradient = SubResource("Gradient_ihyl7")
 
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_ar1ql"]
+
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_kjv7t"]
 resource_local_to_scene = true
 shader = ExtResource("5_nv3yj")
@@ -70,6 +74,8 @@ shader_parameter/outline_width = 2.0
 shader_parameter/front_tex = ExtResource("5_bieyt")
 shader_parameter/back_tex = ExtResource("5_bieyt")
 shader_parameter/show_bound = false
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_k4tkc"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_bqu5y"]
 resource_local_to_scene = true
@@ -106,7 +112,7 @@ grow_horizontal = 2
 grow_vertical = 0
 size_flags_horizontal = 3
 theme = ExtResource("4_xbt3u")
-theme_override_styles/panel = ExtResource("3_eocbu")
+theme_override_styles/panel = SubResource("StyleBoxEmpty_sgloa")
 
 [node name="HBoxContainer" type="HBoxContainer" parent="Panel"]
 layout_mode = 1
@@ -115,10 +121,10 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -95.5
-offset_top = -16.0
-offset_right = 95.5
-offset_bottom = 16.0
+offset_left = -103.0
+offset_top = -51.0
+offset_right = 103.0
+offset_bottom = -19.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -157,9 +163,9 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -215.5
-offset_top = -81.0
+offset_top = -12.0
 offset_right = 215.5
-offset_bottom = -41.0
+offset_bottom = -1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_6d11k")
@@ -188,7 +194,7 @@ offset_bottom = 60.0
 grow_horizontal = 0
 size_flags_horizontal = 3
 theme = ExtResource("4_xbt3u")
-theme_override_styles/panel = ExtResource("3_eocbu")
+theme_override_styles/panel = SubResource("StyleBoxEmpty_ar1ql")
 
 [node name="HBoxContainer" type="HBoxContainer" parent="Panel2"]
 layout_mode = 1
@@ -202,7 +208,7 @@ offset_bottom = -2.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="TextureRect" type="TextureRect" parent="Panel2/HBoxContainer"]
+[node name="TextureRect" type="TextureRect" parent="Panel2/HBoxContainer" groups=["coinui"]]
 material = SubResource("ShaderMaterial_kjv7t")
 custom_minimum_size = Vector2(48, 48)
 layout_mode = 2
@@ -229,7 +235,7 @@ offset_bottom = 60.0
 grow_horizontal = 0
 size_flags_horizontal = 3
 theme = ExtResource("4_xbt3u")
-theme_override_styles/panel = ExtResource("3_eocbu")
+theme_override_styles/panel = SubResource("StyleBoxEmpty_k4tkc")
 
 [node name="HBoxContainer" type="HBoxContainer" parent="Panel4"]
 layout_mode = 1
@@ -243,7 +249,7 @@ offset_bottom = -2.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="TextureRect" type="TextureRect" parent="Panel4/HBoxContainer"]
+[node name="TextureRect" type="TextureRect" parent="Panel4/HBoxContainer" groups=["gemui"]]
 material = SubResource("ShaderMaterial_bqu5y")
 custom_minimum_size = Vector2(48, 48)
 layout_mode = 2
@@ -261,6 +267,7 @@ text = "0"
 horizontal_alignment = 1
 
 [node name="Panel3" type="Panel" parent="."]
+self_modulate = Color(1, 1, 1, 0)
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
@@ -291,6 +298,7 @@ horizontal_alignment = 1
 script = ExtResource("3_hepv3")
 
 [node name="gearbox" type="Label" parent="." groups=["gearui"]]
+material = ExtResource("7_kow26")
 offset_left = 185.0
 offset_top = 122.0
 offset_right = 214.0

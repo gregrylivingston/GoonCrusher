@@ -5,6 +5,7 @@ var levelCompleted: bool = false #did the player successfully complete their run
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
+	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	if isGameSummary: buildGameSummary()
 	else: buildAchievementSummary()

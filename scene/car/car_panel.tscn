@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3 uid="uid://bf1f5117fhyd2"]
+[gd_scene load_steps=22 format=3 uid="uid://bf1f5117fhyd2"]
 
 [ext_resource type="Script" path="res://scene/car/car_panel.gd" id="1_ose0a"]
 [ext_resource type="PackedScene" uid="uid://i0goedbwsro6" path="res://scene/player/ui/attribute_indicator.tscn" id="1_sbnje"]
@@ -11,6 +11,8 @@
 [ext_resource type="Texture2D" uid="uid://dthtmohgw8u1f" path="res://scene/car/audi/Audi.png" id="8_w0ppy"]
 [ext_resource type="Texture2D" uid="uid://bwlwtwutv2vx1" path="res://texture/icon/gas.png" id="11_sb4te"]
 [ext_resource type="PackedScene" uid="uid://bepxjqhida0n8" path="res://scene/player/ui/roadButton.tscn" id="11_v8b53"]
+[ext_resource type="Material" uid="uid://d4nw1uchte7mv" path="res://scene/player/menu/main/3dText_Common.tres" id="12_ib4fu"]
+[ext_resource type="Shader" path="res://shader/3dtext.gdshader" id="13_re0hq"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ei1gt"]
 content_margin_left = 20.0
@@ -37,6 +39,12 @@ corner_radius_top_right = 50
 corner_radius_bottom_right = 2
 corner_radius_bottom_left = 2
 
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_gi0ic"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_io2lf"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_if2kl"]
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_oqre2"]
 bg_color = Color(0.658824, 0.12549, 0.101961, 1)
 corner_radius_top_left = 5
@@ -50,6 +58,18 @@ corner_radius_top_left = 5
 corner_radius_top_right = 5
 corner_radius_bottom_right = 5
 corner_radius_bottom_left = 5
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_x2tyj"]
+resource_local_to_scene = true
+shader = ExtResource("13_re0hq")
+shader_parameter/angle = 0.6
+shader_parameter/thickness = 5.0
+shader_parameter/scale = 1.0
+shader_parameter/shear = Vector2(0, -0.2)
+shader_parameter/slices = 16
+shader_parameter/outline = true
+shader_parameter/outline_width = 2.0
+shader_parameter/show_bound = false
 
 [node name="carPanel" type="Panel"]
 self_modulate = Color(1, 1, 1, 0)
@@ -82,6 +102,7 @@ offset_bottom = 64.0
 grow_horizontal = 0
 
 [node name="speed" type="Label" parent="Panel/HBoxContainer2"]
+material = ExtResource("12_ib4fu")
 layout_mode = 2
 size_flags_horizontal = 0
 theme = ExtResource("2_62tb0")
@@ -114,9 +135,9 @@ anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = -13.0
-offset_top = 64.0
+offset_top = 200.0
 offset_right = -60.0
-offset_bottom = 312.0
+offset_bottom = 448.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = -4
@@ -125,24 +146,36 @@ theme_override_constants/separation = -4
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 6
+theme_override_styles/normal = SubResource("StyleBoxEmpty_gi0ic")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_io2lf")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_if2kl")
 myIcon = ExtResource("6_i8q0m")
 
 [node name="attributeIndicator_steering" parent="VBoxContainer/Panel/HBoxContainer" groups=["steeringui"] instance=ExtResource("1_sbnje")]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 6
+theme_override_styles/normal = SubResource("StyleBoxEmpty_gi0ic")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_io2lf")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_if2kl")
 myIcon = ExtResource("5_h3pqn")
 
 [node name="attributeIndicator_aero" parent="VBoxContainer/Panel/HBoxContainer" groups=["tractionui"] instance=ExtResource("1_sbnje")]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 6
+theme_override_styles/normal = SubResource("StyleBoxEmpty_gi0ic")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_io2lf")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_if2kl")
 myIcon = ExtResource("7_y38vu")
 
 [node name="attributeIndicator_armor" parent="VBoxContainer/Panel/HBoxContainer" groups=["armorui"] instance=ExtResource("1_sbnje")]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 6
+theme_override_styles/normal = SubResource("StyleBoxEmpty_gi0ic")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_io2lf")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_if2kl")
 myIcon = ExtResource("8_sqmqh")
 
 [node name="CenterContainer" type="CenterContainer" parent="VBoxContainer"]
@@ -209,6 +242,7 @@ value = 100.0
 show_percentage = false
 
 [node name="pauseButton" parent="." instance=ExtResource("11_v8b53")]
+material = SubResource("ShaderMaterial_x2tyj")
 layout_mode = 1
 anchors_preset = 0
 anchor_right = 0.0
@@ -220,6 +254,6 @@ offset_bottom = 62.0
 grow_horizontal = 1
 grow_vertical = 1
 theme_override_font_sizes/font_size = 20
-text = "Road Rogue"
+text = "GOONCRUSHER"
 
 [connection signal="pressed" from="pauseButton" to="." method="_on_pause_button_pressed"]

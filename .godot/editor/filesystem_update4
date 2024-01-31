@@ -58,3 +58,9 @@ res://scene/enemy/walker/walker.tscn
 res://scene/car/sedan/sedan.tscn
 res://scene/car/van/van.tscn
 res://scripts/global/root.gd
+res://scene/car/car_panel.tscn
+res://scene/player/menu/pauseMenu.tscn
+res://scene/player/menu/pauseMenu.gd
+res://scene/fx/lotto/lottoTransition.tscn
+res://scene/fx/lotto/lottoTransition.gd
+res://scene/car/taxi/taxi.tscn

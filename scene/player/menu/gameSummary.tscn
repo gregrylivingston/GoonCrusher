@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://cmq25gqd8rdxw"]
+[gd_scene load_steps=11 format=3 uid="uid://cmq25gqd8rdxw"]
 
 [ext_resource type="Theme" uid="uid://co40pijjc7hbw" path="res://style/roadRogue.tres" id="1_88ve0"]
 [ext_resource type="Script" path="res://scene/player/menu/gameSummary.gd" id="1_exyns"]
@@ -6,6 +6,14 @@
 [ext_resource type="Material" uid="uid://d4nw1uchte7mv" path="res://scene/player/menu/main/3dText_Common.tres" id="4_iax4v"]
 [ext_resource type="AudioStream" uid="uid://drfvw2y67t3p" path="res://sound/fx/big-impact-7054.mp3" id="6_vmo1w"]
 [ext_resource type="AudioStream" uid="uid://cs46g72v820b1" path="res://sound/fx/punch-2-123106.mp3" id="7_6todt"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_vhec0"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_e2c58"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_ee2fh"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_nea5v"]
 
 [node name="GameSummary" type="CanvasLayer"]
 script = ExtResource("1_exyns")
@@ -198,10 +206,13 @@ layout_mode = 2
 
 [node name="continue" parent="Panel/Panel2/VBoxContainer" instance=ExtResource("2_llr28")]
 visible = false
-custom_minimum_size = Vector2(300, 75)
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 50
+theme_override_styles/normal = SubResource("StyleBoxEmpty_vhec0")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_e2c58")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_ee2fh")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_nea5v")
 text = "Continue"
 
 [node name="AudioStreamPlayer_highImpact" type="AudioStreamPlayer" parent="."]

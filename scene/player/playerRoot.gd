@@ -4,8 +4,7 @@ extends CanvasLayer
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
-	$Panel2/HBoxContainer/coins.add_to_group("coinui")
-	$Panel4/HBoxContainer/TextureRect.add_to_group("gemui")
+	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
 	if is_instance_valid(Root.playerCar):
 		updateStats()
 	else: await get_tree().create_timer(1).timeout
@@ -19,6 +18,9 @@ func _ready():
 	
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
+	if Input.is_action_just_pressed("ui_menu") && get_tree().get_nodes_in_group("pauseMenu").size() == 0:
+		get_tree().paused = true
+		add_child( load("res://scene/player/menu/pauseMenu.tscn").instantiate() )
 	$Panel2/HBoxContainer/coins.text = str( Root.playerCar.coin )
 	$Panel4/HBoxContainer/gem.text = str( Root.playerCar.gem )
 

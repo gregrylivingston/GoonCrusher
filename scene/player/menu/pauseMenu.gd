@@ -4,6 +4,7 @@ extends CanvasLayer
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 
 
 
@@ -13,6 +14,7 @@ func _process(delta):
 
 
 func _on_continue_pressed():
+	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
 	queue_free()	
 	get_tree().paused = false
 
