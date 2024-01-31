@@ -62,5 +62,6 @@ func _on_mouse_exited():
 	if not has_focus() || not canGrabFocus:
 		get_tree().create_tween().tween_method(set3dAnimationAngle, PI, PI/8 , animTransitionTimer)
 		get_tree().create_tween().tween_property(self , "scale", Vector2(1.0,1.0),  animTransitionTimer)
-	
+
+
 

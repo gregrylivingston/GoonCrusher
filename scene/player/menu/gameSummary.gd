@@ -9,14 +9,38 @@ func _ready():
 	if isGameSummary: buildGameSummary()
 	else: buildAchievementSummary()
 
-	
+var summaryTimer:float = -2.0
+var summaryComplete: bool = false
+
+func _process(delta):
+	if isGameSummary && not summaryComplete:
+		summaryTimer += delta
+		if summaryTimer > 0.5:
+			if advanceSummary():
+				summaryTimer = 0.0
+				$AudioStreamPlayer2_lowImpact.play()
+			else: summaryComplete = true
+		
+func advanceSummary():
+	for i in $Panel/Panel2/VBoxContainer.get_children():
+		if i.visible == false:
+			i.visible = true
+			return true
+	return false #returns false if there is nothing left to make visible
+
+
+
 func buildGameSummary():
 	
 	%wasSuccessful.self_modulate.a = 1.0
+	$Panel/Panel2.self_modulate.a = 0.0
+	Root.playerRoot.visible = false
 	if levelCompleted:
 		SaveManager.currentLevelPassed()
 	else:
-		%wasSuccessful.text = "LEVEL FAILED"
+		%wasSuccessful.text = "YOU GOT GOONED"
+		$AudioStreamPlayer_highImpact.play()			
+
 	
 	var carStats = SaveManager.getCarByName(Root.playerCar.carId)
 	

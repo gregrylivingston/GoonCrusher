@@ -352,7 +352,7 @@ func destroy():
 			await get_tree().create_timer(randf_range(0.01 , 1.0)).timeout
 		if isPlayer:
 			$sprite.modulate = Color(0.8,0.8,0.8,1.0)
-			await get_tree().create_timer(4).timeout
+			await get_tree().create_timer(1).timeout
 			Root.levelRoot.endLevel(false)
 		else:
 			queue_free()

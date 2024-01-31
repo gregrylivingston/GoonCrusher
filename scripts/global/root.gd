@@ -8,6 +8,7 @@ var timer: float #the timer during a game run
 var mainMenu: CanvasLayer
 var levelRoot: Node2D
 var spawnManager
+var playerRoot #this is basically the inlevel UI
 
 var isRunActive: bool = false
 var earnedCoins: int

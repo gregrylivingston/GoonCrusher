@@ -57,3 +57,4 @@ res://scene/fx/explosion.gd
 res://scene/enemy/walker/walker.tscn
 res://scene/car/sedan/sedan.tscn
 res://scene/car/van/van.tscn
+res://scripts/global/root.gd

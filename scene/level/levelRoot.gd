@@ -20,9 +20,9 @@ func _ready():
 	Root.levelRoot = self
 	Root.isRunActive = true
 	
-	Root.playerCar.ui = get_tree().get_nodes_in_group("playerGameUi")[0]
-	Root.playerCar.ui.get_node("carPanel").setTexture( Root.playerCar.get_node("sprite").texture )
-	Root.playerCar.ui.updateStats()
+	Root.playerRoot = get_tree().get_nodes_in_group("playerGameUi")[0]
+	Root.playerRoot.get_node("carPanel").setTexture( Root.playerCar.get_node("sprite").texture )
+	Root.playerRoot.updateStats()
 	
 	newSpawner( Vector2i(4000,250))
 	newSpawner( Vector2i(4000,-250))
