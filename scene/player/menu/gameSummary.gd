@@ -12,7 +12,7 @@ func _ready():
 	
 func buildGameSummary():
 	
-	%wasSuccessful.modulate.a = 1.0
+	%wasSuccessful.self_modulate.a = 1.0
 	if levelCompleted:
 		SaveManager.currentLevelPassed()
 	else:

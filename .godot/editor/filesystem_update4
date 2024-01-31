@@ -48,3 +48,9 @@ res://scene/player/menu/settings/gameplay.gd
 res://scene/player/menu/settings/settings_sound.tscn
 res://scene/player/menu/settings/graphics.tscn
 res://style/style_box_basic.tres
+res://lib/overhead_car_2d/overhead_car_body_2d.gd
+res://scene/player/Timer.gd
+res://scene/level/levelRoot.gd
+res://scene/fx/explosion.tscn
+res://scene/fx/explosion/spriteframes_explosion2.tres
+res://scene/fx/explosion.gd
