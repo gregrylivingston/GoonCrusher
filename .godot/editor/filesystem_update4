@@ -70,3 +70,5 @@ res://scene/enemy/enemy.gd
 res://scene/enemy/walker/walker.gd
 res://scripts/global/Audio.gd
 res://scene/player/slots/slotMachine.gd
+res://scene/player/countdown.tscn
+res://scene/player/countdown.gd

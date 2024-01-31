@@ -15,19 +15,19 @@ var sizeIncreaser = 5
 func fillFromTop(columns , rows):
 	for y in rows + sizeIncreaser:
 		for x in columns + sizeIncreaser:
-			createIcon( Vector2( x * 40 , y * 40 - 20) )
+			createIcon( Vector2( ( x-2) * 40 , (y-2) * 40 - 20) )
 		await get_tree().process_frame
 
 func fillFromBottom(columns, rows):
 	for y in rows + sizeIncreaser:
 		for x in columns + sizeIncreaser:
-			createIcon( Vector2( (columns-1-x) * 40 , (rows-1-y) * 40 - 20) )
+			createIcon( Vector2( (columns-x) * 40 , (rows-y) * 40 - 20) )
 		await get_tree().process_frame
 
 func fillFromLeft(columns , rows):
 	for x in columns + sizeIncreaser:
 		for y in rows + sizeIncreaser:
-			createIcon( Vector2( x * 40 , y * 40 - 20) )
+			createIcon( Vector2( (x-2) * 40 , (y-2) * 40 - 20) )
 		await get_tree().process_frame
 
 

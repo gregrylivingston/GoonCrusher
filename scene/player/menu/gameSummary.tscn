@@ -1,11 +1,24 @@
-[gd_scene load_steps=11 format=3 uid="uid://cmq25gqd8rdxw"]
+[gd_scene load_steps=13 format=3 uid="uid://cmq25gqd8rdxw"]
 
 [ext_resource type="Theme" uid="uid://co40pijjc7hbw" path="res://style/roadRogue.tres" id="1_88ve0"]
 [ext_resource type="Script" path="res://scene/player/menu/gameSummary.gd" id="1_exyns"]
 [ext_resource type="PackedScene" uid="uid://bepxjqhida0n8" path="res://scene/player/ui/roadButton.tscn" id="2_llr28"]
 [ext_resource type="Material" uid="uid://d4nw1uchte7mv" path="res://scene/player/menu/main/3dText_Common.tres" id="4_iax4v"]
+[ext_resource type="Shader" path="res://shader/3dtext.gdshader" id="4_ngfis"]
 [ext_resource type="AudioStream" uid="uid://b2uhv71f06te0" path="res://sound/fx/halloween-impact-05-93808.mp3" id="5_x2d5e"]
 [ext_resource type="AudioStream" uid="uid://cs46g72v820b1" path="res://sound/fx/punch-2-123106.mp3" id="7_6todt"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_fp85x"]
+resource_local_to_scene = true
+shader = ExtResource("4_ngfis")
+shader_parameter/angle = 0.6
+shader_parameter/thickness = 5.0
+shader_parameter/scale = 1.0
+shader_parameter/shear = Vector2(0, -0.2)
+shader_parameter/slices = 16
+shader_parameter/outline = true
+shader_parameter/outline_width = 2.0
+shader_parameter/show_bound = false
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_vhec0"]
 
@@ -13,7 +26,7 @@
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_ee2fh"]
 
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_nea5v"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_5s1b4"]
 
 [node name="GameSummary" type="CanvasLayer"]
 script = ExtResource("1_exyns")
@@ -206,13 +219,14 @@ layout_mode = 2
 
 [node name="continue" parent="Panel/Panel2/VBoxContainer" instance=ExtResource("2_llr28")]
 visible = false
+material = SubResource("ShaderMaterial_fp85x")
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 50
 theme_override_styles/normal = SubResource("StyleBoxEmpty_vhec0")
 theme_override_styles/hover = SubResource("StyleBoxEmpty_e2c58")
 theme_override_styles/pressed = SubResource("StyleBoxEmpty_ee2fh")
-theme_override_styles/focus = SubResource("StyleBoxEmpty_nea5v")
+theme_override_styles/focus = SubResource("StyleBoxFlat_5s1b4")
 text = "Continue"
 
 [node name="AudioStreamPlayer_highImpact" type="AudioStreamPlayer" parent="."]

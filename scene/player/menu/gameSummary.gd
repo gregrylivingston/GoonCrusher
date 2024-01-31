@@ -9,6 +9,7 @@ func _ready():
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	if isGameSummary: buildGameSummary()
 	else: buildAchievementSummary()
+	$Panel/Panel2/VBoxContainer/continue.grab_focus()
 
 var summaryTimer:float = -2.0
 var summaryComplete: bool = false
@@ -85,6 +86,8 @@ func buildGameSummary():
 
 
 func buildAchievementSummary():
+	for i in $Panel/Panel2/VBoxContainer.get_children():i.visible = true
+	
 	var carStats = SaveManager.getCarByName(Root.playerCar.carId)
 	$Panel/Panel2/VBoxContainer/HBoxContainer6/goonsCrushed.text = str(carStats.records.goonsCrushed)
 	$Panel/Panel2/VBoxContainer/HBoxContainer3/topSpeed.text = str(carStats.records.speed) + " MPH" 
