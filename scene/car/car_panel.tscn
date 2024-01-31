@@ -1,4 +1,4 @@
-[gd_scene load_steps=22 format=3 uid="uid://bf1f5117fhyd2"]
+[gd_scene load_steps=20 format=3 uid="uid://bf1f5117fhyd2"]
 
 [ext_resource type="Script" path="res://scene/car/car_panel.gd" id="1_ose0a"]
 [ext_resource type="PackedScene" uid="uid://i0goedbwsro6" path="res://scene/player/ui/attribute_indicator.tscn" id="1_sbnje"]
@@ -41,10 +41,6 @@ corner_radius_bottom_left = 2
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_gi0ic"]
 
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_io2lf"]
-
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_if2kl"]
-
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_oqre2"]
 bg_color = Color(0.658824, 0.12549, 0.101961, 1)
 corner_radius_top_left = 5
@@ -59,7 +55,7 @@ corner_radius_top_right = 5
 corner_radius_bottom_right = 5
 corner_radius_bottom_left = 5
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_x2tyj"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_u531t"]
 resource_local_to_scene = true
 shader = ExtResource("13_re0hq")
 shader_parameter/angle = 0.6
@@ -147,8 +143,9 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 6
 theme_override_styles/normal = SubResource("StyleBoxEmpty_gi0ic")
-theme_override_styles/hover = SubResource("StyleBoxEmpty_io2lf")
-theme_override_styles/pressed = SubResource("StyleBoxEmpty_if2kl")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_gi0ic")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_gi0ic")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_gi0ic")
 myIcon = ExtResource("6_i8q0m")
 
 [node name="attributeIndicator_steering" parent="VBoxContainer/Panel/HBoxContainer" groups=["steeringui"] instance=ExtResource("1_sbnje")]
@@ -156,8 +153,9 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 6
 theme_override_styles/normal = SubResource("StyleBoxEmpty_gi0ic")
-theme_override_styles/hover = SubResource("StyleBoxEmpty_io2lf")
-theme_override_styles/pressed = SubResource("StyleBoxEmpty_if2kl")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_gi0ic")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_gi0ic")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_gi0ic")
 myIcon = ExtResource("5_h3pqn")
 
 [node name="attributeIndicator_aero" parent="VBoxContainer/Panel/HBoxContainer" groups=["tractionui"] instance=ExtResource("1_sbnje")]
@@ -165,8 +163,9 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 6
 theme_override_styles/normal = SubResource("StyleBoxEmpty_gi0ic")
-theme_override_styles/hover = SubResource("StyleBoxEmpty_io2lf")
-theme_override_styles/pressed = SubResource("StyleBoxEmpty_if2kl")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_gi0ic")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_gi0ic")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_gi0ic")
 myIcon = ExtResource("7_y38vu")
 
 [node name="attributeIndicator_armor" parent="VBoxContainer/Panel/HBoxContainer" groups=["armorui"] instance=ExtResource("1_sbnje")]
@@ -174,8 +173,9 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 6
 theme_override_styles/normal = SubResource("StyleBoxEmpty_gi0ic")
-theme_override_styles/hover = SubResource("StyleBoxEmpty_io2lf")
-theme_override_styles/pressed = SubResource("StyleBoxEmpty_if2kl")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_gi0ic")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_gi0ic")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_gi0ic")
 myIcon = ExtResource("8_sqmqh")
 
 [node name="CenterContainer" type="CenterContainer" parent="VBoxContainer"]
@@ -242,7 +242,7 @@ value = 100.0
 show_percentage = false
 
 [node name="pauseButton" parent="." instance=ExtResource("11_v8b53")]
-material = SubResource("ShaderMaterial_x2tyj")
+material = SubResource("ShaderMaterial_u531t")
 layout_mode = 1
 anchors_preset = 0
 anchor_right = 0.0

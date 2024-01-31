@@ -25,6 +25,7 @@ buses/default_bus_layout="res://sound/new_audio_bus_layout.tres"
 
 Root="*res://scripts/global/root.gd"
 SaveManager="*res://scripts/global/saveManager.gd"
+Audio="*res://scripts/global/Audio.tscn"
 
 [display]
 

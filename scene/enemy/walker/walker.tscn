@@ -1,10 +1,16 @@
-[gd_scene load_steps=9 format=3 uid="uid://ck730mtu8o5o8"]
+[gd_scene load_steps=15 format=3 uid="uid://ck730mtu8o5o8"]
 
 [ext_resource type="Shader" path="res://shader/flashiness.gdshader" id="1_1hpc4"]
 [ext_resource type="SpriteFrames" uid="uid://lyldd0udb2f" path="res://scene/enemy/walker/devil/walkingDevil.tres" id="1_mmdcr"]
 [ext_resource type="Script" path="res://scene/enemy/walker/walker.gd" id="2_ogk1f"]
+[ext_resource type="AudioStream" uid="uid://cx4bb003v21gi" path="res://sound/fx/walker/walker_snarling/snarling_1.mp3" id="2_v4qqt"]
+[ext_resource type="AudioStream" uid="uid://dihcfehli7r6b" path="res://sound/fx/walker/metal_bash1-46582.mp3" id="3_1d64k"]
+[ext_resource type="AudioStream" uid="uid://bndssphim4iug" path="res://sound/fx/walker/walker_snarling/snarling_2.mp3" id="3_1vsyv"]
 [ext_resource type="AudioStream" uid="uid://bb2bp4dpqqiv8" path="res://sound/fx/male_hurt7-48124.mp3" id="3_8yt8i"]
+[ext_resource type="AudioStream" uid="uid://dnhvotmkb8yru" path="res://sound/fx/walker/walker_snarling/snarling_3.mp3" id="4_5a5y4"]
+[ext_resource type="AudioStream" uid="uid://bvlrukk8fgu8j" path="res://sound/fx/walker/metal_bash2-100028.mp3" id="4_u5tvo"]
 [ext_resource type="AudioStream" uid="uid://bx5sol7p1e63w" path="res://sound/fx/punch-140236.mp3" id="4_x7wx2"]
+[ext_resource type="AudioStream" uid="uid://bssg6681ejb2i" path="res://sound/fx/walker/metal_bash3-46584.mp3" id="5_hwxlo"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_je6xf"]
 size = Vector2(32, 32)
@@ -24,6 +30,8 @@ collision_layer = 3
 collision_mask = 3
 script = ExtResource("2_ogk1f")
 attackDamage = 3.0
+audio_charge = Array[AudioStreamMP3]([ExtResource("2_v4qqt"), ExtResource("3_1vsyv"), ExtResource("4_5a5y4")])
+audio_hit = Array[AudioStreamMP3]([ExtResource("3_1d64k"), ExtResource("4_u5tvo"), ExtResource("5_hwxlo")])
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 position = Vector2(-1, -2.5)

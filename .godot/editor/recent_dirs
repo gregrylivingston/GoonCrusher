@@ -1,6 +1,7 @@
+res://scripts/global
+D:/Godot/AutoSurvivor
 res://shader
 res://scene/player/menu/main
-D:/Godot/AutoSurvivor
 res://texture/spritesheet
 res://scene/fx/explosion
 res://texture/atlas
@@ -17,6 +18,5 @@ res://scene/level
 res://texture/animation
 res://scene/player/slots
 res://scene/player/save
-res://scripts/global
 res://texture/icon
 res://texture/fx

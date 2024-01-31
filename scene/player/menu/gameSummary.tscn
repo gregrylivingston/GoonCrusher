@@ -4,7 +4,7 @@
 [ext_resource type="Script" path="res://scene/player/menu/gameSummary.gd" id="1_exyns"]
 [ext_resource type="PackedScene" uid="uid://bepxjqhida0n8" path="res://scene/player/ui/roadButton.tscn" id="2_llr28"]
 [ext_resource type="Material" uid="uid://d4nw1uchte7mv" path="res://scene/player/menu/main/3dText_Common.tres" id="4_iax4v"]
-[ext_resource type="AudioStream" uid="uid://drfvw2y67t3p" path="res://sound/fx/big-impact-7054.mp3" id="6_vmo1w"]
+[ext_resource type="AudioStream" uid="uid://b2uhv71f06te0" path="res://sound/fx/halloween-impact-05-93808.mp3" id="5_x2d5e"]
 [ext_resource type="AudioStream" uid="uid://cs46g72v820b1" path="res://sound/fx/punch-2-123106.mp3" id="7_6todt"]
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_vhec0"]
@@ -216,7 +216,7 @@ theme_override_styles/focus = SubResource("StyleBoxEmpty_nea5v")
 text = "Continue"
 
 [node name="AudioStreamPlayer_highImpact" type="AudioStreamPlayer" parent="."]
-stream = ExtResource("6_vmo1w")
+stream = ExtResource("5_x2d5e")
 
 [node name="AudioStreamPlayer2_lowImpact" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("7_6todt")

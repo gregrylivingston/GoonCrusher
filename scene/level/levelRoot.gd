@@ -8,7 +8,6 @@ var playerController
 var isDaytime: bool = true
 
 func _ready():
-	updateAudioLevels()
 	#add my car
 	var newPosition = $Car.position
 	$Car.queue_free()
@@ -54,14 +53,8 @@ func newSpawner( spawnerPosition: Vector2i ):
 	newSpawner.position = spawnerPosition
 	Root.playerCar.add_child(newSpawner)
 	
-func updateAudioLevels():
-	$AudioStreamPlayer2.volume_db = -8 + SaveManager.getVolume( "music" )
-	
-func reduceMusic():
-	$AudioStreamPlayer2.volume_db = -18 + SaveManager.getVolume( "music" )
-	
-func playMusic():
-	$AudioStreamPlayer2.volume_db = -8 + SaveManager.getVolume( "music" )
+
+
 	
 func endLevel(levelCompleted: bool):
 	var gameSummary = load("res://scene/player/menu/gameSummary.tscn").instantiate() 

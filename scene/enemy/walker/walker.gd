@@ -1,4 +1,4 @@
-class_name Walker extends CharacterBody2D
+class_name Walker extends Enemy
 
 enum mode { MOVE , ATTACK , IDLE , DEAD , PREPAREATTACK}
 var myMode: mode = mode.MOVE
@@ -59,6 +59,7 @@ func _on_walker_animation_looped():
 			#$CollisionShape2D.scale = Vector2(1,1)
 			idleTime = 0
 			$Walker.animation = "prepare_attack"
+			hitSuccess = false
 		mode.IDLE:
 			idleTime += 1
 			if idleTime > myIdleLength:
@@ -69,15 +70,18 @@ func _on_walker_animation_looped():
 				
 				
 
+var chargeAudioRequest = false
 var preparingAttack = false
 func prepareAttack(delta):
 	look_at(  Root.playerCar.position )
 	if not preparingAttack:
 		preparingAttack = true
+		if randi()%3 == 0:Audio.queueRequest( audio_charge )
 		$Walker.animation = "prepare_attack"
-		
+
 	
 
+var hitSuccess = false
 func attack(delta):
 	$Walker.animation = "attack"
 	#$CollisionShape2D.scale = Vector2(2,1)
@@ -91,6 +95,9 @@ func attack(delta):
 		var collider = get_slide_collision( i ).get_collider()
 		if collider.has_method("damage"):
 			collider.damage(attackDamage)
+			if not hitSuccess:
+				Audio.queueRequest( audio_hit )
+				hitSuccess = true
 	#In your player's set block function or something.
 
 

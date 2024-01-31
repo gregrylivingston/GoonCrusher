@@ -32,12 +32,11 @@ func _ready():
 	$slotMahineLever.volume_db = SaveManager.getVolume("fx") + 4
 	$slotMachineBonusSound.volume_db = SaveManager.getVolume("fx") + 4
 	await get_tree().create_timer( slotDelayTime ).timeout
-	Root.levelRoot.reduceMusic()
 	$slotMahineSound.play()
 	isReady = true
 	$Panel/Panel/VBoxContainer/play_button.disabled = false
 	delayKeyPress = false
-
+	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 
 func resetKeyPress():
 	await get_tree().create_timer(keyPressDelay).timeout
@@ -129,10 +128,10 @@ func _on_claim_button_pressed():
 	var splashScreen = load("res://scene/player/menu/splash/splashscreen_1.tscn").instantiate()
 	splashScreen.myIcons = myIconArray
 	Root.levelRoot.add_child(splashScreen)
-
+	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
 	splashScreen.startExplosion()
 	
-	Root.levelRoot.playMusic()
+
 	Root.playerCar.add_child(countdownScreen.instantiate())
 	queue_free()
 		

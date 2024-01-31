@@ -1,4 +1,4 @@
-[gd_scene load_steps=31 format=3 uid="uid://btm8fh8tutk2x"]
+[gd_scene load_steps=30 format=3 uid="uid://btm8fh8tutk2x"]
 
 [ext_resource type="Theme" uid="uid://co40pijjc7hbw" path="res://style/roadRogue.tres" id="1_badde"]
 [ext_resource type="Script" path="res://scene/player/menu/main/main2.gd" id="1_cc7gi"]
@@ -16,7 +16,6 @@
 [ext_resource type="Shader" uid="uid://c2jd3wjben4p2" path="res://shader/3d_Text_HighlightRight.tres" id="10_l1x4e"]
 [ext_resource type="Texture2D" uid="uid://w03tvhxtmrv4" path="res://texture/icon/icons8-coin-48 (1).png" id="11_1oi8i"]
 [ext_resource type="PackedScene" uid="uid://clx3q1jksnuoc" path="res://scene/player/menu/main/car_stats_container.tscn" id="11_wos04"]
-[ext_resource type="AudioStream" uid="uid://chsan1o1ku2c7" path="res://sound/music/abstract-world-127012.mp3" id="12_3e52h"]
 [ext_resource type="Texture2D" uid="uid://cko3st4beios6" path="res://texture/icon/moon.png" id="14_k0lsc"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_noll7"]
@@ -51,7 +50,7 @@ shader_parameter/back_tex = ExtResource("10_8o5bn")
 shader_parameter/side_tex = SubResource("GradientTexture1D_pwab5")
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_hs8hq"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_4hek4"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -63,7 +62,7 @@ shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_dlvri"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_2x3vt"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -75,7 +74,7 @@ shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_8btm7"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_agl3d"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -87,7 +86,7 @@ shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_gtntd"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_42cyb"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -99,7 +98,7 @@ shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_rn7op"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_yuixy"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -111,7 +110,7 @@ shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_55k3w"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_8uy5f"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -123,7 +122,7 @@ shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_vctim"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_0q12q"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -316,7 +315,7 @@ theme = ExtResource("1_badde")
 theme_override_constants/separation = 20
 
 [node name="previous_car_button" parent="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer" instance=ExtResource("4_f12ks")]
-material = SubResource("ShaderMaterial_hs8hq")
+material = SubResource("ShaderMaterial_4hek4")
 layout_mode = 2
 text = "<"
 
@@ -334,7 +333,7 @@ text = "  Begin"
 
 [node name="unlock" parent="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
-material = SubResource("ShaderMaterial_dlvri")
+material = SubResource("ShaderMaterial_2x3vt")
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -357,7 +356,7 @@ grow_vertical = 2
 [node name="levelSelect" parent="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
 visible = false
-material = SubResource("ShaderMaterial_8btm7")
+material = SubResource("ShaderMaterial_agl3d")
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -369,7 +368,7 @@ theme_override_font_sizes/font_size = 50
 text = ""
 
 [node name="next_car_button" parent="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer" instance=ExtResource("4_f12ks")]
-material = SubResource("ShaderMaterial_gtntd")
+material = SubResource("ShaderMaterial_42cyb")
 layout_mode = 2
 text = ">"
 
@@ -389,7 +388,7 @@ layout_mode = 2
 
 [node name="recordsButton" parent="mainMenuPanel/VBoxContainer/HBoxContainer3" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
-material = SubResource("ShaderMaterial_rn7op")
+material = SubResource("ShaderMaterial_yuixy")
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -424,7 +423,7 @@ layout_mode = 2
 
 [node name="settingsButton" parent="mainMenuPanel/VBoxContainer/HBoxContainer5" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
-material = SubResource("ShaderMaterial_55k3w")
+material = SubResource("ShaderMaterial_8uy5f")
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -447,7 +446,7 @@ layout_mode = 2
 
 [node name="quitButton" parent="mainMenuPanel/VBoxContainer/HBoxContainer4" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
-material = SubResource("ShaderMaterial_vctim")
+material = SubResource("ShaderMaterial_0q12q")
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -466,12 +465,6 @@ grow_horizontal = 2
 
 [node name="voicePlayer" type="AudioStreamPlayer" parent="."]
 bus = &"Voice"
-
-[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
-stream = ExtResource("12_3e52h")
-volume_db = -8.0
-autoplay = true
-bus = &"Music"
 
 [node name="VBoxContainer2" type="VBoxContainer" parent="."]
 modulate = Color(1, 1, 1, 0)

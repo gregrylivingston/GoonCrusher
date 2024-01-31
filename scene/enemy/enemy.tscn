@@ -1,6 +1,12 @@
-[gd_scene load_steps=2 format=3 uid="uid://crw113yh87eky"]
+[gd_scene load_steps=6 format=3 uid="uid://crw113yh87eky"]
 
 [ext_resource type="Script" path="res://scene/enemy/enemy.gd" id="1_nf4sv"]
+[ext_resource type="AudioStream" uid="uid://dihcfehli7r6b" path="res://sound/fx/walker/metal_bash1-46582.mp3" id="2_dd84a"]
+[ext_resource type="AudioStream" uid="uid://caut8fnql4k4k" path="res://sound/fx/walker/zombie-6851.mp3" id="2_pqgc8"]
+[ext_resource type="AudioStream" uid="uid://bvlrukk8fgu8j" path="res://sound/fx/walker/metal_bash2-100028.mp3" id="3_5niu2"]
+[ext_resource type="AudioStream" uid="uid://bssg6681ejb2i" path="res://sound/fx/walker/metal_bash3-46584.mp3" id="4_hrnth"]
 
 [node name="Enemy" type="CharacterBody2D"]
 script = ExtResource("1_nf4sv")
+audio_charge = Array[AudioStreamMP3]([ExtResource("2_pqgc8")])
+audio_hit = Array[AudioStreamMP3]([ExtResource("2_dd84a"), ExtResource("3_5niu2"), ExtResource("4_hrnth")])

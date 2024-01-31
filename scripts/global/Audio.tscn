@@ -1,0 +1,26 @@
+[gd_scene load_steps=3 format=3 uid="uid://d20itb73p7fmt"]
+
+[ext_resource type="Script" path="res://scripts/global/Audio.gd" id="1_f1w12"]
+[ext_resource type="AudioStream" uid="uid://chsan1o1ku2c7" path="res://sound/music/abstract-world-127012.mp3" id="2_ar4ph"]
+
+[node name="Audio" type="Node"]
+script = ExtResource("1_f1w12")
+
+[node name="AudioStream_Music" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("2_ar4ph")
+volume_db = -4.0
+autoplay = true
+
+[node name="enemy_sounds" type="Node" parent="."]
+
+[node name="enemySound1" type="AudioStreamPlayer" parent="enemy_sounds"]
+
+[node name="enemySound2" type="AudioStreamPlayer" parent="enemy_sounds"]
+
+[node name="enemySound3" type="AudioStreamPlayer" parent="enemy_sounds"]
+
+[node name="enemySound4" type="AudioStreamPlayer" parent="enemy_sounds"]
+
+[node name="enemySound5" type="AudioStreamPlayer" parent="enemy_sounds"]
+
+[node name="enemySound6" type="AudioStreamPlayer" parent="enemy_sounds"]
