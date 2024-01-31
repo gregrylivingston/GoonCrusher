@@ -23,6 +23,7 @@ polygon = PackedVector2Array(-12, -4, -11, 6, -6, 12, 5, 15, 18, 11, 18, 4, 27, 
 collision_layer = 3
 collision_mask = 3
 script = ExtResource("2_ogk1f")
+attackDamage = 3.0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 position = Vector2(-1, -2.5)

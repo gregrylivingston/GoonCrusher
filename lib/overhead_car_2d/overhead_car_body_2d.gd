@@ -136,9 +136,9 @@ func _physics_process(delta):
 
 	
 	# Base steering wheel angle and acceleration
-	var steer_angle = _car_input.steering * deg_to_rad( 5 + ( steering / 4.0 ) )
+	var steer_angle = _car_input.steering * deg_to_rad( 8 + ( steering / 4.0 ) )
 	
-	var acceleration = _car_input.acceleration * transform.x * engine * 10 * ( 2.5 - abs(_car_input.steering))
+	var acceleration = _car_input.acceleration * transform.x * ( engine + 14 ) * 10 * ( 2.2 - abs(_car_input.steering))
 
 	# Apply friction
 	if velocity.length() < 5:
@@ -149,7 +149,7 @@ func _physics_process(delta):
 		friction_force *= 3
 	acceleration += drag_force + friction_force
 	if _car_input.braking:
-		acceleration += - ( traction * 50 / ( velocity.length() + 1)  ) * velocity
+		acceleration += - ( (5 + traction) * 50 / ( velocity.length() + 1)  ) * velocity
 	
 	# Calculate steering
 	var rear_wheel = position - transform.x * wheel_base / 2.0 + velocity * delta
@@ -162,7 +162,7 @@ func _physics_process(delta):
 	if d >= 0:
 		velocity = velocity.lerp(new_heading * velocity.length(), traction)
 	if d < 0:
-		velocity = -new_heading * min(velocity.length(), engine * 30)#10
+		velocity = -new_heading * min(velocity.length(), ( engine + 20 ) * 20)#10
 	
 	# Update the physics engine
 	rotation = new_heading.angle()
@@ -194,7 +194,7 @@ func collideWithFixedObject( collision ):
 		var spark = sparks.instantiate()
 		spark.global_position = collision.get_position()
 		Root.levelRoot.add_child(spark)
-	damage(  velocity.length() * 0.5 / armor )
+	damage(  velocity.length()  / ( armor + 10 )  )
 	velocity *= 0.85
 
 func stopCarFX():
@@ -332,7 +332,7 @@ func spendGems(numOfGems: int):
 		return false
 
 func damage(damage: float):
-	health -= damage / armor
+	health -= damage / ( armor + 10.0)
 	if health <= 0:
 		destroy()
 

@@ -54,3 +54,6 @@ res://scene/level/levelRoot.gd
 res://scene/fx/explosion.tscn
 res://scene/fx/explosion/spriteframes_explosion2.tres
 res://scene/fx/explosion.gd
+res://scene/enemy/walker/walker.tscn
+res://scene/car/sedan/sedan.tscn
+res://scene/car/van/van.tscn

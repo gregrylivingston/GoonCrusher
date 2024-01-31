@@ -44,8 +44,9 @@
 size = Vector2(183, 84)
 
 [node name="Car" instance=ExtResource("1_p428k")]
-engine = 12
-steering = 10
+engine = 2
+steering = 1
+traction = 3.0
 armor = 14
 profilePic = ExtResource("2_s78ni")
 backgroundPic = ExtResource("3_xnhct")
