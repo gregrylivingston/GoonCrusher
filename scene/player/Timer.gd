@@ -11,7 +11,7 @@ func _ready():
 	resetTimer()
 
 var daylength = 120
-var reset: bool = false
+var reset: bool = true
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):

@@ -8,7 +8,7 @@ func _ready():
 	$HBoxContainer/Label.text = text
 	$HBoxContainer/TextureRect.texture = icon
 	icon = null
-	text = ""
+	text = " "
 	$HBoxContainer/Label.add_theme_font_size_override("font_size" ,get_theme_font_size("font_size"))
 	if $HBoxContainer/TextureRect.texture == null:
 		$HBoxContainer/TextureRect.visible = false

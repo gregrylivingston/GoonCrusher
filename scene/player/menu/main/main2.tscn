@@ -50,7 +50,7 @@ shader_parameter/back_tex = ExtResource("10_8o5bn")
 shader_parameter/side_tex = SubResource("GradientTexture1D_pwab5")
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_4hek4"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_lmdt0"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -62,7 +62,7 @@ shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_2x3vt"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_5osky"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -74,7 +74,7 @@ shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_agl3d"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_tm0ji"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -86,7 +86,7 @@ shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_42cyb"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_6y51q"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -98,7 +98,7 @@ shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_yuixy"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_0tivn"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -110,7 +110,7 @@ shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_8uy5f"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_n5hai"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -122,7 +122,7 @@ shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_0q12q"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_naycl"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -202,11 +202,15 @@ theme = ExtResource("1_badde")
 theme_override_styles/panel = ExtResource("2_qamlo")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="Panel"]
-layout_mode = 0
-offset_left = 74.0
-offset_top = 204.0
-offset_right = 503.0
-offset_bottom = 373.0
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 80.0
+offset_top = -268.5
+offset_right = 509.0
+offset_bottom = -99.5
+grow_vertical = 2
 theme_override_constants/separation = -5
 
 [node name="Label" type="Label" parent="Panel/VBoxContainer"]
@@ -283,9 +287,9 @@ anchor_top = 0.5
 anchor_right = 0.03
 anchor_bottom = 1.0
 offset_left = 91.0
-offset_top = 15.0
-offset_right = 579.6
-offset_bottom = -45.0
+offset_top = -31.0
+offset_right = 542.6
+offset_bottom = -69.0
 grow_vertical = 2
 theme = ExtResource("1_badde")
 
@@ -294,17 +298,14 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 10.0
-offset_top = -44.0
-offset_right = 25.0
-offset_bottom = -65.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 5
+theme_override_constants/separation = 40
 
 [node name="HBoxContainer2" type="HBoxContainer" parent="mainMenuPanel/VBoxContainer"]
+custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
-size_flags_vertical = 3
+size_flags_vertical = 0
 
 [node name="HBoxContainer" type="HBoxContainer" parent="mainMenuPanel/VBoxContainer/HBoxContainer2"]
 custom_minimum_size = Vector2(0, 75)
@@ -314,17 +315,18 @@ size_flags_vertical = 3
 theme = ExtResource("1_badde")
 theme_override_constants/separation = 20
 
-[node name="previous_car_button" parent="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer" instance=ExtResource("4_f12ks")]
-material = SubResource("ShaderMaterial_4hek4")
+[node name="VSeparator2" type="VSeparator" parent="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer"]
+self_modulate = Color(1, 1, 1, 0)
+custom_minimum_size = Vector2(75, 0)
 layout_mode = 2
-text = "<"
 
 [node name="begin" parent="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer" groups=["levelMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
 visible = false
 self_modulate = Color(1, 1, 1, 0)
+custom_minimum_size = Vector2(250, 25)
 layout_mode = 2
-size_flags_horizontal = 3
+size_flags_horizontal = 0
 size_flags_vertical = 3
 focus_neighbor_bottom = NodePath("../../../HBoxContainer3/backButton")
 focus_next = NodePath("../../../HBoxContainer3/backButton")
@@ -333,9 +335,11 @@ text = "  Begin"
 
 [node name="unlock" parent="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
-material = SubResource("ShaderMaterial_2x3vt")
+visible = false
+material = SubResource("ShaderMaterial_lmdt0")
+custom_minimum_size = Vector2(250, 25)
 layout_mode = 2
-size_flags_horizontal = 3
+size_flags_horizontal = 0
 size_flags_vertical = 3
 focus_neighbor_top = NodePath("../../../HBoxContainer4/quitButton")
 focus_neighbor_bottom = NodePath("../../../HBoxContainer3/recordsButton")
@@ -345,41 +349,29 @@ theme_override_font_sizes/font_size = 60
 text = ""
 icon = ExtResource("11_1oi8i")
 
-[node name="HBoxContainer2" type="HBoxContainer" parent="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer/unlock"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
 [node name="levelSelect" parent="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
-visible = false
-material = SubResource("ShaderMaterial_agl3d")
+material = SubResource("ShaderMaterial_5osky")
+custom_minimum_size = Vector2(250, 0)
 layout_mode = 2
-size_flags_horizontal = 3
+size_flags_horizontal = 0
 size_flags_vertical = 3
 focus_neighbor_top = NodePath("../../../HBoxContainer4/quitButton")
 focus_neighbor_bottom = NodePath("../../../HBoxContainer3/recordsButton")
 focus_next = NodePath("../../../HBoxContainer3/recordsButton")
 focus_previous = NodePath("../../../HBoxContainer4/quitButton")
-theme_override_font_sizes/font_size = 50
-text = ""
-
-[node name="next_car_button" parent="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer" instance=ExtResource("4_f12ks")]
-material = SubResource("ShaderMaterial_42cyb")
-layout_mode = 2
-text = ">"
+theme_override_font_sizes/font_size = 60
+text = "Plan Ride"
 
 [node name="VSeparator" type="VSeparator" parent="mainMenuPanel/VBoxContainer/HBoxContainer2"]
 self_modulate = Color(1, 1, 1, 0)
-custom_minimum_size = Vector2(100, 0)
+custom_minimum_size = Vector2(25, 0)
 layout_mode = 2
 
 [node name="HBoxContainer3" type="HBoxContainer" parent="mainMenuPanel/VBoxContainer"]
+custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
-size_flags_vertical = 3
+size_flags_vertical = 0
 
 [node name="VSeparator3" type="VSeparator" parent="mainMenuPanel/VBoxContainer/HBoxContainer3"]
 self_modulate = Color(1, 1, 1, 0)
@@ -388,7 +380,7 @@ layout_mode = 2
 
 [node name="recordsButton" parent="mainMenuPanel/VBoxContainer/HBoxContainer3" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
-material = SubResource("ShaderMaterial_yuixy")
+material = SubResource("ShaderMaterial_tm0ji")
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -413,8 +405,9 @@ custom_minimum_size = Vector2(66, 0)
 layout_mode = 2
 
 [node name="HBoxContainer5" type="HBoxContainer" parent="mainMenuPanel/VBoxContainer"]
+custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
-size_flags_vertical = 3
+size_flags_vertical = 0
 
 [node name="VSeparator3" type="VSeparator" parent="mainMenuPanel/VBoxContainer/HBoxContainer5"]
 self_modulate = Color(1, 1, 1, 0)
@@ -423,7 +416,7 @@ layout_mode = 2
 
 [node name="settingsButton" parent="mainMenuPanel/VBoxContainer/HBoxContainer5" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
-material = SubResource("ShaderMaterial_8uy5f")
+material = SubResource("ShaderMaterial_6y51q")
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -436,8 +429,9 @@ custom_minimum_size = Vector2(33, 0)
 layout_mode = 2
 
 [node name="HBoxContainer4" type="HBoxContainer" parent="mainMenuPanel/VBoxContainer"]
+custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
-size_flags_vertical = 3
+size_flags_vertical = 0
 
 [node name="VSeparator2" type="VSeparator" parent="mainMenuPanel/VBoxContainer/HBoxContainer4"]
 self_modulate = Color(1, 1, 1, 0)
@@ -446,7 +440,7 @@ layout_mode = 2
 
 [node name="quitButton" parent="mainMenuPanel/VBoxContainer/HBoxContainer4" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
-material = SubResource("ShaderMaterial_0q12q")
+material = SubResource("ShaderMaterial_0tivn")
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -467,7 +461,6 @@ grow_horizontal = 2
 bus = &"Voice"
 
 [node name="VBoxContainer2" type="VBoxContainer" parent="."]
-modulate = Color(1, 1, 1, 0)
 anchors_preset = -1
 anchor_left = 0.476
 anchor_top = 1.0
@@ -479,6 +472,33 @@ offset_right = -72.0
 offset_bottom = -46.0
 grow_horizontal = 2
 grow_vertical = 0
+
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer2"]
+layout_mode = 2
+theme_override_constants/separation = 40
+
+[node name="previous_car_button" parent="VBoxContainer2/HBoxContainer" instance=ExtResource("4_f12ks")]
+material = SubResource("ShaderMaterial_n5hai")
+custom_minimum_size = Vector2(80, 80)
+layout_mode = 2
+theme_override_font_sizes/font_size = 75
+text = "<"
+
+[node name="next_car_button" parent="VBoxContainer2/HBoxContainer" instance=ExtResource("4_f12ks")]
+material = SubResource("ShaderMaterial_naycl")
+custom_minimum_size = Vector2(80, 80)
+layout_mode = 2
+size_flags_horizontal = 0
+theme_override_font_sizes/font_size = 75
+text = ">"
+
+[node name="driverName" type="Label" parent="VBoxContainer2/HBoxContainer"]
+unique_name_in_owner = true
+material = ExtResource("8_vdjnf")
+layout_mode = 2
+theme = ExtResource("1_badde")
+theme_override_font_sizes/font_size = 75
+text = "ANTHONY"
 
 [node name="levelDifficultyPanel" type="HBoxContainer" parent="VBoxContainer2"]
 modulate = Color(1, 1, 1, 0)
@@ -521,12 +541,12 @@ stretch_mode = 5
 layout_mode = 2
 size_flags_horizontal = 3
 
-[connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer/previous_car_button" to="." method="_on_previous_car_button_pressed"]
 [connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer/begin" to="." method="_on_begin_pressed"]
 [connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer/unlock" to="." method="_on_unlock_pressed"]
 [connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer/levelSelect" to="." method="_on_level_select_pressed"]
-[connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer/next_car_button" to="." method="_on_next_car_button_pressed"]
 [connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer3/recordsButton" to="." method="_on_records_button_pressed"]
 [connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer3/backButton" to="." method="_on_back_button_pressed"]
 [connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer5/settingsButton" to="." method="_on_settings_button_pressed"]
 [connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer4/quitButton" to="." method="_on_quit_button_pressed"]
+[connection signal="pressed" from="VBoxContainer2/HBoxContainer/previous_car_button" to="." method="_on_previous_car_button_pressed"]
+[connection signal="pressed" from="VBoxContainer2/HBoxContainer/next_car_button" to="." method="_on_next_car_button_pressed"]

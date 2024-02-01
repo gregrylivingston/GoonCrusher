@@ -15,25 +15,25 @@ bus = &"Music"
 [node name="enemy_sounds" type="Node" parent="."]
 
 [node name="enemySound1" type="AudioStreamPlayer" parent="enemy_sounds"]
-volume_db = 8.0
+volume_db = 3.0
 bus = &"FX"
 
 [node name="enemySound2" type="AudioStreamPlayer" parent="enemy_sounds"]
-volume_db = 8.0
+volume_db = 3.0
 bus = &"FX"
 
 [node name="enemySound3" type="AudioStreamPlayer" parent="enemy_sounds"]
-volume_db = 8.0
+volume_db = 3.0
 bus = &"FX"
 
 [node name="enemySound4" type="AudioStreamPlayer" parent="enemy_sounds"]
-volume_db = 8.0
+volume_db = 3.0
 bus = &"FX"
 
 [node name="enemySound5" type="AudioStreamPlayer" parent="enemy_sounds"]
-volume_db = 8.0
+volume_db = 3.0
 bus = &"FX"
 
 [node name="enemySound6" type="AudioStreamPlayer" parent="enemy_sounds"]
-volume_db = 8.0
+volume_db = 3.0
 bus = &"FX"

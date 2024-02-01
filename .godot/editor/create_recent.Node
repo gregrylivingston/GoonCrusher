@@ -1,14 +1,15 @@
+VSeparator
+HBoxContainer
+Label
 AudioStreamPlayer
 Node
 HSeparator
 roadButton
-HBoxContainer
 VBoxContainer
 Panel
 TextureProgressBar
 Button
 TextureRect
-Label
 CanvasLayer
 Sprite2D
 AnimatedSprite2D

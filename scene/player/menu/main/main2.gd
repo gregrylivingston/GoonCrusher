@@ -32,7 +32,8 @@ func selectCar(car):
 	get_tree().create_tween().tween_property(%charTexture, "position" , Vector2( $Control.size.x  , $Control.size.y ) , selectCarDelay).set_ease(Tween.EASE_IN_OUT)
 	
 	$carStatsContainer.updateStats()
-	%levelSelect.updateText( Root.playerCar.charName )
+	#%levelSelect.updateText( "Ride with " + Root.playerCar.charName )
+	%driverName.text = Root.playerCar.charName
 	$voicePlayer.stream = Root.playerCar.introAudio[randi_range(0 , Root.playerCar.introAudio.size()-1)]
 	$voicePlayer.play()
 	await get_tree().create_timer( selectCarDelay ).timeout
@@ -45,8 +46,8 @@ func disableLockedCars(car):
 	if thisCar.cost != 0:
 		%levelSelect.visible = false
 		%unlock.visible = true
-		var unlockCost = thisCar.cost
-		%unlock.updateText( "" +str(unlockCost) )
+		var unlockCost = thisCar.cost / 1000
+		%unlock.updateText( str(unlockCost) + "k to Unlock" )
 		if thisCar.cost > SaveManager.playerData.coin:%unlock.disabled = true
 		else: %unlock.disabled = false
 	else:
@@ -83,7 +84,7 @@ func selectPreviousCar():
 func setupLevel(level):
 	$VBoxContainer2/levelDifficultyPanel.modulate.a = 1.0
 	showNewBackgroundImage(load(level.image))
-	%levelSelect.updateText( str(SaveManager.playerData.selectedLevel + 1) + ". " + level.name)
+	#%levelSelect.updateText( str(SaveManager.playerData.selectedLevel + 1) + ". " + level.name)
 	%levelDifficulty.text = level.difficulty
 	%levelTime.text = level.time
 	if level.unlocked:
