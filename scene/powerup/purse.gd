@@ -3,7 +3,7 @@ extends Powerup
 var coinScene = preload("res://scene/powerup/coin.tscn")
 
 func sendReward(body, forShowOnly: bool = false):
-	var coinsToReward = randi_range( 5 , 100 )
+	var coinsToReward = randi_range( 50 , 250 )
 	visible = false
 	for i in coinsToReward:
 		var newCoin = coinScene.instantiate()

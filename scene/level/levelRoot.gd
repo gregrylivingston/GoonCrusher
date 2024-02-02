@@ -8,6 +8,7 @@ var playerController
 var isDaytime: bool = true
 
 func _ready():
+
 	#add my car
 	var newPosition = $Car.position
 	$Car.queue_free()
@@ -30,6 +31,11 @@ func _ready():
 	newSpawner( Vector2i(3500,-1500))
 	newSpawner( Vector2i(-3500,0))
 	
+	match SaveManager.playerData.gameMode:
+		Root.gameModes.DEFENSE:
+			seconds = 0
+		Root.gameModes.GOONPOCALYPSE:
+			seconds = 0
 
 
 

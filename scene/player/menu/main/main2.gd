@@ -149,7 +149,7 @@ func goToMenuMode(myMenuMode: menuModes): #true if adancing to level select
 
 
 func selectGameMode(newGameMode):
-	%begin.text = "Begin Ride"
+	%begin.updateText( "Select Game Mode" )
 	var gameModeString = (Root.gameModes.keys()[newGameMode])
 	$VBoxContainer2/levelNameContainer.visible = true
 	var selectedLevel =  SaveManager.playerData.levels[SaveManager.playerData.selectedLevel]

@@ -1,7 +1,6 @@
 extends Node
 
 enum gameModes {  COUNTDOWN, SPRINT, MARATHON, DEFENSE, GOONPOCALYPSE }
-var gameMode: gameModes = gameModes.COUNTDOWN
 
 var playerCar: OverheadCarBody2D
 var selectedCar: Dictionary

@@ -3,7 +3,7 @@ class_name Walker extends Enemy
 enum mode { MOVE , ATTACK , IDLE , DEAD , PREPAREATTACK}
 var myMode: mode = mode.MOVE
 
-@export var powerupDropChance: int = 10
+@export var powerupDropChance: int = 25
 @export var speed: int = 6000
 @export var prepareAttackDistance: int = 300
 @export var attackSpeedMultiplier: float = 3.0

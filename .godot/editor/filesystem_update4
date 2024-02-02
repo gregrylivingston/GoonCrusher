@@ -74,3 +74,8 @@ res://scene/player/countdown.tscn
 res://scene/player/countdown.gd
 res://scene/fx/tiremark.tscn
 res://scripts/global/saveManager.gd
+res://scene/car/car_panel.gd
+res://scene/powerup/purse.tscn
+res://scene/powerup/purse.gd
+res://texture/animation/smoke.gd
+res://scene/powerup/coin.tscn

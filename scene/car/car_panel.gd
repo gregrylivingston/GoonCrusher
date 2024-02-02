@@ -3,6 +3,7 @@ extends Panel
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
+	$pauseButton.updateText( Root.gameModes.keys()[SaveManager.playerData.gameMode] )
 	$VBoxContainer/Panel/HBoxContainer/attributeIndicator_engine.add_to_group("max_engine_powerui")
 	$VBoxContainer/Panel/HBoxContainer/attributeIndicator_steering.add_to_group("max_steering_degreesui")
 	$VBoxContainer/Panel/HBoxContainer/attributeIndicator_aero.add_to_group("wheelui")

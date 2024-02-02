@@ -55,7 +55,7 @@ corner_radius_top_right = 5
 corner_radius_bottom_right = 5
 corner_radius_bottom_left = 5
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_djefb"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_6chjv"]
 resource_local_to_scene = true
 shader = ExtResource("13_re0hq")
 shader_parameter/angle = 0.6
@@ -146,6 +146,7 @@ theme_override_styles/normal = SubResource("StyleBoxEmpty_gi0ic")
 theme_override_styles/hover = SubResource("StyleBoxEmpty_gi0ic")
 theme_override_styles/pressed = SubResource("StyleBoxEmpty_gi0ic")
 theme_override_styles/focus = SubResource("StyleBoxEmpty_gi0ic")
+text = " "
 myIcon = ExtResource("6_i8q0m")
 
 [node name="attributeIndicator_steering" parent="VBoxContainer/Panel/HBoxContainer" groups=["steeringui"] instance=ExtResource("1_sbnje")]
@@ -156,6 +157,7 @@ theme_override_styles/normal = SubResource("StyleBoxEmpty_gi0ic")
 theme_override_styles/hover = SubResource("StyleBoxEmpty_gi0ic")
 theme_override_styles/pressed = SubResource("StyleBoxEmpty_gi0ic")
 theme_override_styles/focus = SubResource("StyleBoxEmpty_gi0ic")
+text = " "
 myIcon = ExtResource("5_h3pqn")
 
 [node name="attributeIndicator_aero" parent="VBoxContainer/Panel/HBoxContainer" groups=["tractionui"] instance=ExtResource("1_sbnje")]
@@ -166,6 +168,7 @@ theme_override_styles/normal = SubResource("StyleBoxEmpty_gi0ic")
 theme_override_styles/hover = SubResource("StyleBoxEmpty_gi0ic")
 theme_override_styles/pressed = SubResource("StyleBoxEmpty_gi0ic")
 theme_override_styles/focus = SubResource("StyleBoxEmpty_gi0ic")
+text = " "
 myIcon = ExtResource("7_y38vu")
 
 [node name="attributeIndicator_armor" parent="VBoxContainer/Panel/HBoxContainer" groups=["armorui"] instance=ExtResource("1_sbnje")]
@@ -176,6 +179,7 @@ theme_override_styles/normal = SubResource("StyleBoxEmpty_gi0ic")
 theme_override_styles/hover = SubResource("StyleBoxEmpty_gi0ic")
 theme_override_styles/pressed = SubResource("StyleBoxEmpty_gi0ic")
 theme_override_styles/focus = SubResource("StyleBoxEmpty_gi0ic")
+text = " "
 myIcon = ExtResource("8_sqmqh")
 
 [node name="CenterContainer" type="CenterContainer" parent="VBoxContainer"]
@@ -242,7 +246,7 @@ value = 100.0
 show_percentage = false
 
 [node name="pauseButton" parent="." instance=ExtResource("11_v8b53")]
-material = SubResource("ShaderMaterial_djefb")
+material = SubResource("ShaderMaterial_6chjv")
 layout_mode = 1
 anchors_preset = 0
 anchor_right = 0.0
