@@ -4,6 +4,7 @@ extends Resource
 @export var gem: int = 3
 @export var selectedCar: int = 0
 @export var selectedLevel: int = 0
+@export var gameMode: int = 0
 
 @export var cars = [
 	{	"name":"sedan",
@@ -120,7 +121,7 @@ extends Resource
 		"time":"3",
 	},
 	{
-		"name":"...",
+		"name":"The Dunes",
 		"image":"res://texture/background/desertBackground.png",
 		"unlocked":false,
 		"scene":"res://scene/level/levels/level_sand_1.tscn",
@@ -128,7 +129,7 @@ extends Resource
 		"time":"3",
 	},
 	{
-		"name":"...",
+		"name":"Northern Wastes",
 		"image":"res://texture/background/iceBackground.png",
 		"unlocked":false,
 		"scene":"res://scene/level/levels/level_snow_1.tscn",

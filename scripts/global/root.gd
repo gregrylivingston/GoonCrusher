@@ -1,5 +1,8 @@
 extends Node
 
+enum gameModes {  COUNTDOWN, SPRINT, MARATHON, DEFENSE, GOONPOCALYPSE }
+var gameMode: gameModes = gameModes.COUNTDOWN
+
 var playerCar: OverheadCarBody2D
 var selectedCar: Dictionary
 var timer: float #the timer during a game run
@@ -76,4 +79,22 @@ func getSpecificPowerup(pName: String) -> Powerup:
 
 func getGoon():return spawnManager.getGoon()
 
+
+var gameModeDescription: Dictionary = {
+	Root.gameModes.COUNTDOWN:{
+		"description":"Survive the countdown while crushing increasing powerful waves of goon.",
+	},
+	Root.gameModes.SPRINT:{
+		"description":"Race against the goons, rocks, and clocks to reach the finish line.",
+	},
+	Root.gameModes.DEFENSE:{
+		"description":"Stop the goons from reaching the barrier.",
+	},
+	Root.gameModes.MARATHON:{
+		"description":"Outlast, outwit, and survive in this marathon race.",
+	},
+	Root.gameModes.GOONPOCALYPSE:{
+		"description":"Survive as long as you can against increasingly powerful waves of goon.",
+	},
+}
 	

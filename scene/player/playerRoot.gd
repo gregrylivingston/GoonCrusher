@@ -45,6 +45,7 @@ func updateGoonsCrushed():
 		var slotMachineScene = preload("res://scene/player/slots/slotMachine.tscn")
 		var newMachine = slotMachineScene.instantiate()
 		Root.levelRoot.add_child(newMachine)
+		$Panel/HBoxContainer/crushedGoons.text = str( int(nextCrushingAward) - Root.playerCar.currentGoonsCrushed )
 		get_tree().paused = true
 
 	

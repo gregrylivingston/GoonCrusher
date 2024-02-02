@@ -72,3 +72,5 @@ res://scripts/global/Audio.gd
 res://scene/player/slots/slotMachine.gd
 res://scene/player/countdown.tscn
 res://scene/player/countdown.gd
+res://scene/fx/tiremark.tscn
+res://scripts/global/saveManager.gd

@@ -384,6 +384,7 @@ func turnOnHeadlights(status: bool):
 	headlamps.visible = status
 	
 func outOfFuel():
+	isDestroyed = true
 	_car_input.acceleration = 0.0
 	await get_tree().create_timer(2.5).timeout
 	Root.levelRoot.endLevel(false)

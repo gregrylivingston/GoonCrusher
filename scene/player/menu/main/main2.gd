@@ -1,7 +1,10 @@
 extends CanvasLayer
 
 
-var menuMode: String = "main"
+enum menuModes{ RIDER , LEVEL , GAMEMODE }
+var menuMode: menuModes = menuModes.RIDER
+
+
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
@@ -68,27 +71,29 @@ func showNewBackgroundImage(newImage:Texture2D):
 func _on_next_car_button_pressed():selectNextCar()
 	
 func selectNextCar():
-	if menuMode == "level":
-		setupLevel(SaveManager.selectNextLevel())
-	elif menuMode == "main":
-		selectCar(SaveManager.selectNextCar())
+	match menuMode:
+		menuModes.RIDER:selectCar(SaveManager.selectNextCar())
+		menuModes.LEVEL:setupLevel(SaveManager.selectNextLevel())
+		menuModes.GAMEMODE:selectGameMode(SaveManager.selectNextGameMode())
 	
 func _on_previous_car_button_pressed():selectPreviousCar()
 
 func selectPreviousCar():
-	if menuMode == "level":
-		setupLevel(SaveManager.selectPreviousLevel())
-	elif menuMode == "main":
-		selectCar(SaveManager.selectPreviousCar())
+	match menuMode:
+		menuModes.RIDER:selectCar(SaveManager.selectPreviousCar())
+		menuModes.LEVEL:setupLevel(SaveManager.selectPreviousLevel())
+		menuModes.GAMEMODE:selectGameMode(SaveManager.selectPreviousGameMode())
+		
 
 func setupLevel(level):
-	$VBoxContainer2/levelDifficultyPanel.modulate.a = 1.0
+
 	showNewBackgroundImage(load(level.image))
 	#%levelSelect.updateText( str(SaveManager.playerData.selectedLevel + 1) + ". " + level.name)
-	%levelDifficulty.text = level.difficulty
-	%levelTime.text = level.time
+	%driverName2.text =  Root.playerCar.charName
+	%driverName.text = str(SaveManager.playerData.selectedLevel + 1) + ". " + level.name
 	if level.unlocked:
-		%begin.updateText(str(SaveManager.playerData.selectedLevel + 1) + ". " + level.name)
+		%begin.updateText("Select Level")
+
 		%begin.disabled = false
 	else:
 		%begin.updateText("LOCKED")
@@ -97,41 +102,69 @@ func setupLevel(level):
 	$backgroundTexture.texture = load(level.image)
 
 
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta):
-	pass
-
-
 func _on_level_select_pressed():
-	goToLevelSelect(true)
+	match menuMode:
+		menuModes.RIDER:goToMenuMode(menuModes.LEVEL)
 	
 
 var menuTweenSpeed = 0.12
-func goToLevelSelect(setting: bool): #true if adancing to level select
+func goToMenuMode(myMenuMode: menuModes): #true if adancing to level select
+	menuMode = myMenuMode
+
 	var mainMenuScale = %mainMenuPanel.scale
-	var topMenuScale = $carStatsContainer.scale
+	var topMenuScale = $carStatsContainer.scale	
+	var selectedTextScale = $VBoxContainer2.scale
 	get_tree().create_tween().tween_property(%mainMenuPanel , "scale" , Vector2(mainMenuScale.x * 0.8 ,0) , menuTweenSpeed)
-	if setting: 
-		menuMode = "level"
-		get_tree().create_tween().tween_property($carStatsContainer , "scale" , Vector2(0 ,topMenuScale.y) , menuTweenSpeed)
-		setupLevel(SaveManager.playerData.levels[SaveManager.playerData.selectedLevel])
+	get_tree().create_tween().tween_property($VBoxContainer2 , "scale", Vector2(0, 1 ), menuTweenSpeed)
+
+	match menuMode:
+		menuModes.LEVEL:		
+			get_tree().create_tween().tween_property($carStatsContainer , "scale" , Vector2(0 ,topMenuScale.y) , menuTweenSpeed)
+			setupLevel(SaveManager.playerData.levels[SaveManager.playerData.selectedLevel])
+
 	await get_tree().create_timer(menuTweenSpeed + 0.02).timeout #animation halfway complete
 	
-	for i in 	get_tree().get_nodes_in_group("levelMenu"): i.visible = setting
-	for i in 	get_tree().get_nodes_in_group("characterMenu"): i.visible = not setting
+	var isRiderMenu: bool = false  #this is really awkard - just using it to hide which parts of main menu get shown....
+	if menuMode == menuModes.RIDER:
+		isRiderMenu = true
+
+	for i in get_tree().get_nodes_in_group("levelMenu"): i.visible = not isRiderMenu
+	for i in get_tree().get_nodes_in_group("characterMenu"): i.visible = isRiderMenu
 	
-	if not setting:
-		menuMode = "main"
-		selectCar(SaveManager.getCarByName(Root.playerCar.carId))
-		$VBoxContainer2/levelDifficultyPanel.modulate.a = 0.0
+	match menuMode:
+		menuModes.RIDER:selectCar(SaveManager.getCarByName(Root.playerCar.carId))
+		menuModes.GAMEMODE:selectGameMode(SaveManager.getGameMode())
+		menuModes.LEVEL:
+			$VBoxContainer2/levelNameContainer.visible = false
+			$gameModeInfo.visible = false
+			%begin.text = "Select Level"
 	
 	get_tree().create_tween().tween_property(%mainMenuPanel, "scale" ,  mainMenuScale  , menuTweenSpeed)
+	get_tree().create_tween().tween_property($VBoxContainer2 , "scale", selectedTextScale, menuTweenSpeed)
 	$carStatsContainer.scale = topMenuScale
 	
-	if setting && $voicePlayer.playing == false:
+	if isRiderMenu && $voicePlayer.playing == false:
 		$voicePlayer.stream = Root.playerCar.introAudio[randi_range(0 , Root.playerCar.introAudio.size()-1)]
 		$voicePlayer.play()
+
+
+func selectGameMode(newGameMode):
+	%begin.text = "Begin Ride"
+	var gameModeString = (Root.gameModes.keys()[newGameMode])
+	$VBoxContainer2/levelNameContainer.visible = true
+	var selectedLevel =  SaveManager.playerData.levels[SaveManager.playerData.selectedLevel]
+	$VBoxContainer2/levelNameContainer/levelName.text = str(SaveManager.playerData.selectedLevel + 1) + ". " + selectedLevel.name
+	%driverName.text = gameModeString
+
+	$gameModeInfo/gameModeLabel.text = Root.gameModes.keys()[newGameMode]
+	$gameModeInfo.visible = true
+	$gameModeInfo/gameModeDescription.text = Root.gameModeDescription[newGameMode].description
+	highlightAGameModeStar(gameModeString)
 	
+func highlightAGameModeStar(starNodeGroup: String):
+	for i in get_tree().get_nodes_in_group("gameModeStar"):get_tree().create_tween().tween_property(i , "custom_minimum_size", Vector2(48,48), menuTweenSpeed)
+	var myStar = get_tree().get_first_node_in_group(starNodeGroup)
+	if is_instance_valid(myStar):get_tree().create_tween().tween_property(myStar , "custom_minimum_size",  Vector2(72,72), menuTweenSpeed)
 
 func _on_quit_button_pressed():	get_tree().quit()
 func _on_settings_button_pressed():	add_child(load("res://scene/player/menu/settings/settings.tscn").instantiate())
@@ -143,12 +176,15 @@ func _on_records_button_pressed():
 
 
 func _on_back_button_pressed():
-	goToLevelSelect(false)
-
-
+	match menuMode:
+		menuModes.LEVEL:goToMenuMode(menuModes.RIDER)
+		menuModes.GAMEMODE:goToMenuMode(menuModes.LEVEL)
+			
+		
 func _on_begin_pressed():
-	get_tree().change_scene_to_file( SaveManager.playerData.levels[SaveManager.playerData.selectedLevel].scene)
-
+	match menuMode:
+		menuModes.GAMEMODE:get_tree().change_scene_to_file( SaveManager.playerData.levels[SaveManager.playerData.selectedLevel].scene)
+		menuModes.LEVEL:goToMenuMode(menuModes.GAMEMODE)
 
 func _on_unlock_pressed():
 	if SaveManager.unlockCar():

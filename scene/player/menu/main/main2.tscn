@@ -1,4 +1,4 @@
-[gd_scene load_steps=30 format=3 uid="uid://btm8fh8tutk2x"]
+[gd_scene load_steps=34 format=3 uid="uid://btm8fh8tutk2x"]
 
 [ext_resource type="Theme" uid="uid://co40pijjc7hbw" path="res://style/roadRogue.tres" id="1_badde"]
 [ext_resource type="Script" path="res://scene/player/menu/main/main2.gd" id="1_cc7gi"]
@@ -16,7 +16,7 @@
 [ext_resource type="Shader" uid="uid://c2jd3wjben4p2" path="res://shader/3d_Text_HighlightRight.tres" id="10_l1x4e"]
 [ext_resource type="Texture2D" uid="uid://w03tvhxtmrv4" path="res://texture/icon/icons8-coin-48 (1).png" id="11_1oi8i"]
 [ext_resource type="PackedScene" uid="uid://clx3q1jksnuoc" path="res://scene/player/menu/main/car_stats_container.tscn" id="11_wos04"]
-[ext_resource type="Texture2D" uid="uid://cko3st4beios6" path="res://texture/icon/moon.png" id="14_k0lsc"]
+[ext_resource type="Texture2D" uid="uid://djs2pk1xs4sql" path="res://texture/icon/star.png" id="17_pkha7"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_noll7"]
 shader = ExtResource("3_w77gt")
@@ -50,7 +50,7 @@ shader_parameter/back_tex = ExtResource("10_8o5bn")
 shader_parameter/side_tex = SubResource("GradientTexture1D_pwab5")
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_lmdt0"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_cc2p7"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -62,7 +62,7 @@ shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_5osky"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_4u3vi"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -74,7 +74,7 @@ shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_tm0ji"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_1s7us"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -86,7 +86,7 @@ shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_6y51q"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_q48c5"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -98,7 +98,7 @@ shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_0tivn"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_dt7lw"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -110,7 +110,349 @@ shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_n5hai"]
+[sub_resource type="Shader" id="Shader_cb3y6"]
+code = "shader_type canvas_item;
+
+//from https://godotshaders.com/shader/cool-3d-text/
+
+render_mode blend_premul_alpha;
+
+uniform float angle = -0.2;
+uniform float thickness : hint_range(0.0, 64.0) = 10.0;
+uniform float scale = 1.0;
+uniform vec2 shear = vec2(0.0, -0.4);
+uniform int slices = 16;
+uniform bool outline = true;
+uniform float outline_width : hint_range(0.0, 5.0) = 2.0;
+
+uniform sampler2D front_tex : hint_default_white, repeat_disable;
+uniform sampler2D back_tex : hint_default_white, repeat_disable;
+uniform sampler2D side_tex : hint_default_black, repeat_disable;
+uniform sampler2D outline_tex : hint_default_black, repeat_disable;
+
+group_uniforms debug;
+uniform bool show_bound = false;
+
+float box(vec2 p, vec2 d){
+	p = abs(p) - d;
+	return max(p.x, p.y);
+}
+
+varying vec2 vertex_base;
+varying flat vec2 glyph_position;
+varying vec2 padding;
+varying vec4 my_modulate;
+void vertex() {
+	// Magic :)
+	vertex_base = vec2(float(VERTEX_ID>>1), float(6>>VERTEX_ID&1));
+	glyph_position = UV;
+
+	// Extend bounds
+	padding = (vertex_base*2.0-1.0) * abs(shear) * thickness * 0.5;
+	padding += (vertex_base*2.0-1.0) * outline_width;
+	VERTEX.xy += padding;
+	padding *= TEXTURE_PIXEL_SIZE;
+
+	// Give me access to MODULATE
+	my_modulate = COLOR;
+}
+
+void transformRay(inout vec3 p, inout vec3 rd, float _angle, float _scale, vec2 _shear){
+	// Apply scale
+	p.xy /= _scale;
+
+	// Apply shear
+	p.xy += p.z * _shear;
+	rd.xy += rd.z * _shear;
+
+	_angle = clamp( _angle * sin(TIME *2.0 ) , -1000000 ,100000);
+	
+	// Apply rotation
+	mat2 R = mat2(vec2(cos(_angle),sin(_angle)),vec2(-sin(_angle),cos(_angle)));
+	p.xz *= R;
+	rd.xz *= R;
+}
+
+// complex number math
+vec2 cmul(vec2 a, vec2 b) { return vec2(a.x*b.x-a.y*b.y, a.x*b.y+a.y*b.x); }
+float getOutline(sampler2D tex, vec2 p, vec2 offset_px, vec2 clip_center, vec2 clip_size){
+	float opacity = 0.0;
+
+	for(int i = 0; i < 8; i++){
+		float samp = texture(tex, p + offset_px).a;
+		samp *= float(box(p + offset_px - clip_center, clip_size) < 0.0); // Clipping
+
+		opacity = max(opacity, samp);
+
+		offset_px = cmul(vec2(1.0/sqrt(2.0)), offset_px);
+	}
+
+	return opacity;
+}
+
+void fragment(){
+	vec2 glyph_size = (UV - glyph_position)/vertex_base;
+	vec2 glyph_center = glyph_position + glyph_size/2.0;
+
+	vec3 p = vec3(UV + padding, 0); // A point in the font atlas, with padded bounds
+	vec3 rd = vec3(0, 0, -1); // Ray points back to front
+
+	// Inversly transform the ray
+	p.xy -= glyph_center;
+	transformRay(p, rd, angle, scale, shear);
+	p.xy += glyph_center;
+
+
+	// Intersect xy plane
+	rd /= abs(rd.z);
+	p -= rd * rd.z * p.z;
+
+	// Thickness is measured in pixels. Hopefully the texture is predictable
+	rd *= thickness * TEXTURE_PIXEL_SIZE.x;
+
+	// Find back slice
+	p -= rd * 0.5;
+
+	// Prepare for ray march
+	rd /= float(slices - 1);
+
+	COLOR = vec4(0,0,0,0);
+
+	// Add back outline
+	if(outline){
+		float opacity = getOutline(TEXTURE, p.xy, sign(shear) * TEXTURE_PIXEL_SIZE * outline_width, glyph_center, glyph_size/2.0);
+		vec4 col = vec4(texture(outline_tex, vertex_base).rgb * opacity, opacity);
+		col *= my_modulate;
+		COLOR = COLOR + col * (1.0 - COLOR.a); // premultiplied alpha under operator*/
+	}
+
+	for(int i = 0; i<slices; i++){
+		vec4 samp = texture(TEXTURE, p.xy);
+		samp.a *= float(box(p.xy - glyph_center, glyph_size/2.0) < 0.0); // Clipping
+
+		if(i < slices-1) {
+			samp.rgb = texture(side_tex, vertex_base).rgb;
+		}
+		else if(rd.z < 0.0) {
+			samp.rgb = texture(front_tex, vertex_base).rgb;
+		}
+		else {
+			samp.rgb = texture(back_tex, vertex_base).rgb;
+		}
+
+		samp *= my_modulate;
+		samp.rgb *= samp.a; // premultiply alpha
+		COLOR = samp + COLOR * (1.0 - samp.a); // premultiplied alpha over operator
+
+		// March to the next slice
+		p += rd;
+	}
+
+	// Unmarch it back. Kinda lazy
+	p -= rd;
+
+	// Add front outline
+	if(outline){
+		float opacity = getOutline(TEXTURE, p.xy, sign(shear) * TEXTURE_PIXEL_SIZE * outline_width, glyph_center, glyph_size/2.0);
+		vec4 col = vec4(texture(outline_tex, vertex_base).rgb * opacity, opacity);
+		col *= my_modulate;
+		COLOR = COLOR + col * (1.0 - COLOR.a); // premultiplied alpha under operator*/
+	}
+
+	if(show_bound){
+		COLOR.a = COLOR.a * 0.8 + 0.2;
+
+		float b = box(vertex_base-0.5, vec2(0.5));
+		COLOR.g += (1.0 - clamp(abs(b/fwidth(b) + 0.5), 0.0, 1.0));
+	}
+	
+}"
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_473f3"]
+resource_local_to_scene = true
+shader = SubResource("Shader_cb3y6")
+shader_parameter/angle = 0.6
+shader_parameter/thickness = 5.0
+shader_parameter/scale = 1.0
+shader_parameter/shear = Vector2(0, -0.2)
+shader_parameter/slices = 16
+shader_parameter/outline = true
+shader_parameter/outline_width = 2.0
+shader_parameter/front_tex = ExtResource("17_pkha7")
+shader_parameter/back_tex = ExtResource("17_pkha7")
+shader_parameter/show_bound = false
+
+[sub_resource type="Shader" id="Shader_dq0st"]
+code = "shader_type canvas_item;
+
+//from https://godotshaders.com/shader/cool-3d-text/
+
+render_mode blend_premul_alpha;
+
+uniform float angle = -0.2;
+uniform float thickness : hint_range(0.0, 64.0) = 10.0;
+uniform float scale = 1.0;
+uniform vec2 shear = vec2(0.0, -0.4);
+uniform int slices = 16;
+uniform bool outline = true;
+uniform float outline_width : hint_range(0.0, 5.0) = 2.0;
+
+uniform sampler2D front_tex : hint_default_white, repeat_disable;
+uniform sampler2D back_tex : hint_default_white, repeat_disable;
+uniform sampler2D side_tex : hint_default_black, repeat_disable;
+uniform sampler2D outline_tex : hint_default_black, repeat_disable;
+
+group_uniforms debug;
+uniform bool show_bound = false;
+
+float box(vec2 p, vec2 d){
+	p = abs(p) - d;
+	return max(p.x, p.y);
+}
+
+varying vec2 vertex_base;
+varying flat vec2 glyph_position;
+varying vec2 padding;
+varying vec4 my_modulate;
+void vertex() {
+	// Magic :)
+	vertex_base = vec2(float(VERTEX_ID>>1), float(6>>VERTEX_ID&1));
+	glyph_position = UV;
+
+	// Extend bounds
+	padding = (vertex_base*2.0-1.0) * abs(shear) * thickness * 0.5;
+	padding += (vertex_base*2.0-1.0) * outline_width;
+	VERTEX.xy += padding;
+	padding *= TEXTURE_PIXEL_SIZE;
+
+	// Give me access to MODULATE
+	my_modulate = COLOR;
+}
+
+void transformRay(inout vec3 p, inout vec3 rd, float _angle, float _scale, vec2 _shear){
+	// Apply scale
+	p.xy /= _scale;
+
+	// Apply shear
+	p.xy += p.z * _shear;
+	rd.xy += rd.z * _shear;
+
+	_angle = clamp( _angle * sin(TIME *2.0 ) , -1000000 ,100000);
+	
+	// Apply rotation
+	mat2 R = mat2(vec2(cos(_angle),sin(_angle)),vec2(-sin(_angle),cos(_angle)));
+	p.xz *= R;
+	rd.xz *= R;
+}
+
+// complex number math
+vec2 cmul(vec2 a, vec2 b) { return vec2(a.x*b.x-a.y*b.y, a.x*b.y+a.y*b.x); }
+float getOutline(sampler2D tex, vec2 p, vec2 offset_px, vec2 clip_center, vec2 clip_size){
+	float opacity = 0.0;
+
+	for(int i = 0; i < 8; i++){
+		float samp = texture(tex, p + offset_px).a;
+		samp *= float(box(p + offset_px - clip_center, clip_size) < 0.0); // Clipping
+
+		opacity = max(opacity, samp);
+
+		offset_px = cmul(vec2(1.0/sqrt(2.0)), offset_px);
+	}
+
+	return opacity;
+}
+
+void fragment(){
+	vec2 glyph_size = (UV - glyph_position)/vertex_base;
+	vec2 glyph_center = glyph_position + glyph_size/2.0;
+
+	vec3 p = vec3(UV + padding, 0); // A point in the font atlas, with padded bounds
+	vec3 rd = vec3(0, 0, -1); // Ray points back to front
+
+	// Inversly transform the ray
+	p.xy -= glyph_center;
+	transformRay(p, rd, angle, scale, shear);
+	p.xy += glyph_center;
+
+
+	// Intersect xy plane
+	rd /= abs(rd.z);
+	p -= rd * rd.z * p.z;
+
+	// Thickness is measured in pixels. Hopefully the texture is predictable
+	rd *= thickness * TEXTURE_PIXEL_SIZE.x;
+
+	// Find back slice
+	p -= rd * 0.5;
+
+	// Prepare for ray march
+	rd /= float(slices - 1);
+
+	COLOR = vec4(0,0,0,0);
+
+	// Add back outline
+	if(outline){
+		float opacity = getOutline(TEXTURE, p.xy, sign(shear) * TEXTURE_PIXEL_SIZE * outline_width, glyph_center, glyph_size/2.0);
+		vec4 col = vec4(texture(outline_tex, vertex_base).rgb * opacity, opacity);
+		col *= my_modulate;
+		COLOR = COLOR + col * (1.0 - COLOR.a); // premultiplied alpha under operator*/
+	}
+
+	for(int i = 0; i<slices; i++){
+		vec4 samp = texture(TEXTURE, p.xy);
+		samp.a *= float(box(p.xy - glyph_center, glyph_size/2.0) < 0.0); // Clipping
+
+		if(i < slices-1) {
+			samp.rgb = texture(side_tex, vertex_base).rgb;
+		}
+		else if(rd.z < 0.0) {
+			samp.rgb = texture(front_tex, vertex_base).rgb;
+		}
+		else {
+			samp.rgb = texture(back_tex, vertex_base).rgb;
+		}
+
+		samp *= my_modulate;
+		samp.rgb *= samp.a; // premultiply alpha
+		COLOR = samp + COLOR * (1.0 - samp.a); // premultiplied alpha over operator
+
+		// March to the next slice
+		p += rd;
+	}
+
+	// Unmarch it back. Kinda lazy
+	p -= rd;
+
+	// Add front outline
+	if(outline){
+		float opacity = getOutline(TEXTURE, p.xy, sign(shear) * TEXTURE_PIXEL_SIZE * outline_width, glyph_center, glyph_size/2.0);
+		vec4 col = vec4(texture(outline_tex, vertex_base).rgb * opacity, opacity);
+		col *= my_modulate;
+		COLOR = COLOR + col * (1.0 - COLOR.a); // premultiplied alpha under operator*/
+	}
+
+	if(show_bound){
+		COLOR.a = COLOR.a * 0.8 + 0.2;
+
+		float b = box(vertex_base-0.5, vec2(0.5));
+		COLOR.g += (1.0 - clamp(abs(b/fwidth(b) + 0.5), 0.0, 1.0));
+	}
+	
+}"
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_as176"]
+resource_local_to_scene = true
+shader = SubResource("Shader_dq0st")
+shader_parameter/angle = 0.6
+shader_parameter/thickness = 5.0
+shader_parameter/scale = 1.0
+shader_parameter/shear = Vector2(0, -0.2)
+shader_parameter/slices = 16
+shader_parameter/outline = true
+shader_parameter/outline_width = 2.0
+shader_parameter/show_bound = false
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_vpirc"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -122,7 +464,7 @@ shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_naycl"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_xfgy4"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -196,7 +538,7 @@ stretch_mode = 6
 [node name="Panel" type="Panel" parent="."]
 anchors_preset = 9
 anchor_bottom = 1.0
-offset_right = 640.0
+offset_right = 673.0
 grow_vertical = 2
 theme = ExtResource("1_badde")
 theme_override_styles/panel = ExtResource("2_qamlo")
@@ -295,9 +637,12 @@ theme = ExtResource("1_badde")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="mainMenuPanel"]
 layout_mode = 1
-anchors_preset = 15
+anchors_preset = 14
+anchor_top = 0.5
 anchor_right = 1.0
-anchor_bottom = 1.0
+anchor_bottom = 0.5
+offset_top = -189.0
+offset_bottom = 189.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 40
@@ -305,7 +650,7 @@ theme_override_constants/separation = 40
 [node name="HBoxContainer2" type="HBoxContainer" parent="mainMenuPanel/VBoxContainer"]
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
-size_flags_vertical = 0
+size_flags_vertical = 4
 
 [node name="HBoxContainer" type="HBoxContainer" parent="mainMenuPanel/VBoxContainer/HBoxContainer2"]
 custom_minimum_size = Vector2(0, 75)
@@ -336,7 +681,7 @@ text = "  Begin"
 [node name="unlock" parent="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
 visible = false
-material = SubResource("ShaderMaterial_lmdt0")
+material = SubResource("ShaderMaterial_cc2p7")
 custom_minimum_size = Vector2(250, 25)
 layout_mode = 2
 size_flags_horizontal = 0
@@ -351,7 +696,7 @@ icon = ExtResource("11_1oi8i")
 
 [node name="levelSelect" parent="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
-material = SubResource("ShaderMaterial_5osky")
+material = SubResource("ShaderMaterial_4u3vi")
 custom_minimum_size = Vector2(250, 0)
 layout_mode = 2
 size_flags_horizontal = 0
@@ -361,7 +706,7 @@ focus_neighbor_bottom = NodePath("../../../HBoxContainer3/recordsButton")
 focus_next = NodePath("../../../HBoxContainer3/recordsButton")
 focus_previous = NodePath("../../../HBoxContainer4/quitButton")
 theme_override_font_sizes/font_size = 60
-text = "Plan Ride"
+text = "Select Driver"
 
 [node name="VSeparator" type="VSeparator" parent="mainMenuPanel/VBoxContainer/HBoxContainer2"]
 self_modulate = Color(1, 1, 1, 0)
@@ -371,7 +716,7 @@ layout_mode = 2
 [node name="HBoxContainer3" type="HBoxContainer" parent="mainMenuPanel/VBoxContainer"]
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
-size_flags_vertical = 0
+size_flags_vertical = 4
 
 [node name="VSeparator3" type="VSeparator" parent="mainMenuPanel/VBoxContainer/HBoxContainer3"]
 self_modulate = Color(1, 1, 1, 0)
@@ -380,7 +725,7 @@ layout_mode = 2
 
 [node name="recordsButton" parent="mainMenuPanel/VBoxContainer/HBoxContainer3" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
-material = SubResource("ShaderMaterial_tm0ji")
+material = SubResource("ShaderMaterial_1s7us")
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -407,7 +752,7 @@ layout_mode = 2
 [node name="HBoxContainer5" type="HBoxContainer" parent="mainMenuPanel/VBoxContainer"]
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
-size_flags_vertical = 0
+size_flags_vertical = 4
 
 [node name="VSeparator3" type="VSeparator" parent="mainMenuPanel/VBoxContainer/HBoxContainer5"]
 self_modulate = Color(1, 1, 1, 0)
@@ -416,7 +761,7 @@ layout_mode = 2
 
 [node name="settingsButton" parent="mainMenuPanel/VBoxContainer/HBoxContainer5" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
-material = SubResource("ShaderMaterial_6y51q")
+material = SubResource("ShaderMaterial_q48c5")
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -431,7 +776,7 @@ layout_mode = 2
 [node name="HBoxContainer4" type="HBoxContainer" parent="mainMenuPanel/VBoxContainer"]
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
-size_flags_vertical = 0
+size_flags_vertical = 4
 
 [node name="VSeparator2" type="VSeparator" parent="mainMenuPanel/VBoxContainer/HBoxContainer4"]
 self_modulate = Color(1, 1, 1, 0)
@@ -440,7 +785,7 @@ layout_mode = 2
 
 [node name="quitButton" parent="mainMenuPanel/VBoxContainer/HBoxContainer4" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
-material = SubResource("ShaderMaterial_0tivn")
+material = SubResource("ShaderMaterial_dt7lw")
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -457,36 +802,95 @@ offset_right = -102.0
 offset_bottom = 185.0
 grow_horizontal = 2
 
-[node name="voicePlayer" type="AudioStreamPlayer" parent="."]
-bus = &"Voice"
-
 [node name="VBoxContainer2" type="VBoxContainer" parent="."]
-anchors_preset = -1
-anchor_left = 0.476
+custom_minimum_size = Vector2(800, 0)
+anchors_preset = 7
+anchor_left = 0.5
 anchor_top = 1.0
-anchor_right = 1.0
+anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = 77.4
-offset_top = -177.0
-offset_right = -72.0
-offset_bottom = -46.0
+offset_left = -46.0
+offset_top = -318.0
+offset_right = 754.0
+offset_bottom = -45.0
 grow_horizontal = 2
 grow_vertical = 0
+size_flags_vertical = 3
+theme_override_constants/separation = -20
+
+[node name="starContainer" type="HBoxContainer" parent="VBoxContainer2"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(500, 0)
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0
+
+[node name="VSeparator" type="VSeparator" parent="VBoxContainer2/starContainer"]
+self_modulate = Color(1, 1, 1, 0)
+custom_minimum_size = Vector2(240, 70)
+layout_mode = 2
+
+[node name="TextureRect" type="TextureRect" parent="VBoxContainer2/starContainer" groups=["COUNTDOWN", "gameModeStar", "levelMenu"]]
+visible = false
+material = SubResource("ShaderMaterial_473f3")
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 4
+texture = ExtResource("17_pkha7")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="TextureRect3" type="TextureRect" parent="VBoxContainer2/starContainer" groups=["SPRINT", "gameModeStar", "levelMenu"]]
+visible = false
+material = SubResource("ShaderMaterial_as176")
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 4
+texture = ExtResource("17_pkha7")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="TextureRect2" type="TextureRect" parent="VBoxContainer2/starContainer" groups=["MARATHON", "gameModeStar", "levelMenu"]]
+visible = false
+material = SubResource("ShaderMaterial_as176")
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 4
+texture = ExtResource("17_pkha7")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="TextureRect4" type="TextureRect" parent="VBoxContainer2/starContainer" groups=["DEFENSE", "gameModeStar", "levelMenu"]]
+visible = false
+material = SubResource("ShaderMaterial_as176")
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 4
+texture = ExtResource("17_pkha7")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer2"]
 layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0
 theme_override_constants/separation = 40
 
 [node name="previous_car_button" parent="VBoxContainer2/HBoxContainer" instance=ExtResource("4_f12ks")]
-material = SubResource("ShaderMaterial_n5hai")
-custom_minimum_size = Vector2(80, 80)
+material = SubResource("ShaderMaterial_vpirc")
+custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
+size_flags_horizontal = 0
 theme_override_font_sizes/font_size = 75
 text = "<"
 
 [node name="next_car_button" parent="VBoxContainer2/HBoxContainer" instance=ExtResource("4_f12ks")]
-material = SubResource("ShaderMaterial_naycl")
-custom_minimum_size = Vector2(80, 80)
+material = SubResource("ShaderMaterial_xfgy4")
+custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
 size_flags_horizontal = 0
 theme_override_font_sizes/font_size = 75
@@ -496,50 +900,76 @@ text = ">"
 unique_name_in_owner = true
 material = ExtResource("8_vdjnf")
 layout_mode = 2
+size_flags_horizontal = 0
 theme = ExtResource("1_badde")
-theme_override_font_sizes/font_size = 75
+theme_override_font_sizes/font_size = 65
 text = "ANTHONY"
 
-[node name="levelDifficultyPanel" type="HBoxContainer" parent="VBoxContainer2"]
-modulate = Color(1, 1, 1, 0)
+[node name="levelNameContainer" type="HBoxContainer" parent="VBoxContainer2"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 40
+
+[node name="VSeparator" type="VSeparator" parent="VBoxContainer2/levelNameContainer"]
+self_modulate = Color(1, 1, 1, 0)
+custom_minimum_size = Vector2(200, 60)
 layout_mode = 2
 
-[node name="Control" type="Control" parent="VBoxContainer2/levelDifficultyPanel"]
-custom_minimum_size = Vector2(50, 0)
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer2/levelDifficultyPanel"]
-custom_minimum_size = Vector2(500, 0)
-layout_mode = 2
-size_flags_horizontal = 4
-size_flags_vertical = 0
-
-[node name="levelDifficulty" type="Label" parent="VBoxContainer2/levelDifficultyPanel/HBoxContainer"]
+[node name="levelName" type="Label" parent="VBoxContainer2/levelNameContainer"]
 unique_name_in_owner = true
+material = ExtResource("8_vdjnf")
 layout_mode = 2
 theme = ExtResource("1_badde")
-theme_override_font_sizes/font_size = 24
-text = " VERY EASY"
+theme_override_font_sizes/font_size = 40
+text = "ANTHONY"
 
-[node name="levelTime" type="Label" parent="VBoxContainer2/levelDifficultyPanel/HBoxContainer"]
+[node name="HBoxContainer2" type="HBoxContainer" parent="VBoxContainer2"]
+layout_mode = 2
+theme_override_constants/separation = 40
+
+[node name="VSeparator" type="VSeparator" parent="VBoxContainer2/HBoxContainer2"]
+self_modulate = Color(1, 1, 1, 0)
+custom_minimum_size = Vector2(200, 60)
+layout_mode = 2
+
+[node name="driverName2" type="Label" parent="VBoxContainer2/HBoxContainer2" groups=["levelMenu"]]
 unique_name_in_owner = true
+visible = false
+material = ExtResource("8_vdjnf")
 layout_mode = 2
-size_flags_horizontal = 10
 theme = ExtResource("1_badde")
-theme_override_font_sizes/font_size = 24
-text = "5"
+theme_override_font_sizes/font_size = 40
+text = "ANTHONY"
 
-[node name="TextureRect" type="TextureRect" parent="VBoxContainer2/levelDifficultyPanel/HBoxContainer"]
-custom_minimum_size = Vector2(30, 30)
-layout_mode = 2
-texture = ExtResource("14_k0lsc")
-expand_mode = 1
-stretch_mode = 5
+[node name="voicePlayer" type="AudioStreamPlayer" parent="."]
+bus = &"Voice"
 
-[node name="Control2" type="Control" parent="VBoxContainer2/levelDifficultyPanel"]
+[node name="gameModeInfo" type="VBoxContainer" parent="."]
+visible = false
+anchors_preset = -1
+anchor_left = 0.5
+anchor_right = 1.0
+offset_left = -9.0
+offset_top = 39.0
+offset_right = -14.0
+offset_bottom = 191.0
+grow_horizontal = 0
+
+[node name="gameModeLabel" type="Label" parent="gameModeInfo"]
+material = ExtResource("8_vdjnf")
 layout_mode = 2
-size_flags_horizontal = 3
+theme = ExtResource("1_badde")
+theme_override_font_sizes/font_size = 30
+text = "COUNTDOWN"
+
+[node name="gameModeDescription" type="RichTextLabel" parent="gameModeInfo"]
+material = ExtResource("8_vdjnf")
+clip_contents = false
+layout_mode = 2
+theme = ExtResource("1_badde")
+theme_override_font_sizes/normal_font_size = 20
+text = "Survive the countdown while crushing increasing powerful waves of goon."
+fit_content = true
 
 [connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer/begin" to="." method="_on_begin_pressed"]
 [connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer/unlock" to="." method="_on_unlock_pressed"]

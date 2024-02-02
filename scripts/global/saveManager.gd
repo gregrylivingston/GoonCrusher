@@ -126,3 +126,14 @@ func getCarByName(carName):
 	
 func findCar(car):
 	return car.name == carNameToFind
+	
+func getGameMode():
+	return playerData.gameMode
+	
+func selectNextGameMode():
+	playerData.gameMode = wrap( playerData.gameMode + 1, 0 , Root.gameModes.size() )
+	return playerData.gameMode
+	
+func selectPreviousGameMode():
+	playerData.gameMode = wrap( playerData.gameMode  -1, 0 , Root.gameModes.size() )
+	return playerData.gameMode
