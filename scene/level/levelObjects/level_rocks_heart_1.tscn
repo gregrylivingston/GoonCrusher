@@ -1,0 +1,120 @@
+[gd_scene load_steps=16 format=3 uid="uid://ct4635udx7vdm"]
+
+[ext_resource type="PackedScene" uid="uid://brhh6ifac5qvc" path="res://scene/scenery/rocks1.tscn" id="1_cqn7d"]
+[ext_resource type="PackedScene" uid="uid://c3nj8qlsr0clb" path="res://scene/powerup/coin.tscn" id="2_0cm0p"]
+[ext_resource type="Shader" path="res://shader/shine.gdshader" id="3_2h3ia"]
+[ext_resource type="PackedScene" uid="uid://bnet6qb3y8n0b" path="res://scene/scenery/rocks4.tscn" id="5_bs23b"]
+[ext_resource type="PackedScene" uid="uid://c0xcbyhyhfy1y" path="res://scene/scenery/rocks2.tscn" id="6_yw6n5"]
+[ext_resource type="PackedScene" uid="uid://1n5rup2g5iel" path="res://scene/scenery/rocks3.tscn" id="7_luogy"]
+[ext_resource type="PackedScene" uid="uid://cj1bw767v5imn" path="res://scene/powerup/health.tscn" id="7_nhxgj"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_0tt3q"]
+resource_local_to_scene = true
+shader = ExtResource("3_2h3ia")
+shader_parameter/shine_color = Color(100, 100, 0, 1)
+shader_parameter/shine_speed = 5.0
+shader_parameter/shine_size = 0.02
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_0cyjr"]
+resource_local_to_scene = true
+shader = ExtResource("3_2h3ia")
+shader_parameter/shine_color = Color(100, 100, 0, 1)
+shader_parameter/shine_speed = 5.0
+shader_parameter/shine_size = 0.02
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_lhqav"]
+resource_local_to_scene = true
+shader = ExtResource("3_2h3ia")
+shader_parameter/shine_color = Color(100, 100, 0, 1)
+shader_parameter/shine_speed = 5.0
+shader_parameter/shine_size = 0.02
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_0doo2"]
+resource_local_to_scene = true
+shader = ExtResource("3_2h3ia")
+shader_parameter/shine_color = Color(100, 100, 0, 1)
+shader_parameter/shine_speed = 5.0
+shader_parameter/shine_size = 0.02
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_mbwrr"]
+resource_local_to_scene = true
+shader = ExtResource("3_2h3ia")
+shader_parameter/shine_color = Color(100, 100, 0, 1)
+shader_parameter/shine_speed = 5.0
+shader_parameter/shine_size = 0.02
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_utr71"]
+resource_local_to_scene = true
+shader = ExtResource("3_2h3ia")
+shader_parameter/shine_color = Color(100, 100, 0, 1)
+shader_parameter/shine_speed = 5.0
+shader_parameter/shine_size = 0.02
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_4ufmi"]
+resource_local_to_scene = true
+shader = ExtResource("3_2h3ia")
+shader_parameter/shine_color = Color(100, 100, 0, 1)
+shader_parameter/shine_speed = 5.0
+shader_parameter/shine_size = 0.02
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_15yte"]
+resource_local_to_scene = true
+shader = ExtResource("3_2h3ia")
+shader_parameter/shine_color = Color(100, 100, 0, 1)
+shader_parameter/shine_speed = 5.0
+shader_parameter/shine_size = 0.02
+
+[node name="LevelRocks1" type="Node2D"]
+
+[node name="Rocks9" parent="." instance=ExtResource("1_cqn7d")]
+position = Vector2(-345, 152)
+
+[node name="Rocks6" parent="." instance=ExtResource("1_cqn7d")]
+position = Vector2(-101, -353)
+
+[node name="Powerup2" parent="." instance=ExtResource("2_0cm0p")]
+material = SubResource("ShaderMaterial_0tt3q")
+position = Vector2(145, 335)
+
+[node name="Powerup8" parent="." instance=ExtResource("2_0cm0p")]
+material = SubResource("ShaderMaterial_0cyjr")
+position = Vector2(-219, 279)
+
+[node name="Powerup3" parent="." instance=ExtResource("2_0cm0p")]
+material = SubResource("ShaderMaterial_lhqav")
+position = Vector2(-237, -282)
+
+[node name="Powerup4" parent="." instance=ExtResource("2_0cm0p")]
+material = SubResource("ShaderMaterial_0doo2")
+position = Vector2(62, -367)
+
+[node name="Powerup5" parent="." instance=ExtResource("2_0cm0p")]
+material = SubResource("ShaderMaterial_mbwrr")
+position = Vector2(310, -207)
+
+[node name="Powerup6" parent="." instance=ExtResource("2_0cm0p")]
+material = SubResource("ShaderMaterial_utr71")
+position = Vector2(-376, 5)
+
+[node name="Powerup7" parent="." instance=ExtResource("2_0cm0p")]
+material = SubResource("ShaderMaterial_4ufmi")
+position = Vector2(358, 97)
+
+[node name="Rocks" parent="." instance=ExtResource("5_bs23b")]
+position = Vector2(-69, 357)
+
+[node name="Rocks2" parent="." instance=ExtResource("6_yw6n5")]
+position = Vector2(359, -76)
+
+[node name="Rocks3" parent="." instance=ExtResource("6_yw6n5")]
+position = Vector2(200, -315)
+
+[node name="Rocks4" parent="." instance=ExtResource("6_yw6n5")]
+position = Vector2(274, 234)
+
+[node name="Rocks5" parent="." instance=ExtResource("7_luogy")]
+position = Vector2(-338, -172)
+
+[node name="Powerup" parent="." instance=ExtResource("7_nhxgj")]
+material = SubResource("ShaderMaterial_15yte")
+position = Vector2(-1, 3)

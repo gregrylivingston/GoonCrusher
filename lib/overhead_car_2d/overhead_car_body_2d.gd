@@ -308,7 +308,7 @@ func reward(powerup: String , quantity, forShowOnly: bool = false):
 	fuel = clamp(fuel, -10.0, 100.0)
 	if powerup != "coin" && powerup != "health" && powerup != "fuel" && powerup != "currentGoonsCrushed": 
 		if powerup != "gem": powerupsCollected += 1
-		if  powerupAudio.size() > 0 && $"AudioStream-Voice".playing == false:
+		if  powerupAudio.size() > 0 && not $"AudioStream-Voice".playing:
 			await get_tree().create_timer(.25).timeout
 			$"AudioStream-Voice".stream = powerupAudio[ randi_range(0, powerupAudio.size()-1)]
 			$"AudioStream-Voice".play()
@@ -319,7 +319,7 @@ func reward(powerup: String , quantity, forShowOnly: bool = false):
 
 
 func playPurseRewardAudio():
-	if  purseAudio.size() > 0:# && $"AudioStream-Voice".playing == false:
+	if  purseAudio.size() > 0 && not $"AudioStream-Voice".playing:
 		$"AudioStream-Voice".stream = purseAudio[ randi_range(0, purseAudio.size()-1)]
 		await get_tree().create_timer(.25).timeout
 		$"AudioStream-Voice".play()

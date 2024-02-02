@@ -3,3 +3,11 @@ sprite: https://opengameart.org/content/seven-kingdoms
 
 Sound Effect from <a href="https://pixabay.com/sound-effects/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=102137">Pixabay</a>
 Sound Effect from <a href="https://pixabay.com/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=91862">Pixabay</a>
+
+
+
+Textures from 
+https://opengameart.org/content/seamless-textures
+https://opengameart.org/content/29-grounds-and-walls-and-water-1024x1024
+https://opengameart.org/content/seamless-2
+https://opengameart.org/content/50-free-textures-5-with-normalmaps

@@ -6,10 +6,11 @@ extends AnimatedSprite2D
 func _ready():
 	play()
 	rotation = randi()%360
-	if not temporary:createSmokePuff()
+	modulate.a = 0.5
+	if not temporary:
+		createSmokePuff()
 	else:
 		z_index = 5
-		modulate.a = 0.5
 		get_tree().create_tween().tween_property(self, "scale", Vector2(4,4), 2)
 		get_tree().create_tween().tween_property(self, "modulate", Color(1.0,1.0,1.0,0.0), 2)
 		await get_tree().create_timer(2).timeout
@@ -18,7 +19,7 @@ func _ready():
 	
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
-	pass
+	if not temporary:rotation += randi()%360
 
 
 

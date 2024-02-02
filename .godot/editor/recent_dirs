@@ -1,6 +1,7 @@
+res://scene/scenery/walls
+res://shader
 D:/Godot/AutoSurvivor
 res://scripts/global
-res://shader
 res://scene/player/menu/main
 res://texture/spritesheet
 res://scene/fx/explosion
@@ -19,4 +20,3 @@ res://texture/animation
 res://scene/player/slots
 res://scene/player/save
 res://texture/icon
-res://texture/fx

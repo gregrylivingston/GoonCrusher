@@ -37,6 +37,9 @@ var AllObjectTiles = {
 		preload("res://scene/level/levelObjects/level_rocks_fuel_3.tscn"),
 		preload("res://scene/level/levelObjects/level_rocks_fuel_4.tscn"),
 		preload("res://scene/level/levelObjects/level_rocks_purse_1.tscn"),
+		preload("res://scene/level/levelObjects/level_rocks_heart_1.tscn"),
+		preload("res://scene/level/levelObjects/level_rocks_slot_1.tscn")
+		
 	],
 	objectTypes.EMPTY:[
 		preload("res://scene/level/levelObjects/level_empty.tscn"),

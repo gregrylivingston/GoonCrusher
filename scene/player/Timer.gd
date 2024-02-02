@@ -21,7 +21,7 @@ func _ready():
 	resetTimer()
 
 var daylength = 120
-var reset: bool = true
+var reset: bool = false
 var timeIsCountingDown = -1 #set to negative one for a countdown game
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
