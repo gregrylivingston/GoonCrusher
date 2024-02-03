@@ -1,6 +1,6 @@
 extends Node2D
 
-var tilesPerChunk: Vector2 = Vector2(80,80)
+var tilesPerChunk: Vector2 = Vector2(40,40)
 var pixelsPerTile: Vector2 = Vector2(128,64)
 var tilesize: Vector2
 

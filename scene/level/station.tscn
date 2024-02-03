@@ -225,7 +225,6 @@ stretch_mode = 1
 occluder = SubResource("OccluderPolygon2D_qrw17")
 
 [node name="Lights" type="Node2D" parent="Polygon2D"]
-visible = false
 
 [node name="Light" parent="Polygon2D/Lights" instance=ExtResource("6_5ylcr")]
 offset_left = 106.0
@@ -255,18 +254,11 @@ offset_right = 1424.0
 offset_bottom = 185.0
 rotation = 0.553017
 
-[node name="Light3" parent="Polygon2D/Lights" instance=ExtResource("6_5ylcr")]
-offset_left = 1074.0
-offset_top = 99.0
-offset_right = 1148.0
-offset_bottom = 157.0
-rotation = -0.188367
-
 [node name="Light6" parent="Polygon2D/Lights" instance=ExtResource("6_5ylcr")]
-offset_left = 323.0
-offset_top = 1044.0
-offset_right = 397.0
-offset_bottom = 1102.0
+offset_left = 249.0
+offset_top = 1030.0
+offset_right = 323.0
+offset_bottom = 1088.0
 rotation = 3.16216
 
 [node name="PointLight2D" type="PointLight2D" parent="Polygon2D/Lights"]

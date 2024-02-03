@@ -6,7 +6,7 @@
 
 [node name="Light" type="TextureRect"]
 self_modulate = Color(0.466667, 0.466667, 0.466667, 1)
-z_index = 5
+z_index = 2
 offset_left = 123.0
 offset_top = 78.0
 offset_right = 197.0
@@ -24,14 +24,14 @@ texture = ExtResource("1_wxbnt")
 expand_mode = 1
 
 [node name="PointLight2D" type="PointLight2D" parent="."]
-position = Vector2(36, -138)
+position = Vector2(36, -342)
 rotation = 3.14159
 scale = Vector2(30, 20)
 energy = 0.3
 range_layer_min = -50
 range_layer_max = 20
 texture = ExtResource("2_5l8nt")
-offset = Vector2(0, 44.8)
+offset = Vector2(0, 38.57)
 height = 200.0
 
 [node name="PointLight2D2" type="PointLight2D" parent="."]

@@ -55,7 +55,7 @@ shader_parameter/show_bound = false
 
 [node name="SlotMachine" type="CanvasLayer"]
 process_mode = 3
-layer = 2
+layer = 5
 script = ExtResource("1_lo6kv")
 
 [node name="Panel" type="Panel" parent="."]
