@@ -132,8 +132,10 @@ func getGameMode():
 	
 func selectNextGameMode():
 	playerData.gameMode = wrap( playerData.gameMode + 1, 0 , Root.gameModes.size() )
+	save_character_data()
 	return playerData.gameMode
 	
 func selectPreviousGameMode():
 	playerData.gameMode = wrap( playerData.gameMode  -1, 0 , Root.gameModes.size() )
+	save_character_data()
 	return playerData.gameMode

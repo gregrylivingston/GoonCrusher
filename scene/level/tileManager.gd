@@ -65,9 +65,8 @@ func _ready():
 	tilesize = tilesPerChunk * pixelsPerTile
 	
 	match SaveManager.playerData.gameMode:
-		Root.gameModes.COUNTDOWN || Root.gameModes.GOONPOCALYPSE:
-			Root.station = null
-			loadChunk(Vector2i(0,0) , preload("res://scene/level/levelObjects/level_empty.tscn").instantiate())
+		Root.gameModes.COUNTDOWN:setupNoStations()
+		Root.gameModes.GOONPOCALYPSE:setupNoStations()
 		Root.gameModes.SPRINT:
 			loadChunk(Vector2i(0,0) , preload("res://scene/level/levelObjects/level_empty.tscn").instantiate())
 		Root.gameModes.MARATHON:
@@ -85,14 +84,16 @@ func _ready():
 		Root.gameModes.SPRINT:
 			var myStation = load("res://scene/level/station.tscn").instantiate()
 			Root.station = myStation
-			loadChunk(Vector2i( randi_range( Root.levelRoot.seconds * 0.12 , Root.levelRoot.seconds * 0.16),  randi_range(Root.levelRoot.seconds * 0.1, Root.levelRoot.seconds * 0.12) ) , myStation)
+			loadChunk(Vector2i( randi_range( Root.levelRoot.seconds * 0.12 , Root.levelRoot.seconds * 0.16),  randi_range(Root.levelRoot.seconds * 0.12, Root.levelRoot.seconds - 0.12) ) , myStation)
 		Root.gameModes.MARATHON:
 			var myStation = load("res://scene/level/station.tscn").instantiate()
 			Root.station = myStation
-			loadChunk(Vector2i( randi_range(150, 175),  randi_range(-70, 70)  ) , myStation)
+			loadChunk(Vector2i( randi_range( Root.levelRoot.seconds * 0.7 , Root.levelRoot.seconds * 0.72),  randi_range( Root.levelRoot.seconds * 0.2 , Root.levelRoot.seconds * -0.2 ) ), myStation)
 
 	
-
+func setupNoStations():
+	Root.station = null
+	loadChunk(Vector2i(0,0) , preload("res://scene/level/levelObjects/level_empty.tscn").instantiate())
 
 			
 var lastPlayerChunk

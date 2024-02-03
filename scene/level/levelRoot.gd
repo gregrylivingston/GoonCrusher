@@ -24,12 +24,17 @@ func _ready():
 	Root.playerRoot.get_node("carPanel").setTexture( Root.playerCar.get_node("sprite").texture )
 	Root.playerRoot.updateStats()
 	
-	newSpawner( Vector2i(4000,250))
-	newSpawner( Vector2i(4000,-250))
-	newSpawner( Vector2i(4000,250))
-	newSpawner( Vector2i(3500,1500))
-	newSpawner( Vector2i(3500,-1500))
-	newSpawner( Vector2i(-3500,0))
+
+	print(SaveManager.playerData.gameMode)
+	match SaveManager.playerData.gameMode:
+		Root.gameModes.COUNTDOWN:createCountdownSpawners()
+		Root.gameModes.GOONPOCALYPSE:createCountdownSpawners()
+		Root.gameModes.MARATHON:createSprintSpawners()
+		Root.gameModes.SPRINT:createSprintSpawners()
+			
+		Root.gameModes.DEFENSE:
+			Root.station.add_child( newSpawner( Vector2i(4000,800)) )
+			
 	
 	match SaveManager.playerData.gameMode:
 		Root.gameModes.DEFENSE:
@@ -39,7 +44,22 @@ func _ready():
 		Root.gameModes.MARATHON:
 			seconds = seconds * 5 #this is 5 times the length of sprint or countdown
 
+func createCountdownSpawners():
+	Root.playerCar.add_child( newSpawner( Vector2i(4000,2000)) )
+	Root.playerCar.add_child( newSpawner( Vector2i(4000,-2000)) )
+	
+	Root.playerCar.add_child( newSpawner( Vector2i(4000,250) ))
+	Root.playerCar.add_child( newSpawner( Vector2i(4000,-250)) )
+	Root.playerCar.add_child( newSpawner( Vector2i(-3500,0)) )
 
+func createSprintSpawners():
+	newSpawner( Vector2i(4000,800)) 
+	newSpawner( Vector2i(4000,-800)) 
+
+	newSpawner( Vector2i(4000,250) )
+	newSpawner( Vector2i(4000,-250)) 
+	newSpawner( Vector2i(-3500,0)) 
+		
 
 func setNighttime(isNighttime: bool):
 
@@ -63,6 +83,8 @@ func newSpawner( spawnerPosition: Vector2i ):
 	var newSpawner = spawnerScene.instantiate()
 	newSpawner.position = spawnerPosition
 	Root.playerCar.add_child(newSpawner)
+	return newSpawner
+
 	
 
 

@@ -54,3 +54,4 @@ res://scripts/global/root.gd
 res://scene/powerup/powerup.tscn
 res://scene/player/menu/gameSummary.tscn
 res://scene/player/menu/gameSummary.gd
+res://scripts/global/saveManager.gd

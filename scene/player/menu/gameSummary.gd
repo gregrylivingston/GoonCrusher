@@ -66,7 +66,6 @@ func buildGameSummary():
 			"Crashed. Smashed. Gooned. Game Iver.",
 			"Wrecked Ride, Better Luck Next Time!",
 			"Gooned Again? Drive Smarter!",
-			"Car's Dead. Ya Got Gooned.",
 			"Hit, Run, Crash, Burn, Goodbye.",
 			"Smash Fail. Goons Laugh. The End.",
 			"Ride Wrecked. Dreams Dashed.",

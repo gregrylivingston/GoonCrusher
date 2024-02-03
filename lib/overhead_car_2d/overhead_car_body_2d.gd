@@ -124,7 +124,7 @@ func pointIndicator():
 			$indicator.look_at(Root.station.global_position)
 			%indicatorRoot.look_at(Vector2( $indicator.global_position.x + 10000, $indicator.global_position.y  ))
 			var distance = int ( global_position.distance_to(Root.station.global_position) / 10000 ) 			
-			%indicatorDistance.text = str( distance ) + " km"
+			%indicatorDistance.text = str( distance + 1) + " mi"
 		else: $indicator.visible = false
 	else: $indicator.visible = false
 
