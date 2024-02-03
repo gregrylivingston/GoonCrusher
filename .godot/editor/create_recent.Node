@@ -1,6 +1,6 @@
 PointLight2D
-Node2D
 TextureRect
+Node2D
 LightOccluder2D
 ColorRect
 CollisionShape2D

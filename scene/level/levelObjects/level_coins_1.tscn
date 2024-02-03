@@ -1,77 +1,270 @@
-[gd_scene load_steps=2 format=3 uid="uid://bam37dciwmsrl"]
+[gd_scene load_steps=27 format=3 uid="uid://bam37dciwmsrl"]
 
+[ext_resource type="Shader" path="res://shader/shine.gdshader" id="2_x3t2l"]
 [ext_resource type="PackedScene" uid="uid://c3nj8qlsr0clb" path="res://scene/powerup/coin.tscn" id="3_4un8y"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_kdhp5"]
+resource_local_to_scene = true
+shader = ExtResource("2_x3t2l")
+shader_parameter/shine_color = Color(100, 100, 0, 1)
+shader_parameter/shine_speed = 5.0
+shader_parameter/shine_size = 0.02
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_sglkt"]
+resource_local_to_scene = true
+shader = ExtResource("2_x3t2l")
+shader_parameter/shine_color = Color(100, 100, 0, 1)
+shader_parameter/shine_speed = 5.0
+shader_parameter/shine_size = 0.02
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_84jy5"]
+resource_local_to_scene = true
+shader = ExtResource("2_x3t2l")
+shader_parameter/shine_color = Color(100, 100, 0, 1)
+shader_parameter/shine_speed = 5.0
+shader_parameter/shine_size = 0.02
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_o0xq4"]
+resource_local_to_scene = true
+shader = ExtResource("2_x3t2l")
+shader_parameter/shine_color = Color(100, 100, 0, 1)
+shader_parameter/shine_speed = 5.0
+shader_parameter/shine_size = 0.02
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_72wjm"]
+resource_local_to_scene = true
+shader = ExtResource("2_x3t2l")
+shader_parameter/shine_color = Color(100, 100, 0, 1)
+shader_parameter/shine_speed = 5.0
+shader_parameter/shine_size = 0.02
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_3p6g5"]
+resource_local_to_scene = true
+shader = ExtResource("2_x3t2l")
+shader_parameter/shine_color = Color(100, 100, 0, 1)
+shader_parameter/shine_speed = 5.0
+shader_parameter/shine_size = 0.02
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_t3wsq"]
+resource_local_to_scene = true
+shader = ExtResource("2_x3t2l")
+shader_parameter/shine_color = Color(100, 100, 0, 1)
+shader_parameter/shine_speed = 5.0
+shader_parameter/shine_size = 0.02
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_jnmji"]
+resource_local_to_scene = true
+shader = ExtResource("2_x3t2l")
+shader_parameter/shine_color = Color(100, 100, 0, 1)
+shader_parameter/shine_speed = 5.0
+shader_parameter/shine_size = 0.02
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_182je"]
+resource_local_to_scene = true
+shader = ExtResource("2_x3t2l")
+shader_parameter/shine_color = Color(100, 100, 0, 1)
+shader_parameter/shine_speed = 5.0
+shader_parameter/shine_size = 0.02
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_vlky2"]
+resource_local_to_scene = true
+shader = ExtResource("2_x3t2l")
+shader_parameter/shine_color = Color(100, 100, 0, 1)
+shader_parameter/shine_speed = 5.0
+shader_parameter/shine_size = 0.02
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_4auul"]
+resource_local_to_scene = true
+shader = ExtResource("2_x3t2l")
+shader_parameter/shine_color = Color(100, 100, 0, 1)
+shader_parameter/shine_speed = 5.0
+shader_parameter/shine_size = 0.02
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_vmdqw"]
+resource_local_to_scene = true
+shader = ExtResource("2_x3t2l")
+shader_parameter/shine_color = Color(100, 100, 0, 1)
+shader_parameter/shine_speed = 5.0
+shader_parameter/shine_size = 0.02
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_towkr"]
+resource_local_to_scene = true
+shader = ExtResource("2_x3t2l")
+shader_parameter/shine_color = Color(100, 100, 0, 1)
+shader_parameter/shine_speed = 5.0
+shader_parameter/shine_size = 0.02
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_2k70e"]
+resource_local_to_scene = true
+shader = ExtResource("2_x3t2l")
+shader_parameter/shine_color = Color(100, 100, 0, 1)
+shader_parameter/shine_speed = 5.0
+shader_parameter/shine_size = 0.02
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_op701"]
+resource_local_to_scene = true
+shader = ExtResource("2_x3t2l")
+shader_parameter/shine_color = Color(100, 100, 0, 1)
+shader_parameter/shine_speed = 5.0
+shader_parameter/shine_size = 0.02
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_omiob"]
+resource_local_to_scene = true
+shader = ExtResource("2_x3t2l")
+shader_parameter/shine_color = Color(100, 100, 0, 1)
+shader_parameter/shine_speed = 5.0
+shader_parameter/shine_size = 0.02
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_oc3ts"]
+resource_local_to_scene = true
+shader = ExtResource("2_x3t2l")
+shader_parameter/shine_color = Color(100, 100, 0, 1)
+shader_parameter/shine_speed = 5.0
+shader_parameter/shine_size = 0.02
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ckpxt"]
+resource_local_to_scene = true
+shader = ExtResource("2_x3t2l")
+shader_parameter/shine_color = Color(100, 100, 0, 1)
+shader_parameter/shine_speed = 5.0
+shader_parameter/shine_size = 0.02
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_fu37w"]
+resource_local_to_scene = true
+shader = ExtResource("2_x3t2l")
+shader_parameter/shine_color = Color(100, 100, 0, 1)
+shader_parameter/shine_speed = 5.0
+shader_parameter/shine_size = 0.02
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_fsjr3"]
+resource_local_to_scene = true
+shader = ExtResource("2_x3t2l")
+shader_parameter/shine_color = Color(100, 100, 0, 1)
+shader_parameter/shine_speed = 5.0
+shader_parameter/shine_size = 0.02
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_rlvel"]
+resource_local_to_scene = true
+shader = ExtResource("2_x3t2l")
+shader_parameter/shine_color = Color(100, 100, 0, 1)
+shader_parameter/shine_speed = 5.0
+shader_parameter/shine_size = 0.02
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_76xk7"]
+resource_local_to_scene = true
+shader = ExtResource("2_x3t2l")
+shader_parameter/shine_color = Color(100, 100, 0, 1)
+shader_parameter/shine_speed = 5.0
+shader_parameter/shine_size = 0.02
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_j2x5n"]
+resource_local_to_scene = true
+shader = ExtResource("2_x3t2l")
+shader_parameter/shine_color = Color(100, 100, 0, 1)
+shader_parameter/shine_speed = 5.0
+shader_parameter/shine_size = 0.02
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_eqlac"]
+resource_local_to_scene = true
+shader = ExtResource("2_x3t2l")
+shader_parameter/shine_color = Color(100, 100, 0, 1)
+shader_parameter/shine_speed = 5.0
+shader_parameter/shine_size = 0.02
 
 [node name="LevelRocks1" type="Node2D"]
 
 [node name="Powerup2" parent="." instance=ExtResource("3_4un8y")]
+material = SubResource("ShaderMaterial_kdhp5")
 position = Vector2(-633, -4)
 
 [node name="Powerup3" parent="." instance=ExtResource("3_4un8y")]
+material = SubResource("ShaderMaterial_sglkt")
 position = Vector2(-323, -700)
 
 [node name="Powerup4" parent="." instance=ExtResource("3_4un8y")]
+material = SubResource("ShaderMaterial_84jy5")
 position = Vector2(-498, -497)
 
 [node name="Powerup5" parent="." instance=ExtResource("3_4un8y")]
+material = SubResource("ShaderMaterial_o0xq4")
 position = Vector2(-587, -268)
 
 [node name="Powerup6" parent="." instance=ExtResource("3_4un8y")]
+material = SubResource("ShaderMaterial_72wjm")
 position = Vector2(129, -976)
 
 [node name="Powerup20" parent="." instance=ExtResource("3_4un8y")]
+material = SubResource("ShaderMaterial_3p6g5")
 position = Vector2(384, -1012)
 
 [node name="Powerup21" parent="." instance=ExtResource("3_4un8y")]
+material = SubResource("ShaderMaterial_t3wsq")
 position = Vector2(642, -976)
 
 [node name="Powerup22" parent="." instance=ExtResource("3_4un8y")]
+material = SubResource("ShaderMaterial_jnmji")
 position = Vector2(912, -868)
 
 [node name="Powerup23" parent="." instance=ExtResource("3_4un8y")]
+material = SubResource("ShaderMaterial_182je")
 position = Vector2(1104, -721)
 
 [node name="Powerup24" parent="." instance=ExtResource("3_4un8y")]
+material = SubResource("ShaderMaterial_vlky2")
 position = Vector2(1275, -505)
 
 [node name="Powerup25" parent="." instance=ExtResource("3_4un8y")]
+material = SubResource("ShaderMaterial_4auul")
 position = Vector2(1383, -250)
 
 [node name="Powerup8" parent="." instance=ExtResource("3_4un8y")]
+material = SubResource("ShaderMaterial_vmdqw")
 position = Vector2(391, 1037)
 
 [node name="Powerup14" parent="." instance=ExtResource("3_4un8y")]
+material = SubResource("ShaderMaterial_towkr")
 position = Vector2(679, 1008)
 
 [node name="Powerup15" parent="." instance=ExtResource("3_4un8y")]
+material = SubResource("ShaderMaterial_2k70e")
 position = Vector2(931, 881)
 
 [node name="Powerup16" parent="." instance=ExtResource("3_4un8y")]
+material = SubResource("ShaderMaterial_op701")
 position = Vector2(1124, 739)
 
 [node name="Powerup17" parent="." instance=ExtResource("3_4un8y")]
+material = SubResource("ShaderMaterial_omiob")
 position = Vector2(1283, 525)
 
 [node name="Powerup18" parent="." instance=ExtResource("3_4un8y")]
+material = SubResource("ShaderMaterial_oc3ts")
 position = Vector2(1387, 288)
 
 [node name="Powerup19" parent="." instance=ExtResource("3_4un8y")]
+material = SubResource("ShaderMaterial_ckpxt")
 position = Vector2(1419, 10)
 
 [node name="Powerup7" parent="." instance=ExtResource("3_4un8y")]
+material = SubResource("ShaderMaterial_fu37w")
 position = Vector2(-107, -866)
 
 [node name="Powerup9" parent="." instance=ExtResource("3_4un8y")]
+material = SubResource("ShaderMaterial_fsjr3")
 position = Vector2(-313, 744)
 
 [node name="Powerup10" parent="." instance=ExtResource("3_4un8y")]
+material = SubResource("ShaderMaterial_rlvel")
 position = Vector2(-496, 528)
 
 [node name="Powerup13" parent="." instance=ExtResource("3_4un8y")]
+material = SubResource("ShaderMaterial_76xk7")
 position = Vector2(-602, 275)
 
 [node name="Powerup11" parent="." instance=ExtResource("3_4un8y")]
+material = SubResource("ShaderMaterial_j2x5n")
 position = Vector2(130, 1006)
 
 [node name="Powerup12" parent="." instance=ExtResource("3_4un8y")]
+material = SubResource("ShaderMaterial_eqlac")
 position = Vector2(-117, 901)

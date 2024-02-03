@@ -3,6 +3,7 @@ extends Node
 enum gameModes {  COUNTDOWN, SPRINT, MARATHON, DEFENSE, GOONPOCALYPSE }
 
 var playerCar: OverheadCarBody2D
+var station  #this is the gas-station / house thing
 var selectedCar: Dictionary
 var timer: float #the timer during a game run
 

@@ -1,4 +1,4 @@
-res://scene/level/station.tscn
+res://scene/car/car.tscn
 res://shader/shine.gdshader
 res://style/roadRogue.tres
 res://scene/player/slots/slot_row_gradient.tres
@@ -19,7 +19,6 @@ res://shader/edgeGlow.gdshader
 res://shader/liquid.gdshader
 res://shader/3dicon.gdshader
 res://shader/ground_normals.gdshader
-res://scene/car/car.tscn
 res://scene/level/levelRoot.tscn
 res://scene/player/playerRoot.tscn
 res://scene/enemy/spawnManager.tscn
@@ -37,9 +36,13 @@ res://scene/car/car_panel.tscn
 res://scene/car/taxi/taxi.tscn
 res://scripts/global/Audio.tscn
 res://scene/enemy/enemy.tscn
-res://scene/level/levelObjects/level_rocks_slot_1.tscn
 res://scene/player/menu/main/car_stats_container.tscn
 res://scene/level/levels/level_grass_1.tscn
 res://scene/scenery/walls/concrete_wall.tscn
-res://sources.txt
 res://scene/scenery/walls/light.tscn
+res://scene/level/station.tscn
+res://scene/level/levelObjects/level_coins_1.tscn
+res://scene/level/terrain/landscapeMap.tscn
+res://scene/level/tileManager.gd
+res://scene/level/levelRoot.gd
+res://scene/level/station.gd

@@ -19,7 +19,7 @@ script = ExtResource("1_65p74")
 [node name="TileManager" parent="." instance=ExtResource("2_jny74")]
 
 [node name="Car" parent="." instance=ExtResource("2_v78xq")]
-position = Vector2(662, 405)
+position = Vector2(1158, 719)
 carId = "sedan"
 
 [node name="PlayerRoot" parent="." instance=ExtResource("3_sf05p")]

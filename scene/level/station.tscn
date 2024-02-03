@@ -1,6 +1,7 @@
-[gd_scene load_steps=10 format=3 uid="uid://ct8qxkrifar7p"]
+[gd_scene load_steps=11 format=3 uid="uid://ct8qxkrifar7p"]
 
 [ext_resource type="Texture2D" uid="uid://bdg2i07wcop5f" path="res://texture/ground/concrete_structured.png" id="1_25t44"]
+[ext_resource type="Script" path="res://scene/level/station.gd" id="1_c760a"]
 [ext_resource type="PackedScene" uid="uid://bnuydl8moo5is" path="res://scene/scenery/walls/concrete_wall.tscn" id="2_uf0n5"]
 [ext_resource type="Texture2D" uid="uid://d26q3iptm6gdh" path="res://texture/ground/rooftiles.jpg" id="3_mxanu"]
 [ext_resource type="Texture2D" uid="uid://bur2dveeypoae" path="res://texture/ground/clover.jpg" id="4_0og1h"]
@@ -14,66 +15,70 @@ size = Vector2(505, 554)
 [sub_resource type="OccluderPolygon2D" id="OccluderPolygon2D_qrw17"]
 polygon = PackedVector2Array(-34, -44, -34, 505, 475, 505, 473, -46)
 
-[node name="Polygon2D" type="TextureRect"]
+[node name="stationParent" type="Node2D"]
+script = ExtResource("1_c760a")
+
+[node name="Polygon2D" type="TextureRect" parent="."]
 self_modulate = Color(1.9, 1.9, 1.9, 1)
+light_mask = 3
 texture_repeat = 2
 anchors_preset = -1
 anchor_left = -0.157813
 anchor_top = -0.233333
 anchor_right = -0.157813
 anchor_bottom = -0.233333
-offset_left = -1242.0
-offset_top = -947.0
-offset_right = 276.0
-offset_bottom = 157.0
+offset_left = -770.0
+offset_top = -539.0
+offset_right = 748.0
+offset_bottom = 565.0
 texture = ExtResource("1_25t44")
 expand_mode = 1
 stretch_mode = 1
 metadata/_edit_use_anchors_ = true
 
-[node name="concreteWall" parent="." instance=ExtResource("2_uf0n5")]
+[node name="concreteWall" parent="Polygon2D" instance=ExtResource("2_uf0n5")]
 z_index = 1
 layout_mode = 1
 anchors_preset = -1
-anchor_left = 0.724607
-anchor_top = 0.898801
-anchor_right = 0.724607
-anchor_bottom = 0.898801
+anchor_left = 0.723948
+anchor_top = 0.897895
+anchor_right = 0.723948
+anchor_bottom = 0.897895
 offset_left = -1100.0
 offset_top = -990.0
 offset_right = -550.0
 offset_bottom = -940.0
 metadata/_edit_use_anchors_ = true
 
-[node name="concreteWall2" parent="." instance=ExtResource("2_uf0n5")]
+[node name="concreteWall2" parent="Polygon2D" instance=ExtResource("2_uf0n5")]
 z_index = 1
 layout_mode = 1
 anchors_preset = -1
 anchor_left = 0.735806
-anchor_top = 0.898801
+anchor_top = 0.897895
 anchor_right = 0.735806
-anchor_bottom = 0.898801
+anchor_bottom = 0.897895
 offset_left = -600.0
 offset_top = -990.0
 offset_right = -50.0
 offset_bottom = -940.0
 metadata/_edit_use_anchors_ = true
 
-[node name="concreteWall3" parent="." instance=ExtResource("2_uf0n5")]
+[node name="concreteWall3" parent="Polygon2D" instance=ExtResource("2_uf0n5")]
 z_index = 1
 layout_mode = 1
 anchors_preset = -1
-anchor_left = 0.704185
-anchor_top = 0.898801
-anchor_right = 0.704185
-anchor_bottom = 0.898801
+anchor_left = 0.705503
+anchor_top = 0.897895
+anchor_right = 0.705503
+anchor_bottom = 0.897895
 offset_left = -103.0
 offset_top = -990.0
 offset_right = 447.0
 offset_bottom = -940.0
 metadata/_edit_use_anchors_ = true
 
-[node name="concreteWall4" parent="." instance=ExtResource("2_uf0n5")]
+[node name="concreteWall4" parent="Polygon2D" instance=ExtResource("2_uf0n5")]
 z_index = 1
 layout_mode = 1
 anchors_preset = -1
@@ -87,7 +92,7 @@ offset_right = -551.0
 offset_bottom = 13.0
 metadata/_edit_use_anchors_ = true
 
-[node name="concreteWall5" parent="." instance=ExtResource("2_uf0n5")]
+[node name="concreteWall5" parent="Polygon2D" instance=ExtResource("2_uf0n5")]
 z_index = 1
 layout_mode = 1
 anchors_preset = -1
@@ -101,7 +106,7 @@ offset_right = -62.0
 offset_bottom = 13.0
 metadata/_edit_use_anchors_ = true
 
-[node name="concreteWall6" parent="." instance=ExtResource("2_uf0n5")]
+[node name="concreteWall6" parent="Polygon2D" instance=ExtResource("2_uf0n5")]
 z_index = 1
 layout_mode = 1
 anchors_preset = -1
@@ -115,59 +120,14 @@ offset_right = 467.0
 offset_bottom = 13.0
 metadata/_edit_use_anchors_ = true
 
-[node name="concreteWall7" parent="." instance=ExtResource("2_uf0n5")]
+[node name="concreteWall11" parent="Polygon2D" instance=ExtResource("2_uf0n5")]
 z_index = 1
 layout_mode = 1
 anchors_preset = -1
-anchor_left = 0.723289
-anchor_top = 0.897895
-anchor_right = 0.723289
-anchor_bottom = 0.897895
-offset_left = -1049.0
-offset_top = -991.0
-offset_right = -449.0
-offset_bottom = -941.0
-rotation = 1.56996
-metadata/_edit_use_anchors_ = true
-
-[node name="concreteWall9" parent="." instance=ExtResource("2_uf0n5")]
-z_index = 1
-layout_mode = 1
-anchors_preset = -1
-anchor_left = 0.720918
-anchor_top = 0.901479
-anchor_right = 0.720918
-anchor_bottom = 0.901479
-offset_left = 422.0
-offset_top = -994.0
-offset_right = 972.0
-offset_bottom = -944.0
-rotation = 1.56996
-metadata/_edit_use_anchors_ = true
-
-[node name="concreteWall10" parent="." instance=ExtResource("2_uf0n5")]
-layout_mode = 1
-anchors_preset = -1
-anchor_left = 0.683136
-anchor_top = 0.981884
-anchor_right = 0.683136
-anchor_bottom = 0.981884
-offset_left = 422.0
-offset_top = -994.0
-offset_right = 972.0
-offset_bottom = -944.0
-rotation = 1.56996
-scale = Vector2(1, 0.25)
-metadata/_edit_use_anchors_ = true
-
-[node name="concreteWall8" parent="." instance=ExtResource("2_uf0n5")]
-z_index = 1
-layout_mode = 1
-anchors_preset = -1
-anchor_left = 0.72263
-anchor_top = 0.942279
-anchor_right = 0.72263
-anchor_bottom = 0.942279
+anchor_left = 0.722661
+anchor_top = 0.488225
+anchor_right = 0.722661
+anchor_bottom = 0.488225
 offset_left = -1048.0
 offset_top = -489.0
 offset_right = -498.0
@@ -175,18 +135,51 @@ offset_bottom = -439.0
 rotation = 1.56996
 metadata/_edit_use_anchors_ = true
 
-[node name="Clover" type="Sprite2D" parent="."]
+[node name="concreteWall13" parent="Polygon2D" instance=ExtResource("2_uf0n5")]
+z_index = 1
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 1.68972
+anchor_top = 0.487319
+anchor_right = 1.68972
+anchor_bottom = 0.487319
+offset_left = -1048.0
+offset_top = -489.0
+offset_right = -498.0
+offset_bottom = -439.0
+rotation = 1.56996
+metadata/_edit_use_anchors_ = true
+
+[node name="concreteWall12" parent="Polygon2D" instance=ExtResource("2_uf0n5")]
+z_index = 1
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.722661
+anchor_top = 0.944746
+anchor_right = 0.722661
+anchor_bottom = 0.944746
+offset_left = -1048.0
+offset_top = -489.0
+offset_right = -498.0
+offset_bottom = -439.0
+rotation = 1.56996
+metadata/_edit_use_anchors_ = true
+
+[node name="Clover" type="Sprite2D" parent="Polygon2D"]
+light_mask = 3
 position = Vector2(920, 253)
 scale = Vector2(0.100586, 0.384766)
 texture = ExtResource("4_0og1h")
 
-[node name="Clover2" type="Sprite2D" parent="."]
-position = Vector2(97, 860)
+[node name="Clover2" type="Sprite2D" parent="Polygon2D"]
+light_mask = 3
+position = Vector2(213, 468)
 scale = Vector2(0.100586, 0.384766)
 texture = ExtResource("4_0og1h")
 
-[node name="Imgp5539AlmostSeamless" type="TextureRect" parent="."]
+[node name="Imgp5539AlmostSeamless" type="TextureRect" parent="Polygon2D"]
 self_modulate = Color(1.5, 1.5, 1.5, 1)
+light_mask = 3
 layout_mode = 0
 offset_left = 268.0
 offset_top = 546.0
@@ -196,14 +189,17 @@ scale = Vector2(0.25, 0.25)
 texture = ExtResource("5_hl0xu")
 stretch_mode = 1
 
-[node name="house" type="StaticBody2D" parent="."]
+[node name="house" type="StaticBody2D" parent="Polygon2D"]
+light_mask = 3
 position = Vector2(346, 117)
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="house"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Polygon2D/house"]
+light_mask = 3
 position = Vector2(220.5, 231)
 shape = SubResource("RectangleShape2D_7geos")
 
-[node name="TextureRect" type="TextureRect" parent="house"]
+[node name="TextureRect" type="TextureRect" parent="Polygon2D/house"]
+light_mask = 3
 z_index = 20
 offset_left = -81.0
 offset_top = 219.0
@@ -213,7 +209,8 @@ texture = ExtResource("3_mxanu")
 expand_mode = 1
 stretch_mode = 1
 
-[node name="TextureRect2" type="TextureRect" parent="house"]
+[node name="TextureRect2" type="TextureRect" parent="Polygon2D/house"]
+light_mask = 3
 z_index = 20
 offset_left = 523.0
 offset_top = 219.0
@@ -224,68 +221,56 @@ texture = ExtResource("3_mxanu")
 expand_mode = 1
 stretch_mode = 1
 
-[node name="LightOccluder2D" type="LightOccluder2D" parent="house"]
+[node name="LightOccluder2D" type="LightOccluder2D" parent="Polygon2D/house"]
 occluder = SubResource("OccluderPolygon2D_qrw17")
 
-[node name="Lights" type="Node2D" parent="."]
+[node name="Lights" type="Node2D" parent="Polygon2D"]
+visible = false
 
-[node name="Light" parent="Lights" instance=ExtResource("6_5ylcr")]
-offset_left = 112.0
-offset_top = 159.0
-offset_right = 186.0
-offset_bottom = 217.0
-rotation = -0.933751
+[node name="Light" parent="Polygon2D/Lights" instance=ExtResource("6_5ylcr")]
+offset_left = 106.0
+offset_top = 106.0
+offset_right = 180.0
+offset_bottom = 164.0
+rotation = -0.348064
 
-[node name="Light2" parent="Lights" instance=ExtResource("6_5ylcr")]
+[node name="Light7" parent="Polygon2D/Lights" instance=ExtResource("6_5ylcr")]
+offset_left = 65.0
+offset_top = 420.0
+offset_right = 139.0
+offset_bottom = 478.0
+rotation = -1.59452
+
+[node name="Light8" parent="Polygon2D/Lights" instance=ExtResource("6_5ylcr")]
+offset_left = 66.0
+offset_top = 815.0
+offset_right = 140.0
+offset_bottom = 873.0
+rotation = -1.59452
+
+[node name="Light2" parent="Polygon2D/Lights" instance=ExtResource("6_5ylcr")]
 offset_left = 1350.0
 offset_top = 127.0
 offset_right = 1424.0
 offset_bottom = 185.0
-rotation = 0.802851
+rotation = 0.553017
 
-[node name="Light3" parent="Lights" instance=ExtResource("6_5ylcr")]
-offset_left = 1101.0
-offset_top = 108.0
-offset_right = 1175.0
-offset_bottom = 166.0
-rotation = -0.549779
+[node name="Light3" parent="Polygon2D/Lights" instance=ExtResource("6_5ylcr")]
+offset_left = 1074.0
+offset_top = 99.0
+offset_right = 1148.0
+offset_bottom = 157.0
+rotation = -0.188367
 
-[node name="Light4" parent="Lights" instance=ExtResource("6_5ylcr")]
-offset_left = 1412.0
-offset_top = 445.0
-offset_right = 1486.0
-offset_bottom = 503.0
-rotation = 1.89587
-
-[node name="Light5" parent="Lights" instance=ExtResource("6_5ylcr")]
-offset_left = 872.0
-offset_top = 975.0
-offset_right = 946.0
-offset_bottom = 1033.0
-rotation = 2.35593
-
-[node name="Light6" parent="Lights" instance=ExtResource("6_5ylcr")]
-offset_left = 726.0
-offset_top = 1016.0
-offset_right = 800.0
-offset_bottom = 1074.0
+[node name="Light6" parent="Polygon2D/Lights" instance=ExtResource("6_5ylcr")]
+offset_left = 323.0
+offset_top = 1044.0
+offset_right = 397.0
+offset_bottom = 1102.0
 rotation = 3.16216
 
-[node name="Light7" parent="Lights" instance=ExtResource("6_5ylcr")]
-offset_left = 229.0
-offset_top = 1021.0
-offset_right = 303.0
-offset_bottom = 1079.0
-rotation = 3.92359
-
-[node name="Light8" parent="Lights" instance=ExtResource("6_5ylcr")]
-offset_left = 70.0
-offset_top = 621.0
-offset_right = 144.0
-offset_bottom = 679.0
-rotation = 4.74475
-
-[node name="PointLight2D" type="PointLight2D" parent="Lights"]
-position = Vector2(882, 559)
+[node name="PointLight2D" type="PointLight2D" parent="Polygon2D/Lights"]
+position = Vector2(1140, 752)
 scale = Vector2(2, 2)
+energy = 0.3
 texture = ExtResource("7_fc8n0")

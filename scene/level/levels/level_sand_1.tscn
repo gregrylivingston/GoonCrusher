@@ -1,12 +1,55 @@
-[gd_scene load_steps=8 format=3 uid="uid://bo64o4vigptpr"]
+[gd_scene load_steps=15 format=3 uid="uid://bo64o4vigptpr"]
 
 [ext_resource type="PackedScene" uid="uid://dqcrli42u3gia" path="res://scene/level/levelRoot.tscn" id="1_2efxu"]
 [ext_resource type="PackedScene" uid="uid://brhh6ifac5qvc" path="res://scene/scenery/rocks1.tscn" id="2_1b8av"]
 [ext_resource type="PackedScene" uid="uid://cj1bw767v5imn" path="res://scene/powerup/health.tscn" id="3_otnbs"]
 [ext_resource type="PackedScene" uid="uid://bvivg0dx8wkea" path="res://scene/powerup/fuel.tscn" id="4_kx6y0"]
+[ext_resource type="Shader" path="res://shader/shine.gdshader" id="4_qqtwm"]
 [ext_resource type="PackedScene" uid="uid://c3nj8qlsr0clb" path="res://scene/powerup/coin.tscn" id="6_lecho"]
 [ext_resource type="PackedScene" uid="uid://bogdlh0ch1tuf" path="res://scene/powerup/purse.tscn" id="7_uucuj"]
 [ext_resource type="PackedScene" uid="uid://xwhhgw0qwlsm" path="res://scene/powerup/slotMachine.tscn" id="9_smtqc"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_t3blw"]
+resource_local_to_scene = true
+shader = ExtResource("4_qqtwm")
+shader_parameter/shine_color = Color(100, 100, 0, 1)
+shader_parameter/shine_speed = 5.0
+shader_parameter/shine_size = 0.02
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_flk21"]
+resource_local_to_scene = true
+shader = ExtResource("4_qqtwm")
+shader_parameter/shine_color = Color(100, 100, 0, 1)
+shader_parameter/shine_speed = 5.0
+shader_parameter/shine_size = 0.02
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_21llm"]
+resource_local_to_scene = true
+shader = ExtResource("4_qqtwm")
+shader_parameter/shine_color = Color(100, 100, 0, 1)
+shader_parameter/shine_speed = 5.0
+shader_parameter/shine_size = 0.02
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_iyii5"]
+resource_local_to_scene = true
+shader = ExtResource("4_qqtwm")
+shader_parameter/shine_color = Color(100, 100, 0, 1)
+shader_parameter/shine_speed = 5.0
+shader_parameter/shine_size = 0.02
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_hrmqi"]
+resource_local_to_scene = true
+shader = ExtResource("4_qqtwm")
+shader_parameter/shine_color = Color(100, 100, 0, 1)
+shader_parameter/shine_speed = 5.0
+shader_parameter/shine_size = 0.02
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_gv50u"]
+resource_local_to_scene = true
+shader = ExtResource("4_qqtwm")
+shader_parameter/shine_color = Color(100, 100, 0, 1)
+shader_parameter/shine_speed = 5.0
+shader_parameter/shine_size = 0.02
 
 [node name="LevelRoot" instance=ExtResource("1_2efxu")]
 seconds = 420
@@ -14,7 +57,7 @@ seconds = 420
 [node name="TileManager" parent="." index="0"]
 landscapeType = 1
 
-[node name="SpawnManager" parent="." index="5"]
+[node name="SpawnManager" parent="." index="4"]
 spawnTimer = 3.0
 basicGoons = Array[int]([3, 3, 3])
 giantOdds = 10
@@ -30,24 +73,30 @@ position = Vector2(356, 235)
 
 [node name="Powerup" parent="." index="11" instance=ExtResource("3_otnbs")]
 process_mode = 0
+material = SubResource("ShaderMaterial_t3blw")
 position = Vector2(680, 90)
 
 [node name="Powerup2" parent="." index="12" instance=ExtResource("4_kx6y0")]
 process_mode = 0
+material = SubResource("ShaderMaterial_flk21")
 position = Vector2(-308, -233)
 
 [node name="Powerup4" parent="." index="13" instance=ExtResource("6_lecho")]
 process_mode = 0
+material = SubResource("ShaderMaterial_21llm")
 position = Vector2(1123, 339)
 
 [node name="Powerup8" parent="." index="14" instance=ExtResource("6_lecho")]
 process_mode = 0
+material = SubResource("ShaderMaterial_iyii5")
 position = Vector2(1097, 562)
 
 [node name="Powerup5" parent="." index="15" instance=ExtResource("7_uucuj")]
 process_mode = 0
+material = SubResource("ShaderMaterial_hrmqi")
 position = Vector2(1266, 1962)
 
 [node name="Powerup7" parent="." index="16" instance=ExtResource("9_smtqc")]
 process_mode = 0
+material = SubResource("ShaderMaterial_gv50u")
 position = Vector2(2466, 1868)

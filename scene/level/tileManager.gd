@@ -1,6 +1,6 @@
 extends Node2D
 
-var tilesPerChunk: Vector2 = Vector2(40,40)
+var tilesPerChunk: Vector2 = Vector2(80,80)
 var pixelsPerTile: Vector2 = Vector2(128,64)
 var tilesize: Vector2
 
@@ -62,8 +62,29 @@ var loadedObjects = {}
 func _ready():
 	for i in requestedObjectTiles:
 		objectTiles.append_array(AllObjectTiles[i])
-	
 	tilesize = tilesPerChunk * pixelsPerTile
+
+	match SaveManager.playerData.gameMode:
+		Root.gameModes.COUNTDOWN || Root.gameModes.GOONPOCALYPSE:
+			Root.station = null
+			loadChunk(Vector2i(0,0) , preload("res://scene/level/levelObjects/level_empty.tscn").instantiate())
+		Root.gameModes.SPRINT:
+			var myStation = load("res://scene/level/station.tscn").instantiate()
+			Root.station = myStation
+			loadChunk(Vector2i( randi_range(2, 4), 0 ) , myStation)
+			loadChunk(Vector2i(0,0) , preload("res://scene/level/levelObjects/level_empty.tscn").instantiate())
+		Root.gameModes.MARATHON:
+			var myStation = load("res://scene/level/station.tscn").instantiate()
+			Root.station = myStation
+			loadChunk(Vector2i( randi_range(3, 5), 0 ) , myStation)
+			loadChunk(Vector2i(0,0) , preload("res://scene/level/levelObjects/level_empty.tscn").instantiate())
+		Root.gameModes.DEFENSE:
+			var myStation = load("res://scene/level/station.tscn").instantiate()
+			Root.station = myStation
+			loadChunk(Vector2i( randi_range(0, 0), 0 ) , myStation)
+	
+			
+
 	getPlayerChunk()
 
 
@@ -96,7 +117,11 @@ func getPlayerChunk():
 		loadChunk(playerChunk + Vector2i(1,-2) )		
 
 
-func loadChunk(chunk):
+func getRandomTileObject():
+	return objectTiles[randi() % objectTiles.size()].instantiate()
+	
+
+func loadChunk(chunk:Vector2i , myScene = null): #if an instantiated scene isn't passed get a random one from the level dictionary.
 	if not loadedLandscapes.has(chunk):
 		var targetPosition = Vector2( tilesize.x * chunk.x , tilesize.y * chunk.y )
 		var newLandscapeMap = landscapeMap[landscapeType].instantiate()
@@ -104,13 +129,19 @@ func loadChunk(chunk):
 		loadedLandscapes[chunk] = newLandscapeMap
 		add_child(newLandscapeMap)
 
-		var newObjectTile = objectTiles[randi() % objectTiles.size()].instantiate()
+		var newObjectTile 
+		if myScene == null: 
+			newObjectTile = getRandomTileObject()
+			var myRotation = randi() % 180
+			newObjectTile.global_position = targetPosition + (tilesize / 2) + Vector2(randi_range(tilesize.x/-3,tilesize.x/3),randi_range(-200,200))		
+			newObjectTile.rotation = myRotation
+			for i in newObjectTile.get_children():
+				if not i.has_method("isFixed"):i.rotation = -myRotation
+		else: 
+			newObjectTile = myScene
+			newObjectTile.global_position = targetPosition + (tilesize / 2) 
+
 		loadedObjects[chunk] = newObjectTile
-		newObjectTile.global_position = targetPosition + (tilesize / 2) + Vector2(randi_range(tilesize.x/-3,tilesize.x/3),randi_range(-200,200))
-		var myRotation = randi() % 180
-		newObjectTile.rotation = myRotation
-		for i in newObjectTile.get_children():
-			if not i.has_method("isFixed"):i.rotation = -myRotation
 		add_child(newObjectTile)
 			
 
