@@ -117,8 +117,16 @@ func makeHealthWarning():
 	resetHealthWarning()
 
 
+func pointIndicator():
+	if is_instance_valid(Root.station):
+		if global_position.distance_to(Root.station.global_position) > 4000:
+			$indicator.visible = true
+			$indicator.look_at(Root.station.global_position)
+		else: $indicator.visible = false
+	else: $indicator.visible = false
 
 func _physics_process(delta):
+	pointIndicator()
 	if _path_follow:
 		_path_follow.provide_input(self)
 		pass

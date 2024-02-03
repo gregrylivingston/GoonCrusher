@@ -36,6 +36,8 @@ func _ready():
 			seconds = 0
 		Root.gameModes.GOONPOCALYPSE:
 			seconds = 0
+		Root.gameModes.MARATHON:
+			seconds = seconds * 5 #this is 5 times the length of sprint or countdown
 
 
 

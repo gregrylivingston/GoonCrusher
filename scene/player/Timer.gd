@@ -8,16 +8,11 @@ func _ready():
 			timeIsCountingDown = 1
 		Root.gameModes.GOONPOCALYPSE:
 			timeIsCountingDown = 1
-
-			
-		
-		
 		
 	await get_tree().process_frame
 	var clockSeconds = int(Root.levelRoot.seconds )%60
 	if clockSeconds < 10: clockSeconds = "0" + str(clockSeconds)
 	text = str(int(Root.levelRoot.seconds /60)) + " : " + str(clockSeconds)
-	Root.timer
 	resetTimer()
 
 var daylength = 120

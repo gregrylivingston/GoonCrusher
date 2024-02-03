@@ -46,3 +46,8 @@ res://scene/level/terrain/landscapeMap.tscn
 res://scene/level/tileManager.gd
 res://scene/level/levelRoot.gd
 res://scene/level/station.gd
+res://lib/overhead_car_2d/overhead_car_body_2d.gd
+res://scene/powerup/purse.tscn
+res://scene/powerup/purse.gd
+res://scene/player/Timer.gd
+res://scripts/global/root.gd
