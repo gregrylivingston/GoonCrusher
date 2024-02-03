@@ -122,6 +122,9 @@ func pointIndicator():
 		if global_position.distance_to(Root.station.global_position) > 4000:
 			$indicator.visible = true
 			$indicator.look_at(Root.station.global_position)
+			%indicatorRoot.look_at(Vector2( $indicator.global_position.x + 10000, $indicator.global_position.y  ))
+			var distance = int ( global_position.distance_to(Root.station.global_position) / 10000 ) 			
+			%indicatorDistance.text = str( distance ) + " km"
 		else: $indicator.visible = false
 	else: $indicator.visible = false
 
@@ -390,6 +393,7 @@ func playRandomFxSound():
 @onready var headlamps = $headlamps
 func turnOnHeadlights(status: bool):
 	headlamps.visible = status
+	%indicatorLight.visible = status
 	
 func outOfFuel():
 	isDestroyed = true

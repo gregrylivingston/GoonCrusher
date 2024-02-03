@@ -1,8 +1,11 @@
+SubViewport
+CanvasLayer
+Node2D
+Node
+Label
 CollisionShape2D
 Area2D
 PointLight2D
-Label
-Node2D
 TextureRect
 LightOccluder2D
 ColorRect
@@ -10,5 +13,3 @@ StaticBody2D
 Polygon2D
 Sprite2D
 Line2D
-RichTextLabel
-VBoxContainer

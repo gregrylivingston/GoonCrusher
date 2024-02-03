@@ -68,6 +68,7 @@ func newSpawner( spawnerPosition: Vector2i ):
 
 	
 func endLevel(levelCompleted: bool, reason):  #reason takes Rout.endcondition
+	Root.playerCar.isDestroyed = true
 	var gameSummary = load("res://scene/player/menu/gameSummary.tscn").instantiate()
 	gameSummary.reason = reason 
 	if levelCompleted:
