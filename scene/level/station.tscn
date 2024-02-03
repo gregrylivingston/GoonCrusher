@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3 uid="uid://ct8qxkrifar7p"]
+[gd_scene load_steps=12 format=3 uid="uid://ct8qxkrifar7p"]
 
 [ext_resource type="Texture2D" uid="uid://bdg2i07wcop5f" path="res://texture/ground/concrete_structured.png" id="1_25t44"]
 [ext_resource type="Script" path="res://scene/level/station.gd" id="1_c760a"]
@@ -14,6 +14,9 @@ size = Vector2(505, 554)
 
 [sub_resource type="OccluderPolygon2D" id="OccluderPolygon2D_qrw17"]
 polygon = PackedVector2Array(-34, -44, -34, 505, 475, 505, 473, -46)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_3v8c0"]
+size = Vector2(1045, 408)
 
 [node name="stationParent" type="Node2D"]
 script = ExtResource("1_c760a")
@@ -266,3 +269,13 @@ position = Vector2(1140, 752)
 scale = Vector2(2, 2)
 energy = 0.3
 texture = ExtResource("7_fc8n0")
+
+[node name="driveway" type="Area2D" parent="."]
+position = Vector2(111, 93)
+collision_layer = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="driveway"]
+position = Vector2(-65.5, 194)
+shape = SubResource("RectangleShape2D_3v8c0")
+
+[connection signal="body_entered" from="driveway" to="." method="_on_driveway_body_entered"]

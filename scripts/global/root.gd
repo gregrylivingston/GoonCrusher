@@ -1,6 +1,7 @@
 extends Node
 
 enum gameModes {  COUNTDOWN, SPRINT, MARATHON, DEFENSE, GOONPOCALYPSE }
+enum endCondition { NOGAS , NOHEALTH , NOTIME , SUCCESS }
 
 var playerCar: OverheadCarBody2D
 var station  #this is the gas-station / house thing

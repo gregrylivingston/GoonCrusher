@@ -16,7 +16,7 @@ func _ready():
 	resetTimer()
 
 var daylength = 120
-var reset: bool = false
+var reset: bool = true  #prevents level from switching immediately, reset timer on daytimeaa
 var timeIsCountingDown = -1 #set to negative one for a countdown game
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -36,8 +36,14 @@ func _process(delta):
 		reset = true
 		Root.levelRoot.setNighttime(false)
 		resetTimer()
+		
 	if Root.levelRoot.seconds <= 0.01:
-		Root.levelRoot.endLevel(true)
+		match SaveManager.playerData.gameMode:
+			Root.gameModes.COUNTDOWN:
+				Root.levelRoot.endLevel(true , Root.endCondition.SUCCESS )
+			Root.gameModes.SPRINT || Root.gameModes.MARATHON:
+				Root.levelRoot.endLevel(false , Root.endCondition.NOTIME )
+
 
 func resetTimer():
 	await get_tree().create_timer(20).timeout

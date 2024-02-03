@@ -51,3 +51,6 @@ res://scene/powerup/purse.tscn
 res://scene/powerup/purse.gd
 res://scene/player/Timer.gd
 res://scripts/global/root.gd
+res://scene/powerup/powerup.tscn
+res://scene/player/menu/gameSummary.tscn
+res://scene/player/menu/gameSummary.gd

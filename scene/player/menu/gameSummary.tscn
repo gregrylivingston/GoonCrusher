@@ -165,7 +165,7 @@ void fragment(){
 	
 }"
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_mssc6"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_70ecg"]
 resource_local_to_scene = true
 shader = SubResource("Shader_ffeh2")
 shader_parameter/angle = 3.0
@@ -376,7 +376,7 @@ layout_mode = 2
 
 [node name="continue" parent="Panel/Panel2/VBoxContainer" instance=ExtResource("2_llr28")]
 visible = false
-material = SubResource("ShaderMaterial_mssc6")
+material = SubResource("ShaderMaterial_70ecg")
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 50

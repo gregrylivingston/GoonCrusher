@@ -47,14 +47,14 @@ func setNighttime(isNighttime: bool):
 		get_tree().create_tween().tween_property($CanvasModulate , "color" , Color(.0,.0,.0,1.0) , 5)
 			#if canvasmodulate this is set to .05 powerups and giants glow at night.  If set to 0 they don't
 		await get_tree().create_timer(2).timeout
-		Root.station.setNighttime(isNighttime)
+		if is_instance_valid(Root.station): Root.station.setNighttime(isNighttime)
 		$AudioStreamPlayer_wolf.play()
 		await get_tree().create_timer(1).timeout
 		Root.playerCar.turnOnHeadlights(true)
 	else: 
 		get_tree().create_tween().tween_property($CanvasModulate , "color" , Color(1.0,1.0,1.0,1.0) , 5)
 		await get_tree().create_timer(1).timeout
-		Root.station.setNighttime(isNighttime)
+		if is_instance_valid(Root.station): Root.station.setNighttime(isNighttime)
 		#$AudioStreamPlayer_wolf.play()
 		await get_tree().create_timer(2).timeout
 		Root.playerCar.turnOnHeadlights(false)
@@ -67,8 +67,9 @@ func newSpawner( spawnerPosition: Vector2i ):
 
 
 	
-func endLevel(levelCompleted: bool):
-	var gameSummary = load("res://scene/player/menu/gameSummary.tscn").instantiate() 
+func endLevel(levelCompleted: bool, reason):  #reason takes Rout.endcondition
+	var gameSummary = load("res://scene/player/menu/gameSummary.tscn").instantiate()
+	gameSummary.reason = reason 
 	if levelCompleted:
 		$AudioStreamPlayer.stream = load("res://sound/fx/slotmachine/winner_3.mp3")
 		$AudioStreamPlayer.play()

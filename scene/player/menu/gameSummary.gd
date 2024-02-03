@@ -2,6 +2,7 @@ extends CanvasLayer
 
 var isGameSummary: bool = true #alternative is achievements menu for now
 var levelCompleted: bool = false #did the player successfully complete their run.
+var reason #why did I win or lose.  this is an enum, Root.endCondition
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
@@ -34,13 +35,54 @@ func advanceSummary():
 
 func buildGameSummary():
 	
+
+	var reasonDict = {
+		Root.endCondition.SUCCESS:["Level Complete"],
+		Root.endCondition.NOGAS:[
+			"Empty tank. Full stop. Gooned.",
+			"Gasless? Game over, pal.",
+			"Out of fuel? Out of luck.",
+			"No gas. Big crash. You're done.",
+			"Fuel's gone. So's your chance.",
+			"Empty tank equals gooned fate.",
+			"Ran dry. Goons win. Good Bye!",
+			"No juice? No win. Restart?",
+			"Fuel fail. Goons cheer. Oops.",
+			"Dry tank. End game. Gooned."
+		],
+		Root.endCondition.NOTIME:[
+			"Too slow? Gooned. Time's up.",
+			"Time's out! Speed or get gooned.",
+			"Too Slow. Goons feasted. Finished.",
+			"Lingered long? Goons gobbled. You're Gone.",
+			"Slow and steady got you gooned.",
+			"Ran out of time, got gooned.",
+			"Time expired, you are officially gooned.",
+			"Delay meant defeat, thoroughly gooned."
+		],
+		Root.endCondition.NOHEALTH:[
+			"You Got Gooned.",
+			"You Got Gooned Again.",
+			"Crashed. Smashed. Gooned. Game Iver.",
+			"Wrecked Ride, Better Luck Next Time!",
+			"Gooned Again? Drive Smarter!",
+			"Car's Dead. Ya Got Gooned.",
+			"Hit, Run, Crash, Burn, Goodbye.",
+			"Smash Fail. Goons Laugh. The End.",
+			"Ride Wrecked. Dreams Dashed.",
+			"Crash Course In Defeat!",
+			"Gooned! Car Kaput. Retry?"
+],
+	}
+	var textreason = reasonDict[reason][ randi() % reasonDict[reason].size() - 1  ]
+	
+	%wasSuccessful.text = textreason
 	%wasSuccessful.self_modulate.a = 1.0
 	$Panel/Panel2.self_modulate.a = 0.0
 	Root.playerRoot.visible = false
 	if levelCompleted:
 		SaveManager.currentLevelPassed()
 	else:
-		%wasSuccessful.text = "YOU GOT GOONED"
 		$AudioStreamPlayer_highImpact.play()			
 
 	

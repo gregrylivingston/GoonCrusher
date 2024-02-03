@@ -361,7 +361,7 @@ func destroy():
 		if isPlayer:
 			$sprite.modulate = Color(0.8,0.8,0.8,1.0)
 			await get_tree().create_timer(1).timeout
-			Root.levelRoot.endLevel(false)
+			Root.levelRoot.endLevel( false ,  Root.endCondition.NOHEALTH )
 		else:
 			queue_free()
 
@@ -395,7 +395,7 @@ func outOfFuel():
 	isDestroyed = true
 	_car_input.acceleration = 0.0
 	await get_tree().create_timer(2.5).timeout
-	Root.levelRoot.endLevel(false)
+	Root.levelRoot.endLevel(false, Root.endCondition.NOGAS)
 	
 func setForwardCollisionMode(setting: bool):#activate or deactive bumper collision based on gear
 	$CollisionShape2D.disabled = not setting
