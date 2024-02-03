@@ -84,7 +84,7 @@ func _ready():
 		Root.gameModes.SPRINT:
 			var myStation = load("res://scene/level/station.tscn").instantiate()
 			Root.station = myStation
-			loadChunk(Vector2i( randi_range( Root.levelRoot.seconds * 0.12 , Root.levelRoot.seconds * 0.16),  randi_range(Root.levelRoot.seconds * 0.12, Root.levelRoot.seconds - 0.12) ) , myStation)
+			loadChunk(Vector2i( randi_range( Root.levelRoot.seconds * 0.12 , Root.levelRoot.seconds * 0.16),  randi_range(Root.levelRoot.seconds * 0.07, Root.levelRoot.seconds * - 0.07) ) , myStation)
 		Root.gameModes.MARATHON:
 			var myStation = load("res://scene/level/station.tscn").instantiate()
 			Root.station = myStation

@@ -7,7 +7,7 @@
 [ext_resource type="AudioStream" uid="uid://b2uhv71f06te0" path="res://sound/fx/halloween-impact-05-93808.mp3" id="5_x2d5e"]
 [ext_resource type="AudioStream" uid="uid://cs46g72v820b1" path="res://sound/fx/punch-2-123106.mp3" id="7_6todt"]
 
-[sub_resource type="Shader" id="Shader_ffeh2"]
+[sub_resource type="Shader" id="Shader_0twmf"]
 code = "shader_type canvas_item;
 
 //from https://godotshaders.com/shader/cool-3d-text/
@@ -165,9 +165,9 @@ void fragment(){
 	
 }"
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_70ecg"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_g3ek7"]
 resource_local_to_scene = true
-shader = SubResource("Shader_ffeh2")
+shader = SubResource("Shader_0twmf")
 shader_parameter/angle = 3.0
 shader_parameter/thickness = 5.0
 shader_parameter/scale = 1.0
@@ -375,8 +375,9 @@ custom_minimum_size = Vector2(0, 75)
 layout_mode = 2
 
 [node name="continue" parent="Panel/Panel2/VBoxContainer" instance=ExtResource("2_llr28")]
+process_mode = 3
 visible = false
-material = SubResource("ShaderMaterial_70ecg")
+material = SubResource("ShaderMaterial_g3ek7")
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 50

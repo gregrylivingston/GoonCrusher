@@ -22,6 +22,7 @@ func _process(delta):
 			if advanceSummary():
 				summaryTimer = 0.0
 				$AudioStreamPlayer2_lowImpact.play()
+				$Panel/Panel2/VBoxContainer/continue.grab_focus()
 			else: summaryComplete = true
 		
 func advanceSummary():
