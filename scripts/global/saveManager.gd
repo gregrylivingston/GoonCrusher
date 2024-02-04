@@ -113,9 +113,11 @@ func selectPreviousCar():
 
 
 func currentLevelPassed():
+	playerData.levels[playerData.selectedLevel].gamemodeBeat[playerData.gameMode] = true
 	if not playerData.levels[playerData.selectedLevel + 1].unlocked:
 		playerData.levels[playerData.selectedLevel + 1].unlocked = true
 		playerData.selectedLevel += 1
+
 	save_character_data()
 
 var carNameToFind

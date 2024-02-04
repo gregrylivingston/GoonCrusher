@@ -17,7 +17,6 @@ polygon = PackedVector2Array(-12, 15.5, 0.5, 18, 14, 13.5, 18.5, -1, 13, -13, 2,
 
 [node name="Powerup" instance=ExtResource("1_r6hoh")]
 material = SubResource("ShaderMaterial_gyedc")
-scale = Vector2(1, 1)
 texture = ExtResource("2_pgcic")
 powerup = "coin"
 quantity = 1.0

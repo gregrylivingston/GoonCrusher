@@ -64,7 +64,7 @@ func buildGameSummary():
 		Root.endCondition.NOHEALTH:[
 			"You Got Gooned.",
 			"You Got Gooned Again.",
-			"Crashed. Smashed. Gooned. Game Iver.",
+			"Crashed. Smashed. Gooned. Game Over.",
 			"Wrecked Ride, Better Luck Next Time!",
 			"Gooned Again? Drive Smarter!",
 			"Hit, Run, Crash, Burn, Goodbye.",

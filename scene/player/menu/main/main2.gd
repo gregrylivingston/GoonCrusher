@@ -98,8 +98,14 @@ func setupLevel(level):
 	else:
 		%begin.updateText("LOCKED")
 		%begin.disabled = true
+		
+	
+	setupGameModeStars()
+	for i in get_tree().get_nodes_in_group("gameModeStar"):get_tree().create_tween().tween_property(i , "custom_minimum_size", Vector2(48,48), menuTweenSpeed)
+	
 	await get_tree().create_timer( selectCarDelay ).timeout
 	$backgroundTexture.texture = load(level.image)
+
 
 
 func _on_level_select_pressed():
@@ -148,8 +154,44 @@ func goToMenuMode(myMenuMode: menuModes): #true if adancing to level select
 		$voicePlayer.play()
 
 
+var Mat_Star_Beat = load("res://shader/mat_star_yellow.tres")
+var Mat_Star_Locked = load("res://shader/Mat_Star_Grey.tres")
+var Mat_Star_Unlocked = load("res://shader/Mat_Star_White.tres") 
+
+func setupGameModeStars():
+	var gamemodeBeat = SaveManager.playerData.levels[SaveManager.playerData.selectedLevel].gamemodeBeat
+	var gamemode = SaveManager.playerData.gameMode
+	
+	if not gamemodeBeat[ Root.gameModes.COUNTDOWN ]: #countdown hasn't been beaten...
+		$VBoxContainer2/starContainer/TextureRect.material = Mat_Star_Unlocked
+	else:
+		$VBoxContainer2/starContainer/TextureRect.material = Mat_Star_Beat
+		
+		if not gamemodeBeat[ Root.gameModes.SPRINT ]:
+			$VBoxContainer2/starContainer/TextureRect3.material = Mat_Star_Unlocked
+		else:
+			$VBoxContainer2/starContainer/TextureRect3.material = Mat_Star_Beat
+	
+			##if both sprint and countdown have been beaten... unlock the other three....
+			if gamemodeBeat[ Root.gameModes.DEFENSE ]:$VBoxContainer2/starContainer/TextureRect2.material = Mat_Star_Beat
+			else: $VBoxContainer2/starContainer/TextureRect2.material = Mat_Star_Unlocked
+			if gamemodeBeat[ Root.gameModes.MARATHON ]:$VBoxContainer2/starContainer/TextureRect2.material = Mat_Star_Beat
+			else: $VBoxContainer2/starContainer/TextureRect2.material = Mat_Star_Unlocked	
+			$VBoxContainer2/starContainer/TextureRect5.material = Mat_Star_Unlocked
+
 func selectGameMode(newGameMode):
-	%begin.updateText( "Select Game Mode" )
+	var gamemodeBeat = SaveManager.playerData.levels[SaveManager.playerData.selectedLevel].gamemodeBeat
+	var gamemode = SaveManager.playerData.gameMode
+
+	
+	#this will have to be updated to reflect the player's status...
+	if newGameMode == Root.gameModes.MARATHON || newGameMode == Root.gameModes.DEFENSE:
+		%begin.disabled = true
+		%begin.updateText("Locked")
+	else:
+		%begin.updateText( "Select Game Mode" )
+		%begin.disabled = false
+	
 	var gameModeString = (Root.gameModes.keys()[newGameMode])
 	$VBoxContainer2/levelNameContainer.visible = true
 	var selectedLevel =  SaveManager.playerData.levels[SaveManager.playerData.selectedLevel]
@@ -159,12 +201,17 @@ func selectGameMode(newGameMode):
 	$gameModeInfo/gameModeLabel.text = Root.gameModes.keys()[newGameMode]
 	$gameModeInfo.visible = true
 	$gameModeInfo/gameModeDescription.text = Root.gameModeDescription[newGameMode].description
+	setupGameModeStars()
 	highlightAGameModeStar(gameModeString)
 	
 func highlightAGameModeStar(starNodeGroup: String):
-	for i in get_tree().get_nodes_in_group("gameModeStar"):get_tree().create_tween().tween_property(i , "custom_minimum_size", Vector2(48,48), menuTweenSpeed)
+	for i in get_tree().get_nodes_in_group("gameModeStar"):
+		get_tree().create_tween().tween_property(i , "custom_minimum_size", Vector2(48,48), menuTweenSpeed)
 	var myStar = get_tree().get_first_node_in_group(starNodeGroup)
-	if is_instance_valid(myStar):get_tree().create_tween().tween_property(myStar , "custom_minimum_size",  Vector2(72,72), menuTweenSpeed)
+	if is_instance_valid(myStar):
+		get_tree().create_tween().tween_property(myStar , "custom_minimum_size",  Vector2(84,84), menuTweenSpeed)
+
+
 
 func _on_quit_button_pressed():	get_tree().quit()
 func _on_settings_button_pressed():	add_child(load("res://scene/player/menu/settings/settings.tscn").instantiate())

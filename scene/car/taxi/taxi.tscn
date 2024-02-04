@@ -1,4 +1,4 @@
-[gd_scene load_steps=45 format=3 uid="uid://1bi7flsw4h78"]
+[gd_scene load_steps=47 format=3 uid="uid://1bi7flsw4h78"]
 
 [ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="1_v41dt"]
 [ext_resource type="Texture2D" uid="uid://wvrtktlo2l0e" path="res://scene/car/taxi/char_taxi_transparent.png" id="2_3d4qt"]
@@ -43,9 +43,22 @@
 [ext_resource type="AudioStream" uid="uid://bl1k15t5dtd3v" path="res://scene/car/taxi/audio/taxi_lowhealth_2.mp3" id="29_gutk2"]
 [ext_resource type="AudioStream" uid="uid://dk8dxgulkdxvl" path="res://sound/fx/engine/rally-car1.mp3" id="33_3ogwm"]
 [ext_resource type="Texture2D" uid="uid://duef53a4dv754" path="res://scene/car/taxi/taxi1.png" id="34_1ynbo"]
+[ext_resource type="Shader" path="res://shader/3dtext.gdshader" id="44_ldv35"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_sc1hy"]
 size = Vector2(229, 94)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_jwwff"]
+resource_local_to_scene = true
+shader = ExtResource("44_ldv35")
+shader_parameter/angle = 0.6
+shader_parameter/thickness = 5.0
+shader_parameter/scale = 1.0
+shader_parameter/shear = Vector2(0, -0.2)
+shader_parameter/slices = 16
+shader_parameter/outline = true
+shader_parameter/outline_width = 2.0
+shader_parameter/show_bound = false
 
 [node name="Car" instance=ExtResource("1_v41dt")]
 engine = 10
@@ -89,3 +102,9 @@ position = Vector2(-44.0002, -59.9998)
 [node name="CollisionShape2D" parent="carBodyArea" index="0"]
 position = Vector2(-8.5, 2)
 shape = SubResource("RectangleShape2D_sc1hy")
+
+[node name="Label" parent="indicator" index="0"]
+material = SubResource("ShaderMaterial_jwwff")
+
+[node name="indicatorDistance" parent="indicator/Label/indicatorRoot" index="0"]
+material = SubResource("ShaderMaterial_jwwff")

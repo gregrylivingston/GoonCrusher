@@ -1,4 +1,4 @@
-[gd_scene load_steps=41 format=3 uid="uid://67a8ek6j834x"]
+[gd_scene load_steps=43 format=3 uid="uid://67a8ek6j834x"]
 
 [ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="1_p428k"]
 [ext_resource type="Texture2D" uid="uid://pjglsxpdyhov" path="res://scene/car/van/Mini_van.png" id="2_1lxhl"]
@@ -39,9 +39,22 @@
 [ext_resource type="AudioStream" uid="uid://dawqa2bvv647c" path="res://scene/car/van/audio/van_lowhealth_1.mp3" id="30_co8o0"]
 [ext_resource type="AudioStream" uid="uid://br1m5vwgv6tg2" path="res://scene/car/van/audio/van_joy_14.mp3" id="31_0cmwq"]
 [ext_resource type="AudioStream" uid="uid://cidnoei82mwvw" path="res://scene/car/van/audio/van_lowhealth_2.mp3" id="31_b7jwg"]
+[ext_resource type="Shader" path="res://shader/3dtext.gdshader" id="40_ng5yr"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_mgbn7"]
 size = Vector2(183, 84)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_d7p1d"]
+resource_local_to_scene = true
+shader = ExtResource("40_ng5yr")
+shader_parameter/angle = 0.6
+shader_parameter/thickness = 5.0
+shader_parameter/scale = 1.0
+shader_parameter/shear = Vector2(0, -0.2)
+shader_parameter/slices = 16
+shader_parameter/outline = true
+shader_parameter/outline_width = 2.0
+shader_parameter/show_bound = false
 
 [node name="Car" instance=ExtResource("1_p428k")]
 engine = 1
@@ -86,3 +99,9 @@ position = Vector2(-44.0002, -59.9998)
 [node name="CollisionShape2D" parent="carBodyArea" index="0"]
 position = Vector2(-20.5, -1)
 shape = SubResource("RectangleShape2D_mgbn7")
+
+[node name="Label" parent="indicator" index="0"]
+material = SubResource("ShaderMaterial_d7p1d")
+
+[node name="indicatorDistance" parent="indicator/Label/indicatorRoot" index="0"]
+material = SubResource("ShaderMaterial_d7p1d")

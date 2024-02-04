@@ -22,11 +22,14 @@ func _process(delta):
 
 
 func _on_mouse_entered():
-	if canGrabFocus: grab_focus()
-	get_tree().create_tween().tween_property(self , "scale", Vector2(1.0,1.1),  animTransitionTimer)
-	$AudioStreamPlayer.play()
-	get_tree().create_tween().tween_method(set3dAnimationAngle, PI/8, PI , animTransitionTimer)
-	#set3dAnimationAngle(PI)
+	
+	if canGrabFocus && not has_focus(): 
+		grab_focus()
+		get_tree().create_tween().tween_property(self , "scale", Vector2(1.0,1.3),  animTransitionTimer)
+		get_tree().create_tween().tween_property(self , "position", position + Vector2(0,-10),  animTransitionTimer)
+		$AudioStreamPlayer.play()
+		get_tree().create_tween().tween_method(set3dAnimationAngle, PI/8, PI , animTransitionTimer)
+		#set3dAnimationAngle(PI)
 
 func set3dAnimationAngle(angle):
 	if $HBoxContainer/TextureRect != null:
@@ -57,6 +60,7 @@ func _on_focus_entered():
 func _on_focus_exited():
 	get_tree().create_tween().tween_method(set3dAnimationAngle, PI, PI/8 , animTransitionTimer)
 	get_tree().create_tween().tween_property(self , "scale", Vector2(1.0,1.0),  animTransitionTimer)
+	get_tree().create_tween().tween_property(self , "position", position + Vector2(0 , 10),  animTransitionTimer)
 
 func _on_mouse_exited():
 	if not has_focus() || not canGrabFocus:

@@ -45,12 +45,12 @@ func _ready():
 			seconds = seconds * 5 #this is 5 times the length of sprint or countdown
 
 func createCountdownSpawners():
-	Root.playerCar.add_child( newSpawner( Vector2i(4000,2000)) )
-	Root.playerCar.add_child( newSpawner( Vector2i(4000,-2000)) )
+	newSpawner( Vector2i(4000,2000)) 
+	newSpawner( Vector2i(4000,-2000)) 
 	
-	Root.playerCar.add_child( newSpawner( Vector2i(4000,250) ))
-	Root.playerCar.add_child( newSpawner( Vector2i(4000,-250)) )
-	Root.playerCar.add_child( newSpawner( Vector2i(-3500,0)) )
+	newSpawner( Vector2i(4000,250) )
+	newSpawner( Vector2i(4000,-250))
+	newSpawner( Vector2i(-3500,0)) 
 
 func createSprintSpawners():
 	newSpawner( Vector2i(4000,800)) 
