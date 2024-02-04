@@ -162,7 +162,10 @@ func setupGameModeStars():
 	var gamemodeBeat = SaveManager.playerData.levels[SaveManager.playerData.selectedLevel].gamemodeBeat
 	var gamemode = SaveManager.playerData.gameMode
 	
-	if not gamemodeBeat[ Root.gameModes.COUNTDOWN ]: #countdown hasn't been beaten...
+	
+	if not SaveManager.playerData.levels[SaveManager.playerData.selectedLevel].unlocked:
+		$VBoxContainer2/starContainer/TextureRect.material = Mat_Star_Locked
+	elif not gamemodeBeat[ Root.gameModes.COUNTDOWN ]: #countdown hasn't been beaten...
 		$VBoxContainer2/starContainer/TextureRect.material = Mat_Star_Unlocked
 	else:
 		$VBoxContainer2/starContainer/TextureRect.material = Mat_Star_Beat
@@ -179,19 +182,36 @@ func setupGameModeStars():
 			else: $VBoxContainer2/starContainer/TextureRect2.material = Mat_Star_Unlocked	
 			$VBoxContainer2/starContainer/TextureRect5.material = Mat_Star_Unlocked
 
+func setGameModeUnlocked():
+	%begin.updateText( "Select Game Mode" )
+	%begin.disabled = false
+	%unlockCondition.visible = false
+	%lock.visible = false
+
+func setGameModeLocked(reason: String):
+	%begin.disabled = true
+	%begin.updateText("Locked")
+	%unlockCondition.visible = true
+	%lock.visible = true
+	%unlockCondition.text = reason
+
 func selectGameMode(newGameMode):
 	var gamemodeBeat = SaveManager.playerData.levels[SaveManager.playerData.selectedLevel].gamemodeBeat
-	var gamemode = SaveManager.playerData.gameMode
-
 	
-	#this will have to be updated to reflect the player's status...
-	if newGameMode == Root.gameModes.MARATHON || newGameMode == Root.gameModes.DEFENSE:
-		%begin.disabled = true
-		%begin.updateText("Locked")
+	
+		
+	if newGameMode == Root.gameModes.COUNTDOWN: #countdown hasn't been beaten...
+		if SaveManager.playerData.levels[SaveManager.playerData.selectedLevel].unlocked: setGameModeUnlocked()
+		else:pass
+	elif newGameMode == Root.gameModes.SPRINT:
+		if gamemodeBeat[ Root.gameModes.COUNTDOWN ]:setGameModeUnlocked()
+		else:setGameModeLocked(" Beat Countdown To Unlock")
+	elif gamemodeBeat[ Root.gameModes.SPRINT ]:
+		setGameModeUnlocked()
 	else:
-		%begin.updateText( "Select Game Mode" )
-		%begin.disabled = false
-	
+		setGameModeLocked(" Beat Sprint To Unlock")
+		
+
 	var gameModeString = (Root.gameModes.keys()[newGameMode])
 	$VBoxContainer2/levelNameContainer.visible = true
 	var selectedLevel =  SaveManager.playerData.levels[SaveManager.playerData.selectedLevel]

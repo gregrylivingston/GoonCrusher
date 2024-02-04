@@ -56,3 +56,4 @@ res://scripts/global/saveManager.gd
 res://scene/player/ui/roadButton.tscn
 res://scene/player/ui/roadButton.gd
 res://scene/level/levelRoot.gd
+res://scene/player/menu/main/3dText_Common.tres
