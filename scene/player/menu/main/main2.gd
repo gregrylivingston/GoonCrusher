@@ -100,7 +100,7 @@ func setupLevel(level):
 		%begin.disabled = true
 		
 	
-	setupGameModeStars()
+	setupGameModeStars(level)
 	for i in get_tree().get_nodes_in_group("gameModeStar"):get_tree().create_tween().tween_property(i , "custom_minimum_size", Vector2(48,48), menuTweenSpeed)
 	
 	await get_tree().create_timer( selectCarDelay ).timeout
@@ -158,28 +158,29 @@ var Mat_Star_Beat = load("res://shader/mat_star_yellow.tres")
 var Mat_Star_Locked = load("res://shader/Mat_Star_Grey.tres")
 var Mat_Star_Unlocked = load("res://shader/Mat_Star_White.tres") 
 
-func setupGameModeStars():
-	var gamemodeBeat = SaveManager.playerData.levels[SaveManager.playerData.selectedLevel].gamemodeBeat
+func setupGameModeStars(level):
+	var gamemodeBeat = level.gamemodeBeat
 	var gamemode = SaveManager.playerData.gameMode
 	
-	
-	if not SaveManager.playerData.levels[SaveManager.playerData.selectedLevel].unlocked:
-		$VBoxContainer2/starContainer/TextureRect.material = Mat_Star_Locked
+	if not level.unlocked:
+		for i in [$VBoxContainer2/starContainer/TextureRect, $VBoxContainer2/starContainer/TextureRect3, $VBoxContainer2/starContainer/TextureRect2, $VBoxContainer2/starContainer/TextureRect4, $VBoxContainer2/starContainer/TextureRect5]:i.material = Mat_Star_Locked
 	elif not gamemodeBeat[ Root.gameModes.COUNTDOWN ]: #countdown hasn't been beaten...
 		$VBoxContainer2/starContainer/TextureRect.material = Mat_Star_Unlocked
+		for i in [$VBoxContainer2/starContainer/TextureRect3, $VBoxContainer2/starContainer/TextureRect2, $VBoxContainer2/starContainer/TextureRect4, $VBoxContainer2/starContainer/TextureRect5]:i.material = Mat_Star_Locked
 	else:
 		$VBoxContainer2/starContainer/TextureRect.material = Mat_Star_Beat
 		
 		if not gamemodeBeat[ Root.gameModes.SPRINT ]:
 			$VBoxContainer2/starContainer/TextureRect3.material = Mat_Star_Unlocked
+			for i in [$VBoxContainer2/starContainer/TextureRect2, $VBoxContainer2/starContainer/TextureRect4, $VBoxContainer2/starContainer/TextureRect5]:i.material = Mat_Star_Locked
 		else:
 			$VBoxContainer2/starContainer/TextureRect3.material = Mat_Star_Beat
 	
 			##if both sprint and countdown have been beaten... unlock the other three....
 			if gamemodeBeat[ Root.gameModes.DEFENSE ]:$VBoxContainer2/starContainer/TextureRect2.material = Mat_Star_Beat
 			else: $VBoxContainer2/starContainer/TextureRect2.material = Mat_Star_Unlocked
-			if gamemodeBeat[ Root.gameModes.MARATHON ]:$VBoxContainer2/starContainer/TextureRect2.material = Mat_Star_Beat
-			else: $VBoxContainer2/starContainer/TextureRect2.material = Mat_Star_Unlocked	
+			if gamemodeBeat[ Root.gameModes.MARATHON ]:$VBoxContainer2/starContainer/TextureRect4.material = Mat_Star_Beat
+			else: $VBoxContainer2/starContainer/TextureRect4.material = Mat_Star_Unlocked	
 			$VBoxContainer2/starContainer/TextureRect5.material = Mat_Star_Unlocked
 
 func setGameModeUnlocked():
@@ -198,8 +199,6 @@ func setGameModeLocked(reason: String):
 func selectGameMode(newGameMode):
 	var gamemodeBeat = SaveManager.playerData.levels[SaveManager.playerData.selectedLevel].gamemodeBeat
 	
-	
-		
 	if newGameMode == Root.gameModes.COUNTDOWN: #countdown hasn't been beaten...
 		if SaveManager.playerData.levels[SaveManager.playerData.selectedLevel].unlocked: setGameModeUnlocked()
 		else:pass
@@ -221,7 +220,7 @@ func selectGameMode(newGameMode):
 	$gameModeInfo/gameModeLabel.text = Root.gameModes.keys()[newGameMode]
 	$gameModeInfo.visible = true
 	$gameModeInfo/gameModeDescription.text = Root.gameModeDescription[newGameMode].description
-	setupGameModeStars()
+	setupGameModeStars(SaveManager.playerData.levels[SaveManager.playerData.selectedLevel])
 	highlightAGameModeStar(gameModeString)
 	
 func highlightAGameModeStar(starNodeGroup: String):
