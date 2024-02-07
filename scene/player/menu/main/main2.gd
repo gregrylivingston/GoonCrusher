@@ -98,7 +98,7 @@ func setupLevel(level):
 	else:
 		%begin.updateText("LOCKED")
 		%begin.disabled = true
-		
+	%begin.grab_focus()
 	
 	setupGameModeStars(level)
 	for i in get_tree().get_nodes_in_group("gameModeStar"):get_tree().create_tween().tween_property(i , "custom_minimum_size", Vector2(48,48), menuTweenSpeed)

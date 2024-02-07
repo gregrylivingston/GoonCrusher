@@ -14,16 +14,22 @@ func _ready():
 
 var summaryTimer:float = -2.0
 var summaryComplete: bool = false
+var summaryTimerLength: float = 0.5
 
 func _process(delta):
 	if isGameSummary && not summaryComplete:
 		summaryTimer += delta
-		if summaryTimer > 0.5:
+		if summaryTimer > summaryTimerLength:
 			if advanceSummary():
 				summaryTimer = 0.0
 				$AudioStreamPlayer2_lowImpact.play()
 				$Panel/Panel2/VBoxContainer/continue.grab_focus()
 			else: summaryComplete = true
+	if Input.is_action_just_pressed("ui_accept") || Input.is_action_just_pressed("Accelerate"):
+		if not summaryComplete:
+			summaryTimerLength = 0.1
+			summaryTimer = 1.0
+		else: _on_continue_pressed()
 		
 func advanceSummary():
 	for i in $Panel/Panel2/VBoxContainer.get_children():
