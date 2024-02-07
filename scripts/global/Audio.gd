@@ -17,3 +17,19 @@ func queueRequest(requestOptions: Array[AudioStreamMP3]):
 			i.stream = requestOptions[randi_range(0, requestOptions.size() - 1)]
 			i.play()
 			return
+
+var nightSongs = [
+	"res://sound/music/night/anttisinstrumentals_christussanctus.mp3",
+	"res://sound/music/night/anttisinstrumentals_hyperloopnachfrankfurtzumoskau.mp3",
+	"res://sound/music/night/anttisinstrumentals_theoryoffunk.mp3",
+	"res://sound/music/night/anttisinstrumentals_zombiewalkinginstrumental.mp3",
+]
+
+
+func loadNextNightSong():
+	$AudioStream_Music.stream = load( nightSongs[ randi()%nightSongs.size()-1 ])
+	$AudioStream_Music.play()
+
+
+func _on_audio_stream_music_finished():
+	loadNextNightSong()

@@ -18,6 +18,10 @@ func _ready():
 		Root.earnedCoins = 0
 		Root.earnedGems = 0
 	%levelSelect.grab_focus()
+
+func _process(delta):
+	if Input.is_action_just_pressed("TurnLeft") || Input.is_action_just_pressed("ui_left"):selectPreviousCar()
+	elif Input.is_action_just_pressed("TurnRight") || Input.is_action_just_pressed("ui_right"):selectNextCar()
 	
 var selectCarDelay = 0.3
 func selectCar(car):
