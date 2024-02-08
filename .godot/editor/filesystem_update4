@@ -52,3 +52,9 @@ res://scene/powerup/powerup.tscn
 res://scene/player/menu/gameSummary.tscn
 res://scene/powerup/coin.tscn
 res://scene/player/ui/roadButton.tscn
+res://scene/player/menu/settings/settings_sound.tscn
+res://scene/player/menu/settings/settings_sound.gd
+res://lib/overhead_car_2d/overhead_car_body_2d.gd
+res://scene/player/menu/main/mainMenu.gd
+res://addons/gut/gui/Settings.tscn
+res://scripts/global/saveManager.gd

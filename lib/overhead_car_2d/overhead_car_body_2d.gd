@@ -73,7 +73,6 @@ func _init():
 
 func _ready():
 	purseAudio.append_array(powerupAudio)
-	updateAudioLevels()
 	$"AudioStream-Engine".stream = engineNoise
 	$"AudioStream-Engine".play()
 
@@ -368,12 +367,6 @@ func destroy():
 		else:
 			queue_free()
 
-func updateAudioLevels():
-	$"AudioStream-Engine".volume_db =  SaveManager.getVolume("fx")
-	$"AudioStream-Tires".volume_db = 	SaveManager.getVolume("fx")
-	$"AudioStream-Crash".volume_db = 	SaveManager.getVolume("fx")
-	$"AudioStream-Voice".volume_db = 2 + SaveManager.getVolume("voice")
-	$"AudioStream-CarDamage".volume_db = -5 + SaveManager.getVolume("fx")
 	
 func playRandomFxSound():
 	var randomizer = randi_range(0,1)

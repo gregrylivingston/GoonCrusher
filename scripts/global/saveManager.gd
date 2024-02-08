@@ -7,7 +7,15 @@ var playerData
 func _ready():
 #	reset_save()
 	playerData = load_data()
-
+	load_settings()
+	
+	
+func load_settings():
+	AudioServer.set_bus_volume_db(AudioServer.get_bus_index("UI"), SaveManager.getVolume("fx"))
+	AudioServer.set_bus_volume_db(AudioServer.get_bus_index("FX"), SaveManager.getVolume("fx"))
+	AudioServer.set_bus_volume_db(AudioServer.get_bus_index("Master"), SaveManager.getVolume("master"))
+	AudioServer.set_bus_volume_db(AudioServer.get_bus_index("Voice"), SaveManager.getVolume("voice"))
+	AudioServer.set_bus_volume_db(AudioServer.get_bus_index("Music"), SaveManager.getVolume("music"))
 
 
 var save_path = "user://userData.tres"

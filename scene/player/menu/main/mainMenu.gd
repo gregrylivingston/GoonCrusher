@@ -105,11 +105,6 @@ func _on_unlock_button_pressed():
 
 func _on_settings_button_pressed():
 	add_child(load("res://scene/player/menu/settings/settings.tscn").instantiate())
-	
-func updateAudioLevels():
-	$AudioStreamPlayer.volume_db = -8 + SaveManager.getVolume( "music" )
-	$voicePlayer.volume_db = 2 + SaveManager.getVolume( "voice" )
-
 
 func _on_achievements_pressed():
 	var scene = load("res://scene/player/menu/gameSummary.tscn").instantiate()
