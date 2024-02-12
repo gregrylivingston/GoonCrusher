@@ -180,12 +180,15 @@ func setupGameModeStars(level):
 		else:
 			$VBoxContainer2/starContainer/TextureRect3.material = Mat_Star_Beat
 	
+			for i in [$VBoxContainer2/starContainer/TextureRect2, $VBoxContainer2/starContainer/TextureRect4, $VBoxContainer2/starContainer/TextureRect5]:i.material = Mat_Star_Locked
+			#for demo just lock everything else)
+			
 			##if both sprint and countdown have been beaten... unlock the other three....
-			if gamemodeBeat[ Root.gameModes.DEFENSE ]:$VBoxContainer2/starContainer/TextureRect2.material = Mat_Star_Beat
-			else: $VBoxContainer2/starContainer/TextureRect2.material = Mat_Star_Unlocked
-			if gamemodeBeat[ Root.gameModes.MARATHON ]:$VBoxContainer2/starContainer/TextureRect4.material = Mat_Star_Beat
-			else: $VBoxContainer2/starContainer/TextureRect4.material = Mat_Star_Unlocked	
-			$VBoxContainer2/starContainer/TextureRect5.material = Mat_Star_Unlocked
+			#if gamemodeBeat[ Root.gameModes.DEFENSE ]:$VBoxContainer2/starContainer/TextureRect2.material = Mat_Star_Beat
+			#else: $VBoxContainer2/starContainer/TextureRect2.material = Mat_Star_Unlocked
+			#if gamemodeBeat[ Root.gameModes.MARATHON ]:$VBoxContainer2/starContainer/TextureRect4.material = Mat_Star_Beat
+			#else: $VBoxContainer2/starContainer/TextureRect4.material = Mat_Star_Unlocked	
+			#$VBoxContainer2/starContainer/TextureRect5.material = Mat_Star_Unlocked
 
 func setGameModeUnlocked():
 	%begin.updateText( "Select Game Mode" )
