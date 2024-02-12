@@ -1,0 +1,181 @@
+[gd_scene load_steps=13 format=3 uid="uid://dtpncrptg52gn"]
+
+[ext_resource type="Shader" path="res://shader/rainbowfill.gdshader" id="1_snfeh"]
+[ext_resource type="FontFile" uid="uid://hf5rdg67jcwc" path="res://addons/gut/fonts/AnonymousPro-Italic.ttf" id="2_p3sss"]
+[ext_resource type="Shader" uid="uid://c2jd3wjben4p2" path="res://shader/3d_Text_HighlightRight.tres" id="3_s02ml"]
+[ext_resource type="Texture2D" uid="uid://dlgpwix6wtodc" path="res://shader/emtpywhitegradient.tres" id="4_5ec0e"]
+[ext_resource type="FontFile" uid="uid://c106tp6lo578e" path="res://style/font/Tektur/Tektur-Bold.ttf" id="5_mc3qw"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ydqo2"]
+shader = ExtResource("1_snfeh")
+shader_parameter/strength = 1.0
+shader_parameter/speed = 0.15
+shader_parameter/angle = 125.0
+
+[sub_resource type="Gradient" id="Gradient_t0ptw"]
+colors = PackedColorArray(0, 0, 0, 1, 0, 0, 0, 1)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_pwab5"]
+gradient = SubResource("Gradient_t0ptw")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_xyq0p"]
+shader = ExtResource("3_s02ml")
+shader_parameter/angle = 6.8
+shader_parameter/thickness = 6.0
+shader_parameter/scale = 1.0
+shader_parameter/shear = Vector2(0, -0.4)
+shader_parameter/slices = 64
+shader_parameter/outline = true
+shader_parameter/outline_width = 2.0
+shader_parameter/front_tex = ExtResource("4_5ec0e")
+shader_parameter/back_tex = ExtResource("4_5ec0e")
+shader_parameter/side_tex = SubResource("GradientTexture1D_pwab5")
+shader_parameter/show_bound = false
+
+[sub_resource type="Animation" id="Animation_csx60"]
+resource_name = "slide"
+length = 0.3
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Label7:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.0001, 0.3),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 0,
+"values": [Vector2(-796, 391.5), Vector2(-727, 394), Vector2(453, 391.5)]
+}
+
+[sub_resource type="Animation" id="Animation_eqqv5"]
+resource_name = "zoom"
+length = 0.3
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Label7:scale")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.3),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Vector2(0, 0), Vector2(1, 1)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Label7:position")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.3),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Vector2(801, 451.5), Vector2(453, 391.5)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_o50lb"]
+_data = {
+"slide": SubResource("Animation_csx60"),
+"zoom": SubResource("Animation_eqqv5")
+}
+
+[node name="splashText" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TextureRect" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="TextureRect"]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -280.0
+offset_top = -88.5
+offset_right = 280.0
+offset_bottom = 88.5
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = -15
+
+[node name="Label3" type="Label" parent="TextureRect/VBoxContainer"]
+material = SubResource("ShaderMaterial_ydqo2")
+layout_mode = 2
+size_flags_horizontal = 0
+theme_override_constants/outline_size = 10
+theme_override_fonts/font = ExtResource("2_p3sss")
+theme_override_font_sizes/font_size = 34
+text = "Gregry Boyd's"
+horizontal_alignment = 2
+
+[node name="VBoxContainer" type="HBoxContainer" parent="TextureRect/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label5" type="Label" parent="TextureRect/VBoxContainer/VBoxContainer"]
+material = SubResource("ShaderMaterial_xyq0p")
+layout_mode = 2
+size_flags_vertical = 0
+theme_override_colors/font_color = Color(0.92549, 0.603922, 0.160784, 1)
+theme_override_colors/font_outline_color = Color(0.658824, 0.12549, 0.101961, 1)
+theme_override_constants/outline_size = 25
+theme_override_fonts/font = ExtResource("5_mc3qw")
+theme_override_font_sizes/font_size = 90
+text = "GOON"
+
+[node name="Label6" type="Label" parent="TextureRect/VBoxContainer/VBoxContainer"]
+material = SubResource("ShaderMaterial_xyq0p")
+layout_mode = 2
+size_flags_vertical = 8
+theme_override_colors/font_color = Color(0.92549, 0.603922, 0.160784, 1)
+theme_override_colors/font_outline_color = Color(0.658824, 0.12549, 0.101961, 1)
+theme_override_constants/outline_size = 17
+theme_override_fonts/font = ExtResource("5_mc3qw")
+theme_override_font_sizes/font_size = 70
+text = "CRUSHER"
+
+[node name="Label7" type="Label" parent="."]
+material = SubResource("ShaderMaterial_xyq0p")
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = 1.0
+offset_top = 1.49994
+offset_right = 695.0
+offset_bottom = 118.5
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(1e-05, 1e-05)
+size_flags_vertical = 0
+theme_override_colors/font_color = Color(0.92549, 0.603922, 0.160784, 1)
+theme_override_colors/font_outline_color = Color(0.658824, 0.12549, 0.101961, 1)
+theme_override_constants/outline_size = 25
+theme_override_fonts/font = ExtResource("5_mc3qw")
+theme_override_font_sizes/font_size = 90
+text = "WIN BIG PRIZES"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+libraries = {
+"": SubResource("AnimationLibrary_o50lb")
+}

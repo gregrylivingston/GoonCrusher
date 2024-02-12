@@ -1,6 +1,8 @@
+AnimationPlayer
+ColorRect
+TextureRect
 HBoxContainer
 VBoxContainer
-TextureRect
 Label
 SubViewport
 CanvasLayer
@@ -10,5 +12,4 @@ CollisionShape2D
 Area2D
 PointLight2D
 LightOccluder2D
-ColorRect
 StaticBody2D

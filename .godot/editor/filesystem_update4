@@ -55,3 +55,4 @@ res://scene/player/ui/roadButton.tscn
 res://addons/gut/gui/Settings.tscn
 res://scene/player/menu/settings/settings_sound.tscn
 res://scene/player/menu/main/main2.gd
+res://scene/splash_text.tscn
