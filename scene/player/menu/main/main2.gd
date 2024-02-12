@@ -210,9 +210,11 @@ func selectGameMode(newGameMode):
 		if gamemodeBeat[ Root.gameModes.COUNTDOWN ]:setGameModeUnlocked()
 		else:setGameModeLocked(" Beat Countdown To Unlock")
 	elif gamemodeBeat[ Root.gameModes.SPRINT ]:
-		setGameModeUnlocked()
+		#setGameModeUnlocked()
+		setGameModeLocked(" Not Availabe In Demo")
 	else:
-		setGameModeLocked(" Beat Sprint To Unlock")
+		#setGameModeLocked(" Beat Sprint To Unlock")
+		setGameModeLocked(" Not Availabe In Demo")
 		
 
 	var gameModeString = (Root.gameModes.keys()[newGameMode])
