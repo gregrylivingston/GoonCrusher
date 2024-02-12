@@ -2,6 +2,7 @@ extends Node
 
 enum gameModes {  COUNTDOWN, SPRINT, MARATHON, DEFENSE, GOONPOCALYPSE }
 enum endCondition { NOGAS , NOHEALTH , NOTIME , SUCCESS }
+enum upgrade { health , fuel , armor , engine , traction , steering , clover , luck , headlights , oil}
 
 var playerCar: OverheadCarBody2D
 var station  #this is the gas-station / house thing
@@ -24,10 +25,11 @@ var earnedGems: int
 	"steering":preload("res://scene/powerup/steering.tscn"),
 	"engine":preload("res://scene/powerup/engine.tscn"),
 	"armor":preload("res://scene/powerup/armor.tscn"),
+	"traction":preload("res://scene/powerup/traction.tscn"),
+	
 	"coin":preload("res://scene/powerup/coin.tscn"),
 	"purse":preload("res://scene/powerup/purse.tscn"),
 	"gem":preload("res://scene/powerup/gem.tscn"),
-	"traction":preload("res://scene/powerup/traction.tscn"),
 	"slotMachine":preload("res://scene/powerup/slotMachine.tscn"),
 	"currentGoonsCrushed":preload("res://scene/powerup/currentGoonsCrushed.tscn"),
 }

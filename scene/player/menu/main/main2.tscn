@@ -54,7 +54,7 @@ shader_parameter/back_tex = ExtResource("10_8o5bn")
 shader_parameter/side_tex = SubResource("GradientTexture1D_pwab5")
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_1o162"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_on83p"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -66,7 +66,7 @@ shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_kt45g"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_i001t"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -78,7 +78,7 @@ shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_likvk"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_pcheg"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -90,7 +90,7 @@ shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_pn7gn"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_v85jy"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -102,7 +102,7 @@ shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_u15k8"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_4jyrh"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -292,7 +292,7 @@ shader_parameter/outline_width = 2.0
 shader_parameter/front_tex = SubResource("GradientTexture1D_3pvng")
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_hr3pe"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_bve3l"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -304,7 +304,7 @@ shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_ljmaw"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_bwr04"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -557,17 +557,21 @@ theme_override_styles/panel = ExtResource("2_qamlo")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="Panel"]
 layout_mode = 1
-anchors_preset = 4
+anchors_preset = 8
+anchor_left = 0.5
 anchor_top = 0.5
+anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = 80.0
-offset_top = -268.5
-offset_right = 509.0
-offset_bottom = -99.5
+offset_left = -279.5
+offset_top = -232.0
+offset_right = 280.5
+offset_bottom = -55.0
+grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = -5
+theme_override_constants/separation = -40
 
 [node name="Label" type="Label" parent="Panel/VBoxContainer"]
+visible = false
 material = SubResource("ShaderMaterial_noll7")
 layout_mode = 2
 theme_override_constants/outline_size = 2
@@ -576,10 +580,13 @@ theme_override_font_sizes/font_size = 24
 text = "Gregry Boyd's"
 
 [node name="HBoxContainer" type="HBoxContainer" parent="Panel/VBoxContainer"]
+custom_minimum_size = Vector2(0, 100)
 layout_mode = 2
+size_flags_horizontal = 0
 size_flags_vertical = 10
 
 [node name="Label" type="Label" parent="Panel/VBoxContainer/HBoxContainer"]
+visible = false
 material = ExtResource("8_vdjnf")
 layout_mode = 2
 size_flags_horizontal = 3
@@ -587,10 +594,11 @@ theme_override_colors/font_color = Color(0.92549, 0.603922, 0.160784, 1)
 theme_override_colors/font_outline_color = Color(0.658824, 0.12549, 0.101961, 1)
 theme_override_constants/outline_size = 20
 theme_override_fonts/font = ExtResource("4_b1dqc")
-theme_override_font_sizes/font_size = 60
+theme_override_font_sizes/font_size = 36
 text = "RIDE"
 
 [node name="Label2" type="Label" parent="Panel/VBoxContainer/HBoxContainer"]
+visible = false
 material = ExtResource("8_vdjnf")
 layout_mode = 2
 size_flags_horizontal = 3
@@ -598,7 +606,7 @@ theme_override_colors/font_color = Color(0.92549, 0.603922, 0.160784, 1)
 theme_override_colors/font_outline_color = Color(0.658824, 0.12549, 0.101961, 1)
 theme_override_constants/outline_size = 20
 theme_override_fonts/font = ExtResource("4_b1dqc")
-theme_override_font_sizes/font_size = 60
+theme_override_font_sizes/font_size = 36
 text = "'N'"
 horizontal_alignment = 1
 
@@ -608,11 +616,12 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/outline_size = 10
 theme_override_fonts/font = ExtResource("4_b1dqc")
-theme_override_font_sizes/font_size = 70
-text = "PRIZE"
+theme_override_font_sizes/font_size = 34
+text = "Gregry Boyd's"
 horizontal_alignment = 2
 
 [node name="Label3" type="Label" parent="Panel/VBoxContainer"]
+visible = false
 material = SubResource("ShaderMaterial_jhcqm")
 layout_mode = 2
 size_flags_vertical = 2
@@ -631,6 +640,32 @@ theme_override_constants/outline_size = 10
 theme_override_fonts/font = ExtResource("4_b1dqc")
 theme_override_font_sizes/font_size = 60
 text = "PRIZE"
+
+[node name="VBoxContainer" type="HBoxContainer" parent="Panel/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label5" type="Label" parent="Panel/VBoxContainer/VBoxContainer"]
+material = SubResource("ShaderMaterial_jhcqm")
+layout_mode = 2
+size_flags_vertical = 0
+theme_override_colors/font_color = Color(0.92549, 0.603922, 0.160784, 1)
+theme_override_colors/font_outline_color = Color(0.658824, 0.12549, 0.101961, 1)
+theme_override_constants/outline_size = 25
+theme_override_fonts/font = ExtResource("5_00nh6")
+theme_override_font_sizes/font_size = 90
+text = "GOON"
+
+[node name="Label6" type="Label" parent="Panel/VBoxContainer/VBoxContainer"]
+material = SubResource("ShaderMaterial_jhcqm")
+layout_mode = 2
+size_flags_vertical = 8
+theme_override_colors/font_color = Color(0.92549, 0.603922, 0.160784, 1)
+theme_override_colors/font_outline_color = Color(0.658824, 0.12549, 0.101961, 1)
+theme_override_constants/outline_size = 17
+theme_override_fonts/font = ExtResource("5_00nh6")
+theme_override_font_sizes/font_size = 70
+text = "CRUSHER"
 
 [node name="mainMenuPanel" type="Panel" parent="."]
 unique_name_in_owner = true
@@ -693,7 +728,7 @@ text = "  Begin"
 [node name="unlock" parent="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
 visible = false
-material = SubResource("ShaderMaterial_1o162")
+material = SubResource("ShaderMaterial_on83p")
 custom_minimum_size = Vector2(250, 25)
 layout_mode = 2
 size_flags_horizontal = 0
@@ -708,7 +743,7 @@ icon = ExtResource("11_1oi8i")
 
 [node name="levelSelect" parent="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
-material = SubResource("ShaderMaterial_kt45g")
+material = SubResource("ShaderMaterial_i001t")
 custom_minimum_size = Vector2(250, 0)
 layout_mode = 2
 size_flags_horizontal = 0
@@ -737,7 +772,7 @@ layout_mode = 2
 
 [node name="recordsButton" parent="mainMenuPanel/VBoxContainer/HBoxContainer3" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
-material = SubResource("ShaderMaterial_likvk")
+material = SubResource("ShaderMaterial_pcheg")
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -773,7 +808,7 @@ layout_mode = 2
 
 [node name="settingsButton" parent="mainMenuPanel/VBoxContainer/HBoxContainer5" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
-material = SubResource("ShaderMaterial_pn7gn")
+material = SubResource("ShaderMaterial_v85jy")
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -797,7 +832,7 @@ layout_mode = 2
 
 [node name="quitButton" parent="mainMenuPanel/VBoxContainer/HBoxContainer4" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
-material = SubResource("ShaderMaterial_u15k8")
+material = SubResource("ShaderMaterial_4jyrh")
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -904,7 +939,7 @@ size_flags_vertical = 0
 theme_override_constants/separation = 40
 
 [node name="previous_car_button" parent="VBoxContainer2/HBoxContainer" instance=ExtResource("4_f12ks")]
-material = SubResource("ShaderMaterial_hr3pe")
+material = SubResource("ShaderMaterial_bve3l")
 custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
 size_flags_horizontal = 0
@@ -912,7 +947,7 @@ theme_override_font_sizes/font_size = 75
 text = "<"
 
 [node name="next_car_button" parent="VBoxContainer2/HBoxContainer" instance=ExtResource("4_f12ks")]
-material = SubResource("ShaderMaterial_ljmaw")
+material = SubResource("ShaderMaterial_bwr04")
 custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
 size_flags_horizontal = 0

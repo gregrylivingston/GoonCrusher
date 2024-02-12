@@ -1,6 +1,7 @@
+HBoxContainer
+VBoxContainer
 TextureRect
 Label
-HBoxContainer
 SubViewport
 CanvasLayer
 Node2D
@@ -11,4 +12,3 @@ PointLight2D
 LightOccluder2D
 ColorRect
 StaticBody2D
-Polygon2D
