@@ -61,7 +61,15 @@ shader_parameter/show_bound = false
 [node name="Car" instance=ExtResource("1_ehr7y")]
 engine = 3
 steering = 4
-traction = 3.0
+traction = 4
+armor = 0
+friction = 0.1
+drag = 0.0005
+slip_speed = 100
+traction_fast = 0.1
+traction_slow = 0.7
+wheel_base = 70
+isPlayer = true
 profilePic = ExtResource("2_uecx8")
 backgroundPic = ExtResource("3_eyh1t")
 charName = "Anthony"

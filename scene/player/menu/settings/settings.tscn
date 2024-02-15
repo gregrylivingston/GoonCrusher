@@ -9,7 +9,7 @@
 [ext_resource type="Shader" path="res://shader/3dtext.gdshader" id="5_s4gvh"]
 [ext_resource type="PackedScene" uid="uid://du3smnopvsi0b" path="res://scene/player/menu/settings/graphics.tscn" id="5_vpq4j"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_xo7mk"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_0e3nd"]
 resource_local_to_scene = true
 shader = ExtResource("5_s4gvh")
 shader_parameter/angle = 0.6
@@ -21,7 +21,7 @@ shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_nttn3"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ch6f4"]
 resource_local_to_scene = true
 shader = ExtResource("5_s4gvh")
 shader_parameter/angle = 0.6
@@ -33,7 +33,7 @@ shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_ghsoc"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_n8p6f"]
 resource_local_to_scene = true
 shader = ExtResource("5_s4gvh")
 shader_parameter/angle = 0.6
@@ -45,7 +45,7 @@ shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_3v8jd"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_6jjmp"]
 resource_local_to_scene = true
 shader = ExtResource("5_s4gvh")
 shader_parameter/angle = 0.6
@@ -57,7 +57,7 @@ shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_r5r8t"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_cx6qg"]
 resource_local_to_scene = true
 shader = ExtResource("5_s4gvh")
 shader_parameter/angle = 0.6
@@ -117,25 +117,25 @@ layout_mode = 2
 theme_override_constants/separation = 40
 
 [node name="Gameplay" parent="Panel/TabContainer/VBoxContainer2/HBoxContainer" instance=ExtResource("4_abfcl")]
-material = SubResource("ShaderMaterial_xo7mk")
+material = SubResource("ShaderMaterial_0e3nd")
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Gameplay"
 
 [node name="Sound" parent="Panel/TabContainer/VBoxContainer2/HBoxContainer" instance=ExtResource("4_abfcl")]
-material = SubResource("ShaderMaterial_nttn3")
+material = SubResource("ShaderMaterial_ch6f4")
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Sound"
 
 [node name="graphics" parent="Panel/TabContainer/VBoxContainer2/HBoxContainer" instance=ExtResource("4_abfcl")]
-material = SubResource("ShaderMaterial_ghsoc")
+material = SubResource("ShaderMaterial_n8p6f")
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Graphics"
 
 [node name="input" parent="Panel/TabContainer/VBoxContainer2/HBoxContainer" instance=ExtResource("4_abfcl")]
-material = SubResource("ShaderMaterial_3v8jd")
+material = SubResource("ShaderMaterial_6jjmp")
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Input"
@@ -173,7 +173,7 @@ visible = false
 layout_mode = 2
 
 [node name="continue" parent="Panel" instance=ExtResource("4_abfcl")]
-material = SubResource("ShaderMaterial_r5r8t")
+material = SubResource("ShaderMaterial_cx6qg")
 layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.5

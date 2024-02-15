@@ -2,7 +2,7 @@ extends Node
 
 enum gameModes {  COUNTDOWN, SPRINT, MARATHON, DEFENSE, GOONPOCALYPSE }
 enum endCondition { NOGAS , NOHEALTH , NOTIME , SUCCESS }
-enum upgrade { health , fuel , armor , engine , traction , steering , clover , luck , headlights , oil}
+enum upgrade { HEALTH , FUEL , ARMOR , ENGINE , TRACTION , STEERING , CLOVER , LUCK , HEADLIGHTS , OIL , COIN , PURSE , GEM , SLOTMACHINE, CURRENTGOONSCRUSHED}
 
 var playerCar: OverheadCarBody2D
 var station  #this is the gas-station / house thing
@@ -20,51 +20,21 @@ var earnedGems: int
 
 
 @onready var powerup = {
-	"health":preload("res://scene/powerup/health.tscn"),
-	"fuel":preload("res://scene/powerup/fuel.tscn"),
-	"steering":preload("res://scene/powerup/steering.tscn"),
-	"engine":preload("res://scene/powerup/engine.tscn"),
-	"armor":preload("res://scene/powerup/armor.tscn"),
-	"traction":preload("res://scene/powerup/traction.tscn"),
+	upgrade.HEALTH:preload("res://scene/powerup/health.tscn"),
+	upgrade.FUEL:preload("res://scene/powerup/fuel.tscn"),
+	upgrade.STEERING:preload("res://scene/powerup/steering.tscn"),
+	upgrade.ENGINE:preload("res://scene/powerup/engine.tscn"),
+	upgrade.ARMOR:preload("res://scene/powerup/armor.tscn"),
+	upgrade.TRACTION:preload("res://scene/powerup/traction.tscn"),
 	
-	"coin":preload("res://scene/powerup/coin.tscn"),
-	"purse":preload("res://scene/powerup/purse.tscn"),
-	"gem":preload("res://scene/powerup/gem.tscn"),
-	"slotMachine":preload("res://scene/powerup/slotMachine.tscn"),
-	"currentGoonsCrushed":preload("res://scene/powerup/currentGoonsCrushed.tscn"),
+	upgrade.COIN:preload("res://scene/powerup/coin.tscn"),
+	upgrade.PURSE:preload("res://scene/powerup/purse.tscn"),
+	upgrade.GEM:preload("res://scene/powerup/gem.tscn"),
+	upgrade.SLOTMACHINE:preload("res://scene/powerup/slotMachine.tscn"),
+	upgrade.CURRENTGOONSCRUSHED:preload("res://scene/powerup/currentGoonsCrushed.tscn"),
 }
-
-var defaultPowerupWeights = {
-	"gem":4,
-	"coin":100,
-	"purse":4,
-	"slotMachine":1,
-	"health":10,
-	"fuel":10,
-	"traction":4,
-	"steering":4,
-	"armor":4,
-	"engine":4,
-}
-
-func getPowerup():
-	return getPowerupFromWeights( defaultPowerupWeights )
-
 	
-func oldGetPowerup():
-	var randomizer = randf_range(0,100)
-	if randomizer > 50:return powerup.coin.instantiate()
-	elif randomizer > 48: return powerup.slotMachine.instantiate()	
-	elif randomizer > 46: return powerup.purse.instantiate()
-	elif randomizer > 44: return powerup.gem.instantiate()	
-	elif randomizer > 39: return powerup.health.instantiate()
-	elif randomizer > 14: return powerup.fuel.instantiate()	
-	elif randomizer > 11: return powerup.engine.instantiate()
-	elif randomizer > 8: return powerup.steering.instantiate()
-	elif randomizer > 4: return powerup.traction.instantiate()		
-	else: return powerup.armor.instantiate()
-	
-func getPowerupFromWeights( powerupWeightDict ):
+func getPowerupFromWeights( powerupWeightDict:Dictionary ) -> Powerup:
 	var weightTotal = 0
 	for i in powerupWeightDict:
 		weightTotal += powerupWeightDict[i]
@@ -73,9 +43,10 @@ func getPowerupFromWeights( powerupWeightDict ):
 		weightTotal -= powerupWeightDict[i]
 		if weightTotal <= myRandomNumber:
 			return powerup[i].instantiate()
+	return powerup[upgrade.COIN].instantiate()
 		
 	
-func getSpecificPowerup(pName: String) -> Powerup:
+func getSpecificPowerup(pName: upgrade) -> Powerup:
 	return powerup[pName].instantiate()
 
 

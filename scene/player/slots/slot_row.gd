@@ -3,39 +3,39 @@ extends Panel
 
 var isSpinning: bool = false
 var slotContents =[{
-		"type":"purse",
+		"type":Root.upgrade.PURSE,
 		"icon":"res://texture/icon/purse.png",
 		},
 		{
-		"type":"armor",
+		"type":Root.upgrade.ARMOR,
 		"icon":"res://texture/icon/shield.png",
 	},
 	{
-		"type":"gem",
+		"type":Root.upgrade.GEM,
 		"icon":"res://texture/icon/icons8-gem-48.png",
 	},
 	{
-		"type":"traction",
+		"type":Root.upgrade.TRACTION,
 		"icon":"res://texture/icon/wheel.png",
 	},
 	{
-		"type":"steering",
+		"type":Root.upgrade.STEERING,
 		"icon":"res://texture/icon/steering.png",
 	},
 	{
-		"type":"engine",
+		"type":Root.upgrade.ENGINE,
 		"icon":"res://texture/icon/engine.png",
 	},
 	{
-		"type":"fuel",
+		"type":Root.upgrade.FUEL,
 		"icon":"res://texture/icon/gas.png",
 	},
 	{
-		"type":"health",
+		"type":Root.upgrade.HEALTH,
 		"icon":"res://texture/icon/heart.png",
 	},
 	{
-		"type":"coin",
+		"type":Root.upgrade.COIN,
 		"icon":"res://texture/icon/icons8-coin-48 (1).png",
 	},
 ]

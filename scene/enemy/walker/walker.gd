@@ -9,16 +9,16 @@ var myMode: mode = mode.MOVE
 @export var attackSpeedMultiplier: float = 3.0
 @export var attackDamage: float = 1
 @export var powerupDropDict: Dictionary = {
-	"gem":4,
-	"coin":100,
-	"purse":4,
-	"slotMachine":1,
-	"health":10,
-	"fuel":20,
-	"traction":4,
-	"steering":4,
-	"armor":4,
-	"engine":4,
+	Root.upgrade.GEM:4,
+	Root.upgrade.COIN:100,
+	Root.upgrade.PURSE:4,
+	Root.upgrade.SLOTMACHINE:1,
+	Root.upgrade.HEALTH:10,
+	Root.upgrade.FUEL:20,
+	Root.upgrade.TRACTION:4,
+	Root.upgrade.STEERING:4,
+	Root.upgrade.ARMOR:4,
+	Root.upgrade.ENGINE:4,
 }
 
 var isGiant: bool = false

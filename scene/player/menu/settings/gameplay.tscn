@@ -5,7 +5,7 @@
 [ext_resource type="PackedScene" uid="uid://bepxjqhida0n8" path="res://scene/player/ui/roadButton.tscn" id="3_ltdfo"]
 [ext_resource type="Shader" path="res://shader/3dtext.gdshader" id="4_2xqkm"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_nq1s1"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_drdmg"]
 resource_local_to_scene = true
 shader = ExtResource("4_2xqkm")
 shader_parameter/angle = 0.6
@@ -22,7 +22,7 @@ theme = ExtResource("1_m2qjq")
 script = ExtResource("2_61arv")
 
 [node name="resetSave" parent="." instance=ExtResource("3_ltdfo")]
-material = SubResource("ShaderMaterial_nq1s1")
+material = SubResource("ShaderMaterial_drdmg")
 layout_mode = 2
 size_flags_horizontal = 0
 text = "Reset Save"

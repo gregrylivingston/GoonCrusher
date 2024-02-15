@@ -15,25 +15,25 @@ class_name OverheadCarBody2D extends CharacterBody2D
 
 
 
-@export var engine = 25  # Forward acceleration force.
-@export var steering = 12  # Amount that front wheel turns, in degrees
-@export var traction = 4.0   #brakes and turn-rate-increase
-@export var armor = 1
+@export var engine: int = 25  # Forward acceleration force.
+@export var steering: int = 12  # Amount that front wheel turns, in degrees
+@export var traction: int = 4   #brakes and turn-rate-increase
+@export var armor: int = 1
 
-@export var friction = 0.1 #.9
-@export var drag = 0.0005   #.0015
+@export var friction:float = 0.1 #.9
+@export var drag:float = 0.0005   #.0015
 
-@export var slip_speed = 100  # Speed where traction is reduced
-@export var traction_fast = 0.1  # High-speed traction
-@export var traction_slow = 0.7  # Low-speed traction
-@export var wheel_base = 70  # Distance from front to rear wheel
+@export var slip_speed:int = 100  # Speed where traction is reduced
+@export var traction_fast:float = 0.1  # High-speed traction
+@export var traction_slow:float = 0.7  # Low-speed traction
+@export var wheel_base:int = 70  # Distance from front to rear wheel
 
-var health = 100.0
-var fuel = 100.0
-var coin = 0
-var gem = 0
-var currentGoonsCrushed = 0
-var slotMachines = 0
+var health:float = 100.0
+var fuel:float = 100.0
+var coin:int = 0
+var gem:int = 0
+var currentGoonsCrushed:int = 0
+var slotMachines:int = 0
 
 @onready var rewardAudioPlayer = $"AudioStream-Reward"
 
@@ -214,7 +214,7 @@ func stopCarFX():
 
 func crushGoon(collider):
 	if is_instance_valid(collider):
-		var newPowerup = Root.getSpecificPowerup("currentGoonsCrushed")
+		var newPowerup = Root.getSpecificPowerup(Root.upgrade.CURRENTGOONSCRUSHED)
 		newPowerup.global_position = collider.global_position
 		Root.levelRoot.add_child(newPowerup)
 		newPowerup._on_area_2d_body_entered(self)
