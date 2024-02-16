@@ -23,7 +23,7 @@ func createCarArray():
 		var newPanel = carPanel.instantiate()
 		newPanel.carData = Root.cars[car]
 		
-		var newCar = Root.cars[car].scene.instantiate()
+		var newCar = load(Root.cars[car].scene).instantiate()
 		newPanel.setTexture(newCar.get_node("sprite").texture )
 		newCar.queue_free()
 	
@@ -51,7 +51,7 @@ func selectCar(car):
 		targetRotation = Root.playerCar.rotation
 		Root.playerCar.queue_free()
 	await get_tree().process_frame
-	Root.playerCar = car.scene.instantiate()
+	Root.playerCar = load(car.scene).instantiate()
 	Root.playerCar.position = targetPosition
 	Root.playerCar.rotation = targetRotation
 	

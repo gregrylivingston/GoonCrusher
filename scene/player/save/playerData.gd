@@ -1,6 +1,6 @@
 extends Resource
 
-@export var coin: int = 0
+@export var coin: int = 200
 @export var gem: int = 3
 @export var selectedCar: int = 0
 @export var selectedLevel: int = 0
@@ -9,57 +9,57 @@ extends Resource
 @export var cars = [
 	{	"name":"sedan",
 		"cost":0,
-		"upgrades":{"traction":0,"engine":0,"armor":0,"steering":0},
+		"upgrades":{},
 		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,},
-		"scene":preload("res://scene/car/sedan/sedan.tscn"),
+		"scene":"res://scene/car/sedan/sedan.tscn",
 	},
 	{	"name":"van",
 		"cost":1000,
-		"upgrades":{"traction":0,"engine":0,"armor":0,"steering":0},
+		"upgrades":{},
 		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,},
-		"scene":preload("res://scene/car/van/van.tscn"),
+		"scene":"res://scene/car/van/van.tscn",
 	},
 	{	"name":"taxi",
 		"cost":5000,
-		"upgrades":{"traction":0,"engine":0,"armor":0,"steering":0},
+		"upgrades":{},
 		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,},
-		"scene":preload("res://scene/car/taxi/taxi.tscn"),
+		"scene":"res://scene/car/taxi/taxi.tscn",
 	},	
 	{	"name":"pickup",
 		"cost":10000,
-		"upgrades":{"traction":0,"engine":0,"armor":0,"steering":0},
+		"upgrades":{},
 		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,},
-		"scene":preload("res://scene/car/pickup/pickup.tscn"),
+		"scene":"res://scene/car/pickup/pickup.tscn",
 	},
 	{	"name":"semi",
 		"cost":20000,
-		"upgrades":{"traction":0,"engine":0,"armor":0,"steering":0},
+		"upgrades":{},
 		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,},
-		"scene":preload("res://scene/car/semi/semi.tscn"),
+		"scene":"res://scene/car/semi/semi.tscn",
 	},
 	{	"name":"audi",
 		"cost":40000,
-		"upgrades":{"traction":0,"engine":0,"armor":0,"steering":0},
+		"upgrades":{},
 		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,},
-		"scene":preload("res://scene/car/audi/audi.tscn")
+		"scene":"res://scene/car/audi/audi.tscn"
 	},
 	{	"name":"racer",
 		"cost":50000,
-		"upgrades":{"traction":0,"engine":0,"armor":0,"steering":0},
+		"upgrades":{},
 		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,},
-		"scene":preload("res://scene/car/racer/racer.tscn")
+		"scene":"res://scene/car/racer/racer.tscn"
 	},
 	{	"name":"police",
 		"cost":75000,
-		"upgrades":{"traction":0,"engine":0,"armor":0,"steering":0},
+		"upgrades":{},
 		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,},
-		"scene":preload("res://scene/car/police/police.tscn"),
+		"scene":"res://scene/car/police/police.tscn",
 	},
 	{	"name":"ambulance",
 		"cost":100000,
-		"upgrades":{"traction":0,"engine":0,"armor":0,"steering":0},
+		"upgrades":{},
 		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,},
-		"scene":preload("res://scene/car/ambulance/ambulance.tscn"),
+		"scene":"res://scene/car/ambulance/ambulance.tscn",
 	}
 ]
 

@@ -34,7 +34,7 @@ shader_parameter/show_bound = false
 text = "or"
 icon = ExtResource("2_v7bbs")
 script = ExtResource("3_57udn")
-myStat = ""
+myStat = 0
 
 [node name="AudioStreamPlayer3" type="AudioStreamPlayer" parent="." index="2"]
 stream = ExtResource("4_liifr")

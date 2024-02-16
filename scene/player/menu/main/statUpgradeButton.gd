@@ -1,6 +1,6 @@
 extends roadButton
 
-@export var myStat: String
+@export var myStat: Root.upgrade
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
@@ -40,7 +40,7 @@ func _on_upgrade_pressed():
 
 	
 func sendReward(body):
-	var powerupScene = load("res://scene/powerup/" + myStat + ".tscn")
+	var powerupScene = load("res://scene/powerup/" + Root.upgrade.keys()[myStat].to_lower() + ".tscn")
 	var newPowerup = powerupScene.instantiate()
 	newPowerup.global_position = Root.playerCar.global_position
 	Root.playerCar.get_parent().add_child(newPowerup)

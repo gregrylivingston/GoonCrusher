@@ -27,7 +27,7 @@ var selectCarDelay = 0.3
 func selectCar(car):
 	if is_instance_valid(Root.playerCar):Root.playerCar.free()
 	Root.selectedCar = car
-	Root.playerCar = car.scene.instantiate()
+	Root.playerCar = load(car.scene).instantiate()
 
 	disableLockedCars(car)
 	showNewBackgroundImage(Root.playerCar.backgroundPic)

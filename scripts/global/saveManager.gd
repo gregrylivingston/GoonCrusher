@@ -71,18 +71,30 @@ func unlockCar():
 		return true
 	else: return false
 	
-func requestStatCost(statString: String):
-	return int(pow( getCarByName(Root.playerCar.carId).upgrades[statString] + 1 , 1.8 ) * 15)
+#how much the next upgrade will cost
+func requestStatCost(statString: Root.upgrade) -> int: 
+	return int(pow( getUpgradeLevel(statString) + 1 , 1.8 ) * 15)
 
-func requestStatUpgrade(statString: String):
+func requestStatUpgrade(statString: Root.upgrade) -> bool: 
 	var requestCost = requestStatCost(statString)
 	if playerData.coin >= requestCost:
 		playerData.coin -= requestCost
 		getCarByName(Root.playerCar.carId).upgrades[statString] += 1
 		save_character_data()
 		Root.mainMenu.statUpdatesUiUpdate()
-		return true
-	else: return false
+		return true #true because upgrade went through
+	else: return false #false if upgrade not allowed
+	
+#gets the current cars upgrade value for a specific upgrade type	
+func getUpgradeLevel(upgradeType:Root.upgrade) -> int:
+	var myUpgrades = playerData.cars[playerData.selectedCar].upgrades
+	if myUpgrades.has(upgradeType):
+		return myUpgrades[upgradeType]
+	else:
+		playerData.cars[playerData.selectedCar].upgrades.merge({upgradeType:0})
+		save_character_data()
+		return 0 
+
 
 
 func setVolume(settingName: String , value: int):

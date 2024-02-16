@@ -13,7 +13,7 @@ func _ready():
 	var newPosition = $Car.position
 	$Car.queue_free()
 	if is_instance_valid(Root.playerCar): Root.playerCar.queue_free()
-	Root.playerCar = Root.selectedCar.scene.instantiate()
+	Root.playerCar = load(Root.selectedCar.scene).instantiate()
 	Root.playerCar.position = newPosition
 	add_child(Root.playerCar)
 
@@ -24,8 +24,6 @@ func _ready():
 	Root.playerRoot.get_node("carPanel").setTexture( Root.playerCar.get_node("sprite").texture )
 	Root.playerRoot.updateStats()
 	
-
-	print(SaveManager.playerData.gameMode)
 	match SaveManager.playerData.gameMode:
 		Root.gameModes.COUNTDOWN:createCountdownSpawners()
 		Root.gameModes.GOONPOCALYPSE:createCountdownSpawners()

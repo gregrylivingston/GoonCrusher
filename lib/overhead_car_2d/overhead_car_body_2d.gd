@@ -80,10 +80,10 @@ func _ready():
 		add_to_group("playerCar")
 		Root.playerCar = self
 		var thisCar = SaveManager.getCarByName(carId)
-		engine += thisCar.upgrades.engine
-		steering += thisCar.upgrades.steering
-		traction += thisCar.upgrades.traction
-		armor += thisCar.upgrades.armor	
+		engine += SaveManager.getUpgradeLevel(Root.upgrade.ENGINE)
+		steering += SaveManager.getUpgradeLevel(Root.upgrade.STEERING)
+		traction += SaveManager.getUpgradeLevel(Root.upgrade.TRACTION)
+		armor += SaveManager.getUpgradeLevel(Root.upgrade.ARMOR)
 		
 		$headlamps/carhighlight.texture = $sprite.texture
 		$headlamps/carhighlight.position = $sprite.position
