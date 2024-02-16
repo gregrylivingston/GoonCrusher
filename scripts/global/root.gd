@@ -11,7 +11,7 @@ var selectedCar: Dictionary
 
 var mainMenu: CanvasLayer
 var levelRoot: Node2D
-var spawnManager
+var spawnManager: SpawnManager
 var playerRoot #this is basically the inlevel UI
 
 var isRunActive: bool = false
@@ -44,8 +44,7 @@ func getPowerupFromWeights( powerupWeightDict:Dictionary ) -> Powerup:
 		if weightTotal <= myRandomNumber:
 			return powerup[i].instantiate()
 	return powerup[upgrade.COIN].instantiate()
-		
-	
+
 func getSpecificPowerup(pName: upgrade) -> Powerup:
 	return powerup[pName].instantiate()
 

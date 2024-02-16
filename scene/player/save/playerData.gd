@@ -1,4 +1,4 @@
-extends Resource
+class_name PlayerData extends Resource
 
 @export var coin: int = 200
 @export var gem: int = 3

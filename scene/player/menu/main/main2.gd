@@ -95,14 +95,13 @@ func setupLevel(level):
 	#%levelSelect.updateText( str(SaveManager.playerData.selectedLevel + 1) + ". " + level.name)
 	%driverName2.text =  Root.playerCar.charName
 	%driverName.text = str(SaveManager.playerData.selectedLevel + 1) + ". " + level.name
-	if level.unlocked:
+	if level.unlocked || SaveManager.playerData.selectedLevel < 4:
 		%begin.updateText("Select Level")
-
 		%begin.disabled = false
 	else:
 		%begin.updateText("LOCKED")
 		%begin.disabled = true
-	%begin.grab_focus()
+		if SaveManager.playerData.selectedLevel >= 4:%begin.updateText("NOT IN DEMO")
 	
 	setupGameModeStars(level)
 	for i in get_tree().get_nodes_in_group("gameModeStar"):get_tree().create_tween().tween_property(i , "custom_minimum_size", Vector2(48,48), menuTweenSpeed)
@@ -132,7 +131,7 @@ func goToMenuMode(myMenuMode: menuModes): #true if adancing to level select
 			get_tree().create_tween().tween_property($carStatsContainer , "scale" , Vector2(0 ,topMenuScale.y) , menuTweenSpeed)
 			setupLevel(SaveManager.playerData.levels[SaveManager.playerData.selectedLevel])
 
-	await get_tree().create_timer(menuTweenSpeed + 0.02).timeout #animation halfway complete
+	await get_tree().create_timer(menuTweenSpeed + 0.03).timeout #animation halfway complete
 	
 	var isRiderMenu: bool = false  #this is really awkard - just using it to hide which parts of main menu get shown....
 	if menuMode == menuModes.RIDER:
