@@ -50,14 +50,22 @@ func selectCar(car):
 	
 func disableLockedCars(car):
 	var thisCar =  SaveManager.getCarByName(Root.playerCar.carId)
-	if thisCar.cost != 0:
+	if SaveManager.playerData.selectedCar > 2:
+		%levelSelect.visible = true
+		%levelSelect.disabled = true
+		%levelSelect.updateText( "NOT IN DEMO" )
+		%unlock.visible = false
+	elif thisCar.cost != 0:
 		%levelSelect.visible = false
 		%unlock.visible = true
 		var unlockCost = thisCar.cost / 1000
 		%unlock.updateText( str(unlockCost) + "k to Unlock" )
 		if thisCar.cost > SaveManager.playerData.coin:%unlock.disabled = true
 		else: %unlock.disabled = false
+
 	else:
+		%levelSelect.updateText( "Select Driver")
+		%levelSelect.disabled = false
 		%levelSelect.visible = true
 		%unlock.visible = false
 	
