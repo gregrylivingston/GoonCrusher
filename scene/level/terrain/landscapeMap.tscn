@@ -3,7 +3,6 @@
 [ext_resource type="TileSet" uid="uid://bqn2dfrh1vsgd" path="res://texture/atlas/landscapeTiles.tres" id="1_dkm1a"]
 
 [node name="LandscapeMap" type="TileMap"]
-modulate = Color(3, 3, 3, 1)
 light_mask = 3
 z_index = -5
 scale = Vector2(2, 2)

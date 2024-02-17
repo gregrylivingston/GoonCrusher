@@ -10,7 +10,7 @@ func _ready():
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	if isGameSummary: buildGameSummary()
 	else: buildAchievementSummary()
-	$Panel/Panel2/VBoxContainer/continue.grab_focus()
+
 
 var summaryTimer:float = -2.0
 var summaryComplete: bool = false
@@ -23,18 +23,19 @@ func _process(delta):
 			if advanceSummary():
 				summaryTimer = 0.0
 				$AudioStreamPlayer2_lowImpact.play()
-				$Panel/Panel2/VBoxContainer/continue.grab_focus()
 			else: summaryComplete = true
-	if Input.is_action_just_pressed("ui_accept") || Input.is_action_just_pressed("Accelerate"):
+	if Input.is_anything_pressed():
 		if not summaryComplete:
-			summaryTimerLength = 0.1
-			summaryTimer = 1.0
+			if summaryTimerLength != 0.1: 
+				summaryTimerLength = 0.1
+				summaryTimer = 1.0
 		else: _on_continue_pressed()
 		
 func advanceSummary():
 	for i in $Panel/Panel2/VBoxContainer.get_children():
 		if i.visible == false:
 			i.visible = true
+			if i ==	$Panel/Panel2/VBoxContainer/continue:i.grab_focus()
 			return true
 	return false #returns false if there is nothing left to make visible
 

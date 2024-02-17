@@ -165,7 +165,7 @@ void fragment(){
 	
 }"
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_ili41"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_gbb2l"]
 resource_local_to_scene = true
 shader = SubResource("Shader_0twmf")
 shader_parameter/angle = 3.0
@@ -196,7 +196,7 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="Panel2" type="Panel" parent="Panel"]
-custom_minimum_size = Vector2(500, 700)
+custom_minimum_size = Vector2(500, 500)
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -204,7 +204,7 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -320.0
-offset_top = -350.0
+offset_top = -234.0
 offset_right = 320.0
 offset_bottom = 350.0
 grow_horizontal = 2
@@ -223,20 +223,6 @@ offset_right = -85.0
 offset_bottom = -61.0
 grow_horizontal = 2
 grow_vertical = 2
-
-[node name="wasSuccessful" type="Label" parent="Panel/Panel2/VBoxContainer"]
-unique_name_in_owner = true
-self_modulate = Color(1, 1, 1, 0)
-material = ExtResource("4_iax4v")
-layout_mode = 2
-theme_override_font_sizes/font_size = 60
-text = "LEVEL COMPLETE"
-horizontal_alignment = 1
-
-[node name="HSeparator3" type="HSeparator" parent="Panel/Panel2/VBoxContainer"]
-modulate = Color(1, 1, 1, 0)
-custom_minimum_size = Vector2(0, 75)
-layout_mode = 2
 
 [node name="HBoxContainer7" type="HBoxContainer" parent="Panel/Panel2/VBoxContainer"]
 visible = false
@@ -377,7 +363,7 @@ layout_mode = 2
 [node name="continue" parent="Panel/Panel2/VBoxContainer" instance=ExtResource("2_llr28")]
 process_mode = 3
 visible = false
-material = SubResource("ShaderMaterial_ili41")
+material = SubResource("ShaderMaterial_gbb2l")
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 50
@@ -386,6 +372,24 @@ theme_override_styles/hover = SubResource("StyleBoxEmpty_e2c58")
 theme_override_styles/pressed = SubResource("StyleBoxEmpty_ee2fh")
 theme_override_styles/focus = SubResource("StyleBoxFlat_5s1b4")
 text = "Continue"
+
+[node name="wasSuccessful" type="Label" parent="Panel/Panel2"]
+unique_name_in_owner = true
+self_modulate = Color(1, 1, 1, 0)
+material = ExtResource("4_iax4v")
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -610.0
+offset_top = -135.0
+offset_right = 615.0
+offset_bottom = 19.0
+grow_horizontal = 2
+theme = ExtResource("1_88ve0")
+theme_override_font_sizes/font_size = 60
+text = "LEVEL COMPLETE"
+horizontal_alignment = 1
 
 [node name="AudioStreamPlayer_highImpact" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("5_x2d5e")

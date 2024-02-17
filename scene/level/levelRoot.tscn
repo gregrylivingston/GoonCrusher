@@ -20,24 +20,7 @@ script = ExtResource("1_65p74")
 
 [node name="Car" parent="." instance=ExtResource("2_v78xq")]
 position = Vector2(2129, 1227)
-engine = 25
-steering = 12
-traction = 4
-armor = 1
-friction = 0.1
-drag = 0.0005
-slip_speed = 100
-traction_fast = 0.1
-traction_slow = 0.7
-wheel_base = 70
-isPlayer = true
-charName = "Hi"
 carId = "sedan"
-introAudio = Array[AudioStreamMP3]([])
-purseAudio = Array[AudioStreamMP3]([])
-powerupAudio = Array[AudioStreamMP3]([])
-lowGasAudio = Array[AudioStreamMP3]([])
-lowHealthAudio = Array[AudioStreamMP3]([])
 
 [node name="PlayerRoot" parent="." instance=ExtResource("3_sf05p")]
 

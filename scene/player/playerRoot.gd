@@ -8,11 +8,13 @@ func _ready():
 	if is_instance_valid(Root.playerCar):
 		updateStats()
 	else: await get_tree().create_timer(1).timeout
+	updateGoonsCrushed()
 	updateStats()
 	Root.playerRoot = self
 	%ProgressBar.value = 0
 	%ProgressBar.max_value = awardBase
 	add_child(load("res://scene/player/countdown.tscn").instantiate())
+	
 
 
 	

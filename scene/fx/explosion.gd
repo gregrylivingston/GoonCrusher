@@ -21,5 +21,6 @@ func _process(delta):
 	pass
 
 func _on_animation_finished():
-	get_tree().create_tween().tween_property(self , "scale" , scale * randf_range(1.02,1.08) , 0.1)
-	play()
+	if scale.x < 1.2:
+		get_tree().create_tween().tween_property(self , "scale" , scale * randf_range(1.02,1.08) , 0.1)
+		play()
