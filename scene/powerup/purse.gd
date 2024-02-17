@@ -12,5 +12,6 @@ func sendReward(body, forShowOnly: bool = false):
 		newCoin.process_mode = Node.PROCESS_MODE_ALWAYS
 		newCoin.sendReward(body, forShowOnly)
 		await get_tree().process_frame
+		await get_tree().process_frame
 	body.playPurseRewardAudio()	
 	queue_free()

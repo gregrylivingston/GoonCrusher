@@ -54,3 +54,7 @@ res://scene/level/terrain/landscapeMap.tscn
 res://scene/player/menu/gameSummary.gd
 res://scene/fx/explosion.gd
 res://scene/player/playerRoot.gd
+res://scene/powerup/powerup.gd
+res://scene/powerup/currentGoonsCrushed.tscn
+res://scripts/global/Audio.gd
+res://scene/powerup/purse.gd

@@ -23,5 +23,5 @@ script = ExtResource("3_aqf17")
 powerup = "coin"
 quantity = 10.0
 
-[node name="LightOccluder2D" parent="." index="2"]
+[node name="LightOccluder2D" parent="." index="1"]
 occluder = SubResource("OccluderPolygon2D_w45hm")

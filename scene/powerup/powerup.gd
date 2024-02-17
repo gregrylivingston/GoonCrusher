@@ -17,12 +17,14 @@ func _on_area_2d_body_entered(body):
 			$Area2D.queue_free()
 			sendReward(body)
 
+@export var awardSound: Array[AudioStreamMP3]
+
 func sendReward(body, forShowOnly: bool = false):
 	set_material(null)
 	if not Root.levelRoot.isDaytime:
 		$PointLight2D.visible = true
 		$PointLight2D.texture = texture
-	$AudioStreamReward.play()
+	Audio.queueRequest(awardSound)#$AudioStreamReward.play()
 	uiControlNode = get_tree().get_first_node_in_group(powerup+"ui")
 	startPosition = global_position
 	get_tree().create_tween().tween_method(flyToUi, 0.0, 1.0, 0.3)

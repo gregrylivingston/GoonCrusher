@@ -38,4 +38,76 @@ bus = &"FX"
 volume_db = 3.0
 bus = &"FX"
 
+[node name="enemySound7" type="AudioStreamPlayer" parent="enemy_sounds"]
+volume_db = 3.0
+bus = &"FX"
+
+[node name="enemySound8" type="AudioStreamPlayer" parent="enemy_sounds"]
+volume_db = 3.0
+bus = &"FX"
+
+[node name="enemySound9" type="AudioStreamPlayer" parent="enemy_sounds"]
+volume_db = 3.0
+bus = &"FX"
+
+[node name="enemySound10" type="AudioStreamPlayer" parent="enemy_sounds"]
+volume_db = 3.0
+bus = &"FX"
+
+[node name="enemySound11" type="AudioStreamPlayer" parent="enemy_sounds"]
+volume_db = 3.0
+bus = &"FX"
+
+[node name="enemySound12" type="AudioStreamPlayer" parent="enemy_sounds"]
+volume_db = 3.0
+bus = &"FX"
+
+[node name="enemySound13" type="AudioStreamPlayer" parent="enemy_sounds"]
+volume_db = 3.0
+bus = &"FX"
+
+[node name="enemySound14" type="AudioStreamPlayer" parent="enemy_sounds"]
+volume_db = 3.0
+bus = &"FX"
+
+[node name="enemySound15" type="AudioStreamPlayer" parent="enemy_sounds"]
+volume_db = 3.0
+bus = &"FX"
+
+[node name="enemySound16" type="AudioStreamPlayer" parent="enemy_sounds"]
+volume_db = 3.0
+bus = &"FX"
+
+[node name="enemySound17" type="AudioStreamPlayer" parent="enemy_sounds"]
+volume_db = 3.0
+bus = &"FX"
+
+[node name="enemySound18" type="AudioStreamPlayer" parent="enemy_sounds"]
+volume_db = 3.0
+bus = &"FX"
+
+[node name="enemySound19" type="AudioStreamPlayer" parent="enemy_sounds"]
+volume_db = 3.0
+bus = &"FX"
+
+[node name="enemySound20" type="AudioStreamPlayer" parent="enemy_sounds"]
+volume_db = 3.0
+bus = &"FX"
+
+[node name="enemySound21" type="AudioStreamPlayer" parent="enemy_sounds"]
+volume_db = 3.0
+bus = &"FX"
+
+[node name="enemySound22" type="AudioStreamPlayer" parent="enemy_sounds"]
+volume_db = 3.0
+bus = &"FX"
+
+[node name="enemySound23" type="AudioStreamPlayer" parent="enemy_sounds"]
+volume_db = 3.0
+bus = &"FX"
+
+[node name="enemySound24" type="AudioStreamPlayer" parent="enemy_sounds"]
+volume_db = 3.0
+bus = &"FX"
+
 [connection signal="finished" from="AudioStream_Music" to="." method="_on_audio_stream_music_finished"]

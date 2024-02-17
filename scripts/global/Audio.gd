@@ -12,11 +12,12 @@ func _process(delta):
 
 
 func queueRequest(requestOptions: Array[AudioStreamMP3]):
-	for i in $enemy_sounds.get_children():
-		if not i.playing:
-			i.stream = requestOptions[randi_range(0, requestOptions.size() - 1)]
-			i.play()
-			return
+	if requestOptions.size() > 0:
+		for i in $enemy_sounds.get_children():
+			if not i.playing:
+				i.stream = requestOptions[randi_range(0, requestOptions.size() - 1)]
+				i.play()
+				return
 
 
 
