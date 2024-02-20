@@ -58,3 +58,4 @@ res://scene/powerup/powerup.gd
 res://scene/powerup/currentGoonsCrushed.tscn
 res://scripts/global/Audio.gd
 res://scene/powerup/purse.gd
+res://scene/level/tileManager.gd

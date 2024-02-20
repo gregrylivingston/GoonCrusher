@@ -118,3 +118,4 @@ Brake={
 [rendering]
 
 renderer/rendering_method="mobile"
+lights_and_shadows/directional_shadow/size=1024

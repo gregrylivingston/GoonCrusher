@@ -11,7 +11,7 @@ var landscapeMap = [
 	preload("res://scene/level/terrain/landscapeMap.tscn"),
 	preload("res://scene/level/terrain/landscapeMap2.tscn"),
 	preload("res://scene/level/terrain/landscapeMap3.tscn"),
-	preload("res://scene/level/terrain/landscapeMap4.tscn")
+	#preload("res://scene/level/terrain/landscapeMap4.tscn")
 ]
 
 enum objectTypes { ROCKS , COINS , BONUS_ROCKS , EMPTY , SAND }
@@ -131,11 +131,16 @@ func getRandomTileObject():
 func loadChunk(chunk:Vector2i , myScene = null): #if an instantiated scene isn't passed get a random one from the level dictionary.
 	if not loadedLandscapes.has(chunk):
 		var targetPosition = Vector2( tilesize.x * chunk.x , tilesize.y * chunk.y )
-		var newLandscapeMap = landscapeMap[landscapeType].instantiate()
+		#var newLandscapeMap = landscapeMap[landscapeType].instantiate()
+		var newLandscapeMap = landscapeMap[randi() % landscapeMap.size() - 1].instantiate()
 		newLandscapeMap.global_position = targetPosition
 		loadedLandscapes[chunk] = newLandscapeMap
 		add_child(newLandscapeMap)
+		#var newObjectTile = createNewTileObject(targetPosition  , myScene)
+		#loadedObjects[chunk] = newObjectTile
+		#add_child(newObjectTile)
 
+func createNewTileObject(targetPosition , myScene = null):
 		var newObjectTile 
 		if myScene == null: 
 			newObjectTile = getRandomTileObject()
@@ -147,10 +152,8 @@ func loadChunk(chunk:Vector2i , myScene = null): #if an instantiated scene isn't
 		else: 
 			newObjectTile = myScene
 			newObjectTile.global_position = targetPosition + (tilesize / 2) 
+		return newObjectTile
 
-		loadedObjects[chunk] = newObjectTile
-		add_child(newObjectTile)
-			
 
 
 			
