@@ -258,7 +258,7 @@ func activeCarEffects(delta):
 
 	#zoom out if going fast
 	if velocity.length() > 450.0 && isPlayer && is_instance_valid($Camera2D):
-		var myZoomFactor = 0.6 - velocity.length() / 4500.0
+		var myZoomFactor = 0.55 - velocity.length() / 9000.0
 		$Camera2D.zoom = Vector2(myZoomFactor, myZoomFactor)
 	else:
 		$Camera2D.zoom = Vector2(0.5,0.5)
