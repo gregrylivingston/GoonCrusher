@@ -151,7 +151,7 @@ func _physics_process(delta):
 	var acceleration = _car_input.acceleration * transform.x * ( engine + 14 ) * 10 * ( 2.2 - abs(_car_input.steering))
 
 	# Apply friction
-	if velocity.length() < 3:
+	if velocity.length() < 2:
 		velocity = Vector2.ZERO
 	var friction_force = velocity * -friction
 	var drag_force = velocity * velocity.length() * -drag
@@ -186,11 +186,12 @@ func _physics_process(delta):
 		var collider = get_slide_collision( i ).get_collider()
 		#print(collider.get_class())
 		##colide with an unmovable static object like a rock
-		if velocity.length() > 0.01 && collider.get_class() == "StaticBody2D":
+		if velocity.length() > 0.01 && ( collider.get_class() == "StaticBody2D" || collider.get_class() == "TileMap"):
 			collideWithFixedObject( get_slide_collision(i) )
 		elif collider.get_class() == "CharacterBody2D":
 			damage(0.5)
 			if velocity.length() > 100:crushGoon(collider)
+		#else: print(collider.get_class())
 
 	if velocity.length() == 0:
 		stopCarFX()

@@ -11,8 +11,8 @@ class_name landscapeGenerator
 @export var inputSimulateLatitude: bool = false
 @export_range(0.1,0.9) var inputAverageTemperature = 0.5
 @export_range(0.05,0.35) var inputMountains = 0.25
-@export var inputOceanEdgeH:bool = false
-@export var inputOceanEdgeV:bool = false
+@export var inputOceanEdgeH:bool = true
+@export var inputOceanEdgeV:bool = true
 
 var noiseImage
 var desertNoiseImage

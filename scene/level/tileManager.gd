@@ -10,8 +10,9 @@ var tilesize: Vector2
 var landscapeMap = [
 	preload("res://scene/level/terrain/landscapeMap.tscn"),
 	preload("res://scene/level/terrain/landscapeMap2.tscn"),
-	preload("res://scene/level/terrain/landscapeMap3.tscn"),
-	#preload("res://scene/level/terrain/landscapeMap4.tscn")
+	preload("res://scene/level/terrain/landscapeMap_dirt.tscn"),
+	preload("res://scene/level/terrain/landscapeMap_water.tscn"),
+	preload("res://scene/level/terrain/landscapeMap_hill.tscn"),
 ]
 
 enum objectTypes { ROCKS , COINS , BONUS_ROCKS , EMPTY , SAND }
@@ -66,12 +67,15 @@ func _ready():
 	tilesize = tilesPerChunk * pixelsPerTile
 	
 	await $landscapeGenerator.createNewTerrain()
+	$landscapeGenerator.mapDict[128][128].elevation = 0.5
 	
 	setupByGamemode()
 	getPlayerChunk()
 
 	await get_tree().process_frame
-	
+
+	getPlayerChunk()
+
 	match SaveManager.playerData.gameMode:
 		Root.gameModes.SPRINT:
 			var myStation = load("res://scene/level/station.tscn").instantiate()
@@ -101,33 +105,34 @@ func setupNoStations():
 	loadChunk(Vector2i(0,0) , preload("res://scene/level/levelObjects/level_empty.tscn").instantiate())
 
 			
-var lastPlayerChunk
+var playerChunk: Vector2i = Vector2i(-999,-999)
 func getPlayerChunk():
-	var playerChunk = Vector2i( (Root.playerCar.global_position /  tilesize ) )
-	if playerChunk != lastPlayerChunk:
-		lastPlayerChunk = playerChunk
-		loadChunk(playerChunk)
+	if playerChunk != Vector2i( (Root.playerCar.global_position /  tilesize ) ):
+		playerChunk = Vector2i( (Root.playerCar.global_position /  tilesize ) )
+		for i in chunksToLoad:loadChunk(playerChunk + i)
+		for i in chunksToUnload:
+			unloadChunk(playerChunk + i)
+			unloadChunk(playerChunk - i)
 
-		loadChunk(playerChunk + Vector2i(1,0) )
-		loadChunk(playerChunk + Vector2i(1,1) )
-		loadChunk(playerChunk + Vector2i(1,-1) )
 
-		loadChunk(playerChunk + Vector2i(0,1) )
-		loadChunk(playerChunk + Vector2i(0,-1) )
-		loadChunk(playerChunk + Vector2i(-1,1) )
+var chunksToLoad: Array[Vector2i] = [
+	Vector2i(-2,1),Vector2i(-2,0),Vector2i(1,-2),Vector2i(0,-2),Vector2i(-1,-2),Vector2i(-2,-1) ,Vector2i(-2,-2),Vector2i(0,0),
+	Vector2i(-1,0), Vector2i(-1,-1), Vector2i(-1,1) ,Vector2i(0,-1), Vector2i(0,1) ,Vector2i(1,-1),Vector2i(1,1),Vector2i(1,0)
+]
 
-		loadChunk(playerChunk + Vector2i(-1,-1) )
-		loadChunk(playerChunk + Vector2i(-1,0) )
-		loadChunk(playerChunk + Vector2i(-2,-2) )
+var chunksToUnload: Array[Vector2i] = [ 
+	Vector2i(-4,-4), Vector2i(-4,-3), Vector2i(-4,-2), Vector2i(-4,-1), Vector2i(-4,0),
+	Vector2i(-3,-4), Vector2i(-2,-4), Vector2i(-1,-4), Vector2i(0,-4), 
+]
 
-		loadChunk(playerChunk + Vector2i(-2,-1) )
-		loadChunk(playerChunk + Vector2i(-1,-2) )	
-		loadChunk(playerChunk + Vector2i(0,-2) )	
-
-		loadChunk(playerChunk + Vector2i(-2,1) )
-		loadChunk(playerChunk + Vector2i(-2,0) )		
-		loadChunk(playerChunk + Vector2i(1,-2) )		
-
+func unloadChunk(chunk: Vector2i):
+	if loadedLandscapes.has(chunk):
+		loadedLandscapes[chunk].queue_free()
+		loadedLandscapes.erase(chunk)
+		if loadedObjects.has(chunk):
+			loadedObjects[chunk].queue_free()
+			loadedObjects.erase(chunk)
+	
 
 func getRandomTileObject():
 	return objectTiles[randi() % objectTiles.size()].instantiate()
@@ -140,19 +145,22 @@ func loadChunk(chunk:Vector2i , myScene = null): #if an instantiated scene isn't
 		
 		var elevation = $landscapeGenerator.mapDict[chunk.y + 128][chunk.x + 128].elevation
 		
-		print(elevation)
 	
 		var newLandscapeMap
-		if elevation > 0.55: newLandscapeMap = landscapeMap[2].instantiate()
-		elif elevation > 0.35: newLandscapeMap =  landscapeMap[1].instantiate()
-		else: newLandscapeMap = landscapeMap[1].instantiate()
+		if elevation > 0.65: newLandscapeMap = landscapeMap[4].instantiate() #mud
+		elif elevation > 0.55: newLandscapeMap = landscapeMap[2].instantiate() #mud
+		elif elevation > 0.35: newLandscapeMap =  landscapeMap[0].instantiate() #grass
+		elif elevation > 0.15: newLandscapeMap = landscapeMap[1].instantiate() #sand
+		else: newLandscapeMap = landscapeMap[3].instantiate() #water
 		
 		newLandscapeMap.global_position = targetPosition
 		loadedLandscapes[chunk] = newLandscapeMap
 		add_child(newLandscapeMap)
-		var newObjectTile = createNewTileObject(targetPosition  , myScene)
-		loadedObjects[chunk] = newObjectTile
-		add_child(newObjectTile)
+		
+		if elevation > 0.3 && elevation < 0.65:
+			var newObjectTile = createNewTileObject(targetPosition  , myScene)
+			loadedObjects[chunk] = newObjectTile
+			add_child(newObjectTile)
 
 func createNewTileObject(targetPosition , myScene = null):
 		var newObjectTile 

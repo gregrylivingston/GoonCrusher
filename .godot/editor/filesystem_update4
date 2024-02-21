@@ -67,3 +67,5 @@ res://scene/level/landscapeGenerator.gd
 res://scene/level/terrain/landscapeMap3.tscn
 res://scene/level/terrain/landscapeMap4.tscn
 res://scene/level/terrain/landscapeMap2.tscn
+res://scene/level/terrain/landscapeMap_water.tscn
+res://scene/level/terrain/landscapeMap_hill.tscn

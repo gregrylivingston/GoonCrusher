@@ -12,4 +12,4 @@ script = ExtResource("1_an4p7")
 script = ExtResource("2_n84kr")
 inputSizeX = 256
 inputSizeY = 256
-inputNoiseType = 3
+inputNoiseType = 4
