@@ -1,3 +1,4 @@
+res://texture/atlas
 res://scene
 res://shader
 D:/Godot/AutoSurvivor
@@ -6,7 +7,6 @@ res://scripts/global
 res://scene/player/menu/main
 res://texture/spritesheet
 res://scene/fx/explosion
-res://texture/atlas
 res://scene/scenery/groundarea
 res://scene/car/sedan
 res://texture/background

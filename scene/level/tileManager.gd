@@ -58,12 +58,32 @@ var objectTiles = []
 var loadedLandscapes = {}
 var loadedObjects = {}
 
+
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	for i in requestedObjectTiles:
 		objectTiles.append_array(AllObjectTiles[i])
 	tilesize = tilesPerChunk * pixelsPerTile
 	
+	await $landscapeGenerator.createNewTerrain()
+	
+	setupByGamemode()
+	getPlayerChunk()
+
+	await get_tree().process_frame
+	
+	match SaveManager.playerData.gameMode:
+		Root.gameModes.SPRINT:
+			var myStation = load("res://scene/level/station.tscn").instantiate()
+			Root.station = myStation
+			loadChunk(Vector2i( randi_range( Root.levelRoot.seconds * 0.12 , Root.levelRoot.seconds * 0.16),  randi_range(Root.levelRoot.seconds * 0.07, Root.levelRoot.seconds * - 0.07) ) , myStation)
+		Root.gameModes.MARATHON:
+			var myStation = load("res://scene/level/station.tscn").instantiate()
+			Root.station = myStation
+			loadChunk(Vector2i( randi_range( Root.levelRoot.seconds * 0.7 , Root.levelRoot.seconds * 0.72),  randi_range( Root.levelRoot.seconds * 0.2 , Root.levelRoot.seconds * -0.2 ) ), myStation)
+
+
+func setupByGamemode() -> void:
 	match SaveManager.playerData.gameMode:
 		Root.gameModes.COUNTDOWN:setupNoStations()
 		Root.gameModes.GOONPOCALYPSE:setupNoStations()
@@ -75,21 +95,6 @@ func _ready():
 			var myStation = load("res://scene/level/station.tscn").instantiate()
 			Root.station = myStation
 			loadChunk(Vector2i( randi_range(0, 0), 0 ) , myStation)
-	
-	getPlayerChunk()
-
-	await get_tree().process_frame
-
-	match SaveManager.playerData.gameMode:
-		Root.gameModes.SPRINT:
-			var myStation = load("res://scene/level/station.tscn").instantiate()
-			Root.station = myStation
-			loadChunk(Vector2i( randi_range( Root.levelRoot.seconds * 0.12 , Root.levelRoot.seconds * 0.16),  randi_range(Root.levelRoot.seconds * 0.07, Root.levelRoot.seconds * - 0.07) ) , myStation)
-		Root.gameModes.MARATHON:
-			var myStation = load("res://scene/level/station.tscn").instantiate()
-			Root.station = myStation
-			loadChunk(Vector2i( randi_range( Root.levelRoot.seconds * 0.7 , Root.levelRoot.seconds * 0.72),  randi_range( Root.levelRoot.seconds * 0.2 , Root.levelRoot.seconds * -0.2 ) ), myStation)
-
 	
 func setupNoStations():
 	Root.station = null
@@ -132,13 +137,22 @@ func loadChunk(chunk:Vector2i , myScene = null): #if an instantiated scene isn't
 	if not loadedLandscapes.has(chunk):
 		var targetPosition = Vector2( tilesize.x * chunk.x , tilesize.y * chunk.y )
 		#var newLandscapeMap = landscapeMap[landscapeType].instantiate()
-		var newLandscapeMap = landscapeMap[randi() % landscapeMap.size() - 1].instantiate()
+		
+		var elevation = $landscapeGenerator.mapDict[chunk.y + 128][chunk.x + 128].elevation
+		
+		print(elevation)
+	
+		var newLandscapeMap
+		if elevation > 0.55: newLandscapeMap = landscapeMap[2].instantiate()
+		elif elevation > 0.35: newLandscapeMap =  landscapeMap[1].instantiate()
+		else: newLandscapeMap = landscapeMap[1].instantiate()
+		
 		newLandscapeMap.global_position = targetPosition
 		loadedLandscapes[chunk] = newLandscapeMap
 		add_child(newLandscapeMap)
-		#var newObjectTile = createNewTileObject(targetPosition  , myScene)
-		#loadedObjects[chunk] = newObjectTile
-		#add_child(newObjectTile)
+		var newObjectTile = createNewTileObject(targetPosition  , myScene)
+		loadedObjects[chunk] = newObjectTile
+		add_child(newObjectTile)
 
 func createNewTileObject(targetPosition , myScene = null):
 		var newObjectTile 
