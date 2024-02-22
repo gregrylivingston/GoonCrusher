@@ -50,6 +50,18 @@ func createNewTerrain():
 				"terrainType":terrainType,
 				"region":-1
 			} )
+			
+			
+			
+func createTerrainGroups():
+	var size = Vector2i(inputSizeX, inputSizeY)
+	for y in size.y:
+		for x in size.x:
+			var tile = mapDict[y][x]
+			if tile.region == -1:
+				match tile.terrainType:
+					Root.terrain.WATER:tile.region = -2
+					Root.terrain.HILLS:tile.region = -3
 
 func getTerrainType(elevation):
 	if elevation > 0.65: return Root.terrain.HILLS

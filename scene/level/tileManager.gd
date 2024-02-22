@@ -55,7 +55,6 @@ var AllObjectTiles = {
 }
 
 var objectTiles = []
-
 var loadedLandscapes = {}
 var loadedObjects = {}
 
@@ -67,7 +66,7 @@ func _ready():
 	tilesize = tilesPerChunk * pixelsPerTile
 	
 	await $landscapeGenerator.createNewTerrain()
-	$landscapeGenerator.mapDict[128][128].elevation = 0.5
+	$landscapeGenerator.mapDict[128][128].terrainType = Root.terrain.GRASS
 	
 	setupByGamemode()
 	getPlayerChunk()
@@ -104,19 +103,34 @@ func setupNoStations():
 	Root.station = null
 	loadChunk(Vector2i(0,0) , preload("res://scene/level/levelObjects/level_empty.tscn").instantiate())
 
-			
+
 var playerChunk: Vector2i = Vector2i(-999,-999)
+var terrainRegion: int = -5
+var terrainType: int = Root.terrain.GRASS
+
 func getPlayerChunk():
 	if playerChunk != Vector2i( (Root.playerCar.global_position /  tilesize ) ):
 		playerChunk = Vector2i( (Root.playerCar.global_position /  tilesize ) )
-		for i in chunksToLoad:loadChunk(playerChunk + i)
+		
+		var myTile = loadChunk(playerChunk)
+		if myTile.terrainType != terrainType || myTile.region != terrainRegion: 
+			updatePlayerRegion(myTile)
+		
+		for i in chunksToLoad:
+			loadChunk(playerChunk + i)
+
 		for i in chunksToUnload:
 			unloadChunk(playerChunk + i)
 			unloadChunk(playerChunk - i)
 
+func updatePlayerRegion(tile):
+	print("new region entered")
+	print("Region" + str(tile.region))
+	print("Terrain" + str(tile.terrainType))
+
 
 var chunksToLoad: Array[Vector2i] = [
-	Vector2i(-2,1),Vector2i(-2,0),Vector2i(1,-2),Vector2i(0,-2),Vector2i(-1,-2),Vector2i(-2,-1) ,Vector2i(-2,-2),Vector2i(0,0),
+	Vector2i(-2,1),Vector2i(-2,0),Vector2i(1,-2),Vector2i(0,-2),Vector2i(-1,-2),Vector2i(-2,-1) ,Vector2i(-2,-2),
 	Vector2i(-1,0), Vector2i(-1,-1), Vector2i(-1,1) ,Vector2i(0,-1), Vector2i(0,1) ,Vector2i(1,-1),Vector2i(1,1),Vector2i(1,0)
 ]
 
@@ -141,18 +155,22 @@ func getRandomTileObject():
 func loadChunk(chunk:Vector2i , myScene = null): #if an instantiated scene isn't passed get a random one from the level dictionary.
 	if not loadedLandscapes.has(chunk):
 		var targetPosition = Vector2( tilesize.x * chunk.x , tilesize.y * chunk.y )
-		var terrainType = $landscapeGenerator.mapDict[chunk.y + 128][chunk.x + 128].terrainType
-		var newLandscapeMap = landscapeMap[terrainType].instantiate()
+		var tile = $landscapeGenerator.mapDict[chunk.y + 128][chunk.x + 128]
+		var newLandscapeMap = landscapeMap[tile.terrainType].instantiate()
 		
 		newLandscapeMap.global_position = targetPosition
 		loadedLandscapes[chunk] = newLandscapeMap
 		add_child(newLandscapeMap)
 		
-		if terrainType != Root.terrain.WATER && terrainType != Root.terrain.HILLS:
+		if tile.terrainType != Root.terrain.WATER && tile.terrainType != Root.terrain.HILLS:
 			var newObjectTile = createNewTileObject(targetPosition  , myScene)
 			loadedObjects[chunk] = newObjectTile
 			add_child(newObjectTile)
+		return tile
+	else: return $landscapeGenerator.mapDict[chunk.y + 128][chunk.x + 128]
+			
 
+#create objects like rocks and powerups that go over the landscapes
 func createNewTileObject(targetPosition , myScene = null):
 		var newObjectTile 
 		if myScene == null: 
@@ -167,12 +185,5 @@ func createNewTileObject(targetPosition , myScene = null):
 			newObjectTile.global_position = targetPosition + (tilesize / 2) 
 		return newObjectTile
 
-
-
-			
-
-# Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
 	getPlayerChunk()
-
-
