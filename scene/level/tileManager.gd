@@ -141,23 +141,14 @@ func getRandomTileObject():
 func loadChunk(chunk:Vector2i , myScene = null): #if an instantiated scene isn't passed get a random one from the level dictionary.
 	if not loadedLandscapes.has(chunk):
 		var targetPosition = Vector2( tilesize.x * chunk.x , tilesize.y * chunk.y )
-		#var newLandscapeMap = landscapeMap[landscapeType].instantiate()
-		
-		var elevation = $landscapeGenerator.mapDict[chunk.y + 128][chunk.x + 128].elevation
-		
-	
-		var newLandscapeMap
-		if elevation > 0.65: newLandscapeMap = landscapeMap[4].instantiate() #mud
-		elif elevation > 0.55: newLandscapeMap = landscapeMap[2].instantiate() #mud
-		elif elevation > 0.35: newLandscapeMap =  landscapeMap[0].instantiate() #grass
-		elif elevation > 0.15: newLandscapeMap = landscapeMap[1].instantiate() #sand
-		else: newLandscapeMap = landscapeMap[3].instantiate() #water
+		var terrainType = $landscapeGenerator.mapDict[chunk.y + 128][chunk.x + 128].terrainType
+		var newLandscapeMap = landscapeMap[terrainType].instantiate()
 		
 		newLandscapeMap.global_position = targetPosition
 		loadedLandscapes[chunk] = newLandscapeMap
 		add_child(newLandscapeMap)
 		
-		if elevation > 0.3 && elevation < 0.65:
+		if terrainType != Root.terrain.WATER && terrainType != Root.terrain.HILLS:
 			var newObjectTile = createNewTileObject(targetPosition  , myScene)
 			loadedObjects[chunk] = newObjectTile
 			add_child(newObjectTile)
@@ -167,7 +158,7 @@ func createNewTileObject(targetPosition , myScene = null):
 		if myScene == null: 
 			newObjectTile = getRandomTileObject()
 			var myRotation = randi() % 180
-			newObjectTile.global_position = targetPosition + (tilesize / 2) + Vector2(randi_range(tilesize.x/-3,tilesize.x/3),randi_range(-200,200))		
+			newObjectTile.global_position = targetPosition + (tilesize / 2) + Vector2(randi_range(tilesize.x/-4,tilesize.x/4),randi_range(-200,200))		
 			newObjectTile.rotation = myRotation
 			for i in newObjectTile.get_children():
 				if not i.has_method("isFixed"):i.rotation = -myRotation

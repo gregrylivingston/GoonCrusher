@@ -62,8 +62,9 @@ shader_parameter/show_bound = false
 
 [node name="Car" instance=ExtResource("1_v41dt")]
 engine = 10
-steering = 0
-armor = 3
+steering = 8
+traction = 5
+armor = 4
 profilePic = ExtResource("2_3d4qt")
 backgroundPic = ExtResource("3_lelbi")
 charName = "Andrew"

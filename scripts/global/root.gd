@@ -3,6 +3,7 @@ extends Node
 enum gameModes {  COUNTDOWN, SPRINT, MARATHON, DEFENSE, GOONPOCALYPSE }
 enum endCondition { NOGAS , NOHEALTH , NOTIME , SUCCESS }
 enum upgrade { HEALTH , FUEL , ARMOR , ENGINE , TRACTION , STEERING , CLOVER , LUCK , HEADLIGHTS , OIL , COIN , PURSE , GEM , SLOTMACHINE, CURRENTGOONSCRUSHED}
+enum terrain { GRASS , SAND , MUD , WATER , HILLS}
 
 var playerCar: OverheadCarBody2D
 var station  #this is the gas-station / house thing
