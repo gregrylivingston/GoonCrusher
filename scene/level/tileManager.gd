@@ -66,10 +66,8 @@ func _ready():
 	tilesize = tilesPerChunk * pixelsPerTile
 	
 	await $landscapeGenerator.createNewTerrain()
-	$landscapeGenerator.mapDict[128][128].terrainType = Root.terrain.GRASS
 	
 	setupByGamemode()
-	getPlayerChunk()
 
 	await get_tree().process_frame
 
@@ -105,16 +103,19 @@ func setupNoStations():
 
 
 var playerChunk: Vector2i = Vector2i(-999,-999)
-var terrainRegion: int = -5
-var terrainType: int = Root.terrain.GRASS
+#var terrainRegion: int = -5
+#var terrainType: int = Root.terrain.GRASS
 
 func getPlayerChunk():
+		
 	if playerChunk != Vector2i( (Root.playerCar.global_position /  tilesize ) ):
 		playerChunk = Vector2i( (Root.playerCar.global_position /  tilesize ) )
-		
-		var myTile = loadChunk(playerChunk)
-		if myTile.terrainType != terrainType || myTile.region != terrainRegion: 
-			updatePlayerRegion(myTile)
+	
+		var tileToTest = playerChunk
+		if playerChunk.y < 0: tileToTest.y -= 1
+		if playerChunk.x < 0: tileToTest.x -= 1
+		var myTile = loadChunk(tileToTest)
+		if is_instance_valid(Root.playerRoot):Root.playerRoot.updatePlayerRegion(myTile)
 		
 		for i in chunksToLoad:
 			loadChunk(playerChunk + i)
@@ -122,11 +123,6 @@ func getPlayerChunk():
 		for i in chunksToUnload:
 			unloadChunk(playerChunk + i)
 			unloadChunk(playerChunk - i)
-
-func updatePlayerRegion(tile):
-	print("new region entered")
-	print("Region" + str(tile.region))
-	print("Terrain" + str(tile.terrainType))
 
 
 var chunksToLoad: Array[Vector2i] = [
@@ -156,13 +152,13 @@ func loadChunk(chunk:Vector2i , myScene = null): #if an instantiated scene isn't
 	if not loadedLandscapes.has(chunk):
 		var targetPosition = Vector2( tilesize.x * chunk.x , tilesize.y * chunk.y )
 		var tile = $landscapeGenerator.mapDict[chunk.y + 128][chunk.x + 128]
-		var newLandscapeMap = landscapeMap[tile.terrainType].instantiate()
+		var newLandscapeMap = landscapeMap[tile.terrain].instantiate()
 		
 		newLandscapeMap.global_position = targetPosition
 		loadedLandscapes[chunk] = newLandscapeMap
 		add_child(newLandscapeMap)
 		
-		if tile.terrainType != Root.terrain.WATER && tile.terrainType != Root.terrain.HILLS:
+		if tile.terrain != Root.terrain.WATER && tile.terrain != Root.terrain.HILLS:
 			var newObjectTile = createNewTileObject(targetPosition  , myScene)
 			loadedObjects[chunk] = newObjectTile
 			add_child(newObjectTile)

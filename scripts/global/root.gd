@@ -13,7 +13,7 @@ var selectedCar: Dictionary
 var mainMenu: CanvasLayer
 var levelRoot: Node2D
 var spawnManager: SpawnManager
-var playerRoot #this is basically the inlevel UI
+var playerRoot: GameUI #this is basically the inlevel UI
 
 var isRunActive: bool = false
 var earnedCoins: int
@@ -71,3 +71,6 @@ var gameModeDescription: Dictionary = {
 	},
 }
 	
+	
+
+

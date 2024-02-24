@@ -45,14 +45,63 @@ func createNewTerrain():
 					elevation = elevation - (20 + y - size.y )*0.05
 			
 			var terrainType: int = getTerrainType(elevation)
-			
+			var region:int = -1
+			if terrainType == Root.terrain.WATER || terrainType == Root.terrain.HILLS:
+				region = -2
 			mapDict[y].push_back( {	
-				"terrainType":terrainType,
-				"region":-1
+				"terrain":terrainType,
+				"region":region
 			} )
+	await get_tree().process_frame
+	setupStartingTerrain()
+	await get_tree().process_frame
+	setupRegions()
+	
+	
+func setupRegions():
+	for y in inputSizeY:
+		for x in inputSizeX:
+			if mapDict[y][x].region == -1:
+				await recursiveAddToRegion(Vector2i(x,y) , nextRegionToAdd , mapDict[y][x].terrain)
+				nextRegionToAdd += 1
+				await get_tree().process_frame
+				
+var nextRegionToAdd: int = 2
+
+func setupStartingTerrain():
+	mapDict[inputSizeX/2][inputSizeY/2].terrain = Root.terrain.GRASS
+	mapDict[inputSizeY/2][inputSizeX/2].region = 0
+	for x in randi()%2 + 2:
+		for y in randi()%2 + 2:
+			mapDict[inputSizeY/2 + y][inputSizeX/2 + x].terrain = Root.terrain.GRASS
+			mapDict[inputSizeY/2 - y][inputSizeX/2 - x].terrain = Root.terrain.GRASS
+			mapDict[inputSizeY/2 - y][inputSizeX/2 + x].terrain = Root.terrain.GRASS
+			mapDict[inputSizeY/2 - y][inputSizeX/2 + x].terrain = Root.terrain.GRASS
+			mapDict[inputSizeY/2 + y][inputSizeX/2 + x].region = -1
+			mapDict[inputSizeY/2 - y][inputSizeX/2 - x].region = -1
+			mapDict[inputSizeY/2 - y][inputSizeX/2 + x].region = -1
+			mapDict[inputSizeY/2 - y][inputSizeX/2 + x].region = -1
+	recursiveAddToRegion(Vector2i(inputSizeX/2,inputSizeY/2 ) , 0 , Root.terrain.GRASS)
+
+func recursiveAddToRegion(tileLocation: Vector2i , requestedRegion: int , terrain: int ):
+	if mapDict[tileLocation.y][tileLocation.x].region != -1: return
+	mapDict[tileLocation.y][tileLocation.x].region = requestedRegion
+	await get_tree().process_frame
+	if tileLocation.y - 1 >= 0:
+		if mapDict[tileLocation.y - 1][tileLocation.x].terrain == terrain:
+			recursiveAddToRegion(tileLocation + Vector2i(0,-1) , requestedRegion , terrain)
+	if tileLocation.y + 1 < mapDict.size() :
+		if mapDict[tileLocation.y + 1][tileLocation.x].terrain == terrain:
+			recursiveAddToRegion(tileLocation + Vector2i(0,1) , requestedRegion , terrain)	
+	if tileLocation.x - 1 >= 0:
+		if mapDict[tileLocation.y][tileLocation.x - 1].terrain == terrain:
+			recursiveAddToRegion(tileLocation + Vector2i(-1,0) , requestedRegion , terrain)
+	if tileLocation.x + 1 < mapDict[1].size() :
+		if mapDict[tileLocation.y ][tileLocation.x + 1].terrain == terrain:
+			recursiveAddToRegion(tileLocation + Vector2i(1,0) , requestedRegion , terrain)	
 			
 			
-			
+var currentTerrainType:int = -10
 func createTerrainGroups():
 	var size = Vector2i(inputSizeX, inputSizeY)
 	for y in size.y:
@@ -63,9 +112,19 @@ func createTerrainGroups():
 					Root.terrain.WATER:tile.region = -2
 					Root.terrain.HILLS:tile.region = -3
 
-func getTerrainType(elevation):
-	if elevation > 0.65: return Root.terrain.HILLS
-	elif elevation > 0.55: return Root.terrain.MUD
+#func setRegion(terrainType):
+	
+		
+					
+func searchForRegionByTile(y,x):
+	if mapDict.has(y):
+		if mapDict.has(x):
+			if mapDict[y][x].terrain == currentTerrainType:
+				pass
+			
+func getTerrainType(elevation: float) -> int: #returns Root.terrain
+	if elevation > 0.9: return Root.terrain.HILLS
+	elif elevation > 0.6: return Root.terrain.MUD
 	elif elevation > 0.35: return Root.terrain.GRASS
 	elif elevation > 0.15: return Root.terrain.SAND
 	else: return Root.terrain.WATER

@@ -1,3 +1,4 @@
+class_name GameUI
 extends CanvasLayer
 
 
@@ -55,4 +56,9 @@ func updateGoonsCrushed():
 #aerodynamics
 #weight
 #armor
+
+func updatePlayerRegion(tile):
+	%terrain.text = "Terrain: " + str(Root.terrain.keys()[tile.terrain])
+	%region.text = "Region: " + str(tile.region)
+
 
