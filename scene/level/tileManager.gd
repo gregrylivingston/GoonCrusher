@@ -83,6 +83,9 @@ func _ready():
 			Root.station = myStation
 			loadChunk(Vector2i( randi_range( Root.levelRoot.seconds * 0.7 , Root.levelRoot.seconds * 0.72),  randi_range( Root.levelRoot.seconds * 0.2 , Root.levelRoot.seconds * -0.2 ) ), myStation)
 
+	if loadedObjects.has(playerChunk):
+		loadedObjects[playerChunk].queue_free()
+
 
 func setupByGamemode() -> void:
 	match SaveManager.playerData.gameMode:
@@ -103,6 +106,7 @@ func setupNoStations():
 
 
 var playerChunk: Vector2i = Vector2i(-999,-999)
+var startingPlayerChunk
 #var terrainRegion: int = -5
 #var terrainType: int = Root.terrain.GRASS
 

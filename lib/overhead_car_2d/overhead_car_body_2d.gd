@@ -151,7 +151,7 @@ func _physics_process(delta):
 	var acceleration = _car_input.acceleration * transform.x * ( engine + 14 ) * 10 * ( 2.2 - abs(_car_input.steering))
 
 	# Apply friction
-	if velocity.length() < 2:
+	if abs(velocity.length()) < 5:
 		velocity = Vector2.ZERO
 	var friction_force = velocity * -friction
 	var drag_force = velocity * velocity.length() * -drag

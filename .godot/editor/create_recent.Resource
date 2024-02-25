@@ -1,8 +1,8 @@
+Resource
 AtlasTexture
 AudioBusLayout
 TileSet
 AnimatedTexture
-Resource
 Theme
 StyleBoxFlat
 SpriteFrames

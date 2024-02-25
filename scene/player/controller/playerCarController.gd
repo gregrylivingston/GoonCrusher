@@ -20,7 +20,7 @@ func _provide_input(_input):
 	else: _input.steering *= 0.9
 	
 	if Input.is_action_pressed("Brake"):
-		if car.velocity.length() == 0 || car.gear == -1:
+		if car.velocity.length() < 10 || car.gear == -1:
 			if car.gear > -1:car.setForwardCollisionMode(false)
 			car.gear = -1
 			gearui.text = "R"

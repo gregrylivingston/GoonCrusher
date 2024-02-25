@@ -1,3 +1,4 @@
+res://resource/region
 res://texture/atlas
 res://scene
 res://shader
@@ -19,4 +20,3 @@ res://style
 res://scene/level
 res://texture/animation
 res://scene/player/slots
-res://scene/player/save
