@@ -17,18 +17,20 @@ enum goon { DEVIL , SPARTAN , SAMURAI , FIREKIN, PIKEMAN }
 	goon.SAMURAI:preload("res://scene/enemy/walker/samurai/samurai.tscn"),
 }
 
+var giantTimer:float = 0
+var spawners
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	Root.spawnManager = self
-	increaseGiantOdds()
+	await get_tree().process_frame
+	spawners = get_tree().get_nodes_in_group("spawner")
+	
 
 func increaseGiantOdds():
 	giantOdds += 1
 	gameTimeProgress += 1
 	spawnTimer = clampf(spawnTimer - escalationSpeed , 1.0, 6.0)
-	await get_tree().create_timer(10).timeout
-	increaseGiantOdds()
 	
 func createGoonScene():
 	var randomizer = randf_range(0,100) - gameTimeProgress
@@ -44,6 +46,17 @@ func getGoon():
 		goon.isGiant = true
 	return goon
 
+
+var timeCount: float = 0
+var mySpawners
+
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
-	pass
+	giantTimer += delta
+	if giantTimer > 10:
+		increaseGiantOdds
+		giantTimer = 0
+	timeCount += delta
+	if timeCount > Root.spawnManager.spawnTimer:
+		for i in spawners:i.spawn()
+		timeCount = 0
