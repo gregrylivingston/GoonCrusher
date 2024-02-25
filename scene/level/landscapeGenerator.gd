@@ -71,8 +71,8 @@ var nextRegionToAdd: int = 2
 func setupStartingTerrain():
 	mapDict[inputSizeX/2][inputSizeY/2].terrain = Root.terrain.GRASS
 	mapDict[inputSizeY/2][inputSizeX/2].region = 0
-	for x in randi()%2 + 2:
-		for y in randi()%2 + 2:
+	for x in randi()%4 + 3:
+		for y in randi()%3 + 3:
 			mapDict[inputSizeY/2 + y][inputSizeX/2 + x].terrain = Root.terrain.GRASS
 			mapDict[inputSizeY/2 - y][inputSizeX/2 - x].terrain = Root.terrain.GRASS
 			mapDict[inputSizeY/2 - y][inputSizeX/2 + x].terrain = Root.terrain.GRASS

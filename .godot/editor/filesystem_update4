@@ -30,3 +30,6 @@ res://scene/level/tileManager.tscn
 res://scene/powerup/powerup.tscn
 res://scene/enemy/spawnManager.tscn
 res://scene/enemy/spawnManager.gd
+res://scene/level/levelRoot.gd
+res://scene/level/tileManager.gd
+res://scene/level/landscapeGenerator.gd

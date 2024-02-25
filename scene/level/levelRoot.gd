@@ -97,3 +97,7 @@ func endLevel(levelCompleted: bool, reason):  #reason takes Rout.endcondition
 		gameSummary.levelCompleted = true
 	add_child( gameSummary )
 	get_tree().paused = true
+
+
+func getTileByCoordinates(coord: Vector2i):
+	return $TileManager.getTile(coord)

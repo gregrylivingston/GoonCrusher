@@ -106,6 +106,14 @@ var playerChunk: Vector2i = Vector2i(-999,-999)
 #var terrainRegion: int = -5
 #var terrainType: int = Root.terrain.GRASS
 
+func getTile(coordinates) -> Dictionary:
+	var tileVector = Vector2i( (coordinates.x /  tilesize.x ), coordinates.y / tilesize.y )
+	if tileVector.y < 0: tileVector.y -= 1
+	if tileVector.x < 0: tileVector.x -= 1
+	return $landscapeGenerator.mapDict[tileVector.y + 128][tileVector.x + 128]
+	
+
+
 func getPlayerChunk():
 		
 	if playerChunk != Vector2i( (Root.playerCar.global_position /  tilesize ) ):
