@@ -51,14 +51,8 @@ func updateGoonsCrushed():
 		$Panel/HBoxContainer/crushedGoons.text = str( int(nextCrushingAward) - Root.playerCar.currentGoonsCrushed + 1 )
 		get_tree().paused = true
 
-	
-#responsiveness
-#aerodynamics
-#weight
-#armor
 
-func updatePlayerRegion(tile):
-	%terrain.text = "Terrain: " + str(Root.terrain.keys()[tile.terrain])
-	%region.text = "Region: " + str(tile.region)
+
+func updatePlayerRegion(tile):%regionUi.updatePlayerRegion(tile)
 
 

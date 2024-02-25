@@ -1,4 +1,4 @@
-res://scene/player/spawner.tscn
+res://scene/level/terrain/landscapeMap_water.tscn
 res://shader/shine.gdshader
 res://style/roadRogue.tres
 res://scene/player/slots/slot_row_gradient.tres
@@ -20,7 +20,6 @@ res://shader/edgeGlow.gdshader
 res://shader/liquid.gdshader
 res://shader/3dicon.gdshader
 res://shader/ground_normals.gdshader
-res://scene/player/spawner.gd
 res://scene/car/car.tscn
 res://scene/level/levelRoot.tscn
 res://scene/player/playerRoot.tscn
@@ -29,10 +28,10 @@ res://scene/player/menu/main/main2.tscn
 res://scene/level/tileManager.tscn
 res://scene/powerup/powerup.tscn
 res://scene/enemy/spawnManager.tscn
-res://scene/enemy/spawnManager.gd
-res://scene/level/levelRoot.gd
+res://scene/player/spawner.tscn
 res://scene/level/tileManager.gd
-res://scene/level/landscapeGenerator.gd
-res://scene/player/controller/playerCarController.gd
-res://lib/overhead_car_2d/overhead_car_body_2d.gd
-res://resource/region/region.tres
+res://scripts/global/Audio.tscn
+res://scripts/global/Region.gd
+res://scene/player/regionUi.tscn
+res://scene/player/playerRoot.gd
+res://scene/player/regionUi.gd

@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3 uid="uid://pgobm7erc1f0"]
+[gd_scene load_steps=21 format=3 uid="uid://pgobm7erc1f0"]
 
 [ext_resource type="Script" path="res://scene/player/playerRoot.gd" id="1_csk4w"]
 [ext_resource type="PackedScene" uid="uid://bf1f5117fhyd2" path="res://scene/car/car_panel.tscn" id="2_gx8xt"]
@@ -9,6 +9,7 @@
 [ext_resource type="Shader" path="res://shader/3dtext.gdshader" id="5_nv3yj"]
 [ext_resource type="Texture2D" uid="uid://clb0tyqiwegeo" path="res://texture/icon/icons8-gem-48.png" id="6_domly"]
 [ext_resource type="Material" uid="uid://d4nw1uchte7mv" path="res://scene/player/menu/main/3dText_Common.tres" id="7_kow26"]
+[ext_resource type="PackedScene" uid="uid://cyyns0r3734ni" path="res://scene/player/regionUi.tscn" id="10_ep2ps"]
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_sgloa"]
 
@@ -308,28 +309,5 @@ theme_override_constants/outline_size = 2
 theme_override_font_sizes/font_size = 40
 text = "N"
 
-[node name="VBoxContainer" type="VBoxContainer" parent="."]
-anchors_preset = 2
-anchor_top = 1.0
-anchor_bottom = 1.0
-offset_top = -52.0
-offset_right = 40.0
-grow_vertical = 0
-
-[node name="terrain" type="Label" parent="VBoxContainer"]
+[node name="regionUi" parent="." instance=ExtResource("10_ep2ps")]
 unique_name_in_owner = true
-material = ExtResource("7_kow26")
-layout_mode = 2
-theme = ExtResource("4_xbt3u")
-theme_override_constants/outline_size = 2
-theme_override_font_sizes/font_size = 40
-text = "Terrain: -99"
-
-[node name="region" type="Label" parent="VBoxContainer"]
-unique_name_in_owner = true
-material = ExtResource("7_kow26")
-layout_mode = 2
-theme = ExtResource("4_xbt3u")
-theme_override_constants/outline_size = 2
-theme_override_font_sizes/font_size = 40
-text = "Region: -99"

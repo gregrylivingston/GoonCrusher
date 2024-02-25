@@ -1,10 +1,10 @@
-res://resource/region
+res://scene/player
+res://scripts/global
 res://texture/atlas
 res://scene
 res://shader
 D:/Godot/AutoSurvivor
 res://scene/scenery/walls
-res://scripts/global
 res://scene/player/menu/main
 res://texture/spritesheet
 res://scene/fx/explosion

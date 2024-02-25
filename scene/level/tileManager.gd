@@ -85,6 +85,7 @@ func _ready():
 
 	if loadedObjects.has(playerChunk):
 		loadedObjects[playerChunk].queue_free()
+		loadedObjects.erase(playerChunk)
 
 
 func setupByGamemode() -> void:

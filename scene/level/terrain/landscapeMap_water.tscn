@@ -14,7 +14,7 @@ sources/2 = SubResource("TileSetAtlasSource_ri8j6")
 
 [node name="LandscapeMap" type="TileMap"]
 modulate = Color(1.3, 1.3, 1.3, 1)
-z_index = -6
+z_index = -4
 scale = Vector2(2, 2)
 tile_set = SubResource("TileSet_akhyn")
 format = 2
