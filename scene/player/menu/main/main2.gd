@@ -265,7 +265,9 @@ func _on_back_button_pressed():
 		
 func _on_begin_pressed():
 	match menuMode:
-		menuModes.GAMEMODE:get_tree().change_scene_to_file( SaveManager.playerData.levels[SaveManager.playerData.selectedLevel].scene)
+		menuModes.GAMEMODE:
+			Region.resetRegions()
+			get_tree().change_scene_to_file( SaveManager.playerData.levels[SaveManager.playerData.selectedLevel].scene)
 		menuModes.LEVEL:goToMenuMode(menuModes.GAMEMODE)
 
 func _on_unlock_pressed():

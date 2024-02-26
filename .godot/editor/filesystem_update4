@@ -41,3 +41,4 @@ res://scene/level/terrain/landscapeMap2.tscn
 res://scene/level/terrain/landscapeMap_mud.tscn
 res://scene/level/landscapeGenerator.gd
 res://scene/level/terrain/landscapeMap_hill.tscn
+res://scene/player/menu/main/main2.gd

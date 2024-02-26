@@ -29,6 +29,14 @@ var names: Dictionary = {
 	]
 }
 
+func resetRegions():
+	regions = {
+	-2:{
+		"name":"Wasteland","giantism":0
+	}}
+	currentRegion = {}
+	currentRegionNumber = -99
+
 var regions: Dictionary = {
 	-2:{
 		"name":"Wasteland","giantism":0
