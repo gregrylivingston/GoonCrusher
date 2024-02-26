@@ -10,9 +10,12 @@ var tilesize: Vector2
 var landscapeMap = [
 	preload("res://scene/level/terrain/landscapeMap.tscn"),
 	preload("res://scene/level/terrain/landscapeMap2.tscn"),
-	preload("res://scene/level/terrain/landscapeMap_dirt.tscn"),
+	preload("res://scene/level/terrain/landscapeMap_mud.tscn"),
 	preload("res://scene/level/terrain/landscapeMap_water.tscn"),
 	preload("res://scene/level/terrain/landscapeMap_hill.tscn"),
+	preload("res://scene/level/terrain/landscapeMap_shortGrass.tscn"),#moss
+	preload("res://scene/level/terrain/landscapeMap_dirt.tscn"),
+	preload("res://scene/level/terrain/landscapeMap_snow.tscn")
 ]
 
 enum objectTypes { ROCKS , COINS , BONUS_ROCKS , EMPTY , SAND }

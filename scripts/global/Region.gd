@@ -18,6 +18,15 @@ var names: Dictionary = {
 	Root.terrain.SAND:[
 		"Goon Beach" , "Sand Alley" , "The Dunes" , "Doonvale" 
 	],
+	Root.terrain.MOSS:[
+		"Mossy Barrens",
+	],
+	Root.terrain.DIRT:[
+		"Dusty Lane",
+	],
+	Root.terrain.SNOW:[
+		"The Tundra",
+	]
 }
 
 var regions: Dictionary = {

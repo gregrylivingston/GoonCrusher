@@ -124,9 +124,12 @@ func searchForRegionByTile(y,x):
 			
 func getTerrainType(elevation: float) -> int: #returns Root.terrain
 	if elevation > 0.9: return Root.terrain.HILLS
-	elif elevation > 0.6: return Root.terrain.MUD
-	elif elevation > 0.35: return Root.terrain.GRASS
-	elif elevation > 0.15: return Root.terrain.SAND
+	elif elevation > 0.75: return Root.terrain.SNOW
+	elif elevation > 0.6: return Root.terrain.DIRT  #.35
+	elif elevation > 0.45: return Root.terrain.MUD  #.15 (this was too high)
+	elif elevation > 0.35: return Root.terrain.GRASS   #.15 (this was too high)
+	elif elevation > 0.2: return Root.terrain.MOSS   #.15 (this was too high)
+	elif elevation > 0.01: return Root.terrain.SAND   #.15 (this was too high)
 	else: return Root.terrain.WATER
 
 

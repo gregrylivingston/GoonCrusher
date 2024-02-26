@@ -1,3 +1,4 @@
+res://scene/level/terrain
 res://scene/player
 res://scripts/global
 res://texture/atlas
@@ -19,4 +20,3 @@ res://sound
 res://style
 res://scene/level
 res://texture/animation
-res://scene/player/slots
