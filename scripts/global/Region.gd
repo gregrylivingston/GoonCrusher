@@ -20,12 +20,16 @@ var names: Dictionary = {
 	],
 }
 
-var regions: Dictionary = {}
+var regions: Dictionary = {
+	-2:{
+		"name":"Wasteland","giantism":0
+	}
+}
 var currentRegion: Dictionary
 var currentRegionNumber: int = -99
 
 func getRegion(regionNumber: int , terrainType: int) -> Dictionary:
-	if regions.has(regionNumber):
+	if regions.has(regionNumber) || regionNumber == -2:
 		currentRegion = regions[regionNumber]
 		currentRegionNumber = regionNumber
 		return regions[regionNumber]

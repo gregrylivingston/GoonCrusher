@@ -10,8 +10,9 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -227.0
-offset_top = -108.0
+offset_left = -251.0
+offset_top = -186.0
+offset_right = -24.0
 grow_horizontal = 0
 grow_vertical = 0
 script = ExtResource("1_nup3b")
@@ -22,8 +23,17 @@ material = ExtResource("1_8nco0")
 layout_mode = 2
 theme = ExtResource("2_3vkfu")
 theme_override_constants/outline_size = 2
-theme_override_font_sizes/font_size = 40
+theme_override_font_sizes/font_size = 25
 text = "Region: -99"
+
+[node name="giantism" type="Label" parent="."]
+unique_name_in_owner = true
+material = ExtResource("1_8nco0")
+layout_mode = 2
+theme = ExtResource("2_3vkfu")
+theme_override_constants/outline_size = 2
+theme_override_font_sizes/font_size = 25
+text = "Giantism: -99"
 
 [node name="terrain" type="Label" parent="."]
 unique_name_in_owner = true
@@ -31,7 +41,7 @@ material = ExtResource("1_8nco0")
 layout_mode = 2
 theme = ExtResource("2_3vkfu")
 theme_override_constants/outline_size = 2
-theme_override_font_sizes/font_size = 40
+theme_override_font_sizes/font_size = 25
 text = "Terrain: -99"
 
 [node name="region" type="Label" parent="."]
@@ -40,5 +50,5 @@ material = ExtResource("1_8nco0")
 layout_mode = 2
 theme = ExtResource("2_3vkfu")
 theme_override_constants/outline_size = 2
-theme_override_font_sizes/font_size = 40
-text = "Region: -99"
+theme_override_font_sizes/font_size = 25
+text = "Region#: -99"

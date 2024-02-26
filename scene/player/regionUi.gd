@@ -14,6 +14,7 @@ func _process(delta):
 func updatePlayerRegion(tile):
 	if tile.region != Region.currentRegionNumber:
 		var myRegion = Region.getRegion(tile.region, tile.terrain)
-		%regionName.text = "Region: " + str(myRegion.name)
-	%terrain.text = "Terrain: " + str(Root.terrain.keys()[tile.terrain])
-	%region.text = "Region#: " + str(tile.region)
+		%regionName.text = str(myRegion.name)
+		%giantism.text = "Giantism: " + str(myRegion.giantism)
+	%terrain.text = str(Root.terrain.keys()[tile.terrain])
+	%region.text = "ID " + str(tile.region)
