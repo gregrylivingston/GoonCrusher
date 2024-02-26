@@ -35,3 +35,5 @@ res://scripts/global/Region.gd
 res://scene/player/regionUi.tscn
 res://scene/player/playerRoot.gd
 res://scene/player/regionUi.gd
+res://scripts/global/root.gd
+res://scene/level/landscapeGenerator.gd

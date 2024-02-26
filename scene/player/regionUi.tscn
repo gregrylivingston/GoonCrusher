@@ -35,20 +35,55 @@ theme_override_constants/outline_size = 2
 theme_override_font_sizes/font_size = 25
 text = "Giantism: -99"
 
-[node name="terrain" type="Label" parent="."]
-unique_name_in_owner = true
-material = ExtResource("1_8nco0")
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
 layout_mode = 2
-theme = ExtResource("2_3vkfu")
-theme_override_constants/outline_size = 2
-theme_override_font_sizes/font_size = 25
-text = "Terrain: -99"
 
-[node name="region" type="Label" parent="."]
+[node name="goon1" type="Label" parent="HBoxContainer"]
 unique_name_in_owner = true
 material = ExtResource("1_8nco0")
 layout_mode = 2
 theme = ExtResource("2_3vkfu")
 theme_override_constants/outline_size = 2
 theme_override_font_sizes/font_size = 25
-text = "Region#: -99"
+text = "Warrior"
+
+[node name="goon2" type="Label" parent="HBoxContainer"]
+unique_name_in_owner = true
+material = ExtResource("1_8nco0")
+layout_mode = 2
+size_flags_horizontal = 6
+theme = ExtResource("2_3vkfu")
+theme_override_constants/outline_size = 2
+theme_override_font_sizes/font_size = 25
+text = "Warrior"
+
+[node name="goon3" type="Label" parent="HBoxContainer"]
+unique_name_in_owner = true
+material = ExtResource("1_8nco0")
+layout_mode = 2
+size_flags_horizontal = 10
+theme = ExtResource("2_3vkfu")
+theme_override_constants/outline_size = 2
+theme_override_font_sizes/font_size = 25
+text = "Warrior"
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="."]
+layout_mode = 2
+
+[node name="region" type="Label" parent="HBoxContainer2"]
+unique_name_in_owner = true
+material = ExtResource("1_8nco0")
+layout_mode = 2
+theme = ExtResource("2_3vkfu")
+theme_override_constants/outline_size = 2
+theme_override_font_sizes/font_size = 25
+text = "ID: -99"
+
+[node name="terrain" type="Label" parent="HBoxContainer2"]
+unique_name_in_owner = true
+material = ExtResource("1_8nco0")
+layout_mode = 2
+theme = ExtResource("2_3vkfu")
+theme_override_constants/outline_size = 2
+theme_override_font_sizes/font_size = 25
+text = "-99"

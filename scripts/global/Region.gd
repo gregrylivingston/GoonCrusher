@@ -10,20 +10,20 @@ func _ready():
 
 var names: Dictionary = {
 	Root.terrain.GRASS:[
-		"Goon Fields" , "Goonvale" , "Peaceful Meadow" , 
+		"Goon Fields" , "Goonvale" , "Peaceful Meadow" , "Goon Park"
 	],
 	Root.terrain.MUD:[
-		"Mudtown" , "Dust Valley" , "Goon Pits" ,
+		"Mudtown" , "Dust Valley" , "Goon Pits" , "Muddy Barrens"
 	],
 	Root.terrain.SAND:[
-		"Goon Beach" , "Sand Alley"
+		"Goon Beach" , "Sand Alley" , "The Dunes" , "Doonvale" 
 	],
 }
 
 var regions: Dictionary = {
 	-2:{
 		"name":"Wasteland","giantism":0
-	}
+	},
 }
 var currentRegion: Dictionary
 var currentRegionNumber: int = -99
@@ -45,5 +45,22 @@ func createRegion(terrain: int) -> Dictionary:#terrain is Enum Root.terrain
 		"name": names[ terrain ][ randi()%names[terrain].size() - 1 ],
 		"terrain":terrain,
 		"giantism":randi()%100,
+		"goon":[
+			getRandomGoon(),getRandomGoon(),getRandomGoon(),
+		],
 	}
 	return thisRegion
+
+
+func getRandomGoon():
+	return Root.goon[ Root.goon.keys()[randi()%Root.goon.size() - 1 ] ]
+	
+	
+	
+	
+	
+	#still needs at least....
+	#terrain objects
+	#objectives
+	#goons
+	

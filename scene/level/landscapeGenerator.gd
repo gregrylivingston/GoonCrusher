@@ -77,10 +77,10 @@ func setupStartingTerrain():
 			mapDict[inputSizeY/2 - y][inputSizeX/2 - x].terrain = Root.terrain.GRASS
 			mapDict[inputSizeY/2 - y][inputSizeX/2 + x].terrain = Root.terrain.GRASS
 			mapDict[inputSizeY/2 - y][inputSizeX/2 + x].terrain = Root.terrain.GRASS
-			mapDict[inputSizeY/2 + y][inputSizeX/2 + x].region = -1
-			mapDict[inputSizeY/2 - y][inputSizeX/2 - x].region = -1
-			mapDict[inputSizeY/2 - y][inputSizeX/2 + x].region = -1
-			mapDict[inputSizeY/2 - y][inputSizeX/2 + x].region = -1
+			mapDict[inputSizeY/2 + y][inputSizeX/2 + x].region = 0
+			mapDict[inputSizeY/2 - y][inputSizeX/2 - x].region = 0
+			mapDict[inputSizeY/2 - y][inputSizeX/2 + x].region = 0
+			mapDict[inputSizeY/2 - y][inputSizeX/2 + x].region = 0
 	recursiveAddToRegion(Vector2i(inputSizeX/2,inputSizeY/2 ) , 0 , Root.terrain.GRASS)
 
 func recursiveAddToRegion(tileLocation: Vector2i , requestedRegion: int , terrain: int ):

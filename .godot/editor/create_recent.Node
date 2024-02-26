@@ -1,9 +1,9 @@
+HBoxContainer
 VBoxContainer
 Node
 AnimationPlayer
 ColorRect
 TextureRect
-HBoxContainer
 Label
 SubViewport
 CanvasLayer
