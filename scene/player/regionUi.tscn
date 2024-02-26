@@ -16,6 +16,15 @@ grow_horizontal = 0
 grow_vertical = 0
 script = ExtResource("1_nup3b")
 
+[node name="regionName" type="Label" parent="."]
+unique_name_in_owner = true
+material = ExtResource("1_8nco0")
+layout_mode = 2
+theme = ExtResource("2_3vkfu")
+theme_override_constants/outline_size = 2
+theme_override_font_sizes/font_size = 40
+text = "Region: -99"
+
 [node name="terrain" type="Label" parent="."]
 unique_name_in_owner = true
 material = ExtResource("1_8nco0")

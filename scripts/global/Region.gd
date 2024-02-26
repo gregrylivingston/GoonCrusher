@@ -21,12 +21,19 @@ var names: Dictionary = {
 }
 
 var regions: Dictionary = {}
+var currentRegion: Dictionary
+var currentRegionNumber: int = -99
 
 func getRegion(regionNumber: int , terrainType: int) -> Dictionary:
-	if regions.has(regionNumber):return regions[regionNumber]
+	if regions.has(regionNumber):
+		currentRegion = regions[regionNumber]
+		currentRegionNumber = regionNumber
+		return regions[regionNumber]
 	else:
 		var newRegion = createRegion(terrainType)
 		regions.merge({regionNumber:newRegion})
+		currentRegion = newRegion
+		currentRegionNumber = regionNumber
 		return newRegion
 		
 func createRegion(terrain: int) -> Dictionary:#terrain is Enum Root.terrain
