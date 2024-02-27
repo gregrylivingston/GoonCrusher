@@ -229,7 +229,7 @@ offset_bottom = 58.0
 size_flags_horizontal = 0
 script = ExtResource("1_dcbjq")
 
-[node name="quitButton" parent="." groups=["characterMenu"] instance=ExtResource("2_bmaru")]
+[node name="quitButton" parent="." instance=ExtResource("2_bmaru")]
 unique_name_in_owner = true
 material = SubResource("ShaderMaterial_udm2w")
 custom_minimum_size = Vector2(70, 25)
@@ -240,7 +240,7 @@ theme_override_font_sizes/font_size = 40
 text = ""
 icon = ExtResource("4_s3ccf")
 
-[node name="settingsButton" parent="." groups=["characterMenu"] instance=ExtResource("2_bmaru")]
+[node name="settingsButton" parent="." instance=ExtResource("2_bmaru")]
 unique_name_in_owner = true
 material = SubResource("ShaderMaterial_ky1vj")
 custom_minimum_size = Vector2(70, 25)
@@ -251,7 +251,7 @@ theme_override_font_sizes/font_size = 40
 text = ""
 icon = ExtResource("4_kg02w")
 
-[node name="discordButton" parent="." groups=["characterMenu"] instance=ExtResource("2_bmaru")]
+[node name="discordButton" parent="." instance=ExtResource("2_bmaru")]
 unique_name_in_owner = true
 material = SubResource("ShaderMaterial_olk2y")
 custom_minimum_size = Vector2(70, 25)
@@ -262,7 +262,7 @@ theme_override_font_sizes/font_size = 40
 text = ""
 icon = ExtResource("5_w0kg5")
 
-[node name="steamButton" parent="." groups=["characterMenu"] instance=ExtResource("2_bmaru")]
+[node name="steamButton" parent="." instance=ExtResource("2_bmaru")]
 unique_name_in_owner = true
 material = SubResource("ShaderMaterial_gy05s")
 custom_minimum_size = Vector2(200, 25)
