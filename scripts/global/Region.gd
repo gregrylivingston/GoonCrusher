@@ -74,6 +74,14 @@ func getRandomGoon():
 	
 	
 	
+func updatePlayerRegion(tile):
+	currentRegionNumber = tile.region
+	currentRegion = getRegion(tile.region , tile.terrain)
+	
+	await get_tree().process_frame
+	Root.playerRoot.updatePlayerRegion(tile)
+	Root.spawnManager.basicGoons = currentRegion.goon
+	
 	
 	
 	#still needs at least....

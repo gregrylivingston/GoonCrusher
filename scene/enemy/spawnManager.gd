@@ -5,9 +5,7 @@ class_name SpawnManager extends Node
 
 enum goon { DEVIL , SPARTAN , SAMURAI , FIREKIN, PIKEMAN }
 
-@export var basicGoons: Array[goon] = [
-	goon.DEVIL, goon.SPARTAN , goon.SAMURAI
-]
+var basicGoons
 
 @onready var goonScene = {
 	goon.DEVIL:preload("res://scene/enemy/walker/devil/devil.tscn"),
@@ -25,7 +23,7 @@ func _ready():
 	Root.spawnManager = self
 	await get_tree().process_frame
 	spawners = get_tree().get_nodes_in_group("spawner")
-	
+
 
 func increaseGiantOdds():
 	giantOdds += 1

@@ -42,3 +42,5 @@ res://scene/level/terrain/landscapeMap_mud.tscn
 res://scene/level/landscapeGenerator.gd
 res://scene/level/terrain/landscapeMap_hill.tscn
 res://scene/player/menu/main/main2.gd
+res://scene/enemy/spawnManager.gd
+res://scene/player/regionUi.gd

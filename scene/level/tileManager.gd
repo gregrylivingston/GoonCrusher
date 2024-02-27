@@ -131,7 +131,7 @@ func getPlayerChunk():
 		if playerChunk.y < 0: tileToTest.y -= 1
 		if playerChunk.x < 0: tileToTest.x -= 1
 		var myTile = loadChunk(tileToTest)
-		if is_instance_valid(Root.playerRoot):Root.playerRoot.updatePlayerRegion(myTile)
+		if is_instance_valid(Root.playerRoot):Region.updatePlayerRegion(myTile)
 		
 		for i in chunksToLoad:
 			loadChunk(playerChunk + i)
