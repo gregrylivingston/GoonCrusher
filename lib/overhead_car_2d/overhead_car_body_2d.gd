@@ -21,6 +21,7 @@ class_name OverheadCarBody2D extends CharacterBody2D
 @export var armor: int = 1
 
 @export var friction:float = 0.1 #.9
+#friction of 0.5 might be sand
 @export var drag:float = 0.0005   #.0015
 
 @export var slip_speed:int = 100  # Speed where traction is reduced
@@ -114,6 +115,18 @@ func makeHealthWarning():
 	$headlamps/carhighlight.texture = carDamagedTexture
 	await get_tree().create_timer(200).timeout
 	resetHealthWarning()
+
+
+var currentTerrain: Root.terrain
+func setTerrain(terrain: int): # Root.terrain
+	currentTerrain = terrain
+	match terrain:
+		Root.terrain.GRASS:friction = 0.13
+		Root.terrain.SAND:friction = 0.5
+		Root.terrain.MUD: friction = 0.5
+		Root.terrain.DIRT: friction = 0.03
+		Root.terrain.MOSS: friction = 0.08
+		Root.terrain.SNOW: friction = 0.3
 
 
 func pointIndicator():

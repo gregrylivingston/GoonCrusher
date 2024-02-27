@@ -59,7 +59,6 @@ landscapeType = 1
 
 [node name="SpawnManager" parent="." index="4"]
 spawnTimer = 3.0
-basicGoons = Array[int]([3, 3, 3])
 giantOdds = 10
 
 [node name="Rocks3" parent="." index="8" instance=ExtResource("2_1b8av")]
