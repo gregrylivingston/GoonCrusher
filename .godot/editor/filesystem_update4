@@ -74,3 +74,4 @@ res://scene/car/audi/audi.tscn
 res://scene/car/pickup/pickup.tscn
 res://scene/car/ambulance/ambulance.tscn
 res://scene/car/police/police.tscn
+res://scripts/global/saveManager.gd

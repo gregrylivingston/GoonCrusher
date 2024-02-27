@@ -17,7 +17,7 @@ func load_settings():
 	AudioServer.set_bus_volume_db(AudioServer.get_bus_index("Music"), SaveManager.getVolume("music"))
 
 
-var save_path = "user://userData.tres"
+var save_path = "user://userData0.1.tres"
 
 func load_data():
 	if ResourceLoader.exists(save_path):
