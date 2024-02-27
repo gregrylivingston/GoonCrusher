@@ -16,6 +16,7 @@
 [ext_resource type="Shader" uid="uid://c2jd3wjben4p2" path="res://shader/3d_Text_HighlightRight.tres" id="10_l1x4e"]
 [ext_resource type="Texture2D" uid="uid://w03tvhxtmrv4" path="res://texture/icon/icons8-coin-48 (1).png" id="11_1oi8i"]
 [ext_resource type="PackedScene" uid="uid://clx3q1jksnuoc" path="res://scene/player/menu/main/car_stats_container.tscn" id="11_wos04"]
+[ext_resource type="PackedScene" uid="uid://cabn86xos6l3c" path="res://scene/player/menu/main/top_menu.tscn" id="13_bt8kb"]
 [ext_resource type="Material" uid="uid://dkh0a5rlpp5og" path="res://shader/mat_star_yellow.tres" id="17_k4abt"]
 [ext_resource type="Texture2D" uid="uid://djs2pk1xs4sql" path="res://texture/icon/star.png" id="17_pkha7"]
 [ext_resource type="Material" uid="uid://ci2pd2s2m10gw" path="res://shader/Mat_Star_Grey.tres" id="20_o60b3"]
@@ -54,7 +55,7 @@ shader_parameter/back_tex = ExtResource("10_8o5bn")
 shader_parameter/side_tex = SubResource("GradientTexture1D_pwab5")
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_nl4iw"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_36v2g"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -66,7 +67,7 @@ shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_7h2yq"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_hryva"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -78,7 +79,7 @@ shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_1dfos"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_mvrw2"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -90,19 +91,7 @@ shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_i4l8e"]
-resource_local_to_scene = true
-shader = ExtResource("9_78e4l")
-shader_parameter/angle = 0.6
-shader_parameter/thickness = 5.0
-shader_parameter/scale = 1.0
-shader_parameter/shear = Vector2(0, -0.2)
-shader_parameter/slices = 16
-shader_parameter/outline = true
-shader_parameter/outline_width = 2.0
-shader_parameter/show_bound = false
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_53f5s"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_rkk1j"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -292,7 +281,7 @@ shader_parameter/outline_width = 2.0
 shader_parameter/front_tex = SubResource("GradientTexture1D_3pvng")
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_ati4u"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_hi8lx"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -304,7 +293,7 @@ shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_ky42y"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_olewx"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -562,9 +551,9 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -279.5
+offset_left = -295.5
 offset_top = -232.0
-offset_right = 280.5
+offset_right = 264.5
 offset_bottom = -55.0
 grow_horizontal = 2
 grow_vertical = 2
@@ -667,6 +656,13 @@ theme_override_fonts/font = ExtResource("5_00nh6")
 theme_override_font_sizes/font_size = 70
 text = "CRUSHER"
 
+[node name="topMenu" parent="Panel" instance=ExtResource("13_bt8kb")]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 24.0
+offset_right = 592.0
+offset_bottom = 82.0
+
 [node name="mainMenuPanel" type="Panel" parent="."]
 unique_name_in_owner = true
 self_modulate = Color(1, 1, 1, 0)
@@ -728,15 +724,13 @@ alignment = 1
 [node name="unlock" parent="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
 visible = false
-material = SubResource("ShaderMaterial_nl4iw")
+material = SubResource("ShaderMaterial_36v2g")
 custom_minimum_size = Vector2(250, 25)
 layout_mode = 2
 size_flags_horizontal = 0
 size_flags_vertical = 3
-focus_neighbor_top = NodePath("../../../HBoxContainer4/quitButton")
 focus_neighbor_bottom = NodePath("../../../HBoxContainer3/recordsButton")
 focus_next = NodePath("../../../HBoxContainer3/recordsButton")
-focus_previous = NodePath("../../../HBoxContainer4/quitButton")
 theme_override_font_sizes/font_size = 60
 text = ""
 icon = ExtResource("11_1oi8i")
@@ -744,15 +738,13 @@ alignment = 1
 
 [node name="levelSelect" parent="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
-material = SubResource("ShaderMaterial_7h2yq")
+material = SubResource("ShaderMaterial_hryva")
 custom_minimum_size = Vector2(250, 0)
 layout_mode = 2
 size_flags_horizontal = 0
 size_flags_vertical = 3
-focus_neighbor_top = NodePath("../../../HBoxContainer4/quitButton")
 focus_neighbor_bottom = NodePath("../../../HBoxContainer3/recordsButton")
 focus_next = NodePath("../../../HBoxContainer3/recordsButton")
-focus_previous = NodePath("../../../HBoxContainer4/quitButton")
 theme_override_font_sizes/font_size = 60
 text = "Select Driver"
 alignment = 1
@@ -774,7 +766,7 @@ layout_mode = 2
 
 [node name="recordsButton" parent="mainMenuPanel/VBoxContainer/HBoxContainer3" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
-material = SubResource("ShaderMaterial_1dfos")
+material = SubResource("ShaderMaterial_mvrw2")
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -808,14 +800,14 @@ self_modulate = Color(1, 1, 1, 0)
 custom_minimum_size = Vector2(66, 0)
 layout_mode = 2
 
-[node name="settingsButton" parent="mainMenuPanel/VBoxContainer/HBoxContainer5" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
+[node name="howToPlayButton" parent="mainMenuPanel/VBoxContainer/HBoxContainer5" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
-material = SubResource("ShaderMaterial_i4l8e")
+material = SubResource("ShaderMaterial_rkk1j")
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_font_sizes/font_size = 40
-text = "  Settings"
+text = "  How To Play"
 
 [node name="VSeparator4" type="VSeparator" parent="mainMenuPanel/VBoxContainer/HBoxContainer5"]
 self_modulate = Color(1, 1, 1, 0)
@@ -831,15 +823,6 @@ size_flags_vertical = 4
 self_modulate = Color(1, 1, 1, 0)
 custom_minimum_size = Vector2(99, 0)
 layout_mode = 2
-
-[node name="quitButton" parent="mainMenuPanel/VBoxContainer/HBoxContainer4" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
-unique_name_in_owner = true
-material = SubResource("ShaderMaterial_53f5s")
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-theme_override_font_sizes/font_size = 40
-text = "  Quit"
 
 [node name="carStatsContainer" parent="." groups=["characterMenu"] instance=ExtResource("11_wos04")]
 anchors_preset = -1
@@ -941,7 +924,7 @@ size_flags_vertical = 0
 theme_override_constants/separation = 40
 
 [node name="previous_car_button" parent="VBoxContainer2/HBoxContainer" instance=ExtResource("4_f12ks")]
-material = SubResource("ShaderMaterial_ati4u")
+material = SubResource("ShaderMaterial_hi8lx")
 custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
 size_flags_horizontal = 0
@@ -949,7 +932,7 @@ theme_override_font_sizes/font_size = 75
 text = "<"
 
 [node name="next_car_button" parent="VBoxContainer2/HBoxContainer" instance=ExtResource("4_f12ks")]
-material = SubResource("ShaderMaterial_ky42y")
+material = SubResource("ShaderMaterial_olewx")
 custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
 size_flags_horizontal = 0
@@ -1069,7 +1052,5 @@ fit_content = true
 [connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer/levelSelect" to="." method="_on_level_select_pressed"]
 [connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer3/recordsButton" to="." method="_on_records_button_pressed"]
 [connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer3/backButton" to="." method="_on_back_button_pressed"]
-[connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer5/settingsButton" to="." method="_on_settings_button_pressed"]
-[connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer4/quitButton" to="." method="_on_quit_button_pressed"]
 [connection signal="pressed" from="VBoxContainer2/HBoxContainer/previous_car_button" to="." method="_on_previous_car_button_pressed"]
 [connection signal="pressed" from="VBoxContainer2/HBoxContainer/next_car_button" to="." method="_on_next_car_button_pressed"]

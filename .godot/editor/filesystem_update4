@@ -75,3 +75,5 @@ res://scene/car/pickup/pickup.tscn
 res://scene/car/ambulance/ambulance.tscn
 res://scene/car/police/police.tscn
 res://scripts/global/saveManager.gd
+res://scene/player/menu/main/top_menu.tscn
+res://scene/player/menu/main/top_menu.gd

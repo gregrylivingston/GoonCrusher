@@ -248,8 +248,8 @@ func highlightAGameModeStar(starNodeGroup: String):
 
 
 
-func _on_quit_button_pressed():	get_tree().quit()
-func _on_settings_button_pressed():	add_child(load("res://scene/player/menu/settings/settings.tscn").instantiate())
+
+
 func _on_records_button_pressed():
 	var scene = load("res://scene/player/menu/gameSummary.tscn").instantiate()
 	scene.isGameSummary = false
