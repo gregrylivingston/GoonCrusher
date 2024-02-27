@@ -1,0 +1,18 @@
+[gd_scene load_steps=5 format=3 uid="uid://dvjl4lmqtkimn"]
+
+[ext_resource type="PackedScene" uid="uid://b7r4ro32w40xi" path="res://scene/powerup/powerup.tscn" id="1_p6gb1"]
+[ext_resource type="Shader" path="res://shader/shine.gdshader" id="2_6s8kv"]
+[ext_resource type="Texture2D" uid="uid://dwin6ujqoo570" path="res://texture/icon/oil.png" id="3_qo8nj"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_cnlfs"]
+resource_local_to_scene = true
+shader = ExtResource("2_6s8kv")
+shader_parameter/shine_color = Color(100, 100, 0, 1)
+shader_parameter/shine_speed = 5.0
+shader_parameter/shine_size = 0.02
+
+[node name="Powerup" instance=ExtResource("1_p6gb1")]
+material = SubResource("ShaderMaterial_cnlfs")
+texture = ExtResource("3_qo8nj")
+powerup = "oil"
+quantity = 1.0

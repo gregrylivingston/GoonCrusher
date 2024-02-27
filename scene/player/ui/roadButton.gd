@@ -22,7 +22,6 @@ func _process(delta):
 
 
 func _on_mouse_entered():
-	
 	if canGrabFocus && not has_focus(): 
 		grab_focus()
 		get_tree().create_tween().tween_property(self , "scale", Vector2(1.0,1.3),  animTransitionTimer)
@@ -46,6 +45,7 @@ func updateText(newText):
 	$HBoxContainer/Label.text = newText
 
 func updateIcon(newIcon):
+	$HBoxContainer/TextureRect.visible = true
 	$HBoxContainer/TextureRect.texture = newIcon
 	$HBoxContainer/TextureRect.material.set_shader_parameter("front_tex" , newIcon)
 	$HBoxContainer/TextureRect.material.set_shader_parameter("back_tex" ,  newIcon )

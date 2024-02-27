@@ -60,6 +60,7 @@ grow_vertical = 2
 theme_override_constants/separation = 15
 
 [node name="TextureRect" type="TextureRect" parent="HBoxContainer"]
+visible = false
 material = SubResource("ShaderMaterial_dikmq")
 layout_mode = 2
 size_flags_horizontal = 6
@@ -70,3 +71,4 @@ material = ExtResource("7_q553s")
 layout_mode = 2
 size_flags_horizontal = 6
 theme_override_font_sizes/font_size = 30
+text = " "

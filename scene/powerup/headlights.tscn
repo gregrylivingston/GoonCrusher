@@ -1,0 +1,18 @@
+[gd_scene load_steps=5 format=3 uid="uid://big6i6j5dhcvw"]
+
+[ext_resource type="PackedScene" uid="uid://b7r4ro32w40xi" path="res://scene/powerup/powerup.tscn" id="1_euqag"]
+[ext_resource type="Shader" path="res://shader/shine.gdshader" id="2_cwrof"]
+[ext_resource type="Texture2D" uid="uid://clojw36svyluh" path="res://texture/icon/headlight.png" id="3_rc3jj"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_cnlfs"]
+resource_local_to_scene = true
+shader = ExtResource("2_cwrof")
+shader_parameter/shine_color = Color(100, 100, 0, 1)
+shader_parameter/shine_speed = 5.0
+shader_parameter/shine_size = 0.02
+
+[node name="Powerup" instance=ExtResource("1_euqag")]
+material = SubResource("ShaderMaterial_cnlfs")
+texture = ExtResource("3_rc3jj")
+powerup = "headlight"
+quantity = 1.0

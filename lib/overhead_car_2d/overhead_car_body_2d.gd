@@ -19,6 +19,10 @@ class_name OverheadCarBody2D extends CharacterBody2D
 @export var steering: int = 12  # Amount that front wheel turns, in degrees
 @export var traction: int = 4   #brakes and turn-rate-increase
 @export var armor: int = 1
+var luck: int = 1
+var clover: int = 1
+var oil: int = 1
+var headlights: int = 1
 
 @export var friction:float = 0.1 #.9
 #friction of 0.5 might be sand
@@ -85,6 +89,11 @@ func _ready():
 		steering += SaveManager.getUpgradeLevel(Root.upgrade.STEERING)
 		traction += SaveManager.getUpgradeLevel(Root.upgrade.TRACTION)
 		armor += SaveManager.getUpgradeLevel(Root.upgrade.ARMOR)
+		headlights += SaveManager.getUpgradeLevel(Root.upgrade.HEADLIGHTS)
+		oil += SaveManager.getUpgradeLevel(Root.upgrade.OIL)
+		clover += SaveManager.getUpgradeLevel(Root.upgrade.CLOVER)
+		luck += SaveManager.getUpgradeLevel(Root.upgrade.LUCK)
+		
 		
 		$headlamps/carhighlight.texture = $sprite.texture
 		$headlamps/carhighlight.position = $sprite.position
@@ -397,9 +406,9 @@ func playRandomFxSound():
 		await get_tree().create_timer(0.5).timeout
 		$"AudioStream-Engine".stop()
 		
-@onready var headlamps = $headlamps
+@onready var myLights = $headlamps
 func turnOnHeadlights(status: bool):
-	headlamps.visible = status
+	myLights.visible = status
 	%indicatorLight.visible = status
 	
 func outOfFuel():

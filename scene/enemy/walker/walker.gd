@@ -19,6 +19,10 @@ var myMode: mode = mode.MOVE
 	Root.upgrade.STEERING:4,
 	Root.upgrade.ARMOR:4,
 	Root.upgrade.ENGINE:4,
+	Root.upgrade.OIL:4,
+	Root.upgrade.CLOVER:4,
+	Root.upgrade.HEADLIGHTS:4,
+	Root.upgrade.LUCK:4
 }
 
 var isGiant: bool = false

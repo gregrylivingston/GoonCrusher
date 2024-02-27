@@ -9,6 +9,8 @@ func _ready():
 	$VBoxContainer/Panel/HBoxContainer/attributeIndicator_aero.add_to_group("wheelui")
 	$VBoxContainer/Panel/HBoxContainer/attributeIndicator_armor.add_to_group("armorui")
 
+	
+
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
 	if is_instance_valid(Root.playerCar):
@@ -21,6 +23,11 @@ func updateStats():
 	$VBoxContainer/Panel/HBoxContainer/attributeIndicator_steering.setValue(Root.playerCar.steering)
 	$VBoxContainer/Panel/HBoxContainer/attributeIndicator_aero.setValue( Root.playerCar.traction )
 	$VBoxContainer/Panel/HBoxContainer/attributeIndicator_armor.setValue(Root.playerCar.armor)
+	%attributeIndicator_oil.setValue(Root.playerCar.oil)
+	%attributeIndicator_headlights.setValue(Root.playerCar.headlights)
+	%attributeIndicator_clover.setValue(Root.playerCar.clover)
+	%attributeIndicator_luck.setValue(Root.playerCar.luck)
+	
 	
 func setTexture(texture):
 	$VBoxContainer/CenterContainer/TextureRect.texture = texture

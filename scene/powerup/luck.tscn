@@ -1,0 +1,18 @@
+[gd_scene load_steps=5 format=3 uid="uid://c4sw1pgipg8a1"]
+
+[ext_resource type="PackedScene" uid="uid://b7r4ro32w40xi" path="res://scene/powerup/powerup.tscn" id="1_uidd2"]
+[ext_resource type="Shader" path="res://shader/shine.gdshader" id="2_w52tr"]
+[ext_resource type="Texture2D" uid="uid://dw45xqq8in4ce" path="res://texture/icon/luck.png" id="3_sy3dc"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_cnlfs"]
+resource_local_to_scene = true
+shader = ExtResource("2_w52tr")
+shader_parameter/shine_color = Color(100, 100, 0, 1)
+shader_parameter/shine_speed = 5.0
+shader_parameter/shine_size = 0.02
+
+[node name="Powerup" instance=ExtResource("1_uidd2")]
+material = SubResource("ShaderMaterial_cnlfs")
+texture = ExtResource("3_sy3dc")
+powerup = "luck"
+quantity = 1.0

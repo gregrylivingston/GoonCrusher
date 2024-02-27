@@ -2,7 +2,7 @@ extends Panel
 
 
 var isSpinning: bool = false
-var slotContents =[{
+var slotContents =[{ ###note coin shows up twice
 		"type":Root.upgrade.PURSE,
 		"icon":"res://texture/icon/purse.png",
 		},
@@ -17,6 +17,10 @@ var slotContents =[{
 	{
 		"type":Root.upgrade.TRACTION,
 		"icon":"res://texture/icon/wheel.png",
+	},
+	{
+		"type":Root.upgrade.COIN,
+		"icon":"res://texture/icon/icons8-coin-48 (1).png",
 	},
 	{
 		"type":Root.upgrade.STEERING,
@@ -37,6 +41,22 @@ var slotContents =[{
 	{
 		"type":Root.upgrade.COIN,
 		"icon":"res://texture/icon/icons8-coin-48 (1).png",
+	},
+	{
+		"type":Root.upgrade.OIL,
+		"icon":"res://texture/icon/oil.png",
+	},
+	{
+		"type":Root.upgrade.HEADLIGHTS,
+		"icon":"res://texture/icon/headlight.png",
+	},
+	{
+		"type":Root.upgrade.CLOVER,
+		"icon":"res://texture/icon/clover.png",
+	},
+	{
+		"type":Root.upgrade.LUCK,
+		"icon":"res://texture/icon/luck.png",
 	},
 ]
 

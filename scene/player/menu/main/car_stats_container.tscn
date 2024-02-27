@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3 uid="uid://clx3q1jksnuoc"]
+[gd_scene load_steps=15 format=3 uid="uid://clx3q1jksnuoc"]
 
 [ext_resource type="PackedScene" uid="uid://i0goedbwsro6" path="res://scene/player/ui/attribute_indicator.tscn" id="1_awv6k"]
 [ext_resource type="Script" path="res://scene/player/menu/main/car_stats_container.gd" id="1_mv7o5"]
@@ -10,13 +10,17 @@
 [ext_resource type="PackedScene" uid="uid://maftjaqqaasp" path="res://scene/player/menu/main/statUpgradeButton.tscn" id="8_neb62"]
 [ext_resource type="Texture2D" uid="uid://s1pejsjjv3o7" path="res://texture/icon/uparrow.png" id="9_adcsu"]
 [ext_resource type="Texture2D" uid="uid://w03tvhxtmrv4" path="res://texture/icon/icons8-coin-48 (1).png" id="9_lbbgn"]
+[ext_resource type="Texture2D" uid="uid://cdchffiu3n8tp" path="res://texture/icon/clover.png" id="11_3owda"]
+[ext_resource type="Texture2D" uid="uid://clojw36svyluh" path="res://texture/icon/headlight.png" id="11_5kyde"]
+[ext_resource type="Texture2D" uid="uid://dw45xqq8in4ce" path="res://texture/icon/luck.png" id="11_ns38o"]
+[ext_resource type="Texture2D" uid="uid://dwin6ujqoo570" path="res://texture/icon/oil.png" id="11_q2r0p"]
 
 [node name="carStatsContainer" type="VBoxContainer"]
 custom_minimum_size = Vector2(700, 150)
-offset_left = 556.0
+offset_left = 627.0
 offset_top = 357.0
 offset_right = 1447.0
-offset_bottom = 508.0
+offset_bottom = 632.0
 script = ExtResource("1_mv7o5")
 
 [node name="HBoxContainer" type="HBoxContainer" parent="."]
@@ -27,24 +31,36 @@ size_flags_vertical = 3
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
+tooltip_text = "Armor
+
+Reduces damage from goons and collisions."
 myIcon = ExtResource("5_1k2du")
 
 [node name="engine" parent="HBoxContainer" instance=ExtResource("1_awv6k")]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
+tooltip_text = "Engine
+
+Improves acceleration and top speed."
 myIcon = ExtResource("4_3l7yx")
 
 [node name="traction" parent="HBoxContainer" instance=ExtResource("1_awv6k")]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
+tooltip_text = "Wheels
+
+Improves braking, traction, and turning."
 myIcon = ExtResource("3_gtqp7")
 
 [node name="steering" parent="HBoxContainer" instance=ExtResource("1_awv6k")]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
+tooltip_text = "Steering
+
+Decreases turn radius, speed lost turning, and turning delay."
 myIcon = ExtResource("2_ekr1k")
 
 [node name="VSeparator" type="VSeparator" parent="HBoxContainer"]
@@ -117,7 +133,132 @@ size_flags_horizontal = 10
 size_flags_vertical = 3
 myIcon = ExtResource("8_5isf4")
 
+[node name="HSeparator" type="HSeparator" parent="."]
+self_modulate = Color(1, 1, 1, 0)
+custom_minimum_size = Vector2(0, 10.86)
+layout_mode = 2
+
+[node name="HBoxContainer3" type="HBoxContainer" parent="."]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="headlights" parent="HBoxContainer3" instance=ExtResource("1_awv6k")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+tooltip_text = "Headlights
+
+Improves headlight visibility and resistance to damage."
+myIcon = ExtResource("11_5kyde")
+
+[node name="oil" parent="HBoxContainer3" instance=ExtResource("1_awv6k")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+tooltip_text = "Oil
+
+Improves fuel efficiency."
+myIcon = ExtResource("11_q2r0p")
+
+[node name="clover" parent="HBoxContainer3" instance=ExtResource("1_awv6k")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+tooltip_text = "4 Leaf Clovers
+
+Increases the chance a goon drops a prize."
+myIcon = ExtResource("11_3owda")
+
+[node name="luck" parent="HBoxContainer3" instance=ExtResource("1_awv6k")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+tooltip_text = "Luck
+
+Improves the chances of getting high value prizes from goon drops."
+myIcon = ExtResource("11_ns38o")
+
+[node name="VSeparator" type="VSeparator" parent="HBoxContainer3"]
+self_modulate = Color(1, 1, 1, 0)
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+
+[node name="coin" parent="HBoxContainer3" instance=ExtResource("1_awv6k")]
+modulate = Color(1, 1, 1, 0)
+custom_minimum_size = Vector2(160, 52)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+disabled = true
+myIcon = ExtResource("9_lbbgn")
+
+[node name="HBoxContainer4" type="HBoxContainer" parent="."]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="statUpgrade" parent="HBoxContainer4" instance=ExtResource("8_neb62")]
+custom_minimum_size = Vector2(0, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+text = ""
+icon = ExtResource("9_adcsu")
+alignment = 2
+myStat = 8
+canGrabFocus = false
+
+[node name="statUpgrade2" parent="HBoxContainer4" instance=ExtResource("8_neb62")]
+custom_minimum_size = Vector2(0, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+text = ""
+icon = ExtResource("9_adcsu")
+alignment = 2
+myStat = 9
+canGrabFocus = false
+
+[node name="statUpgrade3" parent="HBoxContainer4" instance=ExtResource("8_neb62")]
+custom_minimum_size = Vector2(0, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+text = ""
+icon = ExtResource("9_adcsu")
+alignment = 2
+myStat = 6
+canGrabFocus = false
+
+[node name="statUpgrade4" parent="HBoxContainer4" instance=ExtResource("8_neb62")]
+custom_minimum_size = Vector2(0, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+text = ""
+icon = ExtResource("9_adcsu")
+alignment = 2
+myStat = 7
+canGrabFocus = false
+
+[node name="VSeparator2" type="VSeparator" parent="HBoxContainer4"]
+self_modulate = Color(1, 1, 1, 0)
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+
+[node name="gem" parent="HBoxContainer4" instance=ExtResource("1_awv6k")]
+modulate = Color(1, 1, 1, 0)
+custom_minimum_size = Vector2(160, 52)
+layout_mode = 2
+size_flags_horizontal = 10
+size_flags_vertical = 3
+myIcon = ExtResource("8_5isf4")
+
 [connection signal="property_list_changed" from="HBoxContainer2/statUpgrade" to="HBoxContainer2/statUpgrade" method="_on_property_list_changed"]
 [connection signal="property_list_changed" from="HBoxContainer2/statUpgrade2" to="HBoxContainer2/statUpgrade2" method="_on_property_list_changed"]
 [connection signal="property_list_changed" from="HBoxContainer2/statUpgrade3" to="HBoxContainer2/statUpgrade3" method="_on_property_list_changed"]
 [connection signal="property_list_changed" from="HBoxContainer2/statUpgrade4" to="HBoxContainer2/statUpgrade4" method="_on_property_list_changed"]
+[connection signal="property_list_changed" from="HBoxContainer4/statUpgrade" to="HBoxContainer4/statUpgrade" method="_on_property_list_changed"]
+[connection signal="property_list_changed" from="HBoxContainer4/statUpgrade2" to="HBoxContainer4/statUpgrade2" method="_on_property_list_changed"]
+[connection signal="property_list_changed" from="HBoxContainer4/statUpgrade3" to="HBoxContainer4/statUpgrade3" method="_on_property_list_changed"]
+[connection signal="property_list_changed" from="HBoxContainer4/statUpgrade4" to="HBoxContainer4/statUpgrade4" method="_on_property_list_changed"]

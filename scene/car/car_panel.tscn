@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3 uid="uid://bf1f5117fhyd2"]
+[gd_scene load_steps=24 format=3 uid="uid://bf1f5117fhyd2"]
 
 [ext_resource type="Script" path="res://scene/car/car_panel.gd" id="1_ose0a"]
 [ext_resource type="PackedScene" uid="uid://i0goedbwsro6" path="res://scene/player/ui/attribute_indicator.tscn" id="1_sbnje"]
@@ -9,9 +9,13 @@
 [ext_resource type="Texture2D" uid="uid://b282uef7te4fk" path="res://texture/icon/wheel.png" id="7_y38vu"]
 [ext_resource type="Texture2D" uid="uid://ckvii7iuglgha" path="res://texture/icon/shield.png" id="8_sqmqh"]
 [ext_resource type="Texture2D" uid="uid://dthtmohgw8u1f" path="res://scene/car/audi/Audi.png" id="8_w0ppy"]
+[ext_resource type="Texture2D" uid="uid://dwin6ujqoo570" path="res://texture/icon/oil.png" id="10_vjw6w"]
 [ext_resource type="Texture2D" uid="uid://bwlwtwutv2vx1" path="res://texture/icon/gas.png" id="11_sb4te"]
 [ext_resource type="PackedScene" uid="uid://bepxjqhida0n8" path="res://scene/player/ui/roadButton.tscn" id="11_v8b53"]
+[ext_resource type="Texture2D" uid="uid://clojw36svyluh" path="res://texture/icon/headlight.png" id="11_wfrgp"]
 [ext_resource type="Material" uid="uid://d4nw1uchte7mv" path="res://scene/player/menu/main/3dText_Common.tres" id="12_ib4fu"]
+[ext_resource type="Texture2D" uid="uid://cdchffiu3n8tp" path="res://texture/icon/clover.png" id="12_m7voe"]
+[ext_resource type="Texture2D" uid="uid://dw45xqq8in4ce" path="res://texture/icon/luck.png" id="13_k236w"]
 [ext_resource type="Shader" path="res://shader/3dtext.gdshader" id="13_re0hq"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ei1gt"]
@@ -55,7 +59,7 @@ corner_radius_top_right = 5
 corner_radius_bottom_right = 5
 corner_radius_bottom_left = 5
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_2ebwm"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_rvs0p"]
 resource_local_to_scene = true
 shader = ExtResource("13_re0hq")
 shader_parameter/angle = 0.6
@@ -178,6 +182,50 @@ theme_override_styles/pressed = SubResource("StyleBoxEmpty_gi0ic")
 theme_override_styles/focus = SubResource("StyleBoxEmpty_gi0ic")
 myIcon = ExtResource("8_sqmqh")
 
+[node name="attributeIndicator_oil" parent="VBoxContainer/Panel/HBoxContainer" groups=["oilui"] instance=ExtResource("1_sbnje")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 6
+theme_override_styles/normal = SubResource("StyleBoxEmpty_gi0ic")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_gi0ic")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_gi0ic")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_gi0ic")
+myIcon = ExtResource("10_vjw6w")
+
+[node name="attributeIndicator_headlights" parent="VBoxContainer/Panel/HBoxContainer" groups=["headlightsui"] instance=ExtResource("1_sbnje")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 6
+theme_override_styles/normal = SubResource("StyleBoxEmpty_gi0ic")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_gi0ic")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_gi0ic")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_gi0ic")
+myIcon = ExtResource("11_wfrgp")
+
+[node name="attributeIndicator_clover" parent="VBoxContainer/Panel/HBoxContainer" groups=["cloverui"] instance=ExtResource("1_sbnje")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 6
+theme_override_styles/normal = SubResource("StyleBoxEmpty_gi0ic")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_gi0ic")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_gi0ic")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_gi0ic")
+myIcon = ExtResource("12_m7voe")
+
+[node name="attributeIndicator_luck" parent="VBoxContainer/Panel/HBoxContainer" groups=["luckui"] instance=ExtResource("1_sbnje")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 6
+theme_override_styles/normal = SubResource("StyleBoxEmpty_gi0ic")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_gi0ic")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_gi0ic")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_gi0ic")
+myIcon = ExtResource("13_k236w")
+
 [node name="CenterContainer" type="CenterContainer" parent="VBoxContainer"]
 visible = false
 custom_minimum_size = Vector2(0, 220)
@@ -242,7 +290,7 @@ value = 100.0
 show_percentage = false
 
 [node name="pauseButton" parent="." instance=ExtResource("11_v8b53")]
-material = SubResource("ShaderMaterial_2ebwm")
+material = SubResource("ShaderMaterial_rvs0p")
 layout_mode = 1
 anchors_preset = 0
 anchor_right = 0.0

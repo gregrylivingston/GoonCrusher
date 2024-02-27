@@ -28,6 +28,10 @@ var earnedGems: int
 	upgrade.ENGINE:preload("res://scene/powerup/engine.tscn"),
 	upgrade.ARMOR:preload("res://scene/powerup/armor.tscn"),
 	upgrade.TRACTION:preload("res://scene/powerup/traction.tscn"),
+	upgrade.HEADLIGHTS:preload("res://scene/powerup/headlights.tscn"),
+	upgrade.OIL:preload("res://scene/powerup/oil.tscn"),
+	upgrade.LUCK:preload("res://scene/powerup/luck.tscn"),
+	upgrade.CLOVER:preload("res://scene/powerup/clover.tscn"),
 	
 	upgrade.COIN:preload("res://scene/powerup/coin.tscn"),
 	upgrade.PURSE:preload("res://scene/powerup/purse.tscn"),
