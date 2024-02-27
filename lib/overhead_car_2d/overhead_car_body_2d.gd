@@ -19,10 +19,10 @@ class_name OverheadCarBody2D extends CharacterBody2D
 @export var steering: int = 12  # Amount that front wheel turns, in degrees
 @export var traction: int = 4   #brakes and turn-rate-increase
 @export var armor: int = 1
-var luck: int = 1
-var clover: int = 1
-var oil: int = 1
-var headlights: int = 1
+@export var luck: int = 1
+@export var clover: int = 1
+@export var oil: int = 1
+@export var headlights: int = 1
 
 @export var friction:float = 0.1 #.9
 #friction of 0.5 might be sand

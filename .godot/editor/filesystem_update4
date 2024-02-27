@@ -65,3 +65,12 @@ res://scene/player/ui/attribute_indicator.gd
 res://scene/player/slots/slot_row.tscn
 res://scene/player/slots/slot_row.gd
 res://scene/player/slots/slotMachine.tscn
+res://scene/car/sedan/sedan.tscn
+res://scene/car/taxi/taxi.tscn
+res://scene/car/van/van.tscn
+res://scene/car/semi/semi.tscn
+res://scene/car/racer/racer.tscn
+res://scene/car/audi/audi.tscn
+res://scene/car/pickup/pickup.tscn
+res://scene/car/ambulance/ambulance.tscn
+res://scene/car/police/police.tscn

@@ -42,6 +42,8 @@ var earnedGems: int
 	
 func getPowerupFromWeights( powerupWeightDict:Dictionary ) -> Powerup:
 	var weightTotal = 0
+	if powerupWeightDict.has(Root.upgrade.COIN):
+		powerupWeightDict[Root.upgrade.COIN] -= clampi( powerupWeightDict[Root.upgrade.COIN] - Root.playerCar.luck , 0 , 999999)
 	for i in powerupWeightDict:
 		weightTotal += powerupWeightDict[i]
 	var myRandomNumber = randi_range(0 , weightTotal)

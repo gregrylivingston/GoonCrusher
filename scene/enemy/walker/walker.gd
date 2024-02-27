@@ -3,7 +3,6 @@ class_name Walker extends Enemy
 enum mode { MOVE , ATTACK , IDLE , DEAD , PREPAREATTACK}
 var myMode: mode = mode.MOVE
 
-@export var powerupDropChance: int = 25
 @export var speed: int = 6000
 @export var prepareAttackDistance: int = 300
 @export var attackSpeedMultiplier: float = 3.0
@@ -141,8 +140,7 @@ func destroy():
 	$AudioStreamPlayer2D.pitch_scale = randf_range(0.95,1.05)
 	$AudioStreamPlayer2D.play()
 	
-	var diceRoll = randi_range(0,100) 
-	if diceRoll < powerupDropChance:
+	if randi_range(0,200) + Root.playerCar.clover > 150:
 		await get_tree().create_timer(0.5).timeout
 		var newPowerup = Root.getPowerupFromWeights(powerupDropDict)
 		newPowerup.position = global_position
