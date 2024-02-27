@@ -140,7 +140,7 @@ func destroy():
 	$AudioStreamPlayer2D.pitch_scale = randf_range(0.95,1.05)
 	$AudioStreamPlayer2D.play()
 	
-	if randi_range(0,200) + Root.playerCar.clover > 150:
+	if randi_range(0,200) + Root.playerCar.clover > 190:
 		await get_tree().create_timer(0.5).timeout
 		var newPowerup = Root.getPowerupFromWeights(powerupDropDict)
 		newPowerup.position = global_position

@@ -191,7 +191,6 @@ shader_parameter/show_bound = false
 [node name="Car" instance=ExtResource("1_oirr4")]
 engine = 30
 steering = 20
-traction = 20.0
 armor = 40
 clover = 20
 oil = 10
