@@ -17,6 +17,7 @@ func _ready():
 		SaveManager.addGems( Root.earnedGems )
 		Root.earnedCoins = 0
 		Root.earnedGems = 0
+	await get_tree().process_frame
 	%levelSelect.grab_focus()
 
 func _process(delta):

@@ -25,7 +25,7 @@ func _on_mouse_entered():
 	if canGrabFocus && not has_focus(): 
 		grab_focus()
 		get_tree().create_tween().tween_property(self , "scale", Vector2(1.0,1.3),  animTransitionTimer)
-		get_tree().create_tween().tween_property(self , "position", position + Vector2(0,-10),  animTransitionTimer)
+		#get_tree().create_tween().tween_property(self , "position", position + Vector2(0,-10),  animTransitionTimer)
 		$AudioStreamPlayer.play()
 		get_tree().create_tween().tween_method(set3dAnimationAngle, PI/8, PI , animTransitionTimer)
 		#set3dAnimationAngle(PI)
@@ -49,23 +49,20 @@ func updateIcon(newIcon):
 	$HBoxContainer/TextureRect.texture = newIcon
 	$HBoxContainer/TextureRect.material.set_shader_parameter("front_tex" , newIcon)
 	$HBoxContainer/TextureRect.material.set_shader_parameter("back_tex" ,  newIcon )
-	#$HBoxContainer/TextureRect.material.set_shader_parameter("side_tex" ,  newIcon )
-	#$HBoxContainer/TextureRect.material.set_shader_parameter("outline_tex" ,  newIcon )
 
 
 func _on_focus_entered():
 	get_tree().create_tween().tween_method(set3dAnimationAngle, PI/8, PI , animTransitionTimer)
 
-
-func _on_focus_exited():
-	get_tree().create_tween().tween_method(set3dAnimationAngle, PI, PI/8 , animTransitionTimer)
-	get_tree().create_tween().tween_property(self , "scale", Vector2(1.0,1.0),  animTransitionTimer)
-	get_tree().create_tween().tween_property(self , "position", position + Vector2(0 , 10),  animTransitionTimer)
+func _on_focus_exited():removeFocusAnimation()
 
 func _on_mouse_exited():
 	if not has_focus() || not canGrabFocus:
-		get_tree().create_tween().tween_method(set3dAnimationAngle, PI, PI/8 , animTransitionTimer)
-		get_tree().create_tween().tween_property(self , "scale", Vector2(1.0,1.0),  animTransitionTimer)
+		removeFocusAnimation()
 
+func removeFocusAnimation():
+	get_tree().create_tween().tween_method(set3dAnimationAngle, PI, PI/8 , animTransitionTimer)
+	get_tree().create_tween().tween_property(self , "scale", Vector2(1.0,1.0),  animTransitionTimer)
+#	get_tree().create_tween().tween_property(self , "position", position + Vector2(0 , 10),  animTransitionTimer)
 
 
