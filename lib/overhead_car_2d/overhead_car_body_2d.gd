@@ -95,11 +95,9 @@ func _ready():
 		luck += SaveManager.getUpgradeLevel(Root.upgrade.LUCK)
 		
 		
-		$headlamps/carhighlight.texture = $sprite.texture
-		$headlamps/carhighlight.position = $sprite.position
-	else: 
-		$headlamps/carhighlight.queue_free()
-
+	$headlamps/carhighlight.texture = $sprite.texture
+	$headlamps/carhighlight.position = $sprite.position
+	setHeadlightStrength()
 	stopCarFX()
 
 var gasWarningGiven = false
@@ -348,8 +346,13 @@ func reward(powerup: String , quantity, forShowOnly: bool = false):
 	if Root.isRunActive:
 		if not is_instance_valid(ui): ui = get_tree().get_nodes_in_group("playerGameUi")[0]
 		ui.updateStats()
-	if powerup == "currentGoonsCrushed": ui.updateGoonsCrushed()
+	match powerup:
+		"currentGoonsCrushed": ui.updateGoonsCrushed()
+		"headlights":setHeadlightStrength()
 
+
+func setHeadlightStrength():
+	$headlamps/headlights.scale = Vector2( 1.0 + float(headlights)/100 , 1.0 + float(headlights)/100)
 
 func playPurseRewardAudio():
 	if  purseAudio.size() > 0 && not $"AudioStream-Voice".playing:

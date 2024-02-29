@@ -38,3 +38,6 @@ res://scene/car/ambulance/ambulance.tscn
 res://scene/car/police/police.tscn
 res://scene/car/car_panel.tscn
 res://scene/powerup/headlights.tscn
+res://shader/shader_edgeglow.tres
+res://lib/overhead_car_2d/overhead_car_body_2d.gd
+res://scripts/global/saveManager.gd
