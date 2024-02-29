@@ -1,4 +1,4 @@
-[gd_scene load_steps=24 format=3 uid="uid://bf1f5117fhyd2"]
+[gd_scene load_steps=23 format=3 uid="uid://bf1f5117fhyd2"]
 
 [ext_resource type="Script" path="res://scene/car/car_panel.gd" id="1_ose0a"]
 [ext_resource type="PackedScene" uid="uid://i0goedbwsro6" path="res://scene/player/ui/attribute_indicator.tscn" id="1_sbnje"]
@@ -8,7 +8,6 @@
 [ext_resource type="Texture2D" uid="uid://b40eqkba0jho8" path="res://texture/icon/engine.png" id="6_i8q0m"]
 [ext_resource type="Texture2D" uid="uid://b282uef7te4fk" path="res://texture/icon/wheel.png" id="7_y38vu"]
 [ext_resource type="Texture2D" uid="uid://ckvii7iuglgha" path="res://texture/icon/shield.png" id="8_sqmqh"]
-[ext_resource type="Texture2D" uid="uid://dthtmohgw8u1f" path="res://scene/car/audi/Audi.png" id="8_w0ppy"]
 [ext_resource type="Texture2D" uid="uid://dwin6ujqoo570" path="res://texture/icon/oil.png" id="10_vjw6w"]
 [ext_resource type="Texture2D" uid="uid://bwlwtwutv2vx1" path="res://texture/icon/gas.png" id="11_sb4te"]
 [ext_resource type="PackedScene" uid="uid://bepxjqhida0n8" path="res://scene/player/ui/roadButton.tscn" id="11_v8b53"]
@@ -124,25 +123,23 @@ layout_mode = 1
 offset_right = 200.0
 offset_bottom = 21.4
 
-[node name="Panel" type="Panel" parent="VBoxContainer"]
-self_modulate = Color(1, 1, 1, 0)
-layout_mode = 2
-size_flags_vertical = 0
+[node name="Panel" type="CanvasLayer" parent="VBoxContainer"]
+layer = 128
 
-[node name="HBoxContainer" type="VBoxContainer" parent="VBoxContainer/Panel"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -13.0
-offset_top = 130.0
-offset_right = -60.0
-offset_bottom = 651.0
-grow_horizontal = 2
+[node name="HBoxContainer" type="VBoxContainer" parent="VBoxContainer/Panel" groups=["visibleWhenPaused"]]
+visible = false
+z_index = 99
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_top = -313.0
+offset_right = 155.0
+offset_bottom = 323.0
 grow_vertical = 2
 theme_override_constants/separation = -4
 
 [node name="attributeIndicator_engine" parent="VBoxContainer/Panel/HBoxContainer" groups=["engineui"] instance=ExtResource("1_sbnje")]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 6
@@ -153,6 +150,7 @@ theme_override_styles/focus = SubResource("StyleBoxEmpty_gi0ic")
 myIcon = ExtResource("6_i8q0m")
 
 [node name="attributeIndicator_steering" parent="VBoxContainer/Panel/HBoxContainer" groups=["steeringui"] instance=ExtResource("1_sbnje")]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 6
@@ -163,6 +161,7 @@ theme_override_styles/focus = SubResource("StyleBoxEmpty_gi0ic")
 myIcon = ExtResource("5_h3pqn")
 
 [node name="attributeIndicator_aero" parent="VBoxContainer/Panel/HBoxContainer" groups=["tractionui"] instance=ExtResource("1_sbnje")]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 6
@@ -173,6 +172,7 @@ theme_override_styles/focus = SubResource("StyleBoxEmpty_gi0ic")
 myIcon = ExtResource("7_y38vu")
 
 [node name="attributeIndicator_armor" parent="VBoxContainer/Panel/HBoxContainer" groups=["armorui"] instance=ExtResource("1_sbnje")]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 6
@@ -225,20 +225,6 @@ theme_override_styles/hover = SubResource("StyleBoxEmpty_gi0ic")
 theme_override_styles/pressed = SubResource("StyleBoxEmpty_gi0ic")
 theme_override_styles/focus = SubResource("StyleBoxEmpty_gi0ic")
 myIcon = ExtResource("13_k236w")
-
-[node name="CenterContainer" type="CenterContainer" parent="VBoxContainer"]
-visible = false
-custom_minimum_size = Vector2(0, 220)
-layout_mode = 2
-size_flags_horizontal = 8
-
-[node name="TextureRect" type="TextureRect" parent="VBoxContainer/CenterContainer"]
-visible = false
-custom_minimum_size = Vector2(200, 200)
-layout_mode = 2
-size_flags_horizontal = 4
-texture = ExtResource("8_w0ppy")
-expand_mode = 1
 
 [node name="HBoxContainer" type="HBoxContainer" parent="."]
 layout_mode = 1

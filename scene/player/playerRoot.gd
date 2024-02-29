@@ -23,6 +23,7 @@ func _ready():
 func _process(delta):
 	if Input.is_action_just_pressed("ui_menu") && get_tree().get_nodes_in_group("pauseMenu").size() == 0:
 		get_tree().paused = true
+		for i in get_tree().get_nodes_in_group("visibleWhenPaused"):i.visible = true
 		add_child( load("res://scene/player/menu/pauseMenu.tscn").instantiate() )
 	$Panel2/HBoxContainer/coins.text = str( Root.playerCar.coin )
 	$Panel4/HBoxContainer/gem.text = str( Root.playerCar.gem )

@@ -21,7 +21,6 @@ func _ready():
 	Root.isRunActive = true
 	
 	Root.playerRoot = get_tree().get_nodes_in_group("playerGameUi")[0]
-	Root.playerRoot.get_node("carPanel").setTexture( Root.playerCar.get_node("sprite").texture )
 	Root.playerRoot.updateStats()
 	
 	match SaveManager.playerData.gameMode:

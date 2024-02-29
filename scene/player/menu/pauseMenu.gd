@@ -10,10 +10,12 @@ func _ready():
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
-	pass
+	if Input.is_action_just_pressed("ui_menu"):
+		_on_continue_pressed()
 
 
 func _on_continue_pressed():
+	for i in get_tree().get_nodes_in_group("visibleWhenPaused"):i.visible = false
 	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
 	queue_free()	
 	get_tree().paused = false
