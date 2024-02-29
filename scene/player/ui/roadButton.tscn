@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3 uid="uid://bepxjqhida0n8"]
+[gd_scene load_steps=10 format=3 uid="uid://bepxjqhida0n8"]
 
 [ext_resource type="Theme" uid="uid://co40pijjc7hbw" path="res://style/roadRogue.tres" id="1_gduxt"]
 [ext_resource type="StyleBox" uid="uid://dl1e0qtgp13cj" path="res://style/style_box_basic.tres" id="1_w5jvw"]
@@ -8,7 +8,8 @@
 [ext_resource type="AudioStream" uid="uid://bmxxnqvrvdch4" path="res://sound/ui/click.wav" id="4_fec5q"]
 [ext_resource type="Material" uid="uid://d4nw1uchte7mv" path="res://scene/player/menu/main/3dText_Common.tres" id="7_pmy3v"]
 
-[sub_resource type="Shader" id="Shader_a0oxw"]
+[sub_resource type="Shader" id="Shader_85i5l"]
+resource_local_to_scene = true
 code = "shader_type canvas_item;
 
 //from https://godotshaders.com/shader/cool-3d-text/
@@ -63,7 +64,7 @@ void transformRay(inout vec3 p, inout vec3 rd, float _angle, float _scale, vec2 
 	p.xy += p.z * _shear;
 	rd.xy += rd.z * _shear;
 
-	_angle = clamp( _angle * sin(TIME) , 0.0 ,100000);
+	_angle = clamp( _angle * sin(TIME *2.0 ) , -1000000 ,100000);
 	
 	// Apply rotation
 	mat2 R = mat2(vec2(cos(_angle),sin(_angle)),vec2(-sin(_angle),cos(_angle)));
@@ -166,24 +167,16 @@ void fragment(){
 	
 }"
 
-[sub_resource type="Gradient" id="Gradient_i0jlm"]
-offsets = PackedFloat32Array(0)
-colors = PackedColorArray(0, 0, 0, 0.52549)
-
-[sub_resource type="GradientTexture1D" id="GradientTexture1D_p8ylb"]
-gradient = SubResource("Gradient_i0jlm")
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_v7iif"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_tjqxj"]
 resource_local_to_scene = true
-shader = SubResource("Shader_a0oxw")
-shader_parameter/angle = 0.5
+shader = SubResource("Shader_85i5l")
+shader_parameter/angle = 0.6
 shader_parameter/thickness = 5.0
 shader_parameter/scale = 1.0
 shader_parameter/shear = Vector2(0, -0.2)
-shader_parameter/slices = 32
+shader_parameter/slices = 8
 shader_parameter/outline = true
-shader_parameter/outline_width = 1.0
-shader_parameter/outline_tex = SubResource("GradientTexture1D_p8ylb")
+shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
 [node name="RoadButton" type="Button"]
@@ -228,7 +221,7 @@ grow_vertical = 2
 theme_override_constants/separation = 15
 
 [node name="TextureRect" type="TextureRect" parent="HBoxContainer"]
-material = SubResource("ShaderMaterial_v7iif")
+material = SubResource("ShaderMaterial_tjqxj")
 layout_mode = 2
 size_flags_horizontal = 6
 size_flags_vertical = 4

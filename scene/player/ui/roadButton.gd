@@ -7,13 +7,14 @@ var animTransitionTimer = 0.15
 func _ready():
 	$HBoxContainer/Label.text = text
 	$HBoxContainer/TextureRect.texture = icon
-	icon = null
+
 	text = " "
 	$HBoxContainer/Label.add_theme_font_size_override("font_size" ,get_theme_font_size("font_size"))
-	if $HBoxContainer/TextureRect.texture == null:
+	if icon == null:
 		$HBoxContainer/TextureRect.visible = false
 	else:
 		updateIcon($HBoxContainer/TextureRect.texture)
+		icon = null
 
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -21,14 +22,8 @@ func _process(delta):
 	pass
 
 
-func _on_mouse_entered():
-	if canGrabFocus && not has_focus(): 
-		grab_focus()
-		get_tree().create_tween().tween_property(self , "scale", Vector2(1.0,1.3),  animTransitionTimer)
-		#get_tree().create_tween().tween_property(self , "position", position + Vector2(0,-10),  animTransitionTimer)
-		$AudioStreamPlayer.play()
-		get_tree().create_tween().tween_method(set3dAnimationAngle, PI/8, PI , animTransitionTimer)
-		#set3dAnimationAngle(PI)
+func _on_mouse_entered():startFocusAnimation()
+
 
 func set3dAnimationAngle(angle):
 	if $HBoxContainer/TextureRect != null:
@@ -52,7 +47,7 @@ func updateIcon(newIcon):
 
 
 func _on_focus_entered():
-	get_tree().create_tween().tween_method(set3dAnimationAngle, PI/8, PI , animTransitionTimer)
+	startFocusAnimation()
 
 func _on_focus_exited():removeFocusAnimation()
 
@@ -65,4 +60,12 @@ func removeFocusAnimation():
 	get_tree().create_tween().tween_property(self , "scale", Vector2(1.0,1.0),  animTransitionTimer)
 #	get_tree().create_tween().tween_property(self , "position", position + Vector2(0 , 10),  animTransitionTimer)
 
+func startFocusAnimation():
+	if canGrabFocus && not has_focus(): 
+		grab_focus()
+		get_tree().create_tween().tween_property(self , "scale", Vector2(1.0,1.15),  animTransitionTimer)
+		#get_tree().create_tween().tween_property(self , "position", position + Vector2(0,-10),  animTransitionTimer)
+		$AudioStreamPlayer.play()
+		get_tree().create_tween().tween_method(set3dAnimationAngle, PI/8, PI , animTransitionTimer)
+		#set3dAnimationAngle(PI)
 

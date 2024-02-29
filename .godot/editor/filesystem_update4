@@ -39,3 +39,4 @@ res://scene/player/menu/main/top_menu.tscn
 res://scene/player/menu/pauseMenu.tscn
 res://scene/player/ui/roadButton.tscn
 res://scene/player/ui/roadButton.gd
+res://scene/player/menu/main/car_stats_container.tscn

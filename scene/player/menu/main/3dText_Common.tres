@@ -1,6 +1,6 @@
 [gd_resource type="ShaderMaterial" load_steps=2 format=3 uid="uid://d4nw1uchte7mv"]
 
-[sub_resource type="Shader" id="Shader_nb1io"]
+[sub_resource type="Shader" id="Shader_85i5l"]
 resource_local_to_scene = true
 code = "shader_type canvas_item;
 
@@ -161,12 +161,12 @@ void fragment(){
 
 [resource]
 resource_local_to_scene = true
-shader = SubResource("Shader_nb1io")
+shader = SubResource("Shader_85i5l")
 shader_parameter/angle = 0.6
 shader_parameter/thickness = 5.0
 shader_parameter/scale = 1.0
 shader_parameter/shear = Vector2(0, -0.2)
-shader_parameter/slices = 16
+shader_parameter/slices = 8
 shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false

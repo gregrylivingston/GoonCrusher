@@ -87,7 +87,6 @@ text = ""
 icon = ExtResource("9_adcsu")
 alignment = 2
 myStat = 2
-canGrabFocus = false
 
 [node name="statUpgrade2" parent="HBoxContainer2" instance=ExtResource("8_neb62")]
 custom_minimum_size = Vector2(0, 0)
@@ -97,7 +96,6 @@ text = ""
 icon = ExtResource("9_adcsu")
 alignment = 2
 myStat = 3
-canGrabFocus = false
 
 [node name="statUpgrade3" parent="HBoxContainer2" instance=ExtResource("8_neb62")]
 custom_minimum_size = Vector2(0, 0)
@@ -107,7 +105,6 @@ text = ""
 icon = ExtResource("9_adcsu")
 alignment = 2
 myStat = 4
-canGrabFocus = false
 
 [node name="statUpgrade4" parent="HBoxContainer2" instance=ExtResource("8_neb62")]
 custom_minimum_size = Vector2(0, 0)
@@ -117,7 +114,6 @@ text = ""
 icon = ExtResource("9_adcsu")
 alignment = 2
 myStat = 5
-canGrabFocus = false
 
 [node name="VSeparator2" type="VSeparator" parent="HBoxContainer2"]
 self_modulate = Color(1, 1, 1, 0)
@@ -208,7 +204,6 @@ text = ""
 icon = ExtResource("9_adcsu")
 alignment = 2
 myStat = 8
-canGrabFocus = false
 
 [node name="statUpgrade2" parent="HBoxContainer4" instance=ExtResource("8_neb62")]
 custom_minimum_size = Vector2(0, 0)
@@ -218,7 +213,6 @@ text = ""
 icon = ExtResource("9_adcsu")
 alignment = 2
 myStat = 9
-canGrabFocus = false
 
 [node name="statUpgrade3" parent="HBoxContainer4" instance=ExtResource("8_neb62")]
 custom_minimum_size = Vector2(0, 0)
@@ -228,7 +222,6 @@ text = ""
 icon = ExtResource("9_adcsu")
 alignment = 2
 myStat = 6
-canGrabFocus = false
 
 [node name="statUpgrade4" parent="HBoxContainer4" instance=ExtResource("8_neb62")]
 custom_minimum_size = Vector2(0, 0)
@@ -238,7 +231,6 @@ text = ""
 icon = ExtResource("9_adcsu")
 alignment = 2
 myStat = 7
-canGrabFocus = false
 
 [node name="VSeparator2" type="VSeparator" parent="HBoxContainer4"]
 self_modulate = Color(1, 1, 1, 0)
