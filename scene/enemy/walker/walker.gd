@@ -107,12 +107,14 @@ func attack(delta):
 func idle():
 	look_at(  Root.playerCar.position )
 
-var moveCounter = randi_range(-100,100)
+var moveCounter = randi_range(-100,0)
+@export var maxMoveBeforeIdle: int = 1000
+
 func moveTowardsPlayer(delta):
 	moveCounter += 1
-	if moveCounter > 1000:
+	if moveCounter > maxMoveBeforeIdle:
 		myMode = mode.IDLE
-		moveCounter = randi_range(-100,100)
+		moveCounter = 0
 		$Walker.animation = "prepare_attack"
 	else:
 		var directionToPlayer =  position.direction_to( Root.playerCar.position )
@@ -145,9 +147,4 @@ func destroy():
 		var newPowerup = Root.getPowerupFromWeights(powerupDropDict)
 		newPowerup.position = global_position
 		Root.levelRoot.add_child(newPowerup)
-
-
-				
-			
-		
 

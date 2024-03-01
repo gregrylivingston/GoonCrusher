@@ -7,8 +7,11 @@
 size = Vector2(58, 17)
 
 [node name="firekin" instance=ExtResource("1_uvrnl")]
+speed = 20000
 attackSpeedMultiplier = 1.0
 attackDamage = 10.0
+myIdleLength = 8
+maxMoveBeforeIdle = 100
 
 [node name="CollisionShape2D" parent="." index="0"]
 position = Vector2(0, -2.5)
@@ -17,8 +20,7 @@ shape = SubResource("RectangleShape2D_cemrt")
 [node name="Walker" parent="." index="1"]
 sprite_frames = ExtResource("2_pg4s8")
 animation = &"default"
-frame = 0
-frame_progress = 0.524343
+frame_progress = 0.440852
 
 [node name="LightOccluder2D" parent="." index="4"]
 position = Vector2(-2, 1)

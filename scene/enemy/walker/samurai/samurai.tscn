@@ -4,9 +4,10 @@
 [ext_resource type="SpriteFrames" uid="uid://dljg77urgr0py" path="res://scene/enemy/walker/samurai/samurai.tres" id="2_mblwc"]
 
 [node name="samurai" instance=ExtResource("1_xht5c")]
-powerupDropChance = 25
-attackSpeedMultiplier = 5.0
-myIdleLength = 7
+speed = 10000
+attackSpeedMultiplier = 2.0
+myIdleLength = 4
+maxMoveBeforeIdle = 50
 
 [node name="Walker" parent="." index="1"]
 sprite_frames = ExtResource("2_mblwc")

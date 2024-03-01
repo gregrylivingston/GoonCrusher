@@ -55,6 +55,6 @@ func _process(delta):
 		increaseGiantOdds
 		giantTimer = 0
 	timeCount += delta
-	if timeCount > Root.spawnManager.spawnTimer:
+	if timeCount > spawnTimer:
 		for i in spawners:i.spawn()
 		timeCount = 0

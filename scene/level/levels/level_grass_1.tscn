@@ -12,5 +12,5 @@ requestedObjectTiles = Array[int]([1, 2, 3, 2, 4])
 position = Vector2(2866, 1583)
 
 [node name="SpawnManager" parent="." index="4"]
-basicGoons = Array[int]([0, 0, 1])
-giantOdds = -200
+spawnTimer = 5.0
+giantOdds = -20

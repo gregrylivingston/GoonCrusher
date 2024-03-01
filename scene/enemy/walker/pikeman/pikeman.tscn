@@ -4,7 +4,10 @@
 [ext_resource type="SpriteFrames" uid="uid://b4mv2fqwdud37" path="res://scene/enemy/walker/pikeman/pikeman.tres" id="2_qhupx"]
 
 [node name="pikeman" instance=ExtResource("1_iuc51")]
-attackSpeedMultiplier = 1.0
+speed = 5000
+attackSpeedMultiplier = 1.5
+myIdleLength = 2
+maxMoveBeforeIdle = 2000
 
 [node name="CollisionShape2D" parent="." index="0"]
 position = Vector2(-1, 0)
