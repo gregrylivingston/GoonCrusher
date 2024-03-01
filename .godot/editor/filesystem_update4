@@ -1,4 +1,4 @@
-res://scene/car/car.tscn
+res://scene/player/menu/main/main2.tscn
 res://shader/shine.gdshader
 res://style/roadRogue.tres
 res://scene/player/slots/slot_row_gradient.tres
@@ -21,9 +21,10 @@ res://shader/edgeGlow.gdshader
 res://shader/liquid.gdshader
 res://shader/3dicon.gdshader
 res://shader/ground_normals.gdshader
+res://scripts/global/saveManager.gd
+res://scene/car/car.tscn
 res://scene/level/levelRoot.tscn
 res://scene/player/playerRoot.tscn
-res://scene/player/menu/main/main2.tscn
 res://scene/level/tileManager.tscn
 res://scene/powerup/powerup.tscn
 res://scene/enemy/spawnManager.tscn
@@ -39,6 +40,3 @@ res://scene/player/menu/main/top_menu.tscn
 res://scene/player/menu/pauseMenu.tscn
 res://scene/player/ui/roadButton.tscn
 res://scene/player/menu/main/car_stats_container.tscn
-res://scene/player/Timer.gd
-res://scene/level/levelRoot.gd
-res://scripts/global/saveManager.gd
