@@ -24,7 +24,7 @@ func _ready():
 	Root.playerRoot.updateStats()
 	
 	match SaveManager.playerData.gameMode:
-		Root.gameModes.COUNTDOWN:createCountdownSpawners()
+		Root.gameModes.GOONCRUSHER:createCountdownSpawners()
 		Root.gameModes.GOONPOCALYPSE:createCountdownSpawners()
 		Root.gameModes.MARATHON:createSprintSpawners()
 		Root.gameModes.SPRINT:createSprintSpawners()
@@ -37,6 +37,8 @@ func _ready():
 		Root.gameModes.DEFENSE:
 			seconds = 0
 		Root.gameModes.GOONPOCALYPSE:
+			seconds = 0
+		Root.gameModes.GOONCRUSHER:
 			seconds = 0
 		Root.gameModes.MARATHON:
 			seconds = seconds * 5 #this is 5 times the length of sprint or countdown

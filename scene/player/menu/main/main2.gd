@@ -176,7 +176,7 @@ func setupGameModeStars(level):
 	
 	if not level.unlocked:
 		for i in [$VBoxContainer2/starContainer/TextureRect, $VBoxContainer2/starContainer/TextureRect3, $VBoxContainer2/starContainer/TextureRect2, $VBoxContainer2/starContainer/TextureRect4, $VBoxContainer2/starContainer/TextureRect5]:i.material = Mat_Star_Locked
-	elif not gamemodeBeat[ Root.gameModes.COUNTDOWN ]: #countdown hasn't been beaten...
+	elif not gamemodeBeat[ Root.gameModes.GOONCRUSHER ]: #countdown hasn't been beaten...
 		$VBoxContainer2/starContainer/TextureRect.material = Mat_Star_Unlocked
 		for i in [$VBoxContainer2/starContainer/TextureRect3, $VBoxContainer2/starContainer/TextureRect2, $VBoxContainer2/starContainer/TextureRect4, $VBoxContainer2/starContainer/TextureRect5]:i.material = Mat_Star_Locked
 	else:
@@ -214,11 +214,11 @@ func setGameModeLocked(reason: String):
 func selectGameMode(newGameMode):
 	var gamemodeBeat = SaveManager.playerData.levels[SaveManager.playerData.selectedLevel].gamemodeBeat
 	
-	if newGameMode == Root.gameModes.COUNTDOWN: #countdown hasn't been beaten...
+	if newGameMode == Root.gameModes.GOONCRUSHER: #countdown hasn't been beaten...
 		if SaveManager.playerData.levels[SaveManager.playerData.selectedLevel].unlocked: setGameModeUnlocked()
 		else:pass
 	elif newGameMode == Root.gameModes.SPRINT:
-		if gamemodeBeat[ Root.gameModes.COUNTDOWN ]:setGameModeUnlocked()
+		if gamemodeBeat[ Root.gameModes.GOONCRUSHER ]:setGameModeUnlocked()
 		else:setGameModeLocked(" Beat Countdown To Unlock")
 	elif gamemodeBeat[ Root.gameModes.SPRINT ]:
 		#setGameModeUnlocked()
@@ -269,7 +269,9 @@ func _on_begin_pressed():
 		menuModes.GAMEMODE:
 			Region.resetRegions()
 			get_tree().change_scene_to_file( SaveManager.playerData.levels[SaveManager.playerData.selectedLevel].scene)
-		menuModes.LEVEL:goToMenuMode(menuModes.GAMEMODE)
+		menuModes.LEVEL:#goToMenuMode(menuModes.GAMEMODE)
+			Region.resetRegions()
+			get_tree().change_scene_to_file( SaveManager.playerData.levels[SaveManager.playerData.selectedLevel].scene)
 
 func _on_unlock_pressed():
 	if SaveManager.unlockCar():

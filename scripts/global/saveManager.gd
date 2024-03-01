@@ -137,7 +137,7 @@ func currentLevelPassed():
 	if not playerData.levels[playerData.selectedLevel + 1].unlocked:
 		playerData.levels[playerData.selectedLevel + 1].unlocked = true
 		playerData.selectedLevel += 1
-		playerData.gameMode = Root.gameModes.COUNTDOWN
+		playerData.gameMode = Root.gameModes.GOONCRUSHER
 	save_character_data()
 
 var carNameToFind

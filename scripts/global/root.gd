@@ -1,6 +1,6 @@
 extends Node
 
-enum gameModes {  COUNTDOWN, SPRINT, MARATHON, DEFENSE, GOONPOCALYPSE }
+enum gameModes {  GOONCRUSHER , SPRINT, MARATHON, DEFENSE, GOONPOCALYPSE }
 enum endCondition { NOGAS , NOHEALTH , NOTIME , SUCCESS }
 enum upgrade { HEALTH , FUEL , ARMOR , ENGINE , TRACTION , STEERING , CLOVER , LUCK , HEADLIGHTS , OIL , COIN , PURSE , GEM , SLOTMACHINE, CURRENTGOONSCRUSHED}
 enum terrain { GRASS , SAND , MUD , WATER , HILLS , MOSS , DIRT , SNOW}
@@ -61,7 +61,7 @@ func getGoon():return spawnManager.getGoon()
 
 
 var gameModeDescription: Dictionary = {
-	Root.gameModes.COUNTDOWN:{
+	Root.gameModes.GOONCRUSHER:{
 		"description":"Survive the countdown while crushing increasing powerful waves of goon.",
 	},
 	Root.gameModes.SPRINT:{

@@ -93,7 +93,7 @@ func _ready():
 
 func setupByGamemode() -> void:
 	match SaveManager.playerData.gameMode:
-		Root.gameModes.COUNTDOWN:setupNoStations()
+		Root.gameModes.GOONCRUSHER:setupNoStations()
 		Root.gameModes.GOONPOCALYPSE:setupNoStations()
 		Root.gameModes.SPRINT:
 			loadChunk(Vector2i(0,0) , preload("res://scene/level/levelObjects/level_empty.tscn").instantiate())

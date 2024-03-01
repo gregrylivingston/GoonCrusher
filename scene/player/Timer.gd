@@ -8,6 +8,8 @@ func _ready():
 			timeIsCountingDown = 1
 		Root.gameModes.GOONPOCALYPSE:
 			timeIsCountingDown = 1
+		Root.gameModes.GOONCRUSHER:
+			timeIsCountingDown = 1
 		
 	await get_tree().process_frame
 	var clockSeconds = int(Root.levelRoot.seconds )%60
@@ -39,7 +41,7 @@ func _process(delta):
 		
 	if Root.levelRoot.seconds <= 0.01:
 		match SaveManager.playerData.gameMode:
-			Root.gameModes.COUNTDOWN:Root.levelRoot.endLevel(true , Root.endCondition.SUCCESS )
+			Root.gameModes.GOONCRUSHER:Root.levelRoot.endLevel(true , Root.endCondition.SUCCESS )
 			Root.gameModes.SPRINT:Root.levelRoot.endLevel(false , Root.endCondition.NOTIME )
 			Root.gameModes.MARATHON:Root.levelRoot.endLevel(false , Root.endCondition.NOTIME )
 
