@@ -12,6 +12,7 @@ config_version=5
 
 config/name="GoonCrusher"
 run/main_scene="res://scene/player/menu/main/main2.tscn"
+config/use_custom_user_dir=true
 config/features=PackedStringArray("4.2", "Mobile")
 boot_splash/show_image=false
 boot_splash/image="res://texture/background/iceBackground.png"
