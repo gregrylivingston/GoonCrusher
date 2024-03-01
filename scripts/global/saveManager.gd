@@ -5,7 +5,7 @@ var playerData: PlayerData
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
-	#reset_save()   ###add this line here, start the game, then remove it
+	reset_save()   ###add this line here, start the game, then remove it
 	playerData = load_data()
 	load_settings()
 	

@@ -41,3 +41,4 @@ res://scene/player/ui/roadButton.tscn
 res://scene/player/menu/main/car_stats_container.tscn
 res://scene/player/Timer.gd
 res://scene/level/levelRoot.gd
+res://scripts/global/saveManager.gd

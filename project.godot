@@ -10,12 +10,12 @@ config_version=5
 
 [application]
 
-config/name="AutoSurvivor"
+config/name="GoonCrusher"
 run/main_scene="res://scene/player/menu/main/main2.tscn"
 config/features=PackedStringArray("4.2", "Mobile")
 boot_splash/show_image=false
 boot_splash/image="res://texture/background/iceBackground.png"
-config/icon="res://scene/car/sedan/sedan1.png"
+config/icon="res://sedan.ico"
 
 [audio]
 

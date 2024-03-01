@@ -1,3 +1,7 @@
+D:/Godot/AutoSurvivor
+res://
+res://scene/car/sedan
+D:/Godot
 res://scene/player/menu/main
 res://scene/level/terrain
 res://scene/player
@@ -5,12 +9,10 @@ res://scripts/global
 res://texture/atlas
 res://scene
 res://shader
-D:/Godot/AutoSurvivor
 res://scene/scenery/walls
 res://texture/spritesheet
 res://scene/fx/explosion
 res://scene/scenery/groundarea
-res://scene/car/sedan
 res://texture/background
 res://scene/player/menu/settings
 res://lib/overhead_car_2d
@@ -18,5 +20,3 @@ res://scene/car/van
 res://scene/level/levels
 res://sound
 res://style
-res://scene/level
-res://texture/animation
