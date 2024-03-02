@@ -1,0 +1,113 @@
+[gd_resource type="SpriteFrames" load_steps=20 format=3 uid="uid://c7yisoeok3v0d"]
+
+[ext_resource type="Texture2D" uid="uid://c0yr7ue3hxvyh" path="res://scene/enemy/walker/doomcart/texture/0012.png" id="1_g8qg8"]
+[ext_resource type="Texture2D" uid="uid://o2jnvou31xwx" path="res://scene/enemy/walker/doomcart/texture/0013.png" id="2_xjwbi"]
+[ext_resource type="Texture2D" uid="uid://b27y5moe6miwu" path="res://scene/enemy/walker/doomcart/texture/0014.png" id="3_qqr0c"]
+[ext_resource type="Texture2D" uid="uid://co6t4eb4vvdmy" path="res://scene/enemy/walker/doomcart/texture/0015.png" id="4_ghtkp"]
+[ext_resource type="Texture2D" uid="uid://bjtd3v1sp4o0j" path="res://scene/enemy/walker/doomcart/texture/0016.png" id="5_j2dgv"]
+[ext_resource type="Texture2D" uid="uid://dm76lbcvnog3o" path="res://scene/enemy/walker/doomcart/texture/0017.png" id="6_e523r"]
+[ext_resource type="Texture2D" uid="uid://thi2i1jqupi0" path="res://scene/enemy/walker/doomcart/texture/0018.png" id="7_3ujwc"]
+[ext_resource type="Texture2D" uid="uid://u3df3qr32k54" path="res://scene/enemy/walker/doomcart/texture/0019.png" id="8_s558y"]
+[ext_resource type="Texture2D" uid="uid://yw8jusg31i0p" path="res://scene/enemy/walker/doomcart/texture/0020.png" id="9_n7wjn"]
+[ext_resource type="Texture2D" uid="uid://b414iiswihvfk" path="res://scene/enemy/walker/doomcart/texture/0021.png" id="10_0h2v0"]
+[ext_resource type="Texture2D" uid="uid://bmoq8ktpp7lgo" path="res://scene/enemy/walker/doomcart/texture/0022.png" id="11_sj7x6"]
+[ext_resource type="Texture2D" uid="uid://diws5ti5jtltp" path="res://scene/enemy/walker/doomcart/texture/0023.png" id="12_0a7i0"]
+[ext_resource type="Texture2D" uid="uid://ybehw3pauq5i" path="res://scene/enemy/walker/doomcart/texture/0024.png" id="13_04ew7"]
+[ext_resource type="Texture2D" uid="uid://vvsmvpeaxfg4" path="res://scene/enemy/walker/doomcart/texture/0025.png" id="14_m6m4m"]
+[ext_resource type="Texture2D" uid="uid://dw7sb42s8ihs8" path="res://scene/enemy/walker/doomcart/texture/0026.png" id="15_26dah"]
+[ext_resource type="Texture2D" uid="uid://dfkwtyw45ma25" path="res://scene/enemy/walker/doomcart/texture/0027.png" id="16_a717s"]
+[ext_resource type="Texture2D" uid="uid://bu1v4iv8e2oh4" path="res://scene/enemy/walker/doomcart/texture/0028.png" id="17_h5ecx"]
+[ext_resource type="Texture2D" uid="uid://du6kjg2eadsmy" path="res://scene/enemy/walker/doomcart/texture/0029.png" id="18_fhrea"]
+[ext_resource type="Texture2D" uid="uid://bjef5stqta8ac" path="res://scene/enemy/walker/doomcart/texture/0030.png" id="19_0geem"]
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_g8qg8")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_xjwbi")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_qqr0c")
+}],
+"loop": true,
+"name": &"attack",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("4_ghtkp")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_j2dgv")
+}, {
+"duration": 1.0,
+"texture": ExtResource("6_e523r")
+}, {
+"duration": 1.0,
+"texture": ExtResource("7_3ujwc")
+}, {
+"duration": 1.0,
+"texture": ExtResource("8_s558y")
+}, {
+"duration": 1.0,
+"texture": ExtResource("9_n7wjn")
+}, {
+"duration": 1.0,
+"texture": ExtResource("10_0h2v0")
+}, {
+"duration": 1.0,
+"texture": ExtResource("11_sj7x6")
+}, {
+"duration": 1.0,
+"texture": ExtResource("12_0a7i0")
+}, {
+"duration": 1.0,
+"texture": ExtResource("13_04ew7")
+}, {
+"duration": 1.0,
+"texture": ExtResource("14_m6m4m")
+}, {
+"duration": 1.0,
+"texture": ExtResource("15_26dah")
+}, {
+"duration": 1.0,
+"texture": ExtResource("16_a717s")
+}, {
+"duration": 1.0,
+"texture": ExtResource("17_h5ecx")
+}, {
+"duration": 1.0,
+"texture": ExtResource("18_fhrea")
+}, {
+"duration": 1.0,
+"texture": ExtResource("19_0geem")
+}],
+"loop": true,
+"name": &"death",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_g8qg8")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_xjwbi")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_qqr0c")
+}],
+"loop": true,
+"name": &"default",
+"speed": 20.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_g8qg8")
+}],
+"loop": true,
+"name": &"prepare_attack",
+"speed": 5.0
+}]

@@ -3,7 +3,7 @@ class_name SpawnManager extends Node
 @export var spawnTimer: float = 6.0
 @export var escalationSpeed = 0.07
 
-enum goon { DEVIL , SPARTAN , SAMURAI , FIREKIN, PIKEMAN }
+enum goon { DEVIL , SPARTAN , SAMURAI , FIREKIN, PIKEMAN , GOONBEAR , DOOMCART , GREMLIN , SHELLBACK }
 
 var basicGoons
 
@@ -13,6 +13,10 @@ var basicGoons
 	goon.FIREKIN:preload("res://scene/enemy/walker/firekin/firekin.tscn"),
 	goon.PIKEMAN:preload("res://scene/enemy/walker/pikeman/pikeman.tscn"),
 	goon.SAMURAI:preload("res://scene/enemy/walker/samurai/samurai.tscn"),
+	goon.GOONBEAR:preload("res://scene/enemy/walker/goonbear/goonbear.tscn"),
+	goon.DOOMCART:preload("res://scene/enemy/walker/doomcart/doomcart.tscn"),
+	goon.GREMLIN:preload("res://scene/enemy/walker/gremlin/gremlin.tscn"),
+	goon.SHELLBACK:preload("res://scene/enemy/walker/shellback/shellback.tscn"),
 }
 
 var giantTimer:float = 0

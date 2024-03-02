@@ -1,3 +1,4 @@
+res://scene/enemy/walker/gremlin
 D:/Godot/AutoSurvivor
 res://
 res://scene/car/sedan
@@ -19,4 +20,3 @@ res://lib/overhead_car_2d
 res://scene/car/van
 res://scene/level/levels
 res://sound
-res://style

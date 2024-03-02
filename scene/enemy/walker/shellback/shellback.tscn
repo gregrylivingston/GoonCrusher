@@ -1,0 +1,27 @@
+[gd_scene load_steps=4 format=3 uid="uid://3a1o27lqxb48"]
+
+[ext_resource type="PackedScene" uid="uid://ck730mtu8o5o8" path="res://scene/enemy/walker/walker.tscn" id="1_vp3vc"]
+[ext_resource type="SpriteFrames" uid="uid://3vcn5xj6a3lc" path="res://scene/enemy/walker/shellback/shellback.tres" id="2_85uwq"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_cemrt"]
+size = Vector2(58, 17)
+
+[node name="firekin" instance=ExtResource("1_vp3vc")]
+speed = 10000
+attackSpeedMultiplier = 1.0
+attackDamage = 10.0
+myIdleLength = 2
+maxMoveBeforeIdle = 250
+
+[node name="CollisionShape2D" parent="." index="0"]
+position = Vector2(0, -2.5)
+shape = SubResource("RectangleShape2D_cemrt")
+
+[node name="Walker" parent="." index="1"]
+sprite_frames = ExtResource("2_85uwq")
+animation = &"default"
+frame = 0
+frame_progress = 0.0
+
+[node name="LightOccluder2D" parent="." index="4"]
+position = Vector2(-2, 1)

@@ -1,0 +1,26 @@
+[gd_scene load_steps=4 format=3 uid="uid://cxn7my4kedpvn"]
+
+[ext_resource type="PackedScene" uid="uid://ck730mtu8o5o8" path="res://scene/enemy/walker/walker.tscn" id="1_o1l0d"]
+[ext_resource type="SpriteFrames" uid="uid://uvc3iink0yxj" path="res://scene/enemy/walker/goonbear/goonbear.tres" id="2_qipmn"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_cemrt"]
+size = Vector2(58, 17)
+
+[node name="goonbear" instance=ExtResource("1_o1l0d")]
+speed = 5000
+attackDamage = 10.0
+myIdleLength = 2
+maxMoveBeforeIdle = 400
+
+[node name="CollisionShape2D" parent="." index="0"]
+position = Vector2(0, -2.5)
+shape = SubResource("RectangleShape2D_cemrt")
+
+[node name="Walker" parent="." index="1"]
+sprite_frames = ExtResource("2_qipmn")
+animation = &"default"
+frame = 0
+frame_progress = 0.0
+
+[node name="LightOccluder2D" parent="." index="4"]
+position = Vector2(-2, 1)

@@ -1,0 +1,27 @@
+[gd_scene load_steps=4 format=3 uid="uid://csa2rch2o0w7a"]
+
+[ext_resource type="PackedScene" uid="uid://ck730mtu8o5o8" path="res://scene/enemy/walker/walker.tscn" id="1_r0mq0"]
+[ext_resource type="SpriteFrames" uid="uid://c7yisoeok3v0d" path="res://scene/enemy/walker/doomcart/doomcart.tres" id="2_oc2m0"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_cemrt"]
+size = Vector2(58, 17)
+
+[node name="doomcart" instance=ExtResource("1_r0mq0")]
+speed = 10000
+attackSpeedMultiplier = 1.0
+attackDamage = 10.0
+myIdleLength = 2
+maxMoveBeforeIdle = 500
+
+[node name="CollisionShape2D" parent="." index="0"]
+position = Vector2(0, -2.5)
+shape = SubResource("RectangleShape2D_cemrt")
+
+[node name="Walker" parent="." index="1"]
+sprite_frames = ExtResource("2_oc2m0")
+animation = &"default"
+frame = 0
+frame_progress = 0.0
+
+[node name="LightOccluder2D" parent="." index="4"]
+position = Vector2(-2, 1)

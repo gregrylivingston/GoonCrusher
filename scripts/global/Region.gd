@@ -80,9 +80,9 @@ func updatePlayerRegion(tile):
 	
 	await get_tree().process_frame
 	Root.playerRoot.updatePlayerRegion(tile)
-	Root.spawnManager.basicGoons = currentRegion.goon
 	Root.playerCar.setTerrain(tile.terrain)
 	
+	if currentRegion.has("goon"):Root.spawnManager.basicGoons = currentRegion.goon
 	
 	
 	#still needs at least....
