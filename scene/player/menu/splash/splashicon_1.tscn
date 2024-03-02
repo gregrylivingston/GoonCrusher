@@ -14,10 +14,10 @@ gradient = SubResource("Gradient_8ikg4")
 resource_local_to_scene = true
 shader = ExtResource("1_cnkxn")
 shader_parameter/angle = 3.3
-shader_parameter/thickness = 2.0
+shader_parameter/thickness = 0.0
 shader_parameter/scale = 1.0
 shader_parameter/shear = Vector2(0, -0.4)
-shader_parameter/slices = 32
+shader_parameter/slices = 1
 shader_parameter/outline = true
 shader_parameter/outline_width = 1.0
 shader_parameter/front_tex = ExtResource("2_nb155")
@@ -25,7 +25,10 @@ shader_parameter/back_tex = ExtResource("2_nb155")
 shader_parameter/side_tex = SubResource("GradientTexture1D_53al0")
 shader_parameter/show_bound = false
 
-[node name="Splashscreen1" type="Sprite2D"]
+[node name="splashicon" type="Sprite2D"]
+process_thread_group = 2
+process_thread_group_order = 0
+process_thread_messages = 0
 material = SubResource("ShaderMaterial_pxj41")
 scale = Vector2(1.5, 1.5)
 texture = ExtResource("2_nb155")

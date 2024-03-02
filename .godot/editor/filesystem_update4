@@ -49,3 +49,10 @@ res://scene/enemy/walker/gremlin/gremlin.tscn
 res://scene/enemy/spawnManager.gd
 res://scripts/global/root.gd
 res://scripts/global/Region.gd
+res://scene/fx/lotto/lottoTransition.tscn
+res://scene/fx/lotto/lottoTransition.gd
+res://scene/player/menu/splash/splashicon_1.tscn
+res://scene/player/menu/splash/splashicon_1.gd
+res://scene/player/menu/splash/splashscreen_1.tscn
+res://scene/player/menu/splash/splashscreen_1.gd
+res://scene/player/slots/slotMachine.tscn
