@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3 uid="uid://cgg5qxf4ahtrq"]
+[gd_scene load_steps=13 format=3 uid="uid://cgg5qxf4ahtrq"]
 
 [ext_resource type="PackedScene" uid="uid://ck730mtu8o5o8" path="res://scene/enemy/walker/walker.tscn" id="1_30vr5"]
 [ext_resource type="Texture2D" uid="uid://iwbburhwxb8e" path="res://scene/enemy/walker/gremlin/texture/0073.png" id="2_fuvjk"]
@@ -10,8 +10,8 @@
 [ext_resource type="Texture2D" uid="uid://dvu02igxhnvwg" path="res://scene/enemy/walker/gremlin/texture/0032.png" id="8_eqcao"]
 [ext_resource type="Texture2D" uid="uid://dyj0b4iy88rtl" path="res://scene/enemy/walker/gremlin/texture/0036.png" id="9_kwn0i"]
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_cemrt"]
-size = Vector2(58, 17)
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_628gt"]
+size = Vector2(36, 17)
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_ooj0p"]
 animations = [{
@@ -36,7 +36,7 @@ animations = [{
 "duration": 1.0,
 "texture": ExtResource("6_ukquy")
 }, {
-"duration": 1.0,
+"duration": 60.0,
 "texture": ExtResource("7_nics6")
 }],
 "loop": true,
@@ -63,6 +63,10 @@ animations = [{
 "speed": 5.0
 }]
 
+[sub_resource type="OccluderPolygon2D" id="OccluderPolygon2D_qpo4l"]
+cull_mode = 1
+polygon = PackedVector2Array(-12, -4, -11, 6, 7, 9, 18, 11, 18, 4, 19, -7, 18, -18, 7, -18, -5, -12)
+
 [node name="gremlin" instance=ExtResource("1_30vr5")]
 speed = 20000
 attackSpeedMultiplier = 1.0
@@ -71,14 +75,15 @@ myIdleLength = 8
 maxMoveBeforeIdle = 100
 
 [node name="CollisionShape2D" parent="." index="0"]
-position = Vector2(0, -2.5)
-shape = SubResource("RectangleShape2D_cemrt")
+position = Vector2(-11, -2.5)
+shape = SubResource("RectangleShape2D_628gt")
 
 [node name="Walker" parent="." index="1"]
 sprite_frames = SubResource("SpriteFrames_ooj0p")
-animation = &"prepare_attack"
+animation = &"default"
 frame = 0
 frame_progress = 0.0
 
 [node name="LightOccluder2D" parent="." index="4"]
-position = Vector2(-2, 1)
+position = Vector2(-20, -5)
+occluder = SubResource("OccluderPolygon2D_qpo4l")

@@ -1,26 +1,32 @@
-[gd_scene load_steps=4 format=3 uid="uid://cxn7my4kedpvn"]
+[gd_scene load_steps=5 format=3 uid="uid://cxn7my4kedpvn"]
 
 [ext_resource type="PackedScene" uid="uid://ck730mtu8o5o8" path="res://scene/enemy/walker/walker.tscn" id="1_o1l0d"]
 [ext_resource type="SpriteFrames" uid="uid://uvc3iink0yxj" path="res://scene/enemy/walker/goonbear/goonbear.tres" id="2_qipmn"]
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_cemrt"]
-size = Vector2(58, 17)
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_bwok7"]
+size = Vector2(58, 44)
+
+[sub_resource type="OccluderPolygon2D" id="OccluderPolygon2D_etnch"]
+cull_mode = 1
+polygon = PackedVector2Array(-6, 12, 5, 15, 30, 25, 51, 0, 33, -29, -4, -25)
 
 [node name="goonbear" instance=ExtResource("1_o1l0d")]
-speed = 5000
+speed = 12000
 attackDamage = 10.0
 myIdleLength = 2
-maxMoveBeforeIdle = 400
+maxMoveBeforeIdle = 800
 
 [node name="CollisionShape2D" parent="." index="0"]
-position = Vector2(0, -2.5)
-shape = SubResource("RectangleShape2D_cemrt")
+position = Vector2(0, 0)
+shape = SubResource("RectangleShape2D_bwok7")
 
 [node name="Walker" parent="." index="1"]
+scale = Vector2(1.5, 1.5)
 sprite_frames = ExtResource("2_qipmn")
 animation = &"default"
 frame = 0
 frame_progress = 0.0
 
 [node name="LightOccluder2D" parent="." index="4"]
-position = Vector2(-2, 1)
+position = Vector2(-5, 3)
+occluder = SubResource("OccluderPolygon2D_etnch")

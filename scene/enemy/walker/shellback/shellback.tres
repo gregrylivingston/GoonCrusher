@@ -28,7 +28,7 @@ animations = [{
 "duration": 1.0,
 "texture": ExtResource("4_tvuiq")
 }, {
-"duration": 1.0,
+"duration": 60.0,
 "texture": ExtResource("5_q0rus")
 }],
 "loop": true,
@@ -44,7 +44,7 @@ animations = [{
 }],
 "loop": true,
 "name": &"default",
-"speed": 10.0
+"speed": 5.0
 }, {
 "frames": [{
 "duration": 1.0,
