@@ -11,6 +11,7 @@ cull_mode = 1
 polygon = PackedVector2Array(-31, -26, -30, 21, 12, 29, 38, 4, 38, -9, 0, -31)
 
 [node name="doomcart" instance=ExtResource("1_r0mq0")]
+scale = Vector2(2, 2)
 speed = 10000
 attackSpeedMultiplier = 1.0
 attackDamage = 10.0

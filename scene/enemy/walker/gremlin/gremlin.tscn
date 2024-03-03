@@ -63,11 +63,12 @@ animations = [{
 "speed": 5.0
 }]
 
-[sub_resource type="OccluderPolygon2D" id="OccluderPolygon2D_qpo4l"]
+[sub_resource type="OccluderPolygon2D" id="OccluderPolygon2D_memx3"]
 cull_mode = 1
 polygon = PackedVector2Array(-12, -4, -11, 6, 7, 9, 18, 11, 18, 4, 19, -7, 18, -18, 7, -18, -5, -12)
 
 [node name="gremlin" instance=ExtResource("1_30vr5")]
+scale = Vector2(1.5, 1.5)
 speed = 20000
 attackSpeedMultiplier = 1.0
 attackDamage = 10.0
@@ -85,5 +86,5 @@ frame = 0
 frame_progress = 0.0
 
 [node name="LightOccluder2D" parent="." index="4"]
-position = Vector2(-20, -5)
-occluder = SubResource("OccluderPolygon2D_qpo4l")
+position = Vector2(-11, 5)
+occluder = SubResource("OccluderPolygon2D_memx3")

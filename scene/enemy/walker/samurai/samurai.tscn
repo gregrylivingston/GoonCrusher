@@ -4,6 +4,7 @@
 [ext_resource type="SpriteFrames" uid="uid://dljg77urgr0py" path="res://scene/enemy/walker/samurai/samurai.tres" id="2_mblwc"]
 
 [node name="samurai" instance=ExtResource("1_xht5c")]
+scale = Vector2(1.3, 1.3)
 speed = 10000
 attackSpeedMultiplier = 2.0
 myIdleLength = 4
@@ -11,6 +12,6 @@ maxMoveBeforeIdle = 50
 
 [node name="Walker" parent="." index="1"]
 sprite_frames = ExtResource("2_mblwc")
-animation = &"death"
+animation = &"default"
 frame = 0
-frame_progress = 0.478109
+frame_progress = 0.0

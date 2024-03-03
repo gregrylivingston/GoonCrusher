@@ -3,6 +3,7 @@
 [ext_resource type="PackedScene" uid="uid://ck730mtu8o5o8" path="res://scene/enemy/walker/walker.tscn" id="1_p4ndb"]
 
 [node name="devil" instance=ExtResource("1_p4ndb")]
+scale = Vector2(1.5, 1.5)
 attackSpeedMultiplier = 1.0
 
 [node name="CollisionShape2D" parent="." index="0"]

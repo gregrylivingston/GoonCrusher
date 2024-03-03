@@ -4,7 +4,7 @@
 [ext_resource type="SpriteFrames" uid="uid://cgi6qs7i8yq6c" path="res://scene/enemy/walker/spartan/spartan.tres" id="2_ml8tv"]
 
 [node name="spartan" instance=ExtResource("1_2rlkp")]
-powerupDropChance = 20
+scale = Vector2(1.5, 1.5)
 speed = 9000
 
 [node name="Walker" parent="." index="1"]

@@ -7,6 +7,7 @@
 size = Vector2(40, 15)
 
 [node name="firekin" instance=ExtResource("1_vp3vc")]
+scale = Vector2(2.5, 2.5)
 speed = 10000
 attackSpeedMultiplier = 1.0
 attackDamage = 10.0

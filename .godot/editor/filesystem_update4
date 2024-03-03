@@ -56,3 +56,8 @@ res://scene/player/menu/splash/splashicon_1.gd
 res://scene/player/menu/splash/splashscreen_1.tscn
 res://scene/player/menu/splash/splashscreen_1.gd
 res://scene/player/slots/slotMachine.tscn
+res://scene/enemy/walker/devil/devil.tscn
+res://scene/enemy/walker/firekin/firekin.tscn
+res://scene/enemy/walker/pikeman/pikeman.tscn
+res://scene/enemy/walker/samurai/samurai.tscn
+res://scene/enemy/walker/spartan/spartan.tscn
