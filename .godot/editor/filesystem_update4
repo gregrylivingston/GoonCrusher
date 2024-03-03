@@ -61,3 +61,4 @@ res://scene/enemy/walker/firekin/firekin.tscn
 res://scene/enemy/walker/pikeman/pikeman.tscn
 res://scene/enemy/walker/samurai/samurai.tscn
 res://scene/enemy/walker/spartan/spartan.tscn
+res://scene/player/menu/main/top_menu.gd
