@@ -58,7 +58,7 @@ corner_radius_top_right = 5
 corner_radius_bottom_right = 5
 corner_radius_bottom_left = 5
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_4inbs"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_3g0e3"]
 resource_local_to_scene = true
 shader = ExtResource("13_re0hq")
 shader_parameter/angle = 0.6
@@ -276,7 +276,7 @@ value = 100.0
 show_percentage = false
 
 [node name="pauseButton" parent="." instance=ExtResource("11_v8b53")]
-material = SubResource("ShaderMaterial_4inbs")
+material = SubResource("ShaderMaterial_3g0e3")
 layout_mode = 1
 anchors_preset = 0
 anchor_right = 0.0

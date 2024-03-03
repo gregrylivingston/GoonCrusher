@@ -14,7 +14,7 @@ position = Vector2(-1, 0)
 
 [node name="Walker" parent="." index="1"]
 sprite_frames = ExtResource("2_hyv3s")
-animation = &"death"
+animation = &"default"
 frame = 0
 frame_progress = 0.0
 

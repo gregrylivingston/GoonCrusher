@@ -63,14 +63,34 @@ func createRegion(terrain: int) -> Dictionary:#terrain is Enum Root.terrain
 		"terrain":terrain,
 		"giantism":randi()%100,
 		"goon":[
-			getRandomGoon(),getRandomGoon(),getRandomGoon(),
+			getRandomGoon(terrain),getRandomGoon(terrain),getRandomGoon(terrain),
 		],
 	}
 	return thisRegion
 
+var terrainGoons = {
+	Root.terrain.SAND:[
+		Root.goon.FIREKIN,
+	],
+	Root.terrain.MOSS:[
+		Root.goon.SHELLBACK,
+	],
+	Root.terrain.GRASS:[
+		Root.goon.ZULU, Root.goon.SMASHER,
+	],
+	Root.terrain.MUD:[
+		Root.goon.RAT
+	],
+	Root.terrain.DIRT:[
+		Root.goon.ROCKMAN, Root.goon.DOOMCART
+	],
+	Root.terrain.SNOW:[
+		Root.goon.GOONBEAR, Root.goon.ROCKMAN
+	],
+}
 
-func getRandomGoon():
-	return Root.goon[ Root.goon.keys()[randi()%Root.goon.size() - 1 ] ]
+func getRandomGoon(terrain: int): #accepts Root.terrain
+	return terrainGoons[terrain][ randi()%terrainGoons[terrain].size()-1 ]
 	
 	
 	
