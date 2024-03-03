@@ -1,0 +1,23 @@
+[gd_scene load_steps=3 format=3 uid="uid://efr23dfufd7m"]
+
+[ext_resource type="PackedScene" uid="uid://ck730mtu8o5o8" path="res://scene/enemy/walker/walker.tscn" id="1_ud72y"]
+[ext_resource type="SpriteFrames" uid="uid://blm7lx0qs1ov4" path="res://scene/enemy/walker/skeleton/skeleton.tres" id="2_kvais"]
+
+[node name="skeleton" instance=ExtResource("1_ud72y")]
+scale = Vector2(1.5, 1.5)
+prepareAttackDistance = 400
+attackSpeedMultiplier = 1.0
+myIdleLength = 1
+maxMoveBeforeIdle = 200
+
+[node name="CollisionShape2D" parent="." index="0"]
+position = Vector2(-1, 0)
+
+[node name="Walker" parent="." index="1"]
+sprite_frames = ExtResource("2_kvais")
+animation = &"default"
+frame = 0
+frame_progress = 0.0
+
+[node name="LightOccluder2D" parent="." index="4"]
+position = Vector2(-2, 1)

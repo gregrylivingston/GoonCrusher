@@ -1,0 +1,80 @@
+[gd_resource type="SpriteFrames" load_steps=14 format=3 uid="uid://cecxnsidwkj7c"]
+
+[ext_resource type="Texture2D" uid="uid://wgkb4q08e0m3" path="res://scene/enemy/walker/immortal/texture/0046.png" id="1_pxe3u"]
+[ext_resource type="Texture2D" uid="uid://bbmpoiw4055j6" path="res://scene/enemy/walker/immortal/texture/0075.png" id="1_r0361"]
+[ext_resource type="Texture2D" uid="uid://bc4wykekxe854" path="res://scene/enemy/walker/immortal/texture/0047.png" id="2_1ftuu"]
+[ext_resource type="Texture2D" uid="uid://cyv4cdkhnadbx" path="res://scene/enemy/walker/immortal/texture/0076.png" id="2_exc0r"]
+[ext_resource type="Texture2D" uid="uid://c2sv81plbv4u6" path="res://scene/enemy/walker/immortal/texture/0048.png" id="3_b4sfy"]
+[ext_resource type="Texture2D" uid="uid://j00w37nnxpvg" path="res://scene/enemy/walker/immortal/texture/0077.png" id="3_s6m7v"]
+[ext_resource type="Texture2D" uid="uid://bkh1umwu72d4l" path="res://scene/enemy/walker/immortal/texture/0049.png" id="4_hdk3e"]
+[ext_resource type="Texture2D" uid="uid://cl4sdvxio82mk" path="res://scene/enemy/walker/immortal/texture/0078.png" id="4_lxxwu"]
+[ext_resource type="Texture2D" uid="uid://ceu1qqmrv6x5j" path="res://scene/enemy/walker/immortal/texture/0079.png" id="5_qnr6i"]
+[ext_resource type="Texture2D" uid="uid://bg45rd4sis601" path="res://scene/enemy/walker/immortal/texture/0021.png" id="6_g82cf"]
+[ext_resource type="Texture2D" uid="uid://b17gbhj2214tk" path="res://scene/enemy/walker/immortal/texture/0022.png" id="7_kwauy"]
+[ext_resource type="Texture2D" uid="uid://bbacp3gc7xgyf" path="res://scene/enemy/walker/immortal/texture/0023.png" id="8_d4jkb"]
+[ext_resource type="Texture2D" uid="uid://c55u6otoxpmhk" path="res://scene/enemy/walker/immortal/texture/0024.png" id="9_dg42e"]
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_pxe3u")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_1ftuu")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_b4sfy")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_hdk3e")
+}],
+"loop": true,
+"name": &"attack",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_r0361")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_exc0r")
+}, {
+"duration": 20.0,
+"texture": ExtResource("3_s6m7v")
+}, {
+"duration": 20.0,
+"texture": ExtResource("4_lxxwu")
+}, {
+"duration": 20.0,
+"texture": ExtResource("5_qnr6i")
+}],
+"loop": true,
+"name": &"death",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("6_g82cf")
+}, {
+"duration": 1.0,
+"texture": ExtResource("7_kwauy")
+}, {
+"duration": 1.0,
+"texture": ExtResource("8_d4jkb")
+}, {
+"duration": 1.0,
+"texture": ExtResource("9_dg42e")
+}],
+"loop": true,
+"name": &"default",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_pxe3u")
+}],
+"loop": true,
+"name": &"prepare_attack",
+"speed": 5.0
+}]

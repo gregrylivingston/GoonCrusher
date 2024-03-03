@@ -1,0 +1,31 @@
+[gd_scene load_steps=5 format=3 uid="uid://c0fl25qulx03j"]
+
+[ext_resource type="PackedScene" uid="uid://ck730mtu8o5o8" path="res://scene/enemy/walker/walker.tscn" id="1_p4lmi"]
+[ext_resource type="SpriteFrames" uid="uid://br0i1bx0escw7" path="res://scene/enemy/walker/smasher/smasher.tres" id="2_678k1"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_64jw2"]
+size = Vector2(32, 32.6667)
+
+[sub_resource type="OccluderPolygon2D" id="OccluderPolygon2D_8t0ki"]
+cull_mode = 1
+polygon = PackedVector2Array(-11.3333, -16.3333, -10.6667, 0.333333, 3.33333, 8.33333, 16.6667, 3, 18.6667, -11.6667)
+
+[node name="smasher" instance=ExtResource("1_p4lmi")]
+scale = Vector2(1.5, 1.5)
+speed = 6500
+attackSpeedMultiplier = 1.0
+attackDamage = 5.0
+
+[node name="CollisionShape2D" parent="." index="0"]
+position = Vector2(-1, -6.33333)
+shape = SubResource("RectangleShape2D_64jw2")
+
+[node name="Walker" parent="." index="1"]
+sprite_frames = ExtResource("2_678k1")
+animation = &"default"
+frame = 0
+frame_progress = 0.619288
+
+[node name="LightOccluder2D" parent="." index="4"]
+position = Vector2(-2, 1)
+occluder = SubResource("OccluderPolygon2D_8t0ki")

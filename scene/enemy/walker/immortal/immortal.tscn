@@ -1,0 +1,22 @@
+[gd_scene load_steps=3 format=3 uid="uid://t3valr1g453p"]
+
+[ext_resource type="PackedScene" uid="uid://ck730mtu8o5o8" path="res://scene/enemy/walker/walker.tscn" id="1_q5t85"]
+[ext_resource type="SpriteFrames" uid="uid://cecxnsidwkj7c" path="res://scene/enemy/walker/immortal/immortal.tres" id="2_hyv3s"]
+
+[node name="immortal" instance=ExtResource("1_q5t85")]
+scale = Vector2(1.5, 1.5)
+speed = 7000
+prepareAttackDistance = 500
+attackSpeedMultiplier = 1.5
+
+[node name="CollisionShape2D" parent="." index="0"]
+position = Vector2(-1, 0)
+
+[node name="Walker" parent="." index="1"]
+sprite_frames = ExtResource("2_hyv3s")
+animation = &"death"
+frame = 0
+frame_progress = 0.0
+
+[node name="LightOccluder2D" parent="." index="4"]
+position = Vector2(-2, 1)

@@ -1,0 +1,30 @@
+[gd_scene load_steps=5 format=3 uid="uid://cyn2i6lcjf1t2"]
+
+[ext_resource type="PackedScene" uid="uid://ck730mtu8o5o8" path="res://scene/enemy/walker/walker.tscn" id="1_t372p"]
+[ext_resource type="SpriteFrames" uid="uid://bv14301afya4s" path="res://scene/enemy/walker/rockman/rockman.tres" id="2_3xe14"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ici7q"]
+size = Vector2(44.3333, 47.3333)
+
+[sub_resource type="OccluderPolygon2D" id="OccluderPolygon2D_7nmh1"]
+cull_mode = 1
+polygon = PackedVector2Array(-8.66667, 19, 24.6667, 16.3333, 30, 1, 22, -19, -10.6667, -17)
+
+[node name="rockman" instance=ExtResource("1_t372p")]
+scale = Vector2(2, 2)
+attackSpeedMultiplier = 1.0
+attackDamage = 10.0
+
+[node name="CollisionShape2D" parent="." index="0"]
+position = Vector2(5.16667, -2.33333)
+shape = SubResource("RectangleShape2D_ici7q")
+
+[node name="Walker" parent="." index="1"]
+sprite_frames = ExtResource("2_3xe14")
+animation = &"default"
+frame = 3
+frame_progress = 0.00648828
+
+[node name="LightOccluder2D" parent="." index="4"]
+position = Vector2(-2, 1)
+occluder = SubResource("OccluderPolygon2D_7nmh1")

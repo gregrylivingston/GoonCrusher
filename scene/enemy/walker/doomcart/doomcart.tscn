@@ -25,7 +25,7 @@ shape = SubResource("RectangleShape2D_5lksx")
 scale = Vector2(1.125, 1.5)
 sprite_frames = ExtResource("2_oc2m0")
 animation = &"default"
-frame_progress = 0.892147
+frame_progress = 0.39215
 
 [node name="LightOccluder2D" parent="." index="4"]
 position = Vector2(-2, 1)

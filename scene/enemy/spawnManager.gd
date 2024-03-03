@@ -3,10 +3,10 @@ class_name SpawnManager extends Node
 @export var spawnTimer: float = 6.0
 @export var escalationSpeed = 0.07
 
-enum goon { DEVIL , SPARTAN , SAMURAI , FIREKIN, PIKEMAN , GOONBEAR , DOOMCART , GREMLIN , SHELLBACK }
-
+enum goon { DEVIL , SPARTAN , SAMURAI , FIREKIN, PIKEMAN , GOONBEAR , DOOMCART , GREMLIN , 
+SHELLBACK , IMMORTAL , LIZARD , RAT , ROCKMAN , SKELETON , SMASHER ,
+SOLDIER , VIKING , ZULU }
 var basicGoons
-
 @onready var goonScene = {
 	goon.DEVIL:preload("res://scene/enemy/walker/devil/devil.tscn"),
 	goon.SPARTAN:preload("res://scene/enemy/walker/spartan/spartan.tscn"),
@@ -17,6 +17,15 @@ var basicGoons
 	goon.DOOMCART:preload("res://scene/enemy/walker/doomcart/doomcart.tscn"),
 	goon.GREMLIN:preload("res://scene/enemy/walker/gremlin/gremlin.tscn"),
 	goon.SHELLBACK:preload("res://scene/enemy/walker/shellback/shellback.tscn"),
+	goon.IMMORTAL:preload("res://scene/enemy/walker/immortal/immortal.tscn"),
+	goon.LIZARD:preload("res://scene/enemy/walker/lizard/lizard.tscn"),
+	goon.RAT:preload("res://scene/enemy/walker/rat/rat.tscn"),
+	goon.ROCKMAN:preload("res://scene/enemy/walker/rockman/rockman.tscn"),
+	goon.SKELETON:preload("res://scene/enemy/walker/skeleton/skeleton.tscn"),
+	goon.SMASHER:preload("res://scene/enemy/walker/smasher/smasher.tscn"),
+	goon.SOLDIER:preload("res://scene/enemy/walker/soldier/soldier.tscn"),
+	goon.VIKING:preload("res://scene/enemy/walker/viking/viking.tscn"),
+	goon.ZULU:preload("res://scene/enemy/walker/zulu/zulu.tscn")
 }
 
 var giantTimer:float = 0

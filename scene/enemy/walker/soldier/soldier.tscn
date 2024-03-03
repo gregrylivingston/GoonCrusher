@@ -1,0 +1,20 @@
+[gd_scene load_steps=3 format=3 uid="uid://jysoqbjp4o2x"]
+
+[ext_resource type="PackedScene" uid="uid://ck730mtu8o5o8" path="res://scene/enemy/walker/walker.tscn" id="1_h8ygk"]
+[ext_resource type="SpriteFrames" uid="uid://cgee320ujh8f6" path="res://scene/enemy/walker/soldier/soldier.tres" id="2_2f1fh"]
+
+[node name="soldier" instance=ExtResource("1_h8ygk")]
+scale = Vector2(1.5, 1.5)
+attackSpeedMultiplier = 1.0
+
+[node name="CollisionShape2D" parent="." index="0"]
+position = Vector2(-1, 0)
+
+[node name="Walker" parent="." index="1"]
+sprite_frames = ExtResource("2_2f1fh")
+animation = &"default"
+frame = 0
+frame_progress = 0.0
+
+[node name="LightOccluder2D" parent="." index="4"]
+position = Vector2(-2, 1)

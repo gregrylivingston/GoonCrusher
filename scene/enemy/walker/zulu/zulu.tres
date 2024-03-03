@@ -1,0 +1,80 @@
+[gd_resource type="SpriteFrames" load_steps=14 format=3 uid="uid://d2c5aeyng0343"]
+
+[ext_resource type="Texture2D" uid="uid://rnq68ka75a5v" path="res://scene/enemy/walker/zulu/texture/0049.png" id="1_8vyoa"]
+[ext_resource type="Texture2D" uid="uid://cxd45n7f3gr7n" path="res://scene/enemy/walker/zulu/texture/0050.png" id="2_cl5ow"]
+[ext_resource type="Texture2D" uid="uid://u7e8x7bk5dk6" path="res://scene/enemy/walker/zulu/texture/0051.png" id="3_vcrio"]
+[ext_resource type="Texture2D" uid="uid://c70cwmwov322r" path="res://scene/enemy/walker/zulu/texture/0052.png" id="4_vjtsu"]
+[ext_resource type="Texture2D" uid="uid://bnk5vtue48hvh" path="res://scene/enemy/walker/zulu/texture/0090.png" id="5_q8hyq"]
+[ext_resource type="Texture2D" uid="uid://cbnyidroc33an" path="res://scene/enemy/walker/zulu/texture/0091.png" id="6_6sd2d"]
+[ext_resource type="Texture2D" uid="uid://pkx30hjq5qy" path="res://scene/enemy/walker/zulu/texture/0092.png" id="7_quobl"]
+[ext_resource type="Texture2D" uid="uid://c3xfttmxos1im" path="res://scene/enemy/walker/zulu/texture/0093.png" id="8_7wdkh"]
+[ext_resource type="Texture2D" uid="uid://b7arvryimtfbs" path="res://scene/enemy/walker/zulu/texture/0094.png" id="9_vp71x"]
+[ext_resource type="Texture2D" uid="uid://djea8sbg054g2" path="res://scene/enemy/walker/zulu/texture/0021.png" id="10_jwnmk"]
+[ext_resource type="Texture2D" uid="uid://y8t73bc061ck" path="res://scene/enemy/walker/zulu/texture/0022.png" id="11_ob3q3"]
+[ext_resource type="Texture2D" uid="uid://c7pusl7tr7f6u" path="res://scene/enemy/walker/zulu/texture/0023.png" id="12_facdn"]
+[ext_resource type="Texture2D" uid="uid://bk108vofeqmc" path="res://scene/enemy/walker/zulu/texture/0024.png" id="13_xx4s0"]
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_8vyoa")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_cl5ow")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_vcrio")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_vjtsu")
+}],
+"loop": true,
+"name": &"attack",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("5_q8hyq")
+}, {
+"duration": 1.0,
+"texture": ExtResource("6_6sd2d")
+}, {
+"duration": 5.0,
+"texture": ExtResource("7_quobl")
+}, {
+"duration": 20.0,
+"texture": ExtResource("8_7wdkh")
+}, {
+"duration": 20.0,
+"texture": ExtResource("9_vp71x")
+}],
+"loop": true,
+"name": &"death",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("10_jwnmk")
+}, {
+"duration": 1.0,
+"texture": ExtResource("11_ob3q3")
+}, {
+"duration": 1.0,
+"texture": ExtResource("12_facdn")
+}, {
+"duration": 1.0,
+"texture": ExtResource("13_xx4s0")
+}],
+"loop": true,
+"name": &"default",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_8vyoa")
+}],
+"loop": true,
+"name": &"prepare_attack",
+"speed": 5.0
+}]

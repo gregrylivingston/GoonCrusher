@@ -1,0 +1,29 @@
+[gd_scene load_steps=4 format=3 uid="uid://cs18o1tomxdc6"]
+
+[ext_resource type="PackedScene" uid="uid://ck730mtu8o5o8" path="res://scene/enemy/walker/walker.tscn" id="1_5tw4f"]
+[ext_resource type="SpriteFrames" uid="uid://bcyt2b60p1m1u" path="res://scene/enemy/walker/lizard/lizard.tres" id="2_i21jv"]
+
+[sub_resource type="OccluderPolygon2D" id="OccluderPolygon2D_sl7kd"]
+cull_mode = 1
+polygon = PackedVector2Array(-19.3333, -3, -18.6667, 11.6667, 5, 15, 17, 10, 19.3333, -3, 7, -18, -5, -12)
+
+[node name="lizard" instance=ExtResource("1_5tw4f")]
+scale = Vector2(1.5, 1.5)
+speed = 8000
+prepareAttackDistance = 200
+attackSpeedMultiplier = 1.2
+myIdleLength = 2
+maxMoveBeforeIdle = 300
+
+[node name="CollisionShape2D" parent="." index="0"]
+position = Vector2(-1, 0)
+
+[node name="Walker" parent="." index="1"]
+sprite_frames = ExtResource("2_i21jv")
+animation = &"default"
+frame = 0
+frame_progress = 0.0
+
+[node name="LightOccluder2D" parent="." index="4"]
+position = Vector2(-2, 1)
+occluder = SubResource("OccluderPolygon2D_sl7kd")

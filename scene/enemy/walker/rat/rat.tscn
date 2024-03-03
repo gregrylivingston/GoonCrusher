@@ -1,0 +1,23 @@
+[gd_scene load_steps=3 format=3 uid="uid://dpm0trrl5xdiv"]
+
+[ext_resource type="PackedScene" uid="uid://ck730mtu8o5o8" path="res://scene/enemy/walker/walker.tscn" id="1_xoaxj"]
+[ext_resource type="SpriteFrames" uid="uid://bkn1eorp27jrg" path="res://scene/enemy/walker/rat/rat.tres" id="2_jma3k"]
+
+[node name="rat" instance=ExtResource("1_xoaxj")]
+scale = Vector2(1.5, 1.5)
+speed = 4000
+attackSpeedMultiplier = 4.0
+myIdleLength = 2
+maxMoveBeforeIdle = 150
+
+[node name="CollisionShape2D" parent="." index="0"]
+position = Vector2(-1, 0)
+
+[node name="Walker" parent="." index="1"]
+sprite_frames = ExtResource("2_jma3k")
+animation = &"prepare_attack"
+frame = 0
+frame_progress = 0.0
+
+[node name="LightOccluder2D" parent="." index="4"]
+position = Vector2(-2, 1)

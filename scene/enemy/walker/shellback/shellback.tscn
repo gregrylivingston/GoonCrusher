@@ -6,8 +6,8 @@
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_plcxy"]
 size = Vector2(40, 15)
 
-[node name="firekin" instance=ExtResource("1_vp3vc")]
-scale = Vector2(2.5, 2.5)
+[node name="shellback" instance=ExtResource("1_vp3vc")]
+scale = Vector2(1.5, 1.5)
 speed = 10000
 attackSpeedMultiplier = 1.0
 attackDamage = 10.0
@@ -20,7 +20,7 @@ shape = SubResource("RectangleShape2D_plcxy")
 
 [node name="Walker" parent="." index="1"]
 sprite_frames = ExtResource("2_85uwq")
-animation = &"default"
+animation = &"death"
 frame = 0
 frame_progress = 0.0
 
