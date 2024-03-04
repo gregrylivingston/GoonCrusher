@@ -70,22 +70,22 @@ func createRegion(terrain: int) -> Dictionary:#terrain is Enum Root.terrain
 
 var terrainGoons = {
 	Root.terrain.SAND:[
-		Root.goon.FIREKIN,
+		Root.goon.FIREKIN, Root.goon.SHELLBACK, Root.goon.SKELETON
 	],
 	Root.terrain.MOSS:[
-		Root.goon.SHELLBACK,
+		Root.goon.SHELLBACK, Root.goon.RAT, Root.goon.GREMLIN, Root.goon.LIZARD
 	],
 	Root.terrain.GRASS:[
-		Root.goon.ZULU, Root.goon.SMASHER,
+		Root.goon.DEVIL, Root.goon.PIKEMAN, Root.goon.SAMURAI, Root.goon.SPARTAN, Root.goon.SOLDIER
 	],
 	Root.terrain.MUD:[
-		Root.goon.RAT
+		Root.goon.ZULU, Root.goon.SMASHER, Root.goon.IMMORTAL, Root.goon.VIKING, Root.goon.SPARTAN,  Root.goon.SOLDIER
 	],
 	Root.terrain.DIRT:[
-		Root.goon.ROCKMAN, Root.goon.DOOMCART
+		Root.goon.ROCKMAN, Root.goon.DOOMCART, Root.goon.GREMLIN, Root.goon.SKELETON
 	],
 	Root.terrain.SNOW:[
-		Root.goon.GOONBEAR, Root.goon.ROCKMAN
+		Root.goon.GOONBEAR, Root.goon.ROCKMAN, Root.goon.LIZARD,  Root.goon.SKELETON
 	],
 }
 
