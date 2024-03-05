@@ -6,6 +6,11 @@ func _ready():
 	pass # Replace with function body.
 
 
+func _process(delta):
+	if currentRegion.has("time"):
+		currentRegion.time += delta
+		if currentRegion.wave * 120 > currentRegion.time:
+			currentRegion.wave += 1
 
 
 var names: Dictionary = {
@@ -32,7 +37,8 @@ var names: Dictionary = {
 func resetRegions():
 	regions = {
 	-2:{
-		"name":"Wasteland","giantism":0
+		"name":"Wasteland",
+		"giantism":0,
 	}}
 	currentRegion = {}
 	currentRegionNumber = -99
@@ -62,6 +68,8 @@ func createRegion(terrain: int) -> Dictionary:#terrain is Enum Root.terrain
 		"name": names[ terrain ][ randi()%names[terrain].size() - 1 ],
 		"terrain":terrain,
 		"giantism":randi()%100,
+		"time":0.0,
+		"wave":1,
 		"goon":[
 			getRandomGoon(terrain),getRandomGoon(terrain),getRandomGoon(terrain),
 		],

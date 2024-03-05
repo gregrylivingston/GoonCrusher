@@ -1,4 +1,4 @@
-res://scene/enemy/walker/shellback/shellback.tscn
+res://scene/car/car.tscn
 res://shader/shine.gdshader
 res://style/roadRogue.tres
 res://scene/player/slots/slot_row_gradient.tres
@@ -21,8 +21,6 @@ res://shader/edgeGlow.gdshader
 res://shader/liquid.gdshader
 res://shader/3dicon.gdshader
 res://shader/ground_normals.gdshader
-res://scripts/global/Region.gd
-res://scene/car/car.tscn
 res://scene/level/levelRoot.tscn
 res://scene/player/playerRoot.tscn
 res://scene/player/menu/main/main2.tscn
@@ -44,11 +42,6 @@ res://scene/enemy/walker/doomcart/doomcart.tscn
 res://scene/enemy/walker/immortal/immortal.tscn
 res://scene/enemy/walker/lizard/lizard.tscn
 res://scene/enemy/walker/rat/rat.tscn
-res://scene/enemy/walker/rockman/rockman.tscn
-res://scene/enemy/walker/skeleton/skeleton.tscn
-res://scene/enemy/walker/smasher/smasher.tscn
-res://scene/enemy/walker/soldier/soldier.tscn
-res://scene/enemy/walker/viking/viking.tscn
-res://scene/enemy/walker/zulu/zulu.tscn
-res://scene/enemy/walker/pikeman/pikeman.tscn
-res://scene/enemy/walker/spartan/spartan.tscn
+res://scene/player/Timer.gd
+res://scripts/global/Region.gd
+res://scene/player/regionUi.gd
