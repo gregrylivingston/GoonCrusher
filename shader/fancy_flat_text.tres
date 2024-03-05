@@ -1,11 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://cyyns0r3734ni"]
-
-[ext_resource type="Material" uid="uid://d4nw1uchte7mv" path="res://scene/player/menu/main/3dText_Common.tres" id="1_8nco0"]
-[ext_resource type="Script" path="res://scene/player/regionUi.gd" id="1_nup3b"]
-[ext_resource type="Theme" uid="uid://co40pijjc7hbw" path="res://style/roadRogue.tres" id="2_3vkfu"]
-[ext_resource type="Material" uid="uid://d0lj6sppa3i0j" path="res://shader/fancy_flat_text.tres" id="4_1ugrq"]
-[ext_resource type="FontFile" uid="uid://hnnpevcc2v8w" path="res://style/font/Tektur/Tektur_SemiCondensed-ExtraBold.ttf" id="5_iuvtm"]
-[ext_resource type="Texture2D" uid="uid://c4ruanw5s8kja" path="res://texture/icon/mutation.png" id="5_twvs2"]
+[gd_resource type="ShaderMaterial" load_steps=2 format=3 uid="uid://d0lj6sppa3i0j"]
 
 [sub_resource type="Shader" id="Shader_85i5l"]
 resource_local_to_scene = true
@@ -166,7 +159,7 @@ void fragment(){
 	
 }"
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_qh28y"]
+[resource]
 resource_local_to_scene = true
 shader = SubResource("Shader_85i5l")
 shader_parameter/angle = 0.0
@@ -176,134 +169,4 @@ shader_parameter/shear = Vector2(0, -0.2)
 shader_parameter/slices = 1
 shader_parameter/outline = true
 shader_parameter/outline_width = 1.0
-shader_parameter/front_tex = ExtResource("5_twvs2")
 shader_parameter/show_bound = false
-
-[node name="VBoxContainer" type="VBoxContainer"]
-custom_minimum_size = Vector2(300, 0)
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -300.0
-offset_top = -199.0
-grow_horizontal = 0
-grow_vertical = 0
-script = ExtResource("1_nup3b")
-
-[node name="HBoxContainer" type="HBoxContainer" parent="."]
-layout_mode = 2
-
-[node name="goon1" type="Label" parent="HBoxContainer"]
-unique_name_in_owner = true
-material = ExtResource("1_8nco0")
-layout_mode = 2
-theme = ExtResource("2_3vkfu")
-theme_override_constants/outline_size = 2
-theme_override_font_sizes/font_size = 25
-text = "Warrior"
-
-[node name="goon2" type="Label" parent="HBoxContainer"]
-unique_name_in_owner = true
-material = ExtResource("1_8nco0")
-layout_mode = 2
-size_flags_horizontal = 6
-theme = ExtResource("2_3vkfu")
-theme_override_constants/outline_size = 2
-theme_override_font_sizes/font_size = 25
-text = "Warrior"
-
-[node name="goon3" type="Label" parent="HBoxContainer"]
-unique_name_in_owner = true
-material = ExtResource("1_8nco0")
-layout_mode = 2
-size_flags_horizontal = 10
-theme = ExtResource("2_3vkfu")
-theme_override_constants/outline_size = 2
-theme_override_font_sizes/font_size = 25
-text = "Warrior"
-
-[node name="HBoxContainer2" type="HBoxContainer" parent="."]
-layout_mode = 2
-
-[node name="region" type="Label" parent="HBoxContainer2"]
-unique_name_in_owner = true
-material = ExtResource("1_8nco0")
-layout_mode = 2
-theme = ExtResource("2_3vkfu")
-theme_override_constants/outline_size = 2
-theme_override_font_sizes/font_size = 25
-text = "ID: -99"
-
-[node name="terrain" type="Label" parent="HBoxContainer2"]
-unique_name_in_owner = true
-material = ExtResource("1_8nco0")
-layout_mode = 2
-theme = ExtResource("2_3vkfu")
-theme_override_constants/outline_size = 2
-theme_override_font_sizes/font_size = 25
-text = "-99"
-
-[node name="Panel" type="Panel" parent="."]
-custom_minimum_size = Vector2(0, 125)
-layout_mode = 2
-theme = ExtResource("2_3vkfu")
-
-[node name="VBoxContainer" type="VBoxContainer" parent="Panel"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 10.0
-offset_top = 8.0
-offset_right = -11.0
-offset_bottom = -17.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="HBoxContainer" type="HBoxContainer" parent="Panel/VBoxContainer"]
-layout_mode = 2
-theme_override_constants/separation = 5
-
-[node name="Label_regionName" type="Label" parent="Panel/VBoxContainer/HBoxContainer"]
-unique_name_in_owner = true
-material = ExtResource("4_1ugrq")
-custom_minimum_size = Vector2(131.08, 0)
-layout_mode = 2
-theme_override_fonts/font = ExtResource("5_iuvtm")
-theme_override_font_sizes/font_size = 22
-text = "Goontown
-"
-
-[node name="TextureRect" type="TextureRect" parent="Panel/VBoxContainer/HBoxContainer"]
-material = SubResource("ShaderMaterial_qh28y")
-layout_mode = 2
-size_flags_horizontal = 10
-texture = ExtResource("5_twvs2")
-expand_mode = 3
-stretch_mode = 4
-
-[node name="giantism" type="Label" parent="Panel/VBoxContainer/HBoxContainer"]
-unique_name_in_owner = true
-material = ExtResource("4_1ugrq")
-layout_mode = 2
-size_flags_horizontal = 8
-text = "45%
-"
-
-[node name="HBoxContainer2" type="HBoxContainer" parent="Panel/VBoxContainer"]
-layout_mode = 2
-theme_override_constants/separation = 5
-
-[node name="Label_wave" type="Label" parent="Panel/VBoxContainer/HBoxContainer2"]
-unique_name_in_owner = true
-material = ExtResource("4_1ugrq")
-layout_mode = 2
-text = "Wave 1"
-
-[node name="WaveProgressBar" type="ProgressBar" parent="Panel/VBoxContainer"]
-unique_name_in_owner = true
-layout_mode = 2
-max_value = 120.0
-step = 1.0

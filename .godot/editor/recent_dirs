@@ -1,3 +1,4 @@
+res://shader
 res://scene/enemy/walker/gremlin
 D:/Godot/AutoSurvivor
 res://
@@ -9,7 +10,6 @@ res://scene/player
 res://scripts/global
 res://texture/atlas
 res://scene
-res://shader
 res://scene/scenery/walls
 res://texture/spritesheet
 res://scene/fx/explosion

@@ -10,13 +10,13 @@ func _ready():
 func _process(delta):
 	if Region.currentRegion.has("time"):
 		%WaveProgressBar.value = int(Region.currentRegion.time) % 120
-	
+		%Label_wave.text = "Wave " + str(Region.currentRegion.wave)
 
 func updatePlayerRegion(tile):
 	if tile.terrain != Root.terrain.WATER && tile.terrain != Root.terrain.HILLS:
 		var myRegion = Region.getRegion(tile.region, tile.terrain)
-		%regionName.text = str(myRegion.name)
-		%giantism.text = "Giantism: " + str(myRegion.giantism)
+		%Label_regionName.text = str(myRegion.name)
+		%giantism.text = str(myRegion.giantism) + "%"
 		%goon1.text = Root.goon.keys()[myRegion.goon[0]]
 		%goon2.text = Root.goon.keys()[myRegion.goon[1]]
 		%goon3.text = Root.goon.keys()[myRegion.goon[2]]
