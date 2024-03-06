@@ -1,59 +1,33 @@
-[gd_scene load_steps=21 format=3 uid="uid://pgobm7erc1f0"]
+[gd_scene load_steps=23 format=3 uid="uid://pgobm7erc1f0"]
 
 [ext_resource type="Script" path="res://scene/player/playerRoot.gd" id="1_csk4w"]
 [ext_resource type="PackedScene" uid="uid://bf1f5117fhyd2" path="res://scene/car/car_panel.tscn" id="2_gx8xt"]
 [ext_resource type="StyleBox" uid="uid://dl1e0qtgp13cj" path="res://style/style_box_basic.tres" id="3_eocbu"]
 [ext_resource type="Script" path="res://scene/player/Timer.gd" id="3_hepv3"]
+[ext_resource type="Shader" uid="uid://b5xo6d4thuug" path="res://shader/flatTextNoTime.tres" id="4_0qxgv"]
+[ext_resource type="Texture2D" uid="uid://dt60dhhtejv7k" path="res://texture/icon/slotMachine.png" id="4_bmve1"]
 [ext_resource type="Theme" uid="uid://co40pijjc7hbw" path="res://style/roadRogue.tres" id="4_xbt3u"]
 [ext_resource type="Texture2D" uid="uid://w03tvhxtmrv4" path="res://texture/icon/icons8-coin-48 (1).png" id="5_bieyt"]
 [ext_resource type="Shader" path="res://shader/3dtext.gdshader" id="5_nv3yj"]
+[ext_resource type="Material" uid="uid://d0lj6sppa3i0j" path="res://shader/fancy_flat_text.tres" id="5_ykxgr"]
+[ext_resource type="StyleBox" uid="uid://cjukasfxrv1k3" path="res://style/stylboxbox_progressbarBackground.tres" id="6_2f1vc"]
 [ext_resource type="Texture2D" uid="uid://clb0tyqiwegeo" path="res://texture/icon/icons8-gem-48.png" id="6_domly"]
+[ext_resource type="Material" uid="uid://c4e4nqe6cks3c" path="res://shader/rainbow_shader.tres" id="7_5jeqs"]
 [ext_resource type="Material" uid="uid://d4nw1uchte7mv" path="res://scene/player/menu/main/3dText_Common.tres" id="7_kow26"]
 [ext_resource type="PackedScene" uid="uid://cyyns0r3734ni" path="res://scene/player/regionUi.tscn" id="10_ep2ps"]
 
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_sgloa"]
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_6d11k"]
-bg_color = Color(0, 0, 0, 0.207843)
-
-[sub_resource type="Shader" id="Shader_fmfvs"]
-code = "// HSV to RBG from https://www.rapidtables.com/convert/color/hsv-to-rgb.html
-// Rotation matrix from https://en.wikipedia.org/wiki/Rotation_matrix
-
-shader_type canvas_item;
-
-
-uniform float strength: hint_range(0., 1.) = 1.0;
-uniform float speed: hint_range(0., 10.) = 0.15;
-uniform float angle: hint_range(0., 360.) = 125.;
-
-void fragment() {
-	float hue = UV.x * cos(radians(angle)) - UV.y * sin(radians(angle));
-	hue = fract(hue + fract(TIME  * speed));
-	float x = 1. - abs(mod(hue / (1./ 6.), 2.) - 1.);
-	vec3 rainbow;
-	if(hue < 1./6.){
-		rainbow = vec3(1., x, 0.);
-	} else if (hue < 1./3.) {
-		rainbow = vec3(x, 1., 0);
-	} else if (hue < 0.5) {
-		rainbow = vec3(0, 1., x);
-	} else if (hue < 2./3.) {
-		rainbow = vec3(0., x, 1.);
-	} else if (hue < 5./6.) {
-		rainbow = vec3(x, 0., 1.);
-	} else {
-		rainbow = vec3(1., 0., x);
-	}
-	vec4 color = texture(TEXTURE, UV);
-	COLOR = mix(color, vec4(rainbow, color.a), strength);
-}"
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_pm2d1"]
-shader = SubResource("Shader_fmfvs")
-shader_parameter/strength = 1.0
-shader_parameter/speed = 0.3
-shader_parameter/angle = 358.135
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_spkbp"]
+resource_local_to_scene = true
+shader = ExtResource("4_0qxgv")
+shader_parameter/angle = 0.0
+shader_parameter/thickness = 1.0
+shader_parameter/scale = 1.0
+shader_parameter/shear = Vector2(0, -0.2)
+shader_parameter/slices = 1
+shader_parameter/outline = true
+shader_parameter/outline_width = 2.0
+shader_parameter/front_tex = ExtResource("4_bmve1")
+shader_parameter/show_bound = false
 
 [sub_resource type="Gradient" id="Gradient_ihyl7"]
 
@@ -101,36 +75,45 @@ script = ExtResource("1_csk4w")
 
 [node name="Panel" type="Panel" parent="."]
 custom_minimum_size = Vector2(0, 60)
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -132.5
-offset_top = -60.0
-offset_right = 132.5
-grow_horizontal = 2
-grow_vertical = 0
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -326.0
+offset_bottom = 60.0
+grow_horizontal = 0
 size_flags_horizontal = 3
 theme = ExtResource("4_xbt3u")
-theme_override_styles/panel = SubResource("StyleBoxEmpty_sgloa")
 
 [node name="HBoxContainer" type="HBoxContainer" parent="Panel"]
 layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
+anchors_preset = 14
 anchor_top = 0.5
-anchor_right = 0.5
+anchor_right = 1.0
 anchor_bottom = 0.5
-offset_left = -103.0
-offset_top = -51.0
-offset_right = 103.0
-offset_bottom = -19.0
+offset_left = 7.0
+offset_top = -25.0
+offset_right = -12.0
+offset_bottom = 26.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Label" type="Label" parent="Panel/HBoxContainer"]
-material = ExtResource("7_kow26")
+[node name="TextureRect" type="TextureRect" parent="Panel/HBoxContainer"]
+material = SubResource("ShaderMaterial_spkbp")
+custom_minimum_size = Vector2(50, 0)
+layout_mode = 2
+texture = ExtResource("4_bmve1")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Panel/HBoxContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Panel/HBoxContainer/VBoxContainer/HBoxContainer"]
+material = ExtResource("5_ykxgr")
 layout_mode = 2
 size_flags_horizontal = 0
 theme = ExtResource("4_xbt3u")
@@ -138,8 +121,9 @@ theme_override_font_sizes/font_size = 24
 text = "CRUSH "
 horizontal_alignment = 1
 
-[node name="crushedGoons" type="Label" parent="Panel/HBoxContainer" groups=["currentGoonsCrushedui"]]
-material = ExtResource("7_kow26")
+[node name="crushedGoons" type="Label" parent="Panel/HBoxContainer/VBoxContainer/HBoxContainer" groups=["currentGoonsCrushedui"]]
+unique_name_in_owner = true
+material = ExtResource("5_ykxgr")
 layout_mode = 2
 size_flags_horizontal = 0
 theme = ExtResource("4_xbt3u")
@@ -147,8 +131,8 @@ theme_override_font_sizes/font_size = 24
 text = "20"
 horizontal_alignment = 1
 
-[node name="Label2" type="Label" parent="Panel/HBoxContainer"]
-material = ExtResource("7_kow26")
+[node name="Label2" type="Label" parent="Panel/HBoxContainer/VBoxContainer/HBoxContainer"]
+material = ExtResource("5_ykxgr")
 layout_mode = 2
 size_flags_horizontal = 0
 theme = ExtResource("4_xbt3u")
@@ -156,24 +140,14 @@ theme_override_font_sizes/font_size = 24
 text = " GOONS"
 horizontal_alignment = 1
 
-[node name="Panel" type="Panel" parent="Panel"]
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -215.5
-offset_top = -12.0
-offset_right = 215.5
-offset_bottom = -1.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_6d11k")
+[node name="Panel" type="Panel" parent="Panel/HBoxContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+theme_override_styles/panel = ExtResource("6_2f1vc")
 
-[node name="ProgressBar" type="TextureProgressBar" parent="Panel/Panel"]
+[node name="ProgressBar" type="TextureProgressBar" parent="Panel/HBoxContainer/VBoxContainer/Panel"]
 unique_name_in_owner = true
-material = SubResource("ShaderMaterial_pm2d1")
+material = ExtResource("7_5jeqs")
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -182,7 +156,6 @@ grow_horizontal = 2
 grow_vertical = 2
 max_value = 5.0
 value = 3.0
-fill_mode = 6
 nine_patch_stretch = true
 texture_progress = SubResource("GradientTexture1D_bun2y")
 
@@ -191,7 +164,8 @@ anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
 offset_left = -125.0
-offset_bottom = 60.0
+offset_top = 64.0
+offset_bottom = 124.0
 grow_horizontal = 0
 size_flags_horizontal = 3
 theme = ExtResource("4_xbt3u")
@@ -219,6 +193,7 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="coins" type="Label" parent="Panel2/HBoxContainer"]
+unique_name_in_owner = true
 material = ExtResource("7_kow26")
 layout_mode = 2
 size_flags_horizontal = 6
@@ -231,8 +206,9 @@ anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
 offset_left = -268.0
+offset_top = 64.0
 offset_right = -135.0
-offset_bottom = 60.0
+offset_bottom = 124.0
 grow_horizontal = 0
 size_flags_horizontal = 3
 theme = ExtResource("4_xbt3u")
@@ -260,6 +236,7 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="gem" type="Label" parent="Panel4/HBoxContainer"]
+unique_name_in_owner = true
 material = ExtResource("7_kow26")
 layout_mode = 2
 size_flags_horizontal = 6
@@ -311,3 +288,4 @@ text = "N"
 
 [node name="regionUi" parent="." instance=ExtResource("10_ep2ps")]
 unique_name_in_owner = true
+offset_top = -161.0

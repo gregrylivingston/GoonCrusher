@@ -45,3 +45,6 @@ res://scene/enemy/walker/rat/rat.tscn
 res://scene/player/Timer.gd
 res://scripts/global/Region.gd
 res://scene/player/regionUi.gd
+res://scene/player/playerRoot.gd
+res://shader/fancy_flat_text.tres
+res://shader/flatTextNoTime.tres

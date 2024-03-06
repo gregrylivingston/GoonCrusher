@@ -25,8 +25,8 @@ func _process(delta):
 		get_tree().paused = true
 		for i in get_tree().get_nodes_in_group("visibleWhenPaused"):i.visible = true
 		add_child( load("res://scene/player/menu/pauseMenu.tscn").instantiate() )
-	$Panel2/HBoxContainer/coins.text = str( Root.playerCar.coin )
-	$Panel4/HBoxContainer/gem.text = str( Root.playerCar.gem )
+	%coins.text = str( Root.playerCar.coin )
+	%gem.text = str( Root.playerCar.gem )
 
 
 func updateStats():$carPanel.updateStats()
@@ -37,7 +37,7 @@ var nextCrushingAward = awardBase
 @onready var crushProgressBar = %ProgressBar
 
 func updateGoonsCrushed():
-	$Panel/HBoxContainer/crushedGoons.text = str( int(nextCrushingAward) - Root.playerCar.currentGoonsCrushed + 1 )
+	%crushedGoons.text = str( int(nextCrushingAward) - Root.playerCar.currentGoonsCrushed + 1 )
 	crushProgressBar.value = Root.playerCar.currentGoonsCrushed
 	if Root.playerCar.currentGoonsCrushed >= nextCrushingAward && not Root.playerCar.isDestroyed:
 		crushProgressBar.min_value = nextCrushingAward
@@ -49,7 +49,7 @@ func updateGoonsCrushed():
 		var slotMachineScene = preload("res://scene/player/slots/slotMachine.tscn")
 		var newMachine = slotMachineScene.instantiate()
 		Root.levelRoot.add_child(newMachine)
-		$Panel/HBoxContainer/crushedGoons.text = str( int(nextCrushingAward) - Root.playerCar.currentGoonsCrushed + 1 )
+		%crushedGoons.text = str( int(nextCrushingAward) - Root.playerCar.currentGoonsCrushed + 1 )
 		get_tree().paused = true
 
 

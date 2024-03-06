@@ -1,4 +1,5 @@
 res://shader
+res://style
 res://scene/enemy/walker/gremlin
 D:/Godot/AutoSurvivor
 res://
@@ -19,4 +20,3 @@ res://scene/player/menu/settings
 res://lib/overhead_car_2d
 res://scene/car/van
 res://scene/level/levels
-res://sound
