@@ -3,14 +3,15 @@ extends Panel
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
-	$pauseButton.updateText( Root.gameModes.keys()[SaveManager.playerData.gameMode] )
+	pass
+#	$pauseButton.updateText( Root.gameModes.keys()[SaveManager.playerData.gameMode] )
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
 	if is_instance_valid(Root.playerCar):
 		$Panel/HBoxContainer2/speed.text = str(int(Root.playerCar.velocity.length())/10) + " MPH"
-		$HBoxContainer/ProgressBar_Health.value = Root.playerCar.health
-		$HBoxContainer2/ProgressBar_Fuel.value = Root.playerCar.fuel
+		%ProgressBar_Health.value = Root.playerCar.health
+		%ProgressBar_Fuel.value = Root.playerCar.fuel
 
 func updateStats():
 	%attributeIndicator_engine.setValue(Root.playerCar.engine)

@@ -48,3 +48,6 @@ res://scene/player/regionUi.gd
 res://scene/player/playerRoot.gd
 res://shader/fancy_flat_text.tres
 res://shader/flatTextNoTime.tres
+res://shader/Mat_Star_White.tres
+res://lib/overhead_car_2d/overhead_car_body_2d.gd
+res://scene/car/car_panel.gd

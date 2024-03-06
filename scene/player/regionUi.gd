@@ -1,4 +1,4 @@
-extends VBoxContainer
+extends HBoxContainer
 
 
 # Called when the node enters the scene tree for the first time.
@@ -10,7 +10,7 @@ func _ready():
 func _process(delta):
 	if Region.currentRegion.has("time"):
 		%WaveProgressBar.value = int(Region.currentRegion.time) % 120
-		%Label_wave.text = "Wave " + str(Region.currentRegion.wave)
+		%Label_wave.text = "Survive Wave " + str(Region.currentRegion.wave)
 
 func updatePlayerRegion(tile):
 	if tile.terrain != Root.terrain.WATER && tile.terrain != Root.terrain.HILLS:

@@ -1,12 +1,14 @@
-[gd_scene load_steps=12 format=3 uid="uid://cyyns0r3734ni"]
+[gd_scene load_steps=14 format=3 uid="uid://cyyns0r3734ni"]
 
 [ext_resource type="Script" path="res://scene/player/regionUi.gd" id="1_nup3b"]
 [ext_resource type="Theme" uid="uid://co40pijjc7hbw" path="res://style/roadRogue.tres" id="2_3vkfu"]
+[ext_resource type="Material" uid="uid://dkh0a5rlpp5og" path="res://shader/mat_star_yellow.tres" id="2_xvj3x"]
 [ext_resource type="Material" uid="uid://d0lj6sppa3i0j" path="res://shader/fancy_flat_text.tres" id="4_1ugrq"]
 [ext_resource type="FontFile" uid="uid://hnnpevcc2v8w" path="res://style/font/Tektur/Tektur_SemiCondensed-ExtraBold.ttf" id="5_iuvtm"]
 [ext_resource type="Texture2D" uid="uid://c4ruanw5s8kja" path="res://texture/icon/mutation.png" id="5_twvs2"]
 [ext_resource type="StyleBox" uid="uid://cjukasfxrv1k3" path="res://style/stylboxbox_progressbarBackground.tres" id="6_ydsit"]
 [ext_resource type="Material" uid="uid://c4e4nqe6cks3c" path="res://shader/rainbow_shader.tres" id="7_5pdb3"]
+[ext_resource type="Texture2D" uid="uid://djs2pk1xs4sql" path="res://texture/icon/star.png" id="8_1v6uh"]
 
 [sub_resource type="Shader" id="Shader_85i5l"]
 resource_local_to_scene = true
@@ -186,22 +188,30 @@ shader_parameter/show_bound = false
 gradient = SubResource("Gradient_6dced")
 height = 10
 
-[node name="VBoxContainer" type="VBoxContainer"]
+[node name="VBoxContainer" type="HBoxContainer"]
 custom_minimum_size = Vector2(300, 0)
 anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -328.0
+offset_left = -370.0
 offset_top = -150.0
 grow_horizontal = 0
 grow_vertical = 0
 script = ExtResource("1_nup3b")
 
+[node name="TextureRect" type="TextureRect" parent="."]
+material = ExtResource("2_xvj3x")
+layout_mode = 2
+size_flags_vertical = 0
+texture = ExtResource("8_1v6uh")
+stretch_mode = 5
+
 [node name="Panel" type="Panel" parent="."]
 custom_minimum_size = Vector2(0, 150)
 layout_mode = 2
+size_flags_horizontal = 3
 size_flags_vertical = 3
 theme = ExtResource("2_3vkfu")
 

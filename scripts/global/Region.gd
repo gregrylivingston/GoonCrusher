@@ -9,8 +9,9 @@ func _ready():
 func _process(delta):
 	if currentRegion.has("time"):
 		currentRegion.time += delta
-		if currentRegion.wave * 120 < currentRegion.time:
+		if currentRegion.wave * 120 < currentRegion.time && currentRegion.wave < 4:
 			currentRegion.wave += 1
+			Root.playerCar.star += 1
 
 
 var names: Dictionary = {

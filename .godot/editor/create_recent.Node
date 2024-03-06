@@ -1,8 +1,8 @@
+VBoxContainer
+HBoxContainer
+TextureRect
 TextureProgressBar
 Panel
-TextureRect
-HBoxContainer
-VBoxContainer
 ProgressBar
 Label
 CanvasLayer
@@ -12,4 +12,3 @@ HSeparator
 Area2D
 CollisionShape2D
 CollisionPolygon2D
-Polygon2D

@@ -37,6 +37,7 @@ var health:float = 100.0
 var fuel:float = 100.0
 var coin:int = 0
 var gem:int = 0
+var star: int = 0
 var currentGoonsCrushed:int = 0
 var slotMachines:int = 0
 

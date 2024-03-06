@@ -27,7 +27,8 @@ func _process(delta):
 		add_child( load("res://scene/player/menu/pauseMenu.tscn").instantiate() )
 	%coins.text = str( Root.playerCar.coin )
 	%gem.text = str( Root.playerCar.gem )
-
+	%star.text = str(Root.playerCar.star)
+	%coinProjection.text = str(Root.playerCar.coin * Root.playerCar.star)
 
 func updateStats():$carPanel.updateStats()
 
@@ -41,7 +42,8 @@ func updateGoonsCrushed():
 	crushProgressBar.value = Root.playerCar.currentGoonsCrushed
 	if Root.playerCar.currentGoonsCrushed >= nextCrushingAward && not Root.playerCar.isDestroyed:
 		crushProgressBar.min_value = nextCrushingAward
-		crushingAwardLevel += 1 
+		crushingAwardLevel += 1
+		Root.playerCar.star += 1
 		nextCrushingAward = pow(( crushingAwardLevel + 1 ), 1.8) * awardBase
 		crushProgressBar.max_value = nextCrushingAward
 

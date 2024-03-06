@@ -1,4 +1,4 @@
-[gd_scene load_steps=23 format=3 uid="uid://pgobm7erc1f0"]
+[gd_scene load_steps=25 format=3 uid="uid://pgobm7erc1f0"]
 
 [ext_resource type="Script" path="res://scene/player/playerRoot.gd" id="1_csk4w"]
 [ext_resource type="PackedScene" uid="uid://bf1f5117fhyd2" path="res://scene/car/car_panel.tscn" id="2_gx8xt"]
@@ -15,6 +15,51 @@
 [ext_resource type="Material" uid="uid://c4e4nqe6cks3c" path="res://shader/rainbow_shader.tres" id="7_5jeqs"]
 [ext_resource type="Material" uid="uid://d4nw1uchte7mv" path="res://scene/player/menu/main/3dText_Common.tres" id="7_kow26"]
 [ext_resource type="PackedScene" uid="uid://cyyns0r3734ni" path="res://scene/player/regionUi.tscn" id="10_ep2ps"]
+[ext_resource type="Texture2D" uid="uid://djs2pk1xs4sql" path="res://texture/icon/star.png" id="11_itgnb"]
+[ext_resource type="Material" uid="uid://bn8224ky2vc0j" path="res://shader/3dShader_Star.tres" id="11_pg46v"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_kjv7t"]
+resource_local_to_scene = true
+shader = ExtResource("5_nv3yj")
+shader_parameter/angle = 0.6
+shader_parameter/thickness = 5.0
+shader_parameter/scale = 1.0
+shader_parameter/shear = Vector2(0, -0.2)
+shader_parameter/slices = 2
+shader_parameter/outline = true
+shader_parameter/outline_width = 2.0
+shader_parameter/front_tex = ExtResource("5_bieyt")
+shader_parameter/back_tex = ExtResource("5_bieyt")
+shader_parameter/show_bound = false
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_fm0sq"]
+resource_local_to_scene = true
+shader = ExtResource("5_nv3yj")
+shader_parameter/angle = 0.6
+shader_parameter/thickness = 5.0
+shader_parameter/scale = 1.0
+shader_parameter/shear = Vector2(0, -0.2)
+shader_parameter/slices = 2
+shader_parameter/outline = true
+shader_parameter/outline_width = 2.0
+shader_parameter/front_tex = ExtResource("11_itgnb")
+shader_parameter/show_bound = false
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_d8d8g"]
+bg_color = Color(0.6, 0.6, 0.6, 0)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_bqu5y"]
+resource_local_to_scene = true
+shader = ExtResource("5_nv3yj")
+shader_parameter/angle = 0.6
+shader_parameter/thickness = 5.0
+shader_parameter/scale = 1.0
+shader_parameter/shear = Vector2(0, -0.2)
+shader_parameter/slices = 2
+shader_parameter/outline = true
+shader_parameter/outline_width = 2.0
+shader_parameter/front_tex = ExtResource("6_domly")
+shader_parameter/show_bound = false
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_spkbp"]
 resource_local_to_scene = true
@@ -34,38 +79,6 @@ shader_parameter/show_bound = false
 [sub_resource type="GradientTexture1D" id="GradientTexture1D_bun2y"]
 gradient = SubResource("Gradient_ihyl7")
 
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_ar1ql"]
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_kjv7t"]
-resource_local_to_scene = true
-shader = ExtResource("5_nv3yj")
-shader_parameter/angle = 0.6
-shader_parameter/thickness = 5.0
-shader_parameter/scale = 1.0
-shader_parameter/shear = Vector2(0, -0.2)
-shader_parameter/slices = 16
-shader_parameter/outline = true
-shader_parameter/outline_width = 2.0
-shader_parameter/front_tex = ExtResource("5_bieyt")
-shader_parameter/back_tex = ExtResource("5_bieyt")
-shader_parameter/show_bound = false
-
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_k4tkc"]
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_bqu5y"]
-resource_local_to_scene = true
-shader = ExtResource("5_nv3yj")
-shader_parameter/angle = 0.6
-shader_parameter/thickness = 5.0
-shader_parameter/scale = 1.0
-shader_parameter/shear = Vector2(0, -0.2)
-shader_parameter/slices = 16
-shader_parameter/outline = true
-shader_parameter/outline_width = 2.0
-shader_parameter/front_tex = ExtResource("6_domly")
-shader_parameter/back_tex = ExtResource("6_domly")
-shader_parameter/show_bound = false
-
 [node name="PlayerRoot" type="CanvasLayer" groups=["playerGameUi"]]
 process_mode = 3
 layer = 3
@@ -73,18 +86,198 @@ script = ExtResource("1_csk4w")
 
 [node name="carPanel" parent="." instance=ExtResource("2_gx8xt")]
 
-[node name="Panel" type="Panel" parent="."]
-custom_minimum_size = Vector2(0, 60)
+[node name="gearbox" type="Label" parent="." groups=["gearui"]]
+material = ExtResource("7_kow26")
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = 406.0
+offset_top = -58.0
+offset_right = 435.0
+offset_bottom = -6.0
+grow_horizontal = 2
+grow_vertical = 0
+theme = ExtResource("4_xbt3u")
+theme_override_constants/outline_size = 2
+theme_override_font_sizes/font_size = 40
+text = "N"
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="."]
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -326.0
-offset_bottom = 60.0
+offset_left = -660.0
+offset_top = 8.0
+offset_bottom = 56.0
 grow_horizontal = 0
+
+[node name="HBoxContainer" type="HBoxContainer" parent="HBoxContainer2"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+size_flags_horizontal = 6
+
+[node name="TextureRect" type="TextureRect" parent="HBoxContainer2/HBoxContainer" groups=["coinui"]]
+material = SubResource("ShaderMaterial_kjv7t")
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+size_flags_horizontal = 10
+size_flags_vertical = 4
+texture = ExtResource("5_bieyt")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="coins" type="Label" parent="HBoxContainer2/HBoxContainer"]
+unique_name_in_owner = true
+material = ExtResource("7_kow26")
+layout_mode = 2
+size_flags_horizontal = 2
+theme = ExtResource("4_xbt3u")
+theme_override_font_sizes/font_size = 30
+text = "0"
+horizontal_alignment = 1
+
+[node name="times" type="Label" parent="HBoxContainer2"]
+material = ExtResource("5_ykxgr")
+layout_mode = 2
+size_flags_horizontal = 6
+theme = ExtResource("4_xbt3u")
+theme_override_font_sizes/font_size = 15
+text = "X"
+horizontal_alignment = 1
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="HBoxContainer2"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+size_flags_horizontal = 6
+
+[node name="TextureRect" type="TextureRect" parent="HBoxContainer2/HBoxContainer2" groups=["starui"]]
+material = SubResource("ShaderMaterial_fm0sq")
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+size_flags_horizontal = 10
+size_flags_vertical = 4
+texture = ExtResource("11_itgnb")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="star" type="Label" parent="HBoxContainer2/HBoxContainer2"]
+unique_name_in_owner = true
+material = ExtResource("7_kow26")
+layout_mode = 2
+size_flags_horizontal = 2
+theme = ExtResource("4_xbt3u")
+theme_override_font_sizes/font_size = 30
+text = "0"
+horizontal_alignment = 1
+
+[node name="times2" type="Label" parent="HBoxContainer2"]
+material = ExtResource("5_ykxgr")
+layout_mode = 2
+size_flags_horizontal = 6
+theme = ExtResource("4_xbt3u")
+theme_override_font_sizes/font_size = 15
+text = "="
+horizontal_alignment = 1
+
+[node name="coinProjection" type="Label" parent="HBoxContainer2"]
+unique_name_in_owner = true
+material = ExtResource("7_kow26")
+layout_mode = 2
+size_flags_horizontal = 6
+theme = ExtResource("4_xbt3u")
+theme_override_font_sizes/font_size = 30
+text = "="
+horizontal_alignment = 1
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+offset_right = 378.0
+offset_bottom = 262.0
+
+[node name="Panel5" type="Panel" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 70)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme = ExtResource("4_xbt3u")
+theme_override_styles/panel = SubResource("StyleBoxFlat_d8d8g")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/Panel5"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 39.0
+offset_top = 2.0
+offset_right = -9.0
+offset_bottom = -2.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Timer" type="Label" parent="VBoxContainer/Panel5/HBoxContainer" groups=["runTimer"]]
+process_mode = 1
+material = ExtResource("7_kow26")
+layout_mode = 2
+size_flags_horizontal = 6
+theme = ExtResource("4_xbt3u")
+theme_override_font_sizes/font_size = 40
+text = "00 : 00"
+horizontal_alignment = 1
+script = ExtResource("3_hepv3")
+
+[node name="Panel3" type="Panel" parent="VBoxContainer/Panel5/HBoxContainer"]
+self_modulate = Color(1, 1, 1, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/panel = ExtResource("3_eocbu")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/Panel5/HBoxContainer/Panel3"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TextureRect" type="TextureRect" parent="VBoxContainer/Panel5/HBoxContainer" groups=["gemui"]]
+material = SubResource("ShaderMaterial_bqu5y")
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+size_flags_vertical = 4
+texture = ExtResource("6_domly")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="gem" type="Label" parent="VBoxContainer/Panel5/HBoxContainer"]
+unique_name_in_owner = true
+material = ExtResource("7_kow26")
+layout_mode = 2
+size_flags_horizontal = 6
+theme_override_font_sizes/font_size = 30
+text = "0"
+horizontal_alignment = 1
+
+[node name="regionUi" parent="VBoxContainer" instance=ExtResource("10_ep2ps")]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="TextureRect" type="TextureRect" parent="VBoxContainer/HBoxContainer"]
+material = ExtResource("11_pg46v")
+layout_mode = 2
+texture = ExtResource("11_itgnb")
+stretch_mode = 5
+
+[node name="Panel" type="Panel" parent="VBoxContainer/HBoxContainer"]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
 size_flags_horizontal = 3
 theme = ExtResource("4_xbt3u")
 
-[node name="HBoxContainer" type="HBoxContainer" parent="Panel"]
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/HBoxContainer/Panel"]
 layout_mode = 1
 anchors_preset = 14
 anchor_top = 0.5
@@ -97,7 +290,7 @@ offset_bottom = 26.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="TextureRect" type="TextureRect" parent="Panel/HBoxContainer"]
+[node name="TextureRect" type="TextureRect" parent="VBoxContainer/HBoxContainer/Panel/HBoxContainer"]
 material = SubResource("ShaderMaterial_spkbp")
 custom_minimum_size = Vector2(50, 0)
 layout_mode = 2
@@ -105,14 +298,14 @@ texture = ExtResource("4_bmve1")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="VBoxContainer" type="VBoxContainer" parent="Panel/HBoxContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/HBoxContainer/Panel/HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="HBoxContainer" type="HBoxContainer" parent="Panel/HBoxContainer/VBoxContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/HBoxContainer/Panel/HBoxContainer/VBoxContainer"]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="Panel/HBoxContainer/VBoxContainer/HBoxContainer"]
+[node name="Label" type="Label" parent="VBoxContainer/HBoxContainer/Panel/HBoxContainer/VBoxContainer/HBoxContainer"]
 material = ExtResource("5_ykxgr")
 layout_mode = 2
 size_flags_horizontal = 0
@@ -121,7 +314,7 @@ theme_override_font_sizes/font_size = 24
 text = "CRUSH "
 horizontal_alignment = 1
 
-[node name="crushedGoons" type="Label" parent="Panel/HBoxContainer/VBoxContainer/HBoxContainer" groups=["currentGoonsCrushedui"]]
+[node name="crushedGoons" type="Label" parent="VBoxContainer/HBoxContainer/Panel/HBoxContainer/VBoxContainer/HBoxContainer" groups=["currentGoonsCrushedui"]]
 unique_name_in_owner = true
 material = ExtResource("5_ykxgr")
 layout_mode = 2
@@ -131,7 +324,7 @@ theme_override_font_sizes/font_size = 24
 text = "20"
 horizontal_alignment = 1
 
-[node name="Label2" type="Label" parent="Panel/HBoxContainer/VBoxContainer/HBoxContainer"]
+[node name="Label2" type="Label" parent="VBoxContainer/HBoxContainer/Panel/HBoxContainer/VBoxContainer/HBoxContainer"]
 material = ExtResource("5_ykxgr")
 layout_mode = 2
 size_flags_horizontal = 0
@@ -140,12 +333,12 @@ theme_override_font_sizes/font_size = 24
 text = " GOONS"
 horizontal_alignment = 1
 
-[node name="Panel" type="Panel" parent="Panel/HBoxContainer/VBoxContainer"]
+[node name="Panel" type="Panel" parent="VBoxContainer/HBoxContainer/Panel/HBoxContainer/VBoxContainer"]
 custom_minimum_size = Vector2(0, 10)
 layout_mode = 2
 theme_override_styles/panel = ExtResource("6_2f1vc")
 
-[node name="ProgressBar" type="TextureProgressBar" parent="Panel/HBoxContainer/VBoxContainer/Panel"]
+[node name="ProgressBar" type="TextureProgressBar" parent="VBoxContainer/HBoxContainer/Panel/HBoxContainer/VBoxContainer/Panel"]
 unique_name_in_owner = true
 material = ExtResource("7_5jeqs")
 layout_mode = 1
@@ -158,134 +351,3 @@ max_value = 5.0
 value = 3.0
 nine_patch_stretch = true
 texture_progress = SubResource("GradientTexture1D_bun2y")
-
-[node name="Panel2" type="Panel" parent="."]
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -125.0
-offset_top = 64.0
-offset_bottom = 124.0
-grow_horizontal = 0
-size_flags_horizontal = 3
-theme = ExtResource("4_xbt3u")
-theme_override_styles/panel = SubResource("StyleBoxEmpty_ar1ql")
-
-[node name="HBoxContainer" type="HBoxContainer" parent="Panel2"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 3.0
-offset_top = 2.0
-offset_right = -6.0
-offset_bottom = -2.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="TextureRect" type="TextureRect" parent="Panel2/HBoxContainer" groups=["coinui"]]
-material = SubResource("ShaderMaterial_kjv7t")
-custom_minimum_size = Vector2(48, 48)
-layout_mode = 2
-size_flags_vertical = 4
-texture = ExtResource("5_bieyt")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="coins" type="Label" parent="Panel2/HBoxContainer"]
-unique_name_in_owner = true
-material = ExtResource("7_kow26")
-layout_mode = 2
-size_flags_horizontal = 6
-theme_override_font_sizes/font_size = 30
-text = "0"
-horizontal_alignment = 1
-
-[node name="Panel4" type="Panel" parent="."]
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -268.0
-offset_top = 64.0
-offset_right = -135.0
-offset_bottom = 124.0
-grow_horizontal = 0
-size_flags_horizontal = 3
-theme = ExtResource("4_xbt3u")
-theme_override_styles/panel = SubResource("StyleBoxEmpty_k4tkc")
-
-[node name="HBoxContainer" type="HBoxContainer" parent="Panel4"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 2.0
-offset_top = 2.0
-offset_right = -9.0
-offset_bottom = -2.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="TextureRect" type="TextureRect" parent="Panel4/HBoxContainer" groups=["gemui"]]
-material = SubResource("ShaderMaterial_bqu5y")
-custom_minimum_size = Vector2(48, 48)
-layout_mode = 2
-size_flags_vertical = 4
-texture = ExtResource("6_domly")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="gem" type="Label" parent="Panel4/HBoxContainer"]
-unique_name_in_owner = true
-material = ExtResource("7_kow26")
-layout_mode = 2
-size_flags_horizontal = 6
-theme_override_font_sizes/font_size = 30
-text = "0"
-horizontal_alignment = 1
-
-[node name="Panel3" type="Panel" parent="."]
-self_modulate = Color(1, 1, 1, 0)
-anchors_preset = 5
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -91.0
-offset_right = 92.0
-offset_bottom = 65.0
-grow_horizontal = 2
-size_flags_horizontal = 3
-theme_override_styles/panel = ExtResource("3_eocbu")
-
-[node name="HBoxContainer" type="HBoxContainer" parent="Panel3"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="Timer" type="Label" parent="Panel3/HBoxContainer" groups=["runTimer"]]
-process_mode = 1
-material = ExtResource("7_kow26")
-layout_mode = 2
-size_flags_horizontal = 6
-theme = ExtResource("4_xbt3u")
-theme_override_font_sizes/font_size = 40
-text = "00 : 00"
-horizontal_alignment = 1
-script = ExtResource("3_hepv3")
-
-[node name="gearbox" type="Label" parent="." groups=["gearui"]]
-material = ExtResource("7_kow26")
-offset_left = 185.0
-offset_top = 122.0
-offset_right = 214.0
-offset_bottom = 174.0
-theme = ExtResource("4_xbt3u")
-theme_override_constants/outline_size = 2
-theme_override_font_sizes/font_size = 40
-text = "N"
-
-[node name="regionUi" parent="." instance=ExtResource("10_ep2ps")]
-unique_name_in_owner = true
-offset_top = -161.0

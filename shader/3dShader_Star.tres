@@ -1,4 +1,6 @@
-[gd_resource type="ShaderMaterial" load_steps=2 format=3 uid="uid://d4nw1uchte7mv"]
+[gd_resource type="ShaderMaterial" load_steps=3 format=3 uid="uid://bn8224ky2vc0j"]
+
+[ext_resource type="Texture2D" uid="uid://djs2pk1xs4sql" path="res://texture/icon/star.png" id="1_ppsou"]
 
 [sub_resource type="Shader" id="Shader_85i5l"]
 resource_local_to_scene = true
@@ -166,7 +168,8 @@ shader_parameter/angle = 0.6
 shader_parameter/thickness = 5.0
 shader_parameter/scale = 1.0
 shader_parameter/shear = Vector2(0, -0.2)
-shader_parameter/slices = 2
+shader_parameter/slices = 8
 shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
+shader_parameter/front_tex = ExtResource("1_ppsou")
 shader_parameter/show_bound = false
