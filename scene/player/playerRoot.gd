@@ -21,7 +21,7 @@ func _ready():
 	
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
-	if Input.is_action_just_pressed("ui_menu") && get_tree().get_nodes_in_group("pauseMenu").size() == 0:
+	if Input.is_action_just_pressed("ui_menu") && get_tree().get_nodes_in_group("pauseMenu").size() == 0 && not get_tree().paused:
 		get_tree().paused = true
 		for i in get_tree().get_nodes_in_group("visibleWhenPaused"):i.visible = true
 		add_child( load("res://scene/player/menu/pauseMenu.tscn").instantiate() )
@@ -44,18 +44,28 @@ func updateGoonsCrushed():
 		crushProgressBar.min_value = nextCrushingAward
 		crushingAwardLevel += 1
 		Root.playerCar.star += 1
-		nextCrushingAward = pow(( crushingAwardLevel + 1 ), 1.8) * awardBase
-		crushProgressBar.max_value = nextCrushingAward
 
+
+		get_tree().paused = true
+		
 		#create award
 		var slotMachineScene = preload("res://scene/player/slots/slotMachine.tscn")
 		var newMachine = slotMachineScene.instantiate()
+		newMachine.isGoonCrushBonus = true
 		Root.levelRoot.add_child(newMachine)
-		%crushedGoons.text = str( int(nextCrushingAward) - Root.playerCar.currentGoonsCrushed + 1 )
-		get_tree().paused = true
+
+
 
 
 
 func updatePlayerRegion(tile):%regionUi.updatePlayerRegion(tile)
 
 
+func animateNewGoonCrushGoal(animatebackwards: bool = true):
+	if animatebackwards:
+		$AnimationPlayer.play_backwards("NewGoonCrushBonus")
+		nextCrushingAward = pow(( crushingAwardLevel + 1 ), 1.8) * awardBase
+		crushProgressBar.max_value = nextCrushingAward
+		%crushedGoons.text = str( int(nextCrushingAward) - Root.playerCar.currentGoonsCrushed + 1 )		
+	else:
+		$AnimationPlayer.play("NewGoonCrushBonus")

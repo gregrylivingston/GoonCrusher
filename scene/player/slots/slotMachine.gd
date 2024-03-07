@@ -8,6 +8,7 @@ var isPlaying: bool = true
 var isReady: bool = false
 var inactiveSlots = []
 var slotDelayTime = 1.8
+var isGoonCrushBonus: bool = false
 
 var myBackground 
 var slotTransition = preload("res://scene/fx/lotto/lottoTransition.tscn")
@@ -16,10 +17,16 @@ func _ready():
 	Root.playerCar.slotMachines += 1
 	$slotMachineBonusSound.stream = load(winSound[ randi_range( 0 , winSound.size() -1 ) ] )
 	$slotMachineBonusSound.play()
+	$Panel.position.y = get_viewport().size.y
+	
+	if isGoonCrushBonus:
+		Root.playerRoot.animateNewGoonCrushGoal(false)
+		await get_tree().create_timer(1.5).timeout
+	
 	myBackground = slotTransition.instantiate()
 	Root.levelRoot.add_child( myBackground )
 
-	$Panel.position.y = get_viewport().size.y
+
 	var tween = get_tree().create_tween()
 	tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS) 
 	tween.tween_property($Panel , "position" , Vector2(0.0,0.0) , 1.1)
@@ -129,6 +136,7 @@ func _on_claim_button_pressed():
 	splashScreen.myIcons = myIconArray
 	Root.levelRoot.add_child(splashScreen)
 	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
+	if isGoonCrushBonus: Root.playerRoot.animateNewGoonCrushGoal()
 	splashScreen.startExplosion()
 	
 

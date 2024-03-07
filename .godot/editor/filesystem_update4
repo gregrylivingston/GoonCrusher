@@ -51,3 +51,6 @@ res://shader/flatTextNoTime.tres
 res://shader/Mat_Star_White.tres
 res://lib/overhead_car_2d/overhead_car_body_2d.gd
 res://scene/car/car_panel.gd
+res://scene/player/slots/slotMachine.tscn
+res://scene/player/slots/slotMachine.gd
+res://scene/powerup/slotMachine.tscn

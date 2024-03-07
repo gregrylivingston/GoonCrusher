@@ -1,3 +1,5 @@
+Control
+AnimationPlayer
 VBoxContainer
 HBoxContainer
 TextureRect
@@ -11,4 +13,3 @@ roadButton
 HSeparator
 Area2D
 CollisionShape2D
-CollisionPolygon2D

@@ -1,4 +1,4 @@
-[gd_scene load_steps=25 format=3 uid="uid://pgobm7erc1f0"]
+[gd_scene load_steps=28 format=3 uid="uid://pgobm7erc1f0"]
 
 [ext_resource type="Script" path="res://scene/player/playerRoot.gd" id="1_csk4w"]
 [ext_resource type="PackedScene" uid="uid://bf1f5117fhyd2" path="res://scene/car/car_panel.tscn" id="2_gx8xt"]
@@ -78,6 +78,44 @@ shader_parameter/show_bound = false
 
 [sub_resource type="GradientTexture1D" id="GradientTexture1D_bun2y"]
 gradient = SubResource("Gradient_ihyl7")
+
+[sub_resource type="Animation" id="Animation_0va5u"]
+resource_name = "NewWave"
+length = 2.0
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("VBoxContainer/regionUi:position")
+tracks/0/interp = 2
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.8, 1, 2),
+"transitions": PackedFloat32Array(0.517632, 1, 1, 1),
+"update": 0,
+"values": [Vector2(0, 146), Vector2(400, 400), Vector2(400, 400), Vector2(400, 400)]
+}
+
+[sub_resource type="Animation" id="Animation_1ke8o"]
+resource_name = "NewGoonCrushBonus"
+length = 2.0
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("VBoxContainer/crushgoons:position")
+tracks/0/interp = 2
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 1, 1.1, 2),
+"transitions": PackedFloat32Array(0.210224, 1, 1, 1),
+"update": 0,
+"values": [Vector2(0, 76), Vector2(400, 400), Vector2(400, 400), Vector2(400, 400)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_koa56"]
+_data = {
+"NewGoonCrushBonus": SubResource("Animation_1ke8o"),
+"NewWave": SubResource("Animation_0va5u")
+}
 
 [node name="PlayerRoot" type="CanvasLayer" groups=["playerGameUi"]]
 process_mode = 3
@@ -191,13 +229,17 @@ theme_override_font_sizes/font_size = 30
 text = "="
 horizontal_alignment = 1
 
-[node name="VBoxContainer" type="VBoxContainer" parent="."]
+[node name="VBoxContainer" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
 offset_right = 378.0
 offset_bottom = 262.0
 
 [node name="Panel5" type="Panel" parent="VBoxContainer"]
 custom_minimum_size = Vector2(0, 70)
 layout_mode = 2
+offset_right = 378.0
+offset_bottom = 70.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme = ExtResource("4_xbt3u")
@@ -261,23 +303,35 @@ horizontal_alignment = 1
 [node name="regionUi" parent="VBoxContainer" instance=ExtResource("10_ep2ps")]
 unique_name_in_owner = true
 layout_mode = 2
+anchors_preset = 0
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 0.0
+anchor_bottom = 0.0
+offset_left = 0.0
+offset_top = 146.0
+offset_right = 378.0
+offset_bottom = 257.0
 
-[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer"]
+[node name="crushgoons" type="HBoxContainer" parent="VBoxContainer"]
 layout_mode = 2
+offset_top = 76.0
+offset_right = 378.0
+offset_bottom = 136.0
 
-[node name="TextureRect" type="TextureRect" parent="VBoxContainer/HBoxContainer"]
+[node name="TextureRect" type="TextureRect" parent="VBoxContainer/crushgoons"]
 material = ExtResource("11_pg46v")
 layout_mode = 2
 texture = ExtResource("11_itgnb")
 stretch_mode = 5
 
-[node name="Panel" type="Panel" parent="VBoxContainer/HBoxContainer"]
+[node name="Panel" type="Panel" parent="VBoxContainer/crushgoons"]
 custom_minimum_size = Vector2(0, 60)
 layout_mode = 2
 size_flags_horizontal = 3
 theme = ExtResource("4_xbt3u")
 
-[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/HBoxContainer/Panel"]
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/crushgoons/Panel"]
 layout_mode = 1
 anchors_preset = 14
 anchor_top = 0.5
@@ -290,7 +344,7 @@ offset_bottom = 26.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="TextureRect" type="TextureRect" parent="VBoxContainer/HBoxContainer/Panel/HBoxContainer"]
+[node name="TextureRect" type="TextureRect" parent="VBoxContainer/crushgoons/Panel/HBoxContainer"]
 material = SubResource("ShaderMaterial_spkbp")
 custom_minimum_size = Vector2(50, 0)
 layout_mode = 2
@@ -298,14 +352,14 @@ texture = ExtResource("4_bmve1")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/HBoxContainer/Panel/HBoxContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/crushgoons/Panel/HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/HBoxContainer/Panel/HBoxContainer/VBoxContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/crushgoons/Panel/HBoxContainer/VBoxContainer"]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="VBoxContainer/HBoxContainer/Panel/HBoxContainer/VBoxContainer/HBoxContainer"]
+[node name="Label" type="Label" parent="VBoxContainer/crushgoons/Panel/HBoxContainer/VBoxContainer/HBoxContainer"]
 material = ExtResource("5_ykxgr")
 layout_mode = 2
 size_flags_horizontal = 0
@@ -314,7 +368,7 @@ theme_override_font_sizes/font_size = 24
 text = "CRUSH "
 horizontal_alignment = 1
 
-[node name="crushedGoons" type="Label" parent="VBoxContainer/HBoxContainer/Panel/HBoxContainer/VBoxContainer/HBoxContainer" groups=["currentGoonsCrushedui"]]
+[node name="crushedGoons" type="Label" parent="VBoxContainer/crushgoons/Panel/HBoxContainer/VBoxContainer/HBoxContainer" groups=["currentGoonsCrushedui"]]
 unique_name_in_owner = true
 material = ExtResource("5_ykxgr")
 layout_mode = 2
@@ -324,7 +378,7 @@ theme_override_font_sizes/font_size = 24
 text = "20"
 horizontal_alignment = 1
 
-[node name="Label2" type="Label" parent="VBoxContainer/HBoxContainer/Panel/HBoxContainer/VBoxContainer/HBoxContainer"]
+[node name="Label2" type="Label" parent="VBoxContainer/crushgoons/Panel/HBoxContainer/VBoxContainer/HBoxContainer"]
 material = ExtResource("5_ykxgr")
 layout_mode = 2
 size_flags_horizontal = 0
@@ -333,12 +387,12 @@ theme_override_font_sizes/font_size = 24
 text = " GOONS"
 horizontal_alignment = 1
 
-[node name="Panel" type="Panel" parent="VBoxContainer/HBoxContainer/Panel/HBoxContainer/VBoxContainer"]
+[node name="Panel" type="Panel" parent="VBoxContainer/crushgoons/Panel/HBoxContainer/VBoxContainer"]
 custom_minimum_size = Vector2(0, 10)
 layout_mode = 2
 theme_override_styles/panel = ExtResource("6_2f1vc")
 
-[node name="ProgressBar" type="TextureProgressBar" parent="VBoxContainer/HBoxContainer/Panel/HBoxContainer/VBoxContainer/Panel"]
+[node name="ProgressBar" type="TextureProgressBar" parent="VBoxContainer/crushgoons/Panel/HBoxContainer/VBoxContainer/Panel"]
 unique_name_in_owner = true
 material = ExtResource("7_5jeqs")
 layout_mode = 1
@@ -351,3 +405,8 @@ max_value = 5.0
 value = 3.0
 nine_patch_stretch = true
 texture_progress = SubResource("GradientTexture1D_bun2y")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+libraries = {
+"": SubResource("AnimationLibrary_koa56")
+}

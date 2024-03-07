@@ -189,14 +189,13 @@ gradient = SubResource("Gradient_6dced")
 height = 10
 
 [node name="VBoxContainer" type="HBoxContainer"]
-custom_minimum_size = Vector2(300, 0)
 anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = -370.0
-offset_top = -150.0
+offset_top = -125.0
 grow_horizontal = 0
 grow_vertical = 0
 script = ExtResource("1_nup3b")
@@ -209,7 +208,6 @@ texture = ExtResource("8_1v6uh")
 stretch_mode = 5
 
 [node name="Panel" type="Panel" parent="."]
-custom_minimum_size = Vector2(0, 150)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -221,9 +219,9 @@ anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 12.0
-offset_top = 8.0
+offset_top = 15.5
 offset_right = -13.0
-offset_bottom = -17.0
+offset_bottom = -17.5
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -289,39 +287,10 @@ texture_progress = SubResource("GradientTexture2D_nv7mr")
 [node name="HBoxContainer3" type="HBoxContainer" parent="Panel/VBoxContainer"]
 layout_mode = 2
 
-[node name="goon1" type="Label" parent="Panel/VBoxContainer/HBoxContainer3"]
-unique_name_in_owner = true
-material = ExtResource("4_1ugrq")
-layout_mode = 2
-theme = ExtResource("2_3vkfu")
-theme_override_constants/outline_size = 2
-theme_override_font_sizes/font_size = 25
-text = "Warrior"
-
-[node name="goon2" type="Label" parent="Panel/VBoxContainer/HBoxContainer3"]
-unique_name_in_owner = true
-material = ExtResource("4_1ugrq")
-layout_mode = 2
-size_flags_horizontal = 6
-theme = ExtResource("2_3vkfu")
-theme_override_constants/outline_size = 2
-theme_override_font_sizes/font_size = 25
-text = "Warrior"
-
-[node name="goon3" type="Label" parent="Panel/VBoxContainer/HBoxContainer3"]
-unique_name_in_owner = true
-material = ExtResource("4_1ugrq")
-layout_mode = 2
-size_flags_horizontal = 10
-theme = ExtResource("2_3vkfu")
-theme_override_constants/outline_size = 2
-theme_override_font_sizes/font_size = 25
-text = "Warrior"
-
-[node name="HBoxContainer4" type="HBoxContainer" parent="Panel/VBoxContainer"]
+[node name="HBoxContainer4" type="HBoxContainer" parent="Panel/VBoxContainer/HBoxContainer3"]
 layout_mode = 2
 
-[node name="region" type="Label" parent="Panel/VBoxContainer/HBoxContainer4"]
+[node name="region" type="Label" parent="Panel/VBoxContainer/HBoxContainer3/HBoxContainer4"]
 unique_name_in_owner = true
 material = ExtResource("4_1ugrq")
 layout_mode = 2
@@ -330,7 +299,7 @@ theme_override_constants/outline_size = 2
 theme_override_font_sizes/font_size = 14
 text = "ID: -99"
 
-[node name="terrain" type="Label" parent="Panel/VBoxContainer/HBoxContainer4"]
+[node name="terrain" type="Label" parent="Panel/VBoxContainer/HBoxContainer3/HBoxContainer4"]
 unique_name_in_owner = true
 material = ExtResource("4_1ugrq")
 layout_mode = 2
@@ -338,3 +307,33 @@ theme = ExtResource("2_3vkfu")
 theme_override_constants/outline_size = 2
 theme_override_font_sizes/font_size = 14
 text = "-99"
+
+[node name="goon1" type="Label" parent="Panel/VBoxContainer/HBoxContainer3"]
+unique_name_in_owner = true
+material = ExtResource("4_1ugrq")
+layout_mode = 2
+size_flags_horizontal = 0
+theme = ExtResource("2_3vkfu")
+theme_override_constants/outline_size = 2
+theme_override_font_sizes/font_size = 15
+text = "Warrior"
+
+[node name="goon2" type="Label" parent="Panel/VBoxContainer/HBoxContainer3"]
+unique_name_in_owner = true
+material = ExtResource("4_1ugrq")
+layout_mode = 2
+size_flags_horizontal = 0
+theme = ExtResource("2_3vkfu")
+theme_override_constants/outline_size = 2
+theme_override_font_sizes/font_size = 15
+text = "Warrior"
+
+[node name="goon3" type="Label" parent="Panel/VBoxContainer/HBoxContainer3"]
+unique_name_in_owner = true
+material = ExtResource("4_1ugrq")
+layout_mode = 2
+size_flags_horizontal = 0
+theme = ExtResource("2_3vkfu")
+theme_override_constants/outline_size = 2
+theme_override_font_sizes/font_size = 15
+text = "Warrior"
