@@ -58,10 +58,11 @@ func updateGoonsCrushed():
 
 
 
-func updatePlayerRegion(tile):%regionUi.updatePlayerRegion(tile)
+func updatePlayerRegion(tile) ->void:
+	%regionUi.updatePlayerRegion(tile)
 
 
-func animateNewGoonCrushGoal(animatebackwards: bool = true):
+func animateNewGoonCrushGoal(animatebackwards: bool = true) -> void:
 	if animatebackwards:
 		$AnimationPlayer.play_backwards("NewGoonCrushBonus")
 		nextCrushingAward = pow(( crushingAwardLevel + 1 ), 1.8) * awardBase
@@ -69,3 +70,9 @@ func animateNewGoonCrushGoal(animatebackwards: bool = true):
 		%crushedGoons.text = str( int(nextCrushingAward) - Root.playerCar.currentGoonsCrushed  )		
 	else:
 		$AnimationPlayer.play("NewGoonCrushBonus")
+		
+func animateNewRegion(animatebackwards: bool = true) -> void:
+	if animatebackwards:
+		$AnimationPlayer.play_backwards("NewWave")
+	else:
+		$AnimationPlayer.play("NewWave")

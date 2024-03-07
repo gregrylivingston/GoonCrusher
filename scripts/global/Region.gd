@@ -1,5 +1,6 @@
 extends Node
 
+var waveLength: int = 60
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
@@ -9,9 +10,10 @@ func _ready():
 func _process(delta):
 	if currentRegion.has("time"):
 		currentRegion.time += delta
-		if currentRegion.wave * 120 < currentRegion.time && currentRegion.wave < 4:
+		if currentRegion.wave * waveLength < currentRegion.time && currentRegion.wave < 4:
 			currentRegion.wave += 1
 			Root.playerCar.star += 1
+			Root.playerRoot.animateNewRegion(true)
 
 
 var names: Dictionary = {
@@ -104,6 +106,8 @@ func getRandomGoon(terrain: int): #accepts Root.terrain
 	
 	
 func updatePlayerRegion(tile):
+	if currentRegionNumber != tile.region:
+		Root.playerRoot.animateNewRegion(true)
 	currentRegionNumber = tile.region
 	currentRegion = getRegion(tile.region , tile.terrain)
 	

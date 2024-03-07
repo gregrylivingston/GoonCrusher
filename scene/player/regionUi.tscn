@@ -186,6 +186,7 @@ shader_parameter/show_bound = false
 
 [sub_resource type="GradientTexture2D" id="GradientTexture2D_nv7mr"]
 gradient = SubResource("Gradient_6dced")
+width = 294
 height = 10
 
 [node name="VBoxContainer" type="HBoxContainer"]
@@ -281,7 +282,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 max_value = 120.0
-value = 50.0
+value = 120.0
 texture_progress = SubResource("GradientTexture2D_nv7mr")
 
 [node name="HBoxContainer3" type="HBoxContainer" parent="Panel/VBoxContainer"]

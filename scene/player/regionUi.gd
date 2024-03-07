@@ -9,8 +9,9 @@ func _ready():
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
 	if Region.currentRegion.has("time"):
-		%WaveProgressBar.value = int(Region.currentRegion.time) % 120
+		%WaveProgressBar.value = int(Region.currentRegion.time) % Region.waveLength
 		%Label_wave.text = "Survive Wave " + str(Region.currentRegion.wave)
+		%WaveProgressBar.max_value = int(Region.currentRegion.wave * Region.waveLength)
 
 func updatePlayerRegion(tile):
 	if tile.terrain != Root.terrain.WATER && tile.terrain != Root.terrain.HILLS:
