@@ -54,3 +54,4 @@ res://scene/car/car_panel.gd
 res://scene/player/slots/slotMachine.tscn
 res://scene/player/slots/slotMachine.gd
 res://scene/powerup/slotMachine.tscn
+res://scene/enemy/walker/walker.gd

@@ -236,12 +236,12 @@ func stopCarFX():
 
 func crushGoon(collider):
 	if is_instance_valid(collider):
-		var newPowerup = Root.getSpecificPowerup(Root.upgrade.CURRENTGOONSCRUSHED)
-		newPowerup.global_position = collider.global_position
-		Root.levelRoot.add_child(newPowerup)
-		newPowerup._on_area_2d_body_entered(self)
-		collider.destroy()
-	#currentGoonsCrushed += 1
+		if not collider.isDying():
+			var newPowerup = Root.getSpecificPowerup(Root.upgrade.CURRENTGOONSCRUSHED)
+			newPowerup.global_position = collider.global_position
+			Root.levelRoot.add_child(newPowerup)
+			newPowerup._on_area_2d_body_entered(self)
+			collider.destroy()
 
 var isVibratingLeft = 4
 var vibrationSteps = 0

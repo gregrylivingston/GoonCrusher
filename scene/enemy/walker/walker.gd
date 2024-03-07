@@ -125,7 +125,10 @@ func moveTowardsPlayer(delta):
 			myMode = mode.PREPAREATTACK
 
 
-	
+func isDying() -> bool:
+	if myMode == mode.DEAD:
+		return true
+	else: return false
 
 func destroy():
 	$Walker.set_material(null)

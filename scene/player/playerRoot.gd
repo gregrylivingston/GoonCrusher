@@ -38,9 +38,9 @@ var nextCrushingAward = awardBase
 @onready var crushProgressBar = %ProgressBar
 
 func updateGoonsCrushed():
-	%crushedGoons.text = str( int(nextCrushingAward) - Root.playerCar.currentGoonsCrushed + 1 )
+	%crushedGoons.text = str( int(nextCrushingAward) - Root.playerCar.currentGoonsCrushed  )
 	crushProgressBar.value = Root.playerCar.currentGoonsCrushed
-	if Root.playerCar.currentGoonsCrushed >= nextCrushingAward && not Root.playerCar.isDestroyed:
+	if Root.playerCar.currentGoonsCrushed >= nextCrushingAward && not Root.playerCar.isDestroyed && not get_tree().paused:
 		crushProgressBar.min_value = nextCrushingAward
 		crushingAwardLevel += 1
 		Root.playerCar.star += 1
@@ -66,6 +66,6 @@ func animateNewGoonCrushGoal(animatebackwards: bool = true):
 		$AnimationPlayer.play_backwards("NewGoonCrushBonus")
 		nextCrushingAward = pow(( crushingAwardLevel + 1 ), 1.8) * awardBase
 		crushProgressBar.max_value = nextCrushingAward
-		%crushedGoons.text = str( int(nextCrushingAward) - Root.playerCar.currentGoonsCrushed + 1 )		
+		%crushedGoons.text = str( int(nextCrushingAward) - Root.playerCar.currentGoonsCrushed  )		
 	else:
 		$AnimationPlayer.play("NewGoonCrushBonus")
