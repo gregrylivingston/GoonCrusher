@@ -171,7 +171,7 @@ func loadChunk(chunk:Vector2i , myScene = null): #if an instantiated scene isn't
 		var newLandscapeMap = landscapeMap[tile.terrain].instantiate()
 		
 		if Region.regions.has(tile.region):
-			newLandscapeMap.self_modulate = newLandscapeMap.self_modulate * randf_range(0.8,1.2)
+			newLandscapeMap.self_modulate = newLandscapeMap.self_modulate * Region.regions[tile.region].terrain_modulate
 			newLandscapeMap.self_modulate.a = 1.0
 		
 		newLandscapeMap.global_position = targetPosition

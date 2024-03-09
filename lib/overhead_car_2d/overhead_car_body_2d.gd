@@ -97,6 +97,7 @@ func _ready():
 		
 		
 	$headlamps/carhighlight.texture = $sprite.texture
+	$headlamps/carhighlight.scale = $sprite.scale
 	$headlamps/carhighlight.position = $sprite.position
 	setHeadlightStrength()
 	stopCarFX()
