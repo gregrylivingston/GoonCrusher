@@ -278,15 +278,22 @@ func activeCarEffects(delta):
 	else: 		
 		for i in [$headlamps/taillamps/tailLamp3, $headlamps/taillamps/tailLamp4]:i.energy = 0.1
 
-	#zoom out if going fast
-	if velocity.length() > 450.0 && isPlayer && is_instance_valid($Camera2D):
-		var myZoomFactor = 0.55 - velocity.length() / 9000.0
-		$Camera2D.zoom = Vector2(myZoomFactor, myZoomFactor)
-	else:
-		$Camera2D.zoom = Vector2(0.5,0.5)
+	updateCameraZoom()
+
 		
-
-
+var defaultZoomLevel:float = 0.45
+var cameraAdjustmentSpeed: float = 0.0008
+func updateCameraZoom():
+	var targetZoomFactor: float
+	if velocity.length() > 450.0 && isPlayer && is_instance_valid($Camera2D):
+		targetZoomFactor = defaultZoomLevel + 0.10 - velocity.length() / 4500.0
+	else:
+		targetZoomFactor = defaultZoomLevel
+	if $Camera2D.zoom.x > targetZoomFactor:
+		$Camera2D.zoom -= Vector2(cameraAdjustmentSpeed,cameraAdjustmentSpeed)
+	elif $Camera2D.zoom.x < targetZoomFactor:
+		$Camera2D.zoom += Vector2(cameraAdjustmentSpeed,cameraAdjustmentSpeed)
+	#$Camera2D.zoom = Vector2(targetZoomFactor, targetZoomFactor)
 
 var tiremarkScene = preload("res://scene/fx/tiremark.tscn")
 var tiremark = {}

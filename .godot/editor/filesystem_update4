@@ -47,3 +47,6 @@ res://scene/enemy/walker/lizard/lizard.tscn
 res://scene/enemy/walker/rat/rat.tscn
 res://scene/powerup/slotMachine.tscn
 res://scene/player/slots/slotMachine.tscn
+res://lib/overhead_car_2d/overhead_car_body_2d.gd
+res://scene/player/save/playerData.gd
+res://scene/player/menu/main/main2.gd

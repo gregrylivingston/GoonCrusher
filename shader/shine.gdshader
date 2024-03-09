@@ -68,7 +68,7 @@ void fragment() {
 	}
 
 	//this part adds the shine effects.  The code above is all outline	
-	float shine = step(1.0 - shine_size * 0.5, 0.5 + 0.5 * sin(UV.x - UV.y + TIME * shine_speed));
-	COLOR.rgb = mix(COLOR.rgb, shine_color.rgb, shine * shine_color.a ) ;
+	//float shine = step(1.0 - shine_size * 0.5, 0.5 + 0.5 * sin(UV.x - UV.y + TIME * shine_speed));
+	//COLOR.rgb = mix(COLOR.rgb, shine_color.rgb, shine * shine_color.a ) ;
   	
 }

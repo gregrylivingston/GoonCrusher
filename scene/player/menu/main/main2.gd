@@ -51,7 +51,7 @@ func selectCar(car):
 	
 func disableLockedCars(car):
 	var thisCar =  SaveManager.getCarByName(Root.playerCar.carId)
-	if SaveManager.playerData.selectedCar > 2:
+	if SaveManager.playerData.selectedCar > 20:#set this to 2 for DEMO
 		%levelSelect.visible = true
 		%levelSelect.disabled = true
 		%levelSelect.updateText( "NOT IN DEMO" )

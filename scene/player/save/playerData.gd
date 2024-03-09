@@ -50,7 +50,7 @@ class_name PlayerData extends Resource
 		"scene":"res://scene/car/racer/racer.tscn"
 	},
 	{	"name":"police",
-		"cost":75000,
+		"cost":0,#75000,
 		"upgrades":{},
 		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,},
 		"scene":"res://scene/car/police/police.tscn",
