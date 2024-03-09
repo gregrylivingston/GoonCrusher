@@ -1,3 +1,4 @@
+res://scripts/global
 res://shader
 res://style
 res://scene/enemy/walker/gremlin
@@ -8,7 +9,6 @@ D:/Godot
 res://scene/player/menu/main
 res://scene/level/terrain
 res://scene/player
-res://scripts/global
 res://texture/atlas
 res://scene
 res://scene/scenery/walls
