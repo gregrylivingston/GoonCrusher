@@ -108,7 +108,7 @@ func buildGameSummary():
 	
 	$Panel/Panel2/VBoxContainer/HBoxContainer7/time.text = str( get_tree().get_first_node_in_group("runTimer").text )
 	
-	var coin = Root.playerCar.coin
+	var coin = Root.playerCar.coin + Root.playerCar.star
 	if coin > carStats.records.coin: 
 		carStats.records.coin = coin
 	$Panel/Panel2/VBoxContainer/HBoxContainer2/coinsCollected.text = str(Root.playerCar.coin)

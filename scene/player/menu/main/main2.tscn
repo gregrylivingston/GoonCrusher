@@ -55,7 +55,7 @@ shader_parameter/back_tex = ExtResource("10_8o5bn")
 shader_parameter/side_tex = SubResource("GradientTexture1D_pwab5")
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_67msa"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_hyygw"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -67,7 +67,7 @@ shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_i8nrw"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_m78wd"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -79,7 +79,7 @@ shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_u7wdq"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_cviuj"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -91,7 +91,7 @@ shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_201mt"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ug75w"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -281,7 +281,7 @@ shader_parameter/outline_width = 2.0
 shader_parameter/front_tex = SubResource("GradientTexture1D_3pvng")
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_qjoch"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_yxwm6"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -293,7 +293,7 @@ shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_nc4oy"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_wdslo"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -725,7 +725,7 @@ alignment = 1
 [node name="unlock" parent="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
 visible = false
-material = SubResource("ShaderMaterial_67msa")
+material = SubResource("ShaderMaterial_hyygw")
 custom_minimum_size = Vector2(250, 25)
 layout_mode = 2
 size_flags_horizontal = 0
@@ -739,7 +739,7 @@ alignment = 1
 
 [node name="levelSelect" parent="mainMenuPanel/VBoxContainer/HBoxContainer2/HBoxContainer" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
-material = SubResource("ShaderMaterial_i8nrw")
+material = SubResource("ShaderMaterial_m78wd")
 custom_minimum_size = Vector2(250, 0)
 layout_mode = 2
 size_flags_horizontal = 0
@@ -767,7 +767,7 @@ layout_mode = 2
 
 [node name="howToPlayButton" parent="mainMenuPanel/VBoxContainer/HBoxContainer3" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
-material = SubResource("ShaderMaterial_u7wdq")
+material = SubResource("ShaderMaterial_cviuj")
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -801,7 +801,7 @@ layout_mode = 2
 
 [node name="recordsButton" parent="mainMenuPanel/VBoxContainer/HBoxContainer5" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
-material = SubResource("ShaderMaterial_201mt")
+material = SubResource("ShaderMaterial_ug75w")
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -925,7 +925,7 @@ size_flags_vertical = 0
 theme_override_constants/separation = 40
 
 [node name="previous_car_button" parent="VBoxContainer2/HBoxContainer" instance=ExtResource("4_f12ks")]
-material = SubResource("ShaderMaterial_qjoch")
+material = SubResource("ShaderMaterial_yxwm6")
 custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
 size_flags_horizontal = 0
@@ -933,7 +933,7 @@ theme_override_font_sizes/font_size = 75
 text = "<"
 
 [node name="next_car_button" parent="VBoxContainer2/HBoxContainer" instance=ExtResource("4_f12ks")]
-material = SubResource("ShaderMaterial_nc4oy")
+material = SubResource("ShaderMaterial_wdslo")
 custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
 size_flags_horizontal = 0
