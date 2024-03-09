@@ -50,6 +50,7 @@ func selectCar(car):
 	%charTexture2.position = Vector2( 0 , 0 )
 	
 func disableLockedCars(car):
+	return true
 	var thisCar =  SaveManager.getCarByName(Root.playerCar.carId)
 	if SaveManager.playerData.selectedCar > 20:#set this to 2 for DEMO
 		%levelSelect.visible = true
@@ -104,7 +105,9 @@ func setupLevel(level):
 	#%levelSelect.updateText( str(SaveManager.playerData.selectedLevel + 1) + ". " + level.name)
 	%driverName2.text =  Root.playerCar.charName
 	%driverName.text = str(SaveManager.playerData.selectedLevel + 1) + ". " + level.name
-	if level.unlocked || SaveManager.playerData.selectedLevel < 4:
+	
+	#if level.unlocked || SaveManager.playerData.selectedLevel < 4:
+	if true:
 		%begin.updateText("Select Level")
 		%begin.disabled = false
 	else:

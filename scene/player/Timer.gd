@@ -17,7 +17,7 @@ func _ready():
 	text = str(int(Root.levelRoot.seconds /60)) + " : " + str(clockSeconds)
 	resetTimer()
 
-var daylength = 120
+var daylength = 60
 var reset: bool = true  #prevents level from switching immediately, reset timer on daytimeaa
 var timeIsCountingDown = -1 #set to negative one for a countdown game
 
