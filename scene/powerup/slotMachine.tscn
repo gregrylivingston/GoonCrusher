@@ -1,28 +1,14 @@
-[gd_scene load_steps=7 format=3 uid="uid://xwhhgw0qwlsm"]
+[gd_scene load_steps=5 format=3 uid="uid://xwhhgw0qwlsm"]
 
 [ext_resource type="PackedScene" uid="uid://b7r4ro32w40xi" path="res://scene/powerup/powerup.tscn" id="1_4golh"]
 [ext_resource type="Texture2D" uid="uid://dt60dhhtejv7k" path="res://texture/icon/slotMachine.png" id="2_iumps"]
-[ext_resource type="Shader" path="res://shader/shine.gdshader" id="2_ntph6"]
 [ext_resource type="Script" path="res://scene/powerup/slotMachine.gd" id="3_g3jg2"]
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_o3w30"]
-resource_local_to_scene = true
-shader = ExtResource("2_ntph6")
-shader_parameter/shine_color = Color(100, 100, 0, 1)
-shader_parameter/shine_speed = 5.0
-shader_parameter/shine_size = 0.02
-shader_parameter/color = Color(1, 1, 1, 1)
-shader_parameter/width = 1.0
-shader_parameter/pattern = 0
-shader_parameter/inside = false
-shader_parameter/add_margins = true
 
 [sub_resource type="OccluderPolygon2D" id="OccluderPolygon2D_mjxyq"]
 cull_mode = 1
 polygon = PackedVector2Array(-21, -37, -38, -19, -40, 39, 22, 38, 22, -17, 17, -29, -2, -41)
 
 [node name="Powerup" instance=ExtResource("1_4golh")]
-material = SubResource("ShaderMaterial_o3w30")
 scale = Vector2(1, 1)
 texture = ExtResource("2_iumps")
 script = ExtResource("3_g3jg2")

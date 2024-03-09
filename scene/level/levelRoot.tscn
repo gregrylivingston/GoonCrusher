@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://dqcrli42u3gia"]
+[gd_scene load_steps=8 format=3 uid="uid://dqcrli42u3gia"]
 
 [ext_resource type="Script" path="res://scene/level/levelRoot.gd" id="1_65p74"]
 [ext_resource type="PackedScene" uid="uid://d4c6o8m1s51w1" path="res://scene/level/tileManager.tscn" id="2_jny74"]
@@ -7,13 +7,6 @@
 [ext_resource type="AudioStream" uid="uid://mwmiy2un7jgn" path="res://sound/fx/tubular-bell-of-death-89485.mp3" id="7_ihcdj"]
 [ext_resource type="PackedScene" uid="uid://b6x6nemyty8wb" path="res://scene/enemy/spawnManager.tscn" id="17_3wer8"]
 [ext_resource type="AudioStream" uid="uid://bqf1c80fb8cpl" path="res://sound/fx/duskwolf-101348.mp3" id="19_b5cat"]
-
-[sub_resource type="Environment" id="Environment_ax5w4"]
-background_mode = 3
-glow_enabled = true
-glow_bloom = 0.5
-glow_blend_mode = 4
-glow_hdr_threshold = 0.8
 
 [node name="LevelRoot" type="Node2D" groups=["levelRoot"]]
 script = ExtResource("1_65p74")
@@ -38,6 +31,3 @@ autoplay = true
 stream = ExtResource("19_b5cat")
 
 [node name="CanvasModulate" type="CanvasModulate" parent="."]
-
-[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
-environment = SubResource("Environment_ax5w4")
