@@ -42,14 +42,18 @@ func resetRegions():
 	-2:{
 		"name":"Wasteland",
 		"giantism":0,
-	}}
+		"terrain_modulate":1.0,
+	},
+	0:getRegion(0,Root.terrain.GRASS)
+	}
 	currentRegion = {}
 	currentRegionNumber = -99
 
-var regions: Dictionary = {
+@onready var regions: Dictionary = {
 	-2:{
-		"name":"Wasteland","giantism":0
+		"name":"Wasteland","giantism":0,"terrain_modulate":1.0,
 	},
+	0:getRegion(0,Root.terrain.GRASS)
 }
 var currentRegion: Dictionary
 var currentRegionNumber: int = -99
@@ -76,6 +80,7 @@ func createRegion(terrain: int) -> Dictionary:#terrain is Enum Root.terrain
 		"goon":[
 			getRandomGoon(terrain),getRandomGoon(terrain),getRandomGoon(terrain),
 		],
+		"terrain_modulate":randf_range(0.8,1.2),
 	}
 	return thisRegion
 
