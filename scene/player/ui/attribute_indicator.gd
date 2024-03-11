@@ -9,7 +9,8 @@ func _ready():
 
 
 func setValue(value):
-	if value<10:
-		updateText( " " + str(value) )
-	else:updateText(str(value))
+	#if value<10:
+	#	updateText( " " + str(value) )
+	#else:
+		updateText(str(value))
 

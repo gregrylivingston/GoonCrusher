@@ -175,6 +175,13 @@ layer = 3
 script = ExtResource("1_csk4w")
 
 [node name="carPanel" parent="." instance=ExtResource("2_gx8xt")]
+anchors_preset = 8
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_top = -64.0
+offset_bottom = -64.0
+grow_vertical = 2
+scale = Vector2(0.45, 0.45)
 
 [node name="gearbox" type="Label" parent="." groups=["gearui"]]
 material = ExtResource("7_kow26")

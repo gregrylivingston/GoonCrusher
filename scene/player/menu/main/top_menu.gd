@@ -23,4 +23,4 @@ func _on_discord_button_pressed():
 	OS.shell_open("https://discord.gg/CRwgEe4Gve")
 
 func _on_steam_button_pressed():
-	OS.shell_open("https://store.steampowered.com/app/1941650/Gregry_Boyds_RidenPrize_Goon_Crusher/")
+	OS.shell_open("https://store.steampowered.com/app/1941650/GOONCRUSHER/")

@@ -8,7 +8,7 @@ func _ready():
 
 
 func _process(delta):
-	if currentRegion.has("time"):
+	if currentRegion.has("time") && Root.isRunActive:
 		currentRegion.time += delta
 		if currentRegion.wave * waveLength < currentRegion.time && currentRegion.wave < 4:
 			currentRegion.wave += 1

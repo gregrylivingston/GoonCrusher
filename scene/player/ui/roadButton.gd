@@ -1,12 +1,16 @@
 class_name roadButton extends Button
 
+
 var animTransitionTimer = 0.15
 @export var canGrabFocus: bool = true
+var animationMin = 0 # PI/8
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
-	$HBoxContainer/Label.text = text
-	$HBoxContainer/TextureRect.texture = icon
+	if text != null:
+		$HBoxContainer/Label.text = text
+	if icon != null:
+		$HBoxContainer/TextureRect.texture = icon
 
 	text = " "
 	$HBoxContainer/Label.add_theme_font_size_override("font_size" ,get_theme_font_size("font_size"))
@@ -56,7 +60,7 @@ func _on_mouse_exited():
 		removeFocusAnimation()
 
 func removeFocusAnimation():
-	get_tree().create_tween().tween_method(set3dAnimationAngle, PI, PI/8 , animTransitionTimer)
+	get_tree().create_tween().tween_method(set3dAnimationAngle, PI, animationMin , animTransitionTimer)
 	get_tree().create_tween().tween_property(self , "scale", Vector2(1.0,1.0),  animTransitionTimer)
 #	get_tree().create_tween().tween_property(self , "position", position + Vector2(0 , 10),  animTransitionTimer)
 
@@ -66,6 +70,6 @@ func startFocusAnimation():
 		get_tree().create_tween().tween_property(self , "scale", Vector2(1.0,1.15),  animTransitionTimer)
 		#get_tree().create_tween().tween_property(self , "position", position + Vector2(0,-10),  animTransitionTimer)
 		$AudioStreamPlayer.play()
-		get_tree().create_tween().tween_method(set3dAnimationAngle, PI/8, PI , animTransitionTimer)
+		get_tree().create_tween().tween_method(set3dAnimationAngle, animationMin, PI , animTransitionTimer)
 		#set3dAnimationAngle(PI)
 
