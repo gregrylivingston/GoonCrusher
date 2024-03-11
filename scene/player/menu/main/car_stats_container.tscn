@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3 uid="uid://clx3q1jksnuoc"]
+[gd_scene load_steps=14 format=3 uid="uid://clx3q1jksnuoc"]
 
 [ext_resource type="PackedScene" uid="uid://i0goedbwsro6" path="res://scene/player/ui/attribute_indicator.tscn" id="1_awv6k"]
 [ext_resource type="Script" path="res://scene/player/menu/main/car_stats_container.gd" id="1_mv7o5"]
@@ -6,7 +6,6 @@
 [ext_resource type="Texture2D" uid="uid://b282uef7te4fk" path="res://texture/icon/wheel.png" id="3_gtqp7"]
 [ext_resource type="Texture2D" uid="uid://b40eqkba0jho8" path="res://texture/icon/engine.png" id="4_3l7yx"]
 [ext_resource type="Texture2D" uid="uid://ckvii7iuglgha" path="res://texture/icon/shield.png" id="5_1k2du"]
-[ext_resource type="Texture2D" uid="uid://clb0tyqiwegeo" path="res://texture/icon/icons8-gem-48.png" id="8_5isf4"]
 [ext_resource type="PackedScene" uid="uid://maftjaqqaasp" path="res://scene/player/menu/main/statUpgradeButton.tscn" id="8_neb62"]
 [ext_resource type="Texture2D" uid="uid://s1pejsjjv3o7" path="res://texture/icon/uparrow.png" id="9_adcsu"]
 [ext_resource type="Texture2D" uid="uid://w03tvhxtmrv4" path="res://texture/icon/icons8-coin-48 (1).png" id="9_lbbgn"]
@@ -15,15 +14,16 @@
 [ext_resource type="Texture2D" uid="uid://dw45xqq8in4ce" path="res://texture/icon/luck.png" id="11_ns38o"]
 [ext_resource type="Texture2D" uid="uid://dwin6ujqoo570" path="res://texture/icon/oil.png" id="11_q2r0p"]
 
-[node name="carStatsContainer" type="VBoxContainer"]
+[node name="carStatsContainer" type="HBoxContainer"]
 custom_minimum_size = Vector2(700, 100)
 offset_left = 627.0
 offset_top = 357.0
-offset_right = 1447.0
+offset_right = 1411.0
 offset_bottom = 595.0
 script = ExtResource("1_mv7o5")
 
-[node name="HBoxContainer" type="HBoxContainer" parent="."]
+[node name="HBoxContainer" type="VBoxContainer" parent="."]
+custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
 size_flags_vertical = 3
 
@@ -63,26 +63,15 @@ tooltip_text = "Steering
 Decreases turn radius, speed lost turning, and turning delay."
 myIcon = ExtResource("2_ekr1k")
 
-[node name="VSeparator" type="VSeparator" parent="HBoxContainer"]
-self_modulate = Color(1, 1, 1, 0)
-custom_minimum_size = Vector2(50, 0)
+[node name="HBoxContainer2" type="VBoxContainer" parent="."]
+custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
-
-[node name="coin" parent="HBoxContainer" instance=ExtResource("1_awv6k")]
-custom_minimum_size = Vector2(150, 0)
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-myIcon = ExtResource("9_lbbgn")
-
-[node name="HBoxContainer2" type="HBoxContainer" parent="."]
-layout_mode = 2
-size_flags_vertical = 3
 
 [node name="statUpgrade" parent="HBoxContainer2" instance=ExtResource("8_neb62")]
 custom_minimum_size = Vector2(0, 0)
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_vertical = 3
 text = ""
 icon = ExtResource("9_adcsu")
 alignment = 2
@@ -92,6 +81,7 @@ myStat = 2
 custom_minimum_size = Vector2(0, 0)
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_vertical = 3
 text = ""
 icon = ExtResource("9_adcsu")
 alignment = 2
@@ -101,6 +91,7 @@ myStat = 3
 custom_minimum_size = Vector2(0, 0)
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_vertical = 3
 text = ""
 icon = ExtResource("9_adcsu")
 alignment = 2
@@ -110,31 +101,19 @@ myStat = 4
 custom_minimum_size = Vector2(0, 0)
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_vertical = 3
 text = ""
 icon = ExtResource("9_adcsu")
 alignment = 2
 myStat = 5
 
-[node name="VSeparator2" type="VSeparator" parent="HBoxContainer2"]
-self_modulate = Color(1, 1, 1, 0)
-custom_minimum_size = Vector2(50, 0)
-layout_mode = 2
-size_flags_horizontal = 4
-
-[node name="gem" parent="HBoxContainer2" instance=ExtResource("1_awv6k")]
-modulate = Color(1, 1, 1, 0)
-custom_minimum_size = Vector2(150, 0)
-layout_mode = 2
-size_flags_horizontal = 10
-size_flags_vertical = 3
-myIcon = ExtResource("8_5isf4")
-
 [node name="HSeparator" type="HSeparator" parent="."]
 self_modulate = Color(1, 1, 1, 0)
-custom_minimum_size = Vector2(0, 10.86)
+custom_minimum_size = Vector2(24.965, 10.86)
 layout_mode = 2
 
-[node name="HBoxContainer3" type="HBoxContainer" parent="."]
+[node name="HBoxContainer3" type="VBoxContainer" parent="."]
+custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
 size_flags_vertical = 3
 
@@ -178,21 +157,8 @@ tooltip_text = "Dice
 Improves the chances of getting high value prizes from goon drops."
 myIcon = ExtResource("11_ns38o")
 
-[node name="VSeparator" type="VSeparator" parent="HBoxContainer3"]
-self_modulate = Color(1, 1, 1, 0)
-custom_minimum_size = Vector2(50, 0)
-layout_mode = 2
-
-[node name="coin" parent="HBoxContainer3" instance=ExtResource("1_awv6k")]
-modulate = Color(1, 1, 1, 0)
-custom_minimum_size = Vector2(150, 0)
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-disabled = true
-myIcon = ExtResource("9_lbbgn")
-
-[node name="HBoxContainer4" type="HBoxContainer" parent="."]
+[node name="HBoxContainer4" type="VBoxContainer" parent="."]
+custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
 size_flags_vertical = 3
 
@@ -200,6 +166,7 @@ size_flags_vertical = 3
 custom_minimum_size = Vector2(0, 0)
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_vertical = 3
 text = ""
 icon = ExtResource("9_adcsu")
 alignment = 2
@@ -209,6 +176,7 @@ myStat = 8
 custom_minimum_size = Vector2(0, 0)
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_vertical = 3
 text = ""
 icon = ExtResource("9_adcsu")
 alignment = 2
@@ -218,6 +186,7 @@ myStat = 9
 custom_minimum_size = Vector2(0, 0)
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_vertical = 3
 text = ""
 icon = ExtResource("9_adcsu")
 alignment = 2
@@ -227,24 +196,24 @@ myStat = 6
 custom_minimum_size = Vector2(0, 0)
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_vertical = 3
 text = ""
 icon = ExtResource("9_adcsu")
 alignment = 2
 myStat = 7
 
-[node name="VSeparator2" type="VSeparator" parent="HBoxContainer4"]
+[node name="HSeparator2" type="HSeparator" parent="."]
 self_modulate = Color(1, 1, 1, 0)
-custom_minimum_size = Vector2(50, 0)
+custom_minimum_size = Vector2(24.965, 10.86)
 layout_mode = 2
-size_flags_horizontal = 4
 
-[node name="gem" parent="HBoxContainer4" instance=ExtResource("1_awv6k")]
-modulate = Color(1, 1, 1, 0)
-custom_minimum_size = Vector2(150, 0)
+[node name="coin" parent="." instance=ExtResource("1_awv6k")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 56)
 layout_mode = 2
 size_flags_horizontal = 10
-size_flags_vertical = 3
-myIcon = ExtResource("8_5isf4")
+size_flags_vertical = 0
+myIcon = ExtResource("9_lbbgn")
 
 [connection signal="property_list_changed" from="HBoxContainer2/statUpgrade" to="HBoxContainer2/statUpgrade" method="_on_property_list_changed"]
 [connection signal="property_list_changed" from="HBoxContainer2/statUpgrade2" to="HBoxContainer2/statUpgrade2" method="_on_property_list_changed"]

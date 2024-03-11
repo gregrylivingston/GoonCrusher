@@ -335,8 +335,9 @@ theme_override_constants/separation = -4
 
 [node name="attributeIndicator_engine" parent="VBoxContainer/Panel/HBoxContainer" groups=["engineui"] instance=ExtResource("1_sbnje")]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
-size_flags_horizontal = 3
+size_flags_horizontal = 0
 size_flags_vertical = 6
 theme_override_styles/normal = SubResource("StyleBoxEmpty_gi0ic")
 theme_override_styles/hover = SubResource("StyleBoxEmpty_gi0ic")
@@ -346,8 +347,9 @@ myIcon = ExtResource("6_i8q0m")
 
 [node name="attributeIndicator_steering" parent="VBoxContainer/Panel/HBoxContainer" groups=["steeringui"] instance=ExtResource("1_sbnje")]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
-size_flags_horizontal = 3
+size_flags_horizontal = 0
 size_flags_vertical = 6
 theme_override_styles/normal = SubResource("StyleBoxEmpty_gi0ic")
 theme_override_styles/hover = SubResource("StyleBoxEmpty_gi0ic")
@@ -357,8 +359,9 @@ myIcon = ExtResource("5_h3pqn")
 
 [node name="attributeIndicator_aero" parent="VBoxContainer/Panel/HBoxContainer" groups=["tractionui"] instance=ExtResource("1_sbnje")]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
-size_flags_horizontal = 3
+size_flags_horizontal = 0
 size_flags_vertical = 6
 theme_override_styles/normal = SubResource("StyleBoxEmpty_gi0ic")
 theme_override_styles/hover = SubResource("StyleBoxEmpty_gi0ic")
@@ -368,8 +371,9 @@ myIcon = ExtResource("7_y38vu")
 
 [node name="attributeIndicator_armor" parent="VBoxContainer/Panel/HBoxContainer" groups=["armorui"] instance=ExtResource("1_sbnje")]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
-size_flags_horizontal = 3
+size_flags_horizontal = 0
 size_flags_vertical = 6
 theme_override_styles/normal = SubResource("StyleBoxEmpty_gi0ic")
 theme_override_styles/hover = SubResource("StyleBoxEmpty_gi0ic")
@@ -379,8 +383,9 @@ myIcon = ExtResource("8_sqmqh")
 
 [node name="attributeIndicator_oil" parent="VBoxContainer/Panel/HBoxContainer" groups=["oilui"] instance=ExtResource("1_sbnje")]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
-size_flags_horizontal = 3
+size_flags_horizontal = 0
 size_flags_vertical = 6
 theme_override_styles/normal = SubResource("StyleBoxEmpty_gi0ic")
 theme_override_styles/hover = SubResource("StyleBoxEmpty_gi0ic")
@@ -390,8 +395,9 @@ myIcon = ExtResource("10_vjw6w")
 
 [node name="attributeIndicator_headlights" parent="VBoxContainer/Panel/HBoxContainer" groups=["headlightsui"] instance=ExtResource("1_sbnje")]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
-size_flags_horizontal = 3
+size_flags_horizontal = 0
 size_flags_vertical = 6
 theme_override_styles/normal = SubResource("StyleBoxEmpty_gi0ic")
 theme_override_styles/hover = SubResource("StyleBoxEmpty_gi0ic")
@@ -401,8 +407,9 @@ myIcon = ExtResource("11_wfrgp")
 
 [node name="attributeIndicator_clover" parent="VBoxContainer/Panel/HBoxContainer" groups=["cloverui"] instance=ExtResource("1_sbnje")]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
-size_flags_horizontal = 3
+size_flags_horizontal = 0
 size_flags_vertical = 6
 theme_override_styles/normal = SubResource("StyleBoxEmpty_gi0ic")
 theme_override_styles/hover = SubResource("StyleBoxEmpty_gi0ic")
@@ -412,8 +419,9 @@ myIcon = ExtResource("12_m7voe")
 
 [node name="attributeIndicator_luck" parent="VBoxContainer/Panel/HBoxContainer" groups=["luckui"] instance=ExtResource("1_sbnje")]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
-size_flags_horizontal = 3
+size_flags_horizontal = 0
 size_flags_vertical = 6
 theme_override_styles/normal = SubResource("StyleBoxEmpty_gi0ic")
 theme_override_styles/hover = SubResource("StyleBoxEmpty_gi0ic")

@@ -357,15 +357,27 @@ myStat = 0
 [node name="AudioStreamPlayer3" type="AudioStreamPlayer" parent="." index="2"]
 stream = ExtResource("4_liifr")
 
+[node name="HBoxContainer" parent="." index="3"]
+anchors_preset = 14
+anchor_left = 0.0
+anchor_right = 1.0
+offset_left = 8.0
+offset_top = -19.0
+offset_right = -12.0
+offset_bottom = 20.0
+
 [node name="TextureRect" parent="HBoxContainer" index="0"]
 visible = false
 material = SubResource("ShaderMaterial_b7ibi")
 custom_minimum_size = Vector2(22, 22)
+size_flags_horizontal = 0
 texture = ExtResource("2_v7bbs")
 expand_mode = 1
 stretch_mode = 5
 
 [node name="Label" parent="HBoxContainer" index="1"]
 material = SubResource("ShaderMaterial_pqiav")
+size_flags_horizontal = 3
+horizontal_alignment = 1
 
 [connection signal="pressed" from="." to="." method="_on_upgrade_pressed"]

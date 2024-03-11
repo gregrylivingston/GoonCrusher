@@ -1,4 +1,4 @@
-extends VBoxContainer
+extends HBoxContainer
 
 
 # Called when the node enters the scene tree for the first time.
@@ -15,8 +15,7 @@ func updateStats():
 	$HBoxContainer/steering.setValue("Steering   " + str(Root.playerCar.steering +SaveManager.getUpgradeLevel(Root.upgrade.STEERING) ))
 	$HBoxContainer/traction.setValue("Traction   " + str( Root.playerCar.traction + SaveManager.getUpgradeLevel(Root.upgrade.TRACTION) ))
 	$HBoxContainer/armor.setValue("Armor   "   + str(Root.playerCar.armor + SaveManager.getUpgradeLevel(Root.upgrade.ARMOR) ))
-	$HBoxContainer/coin.setValue( SaveManager.playerData.coin )
-	$HBoxContainer2/gem.setValue ( SaveManager.playerData.gem )
+	%coin.setValue( SaveManager.playerData.coin )
 	
 	%headlights.setValue("Lights   " + str(Root.playerCar.headlights + SaveManager.getUpgradeLevel(Root.upgrade.HEADLIGHTS) ))
 	%oil.setValue("Oil   " + str(Root.playerCar.oil +SaveManager.getUpgradeLevel(Root.upgrade.OIL) ))
