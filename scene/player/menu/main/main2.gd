@@ -106,14 +106,13 @@ func setupLevel(level):
 	%driverName2.text =  Root.playerCar.charName
 	%driverName.text = str(SaveManager.playerData.selectedLevel + 1) + ". " + level.name
 	
-	#if level.unlocked || SaveManager.playerData.selectedLevel < 4:
-	if true:
+	if level.unlocked || SaveManager.playerData.selectedLevel < 3:
 		%begin.updateText("Select Level")
 		%begin.disabled = false
 	else:
 		%begin.updateText("LOCKED")
 		%begin.disabled = true
-		if SaveManager.playerData.selectedLevel >= 4:%begin.updateText("NOT IN DEMO")
+		if SaveManager.playerData.selectedLevel >= 3:%begin.updateText("NOT IN DEMO")
 	
 	setupGameModeStars(level)
 	for i in get_tree().get_nodes_in_group("gameModeStar"):get_tree().create_tween().tween_property(i , "custom_minimum_size", Vector2(48,48), menuTweenSpeed)

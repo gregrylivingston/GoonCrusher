@@ -17,23 +17,35 @@ func _process(delta):
 
 
 var names: Dictionary = {
-	Root.terrain.GRASS:[
-		"Goon Fields" , "Goonvale" , "Peaceful Meadow" , "Goon Park"
+	Root.terrain.GRASS: [
+		"Goon Fields", "Goonvale", "Peaceful Meadow", "Goon Park",
+		"Emerald Expanse", "Whisperwind Plains", "Verdant Valley", "Greenhaven Glade",
+		"Sunlit Savanna", "Bloomridge Field", "Meadowbrook Glade", "Serenity Fields"
 	],
-	Root.terrain.MUD:[
-		"Mudtown" , "Dust Valley" , "Goon Pits" , "Muddy Barrens"
+	Root.terrain.MUD: [
+		"Mudtown", "Dust Valley", "Goon Pits", "Muddy Barrens",
+		"Slick Quarry", "Claymore Canyon", "Mudslide Domain", "Bogland Basin",
+		"Sludge Hollow", "Grimy Gulch", "Swampland Shallows", "Marshland Maze"
 	],
-	Root.terrain.SAND:[
-		"Goon Beach" , "Sand Alley" , "The Dunes" , "Doonvale" 
+	Root.terrain.SAND: [
+		"Goon Beach", "Sand Alley", "The Dunes", "Doonvale",
+		"Golden Sands Shore", "Desert Mirage", "Sandy Oasis", "Sunset Dunes",
+		"Quicksand Quarters", "Dune Labyrinth", "Silica Valley", "Scorching Plains"
 	],
-	Root.terrain.MOSS:[
+	Root.terrain.MOSS: [
 		"Mossy Barrens",
+		"Verdigris Forest", "Mossblanket Vale", "Lichen Ledge",
+		"Ferngully Thicket", "Sporing Grounds", "Emerald Moss Marsh", "Velvet Verdure"
 	],
-	Root.terrain.DIRT:[
+	Root.terrain.DIRT: [
 		"Dusty Lane",
+		"Barren Bluffs", "Gravel Grounds", "Loam Lands",
+		"Earthenway Path", "Clodhopper Row", "Tilled Fields", "Soilrich Hollow"
 	],
-	Root.terrain.SNOW:[
+	Root.terrain.SNOW: [
 		"The Tundra",
+		"Frostbite Fields", "Snowdrift Valley", "Icicle Isle",
+		"Glacial Basin", "Winter's Edge", "Permafrost Plains", "Chillwind Wastes"
 	]
 }
 

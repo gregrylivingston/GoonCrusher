@@ -73,7 +73,7 @@ class_name PlayerData extends Resource
 
 @export var levels = [
 	{
-		"name":"Goon Park",
+		"name":"Easy",
 		"image":"res://texture/background/background_level_1.png",
 		"unlocked":true,
 		"scene":"res://scene/level/levels/level_grass_1.tscn",
@@ -81,16 +81,16 @@ class_name PlayerData extends Resource
 		"time":"1",
 	},
 	{
-		"name":"Park Bully",
+		"name":"Medium",
 		"image":"res://texture/background/background_level_2.png",
-		"unlocked":false,
+		"unlocked":true,
 		"scene":"res://scene/level/levels/level_grass_2.tscn",
 		"gamemodeBeat":{ Root.gameModes.GOONCRUSHER: false ,  Root.gameModes.SPRINT: false ,  Root.gameModes.MARATHON: false ,  Root.gameModes.DEFENSE: false  },
 	},
 	{
-		"name":"Field of Giants",
+		"name":"Hard",
 		"image":"res://texture/background/background_grass_3.png",
-		"unlocked":false,
+		"unlocked":true,
 		"scene":"res://scene/level/levels/level_grass_3.tscn",
 		"gamemodeBeat":{ Root.gameModes.GOONCRUSHER: false ,  Root.gameModes.SPRINT: false ,  Root.gameModes.MARATHON: false ,  Root.gameModes.DEFENSE: false  },
 	},
