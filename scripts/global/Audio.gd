@@ -1,5 +1,6 @@
 extends Node
 
+var soundsStartedThisFrame: int = 0
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
@@ -8,15 +9,16 @@ func _ready():
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
-	pass
+	soundsStartedThisFrame = 0
 
 
 func queueRequest(requestOptions: Array[AudioStreamMP3]):
 	if requestOptions.size() > 0:
 		for i in $enemy_sounds.get_children():
-			if not i.playing:
+			if not i.playing && soundsStartedThisFrame < 4:
 				i.stream = requestOptions[randi_range(0, requestOptions.size() - 1)]
 				i.play()
+				soundsStartedThisFrame += 1
 				return
 
 

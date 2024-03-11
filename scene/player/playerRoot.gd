@@ -38,7 +38,7 @@ var nextCrushingAward = awardBase
 @onready var crushProgressBar = %ProgressBar
 
 func updateGoonsCrushed():
-	%crushedGoons.text = str( int(nextCrushingAward) - Root.playerCar.currentGoonsCrushed  )
+	%crushedGoons.text = str( clampi( int(nextCrushingAward) - Root.playerCar.currentGoonsCrushed , 0 , 9999999999999 ) )
 	crushProgressBar.value = Root.playerCar.currentGoonsCrushed
 	if Root.playerCar.currentGoonsCrushed >= nextCrushingAward && not Root.playerCar.isDestroyed && not get_tree().paused:
 		crushProgressBar.min_value = nextCrushingAward

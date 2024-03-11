@@ -183,9 +183,10 @@ offset_top = -89.0
 offset_right = -41.0
 offset_bottom = -89.0
 grow_vertical = 2
-scale = Vector2(0.45, 0.45)
+scale = Vector2(0.75, 0.75)
 
 [node name="gearbox" type="Label" parent="." groups=["gearui"]]
+visible = false
 material = ExtResource("7_kow26")
 anchors_preset = 7
 anchor_left = 0.5

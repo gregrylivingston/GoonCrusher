@@ -64,7 +64,8 @@ func setupRegions():
 			if mapDict[y][x].region == -1:
 				await recursiveAddToRegion(Vector2i(x,y) , nextRegionToAdd , mapDict[y][x].terrain)
 				nextRegionToAdd += 1
-				await get_tree().process_frame
+				if is_instance_valid(get_tree()):
+					await get_tree().process_frame
 				
 var nextRegionToAdd: int = 2
 
@@ -86,20 +87,22 @@ func setupStartingTerrain():
 func recursiveAddToRegion(tileLocation: Vector2i , requestedRegion: int , terrain: int ):
 	if mapDict[tileLocation.y][tileLocation.x].region != -1: return
 	mapDict[tileLocation.y][tileLocation.x].region = requestedRegion
-	await get_tree().process_frame
-	if tileLocation.y - 1 >= 0:
-		if mapDict[tileLocation.y - 1][tileLocation.x].terrain == terrain:
-			recursiveAddToRegion(tileLocation + Vector2i(0,-1) , requestedRegion , terrain)
-	if tileLocation.y + 1 < mapDict.size() :
-		if mapDict[tileLocation.y + 1][tileLocation.x].terrain == terrain:
-			recursiveAddToRegion(tileLocation + Vector2i(0,1) , requestedRegion , terrain)	
-	if tileLocation.x - 1 >= 0:
-		if mapDict[tileLocation.y][tileLocation.x - 1].terrain == terrain:
-			recursiveAddToRegion(tileLocation + Vector2i(-1,0) , requestedRegion , terrain)
-	if tileLocation.x + 1 < mapDict[1].size() :
-		if mapDict[tileLocation.y ][tileLocation.x + 1].terrain == terrain:
-			recursiveAddToRegion(tileLocation + Vector2i(1,0) , requestedRegion , terrain)	
-			
+	
+	if is_instance_valid(get_tree()):
+		await get_tree().process_frame
+		if tileLocation.y - 1 >= 0:
+			if mapDict[tileLocation.y - 1][tileLocation.x].terrain == terrain:
+				recursiveAddToRegion(tileLocation + Vector2i(0,-1) , requestedRegion , terrain)
+		if tileLocation.y + 1 < mapDict.size() :
+			if mapDict[tileLocation.y + 1][tileLocation.x].terrain == terrain:
+				recursiveAddToRegion(tileLocation + Vector2i(0,1) , requestedRegion , terrain)	
+		if tileLocation.x - 1 >= 0:
+			if mapDict[tileLocation.y][tileLocation.x - 1].terrain == terrain:
+				recursiveAddToRegion(tileLocation + Vector2i(-1,0) , requestedRegion , terrain)
+		if tileLocation.x + 1 < mapDict[1].size() :
+			if mapDict[tileLocation.y ][tileLocation.x + 1].terrain == terrain:
+				recursiveAddToRegion(tileLocation + Vector2i(1,0) , requestedRegion , terrain)	
+				
 			
 var currentTerrainType:int = -10
 func createTerrainGroups():
