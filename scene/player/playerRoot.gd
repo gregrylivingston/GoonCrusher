@@ -72,7 +72,8 @@ func animateNewGoonCrushGoal(animatebackwards: bool = true) -> void:
 		$AnimationPlayer.play("NewGoonCrushBonus")
 		
 func animateNewRegion(animatebackwards: bool = true) -> void:
+	
 	if animatebackwards:
-		$AnimationPlayer.play_backwards("NewWave")
+		$AnimationPlayer2.play_backwards("NewWave")
 	else:
-		$AnimationPlayer.play("NewWave")
+		$AnimationPlayer2.play("NewWave")

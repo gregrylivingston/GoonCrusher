@@ -1,6 +1,237 @@
-[gd_resource type="Resource" load_steps=2 format=3 uid="uid://brrojo520ntd"]
+[gd_resource type="Resource" script_class="PlayerData" load_steps=2 format=3 uid="uid://brrojo520ntd"]
 
 [ext_resource type="Script" path="res://scene/player/save/playerData.gd" id="1_yjtqx"]
 
 [resource]
+resource_local_to_scene = true
 script = ExtResource("1_yjtqx")
+coin = 200
+gem = 3
+selectedCar = 0
+selectedLevel = 0
+gameMode = 0
+cars = [{
+"cost": 0,
+"name": "sedan",
+"records": {
+"coin": 0,
+"gem": 0,
+"goonsCrushed": 0,
+"powerups": 0,
+"slotMachines": 0,
+"speed": 0,
+"time": 0
+},
+"scene": "res://scene/car/sedan/sedan.tscn",
+"upgrades": {}
+}, {
+"cost": 1000,
+"name": "van",
+"records": {
+"coin": 0,
+"gem": 0,
+"goonsCrushed": 0,
+"powerups": 0,
+"slotMachines": 0,
+"speed": 0,
+"time": 0
+},
+"scene": "res://scene/car/van/van.tscn",
+"upgrades": {}
+}, {
+"cost": 5000,
+"name": "taxi",
+"records": {
+"coin": 0,
+"gem": 0,
+"goonsCrushed": 0,
+"powerups": 0,
+"slotMachines": 0,
+"speed": 0,
+"time": 0
+},
+"scene": "res://scene/car/taxi/taxi.tscn",
+"upgrades": {}
+}, {
+"cost": 10000,
+"name": "pickup",
+"records": {
+"coin": 0,
+"gem": 0,
+"goonsCrushed": 0,
+"powerups": 0,
+"slotMachines": 0,
+"speed": 0,
+"time": 0
+},
+"scene": "res://scene/car/pickup/pickup.tscn",
+"upgrades": {}
+}, {
+"cost": 20000,
+"name": "semi",
+"records": {
+"coin": 0,
+"gem": 0,
+"goonsCrushed": 0,
+"powerups": 0,
+"slotMachines": 0,
+"speed": 0,
+"time": 0
+},
+"scene": "res://scene/car/semi/semi.tscn",
+"upgrades": {}
+}, {
+"cost": 40000,
+"name": "audi",
+"records": {
+"coin": 0,
+"gem": 0,
+"goonsCrushed": 0,
+"powerups": 0,
+"slotMachines": 0,
+"speed": 0,
+"time": 0
+},
+"scene": "res://scene/car/audi/audi.tscn",
+"upgrades": {}
+}, {
+"cost": 50000,
+"name": "racer",
+"records": {
+"coin": 0,
+"gem": 0,
+"goonsCrushed": 0,
+"powerups": 0,
+"slotMachines": 0,
+"speed": 0,
+"time": 0
+},
+"scene": "res://scene/car/racer/racer.tscn",
+"upgrades": {}
+}, {
+"cost": 0,
+"name": "police",
+"records": {
+"coin": 0,
+"gem": 0,
+"goonsCrushed": 0,
+"powerups": 0,
+"slotMachines": 0,
+"speed": 0,
+"time": 0
+},
+"scene": "res://scene/car/police/police.tscn",
+"upgrades": {}
+}, {
+"cost": 100000,
+"name": "ambulance",
+"records": {
+"coin": 0,
+"gem": 0,
+"goonsCrushed": 0,
+"powerups": 0,
+"slotMachines": 0,
+"speed": 0,
+"time": 0
+},
+"scene": "res://scene/car/ambulance/ambulance.tscn",
+"upgrades": {}
+}]
+settings = {
+"volume": {
+"fx": 0,
+"master": 0,
+"music": 0,
+"voice": 0
+}
+}
+levels = [{
+"gamemodeBeat": {
+0: false,
+1: false,
+2: false,
+3: false
+},
+"image": "res://texture/background/background_level_1.png",
+"name": "Goon Park",
+"scene": "res://scene/level/levels/level_grass_1.tscn",
+"time": "1",
+"unlocked": true
+}, {
+"gamemodeBeat": {
+0: false,
+1: false,
+2: false,
+3: false
+},
+"image": "res://texture/background/background_level_2.png",
+"name": "Park Bully",
+"scene": "res://scene/level/levels/level_grass_2.tscn",
+"unlocked": false
+}, {
+"gamemodeBeat": {
+0: false,
+1: false,
+2: false,
+3: false
+},
+"image": "res://texture/background/background_grass_3.png",
+"name": "Field of Giants",
+"scene": "res://scene/level/levels/level_grass_3.tscn",
+"unlocked": false
+}, {
+"gamemodeBeat": {
+0: false,
+1: false,
+2: false,
+3: false
+},
+"image": "res://texture/background/mud_background1.png",
+"name": "Muddy Barrens",
+"scene": "res://scene/level/levels/level_mud_1.tscn",
+"unlocked": false
+}, {
+"gamemodeBeat": {
+0: false,
+1: false,
+2: false,
+3: false
+},
+"image": "res://texture/background/mud_background2.png",
+"name": "Pikes of Mud",
+"scene": "res://scene/level/levels/level_mud_2.tscn",
+"unlocked": false
+}, {
+"gamemodeBeat": {
+0: false,
+1: false,
+2: false,
+3: false
+},
+"image": "res://texture/background/mud_background3.png",
+"name": "Pools of Agony",
+"scene": "res://scene/level/levels/level_mud_3.tscn",
+"unlocked": false
+}, {
+"gamemodeBeat": {
+0: false,
+1: false,
+2: false,
+3: false
+},
+"image": "res://texture/background/desertBackground.png",
+"name": "The Dunes",
+"scene": "res://scene/level/levels/level_sand_1.tscn",
+"unlocked": false
+}, {
+"gamemodeBeat": {
+0: false,
+1: false,
+2: false,
+3: false
+},
+"image": "res://texture/background/iceBackground.png",
+"name": "Northern Wastes",
+"scene": "res://scene/level/levels/level_snow_1.tscn",
+"unlocked": false
+}]

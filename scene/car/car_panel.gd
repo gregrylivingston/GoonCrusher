@@ -14,14 +14,14 @@ func _process(delta):
 		%ProgressBar_Fuel.value = Root.playerCar.fuel
 
 func updateStats():
-	%attributeIndicator_engine.setValue(Root.playerCar.engine)
-	%attributeIndicator_steering.setValue(Root.playerCar.steering)
-	%attributeIndicator_aero.setValue( Root.playerCar.traction )
-	%attributeIndicator_armor.setValue(Root.playerCar.armor)
-	%attributeIndicator_oil.setValue(Root.playerCar.oil)
-	%attributeIndicator_headlights.setValue(Root.playerCar.headlights)
-	%attributeIndicator_clover.setValue(Root.playerCar.clover)
-	%attributeIndicator_luck.setValue(Root.playerCar.luck)
+	%attributeIndicator_engine.setValue("Engine   " + str(Root.playerCar.engine))
+	%attributeIndicator_steering.setValue("Steering   " + str(Root.playerCar.steering))
+	%attributeIndicator_aero.setValue("Traction   " + str(Root.playerCar.traction ))
+	%attributeIndicator_armor.setValue("Armor   " + str(Root.playerCar.armor))
+	%attributeIndicator_oil.setValue("Oil   " + str(Root.playerCar.oil))
+	%attributeIndicator_headlights.setValue("Lights   " + str(Root.playerCar.headlights))
+	%attributeIndicator_clover.setValue("Luck   " + str(Root.playerCar.clover))
+	%attributeIndicator_luck.setValue("Dice   " + str(Root.playerCar.luck))
 
 func _on_pause_button_pressed():
 	get_tree().paused = true

@@ -14,7 +14,7 @@ func updateStats():
 	$HBoxContainer/engine.setValue("Engine   " + str(Root.playerCar.engine + SaveManager.getUpgradeLevel(Root.upgrade.ENGINE)) )
 	$HBoxContainer/steering.setValue("Steering   " + str(Root.playerCar.steering +SaveManager.getUpgradeLevel(Root.upgrade.STEERING) ))
 	$HBoxContainer/traction.setValue("Traction   " + str( Root.playerCar.traction + SaveManager.getUpgradeLevel(Root.upgrade.TRACTION) ))
-	$HBoxContainer/armor.setValue("Armor"   + str(Root.playerCar.armor + SaveManager.getUpgradeLevel(Root.upgrade.ARMOR) ))
+	$HBoxContainer/armor.setValue("Armor   "   + str(Root.playerCar.armor + SaveManager.getUpgradeLevel(Root.upgrade.ARMOR) ))
 	$HBoxContainer/coin.setValue( SaveManager.playerData.coin )
 	$HBoxContainer2/gem.setValue ( SaveManager.playerData.gem )
 	

@@ -18,12 +18,13 @@ func load_settings():
 	AudioServer.set_bus_volume_db(AudioServer.get_bus_index("Music"), SaveManager.getVolume("music"))
 
 
-var save_path = "user://userData.tres"
+var save_path = "user://userData_1.tres"
 
 func load_data():
 	if ResourceLoader.exists(save_path):
 		return load(save_path)
-	else:reset_save()
+	else:
+		return reset_save()
 
 func reset_save():
 	playerData = load("res://scene/player/save/playerData.tres").duplicate()
@@ -32,6 +33,7 @@ func reset_save():
 
 func save_character_data():
 	var result = ResourceSaver.save(playerData, save_path)
+
 	
 	
 var coinScene = preload("res://scene/powerup/coin.tscn")
