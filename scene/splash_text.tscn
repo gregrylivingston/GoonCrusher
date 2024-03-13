@@ -2,7 +2,7 @@
 
 [ext_resource type="Shader" path="res://shader/rainbowfill.gdshader" id="1_snfeh"]
 [ext_resource type="FontFile" uid="uid://hf5rdg67jcwc" path="res://addons/gut/fonts/AnonymousPro-Italic.ttf" id="2_p3sss"]
-[ext_resource type="Shader" uid="uid://c2jd3wjben4p2" path="res://shader/3d_Text_HighlightRight.tres" id="3_s02ml"]
+[ext_resource type="Shader" path="res://shader/3dtext.gdshader" id="3_4riat"]
 [ext_resource type="Texture2D" uid="uid://dlgpwix6wtodc" path="res://shader/emtpywhitegradient.tres" id="4_5ec0e"]
 [ext_resource type="FontFile" uid="uid://c106tp6lo578e" path="res://style/font/Tektur/Tektur-Bold.ttf" id="5_mc3qw"]
 
@@ -19,8 +19,8 @@ colors = PackedColorArray(0, 0, 0, 1, 0, 0, 0, 1)
 gradient = SubResource("Gradient_t0ptw")
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_xyq0p"]
-shader = ExtResource("3_s02ml")
-shader_parameter/angle = 6.8
+shader = ExtResource("3_4riat")
+shader_parameter/angle = 0.7
 shader_parameter/thickness = 6.0
 shader_parameter/scale = 1.0
 shader_parameter/shear = Vector2(0, -0.4)
@@ -158,13 +158,12 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = 1.0
-offset_top = 1.49994
-offset_right = 695.0
-offset_bottom = 118.5
+offset_left = -347.0
+offset_top = -58.5
+offset_right = 347.0
+offset_bottom = 58.5001
 grow_horizontal = 2
 grow_vertical = 2
-scale = Vector2(1e-05, 1e-05)
 size_flags_vertical = 0
 theme_override_colors/font_color = Color(0.92549, 0.603922, 0.160784, 1)
 theme_override_colors/font_outline_color = Color(0.658824, 0.12549, 0.101961, 1)

@@ -49,3 +49,4 @@ res://scene/car/police/police.tscn
 res://scene/player/menu/main/main2.gd
 res://scripts/global/Region.gd
 res://scene/level/terrain/landscapeMap_shortGrass.tscn
+res://scene/splash_text.tscn
