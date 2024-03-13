@@ -211,7 +211,7 @@ func _physics_process(delta):
 		if velocity.length() > 0.01 && ( collider.get_class() == "StaticBody2D" || collider.get_class() == "TileMap"):
 			collideWithFixedObject( get_slide_collision(i) )
 		elif collider.get_class() == "CharacterBody2D":
-			damage(0.5)
+			damage(5)
 			if velocity.length() > 100:crushGoon(collider)
 		#else: print(collider.get_class())
 
@@ -227,7 +227,7 @@ func collideWithFixedObject( collision ):
 		var spark = sparks.instantiate()
 		spark.global_position = collision.get_position()
 		Root.levelRoot.add_child(spark)
-	damage(  velocity.length()  / ( armor + 5 )  )
+	damage(  ( 10 * velocity.length() )   / ( armor + 100 )  )
 	velocity *= 0.85
 
 func stopCarFX():
@@ -378,7 +378,7 @@ func spendGems(numOfGems: int):
 		return false
 
 func damage(damage: float):
-	health -= damage / ( armor + 5)
+	health -= (damage * 10) / ( armor + 100)
 	if health <= 0:
 		destroy()
 

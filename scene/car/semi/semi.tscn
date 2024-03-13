@@ -204,9 +204,9 @@ shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
 [node name="Car" instance=ExtResource("1_16fys")]
-engine = 20
-steering = 10
-armor = 40
+engine = 10
+steering = 6
+armor = 70
 luck = 15
 oil = 4
 headlights = 40
