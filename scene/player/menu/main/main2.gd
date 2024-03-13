@@ -17,8 +17,8 @@ func _ready():
 		SaveManager.addGems( Root.earnedGems )
 		Root.earnedCoins = 0
 		Root.earnedGems = 0
-	await get_tree().process_frame
-	%levelSelect.grab_focus()
+	#await get_tree().process_frame
+	#%levelSelect.grab_focus()
 
 func _process(delta):
 	if Input.is_action_just_pressed("TurnLeft") || Input.is_action_just_pressed("ui_left"):selectPreviousCar()
@@ -66,10 +66,11 @@ func disableLockedCars(car):
 		else: %unlock.disabled = false
 
 	else:
+		%unlock.visible = false
 		%levelSelect.updateText( "Select Driver")
 		%levelSelect.disabled = false
 		%levelSelect.visible = true
-		%unlock.visible = false
+
 	
 	
 func showNewBackgroundImage(newImage:Texture2D):
@@ -147,9 +148,10 @@ func goToMenuMode(myMenuMode: menuModes): #true if adancing to level select
 	var isRiderMenu: bool = false  #this is really awkard - just using it to hide which parts of main menu get shown....
 	if menuMode == menuModes.RIDER:
 		isRiderMenu = true
-
-	for i in get_tree().get_nodes_in_group("levelMenu"): i.visible = not isRiderMenu
+		
 	for i in get_tree().get_nodes_in_group("characterMenu"): i.visible = isRiderMenu
+	for i in get_tree().get_nodes_in_group("levelMenu"): i.visible = not isRiderMenu
+
 	
 	match menuMode:
 		menuModes.RIDER:selectCar(SaveManager.getCarByName(Root.playerCar.carId))

@@ -58,7 +58,7 @@ func resetRegions():
 	},
 	0:getRegion(0,Root.terrain.GRASS)
 	}
-	currentRegion = {}
+	currentRegion = regions[0]
 	currentRegionNumber = -99
 
 @onready var regions: Dictionary = {
