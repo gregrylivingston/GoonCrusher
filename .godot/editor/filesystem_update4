@@ -46,3 +46,5 @@ res://scene/car/ambulance/ambulance.tscn
 res://scene/level/terrain/landscapeMap_shortGrass.tscn
 res://scene/car/pickup/pickup.tscn
 res://scene/car/racer/racer.tscn
+res://scene/car/police/police.tscn
+res://lib/overhead_car_2d/overhead_car_body_2d.gd

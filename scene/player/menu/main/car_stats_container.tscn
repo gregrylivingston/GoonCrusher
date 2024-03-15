@@ -23,7 +23,7 @@ offset_bottom = 595.0
 script = ExtResource("1_mv7o5")
 
 [node name="HBoxContainer" type="VBoxContainer" parent="."]
-custom_minimum_size = Vector2(150, 0)
+custom_minimum_size = Vector2(160, 0)
 layout_mode = 2
 size_flags_vertical = 3
 
@@ -113,7 +113,7 @@ custom_minimum_size = Vector2(24.965, 10.86)
 layout_mode = 2
 
 [node name="HBoxContainer3" type="VBoxContainer" parent="."]
-custom_minimum_size = Vector2(150, 0)
+custom_minimum_size = Vector2(160, 0)
 layout_mode = 2
 size_flags_vertical = 3
 

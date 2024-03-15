@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3 uid="uid://dfqbeth5jspt5"]
+[gd_scene load_steps=32 format=3 uid="uid://dfqbeth5jspt5"]
 
 [ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="1_qtyvp"]
 [ext_resource type="Texture2D" uid="uid://disw6kafapd1m" path="res://scene/car/police/Police.png" id="2_7cb7w"]
@@ -13,6 +13,21 @@
 [ext_resource type="AudioStream" uid="uid://bfdhnb3ug7pau" path="res://scene/car/police/audio/police_intro_7.mp3" id="9_rcvls"]
 [ext_resource type="AudioStream" uid="uid://csj5cc0mio728" path="res://scene/car/police/audio/police_intro_8.mp3" id="10_ovhbp"]
 [ext_resource type="PackedScene" uid="uid://551dlp73phd4" path="res://texture/animation/smoke.tscn" id="12_7x7a1"]
+[ext_resource type="AudioStream" uid="uid://b176tatlnxn8c" path="res://scene/car/police/audio/police_purse_1.mp3" id="12_luba8"]
+[ext_resource type="AudioStream" uid="uid://dxagtqok5gsrl" path="res://scene/car/police/audio/police_purse_2.mp3" id="13_iy7il"]
+[ext_resource type="AudioStream" uid="uid://cs4dentfg7qc7" path="res://scene/car/police/audio/police_joy_1.mp3" id="14_plabd"]
+[ext_resource type="AudioStream" uid="uid://cjbnlyxj5jcmp" path="res://scene/car/police/audio/police_joy_2.mp3" id="15_5gtnk"]
+[ext_resource type="AudioStream" uid="uid://byw7acj43k2pg" path="res://scene/car/police/audio/police_joy_3.mp3" id="16_ysue5"]
+[ext_resource type="AudioStream" uid="uid://bpht0pol7w6m8" path="res://scene/car/police/audio/police_joy_4.mp3" id="17_uowxg"]
+[ext_resource type="AudioStream" uid="uid://dox5jqujx16n5" path="res://scene/car/police/audio/police_joy_5.mp3" id="18_sv8qh"]
+[ext_resource type="AudioStream" uid="uid://cvxn7uqseauoh" path="res://scene/car/police/audio/police_joy_6.mp3" id="19_r6pp2"]
+[ext_resource type="AudioStream" uid="uid://cwtiiermrjqr0" path="res://scene/car/police/audio/police_joy_7.mp3" id="20_vqm56"]
+[ext_resource type="AudioStream" uid="uid://dd4epqpblbyxi" path="res://scene/car/police/audio/police_joy_8.mp3" id="21_m8mgj"]
+[ext_resource type="AudioStream" uid="uid://bjpcy11ghhhty" path="res://scene/car/police/audio/police_joy_9.mp3" id="22_1c7ex"]
+[ext_resource type="AudioStream" uid="uid://d1rimkqcwdpju" path="res://scene/car/police/audio/police_joy_10_intro.mp3" id="23_5mtr0"]
+[ext_resource type="AudioStream" uid="uid://dtr78i8cwyxby" path="res://scene/car/police/audio/police_fuelwarning_1.mp3" id="24_lto2g"]
+[ext_resource type="AudioStream" uid="uid://cy23vr0ymlxov" path="res://scene/car/police/audio/police_fuelwarning_2.mp3" id="25_bxqdy"]
+[ext_resource type="AudioStream" uid="uid://c8inbeyiwnvwh" path="res://scene/car/police/audio/police_healthwarning_1.mp3" id="26_iuik3"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_cwfv8"]
 size = Vector2(174, 77)
@@ -192,7 +207,7 @@ shader_parameter/show_bound = false
 engine = 35
 steering = 25
 traction = 25
-armor = 30
+armor = 40
 oil = 10
 headlights = 40
 profilePic = ExtResource("2_hmbi1")
@@ -200,10 +215,10 @@ backgroundPic = ExtResource("3_wde7i")
 charName = "Nikita"
 carId = "police"
 introAudio = Array[AudioStreamMP3]([ExtResource("3_iw1cs"), ExtResource("4_i3uqm"), ExtResource("5_kj4sh"), ExtResource("6_7lced"), ExtResource("7_fn2fs"), ExtResource("8_qb8pj"), ExtResource("9_rcvls"), ExtResource("10_ovhbp")])
-purseAudio = Array[AudioStreamMP3]([ExtResource("3_iw1cs")])
-powerupAudio = Array[AudioStreamMP3]([ExtResource("4_i3uqm")])
-lowGasAudio = Array[AudioStreamMP3]([ExtResource("5_kj4sh")])
-lowHealthAudio = Array[AudioStreamMP3]([ExtResource("6_7lced")])
+purseAudio = Array[AudioStreamMP3]([ExtResource("12_luba8"), ExtResource("13_iy7il")])
+powerupAudio = Array[AudioStreamMP3]([ExtResource("14_plabd"), ExtResource("15_5gtnk"), ExtResource("16_ysue5"), ExtResource("17_uowxg"), ExtResource("18_sv8qh"), ExtResource("19_r6pp2"), ExtResource("20_vqm56"), ExtResource("21_m8mgj"), ExtResource("22_1c7ex"), ExtResource("23_5mtr0")])
+lowGasAudio = Array[AudioStreamMP3]([ExtResource("24_lto2g"), ExtResource("25_bxqdy")])
+lowHealthAudio = Array[AudioStreamMP3]([ExtResource("26_iuik3")])
 carDamagedTexture = ExtResource("2_7cb7w")
 
 [node name="CollisionShape2D" parent="." index="2"]

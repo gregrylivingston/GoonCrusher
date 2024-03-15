@@ -256,7 +256,7 @@ func activeCarEffects(delta):
 	if not $"AudioStream-CarDamage".playing && healthWarningGiven: $"AudioStream-CarDamage".play()
 	$"AudioStream-Engine".pitch_scale = 1  +  ( velocity.length() / 400 ) 
 	#fuel -=  velocity.length() / ( 500 * (100 - oil) )
-	fuel -= _car_input.acceleration / ( 100 - oil )
+	fuel -= abs(_car_input.acceleration * 2) / ( 100 - oil )
 
 	vibrationSteps += 1
 	if vibrationSteps % vibrationFrequency == 0:

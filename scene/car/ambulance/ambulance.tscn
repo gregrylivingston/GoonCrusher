@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3 uid="uid://b7vyfnv77wwfw"]
+[gd_scene load_steps=31 format=3 uid="uid://b7vyfnv77wwfw"]
 
 [ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="1_oirr4"]
 [ext_resource type="Texture2D" uid="uid://c4it7ulsvl3bx" path="res://scene/car/ambulance/Ambulance.png" id="2_86vbp"]
@@ -13,6 +13,20 @@
 [ext_resource type="AudioStream" uid="uid://cq1u55gna2d14" path="res://scene/car/ambulance/audio/ambulance_intro_7.mp3" id="9_membe"]
 [ext_resource type="AudioStream" uid="uid://bcd4sf6yhua60" path="res://scene/car/ambulance/audio/ambulance_intro_8.mp3" id="10_nxecm"]
 [ext_resource type="AudioStream" uid="uid://dmlptibuqjawg" path="res://sound/fx/engine/engine1.mp3" id="11_es0hc"]
+[ext_resource type="AudioStream" uid="uid://xqx1b3aolxo0" path="res://scene/car/ambulance/audio/ambulance_purse_1.mp3" id="12_lto7i"]
+[ext_resource type="AudioStream" uid="uid://ci0c3w368jwcw" path="res://scene/car/ambulance/audio/ambulance_purse_2.mp3" id="13_lav1i"]
+[ext_resource type="AudioStream" uid="uid://cntw2ulln6be1" path="res://scene/car/ambulance/audio/ambulance_joy_1.mp3" id="14_tspnu"]
+[ext_resource type="AudioStream" uid="uid://3s1pgw3gl8m3" path="res://scene/car/ambulance/audio/ambulance_joy_2.mp3" id="15_ibd60"]
+[ext_resource type="AudioStream" uid="uid://do4sfdcck8ik1" path="res://scene/car/ambulance/audio/ambulance_joy_3.mp3" id="16_23xsi"]
+[ext_resource type="AudioStream" uid="uid://b6h3wrc4g2v6u" path="res://scene/car/ambulance/audio/ambulance_joy_4.mp3" id="17_h6f0t"]
+[ext_resource type="AudioStream" uid="uid://8nfugdekxbt5" path="res://scene/car/ambulance/audio/ambulance_joy_5.mp3" id="18_gvd1k"]
+[ext_resource type="AudioStream" uid="uid://chu8vlpuiy1b8" path="res://scene/car/ambulance/audio/ambulance_joy_6.mp3" id="19_d5i4l"]
+[ext_resource type="AudioStream" uid="uid://dyqy7q0v3bqkg" path="res://scene/car/ambulance/audio/ambulance_joy_7.mp3" id="20_e6cgl"]
+[ext_resource type="AudioStream" uid="uid://1433ifh64b86" path="res://scene/car/ambulance/audio/ambulance_joy_8.mp3" id="21_iukmt"]
+[ext_resource type="AudioStream" uid="uid://cdfmyxgmn4rh2" path="res://scene/car/ambulance/audio/ambulance_joy_9.mp3" id="22_vfjnw"]
+[ext_resource type="AudioStream" uid="uid://ciffyi68biqaj" path="res://scene/car/ambulance/audio/ambulance_fuelwarning_1.mp3" id="23_dsv0x"]
+[ext_resource type="AudioStream" uid="uid://ifuvss4cpg2e" path="res://scene/car/ambulance/audio/ambulance_fuelwarning_2.mp3" id="24_tnvr2"]
+[ext_resource type="AudioStream" uid="uid://dky2baq1vxkuo" path="res://scene/car/ambulance/audio/ambulance_healthwarning_1.mp3" id="25_70qwf"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_iqugs"]
 size = Vector2(213.375, 80)
@@ -191,7 +205,7 @@ shader_parameter/show_bound = false
 [node name="Car" instance=ExtResource("1_oirr4")]
 engine = 30
 steering = 20
-armor = 30
+armor = 70
 clover = 20
 oil = 10
 headlights = 40
@@ -200,10 +214,10 @@ backgroundPic = ExtResource("3_3jiuq")
 charName = "Xavier"
 carId = "ambulance"
 introAudio = Array[AudioStreamMP3]([ExtResource("3_txlrx"), ExtResource("4_o64rm"), ExtResource("5_8lwbb"), ExtResource("6_7ctxv"), ExtResource("7_rio81"), ExtResource("8_vf216"), ExtResource("9_membe"), ExtResource("10_nxecm")])
-purseAudio = Array[AudioStreamMP3]([ExtResource("3_txlrx")])
-powerupAudio = Array[AudioStreamMP3]([ExtResource("6_7ctxv")])
-lowGasAudio = Array[AudioStreamMP3]([ExtResource("8_vf216")])
-lowHealthAudio = Array[AudioStreamMP3]([ExtResource("10_nxecm")])
+purseAudio = Array[AudioStreamMP3]([ExtResource("12_lto7i"), ExtResource("13_lav1i")])
+powerupAudio = Array[AudioStreamMP3]([ExtResource("4_o64rm"), ExtResource("14_tspnu"), ExtResource("15_ibd60"), ExtResource("16_23xsi"), ExtResource("17_h6f0t"), ExtResource("18_gvd1k"), ExtResource("19_d5i4l"), ExtResource("20_e6cgl"), ExtResource("21_iukmt"), ExtResource("22_vfjnw")])
+lowGasAudio = Array[AudioStreamMP3]([ExtResource("23_dsv0x"), ExtResource("24_tnvr2")])
+lowHealthAudio = Array[AudioStreamMP3]([ExtResource("5_8lwbb"), ExtResource("8_vf216"), ExtResource("25_70qwf")])
 engineNoise = ExtResource("11_es0hc")
 carDamagedTexture = ExtResource("2_86vbp")
 
