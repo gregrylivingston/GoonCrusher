@@ -1,4 +1,4 @@
-res://scene/car/car.tscn
+res://scene/car/audi/audi.tscn
 res://shader/shine.gdshader
 res://style/roadRogue.tres
 res://scene/player/slots/slot_row_gradient.tres
@@ -25,6 +25,7 @@ res://shader/edgeGlow.gdshader
 res://shader/liquid.gdshader
 res://shader/3dicon.gdshader
 res://shader/ground_normals.gdshader
+res://scene/car/car.tscn
 res://scene/level/levelRoot.tscn
 res://scene/player/playerRoot.tscn
 res://scene/player/menu/main/main2.tscn
@@ -39,14 +40,8 @@ res://scene/player/ui/attribute_indicator.tscn
 res://scene/player/menu/main/top_menu.tscn
 res://addons/gut/gui/Settings.tscn
 res://scene/car/car_panel.tscn
-res://lib/overhead_car_2d/overhead_car_body_2d.gd
-res://scene/player/save/playerData.gd
 res://scene/car/semi/semi.tscn
-res://scene/car/pickup/pickup.tscn
-res://scene/car/ambulance/ambulance.tscn
 res://scene/enemy/walker/walker.tscn
-res://scene/car/police/police.tscn
-res://scene/player/menu/main/main2.gd
-res://scripts/global/Region.gd
+res://scene/car/ambulance/ambulance.tscn
 res://scene/level/terrain/landscapeMap_shortGrass.tscn
-res://scene/splash_text.tscn
+res://scene/car/pickup/pickup.tscn

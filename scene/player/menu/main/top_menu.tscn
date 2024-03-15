@@ -8,7 +8,7 @@
 [ext_resource type="Texture2D" uid="uid://cd0i5ggjfhg7s" path="res://texture/icon/discord.png" id="5_w0kg5"]
 [ext_resource type="Texture2D" uid="uid://caxh4upcywiq8" path="res://texture/icon/steam.png" id="6_j1otw"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_8lj4s"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_vggd5"]
 resource_local_to_scene = true
 shader = ExtResource("3_j4luq")
 shader_parameter/angle = 0.6
@@ -180,7 +180,7 @@ void fragment(){
 	
 }"
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_nofyi"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_st1wf"]
 resource_local_to_scene = true
 shader = SubResource("Shader_0orlr")
 shader_parameter/angle = 0.0
@@ -194,7 +194,7 @@ shader_parameter/front_tex = ExtResource("4_kg02w")
 shader_parameter/back_tex = ExtResource("4_kg02w")
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_f8k52"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_xou8i"]
 resource_local_to_scene = true
 shader = SubResource("Shader_0orlr")
 shader_parameter/angle = 0.0
@@ -208,7 +208,7 @@ shader_parameter/front_tex = ExtResource("5_w0kg5")
 shader_parameter/back_tex = ExtResource("5_w0kg5")
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_ry2o1"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_bmj8d"]
 resource_local_to_scene = true
 shader = SubResource("Shader_0orlr")
 shader_parameter/angle = 0.0
@@ -231,7 +231,7 @@ script = ExtResource("1_dcbjq")
 
 [node name="quitButton" parent="." instance=ExtResource("2_bmaru")]
 unique_name_in_owner = true
-material = SubResource("ShaderMaterial_8lj4s")
+material = SubResource("ShaderMaterial_vggd5")
 custom_minimum_size = Vector2(70, 25)
 layout_mode = 2
 size_flags_horizontal = 0
@@ -243,7 +243,7 @@ expand_icon = true
 
 [node name="settingsButton" parent="." instance=ExtResource("2_bmaru")]
 unique_name_in_owner = true
-material = SubResource("ShaderMaterial_nofyi")
+material = SubResource("ShaderMaterial_st1wf")
 custom_minimum_size = Vector2(70, 25)
 layout_mode = 2
 size_flags_horizontal = 0
@@ -255,7 +255,7 @@ expand_icon = true
 
 [node name="discordButton" parent="." instance=ExtResource("2_bmaru")]
 unique_name_in_owner = true
-material = SubResource("ShaderMaterial_f8k52")
+material = SubResource("ShaderMaterial_xou8i")
 custom_minimum_size = Vector2(70, 25)
 layout_mode = 2
 size_flags_horizontal = 0
@@ -267,7 +267,7 @@ expand_icon = true
 
 [node name="steamButton" parent="." instance=ExtResource("2_bmaru")]
 unique_name_in_owner = true
-material = SubResource("ShaderMaterial_ry2o1")
+material = SubResource("ShaderMaterial_bmj8d")
 custom_minimum_size = Vector2(200, 25)
 layout_mode = 2
 size_flags_horizontal = 0

@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3 uid="uid://ckgx8r2itxy2s"]
+[gd_scene load_steps=29 format=3 uid="uid://ckgx8r2itxy2s"]
 
 [ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="1_0vonh"]
 [ext_resource type="Texture2D" uid="uid://5bhp0uvyaltt" path="res://scene/car/audi/audi_backgrond.png" id="2_ds5mp"]
@@ -11,6 +11,20 @@
 [ext_resource type="AudioStream" uid="uid://di25r882viv6a" path="res://scene/car/audi/audio/audi_intro_7.mp3" id="8_ew31w"]
 [ext_resource type="AudioStream" uid="uid://cl6ytrrw0j63j" path="res://scene/car/audi/audio/audi_intro_8.mp3" id="9_fgfbn"]
 [ext_resource type="Texture2D" uid="uid://dthtmohgw8u1f" path="res://scene/car/audi/Audi.png" id="10_uci38"]
+[ext_resource type="AudioStream" uid="uid://cccdntapehhjg" path="res://scene/car/audi/audio/audi_intro_9.mp3" id="11_jxdoi"]
+[ext_resource type="AudioStream" uid="uid://d3bcqglbjoxdb" path="res://scene/car/audi/audio/audi_purse_1.mp3" id="12_jy1aj"]
+[ext_resource type="AudioStream" uid="uid://nyexq4tqe2ip" path="res://scene/car/audi/audio/audi_purse_2.mp3" id="13_xblaa"]
+[ext_resource type="AudioStream" uid="uid://bkkpsa67kvuwh" path="res://scene/car/audi/audio/audi_joy_1.mp3" id="14_liqj8"]
+[ext_resource type="AudioStream" uid="uid://w7jfdogrnk4d" path="res://scene/car/audi/audio/audi_joy_2.mp3" id="15_wat4l"]
+[ext_resource type="AudioStream" uid="uid://bxivhvwvkl876" path="res://scene/car/audi/audio/audi_joy_3.mp3" id="16_k0v2r"]
+[ext_resource type="AudioStream" uid="uid://dhonafmwnxq3w" path="res://scene/car/audi/audio/audi_joy_4.mp3" id="17_okcyt"]
+[ext_resource type="AudioStream" uid="uid://b7fq8q1jqxggr" path="res://scene/car/audi/audio/audi_joy_5.mp3" id="18_g5gt6"]
+[ext_resource type="AudioStream" uid="uid://dbcgjq6w00tnu" path="res://scene/car/audi/audio/audi_joy_6.mp3" id="19_fw6ak"]
+[ext_resource type="AudioStream" uid="uid://bfisc6ktxwvme" path="res://scene/car/audi/audio/audi_joy_7_intro.mp3" id="20_f8bt6"]
+[ext_resource type="AudioStream" uid="uid://gwe2jd7us7l0" path="res://scene/car/audi/audio/audi_joy_8.mp3" id="21_ifbqo"]
+[ext_resource type="AudioStream" uid="uid://daukg2lnjxbuf" path="res://scene/car/audi/audio/audi_fuelwarning_1.mp3" id="22_kv4mi"]
+[ext_resource type="AudioStream" uid="uid://duxvdfy0lw8al" path="res://scene/car/audi/audio/audi_fuelwarning_2.mp3" id="23_y1c7h"]
+[ext_resource type="AudioStream" uid="uid://cnrkticdpt4s1" path="res://scene/car/audi/audio/audi_healthwarning_1.mp3" id="24_bxlei"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_oqcx7"]
 size = Vector2(177, 80)
@@ -196,11 +210,11 @@ headlights = 20
 backgroundPic = ExtResource("2_ds5mp")
 charName = "Snake"
 carId = "audi"
-introAudio = Array[AudioStreamMP3]([ExtResource("2_h46eo"), ExtResource("3_m3p6c"), ExtResource("4_bpqde"), ExtResource("5_peerr"), ExtResource("6_qlobn"), ExtResource("7_jqmce"), ExtResource("8_ew31w"), ExtResource("9_fgfbn")])
-purseAudio = Array[AudioStreamMP3]([ExtResource("9_fgfbn")])
-powerupAudio = Array[AudioStreamMP3]([ExtResource("2_h46eo")])
-lowGasAudio = Array[AudioStreamMP3]([ExtResource("7_jqmce")])
-lowHealthAudio = Array[AudioStreamMP3]([ExtResource("6_qlobn")])
+introAudio = Array[AudioStreamMP3]([ExtResource("2_h46eo"), ExtResource("3_m3p6c"), ExtResource("4_bpqde"), ExtResource("5_peerr"), ExtResource("6_qlobn"), ExtResource("7_jqmce"), ExtResource("8_ew31w"), ExtResource("9_fgfbn"), ExtResource("11_jxdoi")])
+purseAudio = Array[AudioStreamMP3]([ExtResource("12_jy1aj"), ExtResource("13_xblaa")])
+powerupAudio = Array[AudioStreamMP3]([ExtResource("14_liqj8"), ExtResource("15_wat4l"), ExtResource("16_k0v2r"), ExtResource("17_okcyt"), ExtResource("18_g5gt6"), ExtResource("19_fw6ak"), ExtResource("20_f8bt6"), ExtResource("21_ifbqo")])
+lowGasAudio = Array[AudioStreamMP3]([ExtResource("22_kv4mi"), ExtResource("23_y1c7h")])
+lowHealthAudio = Array[AudioStreamMP3]([ExtResource("24_bxlei")])
 carDamagedTexture = ExtResource("10_uci38")
 
 [node name="CollisionShape2D" parent="." index="2"]
