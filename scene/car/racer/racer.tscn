@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3 uid="uid://26c7khgh5lqa"]
+[gd_scene load_steps=31 format=3 uid="uid://26c7khgh5lqa"]
 
 [ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="1_kgqi5"]
 [ext_resource type="Texture2D" uid="uid://3ntiq5bget7n" path="res://scene/car/racer/Black_viper.png" id="2_7a10q"]
@@ -13,6 +13,20 @@
 [ext_resource type="AudioStream" uid="uid://brnxpy4gfoq8a" path="res://scene/car/racer/audio/Racer_Intro_7.mp3" id="9_42fym"]
 [ext_resource type="AudioStream" uid="uid://yw1tml0bor3p" path="res://scene/car/racer/audio/Racer_Intro_8.mp3" id="10_b3qsk"]
 [ext_resource type="PackedScene" uid="uid://551dlp73phd4" path="res://texture/animation/smoke.tscn" id="12_ivv6c"]
+[ext_resource type="AudioStream" uid="uid://cqekjds0xrm5u" path="res://scene/car/racer/audio/racer_purse_1.mp3" id="12_ysw7g"]
+[ext_resource type="AudioStream" uid="uid://de5k2pamnbme6" path="res://scene/car/racer/audio/racer_purse_2.mp3" id="13_mhftg"]
+[ext_resource type="AudioStream" uid="uid://8facs4d05clv" path="res://scene/car/racer/audio/racer_joy_1.mp3" id="14_5e0m1"]
+[ext_resource type="AudioStream" uid="uid://bbiyocs1gpeys" path="res://scene/car/racer/audio/racer_joy_2.mp3" id="15_8o26u"]
+[ext_resource type="AudioStream" uid="uid://b5imi51yu4vrr" path="res://scene/car/racer/audio/racer_joy_3.mp3" id="16_rvyge"]
+[ext_resource type="AudioStream" uid="uid://c5n3ox2ssepj7" path="res://scene/car/racer/audio/racer_joy_4.mp3" id="17_s5ex8"]
+[ext_resource type="AudioStream" uid="uid://bettwld4kuntm" path="res://scene/car/racer/audio/racer_joy_5.mp3" id="18_pirrt"]
+[ext_resource type="AudioStream" uid="uid://dk2sar4nsopmf" path="res://scene/car/racer/audio/racer_joy_6.mp3" id="19_gdkom"]
+[ext_resource type="AudioStream" uid="uid://c4iwlgig4cyqm" path="res://scene/car/racer/audio/racer_joy_7.mp3" id="20_2bfxb"]
+[ext_resource type="AudioStream" uid="uid://crwaaksi04end" path="res://scene/car/racer/audio/racer_joy_8.mp3" id="21_y7erb"]
+[ext_resource type="AudioStream" uid="uid://ctrlbhd34u13w" path="res://scene/car/racer/audio/racer_joy_9.mp3" id="22_u0ryi"]
+[ext_resource type="AudioStream" uid="uid://by8g36moio2y8" path="res://scene/car/racer/audio/racer_fuelwarning_1.mp3" id="23_5lx7c"]
+[ext_resource type="AudioStream" uid="uid://c20viq2xlpqjh" path="res://scene/car/racer/audio/racer_fuelwarning_2.mp3" id="24_gnl76"]
+[ext_resource type="AudioStream" uid="uid://c06qvnqxya6yh" path="res://scene/car/racer/audio/racer_healthwarning_1.mp3" id="25_i6fyi"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_l3dom"]
 size = Vector2(198, 81)
@@ -201,10 +215,10 @@ backgroundPic = ExtResource("3_mbmk4")
 charName = "Kim"
 carId = "racer"
 introAudio = Array[AudioStreamMP3]([ExtResource("3_i2n8g"), ExtResource("4_cxp0d"), ExtResource("5_8phvd"), ExtResource("6_326da"), ExtResource("7_7445v"), ExtResource("8_7yb6i"), ExtResource("9_42fym"), ExtResource("10_b3qsk")])
-purseAudio = Array[AudioStreamMP3]([ExtResource("10_b3qsk")])
-powerupAudio = Array[AudioStreamMP3]([ExtResource("7_7445v")])
-lowGasAudio = Array[AudioStreamMP3]([ExtResource("4_cxp0d")])
-lowHealthAudio = Array[AudioStreamMP3]([ExtResource("3_i2n8g")])
+purseAudio = Array[AudioStreamMP3]([ExtResource("12_ysw7g"), ExtResource("13_mhftg")])
+powerupAudio = Array[AudioStreamMP3]([ExtResource("14_5e0m1"), ExtResource("15_8o26u"), ExtResource("16_rvyge"), ExtResource("17_s5ex8"), ExtResource("18_pirrt"), ExtResource("19_gdkom"), ExtResource("20_2bfxb"), ExtResource("21_y7erb"), ExtResource("22_u0ryi")])
+lowGasAudio = Array[AudioStreamMP3]([ExtResource("23_5lx7c"), ExtResource("24_gnl76")])
+lowHealthAudio = Array[AudioStreamMP3]([ExtResource("25_i6fyi")])
 carDamagedTexture = ExtResource("2_7a10q")
 
 [node name="CollisionShape2D" parent="." index="2"]

@@ -45,3 +45,4 @@ res://scene/enemy/walker/walker.tscn
 res://scene/car/ambulance/ambulance.tscn
 res://scene/level/terrain/landscapeMap_shortGrass.tscn
 res://scene/car/pickup/pickup.tscn
+res://scene/car/racer/racer.tscn
