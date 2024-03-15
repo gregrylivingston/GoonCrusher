@@ -4,8 +4,9 @@
 [ext_resource type="Script" path="res://scene/player/slots/slot_award_icon.gd" id="2_his67"]
 
 [node name="slotAwardIcon" type="TextureRect"]
-custom_minimum_size = Vector2(0, 75)
+custom_minimum_size = Vector2(50, 75)
 size_flags_vertical = 0
 texture = ExtResource("1_tyy7r")
+expand_mode = 1
 stretch_mode = 5
 script = ExtResource("2_his67")

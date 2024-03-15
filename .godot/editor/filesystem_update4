@@ -48,3 +48,6 @@ res://scene/car/pickup/pickup.tscn
 res://scene/car/racer/racer.tscn
 res://scene/car/police/police.tscn
 res://lib/overhead_car_2d/overhead_car_body_2d.gd
+res://scene/player/slots/slot_award_icon.tscn
+res://scene/powerup/armor.tscn
+res://scripts/global/Region.gd

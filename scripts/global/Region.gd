@@ -92,7 +92,7 @@ func createRegion(terrain: int) -> Dictionary:#terrain is Enum Root.terrain
 		"goon":[
 			getRandomGoon(terrain),getRandomGoon(terrain),getRandomGoon(terrain),
 		],
-		"terrain_modulate":randf_range(0.8,1.2),
+		"terrain_modulate":randf_range(0.8,1.12),
 	}
 	return thisRegion
 

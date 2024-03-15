@@ -278,7 +278,7 @@ anchor_bottom = 1.0
 offset_left = 223.0
 offset_top = -96.0
 offset_right = 370.0
-offset_bottom = 2.0
+offset_bottom = -30.0
 grow_horizontal = 2
 grow_vertical = 0
 theme_override_styles/panel = SubResource("StyleBoxFlat_ydy1a")
@@ -289,9 +289,9 @@ anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
 offset_left = -198.0
-offset_top = 12.0
+offset_top = 17.0
 offset_right = -15.0
-offset_bottom = 77.0
+offset_bottom = 50.0
 grow_horizontal = 0
 
 [node name="speed" type="Label" parent="Panel/HBoxContainer2"]
@@ -301,7 +301,7 @@ size_flags_horizontal = 0
 theme = ExtResource("2_62tb0")
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 2
-theme_override_font_sizes/font_size = 50
+theme_override_font_sizes/font_size = 20
 text = "27 MPH"
 
 [node name="TextureRect" type="TextureRect" parent="Panel/HBoxContainer2"]
@@ -446,6 +446,7 @@ grow_vertical = 0
 layout_mode = 2
 
 [node name="TextureRect" type="TextureRect" parent="VBoxContainer2/HBoxContainer"]
+visible = false
 material = SubResource("ShaderMaterial_cs4to")
 custom_minimum_size = Vector2(40, 0)
 layout_mode = 2
@@ -455,7 +456,7 @@ stretch_mode = 5
 
 [node name="ProgressBar_Health" type="ProgressBar" parent="VBoxContainer2/HBoxContainer" groups=["healthui"]]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(100, 20)
+custom_minimum_size = Vector2(100, 10)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 4
@@ -472,6 +473,7 @@ custom_minimum_size = Vector2(15, 0)
 layout_mode = 2
 
 [node name="TextureRect" type="TextureRect" parent="VBoxContainer2/HBoxContainer2"]
+visible = false
 material = SubResource("ShaderMaterial_ymvy4")
 custom_minimum_size = Vector2(24, 24)
 layout_mode = 2
@@ -481,7 +483,7 @@ expand_mode = 1
 
 [node name="ProgressBar_Fuel" type="ProgressBar" parent="VBoxContainer2/HBoxContainer2" groups=["fuelui"]]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(100, 12)
+custom_minimum_size = Vector2(100, 5)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 4
