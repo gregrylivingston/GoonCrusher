@@ -51,3 +51,4 @@ res://lib/overhead_car_2d/overhead_car_body_2d.gd
 res://scene/player/slots/slot_award_icon.tscn
 res://scene/powerup/armor.tscn
 res://scripts/global/Region.gd
+res://scene/level/terrain/landscapeMap_hill.tscn

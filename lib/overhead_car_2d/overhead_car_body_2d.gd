@@ -227,7 +227,7 @@ func collideWithFixedObject( collision ):
 		var spark = sparks.instantiate()
 		spark.global_position = collision.get_position()
 		Root.levelRoot.add_child(spark)
-	damage(  ( 10 * velocity.length() )   / ( armor + 100 )  )
+	damage(  ( 7 * velocity.length() )   / ( armor + 100 )  )
 	velocity *= 0.85
 
 func stopCarFX():
@@ -378,7 +378,7 @@ func spendGems(numOfGems: int):
 		return false
 
 func damage(damage: float):
-	health -= (damage * 10) / ( armor + 100)
+	health -= (damage * 7) / ( armor + 100)
 	if health <= 0:
 		destroy()
 
