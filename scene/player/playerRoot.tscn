@@ -1,4 +1,4 @@
-[gd_scene load_steps=29 format=3 uid="uid://pgobm7erc1f0"]
+[gd_scene load_steps=30 format=3 uid="uid://pgobm7erc1f0"]
 
 [ext_resource type="Script" path="res://scene/player/playerRoot.gd" id="1_csk4w"]
 [ext_resource type="PackedScene" uid="uid://bf1f5117fhyd2" path="res://scene/car/car_panel.tscn" id="2_gx8xt"]
@@ -17,6 +17,7 @@
 [ext_resource type="PackedScene" uid="uid://cyyns0r3734ni" path="res://scene/player/regionUi.tscn" id="10_ep2ps"]
 [ext_resource type="Texture2D" uid="uid://djs2pk1xs4sql" path="res://texture/icon/star.png" id="11_itgnb"]
 [ext_resource type="Material" uid="uid://bn8224ky2vc0j" path="res://shader/3dShader_Star.tres" id="11_pg46v"]
+[ext_resource type="PackedScene" uid="uid://c6ebkh5b1f4nr" path="res://scene/player/versionTracker.tscn" id="18_2aufu"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_kjv7t"]
 resource_local_to_scene = true
@@ -477,3 +478,11 @@ libraries = {
 libraries = {
 "": SubResource("AnimationLibrary_koa56")
 }
+
+[node name="VersionTracker" parent="." instance=ExtResource("18_2aufu")]
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -23.0
+offset_right = 73.0
+grow_vertical = 0

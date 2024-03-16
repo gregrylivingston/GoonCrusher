@@ -50,6 +50,9 @@ var names: Dictionary = {
 }
 
 func resetRegions():
+	for i in regions.keys():
+		regions.erase(i)
+	
 	regions = {
 	-2:{
 		"name":"Wasteland",

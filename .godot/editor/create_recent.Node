@@ -1,3 +1,4 @@
+Label
 HBoxContainer
 VBoxContainer
 Control
@@ -6,7 +7,6 @@ TextureRect
 TextureProgressBar
 Panel
 ProgressBar
-Label
 CanvasLayer
 Node2D
 roadButton

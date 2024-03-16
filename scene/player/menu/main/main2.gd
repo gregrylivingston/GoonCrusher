@@ -103,7 +103,7 @@ func selectPreviousCar():
 func setupLevel(level):
 
 	showNewBackgroundImage(load(level.image))
-	#%levelSelect.updateText( str(SaveManager.playerData.selectedLevel + 1) + ". " + level.name)
+	#%levelSelect.updateText( str(SasetupLevelveManager.playerData.selectedLevel + 1) + ". " + level.name)
 	%driverName2.text =  Root.playerCar.charName
 	%driverName.text = str(SaveManager.playerData.selectedLevel + 1) + ". " + level.name
 	

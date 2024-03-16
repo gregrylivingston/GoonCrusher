@@ -71,7 +71,7 @@ class_name PlayerData extends Resource
 }
 
 
-@export var levels = [
+var levels = [
 	{
 		"name":"Easy",
 		"image":"res://texture/background/background_level_1.png",
