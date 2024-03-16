@@ -54,7 +54,7 @@ shader_parameter/back_tex = ExtResource("10_8o5bn")
 shader_parameter/side_tex = SubResource("GradientTexture1D_pwab5")
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_mge01"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_eeg4v"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -66,7 +66,7 @@ shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_1fi2h"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_2ijqm"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -78,7 +78,7 @@ shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_o1dq0"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_bkcjy"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -268,7 +268,7 @@ shader_parameter/outline_width = 2.0
 shader_parameter/front_tex = SubResource("GradientTexture1D_3pvng")
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_7qb71"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_0tita"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -280,7 +280,7 @@ shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_7ceri"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_l7715"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -671,71 +671,60 @@ theme = ExtResource("1_badde")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="mainMenuPanel"]
 layout_mode = 1
-anchors_preset = 14
-anchor_top = 0.5
-anchor_right = 1.0
-anchor_bottom = 0.5
-offset_left = 40.0
-offset_top = -189.0
-offset_right = -47.0
-offset_bottom = 189.0
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -160.0
+offset_right = 160.0
+offset_bottom = 378.0
 grow_horizontal = 2
-grow_vertical = 2
 theme_override_constants/separation = 40
 
-[node name="HBoxContainer" type="HBoxContainer" parent="mainMenuPanel/VBoxContainer"]
-custom_minimum_size = Vector2(0, 75)
-layout_mode = 2
-size_flags_horizontal = 4
-size_flags_vertical = 3
-theme = ExtResource("1_badde")
-theme_override_constants/separation = 20
-
-[node name="levelSelect" parent="mainMenuPanel/VBoxContainer/HBoxContainer" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
+[node name="unlock" parent="mainMenuPanel/VBoxContainer" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
-material = SubResource("ShaderMaterial_mge01")
-custom_minimum_size = Vector2(250, 0)
+visible = false
+material = SubResource("ShaderMaterial_eeg4v")
+custom_minimum_size = Vector2(250, 25)
 layout_mode = 2
 size_flags_horizontal = 6
-size_flags_vertical = 3
-focus_neighbor_bottom = NodePath("../../HBoxContainer3/recordsButton")
-focus_next = NodePath("../../HBoxContainer3/recordsButton")
+size_flags_vertical = 0
+focus_neighbor_bottom = NodePath("../HBoxContainer3/recordsButton")
+focus_next = NodePath("../HBoxContainer3/recordsButton")
 theme_override_font_sizes/font_size = 40
-text = " Select Driver"
+text = " "
 alignment = 1
 
-[node name="begin" parent="mainMenuPanel/VBoxContainer/HBoxContainer" groups=["levelMenu"] instance=ExtResource("4_f12ks")]
+[node name="begin" parent="mainMenuPanel/VBoxContainer" groups=["levelMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
 visible = false
 self_modulate = Color(1, 1, 1, 0)
 custom_minimum_size = Vector2(250, 25)
 layout_mode = 2
 size_flags_horizontal = 6
-size_flags_vertical = 3
-focus_neighbor_bottom = NodePath("../../HBoxContainer3/backButton")
-focus_next = NodePath("../../HBoxContainer3/backButton")
+size_flags_vertical = 0
+focus_neighbor_bottom = NodePath("../HBoxContainer3/backButton")
+focus_next = NodePath("../HBoxContainer3/backButton")
 theme_override_font_sizes/font_size = 40
 text = " Begin"
 alignment = 1
 
-[node name="unlock" parent="mainMenuPanel/VBoxContainer/HBoxContainer" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
+[node name="levelSelect" parent="mainMenuPanel/VBoxContainer" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
-visible = false
-material = SubResource("ShaderMaterial_1fi2h")
-custom_minimum_size = Vector2(250, 25)
+material = SubResource("ShaderMaterial_2ijqm")
+custom_minimum_size = Vector2(250, 0)
 layout_mode = 2
 size_flags_horizontal = 6
-size_flags_vertical = 3
-focus_neighbor_bottom = NodePath("../../HBoxContainer3/recordsButton")
-focus_next = NodePath("../../HBoxContainer3/recordsButton")
+size_flags_vertical = 0
+focus_neighbor_bottom = NodePath("../HBoxContainer3/recordsButton")
+focus_next = NodePath("../HBoxContainer3/recordsButton")
 theme_override_font_sizes/font_size = 40
-text = " "
+text = " Select Driver"
 alignment = 1
 
 [node name="HBoxContainer3" type="HBoxContainer" parent="mainMenuPanel/VBoxContainer"]
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
-size_flags_vertical = 4
+size_flags_vertical = 0
 
 [node name="VSeparator3" type="VSeparator" parent="mainMenuPanel/VBoxContainer/HBoxContainer3"]
 self_modulate = Color(1, 1, 1, 0)
@@ -744,12 +733,12 @@ layout_mode = 2
 
 [node name="recordsButton" parent="mainMenuPanel/VBoxContainer/HBoxContainer3" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
-material = SubResource("ShaderMaterial_o1dq0")
+material = SubResource("ShaderMaterial_bkcjy")
 layout_mode = 2
 size_flags_horizontal = 6
 size_flags_vertical = 3
-focus_neighbor_top = NodePath("../../HBoxContainer/levelSelect")
-focus_previous = NodePath("../../HBoxContainer/levelSelect")
+focus_neighbor_top = NodePath("../../levelSelect")
+focus_previous = NodePath("../../levelSelect")
 text = " Records"
 
 [node name="backButton" parent="mainMenuPanel/VBoxContainer/HBoxContainer3" groups=["levelMenu"] instance=ExtResource("4_f12ks")]
@@ -764,21 +753,6 @@ text = " Return"
 [node name="VSeparator4" type="VSeparator" parent="mainMenuPanel/VBoxContainer/HBoxContainer3"]
 self_modulate = Color(1, 1, 1, 0)
 custom_minimum_size = Vector2(66, 0)
-layout_mode = 2
-
-[node name="HBoxContainer5" type="HBoxContainer" parent="mainMenuPanel/VBoxContainer"]
-custom_minimum_size = Vector2(0, 50)
-layout_mode = 2
-size_flags_vertical = 4
-
-[node name="VSeparator3" type="VSeparator" parent="mainMenuPanel/VBoxContainer/HBoxContainer5"]
-self_modulate = Color(1, 1, 1, 0)
-custom_minimum_size = Vector2(100, 0)
-layout_mode = 2
-
-[node name="VSeparator4" type="VSeparator" parent="mainMenuPanel/VBoxContainer/HBoxContainer5"]
-self_modulate = Color(1, 1, 1, 0)
-custom_minimum_size = Vector2(33, 0)
 layout_mode = 2
 
 [node name="HBoxContainer4" type="HBoxContainer" parent="mainMenuPanel/VBoxContainer"]
@@ -891,7 +865,7 @@ size_flags_vertical = 0
 theme_override_constants/separation = 40
 
 [node name="previous_car_button" parent="VBoxContainer2/HBoxContainer" instance=ExtResource("4_f12ks")]
-material = SubResource("ShaderMaterial_7qb71")
+material = SubResource("ShaderMaterial_0tita")
 custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
 size_flags_horizontal = 0
@@ -899,7 +873,7 @@ theme_override_font_sizes/font_size = 75
 text = " <"
 
 [node name="next_car_button" parent="VBoxContainer2/HBoxContainer" instance=ExtResource("4_f12ks")]
-material = SubResource("ShaderMaterial_7ceri")
+material = SubResource("ShaderMaterial_l7715")
 custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
 size_flags_horizontal = 0
@@ -1014,9 +988,9 @@ theme_override_font_sizes/normal_font_size = 40
 text = "Unlock by Completing Countdown"
 fit_content = true
 
-[connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer/levelSelect" to="." method="_on_level_select_pressed"]
-[connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer/begin" to="." method="_on_begin_pressed"]
-[connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer/unlock" to="." method="_on_unlock_pressed"]
+[connection signal="pressed" from="mainMenuPanel/VBoxContainer/unlock" to="." method="_on_unlock_pressed"]
+[connection signal="pressed" from="mainMenuPanel/VBoxContainer/begin" to="." method="_on_begin_pressed"]
+[connection signal="pressed" from="mainMenuPanel/VBoxContainer/levelSelect" to="." method="_on_level_select_pressed"]
 [connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer3/recordsButton" to="." method="_on_records_button_pressed"]
 [connection signal="pressed" from="mainMenuPanel/VBoxContainer/HBoxContainer3/backButton" to="." method="_on_back_button_pressed"]
 [connection signal="pressed" from="VBoxContainer2/HBoxContainer/previous_car_button" to="." method="_on_previous_car_button_pressed"]
