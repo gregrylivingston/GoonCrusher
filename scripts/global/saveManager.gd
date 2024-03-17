@@ -75,7 +75,7 @@ func unlockCar():
 	
 #how much the next upgrade will cost
 func requestStatCost(statString: Root.upgrade) -> int: 
-	return int(pow( getUpgradeLevel(statString) + 1 , 1.8 ) * 15)
+	return int(pow( getUpgradeLevel(statString) + 1 , 1.6 ) * 15)
 
 func requestStatUpgrade(statString: Root.upgrade) -> bool: 
 	var requestCost = requestStatCost(statString)

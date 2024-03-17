@@ -65,7 +65,7 @@ func updatePlayerRegion(tile) ->void:
 func animateNewGoonCrushGoal(animatebackwards: bool = true) -> void:
 	if animatebackwards:
 		$AnimationPlayer.play_backwards("NewGoonCrushBonus")
-		nextCrushingAward = pow(( crushingAwardLevel + 1 ), 1.8) * awardBase
+		nextCrushingAward = pow(( crushingAwardLevel + 1 ), 1.7) * awardBase
 		crushProgressBar.max_value = nextCrushingAward
 		%crushedGoons.text = str( int(nextCrushingAward) - Root.playerCar.currentGoonsCrushed  )		
 	else:

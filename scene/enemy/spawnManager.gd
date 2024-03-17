@@ -1,7 +1,7 @@
 class_name SpawnManager extends Node
 
 @export var spawnTimer: float = 6.0
-@export var escalationSpeed = 0.07
+@export var escalationSpeed = 0.15
 
 enum goon { DEVIL , SPARTAN , SAMURAI , FIREKIN, PIKEMAN , GOONBEAR , DOOMCART , GREMLIN , 
 SHELLBACK , IMMORTAL , LIZARD , RAT , ROCKMAN , SKELETON , SMASHER ,
@@ -65,7 +65,7 @@ var mySpawners
 func _process(delta):
 	giantTimer += delta
 	if giantTimer > 10:
-		increaseGiantOdds
+		increaseGiantOdds()
 		giantTimer = 0
 	timeCount += delta
 	if timeCount > spawnTimer:

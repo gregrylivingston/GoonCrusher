@@ -61,3 +61,6 @@ res://scripts/global/saveManager.gd
 res://scene/player/versionTracker.tscn
 res://scene/player/slots/slotMachine.tscn
 res://scene/player/menu/gameSummary.gd
+res://scene/player/playerRoot.gd
+res://scene/enemy/spawnManager.gd
+res://scene/car/van/van.tscn

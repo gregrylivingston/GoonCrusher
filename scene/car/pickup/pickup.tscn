@@ -217,7 +217,7 @@ shader_parameter/show_bound = false
 [node name="Car" instance=ExtResource("1_150xb")]
 engine = 22
 steering = 10
-armor = 30
+armor = 26
 oil = 2
 headlights = 20
 profilePic = ExtResource("2_6iylb")
