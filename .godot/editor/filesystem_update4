@@ -60,3 +60,4 @@ res://scene/player/save/playerData.gd
 res://scripts/global/saveManager.gd
 res://scene/player/versionTracker.tscn
 res://scene/player/slots/slotMachine.tscn
+res://scene/player/menu/gameSummary.gd
