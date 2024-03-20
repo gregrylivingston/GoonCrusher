@@ -1,7 +1,7 @@
 class_name PlayerData extends Resource
 
 @export var coin: int = 0
-@export var gem: int = 3
+@export var gem: int = 0
 @export var selectedCar: int = 0
 @export var selectedLevel: int = 0
 @export var gameMode: int = 0
@@ -14,13 +14,13 @@ class_name PlayerData extends Resource
 		"scene":"res://scene/car/sedan/sedan.tscn",
 	},
 	{	"name":"van",
-		"cost":100,
+		"cost":1000,
 		"upgrades":{},
 		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,},
 		"scene":"res://scene/car/van/van.tscn",
 	},
 	{	"name":"taxi",
-		"cost":1000,
+		"cost":2000,
 		"upgrades":{},
 		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,},
 		"scene":"res://scene/car/taxi/taxi.tscn",

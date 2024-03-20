@@ -1,4 +1,4 @@
-[gd_scene load_steps=39 format=3 uid="uid://btm8fh8tutk2x"]
+[gd_scene load_steps=40 format=3 uid="uid://btm8fh8tutk2x"]
 
 [ext_resource type="Theme" uid="uid://co40pijjc7hbw" path="res://style/roadRogue.tres" id="1_badde"]
 [ext_resource type="Script" path="res://scene/player/menu/main/main2.gd" id="1_cc7gi"]
@@ -16,6 +16,7 @@
 [ext_resource type="Shader" uid="uid://c2jd3wjben4p2" path="res://shader/3d_Text_HighlightRight.tres" id="10_l1x4e"]
 [ext_resource type="PackedScene" uid="uid://clx3q1jksnuoc" path="res://scene/player/menu/main/car_stats_container.tscn" id="11_wos04"]
 [ext_resource type="PackedScene" uid="uid://cabn86xos6l3c" path="res://scene/player/menu/main/top_menu.tscn" id="13_bt8kb"]
+[ext_resource type="Texture2D" uid="uid://w03tvhxtmrv4" path="res://texture/icon/icons8-coin-48 (1).png" id="16_wi8r5"]
 [ext_resource type="Material" uid="uid://dkh0a5rlpp5og" path="res://shader/mat_star_yellow.tres" id="17_k4abt"]
 [ext_resource type="Texture2D" uid="uid://djs2pk1xs4sql" path="res://texture/icon/star.png" id="17_pkha7"]
 [ext_resource type="Material" uid="uid://ci2pd2s2m10gw" path="res://shader/Mat_Star_Grey.tres" id="20_o60b3"]
@@ -55,7 +56,7 @@ shader_parameter/back_tex = ExtResource("10_8o5bn")
 shader_parameter/side_tex = SubResource("GradientTexture1D_pwab5")
 shader_parameter/show_bound = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_onk7u"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_2wf1v"]
 resource_local_to_scene = true
 shader = ExtResource("9_78e4l")
 shader_parameter/angle = 0.6
@@ -65,6 +66,7 @@ shader_parameter/shear = Vector2(0, -0.2)
 shader_parameter/slices = 16
 shader_parameter/outline = true
 shader_parameter/outline_width = 2.0
+shader_parameter/front_tex = ExtResource("16_wi8r5")
 shader_parameter/show_bound = false
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_yfat6"]
@@ -684,7 +686,7 @@ theme_override_constants/separation = 40
 [node name="unlock" parent="mainMenuPanel/VBoxContainer" groups=["characterMenu"] instance=ExtResource("4_f12ks")]
 unique_name_in_owner = true
 visible = false
-material = SubResource("ShaderMaterial_onk7u")
+material = SubResource("ShaderMaterial_2wf1v")
 custom_minimum_size = Vector2(250, 25)
 layout_mode = 2
 size_flags_horizontal = 6
@@ -693,6 +695,7 @@ focus_neighbor_bottom = NodePath("../HBoxContainer3/recordsButton")
 focus_next = NodePath("../HBoxContainer3/recordsButton")
 theme_override_font_sizes/font_size = 40
 text = " "
+icon = ExtResource("16_wi8r5")
 alignment = 1
 
 [node name="begin" parent="mainMenuPanel/VBoxContainer" groups=["levelMenu"] instance=ExtResource("4_f12ks")]
