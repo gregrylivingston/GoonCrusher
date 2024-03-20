@@ -49,8 +49,7 @@ func selectCar(car):
 	%charTexture.texture = Root.playerCar.profilePic
 	%charTexture2.position = Vector2( 0 , 0 )
 	
-func disableLockedCars(car):
-	return true
+func disableLockedCars(car) -> void:
 	var thisCar =  SaveManager.getCarByName(Root.playerCar.carId)
 	if SaveManager.playerData.selectedCar > 20:#set this to 2 for DEMO
 		%levelSelect.visible = true
