@@ -26,3 +26,4 @@ res://shader/liquid.gdshader
 res://shader/3dicon.gdshader
 res://shader/ground_normals.gdshader
 res://scene/player/menu/main/main2.gd
+res://scene/player/save/playerData.gd
