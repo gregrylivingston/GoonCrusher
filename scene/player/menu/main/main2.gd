@@ -59,8 +59,10 @@ func disableLockedCars(car) -> void:
 	elif thisCar.cost != 0:
 		%levelSelect.visible = false
 		%unlock.visible = true
-		var unlockCost = thisCar.cost / 1000
-		%unlock.updateText( str(unlockCost) + "k to Unlock" )
+		if thisCar.cost > 9999:
+			var unlockCost = thisCar.cost / 1000
+			%unlock.updateText( str(unlockCost) + "k to Unlock" )
+		else: %unlock.updateText( str(thisCar.cost) + " to Unlock" )
 		if thisCar.cost > SaveManager.playerData.coin:%unlock.disabled = true
 		else: %unlock.disabled = false
 
