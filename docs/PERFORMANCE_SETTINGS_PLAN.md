@@ -71,6 +71,7 @@ Measured from a clean worktree of the branch, on Low, 1920x1080 borderless, unca
 | S4 night crowd | 55.0 / 37.9 | 76.1 / 34.7 | |
 | S2 day drive | 128.1 / 84.3 | | |
 | S5 slot claims | 118.2 / 55.4 | | |
+| S6 10-minute drive | 121.6 / 57.4; 12 chunks, 16 frames > 50 ms (first pass: 109.4 / 14.1, 1,119 frames > 50 ms) | | |
 
 **Done**
 - **Phase 9, sub-900p rendering.** Render Resolution gains 720p and 540p. A run (level, HUD and in-run menus) is drawn into a SubViewport of that height, with the 1600x900 logical canvas (`size_2d_override`), and scaled up. The world view and every layout are unchanged; menus behave as Auto. `scene/level/run_view.gd`. Night lighting turned out to be fill-bound on the HD 620, which the first pass had missed: a 1280x720 window ran S3 at 121 fps against 57 at 1080p. Presets still default to Auto; whether Low or Potato should default to 720p is the author's call.
@@ -108,8 +109,8 @@ Measured from a clean worktree of the branch, on Low, 1920x1080 borderless, unca
   - It is a one-line project setting (`physics/common/physics_interpolation`) when someone can check it by eye.
 
 **Still open**
-- S6 for the full 10 minutes on the current code. The run with the new escape logic has not been repeated.
 - 4K (S8), vsync-on runs, 3 runs per cell.
+- S6's first-pass spikes came from 250 goons crowding a stalled car. With the autopilot kept moving, the crowd peaks at 141, so S4 remains the crowd test.
 
 ---
 
