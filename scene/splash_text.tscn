@@ -1,7 +1,7 @@
 [gd_scene load_steps=13 format=3 uid="uid://dtpncrptg52gn"]
 
 [ext_resource type="Shader" path="res://shader/rainbowfill.gdshader" id="1_snfeh"]
-[ext_resource type="FontFile" uid="uid://hf5rdg67jcwc" path="res://addons/gut/fonts/AnonymousPro-Italic.ttf" id="2_p3sss"]
+[ext_resource type="FontFile" path="res://style/font/AnonymousPro/AnonymousPro-Italic.ttf" id="2_p3sss"]
 [ext_resource type="Shader" path="res://shader/3dtext.gdshader" id="3_4riat"]
 [ext_resource type="Texture2D" uid="uid://dlgpwix6wtodc" path="res://shader/emtpywhitegradient.tres" id="4_5ec0e"]
 [ext_resource type="FontFile" uid="uid://c106tp6lo578e" path="res://style/font/Tektur/Tektur-Bold.ttf" id="5_mc3qw"]

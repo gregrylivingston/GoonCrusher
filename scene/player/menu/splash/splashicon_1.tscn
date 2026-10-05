@@ -1,8 +1,8 @@
-[gd_scene load_steps=7 format=3 uid="uid://uhoyncya2scj"]
+[gd_scene format=3 uid="uid://uhoyncya2scj"]
 
-[ext_resource type="Shader" path="res://shader/3dicon.gdshader" id="1_cnkxn"]
 [ext_resource type="Texture2D" uid="uid://bipfb4etolpw2" path="res://texture/icon/heart.png" id="2_nb155"]
 [ext_resource type="Script" path="res://scene/player/menu/splash/splashicon_1.gd" id="3_6ocdv"]
+[ext_resource type="Shader" uid="uid://cwca4ap0gs4m5" path="res://shader/3dtext.gdshader" id="gc_3dtext"]
 
 [sub_resource type="Gradient" id="Gradient_8ikg4"]
 colors = PackedColorArray(0, 0, 0, 1, 0, 0, 0, 1)
@@ -12,7 +12,8 @@ gradient = SubResource("Gradient_8ikg4")
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_pxj41"]
 resource_local_to_scene = true
-shader = ExtResource("1_cnkxn")
+shader = ExtResource("gc_3dtext")
+shader_parameter/time_mode = 2
 shader_parameter/angle = 3.3
 shader_parameter/thickness = 0.0
 shader_parameter/scale = 1.0
@@ -26,9 +27,6 @@ shader_parameter/side_tex = SubResource("GradientTexture1D_53al0")
 shader_parameter/show_bound = false
 
 [node name="splashicon" type="Sprite2D"]
-process_thread_group = 2
-process_thread_group_order = 0
-process_thread_messages = 0
 material = SubResource("ShaderMaterial_pxj41")
 scale = Vector2(1.5, 1.5)
 texture = ExtResource("2_nb155")

@@ -1,10 +1,9 @@
-[gd_scene load_steps=30 format=3 uid="uid://pgobm7erc1f0"]
+[gd_scene format=3 uid="uid://pgobm7erc1f0"]
 
 [ext_resource type="Script" path="res://scene/player/playerRoot.gd" id="1_csk4w"]
 [ext_resource type="PackedScene" uid="uid://bf1f5117fhyd2" path="res://scene/car/car_panel.tscn" id="2_gx8xt"]
 [ext_resource type="StyleBox" uid="uid://dl1e0qtgp13cj" path="res://style/style_box_basic.tres" id="3_eocbu"]
 [ext_resource type="Script" path="res://scene/player/Timer.gd" id="3_hepv3"]
-[ext_resource type="Shader" uid="uid://b5xo6d4thuug" path="res://shader/flatTextNoTime.tres" id="4_0qxgv"]
 [ext_resource type="Texture2D" uid="uid://dt60dhhtejv7k" path="res://texture/icon/slotMachine.png" id="4_bmve1"]
 [ext_resource type="Theme" uid="uid://co40pijjc7hbw" path="res://style/roadRogue.tres" id="4_xbt3u"]
 [ext_resource type="Texture2D" uid="uid://w03tvhxtmrv4" path="res://texture/icon/icons8-coin-48 (1).png" id="5_bieyt"]
@@ -64,7 +63,8 @@ shader_parameter/show_bound = false
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_spkbp"]
 resource_local_to_scene = true
-shader = ExtResource("4_0qxgv")
+shader = ExtResource("5_nv3yj")
+shader_parameter/time_mode = 3
 shader_parameter/angle = 0.0
 shader_parameter/thickness = 1.0
 shader_parameter/scale = 1.0

@@ -1,8 +1,14 @@
 shader_type canvas_item;
 
 //from https://godotshaders.com/shader/cool-3d-text/
+//The one shared copy of the 3D text shader; every scene references this file.
+//Quality comes from the Text Effects setting through global uniforms (project.godot [shader_globals]).
 
 render_mode blend_premul_alpha;
+
+global uniform int gc_text_quality;     // 0 flat, 1 still 3D, 2 animated
+global uniform int gc_text_max_slices;  // slice cap when animated: 8 Medium, 16 High
+global uniform float gc_motion;         // 0 = Reduce Motion
 
 uniform float angle = -0.2;
 uniform float thickness : hint_range(0.0, 64.0) = 10.0;
@@ -11,6 +17,7 @@ uniform vec2 shear = vec2(0.0, -0.4);
 uniform int slices = 16;
 uniform bool outline = true;
 uniform float outline_width : hint_range(0.0, 5.0) = 2.0;
+uniform int time_mode = 0;              // 0 oscillate, 1 one-sided, 2 spin, 3 none
 
 uniform sampler2D front_tex : hint_default_white, repeat_disable;
 uniform sampler2D back_tex : hint_default_white, repeat_disable;
@@ -52,8 +59,17 @@ void transformRay(inout vec3 p, inout vec3 rd, float _angle, float _scale, vec2 
 	p.xy += p.z * _shear;
 	rd.xy += rd.z * _shear;
 
-	_angle = clamp( _angle * sin(TIME *2.0 ) , -1000000 ,100000);
-	
+	// Animation. Still and flat text, and Reduce Motion, hold the rest pose.
+	if (gc_text_quality < 2 || gc_motion < 0.5) {
+		if (time_mode <= 1) { _angle = 0.0; }
+	} else if (time_mode == 0) {
+		_angle *= sin(TIME * 2.0);
+	} else if (time_mode == 1) {
+		_angle = max(_angle * sin(TIME), 0.0);
+	} else if (time_mode == 2) {
+		_angle += TIME * 2.0;
+	}
+
 	// Apply rotation
 	mat2 R = mat2(vec2(cos(_angle),sin(_angle)),vec2(-sin(_angle),cos(_angle)));
 	p.xz *= R;
@@ -66,7 +82,7 @@ float getOutline(sampler2D tex, vec2 p, vec2 offset_px, vec2 clip_center, vec2 c
 	float opacity = 0.0;
 
 	for(int i = 0; i < 8; i++){
-		float samp = texture(tex, p + offset_px).a;
+		float samp = textureLod(tex, p + offset_px, 0.0).a;
 		samp *= float(box(p + offset_px - clip_center, clip_size) < 0.0); // Clipping
 
 		opacity = max(opacity, samp);
@@ -96,31 +112,37 @@ void fragment(){
 
 	// Thickness is measured in pixels. Hopefully the texture is predictable
 	rd *= thickness * TEXTURE_PIXEL_SIZE.x;
+	bool front_facing = rd.z < 0.0;
 
-	// Find back slice
-	p -= rd * 0.5;
-
-	// Prepare for ray march
-	rd /= float(slices - 1);
+	// Adaptive slice count: one slice per texel the ray crosses, so resting text needs only a
+	// few. Capped by quality: flat 1, still 4, animated gc_text_max_slices.
+	int n_max = (gc_text_quality == 0) ? 1 : min(slices, (gc_text_quality == 1) ? 4 : gc_text_max_slices);
+	int n = clamp(int(ceil(length(rd.xy) / TEXTURE_PIXEL_SIZE.x)) + 1, 1, max(n_max, 1));
+	if (n == 1) {
+		rd = vec3(0.0);
+	} else {
+		p -= rd * 0.5; // Find back slice
+		rd /= float(n - 1);
+	}
 
 	COLOR = vec4(0,0,0,0);
 
 	// Add back outline
-	if(outline){
+	if(outline && gc_text_quality > 0){
 		float opacity = getOutline(TEXTURE, p.xy, sign(shear) * TEXTURE_PIXEL_SIZE * outline_width, glyph_center, glyph_size/2.0);
 		vec4 col = vec4(texture(outline_tex, vertex_base).rgb * opacity, opacity);
 		col *= my_modulate;
 		COLOR = COLOR + col * (1.0 - COLOR.a); // premultiplied alpha under operator*/
 	}
 
-	for(int i = 0; i<slices; i++){
-		vec4 samp = texture(TEXTURE, p.xy);
+	for(int i = 0; i < n; i++){
+		vec4 samp = textureLod(TEXTURE, p.xy, 0.0);
 		samp.a *= float(box(p.xy - glyph_center, glyph_size/2.0) < 0.0); // Clipping
 
-		if(i < slices-1) {
+		if(i < n-1) {
 			samp.rgb = texture(side_tex, vertex_base).rgb;
 		}
-		else if(rd.z < 0.0) {
+		else if(front_facing) {
 			samp.rgb = texture(front_tex, vertex_base).rgb;
 		}
 		else {
@@ -152,5 +174,5 @@ void fragment(){
 		float b = box(vertex_base-0.5, vec2(0.5));
 		COLOR.g += (1.0 - clamp(abs(b/fwidth(b) + 0.5), 0.0, 1.0));
 	}
-	
+
 }

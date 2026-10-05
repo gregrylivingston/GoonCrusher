@@ -1,10 +1,11 @@
-[gd_resource type="ShaderMaterial" load_steps=2 format=3 uid="uid://d0lj6sppa3i0j"]
+[gd_resource type="ShaderMaterial" format=3 uid="uid://d0lj6sppa3i0j"]
 
-[ext_resource type="Shader" uid="uid://b5xo6d4thuug" path="res://shader/flatTextNoTime.tres" id="1_ug4bn"]
+[ext_resource type="Shader" uid="uid://cwca4ap0gs4m5" path="res://shader/3dtext.gdshader" id="gc_3dtext"]
 
 [resource]
 resource_local_to_scene = true
-shader = ExtResource("1_ug4bn")
+shader = ExtResource("gc_3dtext")
+shader_parameter/time_mode = 3
 shader_parameter/angle = 0.0
 shader_parameter/thickness = 1.0
 shader_parameter/scale = 1.0
