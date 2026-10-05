@@ -19,6 +19,59 @@ File:line citations are from commit `83abe66`.
 
 ---
 
+## Status (2026-10-05): implemented on branch `perf-settings`
+
+Phases 0 to 8 are in, one commit per phase (Phases 1, 6 and 7 share a commit because they live in the same Settings files). Phase 9 (optional) was not started. `CLAUDE.md` describes the new architecture.
+
+### Results on the HD 620 (1920x1080 borderless, Vulkan Mobile, uncapped, 1 run per cell)
+
+Baseline is commit `7f49e14` (Phase 0). "Low" is the preset the game now detects on this machine. Cells are avg fps / 1% low fps.
+
+| Scenario | Baseline | Low | Potato | High |
+|---|---|---|---|---|
+| S1 main menu | 96.1 / 81.0 | 123.0 / 106.1 | | |
+| S2 day drive | 106.6 / 43.7 | 135.3 / 73.3 | | |
+| S3 night, 150+ goons | 23.1 / 8.3 | 56.3 / 39.0 | 116.0 / 47.0 | 24.2 / 14.1 |
+| S4 late-game night crowd | 20.7 / 6.9 (337 goons, 675 frames > 50 ms) | 55.2 / 39.9 (250 goons, 1 frame > 50 ms) | 111.9 / 61.2 | |
+| S5 5 slot claims | 89.8 / 15.4, 35 frames > 50 ms | 116.1 / 52.0, 4 frames > 50 ms | | |
+| S6 10-minute drive | 67.9 / 7.1; 111 chunks, 844 goons, 7,118 nodes, 1,235 frames > 50 ms | 109.4 / 14.1; 12 chunks, 250 goons, 2,087 nodes, 1,119 frames > 50 ms | | |
+| S7 10 purses at night | 40.3 / 34.4 | 64.7 / 59.3 | | |
+| S3 on ANGLE (Compatibility) | 21.0 / 7.5 | | | |
+
+- **Startup and loading:** 2.5 s from launch to the menu (was 3.7-5.4 s). A level loads on a worker thread behind a "Loading..." label; the longest frame during a load is 75-85 ms (was a 1.7 s freeze).
+- **S6 spikes are no longer chunk loads** (none of the 1,119 frames over 50 ms is near a chunk change). All of them come in minutes 8-10, when 250 goons crowd the car on screen: goon-against-goon physics, about 24 ms per frame. The off-screen LOD cannot help there. Running 2D physics on its own thread was tried and was slower (S4 53.6 / 38.3), so it is off.
+- **Against the section 9.4 targets (uncapped numbers):** Potato meets its S4 target (avg >= 58, 1% low >= 45). Low meets the S4 average (>= 55) but not the 1% low (39.9 against 45). S1 and S2 on Low are well under 17.5 ms.
+- **Where the night cost went:** GPU time at night fell from about 35 ms to 14 ms on Low (Lighting Medium plus the Simple Headlight Cone). On Low, the rest of a slow S4 frame was goon physics; the off-screen goon LOD (7.3) addresses it.
+- **Menu:** the 3D text cost 2.9 ms per frame in the menu (10.4 ms with it, 7.6 ms without), which confirmed it as the menu's main cost.
+- **Not measured:** 4K (S8, no 4K panel), 3 runs per cell, vsync-on runs, ANGLE after the changes.
+
+### Decisions taken (the author answered section 11)
+
+- Q1: Lighting **Medium**, which the Low preset uses, keeps every shadow and occluder, so night stealth plays the same. Its saving comes from the smaller shadow atlas and the Simple Headlight Cone (one shadowed light instead of five). Only Lighting Low (Potato) drops shadows. This replaces the earlier "Medium hides goon occluders".
+- Q2: no Night Visibility Assist. Q3: the title follows the preset. Q5: sliders top out at 0 dB. Q6: smoke stays over goons. Q7: the demo and the full game share the save, migrated in place.
+- Q4 (section 7.3): all three items are in: the despawn sweep, the region flood fill rewritten as an iterative fill, and a 250-goon cap for everyone plus off-screen LOD (goons outside the view walk without collision queries).
+
+### Where the implementation differs from the plan
+
+- **Text shader:** every inline copy was rewritten to reference `shader/3dtext.gdshader` (A-24 done up front), so no `node_added` material swap is needed. The hook only handles lights and occluders.
+- **Celebrations:** Full keeps the authored icon wall and sprite burst (both now sized from the logical rect). Reduced and Minimal cut node counts instead of moving to CPUParticles2D or a tiling shader.
+- **Reward flyers** are drawn on their own CanvasLayer, so they stay visible at night without a light.
+- **CLI flags:** Godot hides its own flags from scripts, so the game reads `-- --window=WxH` and `-- --uncapped` instead.
+- **Safe mode** triggered by the boot counter applies Potato for that session only, then asks; nothing is saved unless the player accepts.
+- **Hold to Confirm** is covered by Confirm Abandon / Quit (second press); there is no separate toggle.
+- **Tests:** GUT 9.0.0 doesn't parse on Godot 4.7, so `tests/game` has its own small runner with GUT-style asserts.
+
+### Not done
+
+- Phase 9 (sub-900p SubViewport, chunk pooling, physics interpolation) and HUD Scale.
+- Optional first-run GPU calibration.
+- A-9 (freeing slot icons that scroll off) and A-21's `CarInfo` resource. The menu still instantiates cars; it now prefetches the neighbouring cars.
+- A-20: packing goon frames into atlases, and BC7 for FX sheets. A-22: replacing the dictionary map with packed arrays.
+- A-23: export filters (no `export_presets.cfg` in the repo; the filter list is in `CLAUDE.md`), and checking GodotSteam against 4.7.
+- An exported-build test of the `override.cfg` renderer switch.
+
+---
+
 ## 1. Measured baseline (HD 620, 1600x900 window)
 
 Each cell is min / avg / max FPS, leaving out the first 5 s of warm-up.

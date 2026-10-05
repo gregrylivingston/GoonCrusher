@@ -14,41 +14,39 @@ A free demo is live on Steam (app 1941650). The current work is to finish the ga
 - **Renderer:** `mobile` (Vulkan).
   - The dev box is an Intel HD 620 iGPU with 4 threads, so it doubles as the low-end target.
   - Measured there, Vulkan Mobile was 15–55% faster than Compatibility. Compatibility runs through ANGLE/D3D11, because Godot blocklists the Intel GL driver.
-- **CLI runs:** always pass `--windowed --resolution 1600x900` and bound the run with `--quit-after <frames>`. The project boots fullscreen. `--print-fps` prints an FPS reading every second.
-- **Running a level from the CLI doesn't work.** A level needs `Root.selectedCar`, which only the main menu sets. Benchmarks therefore boot `main2.tscn` and then change scene, using a throwaway `-s` script kept outside the repo.
-- **Save location:** `user://` resolves to `%APPDATA%/GoonCrusher/`, because `use_custom_user_dir=true`. The save file is `saveData_0.1.tres`. **Back it up before running the game for testing.**
-- **Tests:** everything in `tests/` belongs to the rmsmartshape addon. There are **no tests for game code**. The runner scripts in `scripts/windows|linux` point at `res://gut`, which doesn't exist. If you add game tests, put them in a separate folder such as `tests/game/`.
+- **CLI runs:** bound the run with `--quit-after <frames>`. Godot consumes its own flags (`--windowed`, `--resolution`, `--disable-vsync`, `--max-fps`) before scripts see them, and the saved settings would override them anyway, so use the game's user args instead: `-- --window=1600x900` (windowed at that size) and `-- --uncapped` (V-Sync off, no frame cap).
+- **Launch options:** `-- --safe-mode` (Potato, windowed, Compatibility; handled once), `-- --reset-graphics` (deletes `graphics.cfg` and `override.cfg`). F3 cycles the performance overlay.
+- **Benchmarks:** `scripts/debug/bench.gd` (autoload `Bench`, inert without `--bench`). Example: `Godot_console.exe --path . -- --bench=S3 --uncapped --preset=low --seconds=90`. Scenarios S1-S7 and SL (lighting parity) are listed at the top of the file; options `--set=gfx/lighting:0;...`, `--shot=5;30`, `--tag=name`, `--headlights=N`, `--open-settings`, `--notext`. Output goes to `user://bench/` (per-frame CSV plus `summary.csv`). Bench runs save progress to a scratch copy, never the real save. Levels can also be launched directly; they fall back to the saved car.
+- **Save location:** `user://` resolves to `%APPDATA%/GoonCrusher/`, because `use_custom_user_dir=true`. Progress is `saveData_0.1.tres`; settings are `settings.cfg` and `graphics.cfg`; the renderer choice is `override.cfg`. **Back them up before running the game for testing.**
+- **Tests:** game tests live in `tests/game/` and run with `Godot_console.exe --headless --path . -s res://tests/game/run_tests.gd` (or `scripts/*/run_game_tests.*`); the exit code is the number of failures. They use a small GUT-compatible base class (`tests/game/game_test.gd`) because **GUT 9.0.0 does not parse on Godot 4.7** (its `Logger` class shadows a new native class). Everything else in `tests/` belongs to rmsmartshape.
 - **Addons:**
-  - `gut`: tests. The main menu also borrows fonts from `addons/gut/fonts/` (`main2.tscn:6,10`, `splash_text.tscn`). Move those fonts before excluding gut from exports.
+  - `gut`: tests only, and it needs upgrading for 4.7. The menu fonts it used to supply now live in `style/font/`.
   - `rmsmartshape`: an editor plugin that no game scene uses, so it can be removed.
   - `godotsteam`: the binaries are present, but **no game code calls Steam**.
-- **Repo hygiene:**
-  - `.godot/` appears in `.gitignore`, but 874 files under it are still tracked.
-  - About 12 editor `*.tmp` scene backups are committed.
-  - `export_presets.cfg` is gitignored, so export settings are not in version control.
+- **Exports:** `export_presets.cfg` is gitignored and not in the repo. Exclude `addons/gut/*`, `addons/rmsmartshape/*`, `tests/*`, `scripts/debug/bake_headlight_cone.gd`, `*.psd` and `texture/backgroundTexture.png` in the export filters.
 
 ## Architecture
 
 ### Autoloads (`project.godot` [autoload], in load order)
 | Name | File | Owns |
 |---|---|---|
+| `Settings` | `scripts/global/settings.gd` | All player settings: `settings.cfg` (synced) and `graphics.cfg` (per machine), presets and tier detection, safe mode, applying display/audio/input, the shader globals (`gc_*`), the lighting hook on `node_added`, rebinding, the F3 overlay, the runtime advisor, and `menu_open` (push/pop) for blocking input under menus. Read values with `Settings.get_value("gfx/smoke")`. |
 | `Root` | `scripts/global/root.gd` | Global enums (`gameModes`, `endCondition`, `upgrade`, `terrain`, `goon`). Shared node references: `playerCar`, `station`, `levelRoot`, `spawnManager`, `playerRoot` (HUD) and `mainMenu`. Run flags and earned currency. The powerup preload table with `getPowerupFromWeights`. Mode descriptions. |
-| `SaveManager` | `scripts/global/saveManager.gd` | Loading and saving `PlayerData` (a `.tres` Resource). The economy: coins, gems and upgrade cost `int((lvl+1)^1.6*15)`. Car, level and mode selection. Applying saved volume to the audio buses. |
-| `Audio` | `scripts/global/Audio.tscn/.gd` | The music player and a pool of FX players, capped at 4 new sounds per frame. |
+| `SaveManager` | `scripts/global/saveManager.gd` | Loading, migrating and saving `PlayerData` (a `.tres` Resource). Saves are debounced by 1 s and flushed on scene change and exit. The economy: coins, gems and upgrade cost `int((lvl+1)^1.6*15)`. Car, level and mode selection. |
+| `Audio` | `scripts/global/Audio.tscn/.gd` | The music player and a pool of FX players (`Audio.play` / `queueRequest`), limited by Max Sound Effects. Goon death sounds use it too. |
 | `Region` | `scripts/global/Region.gd` | Named regions generated per terrain, 3 goon types per region, and a 60 s wave timer per region that awards stars. Also pushes terrain friction to the car and the goon list to the spawner. |
-
-`scripts/global/Event.gd` is an empty stub and nothing uses it.
+| `Bench` | `scripts/debug/bench.gd` | The benchmark harness. It frees itself unless the game is launched with `--bench`. |
 
 ### Flow
 1. `main2.tscn` (`scene/player/menu/main/`) is the main menu, a state machine with RIDER → LEVEL → GAMEMODE states.
    - The GAMEMODE step is commented out at `main2.gd:277`, so runs always use the saved `gameMode`, which defaults to GOONCRUSHER.
    - The menu calls `instantiate()` on the selected car **without adding it to the tree**. Treat `Root.playerCar` in the menu as an orphan data holder whose `_ready` never runs.
-2. Starting a run calls `change_scene_to_file(level.scene)`. Each level `scene/level/levels/level_*.tscn` is a thin override of `levelRoot.tscn` that changes only timer seconds, object pools and spawn tuning.
+2. Starting a run loads the level on a worker thread (`main2.startLevel`) and then changes scene. Each level `scene/level/levels/level_*.tscn` is a thin override of `levelRoot.tscn` that changes only timer seconds, object pools and spawn tuning.
 3. `levelRoot.gd` instantiates `Root.selectedCar.scene`. It then attaches 5 spawners **as children of the car**, so their offsets rotate with it, and runs day/night by tweening a `CanvasModulate` to pure black every 60 s.
 4. `tileManager.gd` and `landscapeGenerator.gd` handle the world:
    - A 256×256 noise grid becomes terrain types. Each cell is one 5120×2560 px chunk, which is one TileMap per terrain type.
-   - About 16 chunks are streamed around the car. Chunk (0,0) is `mapDict[128][128]`.
-   - Regions are labelled by an async flood fill that keeps running during play.
+   - Chunks the camera can see, plus 1 s of travel, are loaded one per frame. Chunks more than 2 away (Chebyshev) are freed, except the pinned station chunk. Chunk (0,0) is `mapDict[128][128]`; `tileManager.chunkOf()` uses floor, and anything outside the map is water. Each chunk's objects come from its own seed.
+   - Regions are labelled by an iterative flood fill on a 3 ms/frame budget, which finishes during the countdown.
 5. A run ends in one of three ways:
    - The car calls `levelRoot.endLevel()` on NOHEALTH or NOGAS.
    - The station driveway calls it with SUCCESS, in SPRINT and MARATHON only.
@@ -63,43 +61,36 @@ A free demo is live on Steam (app 1941650). The current work is to finish the ga
 - `scene/enemy/spawnManager.gd`, `scene/player/spawner.gd` and `scene/enemy/walker/walker.gd` handle goons. There are 18 goons, all one walker state machine with different numbers. They die in one hit at speed > 100. Two places must be updated together when adding goons:
   - the `goon` enum, which is duplicated in `root.gd` and `spawnManager.gd` in the same order;
   - `Region.terrainGoons`.
-- `scene/powerup/*` contains pickups that fly to the HUD and call `car.reward()`.
+- `scene/powerup/*` contains pickups. Collecting one credits it at once through `car.reward()`; the icon that flies to the HUD is a pooled visual from `scene/fx/reward_flyers.gd` and can be capped without changing totals. Never credit rewards from an animation.
+- Goons are capped at 250 (`SpawnManager.GOON_CAP`, the same for every preset) and swept every 0.5 s when they are more than 8000 px away and off screen.
 - `scene/player/slots/*` and `scene/fx/lotto/*` are the slot machine: 3 reels with no combo logic, and a reroll costs 1 gem.
 - `scene/player/playerRoot.gd` is the HUD. Crush milestones at `(n+1)^1.7*12` award a star and a free slot machine.
-- `scene/player/menu/settings/*` is the settings overlay with tabs Gameplay, Sound, Graphics and Input. The Input tab is hidden and empty.
+- `scene/player/menu/settings/*` is the settings overlay. `settings_menu.gd` builds the tabs from `buildSchema()`; each row is an `OptionRow` (choice, slider, button, header or binding), and `SettingsDialog` is the shared modal. To add a setting: add the key to `Settings.DEFAULTS` (plus `OPTIONS`/`RANGES`, and `PRESET` if presets drive it), apply it in `Settings.applyKey` or read it where it is used, then add a row.
 
 ### Save data (`scene/player/save/playerData.gd`, template `playerData.tres`)
 - The save is a text `.tres` Resource that embeds the script path. **Renaming or moving `playerData.gd` breaks existing player saves.**
-- `cars[]` in the saved file replaces the script defaults. New cars, price changes and scene-path moves therefore never reach existing saves unless you add a migration.
-- `settings = {volume:{master,voice,music,fx}}` lives inside the progress save. Lookups index it directly, so **adding keys crashes on old saves**, and Reset Save wipes the settings too.
-- **`levels` is a plain `var`, not `@export`.** Level unlocks and `gamemodeBeat` are never saved.
-- Before adding any saved field, add a schema version plus a merge-defaults migration in `SaveManager.load_data()`. The plan is to move settings into a separate `user://settings.cfg` (ConfigFile).
+- `SaveManager.migrate()` merges every loaded save with the script defaults: new cars and levels are added, scene paths and record keys are updated, locked cars get current prices, and unlocks and beaten modes are kept. The demo and the full game share the save, so demo progress carries over. Bump `SAVE_VERSION` and extend `migrate()` when you add fields; `tests/game/test_save_migration.gd` covers it.
+- `levels` is `@export` now, so unlocks and `gamemodeBeat` are saved.
+- `settings` in the save is legacy (demo volumes). `Settings.import_legacy_volume()` reads it once and nothing writes it. Delete it one release after launch.
 
 ## Conventions and gotchas
 
 - **Physics is tick-based, not delta-based.** Car steering ramp, fuel burn, camera zoom and goon idle counters all advance per physics tick. Never change `physics_ticks_per_second`, and never expose it as a setting.
-- Some visuals are frame-based too and will speed up or slow down under an FPS cap: `slot_row.gd` reel scrolling, `splashicon_1.gd`, and the `smoke.gd` rotation. Convert them to use delta before adding an FPS cap.
-- **The 3D text shader is copied about 24 times.** Copies are inline in `.tscn` files (car variants, `main2`, `roadButton`, `regionUi`, `top_menu`, `statUpgradeButton`, `gameSummary`, `car_panel`) plus `shader/3dtext.gdshader`, `3dText_Common.tres` and the star materials.
-  - Each copy ray-marches `slices` (up to 64) texture taps per pixel and animates on `TIME`.
-  - It derives quad corners from `VERTEX_ID`, which may break under the Compatibility renderer.
-  - Consolidate the copies before adding a quality toggle.
-- Some materials use `resource_local_to_scene`: the shine and outline on pickups, and the 3D text. Goon animations are separate PNG files per frame. Both of these defeat 2D batching.
+- Frame caps exist (Frame Rate Limit, Menu Frame Rate), so anything visual must be delta-based or advance per physics tick. Slot reels advance in `_physics_process` (exactly 60 Hz, so the reels stay aligned); never go back to per-frame steps.
+- **There is one 3D text shader.** Every 3D-text material references `shader/3dtext.gdshader` with a `time_mode` parameter (0 oscillate, 1 one-sided, 2 spin, 3 none). Never paste the shader inline into a scene. Quality comes from the `gc_*` globals in `project.godot [shader_globals]`, and every global a shader uses must be declared there.
+- Goon animations are separate PNG files per frame, which defeats batching (packing them into atlases is still open). Pickup materials are shared now; don't set `resource_local_to_scene` on them again.
 - Night is gameplay. With `CanvasModulate` at black, visibility comes only from the car's 2D lights:
-  - 5 of the headlamps cast shadows.
+  - The 5 headlamps cast shadows, or the baked `simpleCone` does when Simple Headlight Cone is on (one shadowed light with the same reach). Both sit under `headlamps/headlights`, whose scale is the Headlights stat. Re-run `scripts/debug/bake_headlight_cone.gd` if you change the lamps.
   - Goons, rocks and walls all carry `LightOccluder2D`.
-  - Headlight size is an upgradeable stat (`setHeadlightStrength`), so low-quality modes must keep a headlight cone.
-- Collision type checks use `get_class()` strings, and any `CharacterBody2D` is treated as a goon (`overhead_car_body_2d.gd:207-216`). Moving from TileMap to TileMapLayer will silently break wall hits.
+  - `Settings.onNodeAdded` sees every light and occluder and ANDs the Lighting setting with the authored state (the `gc_shadow`, `gc_enabled` and `gc_vis` metadata). Lighting Low (Potato only) changes what the player can see; Medium and High don't.
+- Collision checks use `is StaticBody2D`, `is TileMap` and `is CharacterBody2D`, and any `CharacterBody2D` is treated as a goon. Moving from TileMap to TileMapLayer will silently break wall hits.
 - `randi() % n - 1` indexing appears in `Region.gd` and `gameSummary.gd`. It looks wrong, but it works because index -1 wraps.
 - `getPowerupFromWeights` mutates the caller's dictionary and sets the coin weight to `luck`.
 - HUD label naming is confusing: "Luck" shows `clover` and "Dice" shows `luck`.
 - Demo gates live in `main2.gd` (around lines 54, 111-117 and 197-233) and in `versionTracker` ("Demo 0.1"). Remove them for the full release.
-- Code style: tabs, camelCase functions and variables (mixed with some snake_case from the original templates), heavy use of the `Root.*` globals, and `$Node` paths. Match the surrounding style. Delete empty `_process` and `_ready` template stubs rather than adding new ones, because 22 scripts already carry them and that costs per-frame callbacks.
+- Code style: tabs, camelCase functions and variables (mixed with some snake_case from the original templates), heavy use of the `Root.*` globals, and `$Node` paths. Match the surrounding style. Don't add empty `_process` or `_ready` stubs; they were all removed because they cost per-frame callbacks. Connect autoload signals such as `Settings.changed` to methods, not lambdas, so they disconnect when the node is freed.
 
 ## Known critical bugs (full lists in `docs/`)
 - GOONCRUSHER cannot be won: the countdown end is commented out in `scene/player/Timer.gd:34-39`. Because of that, SPRINT never unlocks on a fresh save.
-- MARATHON's station index runs past the 256-cell map (`tileManager.gd:87`). DEFENSE reads `Root.station` before it is set (`levelRoot.gd:33`).
-- Chunk unload leak (`tileManager.gd:144-152`): loaded chunks grow to 100+ on long drives.
-- Beating the last level reads out of bounds (`saveManager.gd:139`).
-- The V-Sync toggle reads the fullscreen checkbox (`graphics.gd:23`), and graphics settings are never saved.
+- MARATHON places its station far outside the 256-cell map (`seconds * 0.7` chunks in `tileManager.gd`). It no longer crashes, because outside the map is water, but the station is unreachable. DEFENSE reads `Root.station` before it is set (`levelRoot.gd`).
 - A run that ends with 0 stars pays 0 coins (payout is `coin * star`), and the summary screen doesn't say so.
-- Goon count is uncapped. Late game spawns 5 goons per second, and goons only despawn when they are more than 8000 px away and come out of idle.
