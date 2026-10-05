@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="CarInfo" format=3]
+
+[ext_resource type="Texture2D" path="res://scene/car/audi/audi_backgrond.png" id="1_i168s"]
+[ext_resource type="AudioStream" path="res://scene/car/audi/audio/audi_intro_1.mp3" id="2_mighj"]
+[ext_resource type="AudioStream" path="res://scene/car/audi/audio/audi_intro_2.mp3" id="3_vd6xs"]
+[ext_resource type="AudioStream" path="res://scene/car/audi/audio/audi_intro_3.mp3" id="4_vv8pc"]
+[ext_resource type="AudioStream" path="res://scene/car/audi/audio/audi_intro_4.mp3" id="5_8hu1w"]
+[ext_resource type="AudioStream" path="res://scene/car/audi/audio/audi_intro_5.mp3" id="6_f8b3u"]
+[ext_resource type="AudioStream" path="res://scene/car/audi/audio/audi_intro_6.mp3" id="7_jmnx4"]
+[ext_resource type="AudioStream" path="res://scene/car/audi/audio/audi_intro_7.mp3" id="8_u8tca"]
+[ext_resource type="AudioStream" path="res://scene/car/audi/audio/audi_intro_8.mp3" id="9_85qep"]
+[ext_resource type="AudioStream" path="res://scene/car/audi/audio/audi_intro_9.mp3" id="10_6xomm"]
+[ext_resource type="Texture2D" path="res://scene/car/audi/char_audi.png" id="11_ivnrd"]
+[ext_resource type="Script" path="res://scene/car/car_info.gd" id="12_ancu4"]
+
+[resource]
+script = ExtResource("12_ancu4")
+carId = "audi"
+charName = "Snake"
+profilePic = ExtResource("11_ivnrd")
+backgroundPic = ExtResource("1_i168s")
+introAudio = Array[AudioStreamMP3]([ExtResource("2_mighj"), ExtResource("3_vd6xs"), ExtResource("4_vv8pc"), ExtResource("5_8hu1w"), ExtResource("6_f8b3u"), ExtResource("7_jmnx4"), ExtResource("8_u8tca"), ExtResource("9_85qep"), ExtResource("10_6xomm")])
+engine = 40
+steering = 15
+traction = 15
+clover = 10
+oil = 5
+headlights = 20

@@ -2,16 +2,6 @@
 
 [ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="1_kgqi5"]
 [ext_resource type="Texture2D" uid="uid://3ntiq5bget7n" path="res://scene/car/racer/Black_viper.png" id="2_7a10q"]
-[ext_resource type="Texture2D" uid="uid://t3uorfxptpy2" path="res://scene/car/racer/char_racer.png" id="2_wgnyl"]
-[ext_resource type="AudioStream" uid="uid://bbhgnuxjyv0xi" path="res://scene/car/racer/audio/Racer_Intro_1.mp3" id="3_i2n8g"]
-[ext_resource type="Texture2D" uid="uid://d3vh036wpa2l0" path="res://scene/car/racer/racer_background.png" id="3_mbmk4"]
-[ext_resource type="AudioStream" uid="uid://cp4fkdgydt43a" path="res://scene/car/racer/audio/Racer_Intro_2.mp3" id="4_cxp0d"]
-[ext_resource type="AudioStream" uid="uid://tuv15tske4bt" path="res://scene/car/racer/audio/Racer_Intro_3.mp3" id="5_8phvd"]
-[ext_resource type="AudioStream" uid="uid://c4rj3b65g0tfb" path="res://scene/car/racer/audio/Racer_Intro_4.mp3" id="6_326da"]
-[ext_resource type="AudioStream" uid="uid://by8dldwjbytfe" path="res://scene/car/racer/audio/Racer_Intro_5.mp3" id="7_7445v"]
-[ext_resource type="AudioStream" uid="uid://cmvgf7lrmvv3" path="res://scene/car/racer/audio/Racer_Intro_6.mp3" id="8_7yb6i"]
-[ext_resource type="AudioStream" uid="uid://brnxpy4gfoq8a" path="res://scene/car/racer/audio/Racer_Intro_7.mp3" id="9_42fym"]
-[ext_resource type="AudioStream" uid="uid://yw1tml0bor3p" path="res://scene/car/racer/audio/Racer_Intro_8.mp3" id="10_b3qsk"]
 [ext_resource type="PackedScene" uid="uid://551dlp73phd4" path="res://texture/animation/smoke.tscn" id="12_ivv6c"]
 [ext_resource type="AudioStream" uid="uid://cqekjds0xrm5u" path="res://scene/car/racer/audio/racer_purse_1.mp3" id="12_ysw7g"]
 [ext_resource type="AudioStream" uid="uid://de5k2pamnbme6" path="res://scene/car/racer/audio/racer_purse_2.mp3" id="13_mhftg"]
@@ -28,6 +18,7 @@
 [ext_resource type="AudioStream" uid="uid://c20viq2xlpqjh" path="res://scene/car/racer/audio/racer_fuelwarning_2.mp3" id="24_gnl76"]
 [ext_resource type="AudioStream" uid="uid://c06qvnqxya6yh" path="res://scene/car/racer/audio/racer_healthwarning_1.mp3" id="25_i6fyi"]
 [ext_resource type="Shader" uid="uid://cwca4ap0gs4m5" path="res://shader/3dtext.gdshader" id="gc_3dtext"]
+[ext_resource type="Resource" path="res://scene/car/racer/racer_info.tres" id="ci_info"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_l3dom"]
 size = Vector2(198, 81)
@@ -45,23 +36,13 @@ shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
 [node name="Car" instance=ExtResource("1_kgqi5")]
-engine = 50
-steering = 10
-armor = 0
-luck = 10
-oil = 5
-headlights = 20
 slip_speed = 0
-profilePic = ExtResource("2_wgnyl")
-backgroundPic = ExtResource("3_mbmk4")
-charName = "Kim"
-carId = "racer"
-introAudio = Array[AudioStreamMP3]([ExtResource("3_i2n8g"), ExtResource("4_cxp0d"), ExtResource("5_8phvd"), ExtResource("6_326da"), ExtResource("7_7445v"), ExtResource("8_7yb6i"), ExtResource("9_42fym"), ExtResource("10_b3qsk")])
 purseAudio = Array[AudioStreamMP3]([ExtResource("12_ysw7g"), ExtResource("13_mhftg")])
 powerupAudio = Array[AudioStreamMP3]([ExtResource("14_5e0m1"), ExtResource("15_8o26u"), ExtResource("16_rvyge"), ExtResource("17_s5ex8"), ExtResource("18_pirrt"), ExtResource("19_gdkom"), ExtResource("20_2bfxb"), ExtResource("21_y7erb"), ExtResource("22_u0ryi")])
 lowGasAudio = Array[AudioStreamMP3]([ExtResource("23_5lx7c"), ExtResource("24_gnl76")])
 lowHealthAudio = Array[AudioStreamMP3]([ExtResource("25_i6fyi")])
 carDamagedTexture = ExtResource("2_7a10q")
+info = ExtResource("ci_info")
 
 [node name="CollisionShape2D" parent="." index="2"]
 polygon = PackedVector2Array(-38, -48.5, 13, -43.5, 34, -29.5, 41, 3.5, 33, 30.5, 14, 43.5, -33, 52.5)

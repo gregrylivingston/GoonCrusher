@@ -2,7 +2,6 @@
 
 [ext_resource type="Script" path="res://lib/overhead_car_2d/overhead_car_body_2d.gd" id="1_ibwir"]
 [ext_resource type="Texture2D" uid="uid://dthtmohgw8u1f" path="res://scene/car/audi/Audi.png" id="2_33x0l"]
-[ext_resource type="Texture2D" uid="uid://bwgjsd327ch8p" path="res://scene/car/audi/char_audi.png" id="2_au1uh"]
 [ext_resource type="PackedScene" uid="uid://cl3halv7uu2tw" path="res://scene/player/controller/playerCarController.tscn" id="2_idgy8"]
 [ext_resource type="AudioStream" uid="uid://dahxhxgy1qfrn" path="res://sound/fx/engine/rally-car2.mp3" id="3_hfwa2"]
 [ext_resource type="AudioStream" uid="uid://dd240qte30ido" path="res://sound/fx/tires_squal_loop.wav" id="4_jbkbo"]
@@ -137,7 +136,6 @@ size = Vector2(160.25, 79)
 [node name="Car" type="CharacterBody2D"]
 z_index = 1
 script = ExtResource("1_ibwir")
-profilePic = ExtResource("2_au1uh")
 engineNoise = ExtResource("3_hfwa2")
 
 [node name="Camera2D" type="Camera2D" parent="."]

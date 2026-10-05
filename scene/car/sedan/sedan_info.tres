@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="CarInfo" format=3]
+
+[ext_resource type="Texture2D" path="res://scene/car/sedan/sedan_background.png" id="1_kcfml"]
+[ext_resource type="AudioStream" path="res://scene/car/sedan/audio/sedan_intro_1.mp3" id="2_unbsa"]
+[ext_resource type="AudioStream" path="res://scene/car/sedan/audio/sedan_intro_2.mp3" id="3_em4hn"]
+[ext_resource type="AudioStream" path="res://scene/car/sedan/audio/sedan_intro_3.mp3" id="4_ht1l1"]
+[ext_resource type="AudioStream" path="res://scene/car/sedan/audio/sedan_lowHealth_1.mp3" id="5_ijmkr"]
+[ext_resource type="AudioStream" path="res://scene/car/sedan/audio/sedan_intro_5.mp3" id="6_bf6qe"]
+[ext_resource type="AudioStream" path="res://scene/car/sedan/audio/sedan_intro_6.mp3" id="7_ouree"]
+[ext_resource type="AudioStream" path="res://scene/car/sedan/audio/sedan_lowgas_1.mp3" id="8_yo07a"]
+[ext_resource type="AudioStream" path="res://scene/car/sedan/audio/sedan_lowhealth_2.mp3" id="9_jwauf"]
+[ext_resource type="AudioStream" path="res://scene/car/sedan/audio/sedan_intro_9.mp3" id="10_43wyo"]
+[ext_resource type="AudioStream" path="res://scene/car/sedan/audio/sedan_intro_10.mp3" id="11_t64cr"]
+[ext_resource type="AudioStream" path="res://scene/car/sedan/audio/sedan_intro_11.mp3" id="12_bqii5"]
+[ext_resource type="Texture2D" path="res://scene/car/sedan/char_sedan_transparent.png" id="13_mjohb"]
+[ext_resource type="Script" path="res://scene/car/car_info.gd" id="14_ap600"]
+
+[resource]
+script = ExtResource("14_ap600")
+carId = "sedan"
+charName = "Anthony"
+profilePic = ExtResource("13_mjohb")
+backgroundPic = ExtResource("1_kcfml")
+introAudio = Array[AudioStreamMP3]([ExtResource("2_unbsa"), ExtResource("3_em4hn"), ExtResource("4_ht1l1"), ExtResource("5_ijmkr"), ExtResource("6_bf6qe"), ExtResource("7_ouree"), ExtResource("8_yo07a"), ExtResource("9_jwauf"), ExtResource("10_43wyo"), ExtResource("11_t64cr"), ExtResource("12_bqii5")])
+engine = 3
+steering = 4
+armor = 0
+clover = 5
+oil = 5

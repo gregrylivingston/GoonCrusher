@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="CarInfo" format=3]
+
+[ext_resource type="Texture2D" path="res://scene/car/pickup/pickup_background_unedited.png" id="1_g53yi"]
+[ext_resource type="AudioStream" path="res://scene/car/pickup/audio/pickup_intro_1.mp3" id="2_0lvlg"]
+[ext_resource type="AudioStream" path="res://scene/car/pickup/audio/pickup_intro_2.mp3" id="3_5x8ef"]
+[ext_resource type="AudioStream" path="res://scene/car/pickup/audio/pickup_intro_3.mp3" id="4_laqh1"]
+[ext_resource type="AudioStream" path="res://scene/car/pickup/audio/pickup_intro_4.mp3" id="5_fwjlt"]
+[ext_resource type="AudioStream" path="res://scene/car/pickup/audio/pickup_intro_5.mp3" id="6_kw3iu"]
+[ext_resource type="AudioStream" path="res://scene/car/pickup/audio/pickup_intro_6.mp3" id="7_gnual"]
+[ext_resource type="AudioStream" path="res://scene/car/pickup/audio/pickup_intro_7.mp3" id="8_lloa8"]
+[ext_resource type="AudioStream" path="res://scene/car/pickup/audio/pickup_intro_8.mp3" id="9_12vs1"]
+[ext_resource type="AudioStream" path="res://scene/car/pickup/audio/pickup_joy_1.mp3" id="10_8oulo"]
+[ext_resource type="AudioStream" path="res://scene/car/pickup/audio/pickup_joy_11.mp3" id="11_dovl8"]
+[ext_resource type="AudioStream" path="res://scene/car/pickup/audio/pickup_intro_11.mp3" id="12_7d16l"]
+[ext_resource type="AudioStream" path="res://scene/car/pickup/audio/pickup_intro_12.mp3" id="13_8qije"]
+[ext_resource type="AudioStream" path="res://scene/car/pickup/audio/pickup_intro_13.mp3" id="14_si8oy"]
+[ext_resource type="Texture2D" path="res://scene/car/pickup/char_pickup_transparent.png" id="15_vw14w"]
+[ext_resource type="Script" path="res://scene/car/car_info.gd" id="16_kjd4j"]
+
+[resource]
+script = ExtResource("16_kjd4j")
+carId = "pickup"
+charName = "Karen"
+profilePic = ExtResource("15_vw14w")
+backgroundPic = ExtResource("1_g53yi")
+introAudio = Array[AudioStreamMP3]([ExtResource("2_0lvlg"), ExtResource("3_5x8ef"), ExtResource("4_laqh1"), ExtResource("5_fwjlt"), ExtResource("6_kw3iu"), ExtResource("7_gnual"), ExtResource("8_lloa8"), ExtResource("9_12vs1"), ExtResource("10_8oulo"), ExtResource("11_dovl8"), ExtResource("12_7d16l"), ExtResource("13_8qije"), ExtResource("14_si8oy")])
+engine = 22
+steering = 10
+armor = 26
+oil = 2
+headlights = 20

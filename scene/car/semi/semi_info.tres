@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="CarInfo" format=3]
+
+[ext_resource type="Texture2D" path="res://scene/car/semi/semi_background.png" id="1_1x7yo"]
+[ext_resource type="AudioStream" path="res://scene/car/semi/audio/semi_intro_1.mp3" id="2_6l3i0"]
+[ext_resource type="AudioStream" path="res://scene/car/semi/audio/semi_intro_2.mp3" id="3_elmvp"]
+[ext_resource type="AudioStream" path="res://scene/car/semi/audio/semi_intro_3.mp3" id="4_l055v"]
+[ext_resource type="AudioStream" path="res://scene/car/semi/audio/semi_intro_4.mp3" id="5_j834e"]
+[ext_resource type="AudioStream" path="res://scene/car/semi/audio/semi_intro_5.mp3" id="6_kjblj"]
+[ext_resource type="AudioStream" path="res://scene/car/semi/audio/semi_intro_6.mp3" id="7_eqjqc"]
+[ext_resource type="AudioStream" path="res://scene/car/semi/audio/semi_intro_7.mp3" id="8_66cbi"]
+[ext_resource type="AudioStream" path="res://scene/car/semi/audio/semi_intro_8.mp3" id="9_7ljo1"]
+[ext_resource type="AudioStream" path="res://scene/car/semi/audio/semi_joy_4.mp3" id="10_6m2s8"]
+[ext_resource type="AudioStream" path="res://scene/car/semi/audio/semi_joy_3.mp3" id="11_t28jd"]
+[ext_resource type="Texture2D" path="res://scene/car/semi/char_semi_transparent.png" id="12_ka7te"]
+[ext_resource type="Script" path="res://scene/car/car_info.gd" id="13_cy27o"]
+
+[resource]
+script = ExtResource("13_cy27o")
+carId = "semi"
+charName = "Tiffany"
+profilePic = ExtResource("12_ka7te")
+backgroundPic = ExtResource("1_1x7yo")
+introAudio = Array[AudioStreamMP3]([ExtResource("2_6l3i0"), ExtResource("3_elmvp"), ExtResource("4_l055v"), ExtResource("5_j834e"), ExtResource("6_kjblj"), ExtResource("7_eqjqc"), ExtResource("8_66cbi"), ExtResource("9_7ljo1"), ExtResource("10_6m2s8"), ExtResource("11_t28jd")])
+engine = 10
+steering = 6
+armor = 70
+luck = 15
+oil = 4
+headlights = 40

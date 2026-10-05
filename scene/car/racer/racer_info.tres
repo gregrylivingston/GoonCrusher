@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="CarInfo" format=3]
+
+[ext_resource type="Texture2D" path="res://scene/car/racer/racer_background.png" id="1_fmok2"]
+[ext_resource type="AudioStream" path="res://scene/car/racer/audio/Racer_Intro_1.mp3" id="2_mi6a7"]
+[ext_resource type="AudioStream" path="res://scene/car/racer/audio/Racer_Intro_2.mp3" id="3_7nfbt"]
+[ext_resource type="AudioStream" path="res://scene/car/racer/audio/Racer_Intro_3.mp3" id="4_ltavh"]
+[ext_resource type="AudioStream" path="res://scene/car/racer/audio/Racer_Intro_4.mp3" id="5_rarws"]
+[ext_resource type="AudioStream" path="res://scene/car/racer/audio/Racer_Intro_5.mp3" id="6_1pht5"]
+[ext_resource type="AudioStream" path="res://scene/car/racer/audio/Racer_Intro_6.mp3" id="7_25kdu"]
+[ext_resource type="AudioStream" path="res://scene/car/racer/audio/Racer_Intro_7.mp3" id="8_ijmqm"]
+[ext_resource type="AudioStream" path="res://scene/car/racer/audio/Racer_Intro_8.mp3" id="9_ebf3c"]
+[ext_resource type="Texture2D" path="res://scene/car/racer/char_racer.png" id="10_u8c0r"]
+[ext_resource type="Script" path="res://scene/car/car_info.gd" id="11_gabta"]
+
+[resource]
+script = ExtResource("11_gabta")
+carId = "racer"
+charName = "Kim"
+profilePic = ExtResource("10_u8c0r")
+backgroundPic = ExtResource("1_fmok2")
+introAudio = Array[AudioStreamMP3]([ExtResource("2_mi6a7"), ExtResource("3_7nfbt"), ExtResource("4_ltavh"), ExtResource("5_rarws"), ExtResource("6_1pht5"), ExtResource("7_25kdu"), ExtResource("8_ijmqm"), ExtResource("9_ebf3c")])
+engine = 50
+steering = 10
+armor = 0
+luck = 10
+oil = 5
+headlights = 20
