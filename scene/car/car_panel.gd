@@ -1,15 +1,7 @@
 extends Panel
 
-var speedTimer: float = 0.0
-
-func _process(delta):
-	if is_instance_valid(Root.playerCar):
-		speedTimer -= delta
-		if speedTimer <= 0.0: #the speedometer text updates 10 times a second
-			speedTimer = 0.1
-			$Panel/HBoxContainer2/speed.text = Settings.speed_text(Root.playerCar.velocity.length())
-		if %ProgressBar_Health.value != Root.playerCar.health: %ProgressBar_Health.value = Root.playerCar.health
-		if %ProgressBar_Fuel.value != Root.playerCar.fuel: %ProgressBar_Fuel.value = Root.playerCar.fuel
+#The car's stat list, shown only while the run is paused (group "visibleWhenPaused"). Health, fuel and
+#speed moved to the HUD gauges in scene/player/hud.
 
 func updateStats():
 	%attributeIndicator_engine.setValue("Engine   " + str(Root.playerCar.engine))
@@ -20,6 +12,3 @@ func updateStats():
 	%attributeIndicator_headlights.setValue("Lights   " + str(Root.playerCar.headlights))
 	%attributeIndicator_clover.setValue("Clover   " + str(Root.playerCar.clover))
 	%attributeIndicator_luck.setValue("Dice   " + str(Root.playerCar.luck))
-
-func _on_pause_button_pressed():
-	Root.playerRoot.openPause()

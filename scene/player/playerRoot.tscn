@@ -2,83 +2,14 @@
 
 [ext_resource type="Script" path="res://scene/player/playerRoot.gd" id="1_csk4w"]
 [ext_resource type="PackedScene" uid="uid://bf1f5117fhyd2" path="res://scene/car/car_panel.tscn" id="2_gx8xt"]
-[ext_resource type="StyleBox" uid="uid://dl1e0qtgp13cj" path="res://style/style_box_basic.tres" id="3_eocbu"]
 [ext_resource type="Script" path="res://scene/player/Timer.gd" id="3_hepv3"]
-[ext_resource type="Texture2D" uid="uid://bmbii0hbvxuyn" path="res://texture/icon/slotMachine_flat.svg" id="4_bmve1"]
-[ext_resource type="Theme" uid="uid://co40pijjc7hbw" path="res://style/roadRogue.tres" id="4_xbt3u"]
-[ext_resource type="Texture2D" uid="uid://brujb5nubwa3a" path="res://texture/icon/coin_flat.svg" id="5_bieyt"]
-[ext_resource type="Shader" path="res://shader/3dtext.gdshader" id="5_nv3yj"]
-[ext_resource type="Material" uid="uid://d0lj6sppa3i0j" path="res://shader/fancy_flat_text.tres" id="5_ykxgr"]
-[ext_resource type="StyleBox" uid="uid://cjukasfxrv1k3" path="res://style/stylboxbox_progressbarBackground.tres" id="6_2f1vc"]
-[ext_resource type="Texture2D" uid="uid://c4jtoaca8fpkl" path="res://texture/icon/gem_flat.svg" id="6_domly"]
-[ext_resource type="Material" uid="uid://c4e4nqe6cks3c" path="res://shader/rainbow_shader.tres" id="7_5jeqs"]
-[ext_resource type="Material" uid="uid://d4nw1uchte7mv" path="res://scene/player/menu/main/3dText_Common.tres" id="7_kow26"]
-[ext_resource type="PackedScene" uid="uid://cyyns0r3734ni" path="res://scene/player/regionUi.tscn" id="10_ep2ps"]
-[ext_resource type="Texture2D" uid="uid://dygwh2im72q0u" path="res://texture/icon/star_flat.svg" id="11_itgnb"]
-[ext_resource type="Material" uid="uid://bn8224ky2vc0j" path="res://shader/3dShader_Star.tres" id="11_pg46v"]
+[ext_resource type="FontFile" path="res://style/font/Tektur/Tektur-ExtraBold.ttf" id="4_font"]
+[ext_resource type="Script" path="res://scene/player/hud/hud_crush.gd" id="5_crush"]
+[ext_resource type="Script" path="res://scene/player/hud/hud_region.gd" id="6_region"]
+[ext_resource type="Script" path="res://scene/player/hud/hud_payout.gd" id="7_payout"]
+[ext_resource type="Script" path="res://scene/player/hud/hud_dial.gd" id="8_dial"]
+[ext_resource type="Script" path="res://scene/player/hud/hud_systems.gd" id="9_systems"]
 [ext_resource type="PackedScene" uid="uid://c6ebkh5b1f4nr" path="res://scene/player/versionTracker.tscn" id="18_2aufu"]
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_kjv7t"]
-resource_local_to_scene = true
-shader = ExtResource("5_nv3yj")
-shader_parameter/angle = 0.6
-shader_parameter/thickness = 5.0
-shader_parameter/scale = 1.0
-shader_parameter/shear = Vector2(0, -0.2)
-shader_parameter/slices = 2
-shader_parameter/outline = true
-shader_parameter/outline_width = 2.0
-shader_parameter/front_tex = ExtResource("5_bieyt")
-shader_parameter/back_tex = ExtResource("5_bieyt")
-shader_parameter/show_bound = false
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_fm0sq"]
-resource_local_to_scene = true
-shader = ExtResource("5_nv3yj")
-shader_parameter/angle = 0.6
-shader_parameter/thickness = 5.0
-shader_parameter/scale = 1.0
-shader_parameter/shear = Vector2(0, -0.2)
-shader_parameter/slices = 2
-shader_parameter/outline = true
-shader_parameter/outline_width = 2.0
-shader_parameter/front_tex = ExtResource("11_itgnb")
-shader_parameter/show_bound = false
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_d8d8g"]
-bg_color = Color(0.6, 0.6, 0.6, 0)
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_bqu5y"]
-resource_local_to_scene = true
-shader = ExtResource("5_nv3yj")
-shader_parameter/angle = 0.6
-shader_parameter/thickness = 5.0
-shader_parameter/scale = 1.0
-shader_parameter/shear = Vector2(0, -0.2)
-shader_parameter/slices = 2
-shader_parameter/outline = true
-shader_parameter/outline_width = 2.0
-shader_parameter/front_tex = ExtResource("6_domly")
-shader_parameter/show_bound = false
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_spkbp"]
-resource_local_to_scene = true
-shader = ExtResource("5_nv3yj")
-shader_parameter/time_mode = 3
-shader_parameter/angle = 0.0
-shader_parameter/thickness = 1.0
-shader_parameter/scale = 1.0
-shader_parameter/shear = Vector2(0, -0.2)
-shader_parameter/slices = 1
-shader_parameter/outline = true
-shader_parameter/outline_width = 2.0
-shader_parameter/front_tex = ExtResource("4_bmve1")
-shader_parameter/show_bound = false
-
-[sub_resource type="Gradient" id="Gradient_ihyl7"]
-
-[sub_resource type="GradientTexture1D" id="GradientTexture1D_bun2y"]
-gradient = SubResource("Gradient_ihyl7")
 
 [sub_resource type="Animation" id="Animation_1ke8o"]
 resource_name = "NewGoonCrushBonus"
@@ -86,19 +17,19 @@ length = 2.0
 tracks/0/type = "value"
 tracks/0/imported = false
 tracks/0/enabled = true
-tracks/0/path = NodePath("VBoxContainer/crushgoons:position")
+tracks/0/path = NodePath("TopLeft/CrushPill:position")
 tracks/0/interp = 2
 tracks/0/loop_wrap = true
 tracks/0/keys = {
 "times": PackedFloat32Array(0, 1, 1.1, 2),
 "transitions": PackedFloat32Array(0.210224, 1, 1, 1),
 "update": 0,
-"values": [Vector2(0, 76), Vector2(50, 350), Vector2(50, 350), Vector2(50, 350)]
+"values": [Vector2(24, 22), Vector2(74, 300), Vector2(74, 300), Vector2(74, 300)]
 }
 tracks/1/type = "value"
 tracks/1/imported = false
 tracks/1/enabled = true
-tracks/1/path = NodePath("VBoxContainer/crushgoons:scale")
+tracks/1/path = NodePath("TopLeft/CrushPill:scale")
 tracks/1/interp = 1
 tracks/1/loop_wrap = true
 tracks/1/keys = {
@@ -114,19 +45,19 @@ length = 2.0
 tracks/0/type = "value"
 tracks/0/imported = false
 tracks/0/enabled = true
-tracks/0/path = NodePath("VBoxContainer/regionUi:position")
+tracks/0/path = NodePath("TopLeft/RegionChip:position")
 tracks/0/interp = 2
 tracks/0/loop_wrap = true
 tracks/0/keys = {
 "times": PackedFloat32Array(0, 0.8, 1, 2),
 "transitions": PackedFloat32Array(0.517632, 1, 1, 1),
 "update": 0,
-"values": [Vector2(0, 146), Vector2(50, 250), Vector2(50, 250), Vector2(50, 250)]
+"values": [Vector2(24, 94), Vector2(74, 220), Vector2(74, 220), Vector2(74, 220)]
 }
 tracks/1/type = "value"
 tracks/1/imported = false
 tracks/1/enabled = true
-tracks/1/path = NodePath("VBoxContainer/regionUi:scale")
+tracks/1/path = NodePath("TopLeft/RegionChip:scale")
 tracks/1/interp = 1
 tracks/1/loop_wrap = true
 tracks/1/keys = {
@@ -141,7 +72,7 @@ length = 0.001
 tracks/0/type = "value"
 tracks/0/imported = false
 tracks/0/enabled = true
-tracks/0/path = NodePath("VBoxContainer/crushgoons:scale")
+tracks/0/path = NodePath("TopLeft/CrushPill:scale")
 tracks/0/interp = 1
 tracks/0/loop_wrap = true
 tracks/0/keys = {
@@ -153,7 +84,7 @@ tracks/0/keys = {
 tracks/1/type = "value"
 tracks/1/imported = false
 tracks/1/enabled = true
-tracks/1/path = NodePath("VBoxContainer/regionUi:scale")
+tracks/1/path = NodePath("TopLeft/RegionChip:scale")
 tracks/1/interp = 1
 tracks/1/loop_wrap = true
 tracks/1/keys = {
@@ -161,6 +92,30 @@ tracks/1/keys = {
 "transitions": PackedFloat32Array(1),
 "update": 0,
 "values": [Vector2(1, 1)]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("TopLeft/CrushPill:position")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(24, 22)]
+}
+tracks/3/type = "value"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("TopLeft/RegionChip:position")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(24, 94)]
 }
 
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_koa56"]
@@ -186,288 +141,166 @@ offset_bottom = -41.0
 grow_vertical = 2
 scale = Vector2(0.75, 0.75)
 
-[node name="gearbox" type="Label" parent="." groups=["gearui"]]
-visible = false
-material = ExtResource("7_kow26")
+[node name="TopLeft" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 400.0
+offset_bottom = 160.0
+mouse_filter = 2
+
+[node name="CrushPill" type="Control" parent="TopLeft"]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 24.0
+offset_top = 22.0
+offset_right = 384.0
+offset_bottom = 84.0
+mouse_filter = 2
+script = ExtResource("5_crush")
+
+[node name="RegionChip" type="Control" parent="TopLeft"]
+unique_name_in_owner = true
+layout_mode = 3
+anchors_preset = 0
+offset_left = 24.0
+offset_top = 94.0
+offset_right = 384.0
+offset_bottom = 148.0
+mouse_filter = 2
+script = ExtResource("6_region")
+
+[node name="TopCenter" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -120.0
+offset_top = 8.0
+offset_right = 120.0
+offset_bottom = 80.0
+grow_horizontal = 2
+mouse_filter = 2
+
+[node name="ModeLabel" type="Label" parent="TopCenter"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_top = 6.0
+offset_right = 240.0
+offset_bottom = 24.0
+theme_override_colors/font_color = Color(0.909804, 0.862745, 0.776471, 1)
+theme_override_colors/font_outline_color = Color(0.07, 0.05, 0.04, 1)
+theme_override_constants/outline_size = 5
+theme_override_fonts/font = ExtResource("4_font")
+theme_override_font_sizes/font_size = 12
+text = "COUNTDOWN"
+horizontal_alignment = 1
+
+[node name="Timer" type="Label" parent="TopCenter" groups=["runTimer"]]
+process_mode = 1
+layout_mode = 0
+offset_top = 20.0
+offset_right = 240.0
+offset_bottom = 72.0
+theme_override_colors/font_color = Color(1, 0.827451, 0.419608, 1)
+theme_override_colors/font_outline_color = Color(0.305882, 0.0666667, 0.0431373, 1)
+theme_override_constants/outline_size = 12
+theme_override_fonts/font = ExtResource("4_font")
+theme_override_font_sizes/font_size = 42
+text = "0 : 00"
+horizontal_alignment = 1
+script = ExtResource("3_hepv3")
+
+[node name="TopRight" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -490.0
+offset_top = 22.0
+offset_right = -24.0
+offset_bottom = 134.0
+grow_horizontal = 0
+mouse_filter = 2
+script = ExtResource("7_payout")
+
+[node name="Tach" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 32.0
+offset_top = -256.0
+offset_right = 268.0
+offset_bottom = -20.0
+grow_vertical = 0
+mouse_filter = 2
+script = ExtResource("8_dial")
+kind = 0
+
+[node name="Fuel" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 276.0
+offset_top = -149.0
+offset_right = 404.0
+offset_bottom = -21.0
+grow_vertical = 0
+mouse_filter = 2
+script = ExtResource("8_dial")
+kind = 2
+flyerGroups = PackedStringArray("fuelui")
+
+[node name="Speedo" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -268.0
+offset_top = -256.0
+offset_right = -32.0
+offset_bottom = -20.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_filter = 2
+script = ExtResource("8_dial")
+kind = 1
+
+[node name="Hull" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -404.0
+offset_top = -149.0
+offset_right = -276.0
+offset_bottom = -21.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_filter = 2
+script = ExtResource("8_dial")
+kind = 3
+flyerGroups = PackedStringArray("healthui", "armorui")
+
+[node name="Systems" type="Control" parent="."]
+layout_mode = 3
 anchors_preset = 7
 anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = 406.0
-offset_top = -58.0
-offset_right = 435.0
-offset_bottom = -6.0
+offset_left = -200.0
+offset_top = -44.0
+offset_right = 200.0
 grow_horizontal = 2
 grow_vertical = 0
-theme = ExtResource("4_xbt3u")
-theme_override_constants/outline_size = 2
-theme_override_font_sizes/font_size = 40
-text = "N"
-
-[node name="HBoxContainer2" type="HBoxContainer" parent="."]
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -660.0
-offset_top = 8.0
-offset_bottom = 56.0
-grow_horizontal = 0
-
-[node name="HBoxContainer" type="HBoxContainer" parent="HBoxContainer2"]
-custom_minimum_size = Vector2(150, 0)
-layout_mode = 2
-size_flags_horizontal = 6
-
-[node name="TextureRect" type="TextureRect" parent="HBoxContainer2/HBoxContainer" groups=["coinui"]]
-material = SubResource("ShaderMaterial_kjv7t")
-custom_minimum_size = Vector2(48, 48)
-layout_mode = 2
-size_flags_horizontal = 10
-size_flags_vertical = 4
-texture = ExtResource("5_bieyt")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="coins" type="Label" parent="HBoxContainer2/HBoxContainer"]
-unique_name_in_owner = true
-material = ExtResource("7_kow26")
-layout_mode = 2
-size_flags_horizontal = 2
-theme = ExtResource("4_xbt3u")
-theme_override_font_sizes/font_size = 30
-text = "0"
-horizontal_alignment = 1
-
-[node name="times" type="Label" parent="HBoxContainer2"]
-material = ExtResource("5_ykxgr")
-layout_mode = 2
-size_flags_horizontal = 6
-theme = ExtResource("4_xbt3u")
-theme_override_font_sizes/font_size = 15
-text = "X"
-horizontal_alignment = 1
-
-[node name="HBoxContainer2" type="HBoxContainer" parent="HBoxContainer2"]
-custom_minimum_size = Vector2(150, 0)
-layout_mode = 2
-size_flags_horizontal = 6
-
-[node name="TextureRect" type="TextureRect" parent="HBoxContainer2/HBoxContainer2" groups=["starui"]]
-material = SubResource("ShaderMaterial_fm0sq")
-custom_minimum_size = Vector2(48, 48)
-layout_mode = 2
-size_flags_horizontal = 10
-size_flags_vertical = 4
-texture = ExtResource("11_itgnb")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="star" type="Label" parent="HBoxContainer2/HBoxContainer2"]
-unique_name_in_owner = true
-material = ExtResource("7_kow26")
-layout_mode = 2
-size_flags_horizontal = 2
-theme = ExtResource("4_xbt3u")
-theme_override_font_sizes/font_size = 30
-text = "0"
-horizontal_alignment = 1
-
-[node name="times2" type="Label" parent="HBoxContainer2"]
-material = ExtResource("5_ykxgr")
-layout_mode = 2
-size_flags_horizontal = 6
-theme = ExtResource("4_xbt3u")
-theme_override_font_sizes/font_size = 15
-text = "="
-horizontal_alignment = 1
-
-[node name="coinProjection" type="Label" parent="HBoxContainer2"]
-unique_name_in_owner = true
-material = ExtResource("7_kow26")
-layout_mode = 2
-size_flags_horizontal = 6
-theme = ExtResource("4_xbt3u")
-theme_override_font_sizes/font_size = 30
-text = "="
-horizontal_alignment = 1
-
-[node name="VBoxContainer" type="Control" parent="."]
-layout_mode = 3
-anchors_preset = 0
-offset_right = 378.0
-offset_bottom = 262.0
-
-[node name="Panel5" type="Panel" parent="VBoxContainer"]
-custom_minimum_size = Vector2(0, 70)
-layout_mode = 2
-offset_right = 378.0
-offset_bottom = 70.0
-size_flags_horizontal = 3
-size_flags_vertical = 3
-theme = ExtResource("4_xbt3u")
-theme_override_styles/panel = SubResource("StyleBoxFlat_d8d8g")
-
-[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/Panel5"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 39.0
-offset_top = 2.0
-offset_right = -9.0
-offset_bottom = -2.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="Timer" type="Label" parent="VBoxContainer/Panel5/HBoxContainer" groups=["runTimer"]]
-process_mode = 1
-material = ExtResource("7_kow26")
-layout_mode = 2
-size_flags_horizontal = 6
-theme = ExtResource("4_xbt3u")
-theme_override_font_sizes/font_size = 40
-text = "00 : 00"
-horizontal_alignment = 1
-script = ExtResource("3_hepv3")
-
-[node name="Panel3" type="Panel" parent="VBoxContainer/Panel5/HBoxContainer"]
-self_modulate = Color(1, 1, 1, 0)
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_styles/panel = ExtResource("3_eocbu")
-
-[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/Panel5/HBoxContainer/Panel3"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="TextureRect" type="TextureRect" parent="VBoxContainer/Panel5/HBoxContainer" groups=["gemui"]]
-material = SubResource("ShaderMaterial_bqu5y")
-custom_minimum_size = Vector2(48, 48)
-layout_mode = 2
-size_flags_vertical = 4
-texture = ExtResource("6_domly")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="gem" type="Label" parent="VBoxContainer/Panel5/HBoxContainer"]
-unique_name_in_owner = true
-material = ExtResource("7_kow26")
-layout_mode = 2
-size_flags_horizontal = 6
-theme_override_font_sizes/font_size = 30
-text = "0"
-horizontal_alignment = 1
-
-[node name="regionUi" parent="VBoxContainer" instance=ExtResource("10_ep2ps")]
-unique_name_in_owner = true
-layout_mode = 2
-anchors_preset = 0
-anchor_left = 0.0
-anchor_top = 0.0
-anchor_right = 0.0
-anchor_bottom = 0.0
-offset_left = 0.0
-offset_top = 146.0
-offset_right = 378.0
-offset_bottom = 257.0
-
-[node name="crushgoons" type="HBoxContainer" parent="VBoxContainer"]
-layout_mode = 2
-offset_top = 76.0
-offset_right = 378.0
-offset_bottom = 136.0
-
-[node name="TextureRect" type="TextureRect" parent="VBoxContainer/crushgoons"]
-material = ExtResource("11_pg46v")
-layout_mode = 2
-texture = ExtResource("11_itgnb")
-stretch_mode = 5
-
-[node name="Panel" type="Panel" parent="VBoxContainer/crushgoons"]
-custom_minimum_size = Vector2(0, 60)
-layout_mode = 2
-size_flags_horizontal = 3
-theme = ExtResource("4_xbt3u")
-
-[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/crushgoons/Panel"]
-layout_mode = 1
-anchors_preset = 14
-anchor_top = 0.5
-anchor_right = 1.0
-anchor_bottom = 0.5
-offset_left = 7.0
-offset_top = -25.0
-offset_right = -12.0
-offset_bottom = 26.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="TextureRect" type="TextureRect" parent="VBoxContainer/crushgoons/Panel/HBoxContainer"]
-material = SubResource("ShaderMaterial_spkbp")
-custom_minimum_size = Vector2(50, 0)
-layout_mode = 2
-texture = ExtResource("4_bmve1")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/crushgoons/Panel/HBoxContainer"]
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/crushgoons/Panel/HBoxContainer/VBoxContainer"]
-layout_mode = 2
-
-[node name="Label" type="Label" parent="VBoxContainer/crushgoons/Panel/HBoxContainer/VBoxContainer/HBoxContainer"]
-material = ExtResource("5_ykxgr")
-layout_mode = 2
-size_flags_horizontal = 0
-theme = ExtResource("4_xbt3u")
-theme_override_font_sizes/font_size = 24
-text = "CRUSH "
-horizontal_alignment = 1
-
-[node name="crushedGoons" type="Label" parent="VBoxContainer/crushgoons/Panel/HBoxContainer/VBoxContainer/HBoxContainer" groups=["currentGoonsCrushedui"]]
-unique_name_in_owner = true
-material = ExtResource("5_ykxgr")
-layout_mode = 2
-size_flags_horizontal = 0
-theme = ExtResource("4_xbt3u")
-theme_override_font_sizes/font_size = 24
-text = "20"
-horizontal_alignment = 1
-
-[node name="Label2" type="Label" parent="VBoxContainer/crushgoons/Panel/HBoxContainer/VBoxContainer/HBoxContainer"]
-material = ExtResource("5_ykxgr")
-layout_mode = 2
-size_flags_horizontal = 0
-theme = ExtResource("4_xbt3u")
-theme_override_font_sizes/font_size = 24
-text = " GOONS"
-horizontal_alignment = 1
-
-[node name="Panel" type="Panel" parent="VBoxContainer/crushgoons/Panel/HBoxContainer/VBoxContainer"]
-custom_minimum_size = Vector2(0, 10)
-layout_mode = 2
-theme_override_styles/panel = ExtResource("6_2f1vc")
-
-[node name="ProgressBar" type="TextureProgressBar" parent="VBoxContainer/crushgoons/Panel/HBoxContainer/VBoxContainer/Panel"]
-unique_name_in_owner = true
-material = ExtResource("7_5jeqs")
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-max_value = 5.0
-value = 3.0
-nine_patch_stretch = true
-texture_progress = SubResource("GradientTexture1D_bun2y")
+mouse_filter = 2
+script = ExtResource("9_systems")
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="."]
 libraries = {
@@ -480,9 +313,13 @@ libraries = {
 }
 
 [node name="VersionTracker" parent="." instance=ExtResource("18_2aufu")]
-anchors_preset = 2
-anchor_top = 1.0
-anchor_bottom = 1.0
-offset_top = -23.0
-offset_right = 73.0
-grow_vertical = 0
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -60.0
+offset_top = 80.0
+offset_right = 60.0
+offset_bottom = 100.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 11
+horizontal_alignment = 1

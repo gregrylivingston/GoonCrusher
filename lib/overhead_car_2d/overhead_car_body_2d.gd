@@ -42,6 +42,21 @@ const GRIP_MIN := 0.05
 const GRIP_FAST_MAX := 0.40
 const GRIP_SLOW_MAX := 0.95
 
+#Groundwork for system damage (docs/HUD.md). Each system has a condition from 0 to 100, and the
+#stat it scales keeps CONDITION_FLOOR of its value at 0%. Nothing lowers condition yet and physics
+#doesn't read it; the HUD already draws it (lamp glow, red part of each rating underline).
+const SYSTEM_STATS := {"lights":"headlights", "engine":"engine", "steering":"steering", "tires":"traction", "tank":"oil"}
+const CONDITION_FLOOR := {"lights":0.35, "engine":0.6, "steering":0.7, "tires":0.5, "tank":0.4}
+var condition := {"lights":100.0, "engine":100.0, "steering":100.0, "tires":100.0, "tank":100.0}
+var runStartStats := {} #UPGRADEABLE_STATS when the run began (base + upgrades), before any pickup
+
+func setCondition(system: String, value: float) -> void:
+	condition[system] = clampf(value, 0.0, 100.0)
+
+#how much of a system's stat still works: 1 when undamaged, CONDITION_FLOOR at 0%
+func conditionFactor(system: String) -> float:
+	return lerpf(CONDITION_FLOOR[system], 1.0, condition[system] / 100.0)
+
 @export var friction:float = 0.1 #.9
 #friction of 0.5 might be sand
 @export var drag:float = 0.0005   #.0015
@@ -114,8 +129,8 @@ func _ready():
 		oil += SaveManager.getUpgradeLevel(Root.upgrade.OIL)
 		clover += SaveManager.getUpgradeLevel(Root.upgrade.CLOVER)
 		luck += SaveManager.getUpgradeLevel(Root.upgrade.LUCK)
-		
-		
+	for stat in UPGRADEABLE_STATS: runStartStats[stat] = self[stat]
+
 	$headlamps/carhighlight.texture = $sprite.texture
 	$headlamps/carhighlight.scale = $sprite.scale
 	$headlamps/carhighlight.position = $sprite.position
@@ -188,38 +203,9 @@ func _physics_process(delta):
 		
 
 	
-	# Base steering wheel angle and acceleration
-	var steer_angle = _car_input.steering * deg_to_rad( 8 + ( steering / 4.0 ) )
-	
-	var acceleration = _car_input.acceleration * transform.x * ( engine + 14 ) * 10 * ( 2.2 - abs(_car_input.steering))
-
-	# Apply friction
-	if abs(velocity.length()) < 5:
-		velocity = Vector2.ZERO
-	var friction_force = velocity * -friction
-	var drag_force = velocity * velocity.length() * -drag
-	if velocity.length() < 100:
-		friction_force *= 3
-	acceleration += drag_force + friction_force
-	if _car_input.braking:
-		acceleration += - ( (5 + traction) * 50 / ( velocity.length() + 1)  ) * velocity
-	
-	# Calculate steering
-	var rear_wheel = position - transform.x * wheel_base / 2.0 + velocity * delta
-	var front_wheel = position + transform.x * wheel_base / 2.0 + velocity.rotated(steer_angle) * delta
-	var new_heading = (front_wheel - rear_wheel).normalized()
-	var grip = gripFor(traction_slow, traction, grip_slow_max, grip_per_traction)
-	if velocity.length() > slip_speed:
-		grip = gripFor(traction_fast, traction, grip_fast_max, grip_per_traction)
-	var d = new_heading.dot(velocity.normalized())
-	if d >= 0:
-		velocity = velocity.lerp(new_heading * velocity.length(), grip)
-	if d < 0:
-		velocity = -new_heading * min(velocity.length(), ( engine + 20 ) * 20)#10
-	
-	# Update the physics engine
-	rotation = new_heading.angle()
-	velocity += acceleration * delta
+	var next = integrate(position, transform.x, velocity, _car_input, delta)
+	rotation = next[0].angle()
+	velocity = next[1]
 	move_and_slide()
 	_do_update_output(_car_input.acceleration)
 	
@@ -240,6 +226,40 @@ func _physics_process(delta):
 		stopCarFX()
 	else:
 		activeCarEffects(delta)
+
+#One physics tick of the bicycle model, without moving the body: returns [new heading (unit
+#Vector2), new velocity]. `forward` is transform.x. The AI driver (scripts/ai/ai_driver.gd) runs it
+#ahead from predicted states, so it must only read the car's stats, never change them.
+func integrate(pos: Vector2, forward: Vector2, vel: Vector2, input: CarInput, delta: float) -> Array:
+	# Base steering wheel angle and acceleration
+	var steer_angle = input.steering * deg_to_rad( 8 + ( steering / 4.0 ) )
+
+	var acceleration = input.acceleration * forward * ( engine + 14 ) * 10 * ( 2.2 - abs(input.steering))
+
+	# Apply friction
+	if abs(vel.length()) < 5:
+		vel = Vector2.ZERO
+	var friction_force = vel * -friction
+	var drag_force = vel * vel.length() * -drag
+	if vel.length() < 100:
+		friction_force *= 3
+	acceleration += drag_force + friction_force
+	if input.braking:
+		acceleration += - ( (5 + traction) * 50 / ( vel.length() + 1)  ) * vel
+
+	# Calculate steering
+	var rear_wheel = pos - forward * wheel_base / 2.0 + vel * delta
+	var front_wheel = pos + forward * wheel_base / 2.0 + vel.rotated(steer_angle) * delta
+	var new_heading = (front_wheel - rear_wheel).normalized()
+	var grip = gripFor(traction_slow, traction, grip_slow_max, grip_per_traction)
+	if vel.length() > slip_speed:
+		grip = gripFor(traction_fast, traction, grip_fast_max, grip_per_traction)
+	var d = new_heading.dot(vel.normalized())
+	if d >= 0:
+		vel = vel.lerp(new_heading * vel.length(), grip)
+	if d < 0:
+		vel = -new_heading * min(vel.length(), ( engine + 20 ) * 20)#10
+	return [new_heading, vel + acceleration * delta]
 
 var sparks = preload("res://scene/fx/spark/spark.tscn")
 func collideWithFixedObject( collision ):
@@ -383,10 +403,12 @@ func follow_path(path_follow: OverheadCarPathFollow2D):
 
 var ui
 var powerupsCollected = 0
+signal rewarded(powerup: String, quantity) #a credited reward (not a show-only one); the playtest harness counts these
 func reward(powerup: String , quantity, forShowOnly: bool = false):
 	if not forShowOnly:
 		if UPGRADEABLE_STATS.has(powerup): self[powerup] = addCapped(self[powerup], quantity)
 		else: self[powerup] += quantity
+		rewarded.emit(powerup, quantity)
 	health = clamp(health, -10.0, 100.0)
 	fuel = clamp(fuel, -10.0, 100.0)
 	if powerup != "coin" && powerup != "health" && powerup != "fuel" && powerup != "currentGoonsCrushed": 

@@ -31,6 +31,7 @@ SaveManager="*res://scripts/global/saveManager.gd"
 Audio="*res://scripts/global/Audio.tscn"
 Region="*res://scripts/global/Region.gd"
 Bench="*res://scripts/debug/bench.gd"
+Console="*res://scripts/debug/dev_console.gd"
 
 [display]
 

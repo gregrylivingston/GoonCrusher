@@ -37,6 +37,7 @@ A free demo is live on Steam (app 1941650). The current work is to finish the ga
 | `Audio` | `scripts/global/Audio.tscn/.gd` | The music player and a pool of FX players (`Audio.play` / `queueRequest`), limited by Max Sound Effects. Goon death sounds use it too. |
 | `Region` | `scripts/global/Region.gd` | Named regions generated per terrain, 3 goon types per region, and a 60 s wave timer per region that awards stars. Also pushes terrain friction to the car and the goon list to the spawner. |
 | `Bench` | `scripts/debug/bench.gd` | The benchmark harness. It frees itself unless the game is launched with `--bench`. |
+| `Console` | `scripts/debug/dev_console.gd` | The developer console, in debug builds only (it frees itself in a release export). Backtick toggles it and `help` lists the commands: progress (`unlock`/`lock` cars, levels, modes; `coins`; `gems`; `upgrades`; `unfinished`; `save`) and in-run (`heal`, `fuel`, `god`, `give`, `win`, `lose`, `night`, `day`). Progress commands write the real save. `-- --console="unlock all;coins 50k"` runs commands at startup. While it is open it holds `Settings.menu_open`, so the car controller ignores keys. |
 
 ### Flow
 1. `main2.tscn` (`scene/player/menu/main/`) is the main menu, a state machine with RIDER → LEVEL → GAMEMODE states.

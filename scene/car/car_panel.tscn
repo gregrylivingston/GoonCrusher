@@ -2,21 +2,14 @@
 
 [ext_resource type="Script" path="res://scene/car/car_panel.gd" id="1_ose0a"]
 [ext_resource type="PackedScene" uid="uid://i0goedbwsro6" path="res://scene/player/ui/attribute_indicator.tscn" id="1_sbnje"]
-[ext_resource type="Theme" uid="uid://co40pijjc7hbw" path="res://style/roadRogue.tres" id="2_62tb0"]
-[ext_resource type="Texture2D" uid="uid://ucbbg2wl3q5a" path="res://texture/icon/speed.svg" id="3_m6fwl"]
 [ext_resource type="Texture2D" uid="uid://sjkt6x1gbauj" path="res://texture/icon/steering_flat.svg" id="5_h3pqn"]
 [ext_resource type="Texture2D" uid="uid://cy6hwoy4tsfo8" path="res://texture/icon/engine_flat.svg" id="6_i8q0m"]
 [ext_resource type="Texture2D" uid="uid://bv7hk6bexuiyr" path="res://texture/icon/traction_flat.svg" id="7_y38vu"]
 [ext_resource type="Texture2D" uid="uid://bgfheabrfqpt6" path="res://texture/icon/armor_flat.svg" id="8_sqmqh"]
 [ext_resource type="Texture2D" uid="uid://bv5cxp15s2tsb" path="res://texture/icon/oil_flat.svg" id="10_vjw6w"]
-[ext_resource type="Texture2D" uid="uid://caibtnawgmffy" path="res://texture/icon/fuel_flat.svg" id="11_sb4te"]
 [ext_resource type="Texture2D" uid="uid://tle64s7a0oes" path="res://texture/icon/headlights_flat.svg" id="11_wfrgp"]
-[ext_resource type="Material" uid="uid://d4nw1uchte7mv" path="res://scene/player/menu/main/3dText_Common.tres" id="12_ib4fu"]
 [ext_resource type="Texture2D" uid="uid://brhhhm3cukqjd" path="res://texture/icon/clover_flat.svg" id="12_m7voe"]
 [ext_resource type="Texture2D" uid="uid://vqpwr7t0kef6" path="res://texture/icon/luck_flat.svg" id="13_k236w"]
-[ext_resource type="Texture2D" uid="uid://cjavrijia4yp0" path="res://texture/icon/health_flat.svg" id="16_e47iy"]
-[ext_resource type="Shader" uid="uid://cwca4ap0gs4m5" path="res://shader/3dtext.gdshader" id="gc_3dtext"]
-
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ei1gt"]
 content_margin_left = 20.0
 content_margin_right = 20.0
@@ -31,68 +24,7 @@ corner_radius_top_right = 2
 corner_radius_bottom_right = 200
 corner_radius_bottom_left = 2
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ydy1a"]
-bg_color = Color(0.92549, 0.603922, 0.160784, 1)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 4
-border_width_bottom = 4
-border_color = Color(0.658824, 0.12549, 0.101961, 1)
-corner_radius_top_right = 50
-corner_radius_bottom_right = 2
-corner_radius_bottom_left = 2
-
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_gi0ic"]
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_cs4to"]
-resource_local_to_scene = true
-shader = ExtResource("gc_3dtext")
-shader_parameter/angle = 0.0
-shader_parameter/thickness = 5.0
-shader_parameter/scale = 1.0
-shader_parameter/shear = Vector2(0, -0.2)
-shader_parameter/slices = 2
-shader_parameter/outline = true
-shader_parameter/outline_width = 2.0
-shader_parameter/front_tex = ExtResource("16_e47iy")
-shader_parameter/show_bound = false
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_oqre2"]
-bg_color = Color(0.658824, 0.12549, 0.101961, 1)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0, 0, 0, 1)
-corner_radius_top_left = 5
-corner_radius_top_right = 5
-corner_radius_bottom_right = 5
-corner_radius_bottom_left = 5
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_ymvy4"]
-resource_local_to_scene = true
-shader = ExtResource("gc_3dtext")
-shader_parameter/angle = 0.0
-shader_parameter/thickness = 5.0
-shader_parameter/scale = 1.0
-shader_parameter/shear = Vector2(0, -0.2)
-shader_parameter/slices = 2
-shader_parameter/outline = true
-shader_parameter/outline_width = 2.0
-shader_parameter/front_tex = ExtResource("11_sb4te")
-shader_parameter/show_bound = false
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_0mfgd"]
-bg_color = Color(0.0588235, 0.545098, 0.552941, 1)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0, 0, 0, 1)
-corner_radius_top_left = 5
-corner_radius_top_right = 5
-corner_radius_bottom_right = 5
-corner_radius_bottom_left = 5
 
 [node name="carPanel" type="Panel"]
 self_modulate = Color(1, 1, 1, 0)
@@ -108,50 +40,6 @@ size_flags_vertical = 3
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_ei1gt")
 script = ExtResource("1_ose0a")
-
-[node name="Panel" type="Panel" parent="."]
-self_modulate = Color(1, 1, 1, 0)
-layout_mode = 1
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = 223.0
-offset_top = -96.0
-offset_right = 370.0
-offset_bottom = -30.0
-grow_horizontal = 2
-grow_vertical = 0
-theme_override_styles/panel = SubResource("StyleBoxFlat_ydy1a")
-
-[node name="HBoxContainer2" type="HBoxContainer" parent="Panel"]
-layout_mode = 1
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -198.0
-offset_top = 17.0
-offset_right = -15.0
-offset_bottom = 50.0
-grow_horizontal = 0
-
-[node name="speed" type="Label" parent="Panel/HBoxContainer2"]
-material = ExtResource("12_ib4fu")
-layout_mode = 2
-size_flags_horizontal = 0
-theme = ExtResource("2_62tb0")
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 2
-theme_override_font_sizes/font_size = 20
-text = "27 MPH"
-
-[node name="TextureRect" type="TextureRect" parent="Panel/HBoxContainer2"]
-visible = false
-custom_minimum_size = Vector2(30, 20)
-layout_mode = 2
-texture = ExtResource("3_m6fwl")
-expand_mode = 1
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
 custom_minimum_size = Vector2(200, 0)
@@ -174,7 +62,7 @@ offset_bottom = -291.0
 grow_vertical = 0
 theme_override_constants/separation = -4
 
-[node name="attributeIndicator_engine" parent="VBoxContainer/Panel/HBoxContainer" groups=["engineui"] instance=ExtResource("1_sbnje")]
+[node name="attributeIndicator_engine" parent="VBoxContainer/Panel/HBoxContainer" instance=ExtResource("1_sbnje")]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
@@ -186,7 +74,7 @@ theme_override_styles/pressed = SubResource("StyleBoxEmpty_gi0ic")
 theme_override_styles/focus = SubResource("StyleBoxEmpty_gi0ic")
 myIcon = ExtResource("6_i8q0m")
 
-[node name="attributeIndicator_steering" parent="VBoxContainer/Panel/HBoxContainer" groups=["steeringui"] instance=ExtResource("1_sbnje")]
+[node name="attributeIndicator_steering" parent="VBoxContainer/Panel/HBoxContainer" instance=ExtResource("1_sbnje")]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
@@ -198,7 +86,7 @@ theme_override_styles/pressed = SubResource("StyleBoxEmpty_gi0ic")
 theme_override_styles/focus = SubResource("StyleBoxEmpty_gi0ic")
 myIcon = ExtResource("5_h3pqn")
 
-[node name="attributeIndicator_aero" parent="VBoxContainer/Panel/HBoxContainer" groups=["tractionui"] instance=ExtResource("1_sbnje")]
+[node name="attributeIndicator_aero" parent="VBoxContainer/Panel/HBoxContainer" instance=ExtResource("1_sbnje")]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
@@ -210,7 +98,7 @@ theme_override_styles/pressed = SubResource("StyleBoxEmpty_gi0ic")
 theme_override_styles/focus = SubResource("StyleBoxEmpty_gi0ic")
 myIcon = ExtResource("7_y38vu")
 
-[node name="attributeIndicator_armor" parent="VBoxContainer/Panel/HBoxContainer" groups=["armorui"] instance=ExtResource("1_sbnje")]
+[node name="attributeIndicator_armor" parent="VBoxContainer/Panel/HBoxContainer" instance=ExtResource("1_sbnje")]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
@@ -222,7 +110,7 @@ theme_override_styles/pressed = SubResource("StyleBoxEmpty_gi0ic")
 theme_override_styles/focus = SubResource("StyleBoxEmpty_gi0ic")
 myIcon = ExtResource("8_sqmqh")
 
-[node name="attributeIndicator_oil" parent="VBoxContainer/Panel/HBoxContainer" groups=["oilui"] instance=ExtResource("1_sbnje")]
+[node name="attributeIndicator_oil" parent="VBoxContainer/Panel/HBoxContainer" instance=ExtResource("1_sbnje")]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
@@ -234,7 +122,7 @@ theme_override_styles/pressed = SubResource("StyleBoxEmpty_gi0ic")
 theme_override_styles/focus = SubResource("StyleBoxEmpty_gi0ic")
 myIcon = ExtResource("10_vjw6w")
 
-[node name="attributeIndicator_headlights" parent="VBoxContainer/Panel/HBoxContainer" groups=["headlightsui"] instance=ExtResource("1_sbnje")]
+[node name="attributeIndicator_headlights" parent="VBoxContainer/Panel/HBoxContainer" instance=ExtResource("1_sbnje")]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
@@ -246,7 +134,7 @@ theme_override_styles/pressed = SubResource("StyleBoxEmpty_gi0ic")
 theme_override_styles/focus = SubResource("StyleBoxEmpty_gi0ic")
 myIcon = ExtResource("11_wfrgp")
 
-[node name="attributeIndicator_clover" parent="VBoxContainer/Panel/HBoxContainer" groups=["cloverui"] instance=ExtResource("1_sbnje")]
+[node name="attributeIndicator_clover" parent="VBoxContainer/Panel/HBoxContainer" instance=ExtResource("1_sbnje")]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
@@ -258,7 +146,7 @@ theme_override_styles/pressed = SubResource("StyleBoxEmpty_gi0ic")
 theme_override_styles/focus = SubResource("StyleBoxEmpty_gi0ic")
 myIcon = ExtResource("12_m7voe")
 
-[node name="attributeIndicator_luck" parent="VBoxContainer/Panel/HBoxContainer" groups=["luckui"] instance=ExtResource("1_sbnje")]
+[node name="attributeIndicator_luck" parent="VBoxContainer/Panel/HBoxContainer" instance=ExtResource("1_sbnje")]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
@@ -269,66 +157,3 @@ theme_override_styles/hover = SubResource("StyleBoxEmpty_gi0ic")
 theme_override_styles/pressed = SubResource("StyleBoxEmpty_gi0ic")
 theme_override_styles/focus = SubResource("StyleBoxEmpty_gi0ic")
 myIcon = ExtResource("13_k236w")
-
-[node name="VBoxContainer2" type="VBoxContainer" parent="."]
-layout_mode = 1
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -133.0
-offset_top = -72.0
-offset_right = 131.0
-offset_bottom = -24.0
-grow_horizontal = 2
-grow_vertical = 0
-
-[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer2"]
-layout_mode = 2
-
-[node name="TextureRect" type="TextureRect" parent="VBoxContainer2/HBoxContainer"]
-visible = false
-material = SubResource("ShaderMaterial_cs4to")
-custom_minimum_size = Vector2(40, 0)
-layout_mode = 2
-texture = ExtResource("16_e47iy")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="ProgressBar_Health" type="ProgressBar" parent="VBoxContainer2/HBoxContainer" groups=["healthui"]]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(100, 10)
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 4
-theme_override_styles/fill = SubResource("StyleBoxFlat_oqre2")
-value = 100.0
-show_percentage = false
-
-[node name="HBoxContainer2" type="HBoxContainer" parent="VBoxContainer2"]
-layout_mode = 2
-
-[node name="VSeparator2" type="VSeparator" parent="VBoxContainer2/HBoxContainer2"]
-self_modulate = Color(1, 1, 1, 0)
-custom_minimum_size = Vector2(15, 0)
-layout_mode = 2
-
-[node name="TextureRect" type="TextureRect" parent="VBoxContainer2/HBoxContainer2"]
-visible = false
-material = SubResource("ShaderMaterial_ymvy4")
-custom_minimum_size = Vector2(24, 24)
-layout_mode = 2
-size_flags_vertical = 0
-texture = ExtResource("11_sb4te")
-expand_mode = 1
-
-[node name="ProgressBar_Fuel" type="ProgressBar" parent="VBoxContainer2/HBoxContainer2" groups=["fuelui"]]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(100, 5)
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 4
-theme_override_styles/fill = SubResource("StyleBoxFlat_0mfgd")
-value = 100.0
-show_percentage = false

@@ -2,15 +2,18 @@ extends Node2D
 
 var ui
 @onready var car: OverheadCarBody2D = get_parent()
-@onready var gearui: Control = get_tree().get_first_node_in_group("gearui")
 
 
 func _provide_input(_input):
+	if Settings.menu_open: #the dev console is open over the running game: keys are typing, not driving
+		_input.acceleration = 0.0
+		_input.braking = false
+		_input.steering *= 0.9
+		return _input
 	if Input.is_action_pressed("Accelerate"):
 		if car.gear < 1:car.setForwardCollisionMode(true)
 		_input.acceleration = 1.0
-		car.gear = int(car.velocity.length())/300 + 1
-		gearui.text = str(car.gear)
+		car.gear = int(car.velocity.length())/300 + 1 #the HUD tachometer shows car.gear
 		_input.braking = false
 	else: 
 		_input.acceleration = 0.0
@@ -23,7 +26,6 @@ func _provide_input(_input):
 		if car.velocity.length() < 10 || car.gear == -1:
 			if car.gear > -1:car.setForwardCollisionMode(false)
 			car.gear = -1
-			gearui.text = "R"
 			_input.acceleration = -1.0
 			_input.braking = false
 		else: _input.braking = true

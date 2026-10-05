@@ -45,7 +45,11 @@ const MODE_AVAILABLE = {
 static func versionText() -> String:
 	return ("Demo " + GAME_VERSION) if IS_DEMO else GAME_VERSION
 
+#dev console `unfinished on`: Coming Soon modes can be started. Session only, never saved.
+static var devAllModesAvailable := false
+
 static func isModeAvailable(mode: int) -> bool:
+	if devAllModesAvailable: return true
 	if IS_DEMO && mode not in DEMO_MODES: return false
 	return MODE_AVAILABLE.get(mode, false)
 
