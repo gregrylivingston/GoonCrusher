@@ -21,7 +21,7 @@ File:line citations are from commit `83abe66`.
 
 ## Status (2026-10-05): implemented on branch `perf-settings`
 
-Phases 0 to 8 are in, one commit per phase (Phases 1, 6 and 7 share a commit because they live in the same Settings files). Phase 9 (optional) was not started. `CLAUDE.md` describes the new architecture.
+Phases 0 to 8 are in, one commit per phase (Phases 1, 6 and 7 share a commit because they live in the same Settings files). A second pass did the leftovers, including the parts of Phase 9 that measured as a win (see "Second pass" below). `CLAUDE.md` describes the new architecture.
 
 ### Results on the HD 620 (1920x1080 borderless, Vulkan Mobile, uncapped, 1 run per cell)
 
@@ -61,14 +61,55 @@ Baseline is commit `7f49e14` (Phase 0). "Low" is the preset the game now detects
 - **Hold to Confirm** is covered by Confirm Abandon / Quit (second press); there is no separate toggle.
 - **Tests:** GUT 9.0.0 doesn't parse on Godot 4.7, so `tests/game` has its own small runner with GUT-style asserts.
 
-### Not done
+### Second pass (2026-10-05): the items left over from the first pass
 
-- Phase 9 (sub-900p SubViewport, chunk pooling, physics interpolation) and HUD Scale.
-- Optional first-run GPU calibration.
-- A-9 (freeing slot icons that scroll off) and A-21's `CarInfo` resource. The menu still instantiates cars; it now prefetches the neighbouring cars.
-- A-20: packing goon frames into atlases, and BC7 for FX sheets. A-22: replacing the dictionary map with packed arrays.
-- A-23: export filters (no `export_presets.cfg` in the repo; the filter list is in `CLAUDE.md`), and checking GodotSteam against 4.7.
-- An exported-build test of the `override.cfg` renderer switch.
+Measured from a clean worktree of the branch, on Low, 1920x1080 borderless, uncapped. Avg / 1% low fps.
+
+| Scenario | Native (Low) | Render Resolution 720p | 540p |
+|---|---|---|---|
+| S3 night, 90 s | 56.9 / 40.1 | 78.0 / 40.6 | 101.4 / 57.7 |
+| S4 night crowd | 55.0 / 37.9 | 76.1 / 34.7 | |
+| S2 day drive | 128.1 / 84.3 | | |
+| S5 slot claims | 118.2 / 55.4 | | |
+
+**Done**
+- **Phase 9, sub-900p rendering.** Render Resolution gains 720p and 540p. A run (level, HUD and in-run menus) is drawn into a SubViewport of that height, with the 1600x900 logical canvas (`size_2d_override`), and scaled up. The world view and every layout are unchanged; menus behave as Auto. `scene/level/run_view.gd`. Night lighting turned out to be fill-bound on the HD 620, which the first pass had missed: a 1280x720 window ran S3 at 121 fps against 57 at 1080p. Presets still default to Auto; whether Low or Potato should default to 720p is the author's call.
+- **Phase 9, chunk pooling.** Unloaded landscape TileMaps are reused, up to 8 per terrain, saving about 0.5 ms per chunk load. Chunk objects are not pooled because they hold per-chunk state.
+- **HUD Scale** (Accessibility, 80-130%). Each authored HUD control is scaled about its point nearest its anchor.
+- **First-run GPU calibration.** When a new GPU is detected, the menu's GPU time is measured over 120 frames before the toast, and the tier steps down once if the GPU is clearly slower than the tier assumes.
+  - On the HD 620 the menu costs the same at every preset (median 3.8 ms at 1080p), so it works as a GPU-speed probe.
+  - Limits: 2x the HD 620's time on Low, 0.8x on Medium and 0.5x on High, scaled to 1080p.
+  - It uses the median because the HD 620's p90 is 8.4 ms; the "p90 > 8 ms" rule in section 6 would have demoted the reference machine.
+  - It runs only on the standard renderer: ANGLE does report GPU time, and Compatibility is slower by design.
+- **A-9.** Slot reels recycle the icon that scrolled off, holding at most 12 instead of growing by 6 a second.
+- **A-21, CarInfo.**
+  - Each car's base stats and menu data (portrait, background, intro lines) live in `scene/car/<car>/<car>_info.tres`. The car copies them through `info`, so there's one place to edit.
+  - The menu loads only CarInfos: a cold car switch skipped 100-160 ms of car scene. `Root.playerCar` is null in the menu.
+  - The car scene loads on the worker thread with the level.
+  - `car.tscn`'s placeholder portrait is gone.
+- **A-20, BC7.** The three 1024x1024 explosion flipbooks use BC7, 5.6 to 1.4 MB each.
+- **A-22.** The terrain map is packed arrays, built with its regions on a worker thread. The grid alone had cost 230-380 ms in one frame. The same seed gives the same cells and region ids, checked against the old code on three seeds.
+- **A-23.**
+  - `export_presets.cfg` (Windows Desktop) is tracked with the exclude filters, and an export confirmed they keep tests and editor addons out of the `.pck`.
+  - GodotSteam loads on 4.7; its singleton registers and `steamInitEx` runs.
+  - Shipping needs the 4.7.2 export templates; only 4.7.0 templates are installed here.
+- **Exported-build test of the `override.cfg` switch.** It passes: Vulkan Mobile without the file, Compatibility through ANGLE/D3D11 with it, and no ANGLE DLLs needed.
+  - The test found a bug, now fixed. Under ANGLE the adapter vendor reads "Google Inc. (Intel)", so switching renderer looked like a new GPU and reset the player to Potato.
+- **Harness fixes.**
+  - Headless runs (tests, `--import`) no longer re-detect the tier or count as crashed boots.
+  - Bench runs no longer trip the crashed-boot counter. Before the fix, every third run started in safe mode (windowed, Potato).
+  - The S6 autopilot escapes rock rings: a run had sat in one for 10 minutes.
+
+**Measured and not kept**
+- **A-20, goon atlas.** Drawing every goon from one shared texture (the best case for an atlas) cut S4 draw calls from 178 to 116. It saved 0.1 ms of render CPU and no GPU time, and fps didn't change (54.1 against 54.7). Godot's TextureAtlas importer also only wrote its failure placeholder when run from the command line.
+- **Physics interpolation.** It costs nothing measurable (S4 54.1 / 38.2 with it, 55.0 / 37.9 without), and Godot moves Camera2D to physics processing when it is on.
+  - Its benefit, smooth motion when the frame rate is above 60 Hz, can't be measured by the harness: in 2D the interpolated transforms exist only in the renderer.
+  - Shipping it needs a look on a 120/144 Hz display and an audit of nodes that teleport (pooled goons and landscapes, smoke, the car on a restart).
+  - It is a one-line project setting (`physics/common/physics_interpolation`) when someone can check it by eye.
+
+**Still open**
+- S6 for the full 10 minutes on the current code. The run with the new escape logic has not been repeated.
+- 4K (S8), vsync-on runs, 3 runs per cell.
 
 ---
 
