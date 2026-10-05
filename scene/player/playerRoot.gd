@@ -20,15 +20,25 @@ func _ready():
 
 	
 # Called every frame. 'delta' is the elapsed time since the previous frame.
+var shownCounts = []
+
 func _process(delta):
-	if Input.is_action_just_pressed("ui_menu") && get_tree().get_nodes_in_group("pauseMenu").size() == 0 && not get_tree().paused:
-		get_tree().paused = true
-		for i in get_tree().get_nodes_in_group("visibleWhenPaused"):i.visible = true
-		add_child( load("res://scene/player/menu/pauseMenu.tscn").instantiate() )
-	%coins.text = str( Root.playerCar.coin )
-	%gem.text = str( Root.playerCar.gem )
-	%star.text = str(Root.playerCar.star)
-	%coinProjection.text = str(Root.playerCar.coin * Root.playerCar.star)
+	if Input.is_action_just_pressed("ui_menu"): openPause()
+	var counts = [Root.playerCar.coin, Root.playerCar.gem, Root.playerCar.star]
+	if counts != shownCounts: #strings are rebuilt only when a count changes
+		shownCounts = counts
+		%coins.text = str( Root.playerCar.coin )
+		%gem.text = str( Root.playerCar.gem )
+		%star.text = str(Root.playerCar.star)
+		%coinProjection.text = str(Root.playerCar.coin * Root.playerCar.star)
+
+#the only way to pause a run: Esc / Start, the HUD button, or losing focus.
+#never opens over the slot machine, countdown or summary, which pause the tree themselves
+func openPause() -> void:
+	if get_tree().paused || Settings.menu_open || get_tree().get_nodes_in_group("pauseMenu").size() > 0: return
+	get_tree().paused = true
+	for i in get_tree().get_nodes_in_group("visibleWhenPaused"):i.visible = true
+	add_child( load("res://scene/player/menu/pauseMenu.tscn").instantiate() )
 
 func updateStats():$carPanel.updateStats()
 

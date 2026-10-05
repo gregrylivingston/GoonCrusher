@@ -69,17 +69,17 @@ func _ready():
 		var randomNum = randi_range(0,slotContents.size()-1)
 		i.texture = load( slotContents[randomNum].icon )
 		i.type = slotContents[randomNum].type
+	#wind-up and spin advance per physics tick, not per frame, so a frame cap cannot desync the reels
 	for i in 100:
 		$VBoxContainer.position.y -= 0.18 * i
-		await get_tree().process_frame
+		await get_tree().physics_frame
 	isSpinning = true
 
 var spinFrameTracker = 0 #icons are 75px, 75px in between, every 150 frams is one cycle
 var spins = 7
 
 
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta):
+func _physics_process(_delta):
 	if isSpinning || spinFrameTracker != 6:
 		$VBoxContainer.position.y -= 18
 		spinFrameTracker += 1

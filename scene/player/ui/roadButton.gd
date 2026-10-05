@@ -21,11 +21,6 @@ func _ready():
 		icon = null
 
 
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta):
-	pass
-
-
 func _on_mouse_entered():startFocusAnimation()
 
 
@@ -46,8 +41,9 @@ func updateText(newText):
 func updateIcon(newIcon):
 	$HBoxContainer/TextureRect.visible = true
 	$HBoxContainer/TextureRect.texture = newIcon
-	$HBoxContainer/TextureRect.material.set_shader_parameter("front_tex" , newIcon)
-	$HBoxContainer/TextureRect.material.set_shader_parameter("back_tex" ,  newIcon )
+	if $HBoxContainer/TextureRect.material:
+		$HBoxContainer/TextureRect.material.set_shader_parameter("front_tex" , newIcon)
+		$HBoxContainer/TextureRect.material.set_shader_parameter("back_tex" ,  newIcon )
 
 
 func _on_focus_entered():

@@ -13,7 +13,8 @@ func _ready():
 	material.set_shader_parameter("back_tex" ,  texture )
 
 
-# Called every frame. 'delta' is the elapsed time since the previous frame.
+#velocity is in pixels per 1/60 s, as originally tuned
 func _process(delta):
-	velocity.y += 0.7
-	position += velocity
+	var steps = delta * 60.0
+	velocity.y += 0.7 * steps
+	position += velocity * steps

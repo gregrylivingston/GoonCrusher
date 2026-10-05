@@ -184,12 +184,15 @@ script = null
 
 [node name="slotMahineSound" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("6_bvdc6")
+bus = &"FX"
 
 [node name="slotMahineLever" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("6_pqh6i")
 pitch_scale = 0.6
+bus = &"FX"
 
 [node name="slotMachineBonusSound" type="AudioStreamPlayer" parent="."]
+bus = &"FX"
 
 [connection signal="pressed" from="Panel/Panel/VBoxContainer/play_button" to="." method="_on_play_button_pressed"]
 [connection signal="pressed" from="Panel/Panel/VBoxContainer/reroll_button" to="." method="_on_reroll_button_pressed"]

@@ -18,7 +18,7 @@ func _ready():
 	Root.playerCar.slotMachines += 1
 	$slotMachineBonusSound.stream = load(winSound[ randi_range( 0 , winSound.size() -1 ) ] )
 	$slotMachineBonusSound.play()
-	$Panel.position.y = get_viewport().size.y
+	$Panel.position.y = get_viewport().get_visible_rect().size.y
 	
 	if isGoonCrushBonus:
 		Root.playerRoot.animateNewGoonCrushGoal(false)
@@ -36,9 +36,9 @@ func _ready():
 	$Panel/Panel/VBoxContainer/play_button.disabled = true
 	if is_instance_valid(Root.playerCar):
 		Root.playerCar.playPurseRewardAudio()
-	$slotMahineSound.volume_db = SaveManager.getVolume("fx") - 12.0
-	$slotMahineLever.volume_db = SaveManager.getVolume("fx") + 4
-	$slotMachineBonusSound.volume_db = SaveManager.getVolume("fx") + 4
+	$slotMahineSound.volume_db = -12.0
+	$slotMahineLever.volume_db = 4.0
+	$slotMachineBonusSound.volume_db = 4.0
 	await get_tree().create_timer( slotDelayTime ).timeout
 	$slotMahineSound.play()
 	isReady = true

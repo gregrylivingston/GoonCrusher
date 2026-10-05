@@ -10,6 +10,7 @@ var menuMode: menuModes = menuModes.RIDER
 func _ready():
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	Root.mainMenu = self
+	Settings.set_menu_context(true)
 	selectCar(SaveManager.playerData.cars[SaveManager.playerData.selectedCar])
 	if Root.isRunActive:
 		Root.isRunActive = false
@@ -17,10 +18,16 @@ func _ready():
 		SaveManager.addGems( Root.earnedGems )
 		Root.earnedCoins = 0
 		Root.earnedGems = 0
-	#await get_tree().process_frame
-	#%levelSelect.grab_focus()
+	await get_tree().process_frame
+	Settings.on_menu_ready() #the menu is drawn: this boot did not crash
+	if Settings.safe_mode_prompt: add_child(SettingsDialog.safeModePrompt())
+	elif Settings.detect_toast_pending: add_child(SettingsDialog.detectToast())
+
+func _exit_tree():
+	Settings.set_menu_context(false)
 
 func _process(delta):
+	if Settings.menu_open: return
 	if Input.is_action_just_pressed("TurnLeft") || Input.is_action_just_pressed("ui_left"):selectPreviousCar()
 	elif Input.is_action_just_pressed("TurnRight") || Input.is_action_just_pressed("ui_right"):selectNextCar()
 	
@@ -48,6 +55,15 @@ func selectCar(car):
 	$backgroundTexture.texture = Root.playerCar.backgroundPic
 	%charTexture.texture = Root.playerCar.profilePic
 	%charTexture2.position = Vector2( 0 , 0 )
+	prefetchNeighbourCars()
+
+#start loading the cars either side in the background so the arrows switch instantly
+func prefetchNeighbourCars() -> void:
+	var cars = SaveManager.playerData.cars
+	var index = SaveManager.playerData.selectedCar
+	for offset in [-1, 1]:
+		var path = cars[wrapi(index + offset, 0, cars.size())].scene
+		if not ResourceLoader.has_cached(path): ResourceLoader.load_threaded_request(path)
 	
 func disableLockedCars(car) -> void:
 	var thisCar =  SaveManager.getCarByName(Root.playerCar.carId)
@@ -76,10 +92,10 @@ func disableLockedCars(car) -> void:
 	
 func showNewBackgroundImage(newImage:Texture2D):
 	$backgroundTexture2.texture = newImage
-	$backgroundTexture2.position = Vector2( -get_viewport().size.x , 0 )
+	$backgroundTexture2.position = Vector2( -get_viewport().get_visible_rect().size.x , 0 )
 	$backgroundTexture.position = Vector2( 0, 0)
 	get_tree().create_tween().tween_property($backgroundTexture2, "position" , Vector2(0,0) , selectCarDelay).set_ease(Tween.EASE_IN_OUT)
-	get_tree().create_tween().tween_property($backgroundTexture, "position" , Vector2(get_viewport().size.x,0) , selectCarDelay).set_ease(Tween.EASE_IN_OUT)
+	get_tree().create_tween().tween_property($backgroundTexture, "position" , Vector2(get_viewport().get_visible_rect().size.x,0) , selectCarDelay).set_ease(Tween.EASE_IN_OUT)
 	
 
 	
@@ -271,12 +287,28 @@ func _on_back_button_pressed():
 		
 func _on_begin_pressed():
 	match menuMode:
-		menuModes.GAMEMODE:
-			Region.resetRegions()
-			get_tree().change_scene_to_file( SaveManager.playerData.levels[SaveManager.playerData.selectedLevel].scene)
-		menuModes.LEVEL:#goToMenuMode(menuModes.GAMEMODE)
-			Region.resetRegions()
-			get_tree().change_scene_to_file( SaveManager.playerData.levels[SaveManager.playerData.selectedLevel].scene)
+		menuModes.GAMEMODE, menuModes.LEVEL: #GAMEMODE step is skipped for now
+			startLevel(SaveManager.playerData.levels[SaveManager.playerData.selectedLevel].scene)
+
+var loadingLevel := false
+#loads the level on a worker thread behind a "Loading" label instead of freezing the menu
+func startLevel(path: String) -> void:
+	if loadingLevel: return
+	loadingLevel = true
+	Region.resetRegions()
+	SaveManager.flush()
+	var label = Label.new()
+	label.text = "Loading..."
+	label.add_theme_font_size_override("font_size", 48)
+	label.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	add_child(label)
+	ResourceLoader.load_threaded_request(path)
+	while ResourceLoader.load_threaded_get_status(path) == ResourceLoader.THREAD_LOAD_IN_PROGRESS:
+		await get_tree().process_frame
+	await get_tree().process_frame #let the label draw before the level is built
+	var scene = ResourceLoader.load_threaded_get(path)
+	if scene: get_tree().change_scene_to_packed(scene)
+	else: get_tree().change_scene_to_file(path)
 
 func _on_unlock_pressed():
 	if SaveManager.unlockCar():
@@ -284,3 +316,10 @@ func _on_unlock_pressed():
 		
 func statUpdatesUiUpdate():
 	$carStatsContainer.updateStats()
+
+#run payout: the coins are already credited and saved; this only counts the display up
+func animateCoins(from: int, to: int) -> void:
+	$carStatsContainer.updateStats()
+	var tween = create_tween()
+	tween.tween_method(func(v): $carStatsContainer.setCoinDisplay(int(v)), float(from), float(to), clampf((to - from) / 300.0, 0.3, 1.5))
+	tween.tween_callback(statUpdatesUiUpdate)

@@ -1,5 +1,8 @@
 class_name PlayerData extends Resource
 
+#Renaming or moving this file breaks existing saves: the .tres embeds this script path.
+#SaveManager.migrate() merges every loaded save with the defaults below.
+@export var saveVersion: int = 0
 @export var coin: int = 0
 @export var gem: int = 0
 @export var selectedCar: int = 0
@@ -64,6 +67,8 @@ class_name PlayerData extends Resource
 ]
 
 
+#Demo-era volumes. Read once by Settings.import_legacy_volume(), never written. Keep it for
+#one release so old saves still load, then delete it.
 @export var settings = {
 	"volume":{
 		"master":0,"voice":0,"music":0,"fx":0,
@@ -71,7 +76,7 @@ class_name PlayerData extends Resource
 }
 
 
-var levels = [
+@export var levels = [
 	{
 		"name":"Easy",
 		"image":"res://texture/background/background_level_1.png",

@@ -1,17 +1,15 @@
 extends Panel
 
+var speedTimer: float = 0.0
 
-# Called when the node enters the scene tree for the first time.
-func _ready():
-	pass
-#	$pauseButton.updateText( Root.gameModes.keys()[SaveManager.playerData.gameMode] )
-
-# Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
 	if is_instance_valid(Root.playerCar):
-		$Panel/HBoxContainer2/speed.text = str(int(Root.playerCar.velocity.length())/10) + " MPH"
-		%ProgressBar_Health.value = Root.playerCar.health
-		%ProgressBar_Fuel.value = Root.playerCar.fuel
+		speedTimer -= delta
+		if speedTimer <= 0.0: #the speedometer text updates 10 times a second
+			speedTimer = 0.1
+			$Panel/HBoxContainer2/speed.text = Settings.speed_text(Root.playerCar.velocity.length())
+		if %ProgressBar_Health.value != Root.playerCar.health: %ProgressBar_Health.value = Root.playerCar.health
+		if %ProgressBar_Fuel.value != Root.playerCar.fuel: %ProgressBar_Fuel.value = Root.playerCar.fuel
 
 func updateStats():
 	%attributeIndicator_engine.setValue("Engine   " + str(Root.playerCar.engine))
@@ -24,5 +22,4 @@ func updateStats():
 	%attributeIndicator_luck.setValue("Dice   " + str(Root.playerCar.luck))
 
 func _on_pause_button_pressed():
-	get_tree().paused = true
-	add_child( load("res://scene/player/menu/pauseMenu.tscn").instantiate() )
+	Root.playerRoot.openPause()

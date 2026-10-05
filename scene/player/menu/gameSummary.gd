@@ -104,7 +104,7 @@ func buildGameSummary():
 	var topSpeed = int(Root.playerCar._highest_measured_speed/10)
 	if topSpeed > carStats.records.speed: 
 		carStats.records.speed = topSpeed
-	$Panel/Panel2/VBoxContainer/HBoxContainer3/topSpeed.text = str(topSpeed) + " MPH" 
+	$Panel/Panel2/VBoxContainer/HBoxContainer3/topSpeed.text = Settings.speed_text(Root.playerCar._highest_measured_speed)
 	
 	$Panel/Panel2/VBoxContainer/HBoxContainer7/time.text = str( get_tree().get_first_node_in_group("runTimer").text )
 	
@@ -131,6 +131,15 @@ func buildGameSummary():
 	Root.earnedCoins = coin
 	Root.earnedGems = gem
 	SaveManager.save_character_data()
+	var advice = Settings.take_advisor_message()
+	if advice != "":
+		var label = Label.new()
+		label.text = advice
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		label.add_theme_font_size_override("font_size", 22)
+		label.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+		label.position.y -= 60
+		$Panel.add_child(label)
 	
 
 
@@ -139,7 +148,7 @@ func buildAchievementSummary():
 	
 	var carStats = SaveManager.getCarByName(Root.playerCar.carId)
 	$Panel/Panel2/VBoxContainer/HBoxContainer6/goonsCrushed.text = str(carStats.records.goonsCrushed)
-	$Panel/Panel2/VBoxContainer/HBoxContainer3/topSpeed.text = str(carStats.records.speed) + " MPH" 
+	$Panel/Panel2/VBoxContainer/HBoxContainer3/topSpeed.text = Settings.speed_text(carStats.records.speed * 10.0)
 	$Panel/Panel2/VBoxContainer/HBoxContainer7/time.visible = false
 	
 	$Panel/Panel2/VBoxContainer/HBoxContainer2/coinsCollected.text = str(carStats.records.coin)

@@ -8,10 +8,6 @@
 
 config_version=5
 
-[animation]
-
-compatibility/default_parent_skeleton_in_mesh_instance_3d=true
-
 [application]
 
 config/name="GoonCrusher"
@@ -21,6 +17,7 @@ config/features=PackedStringArray("4.7", "Mobile")
 boot_splash/show_image=false
 boot_splash/image="res://texture/background/iceBackground.png"
 config/icon="res://sedan.ico"
+config/project_settings_override="user://override.cfg"
 
 [audio]
 
@@ -124,7 +121,41 @@ Brake={
 2d_physics/layer_1="Player"
 2d_physics/layer_2="Walker"
 
+[physics]
+
+common/max_physics_steps_per_frame=4
+
 [rendering]
 
 renderer/rendering_method="mobile"
-lights_and_shadows/directional_shadow/size=1024
+
+[shader_globals]
+
+gc_text_quality={
+"type": "int",
+"value": 2
+}
+gc_text_max_slices={
+"type": "int",
+"value": 16
+}
+gc_motion={
+"type": "float",
+"value": 1.0
+}
+gc_pickup_fx={
+"type": "int",
+"value": 1
+}
+gc_giant_style={
+"type": "int",
+"value": 0
+}
+gc_giant_color={
+"type": "color",
+"value": Color(128.498, 1, 1, 1)
+}
+gc_flash={
+"type": "float",
+"value": 1.0
+}
