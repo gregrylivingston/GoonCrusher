@@ -3,8 +3,11 @@ extends Node
 #Benchmark harness (docs/PERFORMANCE_SETTINGS_PLAN.md section 9).
 #Inert unless the user args include --bench=<id>, e.g.
 #  Godot_console.exe --path . --windowed --resolution 1600x900 -- --bench=S2 --seconds=90
-#Writes a per-frame CSV and a summary row to user://bench/. The save file is backed up
-#at start and restored at exit, so a benchmark never changes player progress.
+#Options: --seconds=N, --preset=potato|low|medium|high, --set=gfx/lighting:0;gfx/smoke:1 (any
+#setting, not saved), --shot=5;30 (screenshots at those level seconds), --open-settings (S1 only),
+#--notext.
+#Writes a per-frame CSV and a summary row to user://bench/. Saves are redirected to a scratch
+#copy, so a benchmark never changes player progress.
 
 const LEVELS = "res://scene/level/levels/"
 const SCENARIOS = {
@@ -15,10 +18,11 @@ const SCENARIOS = {
 	"S5": {"level":"level_grass_1", "car":"sedan", "pattern":"none", "slots":5, "seconds":90},
 	"S6": {"level":"level_grass_1", "car":"sedan", "pattern":"route", "seconds":600},
 	"S7": {"level":"level_grass_1", "car":"sedan", "night":true, "pattern":"none", "purses":10, "seconds":30},
+	#lighting parity: parked at night with no goons; use --headlights=N and --shot
+	"SL": {"level":"level_grass_1", "car":"sedan", "night":true, "pattern":"none", "spawnTimer":9999.0, "escalation":0.0, "seconds":10},
 }
 const WARMUP = 5.0
-const SAVE_PATH = "user://saveData_0.1.tres"
-const SAVE_BACKUP = "user://bench/save_backup.tres"
+const SCRATCH_SAVE = "user://bench/bench_save.tres"
 
 var id: String
 var cfg: Dictionary
@@ -35,6 +39,11 @@ var slotPressTimer: float = 0.0
 var slotsClaimed: int = 0
 var pursesSpawned: int = 0
 var stripText: bool = false
+var shots: Array = []
+var headlights: int = -1
+var label: String = "" #--tag=name, added to output file names
+var stuckTime: float = 0.0
+var recoverTime: float = 0.0
 
 func _ready():
 	var args = parseArgs()
@@ -50,7 +59,7 @@ func _ready():
 	seconds = float(args.get("seconds", cfg.seconds))
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	DirAccess.make_dir_recursive_absolute("user://bench")
-	if FileAccess.file_exists(SAVE_PATH): DirAccess.copy_absolute(SAVE_PATH, SAVE_BACKUP)
+	SaveManager.save_path = SCRATCH_SAVE
 	RenderingServer.viewport_set_measure_render_time(get_viewport().get_viewport_rid(), true)
 	stripText = args.has("notext") #measure with every 3D-text material removed
 	get_tree().node_added.connect(onNodeAdded)
@@ -58,6 +67,17 @@ func _ready():
 		for node in get_tree().root.find_children("*", "CanvasItem", true, false): onNodeAdded(node)
 	if args.has("preset") && has_node("/root/Settings") && get_node("/root/Settings").has_method("apply_preset_by_name"):
 		get_node("/root/Settings").apply_preset_by_name(args.preset, false)
+	if args.has("set"):
+		for pair in str(args.set).split(";"):
+			var kv = pair.split(":")
+			if kv.size() == 2: Settings.set_value(kv[0], str_to_var(kv[1]), false)
+	label = str(args.get("tag", ""))
+	headlights = int(args.get("headlights", -1))
+	if args.has("shot"):
+		for t in str(args.shot).split(";"): shots.push_back(float(t))
+	if args.has("open-settings"):
+		await get_tree().create_timer(1.5).timeout
+		Root.mainMenu.add_child(load("res://scene/player/menu/settings/settings.tscn").instantiate())
 	await get_tree().create_timer(1.0).timeout
 	if cfg.level != "": startLevel()
 	started = true
@@ -108,6 +128,10 @@ func drive(car) -> void:
 		if slotPressTimer <= 0.0:
 			slotPressTimer = 0.4
 			wanted = ["Accelerate"]
+	elif recoverTime > 0.0:
+		#stuck on a rock: back up while turning, then drive off at an angle
+		recoverTime -= get_physics_process_delta_time()
+		wanted = ["Brake", "TurnLeft"] if recoverTime > 1.2 else ["Accelerate", "TurnRight"]
 	else:
 		match cfg.pattern:
 			"circle": wanted = ["Accelerate", "TurnRight"]
@@ -118,7 +142,14 @@ func drive(car) -> void:
 				var error = wrapf(target - car.rotation, -PI, PI)
 				if error > 0.05: wanted.push_back("TurnRight")
 				elif error < -0.05: wanted.push_back("TurnLeft")
-	for action in ["Accelerate", "TurnLeft", "TurnRight"]:
+	if "Accelerate" in wanted && recoverTime <= 0.0 && cfg.pattern != "none" && car.velocity.length() < 60.0:
+		stuckTime += get_physics_process_delta_time()
+		if stuckTime > 1.0 && levelTime > 6.0:
+			stuckTime = 0.0
+			recoverTime = 2.4
+	else:
+		stuckTime = 0.0
+	for action in ["Accelerate", "Brake", "TurnLeft", "TurnRight"]:
 		if action in wanted && not Input.is_action_pressed(action): Input.action_press(action)
 		elif not action in wanted && Input.is_action_pressed(action): Input.action_release(action)
 
@@ -135,12 +166,16 @@ func _process(delta):
 		lightTimer = 0.5
 		lightCount = GameStats.lights(get_tree())
 	var t = levelTime if cfg.level != "" else elapsed
+	if not shots.is_empty() && t >= shots[0]: screenshot(shots.pop_front())
 	if t >= WARMUP: record(t, delta)
 	if t >= seconds + WARMUP: finish()
 
 func levelEvents() -> void:
 	var timer = get_tree().get_first_node_in_group("runTimer")
 	if is_instance_valid(timer): timer.reset = true #hold the current time of day
+	if headlights >= 0 && Root.playerCar.headlights != headlights:
+		Root.playerCar.headlights = headlights
+		Root.playerCar.setHeadlightStrength()
 	if cfg.get("night", false) && not nightSet && levelTime > 0.5:
 		nightSet = true
 		Root.levelRoot.isDaytime = false
@@ -154,6 +189,13 @@ func levelEvents() -> void:
 		var purse = Root.getSpecificPowerup(Root.upgrade.PURSE)
 		purse.global_position = Root.playerCar.global_position
 		Root.levelRoot.add_child(purse)
+
+func screenshot(t: float) -> void:
+	await RenderingServer.frame_post_draw
+	var image = get_viewport().get_texture().get_image()
+	var path = "user://bench/%s%s_%s_t%d.png" % [id, label, Settings.get_tier_name(), int(t)]
+	image.save_png(path)
+	print("BENCH_SHOT " + ProjectSettings.globalize_path(path))
 
 func record(t: float, delta: float) -> void:
 	var vp = get_viewport().get_viewport_rid()
@@ -176,7 +218,7 @@ func finish() -> void:
 	if has_node("/root/Settings") && get_node("/root/Settings").has_method("get_tier_name"):
 		preset = get_node("/root/Settings").get_tier_name()
 	var size = DisplayServer.window_get_size()
-	var tag = "%s_%s_%s_%dx%d" % [id + ("-notext" if stripText else ""), preset, RenderingServer.get_current_rendering_method(), size.x, size.y]
+	var tag = "%s_%s_%s_%dx%d" % [id + ("-notext" if stripText else "") + label, preset, RenderingServer.get_current_rendering_method(), size.x, size.y]
 	var file = FileAccess.open("user://bench/" + tag + ".csv", FileAccess.WRITE)
 	file.store_line("t,frame_ms,process_ms,physics_ms,gpu_ms,render_cpu_ms,draw_calls,nodes,goons,chunks,lights")
 	for row in rows: file.store_line(row)
@@ -216,9 +258,6 @@ func finish() -> void:
 	sfile.store_line(",".join(summary.values().map(func(v): return str(v))))
 	sfile.close()
 
-	if FileAccess.file_exists(SAVE_BACKUP):
-		DirAccess.copy_absolute(SAVE_BACKUP, SAVE_PATH)
-		DirAccess.remove_absolute(SAVE_BACKUP)
 	get_tree().quit()
 
 func maxColumn(column: int) -> int:

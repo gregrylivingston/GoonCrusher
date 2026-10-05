@@ -1,0 +1,49 @@
+class_name GameTest extends Node
+
+#Minimal stand-in for GutTest, used by tests/game because GUT 9.0.0 (addons/gut) does not parse
+#on Godot 4.7 (its `Logger` class now shadows a native class). The assert names match GUT's,
+#so these tests can move back to `extends GutTest` once GUT is upgraded.
+
+var failures: Array[String] = []
+var currentTest := ""
+var autofree: Array[Node] = []
+
+func before_each(): pass
+func after_each(): pass
+
+func fail(message: String) -> void:
+	failures.push_back("%s: %s" % [currentTest, message])
+
+func assert_true(value, message := "") -> void:
+	if not value: fail("expected true. " + message)
+
+func assert_false(value, message := "") -> void:
+	if value: fail("expected false. " + message)
+
+func assert_null(value, message := "") -> void:
+	if value != null: fail("expected null, got %s. %s" % [value, message])
+
+func assert_eq(got, expected, message := "") -> void:
+	if typeof(got) != typeof(expected) && not ((got is int || got is float) && (expected is int || expected is float)):
+		fail("expected %s (%s), got %s (%s). %s" % [expected, type_string(typeof(expected)), got, type_string(typeof(got)), message])
+	elif got != expected:
+		fail("expected %s, got %s. %s" % [expected, got, message])
+
+func assert_almost_eq(got, expected, tolerance, message := "") -> void:
+	if absf(got - expected) > tolerance: fail("expected %s +/- %s, got %s. %s" % [expected, tolerance, got, message])
+
+func assert_gt(got, than, message := "") -> void:
+	if not got > than: fail("expected > %s, got %s. %s" % [than, got, message])
+
+func assert_between(got, low, high, message := "") -> void:
+	if got < low || got > high: fail("expected %s..%s, got %s. %s" % [low, high, got, message])
+
+func add_child_autofree(node: Node) -> Node:
+	add_child(node)
+	autofree.push_back(node)
+	return node
+
+func freeAutofree() -> void:
+	for node in autofree:
+		if is_instance_valid(node): node.queue_free()
+	autofree.clear()

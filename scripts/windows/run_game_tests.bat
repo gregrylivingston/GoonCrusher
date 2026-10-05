@@ -1,4 +1,4 @@
 REM Must be called from project root folder
 REM Godot must be in system path
-REM Runs only the game tests (tests/game), headless, and exits with the result code
-godot --headless -d -s --path %CD% addons/gut/gut_cmdln.gd -gdir=res://tests/game -gexit -glog=1
+REM Runs the game tests in tests/game headless; the exit code is the number of failures.
+godot --headless --path %CD% -s res://tests/game/run_tests.gd
