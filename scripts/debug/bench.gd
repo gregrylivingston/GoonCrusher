@@ -54,6 +54,7 @@ func _ready():
 		queue_free()
 		return
 	id = args.bench
+	Settings.on_menu_ready() #runs leave the menu before main2 reports it, which would count as a crashed boot and start the next run in safe mode
 	print("BENCH_STARTUP_MS %d" % Time.get_ticks_msec()) #process start to the main menu being ready
 	if not SCENARIOS.has(id):
 		push_error("Unknown bench scenario " + id)
