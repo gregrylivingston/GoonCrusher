@@ -21,7 +21,9 @@ func _ready():
 	await get_tree().process_frame
 	Settings.on_menu_ready() #the menu is drawn: this boot did not crash
 	if Settings.safe_mode_prompt: add_child(SettingsDialog.safeModePrompt())
-	elif Settings.detect_toast_pending: add_child(SettingsDialog.detectToast())
+	elif Settings.detect_toast_pending || Settings.calibrate_pending:
+		await Settings.calibrate_if_needed() #first run on this GPU only: may lower the detected tier
+		if is_inside_tree() && Settings.detect_toast_pending: add_child(SettingsDialog.detectToast())
 
 func _exit_tree():
 	Settings.set_menu_context(false)

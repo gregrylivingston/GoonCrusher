@@ -92,6 +92,7 @@ const DEFAULTS := {
 	"access/giant_color": 0,
 	"access/plain_text": false,
 	"access/car_shake": true,
+	"access/hud_scale": 1.0,
 }
 
 #allowed values for enumerated keys; numeric keys not listed here are clamped by RANGES
@@ -120,6 +121,7 @@ const RANGES := {
 	"audio/master": [0.0, 1.0], "audio/music": [0.0, 1.0], "audio/voice": [0.0, 1.0],
 	"audio/fx": [0.0, 1.0], "audio/ui": [0.0, 1.0],
 	"controls/deadzone": [0.2, 0.8],
+	"access/hud_scale": [0.8, 1.3],
 	"meta/tier": [-1, 4], "meta/recommended_tier": [-1, 3],
 	"meta/boot_pending_count": [0, 100],
 }
@@ -431,7 +433,45 @@ func detectIfNeeded() -> void:
 		applyingPreset = false
 		values["meta/tier"] = tier
 		detect_toast_pending = not get_value("meta/detect_toast_shown")
+		calibrate_pending = tier > Tier.POTATO
 	dirtyGraphics = true
+
+#First-run calibration. The detected tier is a guess from the adapter's name and type, so the
+#first time the menu is up its GPU time is measured, and the tier steps down once if this GPU is
+#clearly slower than the tier assumes. The menu costs the same GPU time at every preset (the
+#reference Intel HD 620 takes a median 3.8 ms at 1080p on all four), so it measures GPU speed:
+#  Low steps to Potato at twice the HD 620's time (a GPU half as fast);
+#  Medium steps to Low unless the GPU beats the HD 620 by a quarter;
+#  High steps to Medium unless the GPU is at least twice as fast as the HD 620.
+#Times are scaled to 1080p by pixel count. Compatibility reports no GPU time, so there the
+#detected tier stands.
+const REFERENCE_MENU_GPU_MS = 3.8
+const CALIBRATION_LIMIT = [0.0, 2.0, 0.8, 0.5] #per tier, times REFERENCE_MENU_GPU_MS
+const CALIBRATION_SKIP = 30     #frames left out while shaders compile
+const CALIBRATION_FRAMES = 120
+var calibrate_pending := false
+var calibrated_down := false    #the toast says the tier was lowered after measuring
+
+#main2 awaits this before it shows the detection toast
+func calibrate_if_needed() -> void:
+	if not calibrate_pending || safe_mode_prompt: return
+	calibrate_pending = false
+	var vp = get_viewport().get_viewport_rid()
+	RenderingServer.viewport_set_measure_render_time(vp, true)
+	var samples := PackedFloat32Array()
+	for i in CALIBRATION_SKIP + CALIBRATION_FRAMES:
+		await get_tree().process_frame
+		if not is_instance_valid(Root.mainMenu) || menu_open: return #left the menu or opened settings: keep the detected tier
+		if i >= CALIBRATION_SKIP: samples.push_back(RenderingServer.viewport_get_measured_render_time_gpu(vp))
+	samples.sort()
+	var pixels = Vector2(get_viewport().get_texture().get_size())
+	var median = samples[samples.size() / 2] * (1920.0 * 1080.0) / maxf(pixels.x * pixels.y, 1.0)
+	var tier = get_value("meta/tier")
+	if median > 0.0 && tier > Tier.POTATO && tier < Tier.CUSTOM && median > CALIBRATION_LIMIT[tier] * REFERENCE_MENU_GPU_MS:
+		values["meta/recommended_tier"] = tier - 1
+		apply_preset(tier - 1)
+		calibrated_down = true
+	print("Settings: calibration median GPU %.2f ms at tier %d -> tier %d" % [median, tier, get_value("meta/tier")])
 
 func ensureDefaultActions() -> void:
 	#controller Start pauses; LB/RB (and Q/E) switch settings tabs

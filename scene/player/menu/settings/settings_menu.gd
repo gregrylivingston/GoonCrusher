@@ -189,6 +189,8 @@ func accessibilityRows() -> Array:
 			"info":"Draws all 3D text flat, whatever Text Effects is set to.", "perf":"Faster in menus"},
 		{"type":"choice", "key":"access/car_shake", "label":"Car Shake", "options":onOff(),
 			"info":"The car body's shake at speed.", "perf":"None"},
+		{"type":"slider", "key":"access/hud_scale", "label":"HUD Scale", "min":0.8, "max":1.3, "step":0.05, "format":percent,
+			"info":"Size of the in-run HUD: counters, region panel, crush goal and the car's bars. The view of the world is unchanged.", "perf":"None"},
 	]
 
 func audioRow(bus: String, label: String) -> Dictionary:

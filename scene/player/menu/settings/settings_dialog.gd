@@ -28,7 +28,9 @@ static func safeModePrompt() -> SettingsDialog:
 	return dialog
 
 static func detectToast() -> SettingsDialog:
-	var dialog = make("Graphics set to %s for %s." % [Settings.get_tier_name(), Settings.get_value("meta/adapter_name")], ["OK", "Open Graphics"])
+	var text = "Graphics set to %s for %s." % [Settings.get_tier_name(), Settings.get_value("meta/adapter_name")]
+	if Settings.calibrated_down: text += " It was lowered one step after measuring this graphics card."
+	var dialog = make(text, ["OK", "Open Graphics"])
 	dialog.chosen.connect(func(i):
 		Settings.detect_toast_pending = false
 		Settings.set_value("meta/detect_toast_shown", true)

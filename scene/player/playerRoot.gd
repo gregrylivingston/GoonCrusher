@@ -6,6 +6,7 @@ extends CanvasLayer
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
+	setupHudScale()
 	if is_instance_valid(Root.playerCar):
 		updateStats()
 	else: await get_tree().create_timer(1).timeout
@@ -41,6 +42,31 @@ func openPause() -> void:
 	add_child( load("res://scene/player/menu/pauseMenu.tscn").instantiate() )
 
 func updateStats():$carPanel.updateStats()
+
+#HUD Scale (Accessibility). Each authored HUD control is scaled about its point nearest its anchor,
+#so corner widgets stay in their corners and the car's bars stay by the car. Menus added at
+#runtime (pause, slots, countdown, summary) are not scaled.
+var hudControls: Array[Control] = []
+
+func setupHudScale() -> void:
+	for child in get_children():
+		if child is Control:
+			hudControls.push_back(child)
+			child.set_meta("baseScale", child.scale)
+			child.resized.connect(applyHudScale)
+	Settings.changed.connect(onSettingChanged)
+	applyHudScale()
+
+func onSettingChanged(key: String, _value) -> void:
+	if key == "access/hud_scale": applyHudScale()
+
+func applyHudScale() -> void:
+	var hudScale: float = Settings.get_value("access/hud_scale")
+	var screen = get_viewport().get_visible_rect().size
+	for control in hudControls:
+		var anchor = Vector2((control.anchor_left + control.anchor_right) * 0.5 * screen.x, (control.anchor_top + control.anchor_bottom) * 0.5 * screen.y)
+		control.pivot_offset = (anchor - control.position).clamp(Vector2.ZERO, control.size)
+		control.scale = control.get_meta("baseScale") * hudScale
 
 var awardBase = 12
 var crushingAwardLevel = 0
