@@ -1,6 +1,6 @@
 extends Node
 
-#Player settings (docs/PERFORMANCE_SETTINGS_PLAN.md section 4).
+#Player settings (docs/PERFORMANCE.md, "How settings work").
 #  user://settings.cfg  personal preferences, synced by Steam Cloud: [audio] [gameplay] [controls] [access]
 #  user://graphics.cfg  per machine, not synced: [meta] [display] [gfx] [audio_perf]
 #  user://override.cfg  only the renderer choice; read by the engine before anything else runs

@@ -1,6 +1,6 @@
 extends Node
 
-#Benchmark harness (docs/PERFORMANCE_SETTINGS_PLAN.md section 9).
+#Benchmark harness (docs/PERFORMANCE.md, "Benchmarking").
 #Inert unless the user args include --bench=<id>, e.g.
 #  Godot_console.exe --path . --windowed --resolution 1600x900 -- --bench=S2 --seconds=90
 #Options: --seconds=N, --preset=potato|low|medium|high, --set=gfx/lighting:0;gfx/smoke:1 (any

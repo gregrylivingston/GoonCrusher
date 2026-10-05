@@ -2,9 +2,9 @@
 
 GoonCrusher is a top-down 2D arcade car game written in **Godot 4.7 / GDScript**. You drive a car across a procedurally generated, chunk-streamed world and run over "goons" (enemies) at speed to crush them. Crushing earns coins and stars and triggers slot-machine bonuses. Between runs, coins buy cars and per-car stat upgrades.
 
-A free demo is live on Steam (app 1941650). The current work is to finish the game for a full release. Detailed plans live in `docs/`:
-- `docs/PERFORMANCE_SETTINGS_PLAN.md`: settings overhaul, performance fixes, and low-end ("potato") options.
-- `docs/GAMEPLAY_SUGGESTIONS.md`: ways to complete and improve the gameplay content.
+A free demo is live on Steam (app 1941650). The current work is to finish the game for a full release. More detail lives in `docs/`:
+- `docs/PERFORMANCE.md`: how the settings system works, every option and preset, the performance results on the HD 620, and how to benchmark.
+- `docs/GAMEPLAY_SUGGESTIONS.md`: open suggestions for completing the gameplay content (Tier 0 is done; Tiers 1-3 are proposals, not a spec).
 
 ## Running and tooling
 
@@ -48,11 +48,10 @@ A free demo is live on Steam (app 1941650). The current work is to finish the ga
    - A 256×256 noise grid becomes terrain types in `terrainMap` (`PackedByteArray`) and region ids in `regionMap` (`PackedInt32Array`), index `y * 256 + x`. Read cells with `landscapeGenerator.cellAt(x, y)` or `tileManager.tileAt(chunk)`, which return `{"terrain", "region"}`. Each cell is one 5120×2560 px chunk, which is one TileMap per terrain type.
    - The grid, the grass start area (region 0) and the region flood fill are built on a `WorkerThreadPool` task by static functions that touch only their job dictionary; the start area's random rolls are taken on the main thread first. The maps stay empty (every cell reads as water) until `createNewTerrain()` returns.
    - Chunks the camera can see, plus 1 s of travel, are loaded one per frame. Chunks more than 2 away (Chebyshev) are unloaded, except the pinned station chunk; their landscape TileMaps go to a pool (8 per terrain) and are reused, while objects are freed. Chunk (0,0) is map cell (128,128); `tileManager.chunkOf()` uses floor, and anything outside the map is water. Each chunk's objects come from its own seed.
-5. A run ends in one of three ways:
+5. How a run ends:
    - Every end goes through `levelRoot.endLevel()`, which runs once (`hasEnded`). The car calls it on NOHEALTH or NOGAS; the pause menu's Abandon calls it with ABANDONED (pays like a death).
    - The clock: Countdown (GOONCRUSHER) counts down from the level's `seconds` and is won at 0; Sprint and Marathon are lost at 0 (NOTIME); Goonpocalypse and Defense count up. The station driveway gives SUCCESS in SPRINT and MARATHON (a car that ran out of fuel but is still rolling may finish; a wrecked one may not). Sprint's station is placed by distance (`tileManager.placeObjective` never picks water or hills) and its clock is derived from that distance after `world_ready`.
    - `gameSummary` records stats and credits the payout `Root.computePayout(coin, star)` = coin × max(1, star) straight to the save; `main2` only animates the coin count.
-   Returning to `main2` pays the coins out.
 
 ### Key gameplay code
 - `lib/overhead_car_2d/overhead_car_body_2d.gd` is the car. It is a KidsCanCode bicycle-model `CharacterBody2D` that also handles collisions and crushing, damage, fuel, rewards, the camera zoom, the headlights and the station indicator.
@@ -71,7 +70,7 @@ A free demo is live on Steam (app 1941650). The current work is to finish the ga
 ### Save data (`scene/player/save/playerData.gd`, template `playerData.tres`)
 - The save is a text `.tres` Resource that embeds the script path. **Renaming or moving `playerData.gd` breaks existing player saves.**
 - `SaveManager.migrate()` merges every loaded save with the script defaults: new cars and levels are added, scene paths and record keys are updated, locked cars get current prices, and unlocks and beaten modes are kept. The demo and the full game share the save, so demo progress carries over. Bump `SAVE_VERSION` and extend `migrate()` when you add fields; `tests/game/test_save_migration.gd` covers it.
-- `levels` is `@export` now, so unlocks and `gamemodeBeat` are saved.
+- `levels` is `@export`, so unlocks and `gamemodeBeat` (one flag per mode) are saved.
 - `settings` in the save is legacy (demo volumes). `Settings.import_legacy_volume()` reads it once and nothing writes it. Delete it one release after launch.
 
 ## Conventions and gotchas
@@ -80,7 +79,7 @@ A free demo is live on Steam (app 1941650). The current work is to finish the ga
 - Frame caps exist (Frame Rate Limit, Menu Frame Rate), so anything visual must be delta-based or advance per physics tick. Slot reels advance in `_physics_process` (exactly 60 Hz, so the reels stay aligned); never go back to per-frame steps.
 - **There is one 3D text shader.** Every 3D-text material references `shader/3dtext.gdshader` with a `time_mode` parameter (0 oscillate, 1 one-sided, 2 spin, 3 none). Never paste the shader inline into a scene. Quality comes from the `gc_*` globals in `project.godot [shader_globals]`, and every global a shader uses must be declared there.
 - **Icons are original SVGs in `texture/icon/`.** `<name>.svg` has its own extruded edge and is for plain sprites and TextureRects (pickups, slot reels, the lotto wall). `<name>_flat.svg` is for anything drawn by the 3D text shader: `front_tex`/`back_tex`, a TextureRect with a 3D-text material, a `roadButton` `icon`/`myIcon`, and the menu stars `main2.gd` gives star materials at runtime. The shader extrudes the node's own texture, so a non-flat icon there gets its depth twice. Each `.import` sets `svg/scale` (the art is 64 units) to the pixel size the layouts expect, 96 or 48. `discord.png` and `steam.png` are third-party logos; replace them with the official brand files, never redraws.
-- Goon animations are separate PNG files per frame. Packing them into an atlas was measured and dropped: drawing every goon from one shared texture cut S4 draw calls from 178 to 116 but saved only 0.1 ms of render CPU and no GPU time. (Godot's TextureAtlas importer also only wrote its failure placeholder from the command line.) Pickup materials are shared now; don't set `resource_local_to_scene` on them again.
+- Goon animations are separate PNG files per frame; an atlas was measured and dropped (see `docs/PERFORMANCE.md`). Pickup materials are shared; don't set `resource_local_to_scene` on them again.
 - Night is gameplay. With `CanvasModulate` at black, visibility comes only from the car's 2D lights:
   - The 5 headlamps cast shadows, or the baked `simpleCone` does when Simple Headlight Cone is on (one shadowed light with the same reach). Both sit under `headlamps/headlights`, whose scale is the Headlights stat. Re-run `scripts/debug/bake_headlight_cone.gd` if you change the lamps.
   - Goons, rocks and walls all carry `LightOccluder2D`.
