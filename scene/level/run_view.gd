@@ -20,7 +20,11 @@ static func wrap(level: Node) -> Node:
 
 func _init():
 	stretch = false
+	#the container must keep forwarding input while the run is paused (summary, pause menu, slot
+	#machine); the SubViewport stays pausable so the level under it still pauses as it did at the root
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	view = SubViewport.new()
+	view.process_mode = Node.PROCESS_MODE_PAUSABLE
 	view.audio_listener_enable_2d = true #2D sounds play only in a viewport that listens
 	view.size_2d_override_stretch = true
 	view.canvas_item_default_texture_filter = ProjectSettings.get_setting("rendering/textures/canvas_textures/default_texture_filter")
