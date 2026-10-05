@@ -127,11 +127,8 @@ func chunkOf(worldPosition: Vector2) -> Vector2i:
 
 #map cell for a chunk; chunk (0,0) is the centre of the map. Outside the map is water.
 func tileAt(chunk: Vector2i) -> Dictionary:
-	var map = $landscapeGenerator.mapDict
-	var half = map.size() / 2
-	if chunk.y + half < 0 || chunk.y + half >= map.size() || chunk.x + half < 0 || chunk.x + half >= map[0].size():
-		return {"terrain":Root.terrain.WATER, "region":-2}
-	return map[chunk.y + half][chunk.x + half]
+	var generator = $landscapeGenerator
+	return generator.cellAt(chunk.x + generator.inputSizeX / 2, chunk.y + generator.inputSizeY / 2)
 
 func getTile(coordinates) -> Dictionary:
 	return tileAt(chunkOf(Vector2(coordinates)))
@@ -182,7 +179,7 @@ func queueNeededChunks() -> void:
 func unloadChunk(chunk: Vector2i, force := false):
 	if pinnedChunks.has(chunk) && not force: return
 	if loadedLandscapes.has(chunk):
-		loadedLandscapes[chunk].queue_free()
+		poolLandscape(loadedLandscapes[chunk])
 		loadedLandscapes.erase(chunk)
 	if loadedObjects.has(chunk):
 		loadedObjects[chunk].queue_free()
@@ -202,7 +199,7 @@ func loadChunk(chunk:Vector2i , myScene = null): #if an instantiated scene isn't
 	var tile = tileAt(chunk)
 	if not loadedLandscapes.has(chunk):
 		var targetPosition = Vector2( tilesize.x * chunk.x , tilesize.y * chunk.y )
-		var newLandscapeMap = landscapeMap[tile.terrain].instantiate()
+		var newLandscapeMap = takeLandscape(tile.terrain)
 		
 		if Region.regions.has(tile.region):
 			newLandscapeMap.self_modulate = newLandscapeMap.self_modulate * Region.regions[tile.region].terrain_modulate
@@ -218,6 +215,35 @@ func loadChunk(chunk:Vector2i , myScene = null): #if an instantiated scene isn't
 			add_child(newObjectTile)
 	return tile
 			
+
+#Unloaded landscape TileMaps are kept out of the tree and reused, which is cheaper than
+#instantiating a new one (objects are not pooled; they hold per-chunk state such as coins taken).
+const POOL_PER_TERRAIN = 8
+var landscapePool = {} #Root.terrain -> Array of TileMaps outside the tree
+
+func takeLandscape(terrain: int) -> Node2D:
+	var pool = landscapePool.get(terrain, [])
+	if not pool.is_empty():
+		var reused = pool.pop_back()
+		reused.self_modulate = reused.get_meta("baseModulate")
+		return reused
+	var created = landscapeMap[terrain].instantiate()
+	created.set_meta("terrain", terrain)
+	created.set_meta("baseModulate", created.self_modulate)
+	return created
+
+func poolLandscape(landscape: Node2D) -> void:
+	var pool = landscapePool.get_or_add(landscape.get_meta("terrain"), [])
+	if pool.size() >= POOL_PER_TERRAIN:
+		landscape.queue_free()
+		return
+	remove_child(landscape)
+	pool.push_back(landscape)
+
+func _exit_tree():
+	for pool in landscapePool.values():
+		for landscape in pool: landscape.free()
+	landscapePool.clear()
 
 #create objects like rocks and powerups that go over the landscapes
 func createNewTileObject(targetPosition, rng: RandomNumberGenerator, myScene = null):

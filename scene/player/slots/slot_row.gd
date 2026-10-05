@@ -89,12 +89,22 @@ func _physics_process(_delta):
 			addNewIcon()
 		#	
 var slotAwardIcon = preload("res://scene/player/slots/slot_award_icon.tscn")
+const MAX_ROW_CHILDREN = 12 #the separator plus 11 icons; the row shows about 3
+const ICON_PITCH = 180 #75px icon + 105px separation
 func addNewIcon():
-	var newIcon = slotAwardIcon.instantiate()
+	var newIcon
+	if $VBoxContainer.get_child_count() >= MAX_ROW_CHILDREN:
+		#reuse the icon that scrolled off the top instead of growing the row for as long as it spins
+		newIcon = $VBoxContainer.get_child(1)
+		$VBoxContainer.move_child(newIcon, -1)
+		$VBoxContainer.position.y += ICON_PITCH
+		spins -= 1
+	else:
+		newIcon = slotAwardIcon.instantiate()
+		$VBoxContainer.add_child(newIcon)
 	var myFlavor = randi_range(0,slotContents.size()-1)
 	newIcon.type = slotContents[myFlavor].type
 	newIcon.texture = load( slotContents[myFlavor].icon )
-	$VBoxContainer.add_child(newIcon)
 
 
 func stopSpinning():
