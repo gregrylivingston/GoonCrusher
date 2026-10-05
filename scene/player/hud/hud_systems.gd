@@ -21,7 +21,8 @@ const ICON := 28.0
 const LINE_WIDTH := 40.0
 const LINE_Y := 36.0
 const PULSE_MS := 600
-const QUIET := Color(0.62, 0.62, 0.62, 0.9)
+const QUIET := Color(0.8, 0.8, 0.8, 0.95)
+const LINE_TRACK := Color(0.33, 0.3, 0.27)  #the room left up to 100, so a weak stat still reads
 
 var lastStats := {}
 var landsAt := {}          #system id -> msec when its pickup flyer arrives
@@ -93,7 +94,7 @@ func drawUnderline(car, s: Dictionary, at: Vector2) -> void:
 	var start: float = minf(car.runStartStats.get(s.stat, rating), rating)
 	var effective: float = rating * car.conditionFactor(s.id)
 	var x = func(v: float) -> float: return at.x + LINE_WIDTH * clampf(v / 100.0, 0.0, 1.0)
-	draw_rect(Rect2(at, Vector2(LINE_WIDTH, 4)), HudTheme.TRACK)
+	draw_rect(Rect2(at, Vector2(LINE_WIDTH, 4)), LINE_TRACK)
 	var spans = [[0.0, minf(start, effective), HudTheme.START], [start, effective, HudTheme.GAIN], [effective, rating, HudTheme.BAD]]
 	for span in spans:
 		var from = x.call(span[0])

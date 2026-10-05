@@ -6,6 +6,7 @@ class_name Powerup extends Sprite2D
 var hasShinyShader: bool = true
 
 func _ready():
+	add_to_group("pickup") #the AI driver looks for pickups here
 	if not hasShinyShader:
 		set_material(null)
 

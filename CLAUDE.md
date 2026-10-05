@@ -5,6 +5,7 @@ GoonCrusher is a top-down 2D arcade car game written in **Godot 4.7 / GDScript**
 A free demo is live on Steam (app 1941650). The current work is to finish the game for a full release. More detail lives in `docs/`:
 - `docs/PERFORMANCE.md`: how the settings system works, every option and preset, the performance results on the HD 620, and how to benchmark.
 - `docs/GAMEPLAY_SUGGESTIONS.md`: open suggestions for completing the gameplay content (Tier 0 is done; Tiers 1-3 are proposals, not a spec).
+- `docs/HUD.md`: the in-run HUD's layout, how pickups find their widget, and the steps to finish system damage.
 
 ## Running and tooling
 
@@ -65,7 +66,8 @@ A free demo is live on Steam (app 1941650). The current work is to finish the ga
 - `scene/powerup/*` contains pickups. Collecting one credits it at once through `car.reward()`; the icon that flies to the HUD is a pooled visual from `scene/fx/reward_flyers.gd` and can be capped without changing totals. Never credit rewards from an animation.
 - Goons are capped at 250 (`SpawnManager.GOON_CAP`, the same for every preset) and swept every 0.5 s when they are more than 8000 px away and off screen.
 - `scene/player/slots/*` and `scene/fx/lotto/*` are the slot machine: 3 reels with no combo logic, and a reroll costs 1 gem.
-- `scene/player/playerRoot.gd` is the HUD. Crush milestones at `(n+1)^1.7*12` award a star and a free slot machine.
+- `scene/player/playerRoot.tscn` is the HUD (`docs/HUD.md`). Its widgets in `scene/player/hud/` draw themselves with `_draw()` and redraw only when their numbers change. Tach and fuel are bottom left, speedometer and hull bottom right, the systems strip (lamps with rating underlines) bottom center. Pickups fly to the node in group `"<powerup>ui"`, so each HUD widget owns those groups; `car_panel` is only the pause-screen stat list. `playerRoot.gd` owns the crush goals: milestones at `(n+1)^1.7*12` award a star and a free slot machine.
+- System damage is stubbed: the car has `condition` (0-100 per system), `CONDITION_FLOOR`, `conditionFactor()` and `runStartStats`, and the HUD already draws them. Nothing lowers condition yet; `docs/HUD.md` lists the steps.
 - `scene/player/menu/settings/*` is the settings overlay. `settings_menu.gd` builds the tabs from `buildSchema()`; each row is an `OptionRow` (choice, slider, button, header or binding), and `SettingsDialog` is the shared modal. To add a setting: add the key to `Settings.DEFAULTS` (plus `OPTIONS`/`RANGES`, and `PRESET` if presets drive it), apply it in `Settings.applyKey` or read it where it is used, then add a row.
 
 ### Save data (`scene/player/save/playerData.gd`, template `playerData.tres`)
