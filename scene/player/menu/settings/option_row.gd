@@ -195,7 +195,7 @@ func refresh() -> void:
 	if def.type == "binding":
 		var slots = Settings.binding_slots(def.action)
 		for i in 3:
-			slotButtons[i].text = ("Pad: " if i == 2 else "") + Settings.event_name(slots[i])
+			slotButtons[i].text = Settings.event_name(slots[i])
 			slotButtons[i].add_theme_color_override("font_color", Color.WHITE if i == slot && has_focus() else Color(0.93, 0.6, 0.16))
 		return
 	refreshing = true

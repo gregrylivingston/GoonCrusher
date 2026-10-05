@@ -165,7 +165,7 @@ func controlRows() -> Array:
 	var rows = []
 	for action in Settings.REBINDABLE:
 		rows.push_back({"type":"binding", "key":"controls/bindings", "action":action, "label":Settings.REBINDABLE[action],
-			"info":"Two keyboard keys and one controller input. Left and right pick a slot; press Accept, then the new key or button. Esc cancels.",
+			"info":"Two keyboard keys, then one controller button or stick. Left and right pick a slot; press Accept, then the new key or button. Esc cancels.",
 			"perf":"None"})
 	return rows + [
 		{"type":"choice", "key":"controls/vibration", "label":"Controller Vibration", "options":[[0, "Off"], [1, "Low"], [2, "High"]],

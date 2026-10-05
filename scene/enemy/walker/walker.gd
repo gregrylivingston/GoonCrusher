@@ -134,7 +134,9 @@ func moveTowardsPlayer(delta):
 		var directionToPlayer =  position.direction_to( Root.playerCar.position )
 		look_at(  Root.playerCar.position )
 		velocity =  directionToPlayer * speed * delta
-		move_and_slide()
+		#off screen, walk straight without collision queries (plan 7.3 LOD); same speed
+		if Root.spawnManager.needsFullPhysics(global_position): move_and_slide()
+		else: global_position += velocity * delta
 		if position.distance_to( Root.playerCar.position ) < prepareAttackDistance:
 			myMode = mode.PREPAREATTACK
 

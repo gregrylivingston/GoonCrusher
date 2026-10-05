@@ -4,12 +4,15 @@ extends GameTest
 #values it touched back.
 
 var saved: Dictionary
+var savedSession: Dictionary
 
 func before_each():
 	saved = Settings.values.duplicate(true)
+	savedSession = Settings.sessionOnly.duplicate(true)
 
 func after_each():
 	for key in saved: Settings.values[key] = saved[key]
+	Settings.sessionOnly = savedSession
 	Settings.apply_all()
 
 func test_validate_rejects_wrong_types_and_values():
@@ -62,3 +65,11 @@ func test_binding_round_trip():
 	var pad = Settings.joyButton(JOY_BUTTON_X)
 	assert_true(Settings.sameInput(Settings.deserialize(Settings.serialize(pad)), pad))
 	assert_false(Settings.sameInput(key, pad))
+
+func test_unsaved_changes_keep_the_file_value():
+	var onDisk = Settings.get_value("gfx/smoke")
+	var other = 0 if onDisk != 0 else 2
+	Settings.set_value("gfx/smoke", other, false)
+	assert_eq(Settings.sessionOnly.get("gfx/smoke"), onDisk, "save_now writes the remembered value, not the session one")
+	Settings.set_value("gfx/smoke", other, true)
+	assert_false(Settings.sessionOnly.has("gfx/smoke"), "a saved change is the player's")

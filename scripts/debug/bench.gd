@@ -41,6 +41,9 @@ var pursesSpawned: int = 0
 var stripText: bool = false
 var shots: Array = []
 var headlights: int = -1
+var loadStart: int = 0
+var loadReported := false
+var longestLoadFrame: float = 0.0
 var label: String = "" #--tag=name, added to output file names
 var stuckTime: float = 0.0
 var recoverTime: float = 0.0
@@ -51,6 +54,7 @@ func _ready():
 		queue_free()
 		return
 	id = args.bench
+	print("BENCH_STARTUP_MS %d" % Time.get_ticks_msec()) #process start to the main menu being ready
 	if not SCENARIOS.has(id):
 		push_error("Unknown bench scenario " + id)
 		get_tree().quit(1)
@@ -67,6 +71,8 @@ func _ready():
 		for node in get_tree().root.find_children("*", "CanvasItem", true, false): onNodeAdded(node)
 	if args.has("preset") && has_node("/root/Settings") && get_node("/root/Settings").has_method("apply_preset_by_name"):
 		get_node("/root/Settings").apply_preset_by_name(args.preset, false)
+	if has_node("/root/Settings") && get_node("/root/Settings").has_method("set_value"):
+		Settings.set_value("display/pause_unfocused", false, false) #clicking another window must not pause a run
 	if args.has("set"):
 		for pair in str(args.set).split(";"):
 			var kv = pair.split(":")
@@ -77,7 +83,9 @@ func _ready():
 		for t in str(args.shot).split(";"): shots.push_back(float(t))
 	if args.has("open-settings"):
 		await get_tree().create_timer(1.5).timeout
-		Root.mainMenu.add_child(load("res://scene/player/menu/settings/settings.tscn").instantiate())
+		var menu = load("res://scene/player/menu/settings/settings.tscn").instantiate()
+		Root.mainMenu.add_child(menu)
+		if args["open-settings"] is String: menu.showTab(int(args["open-settings"])) #--open-settings=2 opens the third tab
 	await get_tree().create_timer(1.0).timeout
 	if cfg.level != "": startLevel()
 	started = true
@@ -99,6 +107,10 @@ func startLevel() -> void:
 	data.gameMode = Root.gameModes.GOONCRUSHER
 	Root.selectedCar = data.cars[data.selectedCar]
 	seed(1337)
+	loadStart = Time.get_ticks_msec()
+	if parseArgs().has("via-menu") && is_instance_valid(Root.mainMenu):
+		Root.mainMenu.startLevel(LEVELS + cfg.level + ".tscn") #the real menu path: threaded load
+		return
 	Region.resetRegions()
 	get_tree().change_scene_to_file(LEVELS + cfg.level + ".tscn")
 
@@ -154,6 +166,11 @@ func drive(car) -> void:
 		elif not action in wanted && Input.is_action_pressed(action): Input.action_release(action)
 
 func _process(delta):
+	if loadStart > 0 && not loadReported:
+		longestLoadFrame = maxf(longestLoadFrame, delta * 1000.0)
+		if is_instance_valid(Root.levelRoot) && levelTime > 1.0:
+			loadReported = true
+			print("BENCH_LOAD level ready after %d ms, longest frame %.0f ms" % [Time.get_ticks_msec() - loadStart - int(levelTime * 1000), longestLoadFrame])
 	if not started: return
 	elapsed += delta
 	if cfg.level != "" && is_instance_valid(Root.levelRoot) && is_instance_valid(Root.playerCar):

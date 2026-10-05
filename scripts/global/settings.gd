@@ -149,7 +149,7 @@ var cliWindow := false            #window flags given on the command line win ov
 var cliVsync := false
 var cliFps := false
 var applyingPreset := false
-var sessionOnly := {}             #key -> saved value, for safe-mode values that must not reach the file
+var sessionOnly := {}             #key -> value on disk, for session values (safe mode, persist = false) that must not reach the file
 var focusMuted := false
 
 
@@ -227,9 +227,15 @@ func set_value(key: String, value, persist := true) -> void:
 	if value == null: return
 	var old = values.get(key)
 	values[key] = value
-	sessionOnly.erase(key) #a value the player picks is theirs to keep
+	#persist = false (benchmarks, tests, previews) must never reach the file: remember the saved value
+	if persist: sessionOnly.erase(key)
+	elif not sessionOnly.has(key): sessionOnly[key] = old
 	if PRESET.has(key) && not applyingPreset && get_value("meta/tier") != Tier.CUSTOM && value != old:
+		if not persist && not sessionOnly.has("meta/tier"): sessionOnly["meta/tier"] = values["meta/tier"]
 		values["meta/tier"] = Tier.CUSTOM
+		if persist:
+			sessionOnly.erase("meta/tier")
+			markDirty("meta/tier")
 		changed.emit("meta/tier", Tier.CUSTOM)
 	applyKey(key)
 	if old != value: changed.emit(key, value)
@@ -239,8 +245,9 @@ func apply_preset(tier: int, persist := true) -> void:
 	applyingPreset = true
 	for key in PRESET: set_value(key, PRESET[key][tier], persist)
 	applyingPreset = false
+	if persist: sessionOnly.erase("meta/tier")
+	elif not sessionOnly.has("meta/tier"): sessionOnly["meta/tier"] = values["meta/tier"]
 	values["meta/tier"] = tier
-	sessionOnly.erase("meta/tier")
 	changed.emit("meta/tier", tier)
 	if persist: markDirty("meta/tier")
 
@@ -635,8 +642,8 @@ func applyLighting() -> void:
 #Each rebindable action has two keyboard slots and one controller slot. Only actions the player
 #changed are stored in controls/bindings; the rest keep the project defaults.
 const REBINDABLE := {"Accelerate":"Accelerate", "Brake":"Brake", "TurnLeft":"Steer Left", "TurnRight":"Steer Right", "ui_menu":"Pause"}
-const JOY_BUTTON_NAMES := ["A", "B", "X", "Y", "Back", "Guide", "Start", "Left Stick", "Right Stick", "LB", "RB", "D-pad Up", "D-pad Down", "D-pad Left", "D-pad Right"]
-const JOY_AXIS_NAMES := ["Left Stick X", "Left Stick Y", "Right Stick X", "Right Stick Y", "LT", "RT"]
+const JOY_BUTTON_NAMES := ["A", "B", "X", "Y", "Back", "Guide", "Start", "L3", "R3", "LB", "RB", "D-Up", "D-Down", "D-Left", "D-Right"]
+const JOY_AXIS_NAMES := ["LS", "LS", "RS", "RS", "LT", "RT"]
 var defaultBindings := {}
 
 #[key1, key2, pad] events for an action; null where a slot is empty
@@ -657,7 +664,10 @@ static func event_name(event: InputEvent) -> String:
 		return JOY_BUTTON_NAMES[event.button_index] if event.button_index < JOY_BUTTON_NAMES.size() else "Button %d" % event.button_index
 	if event is InputEventJoypadMotion:
 		var axis = JOY_AXIS_NAMES[event.axis] if event.axis < JOY_AXIS_NAMES.size() else "Axis %d" % event.axis
-		return axis + (" +" if event.axis_value > 0 else " -") if event.axis < 4 else axis
+		if event.axis >= 4: return axis
+		var horizontal = event.axis == JOY_AXIS_LEFT_X || event.axis == JOY_AXIS_RIGHT_X
+		var direction = ("Right" if event.axis_value > 0 else "Left") if horizontal else ("Down" if event.axis_value > 0 else "Up")
+		return axis + " " + direction
 	return event.as_text()
 
 static func serialize(event: InputEvent) -> Dictionary:

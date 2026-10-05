@@ -31,6 +31,10 @@ var basicGoons
 const GOON_CAP = 250          #same for every player and preset
 const DESPAWN_DISTANCE = 8000.0
 const SWEEP_SECONDS = 0.5
+const LOD_MARGIN = 400.0     #goons this far outside the view still collide normally
+
+#world rect where goons run full physics; refreshed every physics tick
+var physicsView := Rect2()
 
 var giantTimer:float = 0
 var spawners
@@ -47,6 +51,13 @@ func registerGoon(newGoon: Node) -> void:
 func onGoonExiting(goon: Node) -> void:
 	liveGoons -= 1
 	goons.erase(goon)
+
+func _physics_process(_delta):
+	physicsView = (get_viewport().get_canvas_transform().affine_inverse() * get_viewport().get_visible_rect()).grow(LOD_MARGIN)
+
+#off-screen LOD: goons outside the view skip collision queries while they walk
+func needsFullPhysics(point: Vector2) -> bool:
+	return physicsView.has_area() == false || physicsView.has_point(point)
 
 func canSpawn() -> bool:
 	return liveGoons < GOON_CAP
