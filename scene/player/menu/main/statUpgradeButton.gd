@@ -8,12 +8,12 @@ func _ready():
 	refresh()
 	
 func refresh():
-	if is_instance_valid(Root.playerCar):
+	if is_instance_valid(Root.carInfo):
 		var requestCost = SaveManager.requestStatCost(myStat)
 		updateText(str(SaveManager.requestStatCost(myStat)))
 		
 		#if the player cannot afford the cost or has not unlocked the car hide and lock this button.
-		if requestCost > SaveManager.playerData.coin || SaveManager.getCarByName(Root.playerCar.carId).cost != 0: 
+		if requestCost > SaveManager.playerData.coin || SaveManager.getCarByName(Root.carInfo.carId).cost != 0: 
 			disabled = true
 			modulate.a = 0.0
 		else: 

@@ -15,14 +15,22 @@ class_name OverheadCarBody2D extends CharacterBody2D
 
 
 
-@export var engine: int = 25  # Forward acceleration force.
-@export var steering: int = 12  # Amount that front wheel turns, in degrees
-@export var traction: int = 4   #brakes and turn-rate-increase
-@export var armor: int = 1
-@export var luck: int = 1
-@export var clover: int = 1
-@export var oil: int = 1
-@export var headlights: int = 1
+#the car's menu data and base stats; edit them in scene/car/<car>/<car>_info.tres
+@export var info: CarInfo:
+	set(value):
+		info = value
+		if value:
+			for field in CarInfo.FIELDS: set(field, value.get(field))
+
+#base stats come from `info`; upgrades and powerups add to them
+var engine: int = 25  # Forward acceleration force.
+var steering: int = 12  # Amount that front wheel turns, in degrees
+var traction: int = 4   #brakes and turn-rate-increase
+var armor: int = 1
+var luck: int = 1
+var clover: int = 1
+var oil: int = 1
+var headlights: int = 1
 
 @export var friction:float = 0.1 #.9
 #friction of 0.5 might be sand
@@ -46,12 +54,12 @@ var isDestroyed: bool = false
 
 func getIsPlayer():return isPlayer
 
-@export var profilePic: Texture2D
-@export var backgroundPic: Texture2D
-@export var charName: String = "Hi"
-@export var carId:String
+var profilePic: Texture2D  #from `info`
+var backgroundPic: Texture2D
+var charName: String = "Hi"
+var carId:String
 
-@export var introAudio: Array[AudioStreamMP3] = []
+var introAudio: Array[AudioStreamMP3] = []
 @export var purseAudio: Array[AudioStreamMP3] = []
 @export var powerupAudio: Array[AudioStreamMP3] = []
 @export var lowGasAudio: Array[AudioStreamMP3] = []

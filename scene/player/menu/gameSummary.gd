@@ -146,7 +146,7 @@ func buildGameSummary():
 func buildAchievementSummary():
 	for i in $Panel/Panel2/VBoxContainer.get_children():i.visible = true
 	
-	var carStats = SaveManager.getCarByName(Root.playerCar.carId)
+	var carStats = SaveManager.getCarByName(Root.carInfo.carId)
 	$Panel/Panel2/VBoxContainer/HBoxContainer6/goonsCrushed.text = str(carStats.records.goonsCrushed)
 	$Panel/Panel2/VBoxContainer/HBoxContainer3/topSpeed.text = Settings.speed_text(carStats.records.speed * 10.0)
 	$Panel/Panel2/VBoxContainer/HBoxContainer7/time.visible = false

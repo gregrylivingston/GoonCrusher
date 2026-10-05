@@ -8,9 +8,11 @@ enum goon { DEVIL , SPARTAN , SAMURAI , FIREKIN, PIKEMAN , GOONBEAR , DOOMCART ,
 SHELLBACK , IMMORTAL , LIZARD , RAT , ROCKMAN , SKELETON , SMASHER ,
 SOLDIER , VIKING , ZULU }
 
-var playerCar: OverheadCarBody2D
+var playerCar: OverheadCarBody2D #the car in a run; null in the main menu
 var station  #this is the gas-station / house thing
 var selectedCar: Dictionary
+var carInfo: CarInfo #the car shown in the main menu
+var selectedCarScene: PackedScene #loaded with the level, so levelRoot's load() finds it cached
 
 
 var mainMenu: CanvasLayer

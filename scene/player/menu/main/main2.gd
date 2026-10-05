@@ -35,27 +35,27 @@ func _process(delta):
 	
 var selectCarDelay = 0.3
 func selectCar(car):
-	if is_instance_valid(Root.playerCar):Root.playerCar.free()
 	Root.selectedCar = car
-	Root.playerCar = load(car.scene).instantiate()
+	Root.playerCar = null #the menu shows a car from its CarInfo, without loading the car scene
+	Root.carInfo = load(CarInfo.pathFor(car.scene))
 
 	disableLockedCars(car)
-	showNewBackgroundImage(Root.playerCar.backgroundPic)
+	showNewBackgroundImage(Root.carInfo.backgroundPic)
 	
-	%charTexture2.texture = Root.playerCar.profilePic
+	%charTexture2.texture = Root.carInfo.profilePic
 	%charTexture2.position = Vector2( $Control.size.x , $Control.size.y )
 	%charTexture.position = Vector2( 0,0 )
 	get_tree().create_tween().tween_property(%charTexture2, "position" , Vector2( 0 , 0 ) , selectCarDelay).set_ease(Tween.EASE_IN_OUT)
 	get_tree().create_tween().tween_property(%charTexture, "position" , Vector2( $Control.size.x  , $Control.size.y ) , selectCarDelay).set_ease(Tween.EASE_IN_OUT)
 	
 	$carStatsContainer.updateStats()
-	#%levelSelect.updateText( "Ride with " + Root.playerCar.charName )
-	%driverName.text = Root.playerCar.charName
-	$voicePlayer.stream = Root.playerCar.introAudio[randi_range(0 , Root.playerCar.introAudio.size()-1)]
+	#%levelSelect.updateText( "Ride with " + Root.carInfo.charName )
+	%driverName.text = Root.carInfo.charName
+	$voicePlayer.stream = Root.carInfo.introAudio[randi_range(0 , Root.carInfo.introAudio.size()-1)]
 	$voicePlayer.play()
 	await get_tree().create_timer( selectCarDelay ).timeout
-	$backgroundTexture.texture = Root.playerCar.backgroundPic
-	%charTexture.texture = Root.playerCar.profilePic
+	$backgroundTexture.texture = Root.carInfo.backgroundPic
+	%charTexture.texture = Root.carInfo.profilePic
 	%charTexture2.position = Vector2( 0 , 0 )
 	prefetchNeighbourCars()
 
@@ -64,11 +64,11 @@ func prefetchNeighbourCars() -> void:
 	var cars = SaveManager.playerData.cars
 	var index = SaveManager.playerData.selectedCar
 	for offset in [-1, 1]:
-		var path = cars[wrapi(index + offset, 0, cars.size())].scene
+		var path = CarInfo.pathFor(cars[wrapi(index + offset, 0, cars.size())].scene)
 		if not ResourceLoader.has_cached(path): ResourceLoader.load_threaded_request(path)
 	
 func disableLockedCars(car) -> void:
-	var thisCar =  SaveManager.getCarByName(Root.playerCar.carId)
+	var thisCar =  SaveManager.getCarByName(Root.carInfo.carId)
 	if SaveManager.playerData.selectedCar > 20:#set this to 2 for DEMO
 		%levelSelect.visible = true
 		%levelSelect.disabled = true
@@ -123,7 +123,7 @@ func setupLevel(level):
 
 	showNewBackgroundImage(load(level.image))
 	#%levelSelect.updateText( str(SasetupLevelveManager.playerData.selectedLevel + 1) + ". " + level.name)
-	%driverName2.text =  Root.playerCar.charName
+	%driverName2.text =  Root.carInfo.charName
 	%driverName.text = str(SaveManager.playerData.selectedLevel + 1) + ". " + level.name
 	
 	if level.unlocked || SaveManager.playerData.selectedLevel < 3:
@@ -173,7 +173,7 @@ func goToMenuMode(myMenuMode: menuModes): #true if adancing to level select
 
 	
 	match menuMode:
-		menuModes.RIDER:selectCar(SaveManager.getCarByName(Root.playerCar.carId))
+		menuModes.RIDER:selectCar(SaveManager.getCarByName(Root.carInfo.carId))
 		menuModes.GAMEMODE:selectGameMode(SaveManager.getGameMode())
 		menuModes.LEVEL:
 			$VBoxContainer2/levelNameContainer.visible = false
@@ -185,7 +185,7 @@ func goToMenuMode(myMenuMode: menuModes): #true if adancing to level select
 	$carStatsContainer.scale = topMenuScale
 	
 	if isRiderMenu && $voicePlayer.playing == false:
-		$voicePlayer.stream = Root.playerCar.introAudio[randi_range(0 , Root.playerCar.introAudio.size()-1)]
+		$voicePlayer.stream = Root.carInfo.introAudio[randi_range(0 , Root.carInfo.introAudio.size()-1)]
 		$voicePlayer.play()
 
 
@@ -305,8 +305,13 @@ func startLevel(path: String) -> void:
 	label.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 	add_child(label)
 	ResourceLoader.load_threaded_request(path)
-	while ResourceLoader.load_threaded_get_status(path) == ResourceLoader.THREAD_LOAD_IN_PROGRESS:
+	var carScene = Root.selectedCar.scene #the menu only loaded the car's CarInfo; levelRoot instantiates the scene
+	if not ResourceLoader.has_cached(carScene): ResourceLoader.load_threaded_request(carScene)
+	while ResourceLoader.load_threaded_get_status(path) == ResourceLoader.THREAD_LOAD_IN_PROGRESS \
+			|| ResourceLoader.load_threaded_get_status(carScene) == ResourceLoader.THREAD_LOAD_IN_PROGRESS:
 		await get_tree().process_frame
+	if ResourceLoader.load_threaded_get_status(carScene) == ResourceLoader.THREAD_LOAD_LOADED:
+		Root.selectedCarScene = ResourceLoader.load_threaded_get(carScene) #held so the cache keeps it
 	await get_tree().process_frame #let the label draw before the level is built
 	var scene = ResourceLoader.load_threaded_get(path)
 	if scene: get_tree().change_scene_to_packed(scene)
@@ -314,7 +319,7 @@ func startLevel(path: String) -> void:
 
 func _on_unlock_pressed():
 	if SaveManager.unlockCar():
-		selectCar(SaveManager.getCarByName(Root.playerCar.carId))
+		selectCar(SaveManager.getCarByName(Root.carInfo.carId))
 		
 func statUpdatesUiUpdate():
 	$carStatsContainer.updateStats()

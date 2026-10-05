@@ -105,7 +105,7 @@ func addGems(num: int):
 	if is_instance_valid(Root.mainMenu): Root.mainMenu.statUpdatesUiUpdate()
 
 func unlockCar():
-	var thisCar = getCarByName(Root.playerCar.carId)
+	var thisCar = playerData.cars[playerData.selectedCar]
 	if playerData.coin >= thisCar.cost:
 		playerData.coin -= thisCar.cost
 		thisCar.cost = 0
@@ -121,7 +121,7 @@ func requestStatUpgrade(statString: Root.upgrade) -> bool:
 	var requestCost = requestStatCost(statString)
 	if playerData.coin >= requestCost:
 		playerData.coin -= requestCost
-		var upgrades = getCarByName(Root.playerCar.carId).upgrades
+		var upgrades = playerData.cars[playerData.selectedCar].upgrades
 		upgrades[statString] = upgrades.get(statString, 0) + 1
 		save_character_data()
 		Root.mainMenu.statUpdatesUiUpdate()

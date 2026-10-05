@@ -21,4 +21,8 @@ class_name CarInfo extends Resource
 @export var oil: int = 1
 @export var headlights: int = 1
 
-const FIELDS = ["carId", "charName", "profilePic", "backgroundPic", "introAudio", "engine", "steering", "traction", "armor", "luck", "clover", "oil", "headlights"]
+#res://scene/car/sedan/sedan.tscn -> res://scene/car/sedan/sedan_info.tres
+static func pathFor(carScene: String) -> String:
+	return carScene.get_basename() + "_info.tres"
+
+const FIELDS =["carId", "charName", "profilePic", "backgroundPic", "introAudio", "engine", "steering", "traction", "armor", "luck", "clover", "oil", "headlights"]

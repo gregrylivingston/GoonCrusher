@@ -421,6 +421,7 @@ static func adapterId(adapterName: String, vendor: String) -> String:
 	return vendor.to_lower().strip_edges() + ":" + n
 
 func detectIfNeeded() -> void:
+	if DisplayServer.get_name() == "headless": return #tests and imports: no GPU to detect, and the player's tier must stand
 	var id = adapterId(RenderingServer.get_video_adapter_name(), RenderingServer.get_video_adapter_vendor())
 	if get_value("meta/tier") >= 0 && id == get_value("meta/adapter_id"): return
 	var tier = detect_tier()
