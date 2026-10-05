@@ -56,8 +56,9 @@ func test_plain_text_and_reduce_motion_override_presets():
 
 func test_adapter_id_matches_across_renderers():
 	var vulkan = Settings.adapterId("Intel(R) HD Graphics 620", "Intel")
-	var angle = Settings.adapterId("ANGLE (Intel, Intel(R) HD Graphics 620 (0x00005916) Direct3D11 vs_5_0 ps_5_0, D3D11-27.20.100.8681)", "Intel")
-	assert_eq(vulkan, angle)
+	#the vendor string ANGLE really reports (seen in an exported build on the HD 620)
+	var angle = Settings.adapterId("ANGLE (Intel, Intel(R) HD Graphics 620 (0x00005916) Direct3D11 vs_5_0 ps_5_0, D3D11-27.20.100.8681)", "Google Inc. (Intel)")
+	assert_eq(vulkan, angle, "switching the renderer must not look like a new GPU")
 
 func test_binding_round_trip():
 	var key = Settings.keyEvent(KEY_J)

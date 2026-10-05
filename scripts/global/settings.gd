@@ -419,7 +419,11 @@ static func adapterId(adapterName: String, vendor: String) -> String:
 	if angle: n = angle.get_string(1)
 	for junk in ["(r)", "(tm)", "®", "™"]: n = n.replace(junk, "")
 	n = RegEx.create_from_string("\\s+").sub(n.strip_edges(), " ", true)
-	return vendor.to_lower().strip_edges() + ":" + n
+	#ANGLE reports the vendor as "Google Inc. (Intel)"; Vulkan reports "Intel"
+	var v = vendor.to_lower().strip_edges()
+	var inner = RegEx.create_from_string("\\(([^)]+)\\)\\s*$").search(v)
+	if inner: v = inner.get_string(1).strip_edges()
+	return v + ":" + n
 
 func detectIfNeeded() -> void:
 	if DisplayServer.get_name() == "headless": return #tests and imports: no GPU to detect, and the player's tier must stand
@@ -445,8 +449,7 @@ func detectIfNeeded() -> void:
 #  Low steps to Potato at twice the HD 620's time (a GPU half as fast);
 #  Medium steps to Low unless the GPU beats the HD 620 by a quarter;
 #  High steps to Medium unless the GPU is at least twice as fast as the HD 620.
-#Times are scaled to 1080p by pixel count. Compatibility reports no GPU time, so there the
-#detected tier stands.
+#Times are scaled to 1080p by pixel count. Calibration runs only on the standard renderer.
 const REFERENCE_MENU_GPU_MS = 3.8
 const CALIBRATION_LIMIT = [0.0, 2.0, 0.8, 0.5] #per tier, times REFERENCE_MENU_GPU_MS
 const CALIBRATION_SKIP = 30     #frames left out while shaders compile
@@ -458,6 +461,9 @@ var calibrated_down := false    #the toast says the tier was lowered after measu
 func calibrate_if_needed() -> void:
 	if not calibrate_pending || safe_mode_prompt: return
 	calibrate_pending = false
+	#the reference was measured on Vulkan; Compatibility (ANGLE) does report GPU time, but it is slower
+	#by design, so measuring there would push every machine down a tier
+	if RenderingServer.get_current_rendering_method() == "gl_compatibility": return
 	var vp = get_viewport().get_viewport_rid()
 	RenderingServer.viewport_set_measure_render_time(vp, true)
 	var samples := PackedFloat32Array()
