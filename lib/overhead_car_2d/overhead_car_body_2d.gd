@@ -41,8 +41,6 @@ var star: int = 0
 var currentGoonsCrushed:int = 0
 var slotMachines:int = 0
 
-@onready var rewardAudioPlayer = $"AudioStream-Reward"
-
 @export var isPlayer = true
 var isDestroyed: bool = false
 

@@ -9,4 +9,5 @@ func spawn():
 		if tile.region != -2:
 			var newWalker = Root.getGoon()
 			newWalker.position = coordinates
+			Root.spawnManager.registerGoon(newWalker)
 			Root.levelRoot.add_child(newWalker)

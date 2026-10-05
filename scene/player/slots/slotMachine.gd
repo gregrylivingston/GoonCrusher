@@ -14,6 +14,7 @@ var myBackground
 var slotTransition = preload("res://scene/fx/lotto/lottoTransition.tscn")
 # Called when the node enters the scene tree for the first time.
 func _ready():
+	add_to_group("slotMachine")
 	Root.playerCar.slotMachines += 1
 	$slotMachineBonusSound.stream = load(winSound[ randi_range( 0 , winSound.size() -1 ) ] )
 	$slotMachineBonusSound.play()

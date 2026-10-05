@@ -1,2 +1,2 @@
 # Must be called from project root folder
-godot4 -d -s --path $PWD addons/gut/gut_cmdln.gd -gdir=res://gut/integration -gmaximize -glog=2
+godot4 -d -s --path $PWD addons/gut/gut_cmdln.gd -gdir=res://tests/integration -gmaximize -glog=2

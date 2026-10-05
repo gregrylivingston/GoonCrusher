@@ -11,7 +11,6 @@
 [ext_resource type="Script" path="res://texture/animation/smoke.gd" id="7_jq5da"]
 [ext_resource type="AudioStream" uid="uid://tuaawqdwftov" path="res://sound/fx/car-damage1.mp3" id="8_qq4uq"]
 [ext_resource type="AudioStream" uid="uid://r1f0ifs0q7br" path="res://sound/fx/explosion/explosion-6055.mp3" id="10_hc5pd"]
-[ext_resource type="Texture2D" uid="uid://ltiunalnocyg" path="res://scene/car/sedan/sedan0.png" id="11_lwi02"]
 [ext_resource type="Texture2D" uid="uid://d2weeqgpbqllf" path="res://texture/triangle.png" id="12_4vckk"]
 [ext_resource type="Script" path="res://scene/car/carBodyArea.gd" id="12_bs61w"]
 [ext_resource type="Material" uid="uid://d4nw1uchte7mv" path="res://scene/player/menu/main/3dText_Common.tres" id="15_8ryrj"]
@@ -216,7 +215,6 @@ visible = false
 [node name="carhighlight" type="PointLight2D" parent="headlamps"]
 rotation = 1.5708
 energy = 0.8
-texture = ExtResource("11_lwi02")
 
 [node name="taillamps" type="Node2D" parent="headlamps"]
 

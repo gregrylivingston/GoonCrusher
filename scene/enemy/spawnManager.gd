@@ -30,6 +30,11 @@ var basicGoons
 
 var giantTimer:float = 0
 var spawners
+var liveGoons: int = 0
+
+func registerGoon(newGoon: Node) -> void:
+	liveGoons += 1
+	newGoon.tree_exiting.connect(func(): liveGoons -= 1)
 
 # Called when the node enters the scene tree for the first time.
 func _ready():

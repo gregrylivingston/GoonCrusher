@@ -13,6 +13,8 @@ func _ready():
 	var newPosition = $Car.position
 	$Car.queue_free()
 	if is_instance_valid(Root.playerCar): Root.playerCar.queue_free()
+	if Root.selectedCar.is_empty(): #level launched directly (editor F6 or benchmark) - fall back to the saved car
+		Root.selectedCar = SaveManager.playerData.cars[SaveManager.playerData.selectedCar]
 	Root.playerCar = load(Root.selectedCar.scene).instantiate()
 	Root.playerCar.position = newPosition
 	add_child(Root.playerCar)
