@@ -32,9 +32,23 @@ func _ready():
 		scale = Vector2(1.6,1.9)
 		speed *= 4.0
 		attackDamage *= 2
+		if Settings.get_value("access/giant_style") == 2: addGroundRing()
 	else: 
 		$Walker.set_material(null)
 
+
+const RING_TEXTURE = preload("res://texture/fx/circle_05.png")
+
+#Giant Marker Style "Tint + ground ring": a ring in the marker colour under the giant
+func addGroundRing() -> void:
+	var ring = Sprite2D.new()
+	ring.texture = RING_TEXTURE
+	var tint: Color = Settings.GIANT_COLORS[Settings.get_value("access/giant_color")]
+	var peak = maxf(tint.r, maxf(tint.g, tint.b))
+	ring.modulate = Color(tint.r / peak, tint.g / peak, tint.b / peak, 0.7)
+	ring.z_index = -1
+	ring.scale = Vector2.ONE * 300.0 / RING_TEXTURE.get_width()
+	add_child(ring)
 
 func checkDestroyDistance():
 	if global_position.distance_to( Root.playerCar.global_position ) > 8000: queue_free()
@@ -138,12 +152,10 @@ func destroy():
 	$Walker.animation = "death"
 	get_tree().create_tween().tween_property($Walker , "modulate" , Color(1.0,1.0,1.0,0.3) , 20 )
 	z_index -= 1
-	$AudioStreamPlayer2D2.volume_db = randf_range(0.0,5.0) + SaveManager.getVolume("fx")
-	$AudioStreamPlayer2D2.pitch_scale = randf_range(0.95,1.05)
-	$AudioStreamPlayer2D2.play()
-	$AudioStreamPlayer2D.volume_db = randf_range(0.0,8.0) + SaveManager.getVolume("fx")
-	$AudioStreamPlayer2D.pitch_scale = randf_range(0.95,1.05)
-	$AudioStreamPlayer2D.play()
+	#death sounds go through the shared, limited pool (Max Sound Effects); their own players
+	#are only used as data. Authored level is +10 dB over the pool's +3 dB.
+	Audio.play($AudioStreamPlayer2D2.stream, 7.0 + randf_range(0.0,5.0), randf_range(0.95,1.05))
+	Audio.play($AudioStreamPlayer2D.stream, 7.0 + randf_range(0.0,8.0), randf_range(0.95,1.05))
 	
 	if randi_range(0,200) + Root.playerCar.clover > 190:
 		await get_tree().create_timer(0.5).timeout

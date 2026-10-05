@@ -12,31 +12,16 @@ func _ready():
 
 
 func _on_area_2d_body_entered(body):
-	if body.get_class() == "CharacterBody2D":
+	if body is CharacterBody2D:
 		if body.has_method("getIsPlayer"):
-			$Area2D.queue_free()
 			sendReward(body)
 
 @export var awardSound: Array[AudioStreamMP3]
 
+#credits the reward at once; the fly-to-HUD icon that follows is only for show
 func sendReward(body, forShowOnly: bool = false):
-	set_material(null)
-	if not Root.levelRoot.isDaytime:
-		$PointLight2D.visible = true
-		$PointLight2D.texture = texture
-	Audio.queueRequest(awardSound)#$AudioStreamReward.play()
-	uiControlNode = get_tree().get_first_node_in_group(powerup+"ui")
-	startPosition = global_position
-	get_tree().create_tween().tween_method(flyToUi, 0.0, 1.0, 0.3)
-	await get_tree().create_timer(0.05).timeout
+	if has_node("Area2D"): $Area2D.queue_free() #can't be collected twice
+	Audio.queueRequest(awardSound)
 	body.reward(powerup , quantity, forShowOnly)
-	await get_tree().create_timer(0.25).timeout
-	visible = false
-	await get_tree().create_timer(2).timeout
+	RewardFlyers.flyPowerup(self)
 	queue_free()
-
-var uiControlNode
-var startPosition
-func flyToUi(lerpAmount):
-	var screen_coords = uiControlNode.get_viewport_transform() * uiControlNode.global_position
-	global_position = startPosition.lerp( get_viewport_transform().affine_inverse() * screen_coords , lerpAmount)

@@ -5,7 +5,6 @@
 [ext_resource type="Texture2D" uid="uid://w03tvhxtmrv4" path="res://texture/icon/icons8-coin-48 (1).png" id="2_pgcic"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_gyedc"]
-resource_local_to_scene = true
 shader = ExtResource("2_3dlwv")
 shader_parameter/shine_color = Color(100, 100, 0, 1)
 shader_parameter/shine_speed = 5.0

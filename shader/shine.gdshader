@@ -1,5 +1,8 @@
 shader_type canvas_item;
 
+global uniform int gc_pickup_fx;   // 0 Simple: ring-sampled outline, no shine. 1 Full: as authored.
+global uniform float gc_motion;    // 0 = Reduce Motion (no moving shine)
+
 //these three var are shine effect.  Everything else is outline.
 uniform vec4 shine_color : source_color = vec4(1.0);
 uniform float shine_speed : hint_range(0.0, 10.0, 0.1) = 1.0;
@@ -45,6 +48,24 @@ bool hasContraryNeighbour(vec2 uv, vec2 texture_pixel_size, sampler2D texture) {
 	return false;
 }
 
+// Simple outline: two fixed rings of samples at the full and half outline width instead of every
+// texel inside the diamond (24 taps instead of up to 61). The outline keeps its width.
+bool hasContraryNeighbourFast(vec2 uv, vec2 texture_pixel_size, sampler2D texture) {
+	for (int k = 0; k < 16; k++) {
+		float a = float(k) * 0.39269908; // TAU / 16
+		vec2 dir = vec2(cos(a), sin(a));
+		float r = width / (abs(dir.x) + abs(dir.y)); // on the diamond's edge, matching pattern 0
+		for (int ring = 0; ring < 2; ring++) {
+			if (ring == 1 && (k & 1) == 1) continue;
+			vec2 xy = uv + texture_pixel_size * dir * (ring == 0 ? r : r * 0.5);
+			if ((xy != clamp(xy, vec2(0.0), vec2(1.0)) || textureLod(texture, xy, 0.0).a <= 0.0) == inside) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
 void fragment() {
 	vec2 uv = UV;
 	
@@ -62,13 +83,16 @@ void fragment() {
 		COLOR = texture(TEXTURE, uv);
 	}
 	
-	if ((COLOR.a > 0.0) == inside && hasContraryNeighbour(uv, TEXTURE_PIXEL_SIZE, TEXTURE)) {
+	bool edge = (COLOR.a > 0.0) == inside && (gc_pickup_fx == 0 ? hasContraryNeighbourFast(uv, TEXTURE_PIXEL_SIZE, TEXTURE) : hasContraryNeighbour(uv, TEXTURE_PIXEL_SIZE, TEXTURE));
+	if (edge) {
 		COLOR.rgb = inside ? mix(COLOR.rgb, color.rgb, color.a) : color.rgb;
 		COLOR.a += (1.0 - COLOR.a) * color.a;
 	}
 
 	//this part adds the shine effects.  The code above is all outline	
-	float shine = step(1.0 - shine_size * 0.5, 0.5 + 0.5 * sin(UV.x - UV.y + TIME * shine_speed));
-	COLOR.rgb = mix(COLOR.rgb, shine_color.rgb, shine * shine_color.a ) ;
+	if (gc_pickup_fx != 0 && gc_motion >= 0.5) {
+		float shine = step(1.0 - shine_size * 0.5, 0.5 + 0.5 * sin(UV.x - UV.y + TIME * shine_speed));
+		COLOR.rgb = mix(COLOR.rgb, shine_color.rgb, shine * shine_color.a ) ;
+	}
   	
 }

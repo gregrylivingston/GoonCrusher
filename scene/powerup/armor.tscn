@@ -5,7 +5,6 @@
 [ext_resource type="Texture2D" uid="uid://ckvii7iuglgha" path="res://texture/icon/shield.png" id="2_wo6b0"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_kppdl"]
-resource_local_to_scene = true
 shader = ExtResource("2_ibqvg")
 shader_parameter/shine_color = Color(100, 100, 0, 1)
 shader_parameter/shine_speed = 5.0

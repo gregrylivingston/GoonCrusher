@@ -1,17 +1,18 @@
 extends Powerup
 
-var coinScene = preload("res://scene/powerup/coin.tscn")
+const MIN_COINS = 15
+const MAX_COINS = 100
 
+#all coins are credited at once; the coins that fly to the HUD afterwards are only for show
 func sendReward(body, forShowOnly: bool = false):
-	var coinsToReward = randi_range( 15 , 100 )
+	if has_node("Area2D"): $Area2D.queue_free()
 	visible = false
+	var coinsToReward = randi_range( MIN_COINS , MAX_COINS )
+	body.reward("coin", coinsToReward * RewardFlyers.infoFor(Root.upgrade.COIN).get("quantity", 1), forShowOnly)
+	body.playPurseRewardAudio()
 	for i in coinsToReward:
-		var newCoin = coinScene.instantiate()
-		newCoin.global_position = Root.playerCar.global_position + Vector2( randi_range(-100,100) ,randi_range(-100,100) )
-		Root.levelRoot.add_child(newCoin)
-		newCoin.process_mode = Node.PROCESS_MODE_ALWAYS
-		newCoin.sendReward(body, forShowOnly)
-		await get_tree().process_frame
-		await get_tree().process_frame
-	body.playPurseRewardAudio()	
+		if not is_instance_valid(Root.playerCar): break
+		RewardFlyers.flyUpgrade(Root.upgrade.COIN, Root.playerCar.global_position + Vector2( randi_range(-100,100) ,randi_range(-100,100) ))
+		await get_tree().physics_frame
+		await get_tree().physics_frame
 	queue_free()

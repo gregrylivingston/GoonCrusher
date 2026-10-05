@@ -1,10 +1,20 @@
 extends CanvasLayer
 
 
-# Called when the node enters the scene tree for the first time.
+#Slot Celebration setting: Minimal = a dim fade, Reduced = about 150 large icons,
+#Full = the 40 px icon wall as designed. Sized from the logical 1600x900 rect, so a 4K
+#screen builds the same number of icons as a 900p one.
+const CELL_SIZES = [0, 100, 40]
+var cell: int = 40
+
 func _ready():
-	var columns = get_viewport().size.x / 40
-	var rows = get_viewport().size.y / 40
+	var level = Settings.celebration_level()
+	if level == 0:
+		dimFade()
+		return
+	cell = CELL_SIZES[level]
+	var columns = int(get_viewport().get_visible_rect().size.x / cell)
+	var rows = int(get_viewport().get_visible_rect().size.y / cell)
 	var picker = randi_range(0,2)
 	if picker == 0:fillFromTop(columns, rows)
 	elif picker == 1: fillFromBottom(columns , rows)
@@ -12,23 +22,32 @@ func _ready():
 
 var sizeIncreaser = 5
 
+func dimFade() -> void:
+	var dim = ColorRect.new()
+	dim.color = Color(0, 0, 0, 0)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(dim)
+	create_tween().tween_property(dim, "color:a", 0.55, 0.4)
+
+#one row or column per physics tick, independent of frame rate
 func fillFromTop(columns , rows):
 	for y in rows + sizeIncreaser:
 		for x in columns + sizeIncreaser:
-			createIcon( Vector2( ( x-2) * 40 , (y-2) * 40 - 20) )
-		await get_tree().process_frame
+			createIcon( Vector2( ( x-2) * cell , (y-2) * cell - cell / 2) )
+		await get_tree().physics_frame
 
 func fillFromBottom(columns, rows):
 	for y in rows + sizeIncreaser:
 		for x in columns + sizeIncreaser:
-			createIcon( Vector2( (columns-x) * 40 , (rows-y) * 40 - 20) )
-		await get_tree().process_frame
+			createIcon( Vector2( (columns-x) * cell , (rows-y) * cell - cell / 2) )
+		await get_tree().physics_frame
 
 func fillFromLeft(columns , rows):
 	for x in columns + sizeIncreaser:
 		for y in rows + sizeIncreaser:
-			createIcon( Vector2( (x-2) * 40 , (y-2) * 40 - 20) )
-		await get_tree().process_frame
+			createIcon( Vector2( (x-2) * cell , (y-2) * cell - cell / 2) )
+		await get_tree().physics_frame
 
 
 	
@@ -39,11 +58,11 @@ func createIcon( screenPosition: Vector2):
 	newIcon.type = slotContents[myFlavor].type
 	newIcon.texture =  slotContents[myFlavor].icon 
 	newIcon.position = screenPosition
+	if cell != 40: newIcon.scale = Vector2.ONE * cell / 40.0
 	add_child(newIcon)
 
 
 func destory():
-	for i in get_children():i.queue_free()
 	queue_free()
 	
 	

@@ -3,6 +3,8 @@
 
 shader_type canvas_item;
 
+global uniform float gc_motion; // 0 = Reduce Motion: the rainbow holds still
+
 
 uniform float strength: hint_range(0., 1.) = 1.0;
 uniform float speed: hint_range(0., 10.) = 0.15;
@@ -10,7 +12,7 @@ uniform float angle: hint_range(0., 360.) = 125.;
 
 void fragment() {
 	float hue = UV.x * cos(radians(angle)) - UV.y * sin(radians(angle));
-	hue = fract(hue + fract(TIME  * speed));
+	hue = fract(hue + fract(TIME  * speed * gc_motion));
 	float x = 1. - abs(mod(hue / (1./ 6.), 2.) - 1.);
 	vec3 rainbow;
 	if(hue < 1./6.){

@@ -6,7 +6,6 @@
 [ext_resource type="Script" path="res://scene/powerup/purse.gd" id="3_aqf17"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_u1af4"]
-resource_local_to_scene = true
 shader = ExtResource("2_kfenv")
 shader_parameter/shine_color = Color(100, 100, 0, 1)
 shader_parameter/shine_speed = 5.0
