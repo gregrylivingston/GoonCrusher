@@ -1,14 +1,9 @@
 extends Node2D
 
 
-# Called when the node enters the scene tree for the first time.
 func _ready():
-	pass # Replace with function body.
-
-
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta):
-	pass
+	#lamps start off during the day
+	setNighttime(is_instance_valid(Root.levelRoot) && not Root.levelRoot.isDaytime)
 
 func setNighttime(isNighttime: bool):
 	if isNighttime:	$Polygon2D/Lights.visible = true

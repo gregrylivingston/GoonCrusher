@@ -1,4 +1,4 @@
-[gd_scene load_steps=35 format=3 uid="uid://dbkp41oxg03o6"]
+[gd_scene format=3 uid="uid://dbkp41oxg03o6"]
 
 [ext_resource type="Script" path="res://lib/overhead_car_2d/overhead_car_body_2d.gd" id="1_ibwir"]
 [ext_resource type="Texture2D" uid="uid://dthtmohgw8u1f" path="res://scene/car/audi/Audi.png" id="2_33x0l"]
@@ -16,6 +16,7 @@
 [ext_resource type="Material" uid="uid://d4nw1uchte7mv" path="res://scene/player/menu/main/3dText_Common.tres" id="15_8ryrj"]
 [ext_resource type="Theme" uid="uid://co40pijjc7hbw" path="res://style/roadRogue.tres" id="15_oqhda"]
 [ext_resource type="Texture2D" uid="uid://dwf10tykle8ow" path="res://texture/fx/circle_05.png" id="17_csael"]
+[ext_resource type="Texture2D" path="res://texture/fx/headlight_cone.png" id="gc_cone"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_cdhyb"]
 atlas = ExtResource("6_s186q")
@@ -219,7 +220,6 @@ energy = 0.8
 [node name="taillamps" type="Node2D" parent="headlamps"]
 
 [node name="tailLamp3" type="PointLight2D" parent="headlamps/taillamps"]
-modulate = Color(100, 100, 100, 0.784314)
 z_index = -1
 position = Vector2(-107, -32)
 rotation = 1.5708
@@ -231,7 +231,6 @@ texture = ExtResource("12_4vckk")
 offset = Vector2(0, 46.31)
 
 [node name="tailLamp4" type="PointLight2D" parent="headlamps/taillamps"]
-modulate = Color(100, 100, 100, 0.784314)
 z_index = -1
 position = Vector2(-107, 24)
 rotation = 1.5708
@@ -245,7 +244,6 @@ offset = Vector2(0, 46.31)
 [node name="headlights" type="Node2D" parent="headlamps"]
 
 [node name="headlamp1" type="PointLight2D" parent="headlamps/headlights"]
-modulate = Color(100, 100, 100, 0.784314)
 z_index = -1
 position = Vector2(120, -32)
 rotation = -1.5708
@@ -258,7 +256,6 @@ texture = ExtResource("12_4vckk")
 offset = Vector2(0, 49.465)
 
 [node name="headlamp2" type="PointLight2D" parent="headlamps/headlights"]
-modulate = Color(100, 100, 100, 0.784314)
 z_index = -1
 position = Vector2(120, 32)
 rotation = -1.5708
@@ -271,7 +268,6 @@ texture = ExtResource("12_4vckk")
 offset = Vector2(0, 49.465)
 
 [node name="headlamp3" type="PointLight2D" parent="headlamps/headlights"]
-modulate = Color(100, 100, 100, 0.392157)
 z_index = -1
 position = Vector2(120, -32)
 rotation = -1.5708
@@ -284,7 +280,6 @@ texture = ExtResource("12_4vckk")
 offset = Vector2(0, 49.465)
 
 [node name="headlamp4" type="PointLight2D" parent="headlamps/headlights"]
-modulate = Color(100, 100, 100, 0.392157)
 z_index = -1
 position = Vector2(120, 32)
 rotation = -1.5708
@@ -297,7 +292,6 @@ texture = ExtResource("12_4vckk")
 offset = Vector2(0, 49.465)
 
 [node name="headlamp5" type="PointLight2D" parent="headlamps/headlights"]
-modulate = Color(100, 100, 100, 0.392157)
 z_index = -1
 position = Vector2(39.576, 32)
 rotation = -1.5708
@@ -308,6 +302,17 @@ shadow_enabled = true
 shadow_color = Color(0, 0, 0, 0.0980392)
 texture = ExtResource("12_4vckk")
 offset = Vector2(0, 50.525)
+
+[node name="simpleCone" type="PointLight2D" parent="headlamps/headlights"]
+enabled = false
+position = Vector2(120, 0)
+color = Color(1, 1, 1, 0.47451)
+energy = 2.0628
+shadow_enabled = true
+shadow_color = Color(0, 0, 0, 0.0980392)
+texture = ExtResource("gc_cone")
+offset = Vector2(2209.6, 32)
+texture_scale = 26.6667
 
 [node name="carBodyArea" type="StaticBody2D" parent="."]
 collision_layer = 2
