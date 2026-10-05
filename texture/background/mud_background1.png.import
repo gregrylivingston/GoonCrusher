@@ -3,20 +3,21 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dqww847sbnflx"
-path="res://.godot/imported/mud_background1.png-0dd0d6d2087737063c845e37366cf545.ctex"
+path.bptc="res://.godot/imported/mud_background1.png-0dd0d6d2087737063c845e37366cf545.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://texture/background/mud_background1.png"
-dest_files=["res://.godot/imported/mud_background1.png-0dd0d6d2087737063c845e37366cf545.ctex"]
+dest_files=["res://.godot/imported/mud_background1.png-0dd0d6d2087737063c845e37366cf545.bptc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
