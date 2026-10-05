@@ -15,6 +15,11 @@ func _ready():
 var summaryTimer:float = -2.0
 var summaryComplete: bool = false
 var summaryTimerLength: float = 0.5
+const INPUT_DELAY_MSEC = 500 #presses are ignored this long after the summary opens
+const PRESS_ACTIONS = ["ui_accept", "ui_select", "ui_cancel", "Accelerate", "Brake"] #polled too, in case events don't reach this node
+var openedAtMsec := Time.get_ticks_msec()
+var continued := false
+var freshPress := false
 
 func _process(delta):
 	if isGameSummary && not summaryComplete:
@@ -24,12 +29,28 @@ func _process(delta):
 				summaryTimer = 0.0
 				$AudioStreamPlayer2_lowImpact.play()
 			else: summaryComplete = true
-	if Input.is_anything_pressed():
-		if not summaryComplete:
-			if summaryTimerLength != 0.1: 
-				summaryTimerLength = 0.1
-				summaryTimer = 1.0
-		else: _on_continue_pressed()
+	for action in PRESS_ACTIONS:
+		if InputMap.has_action(action) && Input.is_action_just_pressed(action): freshPress = true
+	if freshPress:
+		freshPress = false
+		if Time.get_ticks_msec() - openedAtMsec >= INPUT_DELAY_MSEC: onFreshPress()
+
+func _input(event):
+	if isFreshPress(event): freshPress = true
+
+#only a fresh press counts (not a key still held from driving, not key repeat), and only after
+#INPUT_DELAY_MSEC: the first one speeds the reveal up, one after the reveal continues
+func onFreshPress():
+	if not summaryComplete:
+		if summaryTimerLength != 0.1:
+			summaryTimerLength = 0.1
+			summaryTimer = 1.0
+	else: _on_continue_pressed()
+
+static func isFreshPress(event: InputEvent) -> bool:
+	if event is InputEventKey: return event.is_pressed() && not event.is_echo()
+	if event is InputEventMouseButton: return event.is_pressed() && (event as InputEventMouseButton).button_index <= MOUSE_BUTTON_MIDDLE #not the wheel
+	return event is InputEventJoypadButton && event.is_pressed()
 		
 func advanceSummary():
 	for i in $Panel/Panel2/VBoxContainer.get_children():
@@ -46,6 +67,11 @@ func buildGameSummary():
 
 	var reasonDict = {
 		Root.endCondition.SUCCESS:["Level Complete"],
+		Root.endCondition.ABANDONED:[
+			"Run Abandoned. Goons Unimpressed.",
+			"Bailed Out. The Goons Saw Everything.",
+			"Abandoned. Coins Kept, Pride Lost.",
+		],
 		Root.endCondition.NOGAS:[
 			"Empty tank. Full stop. Gooned.",
 			"Gasless? Game over, pal.",
@@ -87,7 +113,7 @@ func buildGameSummary():
 	%wasSuccessful.self_modulate.a = 1.0
 	$Panel/Panel2.self_modulate.a = 0.0
 	Root.playerRoot.visible = false
-	if levelCompleted:
+	if levelCompleted && reason != Root.endCondition.ABANDONED:
 		SaveManager.currentLevelPassed()
 	else:
 		$AudioStreamPlayer_highImpact.play()			
@@ -108,10 +134,11 @@ func buildGameSummary():
 	
 	$Panel/Panel2/VBoxContainer/HBoxContainer7/time.text = str( get_tree().get_first_node_in_group("runTimer").text )
 	
-	var coin = Root.playerCar.coin * Root.playerCar.star
+	var coin = Root.computePayout(Root.playerCar.coin, Root.playerCar.star)
 	if coin > carStats.records.coin: 
 		carStats.records.coin = coin
 	$Panel/Panel2/VBoxContainer/HBoxContainer2/coinsCollected.text = str(Root.playerCar.coin)
+	addPaidRow(Root.playerCar.coin, Root.playerCar.star, coin)
 	
 	var powerups = Root.playerCar.powerupsCollected
 	if powerups > carStats.records.powerups: 
@@ -128,9 +155,13 @@ func buildGameSummary():
 		carStats.records.slotMachines = slotMachines
 
 	$Panel/Panel2/VBoxContainer/HBoxContainer8/slotMachines.text = str(slotMachines)
+	#pay now and save, so quitting from the summary can't lose the run; the menu only animates it
+	SaveManager.addCoins(coin)
+	SaveManager.addGems(gem)
 	Root.earnedCoins = coin
 	Root.earnedGems = gem
 	SaveManager.save_character_data()
+	SaveManager.flush()
 	var advice = Settings.take_advisor_message()
 	if advice != "":
 		var label = Label.new()
@@ -143,6 +174,16 @@ func buildGameSummary():
 	
 
 
+#"Paid  120 x 2 = 240" under the coin row: what the run actually pays (Root.computePayout)
+func addPaidRow(coin: int, star: int, paid: int) -> void:
+	var coinRow = $Panel/Panel2/VBoxContainer/HBoxContainer2
+	var paidRow = coinRow.duplicate()
+	paidRow.name = "paidRow"
+	paidRow.visible = false #revealed in turn by advanceSummary
+	paidRow.get_node("Label").text = "Paid (Coins x Stars)"
+	paidRow.get_node("coinsCollected").text = "%d x %d = %d" % [coin, maxi(1, star), paid]
+	coinRow.add_sibling(paidRow)
+
 func buildAchievementSummary():
 	for i in $Panel/Panel2/VBoxContainer.get_children():i.visible = true
 	
@@ -151,6 +192,7 @@ func buildAchievementSummary():
 	$Panel/Panel2/VBoxContainer/HBoxContainer3/topSpeed.text = Settings.speed_text(carStats.records.speed * 10.0)
 	$Panel/Panel2/VBoxContainer/HBoxContainer7/time.visible = false
 	
+	$Panel/Panel2/VBoxContainer/HBoxContainer2/Label.text = "Best Payout" #records.coin holds the best paid amount
 	$Panel/Panel2/VBoxContainer/HBoxContainer2/coinsCollected.text = str(carStats.records.coin)
 	$Panel/Panel2/VBoxContainer/HBoxContainer4/powerups.text = str( carStats.records.powerups )
 	$Panel/Panel2/VBoxContainer/HBoxContainer5/gems.text = str(carStats.records.gem)
@@ -161,6 +203,8 @@ func buildAchievementSummary():
 
 
 func _on_continue_pressed():
+	if continued: return
+	continued = true
 	queue_free()
 	if isGameSummary:
 		get_tree().paused = false

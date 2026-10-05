@@ -7,9 +7,11 @@ var myMode: mode = mode.MOVE
 @export var prepareAttackDistance: int = 300
 @export var attackSpeedMultiplier: float = 3.0
 @export var attackDamage: float = 1
+#relative drop weights. Before the luck fix the coin weight was effectively the luck stat (about 1), so fuel
+#was about 28% of drops; COIN 30 keeps fuel near 20% and health near 10% while coins still drop often.
 @export var powerupDropDict: Dictionary = {
 	Root.upgrade.GEM:4,
-	Root.upgrade.COIN:100,
+	Root.upgrade.COIN:30,
 	Root.upgrade.PURSE:4,
 	Root.upgrade.SLOTMACHINE:1,
 	Root.upgrade.HEALTH:10,

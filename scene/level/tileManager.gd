@@ -65,6 +65,11 @@ var loadQueue: Array[Vector2i] = []
 var queueTimer: float = 0.0
 var mapReady: bool = false
 
+#emitted once at the end of _ready, when the map is built and every station is placed and in the
+#tree. Anything that reads Root.station waits for it (or checks isWorldReady first).
+signal world_ready
+var isWorldReady := false
+
 const KEEP_RADIUS = 2       #chunks further than this (Chebyshev) from the player are freed
 const PREFETCH_SECONDS = 1.0
 
@@ -82,22 +87,19 @@ func _ready():
 	mapReady = true
 	updateChunks()
 
-	match SaveManager.playerData.gameMode:
-		Root.gameModes.SPRINT:
-			var myStation = load("res://scene/level/station.tscn").instantiate()
-			Root.station = myStation
-			pinChunk(Vector2i( randi_range( Root.levelRoot.seconds * 0.12 , Root.levelRoot.seconds * 0.16),  randi_range(Root.levelRoot.seconds * 0.07, Root.levelRoot.seconds * - 0.07) ) , myStation)
-		Root.gameModes.MARATHON:
-			var myStation = load("res://scene/level/station.tscn").instantiate()
-			Root.station = myStation
-			pinChunk(Vector2i( randi_range( Root.levelRoot.seconds * 0.7 , Root.levelRoot.seconds * 0.72),  randi_range( Root.levelRoot.seconds * 0.2 , Root.levelRoot.seconds * -0.2 ) ), myStation)
+	#Root.levelRoot is set by now: LevelRoot._ready ran while this waited for the map and the frame above
+	placeStations()
 
+	#clear the start chunk's rocks, but never a pinned objective (Defense's station is at the start)
 	if loadedObjects.has(playerChunk) && not pinnedChunks.has(playerChunk):
 		loadedObjects[playerChunk].queue_free()
 		loadedObjects.erase(playerChunk)
 
+	isWorldReady = true
+	world_ready.emit()
 
 func setupByGamemode() -> void:
+	Root.station = null #never point at a station left over from an earlier run
 	match SaveManager.playerData.gameMode:
 		Root.gameModes.GOONCRUSHER:setupNoStations()
 		Root.gameModes.GOONPOCALYPSE:setupNoStations()
@@ -105,11 +107,99 @@ func setupByGamemode() -> void:
 			loadChunk(Vector2i(0,0) , preload("res://scene/level/levelObjects/level_empty.tscn").instantiate())
 		Root.gameModes.MARATHON:
 			loadChunk(Vector2i(0,0) , preload("res://scene/level/levelObjects/level_empty.tscn").instantiate())
+		#DEFENSE: its station is placed with the others in placeStations
+
+#Every station goes through placeObjective (on land, inside the map) and is pinned.
+func placeStations() -> void:
+	var startChunk = startChunkOf()
+	var levelSeconds: float = Root.levelRoot.seconds
+	match SaveManager.playerData.gameMode:
+		Root.gameModes.SPRINT:
+			#by distance: SPRINT_DRIVE_FRACTION of the level's seconds at REFERENCE_SPEED. Level.onWorldReady
+			#then sets the clock from the real distance to where the station landed.
+			var offset: Vector2 = Level.sprintOffsetPx(levelSeconds, randf_range(-1.0, 1.0))
+			placeStation(startChunk + Vector2i(roundi(offset.x / tilesize.x), roundi(offset.y / tilesize.y)))
+		Root.gameModes.MARATHON:
+			#far away; placeObjective clamps it inside the map (Marathon is unfinished, T1-3)
+			placeStation(Vector2i( randi_range( levelSeconds * 0.7 , levelSeconds * 0.72),  randi_range( levelSeconds * 0.2 , levelSeconds * -0.2 ) ))
 		Root.gameModes.DEFENSE:
-			var myStation = load("res://scene/level/station.tscn").instantiate()
-			Root.station = myStation
-			pinChunk(Vector2i( randi_range(0, 0), 0 ) , myStation)
-	
+			placeStation(startChunk)
+
+func placeStation(desiredChunk: Vector2i) -> void:
+	var myStation = load("res://scene/level/station.tscn").instantiate()
+	Root.station = myStation
+	pinChunk(placeObjective(desiredChunk), myStation)
+
+func startChunkOf() -> Vector2i:
+	return chunkOf(Root.levelRoot.startPosition) if is_instance_valid(Root.levelRoot) else Vector2i.ZERO
+
+const OBJECTIVE_MAX_CHUNKS = 100 #objectives stay within this many chunks of the map centre, on each axis
+
+#The chunk an objective should go in: desiredChunk clamped to the map, then the nearest land chunk
+#(not WATER or HILLS), preferring one whose neighbours are land too. Sprint and Marathon never get
+#the start chunk.
+func placeObjective(desiredChunk: Vector2i) -> Vector2i:
+	var generator = $landscapeGenerator
+	var forbidden = Vector2i(-99999, -99999)
+	if SaveManager.playerData.gameMode in [Root.gameModes.SPRINT, Root.gameModes.MARATHON]: forbidden = startChunkOf()
+	return findObjectiveChunk(generator.terrainMap, Vector2i(generator.inputSizeX, generator.inputSizeY), desiredChunk, forbidden, OBJECTIVE_MAX_CHUNKS)
+
+const OBJECTIVE_NEIGHBOUR_SEARCH = 3 #rings searched past the first land chunk for one with land neighbours
+
+#Pure: deterministic for a given map. Chunk (0,0) is map cell (size / 2). Searches square rings
+#outward from the clamped chunk; in each ring the closest candidate wins (ties in scan order).
+static func findObjectiveChunk(terrain: PackedByteArray, mapSize: Vector2i, desiredChunk: Vector2i, forbidden: Vector2i, maxChunks: int) -> Vector2i:
+	var limit = Vector2i(mini(maxChunks, mapSize.x / 2 - 1), mini(maxChunks, mapSize.y / 2 - 1))
+	var centre = desiredChunk.clamp(-limit, limit)
+	var fallback = Vector2i(-99999, -99999) #the closest land chunk, used if none nearby has land neighbours
+	var fallbackRing = -1
+	for ring in range(0, 2 * maxi(limit.x, limit.y) + 1):
+		if fallbackRing >= 0 && ring > fallbackRing + OBJECTIVE_NEIGHBOUR_SEARCH: return fallback
+		var best = Vector2i(-99999, -99999)
+		var bestDistance = INF
+		var bestPlain = Vector2i(-99999, -99999)
+		var bestPlainDistance = INF
+		for chunk in ringChunks(centre, ring):
+			if chunk == forbidden || absi(chunk.x) > limit.x || absi(chunk.y) > limit.y: continue
+			if not isLandChunk(terrain, mapSize, chunk): continue
+			var distance = (chunk - centre).length_squared()
+			if distance < bestPlainDistance:
+				bestPlain = chunk
+				bestPlainDistance = distance
+			if distance < bestDistance && hasLandNeighbours(terrain, mapSize, chunk):
+				best = chunk
+				bestDistance = distance
+		if bestDistance < INF: return best
+		if bestPlainDistance < INF && fallbackRing < 0:
+			fallback = bestPlain
+			fallbackRing = ring
+	return fallback if fallbackRing >= 0 else centre
+
+#the chunks exactly `ring` steps (Chebyshev) from centre, in a fixed order
+static func ringChunks(centre: Vector2i, ring: int) -> Array[Vector2i]:
+	var chunks: Array[Vector2i] = []
+	if ring == 0:
+		chunks.push_back(centre)
+		return chunks
+	for x in range(-ring, ring + 1):
+		chunks.push_back(centre + Vector2i(x, -ring))
+		chunks.push_back(centre + Vector2i(x, ring))
+	for y in range(-ring + 1, ring):
+		chunks.push_back(centre + Vector2i(-ring, y))
+		chunks.push_back(centre + Vector2i(ring, y))
+	return chunks
+
+static func isLandChunk(terrain: PackedByteArray, mapSize: Vector2i, chunk: Vector2i) -> bool:
+	var cell = chunk + mapSize / 2
+	if cell.x < 0 || cell.y < 0 || cell.x >= mapSize.x || cell.y >= mapSize.y || terrain.is_empty(): return false
+	var type = terrain[cell.y * mapSize.x + cell.x]
+	return type != Root.terrain.WATER && type != Root.terrain.HILLS
+
+static func hasLandNeighbours(terrain: PackedByteArray, mapSize: Vector2i, chunk: Vector2i) -> bool:
+	for step in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
+		if not isLandChunk(terrain, mapSize, chunk + step): return false
+	return true
+
 func setupNoStations():
 	Root.station = null
 	loadChunk(Vector2i(0,0) , preload("res://scene/level/levelObjects/level_empty.tscn").instantiate())
@@ -209,7 +299,8 @@ func loadChunk(chunk:Vector2i , myScene = null): #if an instantiated scene isn't
 		loadedLandscapes[chunk] = newLandscapeMap
 		add_child(newLandscapeMap)
 		
-		if tile.terrain != Root.terrain.WATER && tile.terrain != Root.terrain.HILLS:
+		#a scene that was passed in (a station) is always added, so it can never be left out of the tree
+		if myScene != null || (tile.terrain != Root.terrain.WATER && tile.terrain != Root.terrain.HILLS):
 			var newObjectTile = createNewTileObject(targetPosition, chunkRng(chunk), myScene)
 			loadedObjects[chunk] = newObjectTile
 			add_child(newObjectTile)

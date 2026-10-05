@@ -11,11 +11,13 @@ func _ready():
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	Root.mainMenu = self
 	Settings.set_menu_context(true)
+	$VersionTracker.text = Root.versionText()
 	selectCar(SaveManager.playerData.cars[SaveManager.playerData.selectedCar])
 	if Root.isRunActive:
 		Root.isRunActive = false
-		SaveManager.addCoins( Root.earnedCoins )
-		SaveManager.addGems( Root.earnedGems )
+		#gameSummary already credited and saved the payout; the menu only counts the display up
+		var coin = SaveManager.playerData.coin
+		if Root.earnedCoins > 0: animateCoins(coin - Root.earnedCoins, coin)
 		Root.earnedCoins = 0
 		Root.earnedGems = 0
 	await get_tree().process_frame
@@ -69,7 +71,7 @@ func prefetchNeighbourCars() -> void:
 	
 func disableLockedCars(car) -> void:
 	var thisCar =  SaveManager.getCarByName(Root.carInfo.carId)
-	if SaveManager.playerData.selectedCar > 20:#set this to 2 for DEMO
+	if Root.IS_DEMO && SaveManager.playerData.selectedCar >= Root.DEMO_CAR_COUNT:
 		%levelSelect.visible = true
 		%levelSelect.disabled = true
 		%levelSelect.updateText( "NOT IN DEMO" )
@@ -126,13 +128,12 @@ func setupLevel(level):
 	%driverName2.text =  Root.carInfo.charName
 	%driverName.text = str(SaveManager.playerData.selectedLevel + 1) + ". " + level.name
 	
-	if level.unlocked || SaveManager.playerData.selectedLevel < 3:
+	if isLevelSelectable(SaveManager.playerData.selectedLevel):
 		%begin.updateText("Select Level")
 		%begin.disabled = false
 	else:
-		%begin.updateText("LOCKED")
+		%begin.updateText("NOT IN DEMO" if isDemoLockedLevel(SaveManager.playerData.selectedLevel) else "LOCKED")
 		%begin.disabled = true
-		if SaveManager.playerData.selectedLevel >= 3:%begin.updateText("NOT IN DEMO")
 	
 	setupGameModeStars(level)
 	for i in get_tree().get_nodes_in_group("gameModeStar"):get_tree().create_tween().tween_property(i , "custom_minimum_size", Vector2(48,48), menuTweenSpeed)
@@ -141,6 +142,11 @@ func setupLevel(level):
 	$backgroundTexture.texture = load(level.image)
 
 
+func isDemoLockedLevel(index: int) -> bool:
+	return Root.IS_DEMO && index >= Root.DEMO_LEVEL_COUNT
+
+func isLevelSelectable(index: int) -> bool:
+	return SaveManager.playerData.levels[index].unlocked && not isDemoLockedLevel(index)
 
 func _on_level_select_pressed():
 	match menuMode:
@@ -174,7 +180,7 @@ func goToMenuMode(myMenuMode: menuModes): #true if adancing to level select
 	
 	match menuMode:
 		menuModes.RIDER:selectCar(SaveManager.getCarByName(Root.carInfo.carId))
-		menuModes.GAMEMODE:selectGameMode(SaveManager.getGameMode())
+		menuModes.GAMEMODE:selectGameMode(SaveManager.setGameMode(defaultGameMode()))
 		menuModes.LEVEL:
 			$VBoxContainer2/levelNameContainer.visible = false
 			$gameModeInfo.visible = false
@@ -193,80 +199,70 @@ var Mat_Star_Beat = load("res://shader/mat_star_yellow.tres")
 var Mat_Star_Locked = load("res://shader/Mat_Star_Grey.tres")
 var Mat_Star_Unlocked = load("res://shader/Mat_Star_White.tres") 
 
-func setupGameModeStars(level):
-	var gamemodeBeat = level.gamemodeBeat
-	var gamemode = SaveManager.playerData.gameMode
-	
-	if not level.unlocked:
-		for i in [$VBoxContainer2/starContainer/TextureRect, $VBoxContainer2/starContainer/TextureRect3, $VBoxContainer2/starContainer/TextureRect2, $VBoxContainer2/starContainer/TextureRect4, $VBoxContainer2/starContainer/TextureRect5]:i.material = Mat_Star_Locked
-	elif not gamemodeBeat[ Root.gameModes.GOONCRUSHER ]: #countdown hasn't been beaten...
-		$VBoxContainer2/starContainer/TextureRect.material = Mat_Star_Unlocked
-		for i in [$VBoxContainer2/starContainer/TextureRect3, $VBoxContainer2/starContainer/TextureRect2, $VBoxContainer2/starContainer/TextureRect4, $VBoxContainer2/starContainer/TextureRect5]:i.material = Mat_Star_Locked
-	else:
-		$VBoxContainer2/starContainer/TextureRect.material = Mat_Star_Beat
-		
-		if not gamemodeBeat[ Root.gameModes.SPRINT ]:
-			$VBoxContainer2/starContainer/TextureRect3.material = Mat_Star_Unlocked
-			for i in [$VBoxContainer2/starContainer/TextureRect2, $VBoxContainer2/starContainer/TextureRect4, $VBoxContainer2/starContainer/TextureRect5]:i.material = Mat_Star_Locked
-		else:
-			$VBoxContainer2/starContainer/TextureRect3.material = Mat_Star_Beat
-	
-			for i in [$VBoxContainer2/starContainer/TextureRect2, $VBoxContainer2/starContainer/TextureRect4, $VBoxContainer2/starContainer/TextureRect5]:i.material = Mat_Star_Locked
-			#for demo just lock everything else)
-			
-			##if both sprint and countdown have been beaten... unlock the other three....
-			#if gamemodeBeat[ Root.gameModes.DEFENSE ]:$VBoxContainer2/starContainer/TextureRect2.material = Mat_Star_Beat
-			#else: $VBoxContainer2/starContainer/TextureRect2.material = Mat_Star_Unlocked
-			#if gamemodeBeat[ Root.gameModes.MARATHON ]:$VBoxContainer2/starContainer/TextureRect4.material = Mat_Star_Beat
-			#else: $VBoxContainer2/starContainer/TextureRect4.material = Mat_Star_Unlocked	
-			#$VBoxContainer2/starContainer/TextureRect5.material = Mat_Star_Unlocked
+#the five stars in scene order. Countdown's star is in group "COUNTDOWN", and TextureRect2 is Marathon.
+@onready var modeStars = {
+	Root.gameModes.GOONCRUSHER: $VBoxContainer2/starContainer/TextureRect,
+	Root.gameModes.SPRINT: $VBoxContainer2/starContainer/TextureRect3,
+	Root.gameModes.MARATHON: $VBoxContainer2/starContainer/TextureRect2,
+	Root.gameModes.DEFENSE: $VBoxContainer2/starContainer/TextureRect4,
+	Root.gameModes.GOONPOCALYPSE: $VBoxContainer2/starContainer/TextureRect5,
+}
+
+#the selected level as the mode rules see it: a level the demo doesn't offer counts as locked
+func selectedLevelForModes() -> Dictionary:
+	var index = SaveManager.playerData.selectedLevel
+	var level: Dictionary = SaveManager.playerData.levels[index]
+	if isDemoLockedLevel(index): return level.merged({"unlocked": false}, true)
+	return level
+
+#yellow when beaten, white when it can be started, grey when locked or not available yet
+func setupGameModeStars(_level = null):
+	var level = selectedLevelForModes()
+	for mode in modeStars:
+		var playable = Root.isModePlayable(level, mode)
+		if playable && level.gamemodeBeat.get(mode, false): modeStars[mode].material = Mat_Star_Beat
+		elif playable: modeStars[mode].material = Mat_Star_Unlocked
+		else: modeStars[mode].material = Mat_Star_Locked
 
 func setGameModeUnlocked():
-	%begin.updateText( "Select Game Mode" )
+	%begin.updateText( "Start" )
 	%begin.disabled = false
 	%unlockCondition.visible = false
 	%lock.visible = false
 
 func setGameModeLocked(reason: String):
 	%begin.disabled = true
-	%begin.updateText("Locked")
+	%begin.updateText("Coming Soon" if reason == "Coming Soon" else "Locked")
 	%unlockCondition.visible = true
 	%lock.visible = true
-	%unlockCondition.text = reason
+	%unlockCondition.text = " " + reason
+
+#the mode shown when the mode menu opens: the saved one if it can be started here, else Countdown
+func defaultGameMode() -> int:
+	var mode = SaveManager.getGameMode()
+	return mode if Root.isModePlayable(selectedLevelForModes(), mode) else Root.gameModes.GOONCRUSHER
 
 func selectGameMode(newGameMode):
-	var gamemodeBeat = SaveManager.playerData.levels[SaveManager.playerData.selectedLevel].gamemodeBeat
-	
-	if newGameMode == Root.gameModes.GOONCRUSHER: #countdown hasn't been beaten...
-		if SaveManager.playerData.levels[SaveManager.playerData.selectedLevel].unlocked: setGameModeUnlocked()
-		else:pass
-	elif newGameMode == Root.gameModes.SPRINT:
-		if gamemodeBeat[ Root.gameModes.GOONCRUSHER ]:setGameModeUnlocked()
-		else:setGameModeLocked(" Beat Countdown To Unlock")
-	elif gamemodeBeat[ Root.gameModes.SPRINT ]:
-		#setGameModeUnlocked()
-		setGameModeLocked(" Not Availabe In Demo")
-	else:
-		#setGameModeLocked(" Beat Sprint To Unlock")
-		setGameModeLocked(" Not Availabe In Demo")
-		
+	var level = selectedLevelForModes()
+	var reason = Root.modeLockReason(level, newGameMode)
+	if reason == "": setGameModeUnlocked()
+	else: setGameModeLocked(reason)
 
-	var gameModeString = (Root.gameModes.keys()[newGameMode])
+	var gameModeName = Root.gameModeDescription[newGameMode].name
 	$VBoxContainer2/levelNameContainer.visible = true
-	var selectedLevel =  SaveManager.playerData.levels[SaveManager.playerData.selectedLevel]
-	$VBoxContainer2/levelNameContainer/levelName.text = str(SaveManager.playerData.selectedLevel + 1) + ". " + selectedLevel.name
-	%driverName.text = gameModeString
+	$VBoxContainer2/levelNameContainer/levelName.text = str(SaveManager.playerData.selectedLevel + 1) + ". " + level.name
+	%driverName.text = gameModeName
 
-	$gameModeInfo/gameModeLabel.text = Root.gameModes.keys()[newGameMode]
+	$gameModeInfo/gameModeLabel.text = gameModeName
 	$gameModeInfo.visible = true
 	$gameModeInfo/gameModeDescription.text = Root.gameModeDescription[newGameMode].description
-	setupGameModeStars(SaveManager.playerData.levels[SaveManager.playerData.selectedLevel])
-	highlightAGameModeStar(gameModeString)
-	
-func highlightAGameModeStar(starNodeGroup: String):
+	setupGameModeStars()
+	highlightAGameModeStar(newGameMode)
+
+func highlightAGameModeStar(mode: int):
 	for i in get_tree().get_nodes_in_group("gameModeStar"):
 		get_tree().create_tween().tween_property(i , "custom_minimum_size", Vector2(48,48), menuTweenSpeed)
-	var myStar = get_tree().get_first_node_in_group(starNodeGroup)
+	var myStar = modeStars.get(mode)
 	if is_instance_valid(myStar):
 		get_tree().create_tween().tween_property(myStar , "custom_minimum_size",  Vector2(84,84), menuTweenSpeed)
 
@@ -287,10 +283,15 @@ func _on_back_button_pressed():
 		menuModes.GAMEMODE:goToMenuMode(menuModes.LEVEL)
 			
 		
+#RIDER -> LEVEL (levelSelect button) -> GAMEMODE (begin) -> start the run (begin). The checks read the
+#save, not the button state, so a press during a menu tween can't start a locked level or mode.
 func _on_begin_pressed():
 	match menuMode:
-		menuModes.GAMEMODE, menuModes.LEVEL: #GAMEMODE step is skipped for now
-			startLevel(SaveManager.playerData.levels[SaveManager.playerData.selectedLevel].scene)
+		menuModes.LEVEL:
+			if isLevelSelectable(SaveManager.playerData.selectedLevel): goToMenuMode(menuModes.GAMEMODE)
+		menuModes.GAMEMODE:
+			if Root.isModePlayable(selectedLevelForModes(), SaveManager.getGameMode()):
+				startLevel(SaveManager.playerData.levels[SaveManager.playerData.selectedLevel].scene)
 
 var loadingLevel := false
 #loads the level on a worker thread behind a "Loading" label instead of freezing the menu

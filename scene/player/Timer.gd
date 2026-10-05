@@ -5,42 +5,56 @@ extends Label
 func _ready():
 	showTimer()
 	Settings.changed.connect(onSettingChanged)
+	#Countdown (GOONCRUSHER), Sprint and Marathon count down; these two count up from 0
 	match SaveManager.playerData.gameMode:
 		Root.gameModes.DEFENSE:
 			timeIsCountingDown = 1
 		Root.gameModes.GOONPOCALYPSE:
 			timeIsCountingDown = 1
-		Root.gameModes.GOONCRUSHER:
-			timeIsCountingDown = 1
-		
+
 	await get_tree().process_frame
-	var clockSeconds = int(Root.levelRoot.seconds )%60
-	if clockSeconds < 10: clockSeconds = "0" + str(clockSeconds)
-	text = str(int(Root.levelRoot.seconds /60)) + " : " + str(clockSeconds)
+	showTime()
 	resetTimer()
 
 var daylength = 60
 var reset: bool = true  #prevents level from switching immediately, reset timer on daytimeaa
 var timeIsCountingDown = -1 #set to negative one for a countdown game
 
+var clockReady := false #the clock waits for the level's final starting time (Level.onWorldReady)
+
 var shownSecond = -1
 
+#called by Level.onWorldReady (group "runTimer") once the starting time is final
+func onClockReady() -> void:
+	clockReady = true
+	showTime()
+
 func _process(delta):
+	if not clockReady: return
 	Root.levelRoot.seconds += delta * timeIsCountingDown
-	if int(Root.levelRoot.seconds) != shownSecond:
-		shownSecond = int(Root.levelRoot.seconds)
-		var clockSeconds = shownSecond % 60
-		text = str(shownSecond / 60) + " : " + ("0" if clockSeconds < 10 else "") + str(clockSeconds)
-	
+	if timeIsCountingDown < 0 && Root.levelRoot.seconds <= 0.0:
+		#the clock ran out: Countdown is won, Sprint and Marathon are lost (Level.timeUpCondition)
+		Root.levelRoot.seconds = 0.0
+		showTime()
+		Root.levelRoot.timeRanOut()
+		return
+	showTime()
+
 	if int(Root.levelRoot.seconds )% daylength == 0:dayNightCycle()
-	
-	
-	#There are no longer any game modes counting down.  When there was this code would end the game.
-	#if Root.levelRoot.seconds <= 0.01:
-	#	match SaveManager.playerData.gameMode:
-	#		Root.gameModes.GOONCRUSHER:Root.levelRoot.endLevel(true , Root.endCondition.SUCCESS )
-	#		Root.gameModes.SPRINT:Root.levelRoot.endLevel(false , Root.endCondition.NOTIME )
-	#		Root.gameModes.MARATHON:Root.levelRoot.endLevel(false , Root.endCondition.NOTIME )
+
+#a countdown shows the whole seconds left, rounded up so 0:00 means time is up; a count-up shows
+#whole seconds elapsed. Never below 0:00.
+func showTime() -> void:
+	var displayed = ceili(Root.levelRoot.seconds) if timeIsCountingDown < 0 else int(Root.levelRoot.seconds)
+	displayed = maxi(displayed, 0)
+	if displayed != shownSecond:
+		shownSecond = displayed
+		text = formatClock(displayed)
+
+static func formatClock(totalSeconds: int) -> String:
+	totalSeconds = maxi(totalSeconds, 0)
+	var clockSeconds = totalSeconds % 60
+	return str(totalSeconds / 60) + " : " + ("0" if clockSeconds < 10 else "") + str(clockSeconds)
 
 	
 

@@ -49,9 +49,9 @@ myIcon = ExtResource("4_3l7yx")
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-tooltip_text = "Wheels
+tooltip_text = "Traction
 
-Improves braking, traction, and turning."
+Improves grip in turns, braking, and turning."
 myIcon = ExtResource("3_gtqp7")
 
 [node name="steering" parent="HBoxContainer" instance=ExtResource("1_awv6k")]
@@ -124,7 +124,7 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 tooltip_text = "Headlights
 
-Improves headlight visibility and resistance to damage."
+Widens and lengthens the headlight beam, so you see further at night."
 myIcon = ExtResource("11_5kyde")
 
 [node name="oil" parent="HBoxContainer3" instance=ExtResource("1_awv6k")]
@@ -142,9 +142,9 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-tooltip_text = "Luck
+tooltip_text = "Clover
 
-Increases the chance a goon drops a prize."
+Raises the chance a crushed goon drops a pickup."
 myIcon = ExtResource("11_3owda")
 
 [node name="luck" parent="HBoxContainer3" instance=ExtResource("1_awv6k")]
@@ -154,7 +154,7 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 tooltip_text = "Dice
 
-Improves the chances of getting high value prizes from goon drops."
+Raises the chance of high-value prizes from goon drops: purses, gems, and slot machines."
 myIcon = ExtResource("11_ns38o")
 
 [node name="HBoxContainer4" type="VBoxContainer" parent="."]

@@ -18,7 +18,7 @@ func updateStats():
 	%attributeIndicator_armor.setValue("Armor   " + str(Root.playerCar.armor))
 	%attributeIndicator_oil.setValue("Oil   " + str(Root.playerCar.oil))
 	%attributeIndicator_headlights.setValue("Lights   " + str(Root.playerCar.headlights))
-	%attributeIndicator_clover.setValue("Luck   " + str(Root.playerCar.clover))
+	%attributeIndicator_clover.setValue("Clover   " + str(Root.playerCar.clover))
 	%attributeIndicator_luck.setValue("Dice   " + str(Root.playerCar.luck))
 
 func _on_pause_button_pressed():

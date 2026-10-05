@@ -25,6 +25,14 @@ So Sprint, Marathon and Defense have probably never been played by anyone, and t
 
 ## Tier 0: Must-fix before release (broken, unwinnable, or progression-losing)
 
+> **Status (2026-10-05): all of Tier 0 is implemented on `perf-settings`.** Decisions taken where the items left a choice:
+> - **Sprint's clock (open question 3):** running out of time ends the run (NOTIME). The station is placed at most 32,000 px away (reference speed 450 px/s), and the clock is the actual distance ÷ 450 × a slack from 1.5 (Easy) to 1.1 (Northern Wastes).
+> - **Unlock chain:** Countdown → Sprint → Goonpocalypse. Marathon and Defense need Sprint, but are hidden as "Coming Soon" (T0-7). Beating any mode unlocks the next level.
+> - **Payouts:** a run pays coins × max(1, stars). Abandon pays like a death.
+> - **Upgrades:** cap of 20 levels per stat per car. The goon drop table's coin weight went from 100 to 30, so fuel and health drops stay about as common as in the demo after the luck fix.
+> - **Demo:** every demo gate is behind `Root.IS_DEMO`.
+> - **Not playtested yet:** Sprint distances, the new drop mix, and the handling and armor changes for all 9 cars.
+
 ### T0-1. Save progression between launches, and version the save
 *Merges C1 and P1.*
 - **Problem.**

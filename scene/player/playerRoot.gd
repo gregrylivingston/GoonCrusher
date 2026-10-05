@@ -6,6 +6,7 @@ extends CanvasLayer
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
+	$VersionTracker.text = Root.versionText()
 	setupHudScale()
 	if is_instance_valid(Root.playerCar):
 		updateStats()
@@ -25,13 +26,16 @@ var shownCounts = []
 
 func _process(delta):
 	if Input.is_action_just_pressed("ui_menu"): openPause()
+	if crushAwardPending && not get_tree().paused: #a goal reached while paused is granted on unpause
+		crushAwardPending = false
+		updateGoonsCrushed()
 	var counts = [Root.playerCar.coin, Root.playerCar.gem, Root.playerCar.star]
 	if counts != shownCounts: #strings are rebuilt only when a count changes
 		shownCounts = counts
 		%coins.text = str( Root.playerCar.coin )
 		%gem.text = str( Root.playerCar.gem )
 		%star.text = str(Root.playerCar.star)
-		%coinProjection.text = str(Root.playerCar.coin * Root.playerCar.star)
+		%coinProjection.text = str(Root.computePayout(Root.playerCar.coin, Root.playerCar.star))
 
 #the only way to pause a run: Esc / Start, the HUD button, or losing focus.
 #never opens over the slot machine, countdown or summary, which pause the tree themselves
@@ -71,12 +75,15 @@ func applyHudScale() -> void:
 var awardBase = 12
 var crushingAwardLevel = 0
 var nextCrushingAward = awardBase
+var crushAwardPending := false #a crush goal was reached while the tree was paused (e.g. a slot machine reward)
 @onready var crushProgressBar = %ProgressBar
 
 func updateGoonsCrushed():
 	%crushedGoons.text = str( clampi( int(nextCrushingAward) - Root.playerCar.currentGoonsCrushed , 0 , 9999999999999 ) )
 	crushProgressBar.value = Root.playerCar.currentGoonsCrushed
-	if Root.playerCar.currentGoonsCrushed >= nextCrushingAward && not Root.playerCar.isDestroyed && not get_tree().paused:
+	if Root.playerCar.currentGoonsCrushed >= nextCrushingAward && not Root.playerCar.isDestroyed && get_tree().paused:
+		crushAwardPending = true #the slot machine can't open over a paused tree; _process grants it on unpause
+	elif Root.playerCar.currentGoonsCrushed >= nextCrushingAward && not Root.playerCar.isDestroyed:
 		crushProgressBar.min_value = nextCrushingAward
 		crushingAwardLevel += 1
 		Root.playerCar.star += 1

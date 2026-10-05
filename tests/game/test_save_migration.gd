@@ -23,7 +23,10 @@ func oldSave() -> PlayerData:
 	data.levels = data.levels.slice(0, 4)
 	data.levels[3].unlocked = true
 	data.levels[1].gamemodeBeat[Root.gameModes.GOONCRUSHER] = true
+	for level in data.levels: level.gamemodeBeat.erase(Root.gameModes.GOONPOCALYPSE) #saves before version 2 had no key
+	data.levels[2].gamemodeBeat.erase(Root.gameModes.DEFENSE) #and a key missing for any other reason
 	data.selectedLevel = 40
+	data.gameMode = 99
 	return data
 
 func test_migrate_adds_and_updates_without_losing_progress():
@@ -40,7 +43,21 @@ func test_migrate_adds_and_updates_without_losing_progress():
 	assert_true(data.levels[3].unlocked, "unlocks are kept")
 	assert_true(data.levels[1].gamemodeBeat[Root.gameModes.GOONCRUSHER], "beaten modes are kept")
 	assert_eq(data.selectedLevel, data.levels.size() - 1, "out-of-range selection is clamped")
+	assert_between(data.gameMode, 0, Root.gameModes.size() - 1, "out-of-range mode is clamped")
+	for level in data.levels:
+		for mode in Root.gameModes.values():
+			assert_true(level.gamemodeBeat.has(mode), "%s gets a %s key" % [level.name, Root.gameModes.find_key(mode)])
+	assert_false(data.levels[0].gamemodeBeat[Root.gameModes.GOONPOCALYPSE], "filled keys are not beaten")
+	assert_false(data.levels[2].gamemodeBeat[Root.gameModes.DEFENSE])
 	assert_eq(data.saveVersion, SaveManager.SAVE_VERSION)
+
+func test_a_clamped_mode_alone_counts_as_a_change():
+	var data = PlayerData.new()
+	data.saveVersion = SaveManager.SAVE_VERSION
+	SaveManager.playerData = data
+	SaveManager.migrate()
+	data.gameMode = 99
+	assert_true(SaveManager.migrate(), "the clamped mode is saved")
 
 func test_migrate_is_idempotent():
 	SaveManager.playerData = oldSave()

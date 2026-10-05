@@ -6,6 +6,11 @@ extends Node
 #Options: --seconds=N, --preset=potato|low|medium|high, --set=gfx/lighting:0;gfx/smoke:1 (any
 #setting, not saved), --shot=5;30 (screenshots at those level seconds), --open-settings (S1 only),
 #--notext.
+#Game mode: --mode=gooncrusher|sprint|marathon|defense|goonpocalypse (default gooncrusher) sets the
+#scratch save's gameMode before the level loads. --level-seconds=N replaces the level's authored
+#seconds (Sprint derives its clock from them). Without --level-seconds the bench keeps a
+#counting-down clock from running out, so long benchmarks are not cut short by the Countdown win;
+#with it the run can end, and BENCH_RUN_ENDED is printed (the bench then stops driving).
 #Writes a per-frame CSV and a summary row to user://bench/. Saves are redirected to a scratch
 #copy, so a benchmark never changes player progress.
 
@@ -47,6 +52,10 @@ var longestLoadFrame: float = 0.0
 var label: String = "" #--tag=name, added to output file names
 var stuckTime: float = 0.0
 var recoverTime: float = 0.0
+var gameMode: int = Root.gameModes.GOONCRUSHER #--mode
+var levelSeconds: float = -1.0 #--level-seconds; -1 keeps the level's own
+var runEndReported := false
+var worldReported := false
 
 func _ready():
 	var args = parseArgs()
@@ -62,6 +71,14 @@ func _ready():
 		return
 	cfg = SCENARIOS[id]
 	seconds = float(args.get("seconds", cfg.seconds))
+	if args.has("mode"):
+		var modeName = str(args.mode).to_upper()
+		if not Root.gameModes.has(modeName):
+			push_error("Unknown bench mode " + str(args.mode))
+			get_tree().quit(1)
+			return
+		gameMode = Root.gameModes[modeName]
+	levelSeconds = float(args.get("level-seconds", -1.0))
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	DirAccess.make_dir_recursive_absolute("user://bench")
 	SaveManager.save_path = SCRATCH_SAVE
@@ -105,7 +122,7 @@ func startLevel() -> void:
 	var data = SaveManager.playerData
 	for i in data.cars.size():
 		if data.cars[i].name == cfg.get("car", "sedan"): data.selectedCar = i
-	data.gameMode = Root.gameModes.GOONCRUSHER
+	data.gameMode = gameMode
 	Root.selectedCar = data.cars[data.selectedCar]
 	seed(1337)
 	loadStart = Time.get_ticks_msec()
@@ -120,6 +137,8 @@ func onNodeAdded(node: Node) -> void:
 		node.material = null
 	if node is landscapeGenerator:
 		node.inputSeed = 1337
+	elif node is Level:
+		if levelSeconds >= 0.0: node.seconds = levelSeconds #before _ready, so every mode sees it
 	elif node is SpawnManager:
 		if cfg.has("spawnTimer"): node.spawnTimer = cfg.spawnTimer
 		if cfg.has("escalation"): node.escalationSpeed = cfg.escalation
@@ -128,6 +147,11 @@ func onNodeAdded(node: Node) -> void:
 
 func _physics_process(_delta):
 	if not started || cfg.level == "" || not is_instance_valid(Root.levelRoot) || not is_instance_valid(Root.playerCar): return
+	if Root.levelRoot.hasEnded:
+		#the summary continues on any key, so stop pressing them
+		for action in ["Accelerate", "Brake", "TurnLeft", "TurnRight"]:
+			if Input.is_action_pressed(action): Input.action_release(action)
+		return
 	var car = Root.playerCar
 	car.health = 100.0 #god mode
 	car.fuel = 100.0
@@ -217,6 +241,16 @@ func _process(delta):
 func levelEvents() -> void:
 	var timer = get_tree().get_first_node_in_group("runTimer")
 	if is_instance_valid(timer): timer.reset = true #hold the current time of day
+	if levelSeconds < 0.0 && is_instance_valid(timer) && timer.timeIsCountingDown < 0 && Root.levelRoot.clockReady:
+		Root.levelRoot.seconds = maxf(Root.levelRoot.seconds, 30.0) #a benchmark run never ends on time
+	if Root.levelRoot.clockReady && not worldReported:
+		worldReported = true
+		print("BENCH_WORLD mode=%s clock=%.1f station=%s start=%s" % [Root.gameModes.find_key(gameMode), Root.levelRoot.seconds,
+			str(Root.station.global_position) if is_instance_valid(Root.station) else "none", str(Root.levelRoot.startPosition)])
+	if Root.levelRoot.hasEnded && not runEndReported:
+		runEndReported = true
+		print("BENCH_RUN_ENDED mode=%s reason=%s level_time=%.1f station=%s" % [Root.gameModes.find_key(gameMode),
+			Root.endCondition.find_key(Root.levelRoot.endReason), levelTime, str(Root.station.global_position) if is_instance_valid(Root.station) else "none"])
 	if headlights >= 0 && Root.playerCar.headlights != headlights:
 		Root.playerCar.headlights = headlights
 		Root.playerCar.setHeadlightStrength()

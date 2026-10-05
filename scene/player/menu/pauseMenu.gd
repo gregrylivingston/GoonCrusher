@@ -24,11 +24,18 @@ func _on_quit_pressed():
 	if confirmed($Panel/VBoxContainer/quit, "Quit"):
 		get_tree().quit()
 
+#abandoning ends the run like a death: the summary shows it and pays coins x stars (at least x1)
 func _on_abandon_pressed():
+	if is_queued_for_deletion(): return
 	if confirmed($Panel/VBoxContainer/abandon, "Abandon"):
-		get_tree().paused = false	
 		Settings.set_menu_context(false)
-		get_tree().change_scene_to_file("res://scene/player/menu/main/main2.tscn")
+		if is_instance_valid(Root.levelRoot) && Root.levelRoot.has_method("endLevel") && not Root.levelRoot.hasEnded:
+			for i in get_tree().get_nodes_in_group("visibleWhenPaused"):i.visible = false
+			queue_free()
+			Root.levelRoot.endLevel(false, Root.endCondition.ABANDONED)
+		else: #no run to end (the level is gone, or it already ended and paid): just leave
+			get_tree().paused = false
+			get_tree().change_scene_to_file("res://scene/player/menu/main/main2.tscn")
 
 #with Confirm Abandon / Quit on, the first press only arms the button for 3 seconds
 func confirmed(button, label: String) -> bool:

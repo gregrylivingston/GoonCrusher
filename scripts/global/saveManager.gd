@@ -4,7 +4,7 @@ extends Node
 #The demo and the full game share this file, so demo progress carries over: load_data() merges
 #each save with the current defaults (migrate()) before anything reads it.
 
-const SAVE_VERSION := 1
+const SAVE_VERSION := 2 #2: every level's gamemodeBeat has a GOONPOCALYPSE key
 var save_path = "user://saveData_0.1.tres"
 var playerData: PlayerData
 var saveTimer: Timer
@@ -49,7 +49,7 @@ func reset_save():
 #Returns true when anything changed.
 func migrate() -> bool:
 	var defaults = PlayerData.new()
-	var before = var_to_str([playerData.cars, playerData.levels, playerData.saveVersion])
+	var before = var_to_str([playerData.cars, playerData.levels, playerData.saveVersion, playerData.selectedCar, playerData.selectedLevel, playerData.gameMode])
 	for defaultCar in defaults.cars:
 		var saved = playerData.cars.filter(func(c): return c.name == defaultCar.name)
 		if saved.is_empty():
@@ -69,13 +69,17 @@ func migrate() -> bool:
 		if i < playerData.levels.size():
 			var saved = playerData.levels[i]
 			level.unlocked = saved.get("unlocked", level.unlocked)
-			for mode in saved.get("gamemodeBeat", {}): level.gamemodeBeat[mode] = saved.gamemodeBeat[mode]
+			#beaten modes are kept; modes the save has no key for (GOONPOCALYPSE before version 2) come from the defaults
+			var savedBeat = saved.get("gamemodeBeat", {})
+			if savedBeat is Dictionary:
+				for mode in savedBeat: level.gamemodeBeat[mode] = bool(savedBeat[mode])
 		mergedLevels.push_back(level)
 	playerData.levels = mergedLevels
 	playerData.selectedCar = clampi(playerData.selectedCar, 0, playerData.cars.size() - 1)
 	playerData.selectedLevel = clampi(playerData.selectedLevel, 0, playerData.levels.size() - 1)
+	playerData.gameMode = clampi(playerData.gameMode, 0, Root.gameModes.size() - 1)
 	playerData.saveVersion = SAVE_VERSION
-	return before != var_to_str([playerData.cars, playerData.levels, playerData.saveVersion])
+	return before != var_to_str([playerData.cars, playerData.levels, playerData.saveVersion, playerData.selectedCar, playerData.selectedLevel, playerData.gameMode])
 
 #marks the save dirty; it is written one second after the last change, on scene change and on exit
 func save_character_data():
@@ -113,11 +117,18 @@ func unlockCar():
 		return true
 	else: return false
 
+#upgrades each car can buy per stat. Saves from before the cap keep any levels above it (no refund).
+const MAX_UPGRADE_LEVEL := 20
+
 #how much the next upgrade will cost
 func requestStatCost(statString: Root.upgrade) -> int:
 	return int(pow( getUpgradeLevel(statString) + 1 , 1.6 ) * 15)
 
+func isUpgradeMaxed(statString: Root.upgrade) -> bool:
+	return getUpgradeLevel(statString) >= MAX_UPGRADE_LEVEL
+
 func requestStatUpgrade(statString: Root.upgrade) -> bool:
+	if isUpgradeMaxed(statString): return false
 	var requestCost = requestStatCost(statString)
 	if playerData.coin >= requestCost:
 		playerData.coin -= requestCost
@@ -165,8 +176,10 @@ func currentLevelPassed():
 	var next = playerData.selectedLevel + 1
 	if next < playerData.levels.size() && not playerData.levels[next].unlocked:
 		playerData.levels[next].unlocked = true
-		playerData.selectedLevel = next
-		playerData.gameMode = Root.gameModes.GOONCRUSHER
+		#the demo unlocks the level for the full game but doesn't open the menu on a level it can't play
+		if not (Root.IS_DEMO && next >= Root.DEMO_LEVEL_COUNT):
+			playerData.selectedLevel = next
+			playerData.gameMode = Root.gameModes.GOONCRUSHER
 	save_character_data()
 
 var carNameToFind
@@ -179,6 +192,12 @@ func findCar(car):
 	return car.name == carNameToFind
 
 func getGameMode():
+	return playerData.gameMode
+
+func setGameMode(mode: int):
+	if playerData.gameMode == mode: return mode
+	playerData.gameMode = wrap( mode, 0 , Root.gameModes.size() )
+	save_character_data()
 	return playerData.gameMode
 
 func selectNextGameMode():

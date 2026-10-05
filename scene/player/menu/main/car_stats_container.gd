@@ -10,7 +10,7 @@ func updateStats():
 	
 	%headlights.setValue("Lights   " + str(Root.carInfo.headlights + SaveManager.getUpgradeLevel(Root.upgrade.HEADLIGHTS) ))
 	%oil.setValue("Oil   " + str(Root.carInfo.oil +SaveManager.getUpgradeLevel(Root.upgrade.OIL) ))
-	%clover.setValue("Luck  " + str(Root.carInfo.clover + SaveManager.getUpgradeLevel(Root.upgrade.CLOVER) ))
+	%clover.setValue("Clover   " + str(Root.carInfo.clover + SaveManager.getUpgradeLevel(Root.upgrade.CLOVER) ))
 	%luck.setValue("Dice   " + str(Root.carInfo.luck + SaveManager.getUpgradeLevel(Root.upgrade.LUCK) ))
 	
 	for i in [$HBoxContainer2/statUpgrade, $HBoxContainer2/statUpgrade2, $HBoxContainer2/statUpgrade3, $HBoxContainer2/statUpgrade4]:

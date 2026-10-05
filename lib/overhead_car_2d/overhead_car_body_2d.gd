@@ -25,12 +25,22 @@ class_name OverheadCarBody2D extends CharacterBody2D
 #base stats come from `info`; upgrades and powerups add to them
 var engine: int = 25  # Forward acceleration force.
 var steering: int = 12  # Amount that front wheel turns, in degrees
-var traction: int = 4   #brakes and turn-rate-increase
+var traction: int = 4   #grip, brakes and turn-rate-increase
 var armor: int = 1
-var luck: int = 1
-var clover: int = 1
+var luck: int = 1   #"Dice": more high-value drops (Root.luckAdjustedWeights)
+var clover: int = 1 #"Clover": more goons drop a pickup (walker.gd)
 var oil: int = 1
 var headlights: int = 1
+
+#stats that upgrades and powerups raise; powerups can't push them past STAT_CAP in a run
+const UPGRADEABLE_STATS = ["engine", "steering", "traction", "armor", "oil", "headlights", "clover", "luck"]
+const STAT_CAP := 150
+const FUEL_BURN_BASE := 0.021 #fuel per physics tick at full throttle with 0 oil
+const WALL_DAMAGE_PER_SPEED := 0.07 #wall-hit damage per px/s of speed; armor is applied in damage()
+const TRACTION_GRIP_PER_POINT := 0.003 #grip each traction point adds to traction_fast/traction_slow
+const GRIP_MIN := 0.05
+const GRIP_FAST_MAX := 0.40
+const GRIP_SLOW_MAX := 0.95
 
 @export var friction:float = 0.1 #.9
 #friction of 0.5 might be sand
@@ -39,6 +49,9 @@ var headlights: int = 1
 @export var slip_speed:int = 100  # Speed where traction is reduced
 @export var traction_fast:float = 0.1  # High-speed traction
 @export var traction_slow:float = 0.7  # Low-speed traction
+@export var grip_per_traction:float = TRACTION_GRIP_PER_POINT #grip each traction point adds (gripFor)
+@export var grip_fast_max:float = GRIP_FAST_MAX
+@export var grip_slow_max:float = GRIP_SLOW_MAX
 @export var wheel_base:int = 70  # Distance from front to rear wheel
 
 var health:float = 100.0
@@ -50,7 +63,8 @@ var currentGoonsCrushed:int = 0
 var slotMachines:int = 0
 
 @export var isPlayer = true
-var isDestroyed: bool = false
+var isDestroyed: bool = false #wrecked or out of fuel; the run is about to end
+var isWrecked: bool = false #destroyed (health, water), not just out of fuel; a wrecked car can't win
 
 func getIsPlayer():return isPlayer
 
@@ -194,12 +208,12 @@ func _physics_process(delta):
 	var rear_wheel = position - transform.x * wheel_base / 2.0 + velocity * delta
 	var front_wheel = position + transform.x * wheel_base / 2.0 + velocity.rotated(steer_angle) * delta
 	var new_heading = (front_wheel - rear_wheel).normalized()
-	var traction = traction_slow
+	var grip = gripFor(traction_slow, traction, grip_slow_max, grip_per_traction)
 	if velocity.length() > slip_speed:
-		traction = traction_fast
+		grip = gripFor(traction_fast, traction, grip_fast_max, grip_per_traction)
 	var d = new_heading.dot(velocity.normalized())
 	if d >= 0:
-		velocity = velocity.lerp(new_heading * velocity.length(), traction)
+		velocity = velocity.lerp(new_heading * velocity.length(), grip)
 	if d < 0:
 		velocity = -new_heading * min(velocity.length(), ( engine + 20 ) * 20)#10
 	
@@ -235,7 +249,7 @@ func collideWithFixedObject( collision ):
 		var spark = sparks.instantiate()
 		spark.global_position = collision.get_position()
 		Root.levelRoot.add_child(spark)
-	damage(  ( 7 * velocity.length() )   / ( armor + 100 )  )
+	damage( WALL_DAMAGE_PER_SPEED * velocity.length() ) #armor is applied once, in damage()
 	velocity *= 0.85
 
 func stopCarFX():
@@ -272,8 +286,7 @@ func activeCarEffects(delta):
 	if not engineAudio.playing: engineAudio.play()
 	if not carDamageAudio.playing && healthWarningGiven: carDamageAudio.play()
 	engineAudio.pitch_scale = 1  +  ( velocity.length() / 400 ) 
-	#fuel -=  velocity.length() / ( 500 * (100 - oil) )
-	fuel -= abs(_car_input.acceleration * 2) / ( 100 - oil )
+	fuel -= fuelBurn(_car_input.acceleration, oil)
 
 	#body shake: the sprite slides between two offsets, one tick at a time (no tween per shake)
 	vibrationSteps += 1
@@ -371,7 +384,9 @@ func follow_path(path_follow: OverheadCarPathFollow2D):
 var ui
 var powerupsCollected = 0
 func reward(powerup: String , quantity, forShowOnly: bool = false):
-	if not forShowOnly: self[powerup] += quantity
+	if not forShowOnly:
+		if UPGRADEABLE_STATS.has(powerup): self[powerup] = addCapped(self[powerup], quantity)
+		else: self[powerup] += quantity
 	health = clamp(health, -10.0, 100.0)
 	fuel = clamp(fuel, -10.0, 100.0)
 	if powerup != "coin" && powerup != "health" && powerup != "fuel" && powerup != "currentGoonsCrushed": 
@@ -386,6 +401,21 @@ func reward(powerup: String , quantity, forShowOnly: bool = false):
 	match powerup:
 		"currentGoonsCrushed": ui.updateGoonsCrushed()
 		"headlights":setHeadlightStrength()
+
+#a stat after a powerup adds `quantity`: never past STAT_CAP, but a stat already above it
+#(an old save with more upgrades than MAX_UPGRADE_LEVEL) is kept, not lowered
+static func addCapped(current: int, quantity: float) -> int:
+	var total := current + int(quantity)
+	if total <= STAT_CAP: return total
+	return maxi(current, STAT_CAP)
+
+#fuel burned per physics tick: more oil always burns less, and the burn never reaches zero
+static func fuelBurn(acceleration: float, oilStat: float) -> float:
+	return absf(acceleration) * FUEL_BURN_BASE * 100.0 / (100.0 + 2.0 * maxf(oilStat, 0.0))
+
+#how strongly velocity turns toward the heading each tick: the car's base grip plus the traction stat
+static func gripFor(baseGrip: float, tractionStat: float, maxGrip: float, perPoint: float = TRACTION_GRIP_PER_POINT) -> float:
+	return clampf(baseGrip + tractionStat * perPoint, GRIP_MIN, maxGrip)
 
 
 func setHeadlightStrength():
@@ -411,6 +441,7 @@ func damage(damage: float):
 
 
 func destroy():
+	isWrecked = true #even after running out of fuel: it can no longer win
 	if not isDestroyed:
 		stopCarFX()
 		$"AudioStream-Explosion".play()

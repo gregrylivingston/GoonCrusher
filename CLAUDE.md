@@ -40,7 +40,7 @@ A free demo is live on Steam (app 1941650). The current work is to finish the ga
 
 ### Flow
 1. `main2.tscn` (`scene/player/menu/main/`) is the main menu, a state machine with RIDER → LEVEL → GAMEMODE states.
-   - The GAMEMODE step is commented out at `main2.gd:277`, so runs always use the saved `gameMode`, which defaults to GOONCRUSHER.
+   - Picking a level leads to picking a mode, then Start. The per-level unlock chain is `Root.isModeUnlocked` (Countdown → Sprint → Goonpocalypse; Marathon and Defense after Sprint), and `Root.MODE_AVAILABLE` hides unfinished modes (Marathon and Defense show "Coming Soon"). `Root.isModePlayable` combines both. Every demo gate reads `Root.IS_DEMO`.
    - The menu shows cars from their `CarInfo` (`scene/car/<car>/<car>_info.tres`: portrait, background, intro lines, base stats) in `Root.carInfo`, without loading car scenes. **`Root.playerCar` is null in the menu**; it is the run's car only.
 2. Starting a run loads the level and the selected car's scene on worker threads (`main2.startLevel`), then changes scene to `RunView.wrap(level)`. At Render Resolution 720p or 540p, `scene/level/run_view.gd` puts the whole run (level, HUD, in-run menus) in a SubViewport of that height with the 1600x900 logical canvas and scales it up. Otherwise the level is the scene. Inside a run, `get_viewport()` may therefore be that SubViewport. It listens for 2D audio itself, and the root viewport's GPU timing doesn't include it. Each level `scene/level/levels/level_*.tscn` is a thin override of `levelRoot.tscn` that changes only timer seconds, object pools and spawn tuning.
 3. `levelRoot.gd` instantiates `Root.selectedCar.scene`. It then attaches 5 spawners **as children of the car**, so their offsets rotate with it, and runs day/night by tweening a `CanvasModulate` to pure black every 60 s.
@@ -49,9 +49,9 @@ A free demo is live on Steam (app 1941650). The current work is to finish the ga
    - The grid, the grass start area (region 0) and the region flood fill are built on a `WorkerThreadPool` task by static functions that touch only their job dictionary; the start area's random rolls are taken on the main thread first. The maps stay empty (every cell reads as water) until `createNewTerrain()` returns.
    - Chunks the camera can see, plus 1 s of travel, are loaded one per frame. Chunks more than 2 away (Chebyshev) are unloaded, except the pinned station chunk; their landscape TileMaps go to a pool (8 per terrain) and are reused, while objects are freed. Chunk (0,0) is map cell (128,128); `tileManager.chunkOf()` uses floor, and anything outside the map is water. Each chunk's objects come from its own seed.
 5. A run ends in one of three ways:
-   - The car calls `levelRoot.endLevel()` on NOHEALTH or NOGAS.
-   - The station driveway calls it with SUCCESS, in SPRINT and MARATHON only.
-   - `gameSummary` records stats and sets `Root.earnedCoins = coin * star`.
+   - Every end goes through `levelRoot.endLevel()`, which runs once (`hasEnded`). The car calls it on NOHEALTH or NOGAS; the pause menu's Abandon calls it with ABANDONED (pays like a death).
+   - The clock: Countdown (GOONCRUSHER) counts down from the level's `seconds` and is won at 0; Sprint and Marathon are lost at 0 (NOTIME); Goonpocalypse and Defense count up. The station driveway gives SUCCESS in SPRINT and MARATHON (a car that ran out of fuel but is still rolling may finish; a wrecked one may not). Sprint's station is placed by distance (`tileManager.placeObjective` never picks water or hills) and its clock is derived from that distance after `world_ready`.
+   - `gameSummary` records stats and credits the payout `Root.computePayout(coin, star)` = coin × max(1, star) straight to the save; `main2` only animates the coin count.
    Returning to `main2` pays the coins out.
 
 ### Key gameplay code
@@ -87,12 +87,11 @@ A free demo is live on Steam (app 1941650). The current work is to finish the ga
   - `Settings.onNodeAdded` sees every light and occluder and ANDs the Lighting setting with the authored state (the `gc_shadow`, `gc_enabled` and `gc_vis` metadata). Lighting Low (Potato only) changes what the player can see; Medium and High don't.
 - Collision checks use `is StaticBody2D`, `is TileMap` and `is CharacterBody2D`, and any `CharacterBody2D` is treated as a goon. Moving from TileMap to TileMapLayer will silently break wall hits.
 - `randi() % n - 1` indexing appears in `Region.gd` and `gameSummary.gd`. It looks wrong, but it works because index -1 wraps.
-- `getPowerupFromWeights` mutates the caller's dictionary and sets the coin weight to `luck`.
-- HUD label naming is confusing: "Luck" shows `clover` and "Dice" shows `luck`.
-- Demo gates live in `main2.gd` (around lines 54, 111-117 and 197-233) and in `versionTracker` ("Demo 0.1"). Remove them for the full release.
+- `getPowerupFromWeights` works on a copy of the goon's table; luck ("Dice") raises the purse, gem and slot-machine weights (`Root.LUCK_WEIGHT_BONUS`).
+- Stat names: the `clover` stat is labelled "Clover" (goon drop chance) and the `luck` stat "Dice" (prize quality). Upgrades cap at `SaveManager.MAX_UPGRADE_LEVEL` (20) per stat per car, and in-run pickups at `STAT_CAP` (150). Oil uses the bounded `fuelBurn()`, traction feeds grip through `gripFor()`, and armor is applied once, inside `damage()`.
+- The demo is built by setting `Root.IS_DEMO = true` (first 3 cars and levels, Countdown and Sprint only, "Demo" in the version label).
 - Code style: tabs, camelCase functions and variables (mixed with some snake_case from the original templates), heavy use of the `Root.*` globals, and `$Node` paths. Match the surrounding style. Don't add empty `_process` or `_ready` stubs; they were all removed because they cost per-frame callbacks. Connect autoload signals such as `Settings.changed` to methods, not lambdas, so they disconnect when the node is freed.
 
-## Known critical bugs (full lists in `docs/`)
-- GOONCRUSHER cannot be won: the countdown end is commented out in `scene/player/Timer.gd:34-39`. Because of that, SPRINT never unlocks on a fresh save.
-- MARATHON places its station far outside the 256-cell map (`seconds * 0.7` chunks in `tileManager.gd`). It no longer crashes, because outside the map is water, but the station is unreachable. DEFENSE reads `Root.station` before it is set (`levelRoot.gd`).
-- A run that ends with 0 stars pays 0 coins (payout is `coin * star`), and the summary screen doesn't say so.
+## Known issues (full lists in `docs/`)
+- MARATHON and DEFENSE are hidden ("Coming Soon") until they get real designs (`docs/GAMEPLAY_SUGGESTIONS.md` T1-3, T1-4). They no longer crash; Defense's car still starts inside the station lot.
+- Tier 0 rebalanced handling, armor, fuel and drops (`docs/GAMEPLAY_SUGGESTIONS.md` Tier 0). Sprint distances, the drop mix and the 9 cars' handling still need a playtest.
