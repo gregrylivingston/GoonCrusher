@@ -60,9 +60,14 @@ var AllObjectTiles = {
 var objectTiles = []
 var loadedLandscapes = {}
 var loadedObjects = {}
+var pinnedChunks = {}       #chunks that are never unloaded (the station)
+var loadQueue: Array[Vector2i] = []
+var queueTimer: float = 0.0
+var mapReady: bool = false
 
+const KEEP_RADIUS = 2       #chunks further than this (Chebyshev) from the player are freed
+const PREFETCH_SECONDS = 1.0
 
-# Called when the node enters the scene tree for the first time.
 func _ready():
 	for i in requestedObjectTiles:
 		objectTiles.append_array(AllObjectTiles[i])
@@ -74,19 +79,20 @@ func _ready():
 
 	await get_tree().process_frame
 
-	getPlayerChunk()
+	mapReady = true
+	updateChunks()
 
 	match SaveManager.playerData.gameMode:
 		Root.gameModes.SPRINT:
 			var myStation = load("res://scene/level/station.tscn").instantiate()
 			Root.station = myStation
-			loadChunk(Vector2i( randi_range( Root.levelRoot.seconds * 0.12 , Root.levelRoot.seconds * 0.16),  randi_range(Root.levelRoot.seconds * 0.07, Root.levelRoot.seconds * - 0.07) ) , myStation)
+			pinChunk(Vector2i( randi_range( Root.levelRoot.seconds * 0.12 , Root.levelRoot.seconds * 0.16),  randi_range(Root.levelRoot.seconds * 0.07, Root.levelRoot.seconds * - 0.07) ) , myStation)
 		Root.gameModes.MARATHON:
 			var myStation = load("res://scene/level/station.tscn").instantiate()
 			Root.station = myStation
-			loadChunk(Vector2i( randi_range( Root.levelRoot.seconds * 0.7 , Root.levelRoot.seconds * 0.72),  randi_range( Root.levelRoot.seconds * 0.2 , Root.levelRoot.seconds * -0.2 ) ), myStation)
+			pinChunk(Vector2i( randi_range( Root.levelRoot.seconds * 0.7 , Root.levelRoot.seconds * 0.72),  randi_range( Root.levelRoot.seconds * 0.2 , Root.levelRoot.seconds * -0.2 ) ), myStation)
 
-	if loadedObjects.has(playerChunk):
+	if loadedObjects.has(playerChunk) && not pinnedChunks.has(playerChunk):
 		loadedObjects[playerChunk].queue_free()
 		loadedObjects.erase(playerChunk)
 
@@ -102,72 +108,100 @@ func setupByGamemode() -> void:
 		Root.gameModes.DEFENSE:
 			var myStation = load("res://scene/level/station.tscn").instantiate()
 			Root.station = myStation
-			loadChunk(Vector2i( randi_range(0, 0), 0 ) , myStation)
+			pinChunk(Vector2i( randi_range(0, 0), 0 ) , myStation)
 	
 func setupNoStations():
 	Root.station = null
 	loadChunk(Vector2i(0,0) , preload("res://scene/level/levelObjects/level_empty.tscn").instantiate())
 
+func pinChunk(chunk: Vector2i, myScene) -> void:
+	pinnedChunks[chunk] = true
+	unloadChunk(chunk, true)
+	loadChunk(chunk, myScene)
+
 
 var playerChunk: Vector2i = Vector2i(-999,-999)
-var startingPlayerChunk
-#var terrainRegion: int = -5
-#var terrainType: int = Root.terrain.GRASS
+
+func chunkOf(worldPosition: Vector2) -> Vector2i:
+	return Vector2i(floori(worldPosition.x / tilesize.x), floori(worldPosition.y / tilesize.y))
+
+#map cell for a chunk; chunk (0,0) is the centre of the map. Outside the map is water.
+func tileAt(chunk: Vector2i) -> Dictionary:
+	var map = $landscapeGenerator.mapDict
+	var half = map.size() / 2
+	if chunk.y + half < 0 || chunk.y + half >= map.size() || chunk.x + half < 0 || chunk.x + half >= map[0].size():
+		return {"terrain":Root.terrain.WATER, "region":-2}
+	return map[chunk.y + half][chunk.x + half]
 
 func getTile(coordinates) -> Dictionary:
-	var tileVector = Vector2i( (coordinates.x /  tilesize.x ), coordinates.y / tilesize.y )
-	if tileVector.y < 0: tileVector.y -= 1
-	if tileVector.x < 0: tileVector.x -= 1
-	return $landscapeGenerator.mapDict[tileVector.y + 128][tileVector.x + 128]
-	
+	return tileAt(chunkOf(Vector2(coordinates)))
 
 
-func getPlayerChunk():
-		
-	if playerChunk != Vector2i( (Root.playerCar.global_position /  tilesize ) ):
-		playerChunk = Vector2i( (Root.playerCar.global_position /  tilesize ) )
-	
-		var tileToTest = playerChunk
-		if playerChunk.y < 0: tileToTest.y -= 1
-		if playerChunk.x < 0: tileToTest.x -= 1
-		var myTile = loadChunk(tileToTest)
+func _process(delta):
+	if mapReady: updateChunks(delta)
+
+func updateChunks(delta: float = 1.0) -> void:
+	if not is_instance_valid(Root.playerCar): return
+	var chunk = chunkOf(Root.playerCar.global_position)
+	queueTimer -= delta
+	if chunk != playerChunk:
+		playerChunk = chunk
+		var myTile = loadChunk(chunk) #the chunk under the car loads immediately
 		if is_instance_valid(Root.playerRoot):Region.updatePlayerRegion(myTile)
-		
-		for i in chunksToLoad:
-			loadChunk(playerChunk + i)
+		for loaded in loadedLandscapes.keys():
+			if not pinnedChunks.has(loaded) && maxi(absi(loaded.x - chunk.x), absi(loaded.y - chunk.y)) > KEEP_RADIUS:
+				unloadChunk(loaded)
+		queueTimer = 0.0
+	if queueTimer <= 0.0:
+		queueTimer = 0.2
+		queueNeededChunks()
+	#at most one chunk per frame, nearest first
+	while not loadQueue.is_empty():
+		var next = loadQueue.pop_front()
+		if not loadedLandscapes.has(next):
+			loadChunk(next)
+			break
 
-		for i in chunksToUnload:
-			unloadChunk(playerChunk + i)
-			unloadChunk(playerChunk - i)
+#every chunk the camera can see now, or will see after PREFETCH_SECONDS of travel
+func queueNeededChunks() -> void:
+	var car = Root.playerCar
+	var zoom = car.get_node("Camera2D").zoom if car.has_node("Camera2D") else Vector2.ONE
+	var half = get_viewport().get_visible_rect().size / zoom / 2.0 + Vector2(256, 256)
+	var view = Rect2(car.global_position - half, half * 2.0)
+	view = view.merge(Rect2(view.position + car.velocity * PREFETCH_SECONDS, view.size))
+	var first = chunkOf(view.position)
+	var last = chunkOf(view.end)
+	loadQueue.clear()
+	for y in range(first.y, last.y + 1):
+		for x in range(first.x, last.x + 1):
+			var c = Vector2i(x, y)
+			if not loadedLandscapes.has(c) && maxi(absi(c.x - playerChunk.x), absi(c.y - playerChunk.y)) <= KEEP_RADIUS + 1:
+				loadQueue.push_back(c)
+	loadQueue.sort_custom(func(a, b): return (a - playerChunk).length_squared() < (b - playerChunk).length_squared())
 
-
-var chunksToLoad: Array[Vector2i] = [
-	Vector2i(-2,1),Vector2i(-2,0),Vector2i(1,-2),Vector2i(0,-2),Vector2i(-1,-2),Vector2i(-2,-1) ,Vector2i(-2,-2),
-	Vector2i(-1,0), Vector2i(-1,-1), Vector2i(-1,1) ,Vector2i(0,-1), Vector2i(0,1) ,Vector2i(1,-1),Vector2i(1,1),Vector2i(1,0)
-]
-
-var chunksToUnload: Array[Vector2i] = [ 
-	Vector2i(-4,-4), Vector2i(-4,-3), Vector2i(-4,-2), Vector2i(-4,-1), Vector2i(-4,0),
-	Vector2i(-3,-4), Vector2i(-2,-4), Vector2i(-1,-4), Vector2i(0,-4), 
-]
-
-func unloadChunk(chunk: Vector2i):
+func unloadChunk(chunk: Vector2i, force := false):
+	if pinnedChunks.has(chunk) && not force: return
 	if loadedLandscapes.has(chunk):
 		loadedLandscapes[chunk].queue_free()
 		loadedLandscapes.erase(chunk)
-		if loadedObjects.has(chunk):
-			loadedObjects[chunk].queue_free()
-			loadedObjects.erase(chunk)
-	
+	if loadedObjects.has(chunk):
+		loadedObjects[chunk].queue_free()
+		loadedObjects.erase(chunk)
 
-func getRandomTileObject():
-	return objectTiles[randi() % objectTiles.size()].instantiate()
+#each chunk rolls its objects from its own seed, so a chunk that is freed and reloaded looks the same
+func chunkRng(chunk: Vector2i) -> RandomNumberGenerator:
+	var rng = RandomNumberGenerator.new()
+	rng.seed = hash([$landscapeGenerator.inputSeed, chunk.x, chunk.y])
+	return rng
+
+func getRandomTileObject(rng: RandomNumberGenerator):
+	return objectTiles[rng.randi() % objectTiles.size()].instantiate()
 	
 
 func loadChunk(chunk:Vector2i , myScene = null): #if an instantiated scene isn't passed get a random one from the level dictionary.
+	var tile = tileAt(chunk)
 	if not loadedLandscapes.has(chunk):
 		var targetPosition = Vector2( tilesize.x * chunk.x , tilesize.y * chunk.y )
-		var tile = $landscapeGenerator.mapDict[chunk.y + 128][chunk.x + 128]
 		var newLandscapeMap = landscapeMap[tile.terrain].instantiate()
 		
 		if Region.regions.has(tile.region):
@@ -179,20 +213,19 @@ func loadChunk(chunk:Vector2i , myScene = null): #if an instantiated scene isn't
 		add_child(newLandscapeMap)
 		
 		if tile.terrain != Root.terrain.WATER && tile.terrain != Root.terrain.HILLS:
-			var newObjectTile = createNewTileObject(targetPosition  , myScene)
+			var newObjectTile = createNewTileObject(targetPosition, chunkRng(chunk), myScene)
 			loadedObjects[chunk] = newObjectTile
 			add_child(newObjectTile)
-		return tile
-	else: return $landscapeGenerator.mapDict[chunk.y + 128][chunk.x + 128]
+	return tile
 			
 
 #create objects like rocks and powerups that go over the landscapes
-func createNewTileObject(targetPosition , myScene = null):
+func createNewTileObject(targetPosition, rng: RandomNumberGenerator, myScene = null):
 		var newObjectTile 
 		if myScene == null: 
-			newObjectTile = getRandomTileObject()
-			var myRotation = randi() % 180
-			newObjectTile.global_position = targetPosition + (tilesize / 2) + Vector2(randi_range(tilesize.x/-4,tilesize.x/4),randi_range(-200,200))		
+			newObjectTile = getRandomTileObject(rng)
+			var myRotation = rng.randi() % 180
+			newObjectTile.global_position = targetPosition + (tilesize / 2) + Vector2(rng.randi_range(tilesize.x/-4,tilesize.x/4),rng.randi_range(-200,200))		
 			newObjectTile.rotation = myRotation
 			for i in newObjectTile.get_children():
 				if not i.has_method("isFixed"):i.rotation = -myRotation
@@ -200,6 +233,3 @@ func createNewTileObject(targetPosition , myScene = null):
 			newObjectTile = myScene
 			newObjectTile.global_position = targetPosition + (tilesize / 2) 
 		return newObjectTile
-
-func _process(delta):
-	getPlayerChunk()

@@ -1,6 +1,7 @@
 class_name Level extends Node2D
 
 var spawnerScene = preload("res://scene/player/spawner.tscn")
+var explosionScene = preload("res://scene/fx/explosion.tscn") #loaded with the level, not with every car
 var playerCar: OverheadCarBody2D
 var playerController
 @export var seconds = 600
@@ -20,7 +21,11 @@ func _ready():
 	add_child(Root.playerCar)
 
 	Root.levelRoot = self
+	var warmup = ShaderWarmup.new() #compiles gameplay shaders behind the countdown
+	warmup.position = newPosition + Vector2(0, 150)
+	add_child(warmup)
 	Root.isRunActive = true
+	Settings.on_run_started()
 	
 	Root.playerRoot = get_tree().get_nodes_in_group("playerGameUi")[0]
 	Root.playerRoot.updateStats()

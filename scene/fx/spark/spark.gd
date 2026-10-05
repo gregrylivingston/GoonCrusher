@@ -6,10 +6,5 @@ func _ready():
 	rotation = randi()%360
 
 
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta):
-	pass
-
-
 func _on_animation_finished():
 	queue_free()

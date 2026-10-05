@@ -142,8 +142,9 @@ func pointIndicator():
 			$indicator.visible = true
 			$indicator.look_at(Root.station.global_position)
 			%indicatorRoot.look_at(Vector2( $indicator.global_position.x + 10000, $indicator.global_position.y  ))
-			var distance = int ( global_position.distance_to(Root.station.global_position) / 10000 ) 			
-			%indicatorDistance.text = str( distance + 1) + " mi"
+			var miles = global_position.distance_to(Root.station.global_position) / 10000.0
+			if Settings.distance_unit() == "km": miles *= 1.609
+			%indicatorDistance.text = str( int(miles) + 1) + " " + Settings.distance_unit()
 		else: $indicator.visible = false
 	else: $indicator.visible = false
 
@@ -204,11 +205,11 @@ func _physics_process(delta):
 	#finding colliders
 	for i in get_slide_collision_count():
 		var collider = get_slide_collision( i ).get_collider()
-		#print(collider.get_class())
 		##colide with an unmovable static object like a rock
-		if velocity.length() > 0.01 && ( collider.get_class() == "StaticBody2D" || collider.get_class() == "TileMap"):
+		#note: walls are TileMap nodes; moving them to TileMapLayer needs this check updated
+		if velocity.length() > 0.01 && ( collider is StaticBody2D || collider is TileMap):
 			collideWithFixedObject( get_slide_collision(i) )
-		elif collider.get_class() == "CharacterBody2D":
+		elif collider is CharacterBody2D:
 			damage(5)
 			if velocity.length() > 100:crushGoon(collider)
 		#else: print(collider.get_class())
@@ -222,6 +223,7 @@ var sparks = preload("res://scene/fx/spark/spark.tscn")
 func collideWithFixedObject( collision ):
 	if not $"AudioStream-Crash".playing: 
 		$"AudioStream-Crash".play()
+		if isPlayer: Settings.vibrate(0.3, 0.6, 0.15)
 		var spark = sparks.instantiate()
 		spark.global_position = collision.get_position()
 		Root.levelRoot.add_child(spark)
@@ -229,54 +231,69 @@ func collideWithFixedObject( collision ):
 	velocity *= 0.85
 
 func stopCarFX():
-	if $"AudioStream-Engine".playing:$"AudioStream-Engine".stop()
-	if $"AudioStream-CarDamage".playing:$"AudioStream-CarDamage".stop()
-	%Smoke.visible = false
+	if engineAudio.playing:engineAudio.stop()
+	if carDamageAudio.playing:carDamageAudio.stop()
+	smoke.visible = false
 
 func crushGoon(collider):
 	if is_instance_valid(collider):
 		if not collider.isDying():
-			var newPowerup = Root.getSpecificPowerup(Root.upgrade.CURRENTGOONSCRUSHED)
-			newPowerup.global_position = collider.global_position
-			Root.levelRoot.add_child(newPowerup)
-			newPowerup._on_area_2d_body_entered(self)
+			if isPlayer: Settings.vibrate(0.4, 0.0, 0.08)
 			collider.destroy()
+			reward("currentGoonsCrushed", 1) #credited now; the flying icon is only for show
+			RewardFlyers.flyUpgrade(Root.upgrade.CURRENTGOONSCRUSHED, collider.global_position)
 
 var isVibratingLeft = 4
 var vibrationSteps = 0
 var vibrationFrequency = 5
+@onready var sprite = $sprite
 @onready var spriteStartingPosition = $sprite.position
+@onready var shakeFrom: Vector2 = spriteStartingPosition
+@onready var shakeTo: Vector2 = spriteStartingPosition
+@onready var engineAudio = $"AudioStream-Engine"
+@onready var tiresAudio = $"AudioStream-Tires"
+@onready var carDamageAudio = $"AudioStream-CarDamage"
+@onready var smoke = %Smoke
+@onready var tailLamps = [$headlamps/taillamps/tailLamp3, $headlamps/taillamps/tailLamp4]
+@onready var camera = $Camera2D
+var tailLampsBright = null
 
 #sound and graphics for running car
 func activeCarEffects(delta):
-	%Smoke.visible = true
-	if not $"AudioStream-Engine".playing: $"AudioStream-Engine".play()
-	if not $"AudioStream-CarDamage".playing && healthWarningGiven: $"AudioStream-CarDamage".play()
-	$"AudioStream-Engine".pitch_scale = 1  +  ( velocity.length() / 400 ) 
+	smoke.visible = true
+	if not engineAudio.playing: engineAudio.play()
+	if not carDamageAudio.playing && healthWarningGiven: carDamageAudio.play()
+	engineAudio.pitch_scale = 1  +  ( velocity.length() / 400 ) 
 	#fuel -=  velocity.length() / ( 500 * (100 - oil) )
 	fuel -= abs(_car_input.acceleration * 2) / ( 100 - oil )
 
+	#body shake: the sprite slides between two offsets, one tick at a time (no tween per shake)
 	vibrationSteps += 1
 	if vibrationSteps % vibrationFrequency == 0:
 		vibrationFrequency = clampi( 10 -  int(velocity.length() / 500) , 2 , 10 )
 		vibrationSteps = 0
 		isVibratingLeft = -isVibratingLeft
-		var vibrationTarget = spriteStartingPosition + Vector2(0 , isVibratingLeft * velocity.length() / 2000)
-		get_tree().create_tween().tween_property( $sprite , "position" , vibrationTarget ,  vibrationFrequency * delta)
+		shakeFrom = sprite.position
+		shakeTo = spriteStartingPosition
+		if Settings.get_value("access/car_shake") && not Settings.reduce_motion():
+			shakeTo += Vector2(0 , isVibratingLeft * velocity.length() / 2000)
+	sprite.position = shakeFrom.lerp(shakeTo, minf(float(vibrationSteps + 1) / vibrationFrequency, 1.0))
 
 
 	##FX and Audio
 	if ( _car_input.braking && velocity.length() > 200.0) || ( velocity.length() > 500.0 && abs(_car_input.steering) > 0.2):
-		for i in tires: createTiremarks(i)
-		if not $"AudioStream-Tires".playing: $"AudioStream-Tires".play()
-	else: 
-		$"AudioStream-Tires".stop()
+		match Settings.get_value("gfx/tire_marks"):
+			1: for i in [tires[0], tires[1]]: createTiremarks(i, 6.0) #Short: rear tyres only
+			2: for i in tires: createTiremarks(i, 20.0)
+		if not tiresAudio.playing: tiresAudio.play()
+	else:
+		tiresAudio.stop()
 		tiremark = {}
-		
-	if _car_input.braking || gear == -1:
-		for i in [$headlamps/taillamps/tailLamp3, $headlamps/taillamps/tailLamp4]:i.energy = 0.3
-	else: 		
-		for i in [$headlamps/taillamps/tailLamp3, $headlamps/taillamps/tailLamp4]:i.energy = 0.1
+
+	var bright = _car_input.braking || gear == -1
+	if bright != tailLampsBright:
+		tailLampsBright = bright
+		for i in tailLamps: i.energy = 0.3 if bright else 0.1
 
 	updateCameraZoom()
 
@@ -285,27 +302,31 @@ var defaultZoomLevel:float = 0.45
 var cameraAdjustmentSpeed: float = 0.0008
 func updateCameraZoom():
 	var targetZoomFactor: float
-	if velocity.length() > 450.0 && isPlayer && is_instance_valid($Camera2D):
+	if velocity.length() > 450.0 && isPlayer && is_instance_valid(camera):
 		targetZoomFactor = defaultZoomLevel + 0.10 - velocity.length() / 4500.0
 	else:
 		targetZoomFactor = defaultZoomLevel
-	if $Camera2D.zoom.x > targetZoomFactor:
-		$Camera2D.zoom -= Vector2(cameraAdjustmentSpeed,cameraAdjustmentSpeed)
-	elif $Camera2D.zoom.x < targetZoomFactor:
-		$Camera2D.zoom += Vector2(cameraAdjustmentSpeed,cameraAdjustmentSpeed)
+	if camera.zoom.x > targetZoomFactor:
+		camera.zoom -= Vector2(cameraAdjustmentSpeed,cameraAdjustmentSpeed)
+	elif camera.zoom.x < targetZoomFactor:
+		camera.zoom += Vector2(cameraAdjustmentSpeed,cameraAdjustmentSpeed)
 	#$Camera2D.zoom = Vector2(targetZoomFactor, targetZoomFactor)
 
 var tiremarkScene = preload("res://scene/fx/tiremark.tscn")
 var tiremark = {}
 
 @onready var tires = [$sprite/tireLocation, $sprite/tireLocation2, $sprite/tireLocation3, $sprite/tireLocation4]
-func createTiremarks(i):
-	if tiremark.has(i.get_instance_id()) && is_instance_valid(tiremark[i.get_instance_id()]):
-		tiremark[i.get_instance_id()].update(i.global_position)
-	else:
-		tiremark[i.get_instance_id()] = tiremarkScene.instantiate()
-		tiremark[i.get_instance_id()].position = i.global_position
-		get_parent().add_child(tiremark[i.get_instance_id()])
+func createTiremarks(i, lifetime: float):
+	var id = i.get_instance_id()
+	var start = i.global_position
+	if tiremark.has(id) && is_instance_valid(tiremark[id]):
+		if tiremark[id].update(i.global_position): return
+		start = tiremark[id].lastGlobalPoint() #segment full: the next one continues from its end
+	var mark = tiremarkScene.instantiate()
+	mark.lifetime = lifetime
+	mark.position = start
+	get_parent().add_child(mark)
+	tiremark[id] = mark
 
 
 func _update_output(_speed_factor: float, _acceleration_factor: float):
@@ -381,14 +402,14 @@ func damage(damage: float):
 		destroy()
 
 
-var explosion = load("res://scene/fx/explosion.tscn")
 func destroy():
 	if not isDestroyed:
 		stopCarFX()
 		$"AudioStream-Explosion".play()
+		if isPlayer: Settings.vibrate(1.0, 1.0, 0.6)
 		isDestroyed = true
 		for i in randi_range(1,2):
-			var newExplosion = explosion.instantiate()
+			var newExplosion = Root.levelRoot.explosionScene.instantiate()
 			newExplosion.position = Vector2( randi_range( 50,90 ) , randi_range( -50,20 ))
 			var modColor = 1.0 - (i/10.0)
 			$sprite.modulate = Color(modColor,modColor,modColor,1.0)

@@ -7,7 +7,7 @@ class_name landscapeGenerator
 @export var inputSizeY: int = 512 
 @export var inputSeaLevel:float = 0.1
 @export_range(0,5) var inputNoiseType = 1
-@export_range(1,4) var inputFractalType = 4 #"tectonic activity"
+@export_range(0,3) var inputFractalType = 0 #"tectonic activity". Was 4, an invalid value that FastNoiseLite treats as 0 (no fractal)
 @export var inputOceanEdgeH:bool = true
 @export var inputOceanEdgeV:bool = true
 
@@ -27,10 +27,13 @@ func createNewTerrain():
 	mapDict = []
 	if inputRandomizeSeed: newSeed()
 	var size = Vector2i(inputSizeX, inputSizeY)
+	#read the noise as raw bytes (same values as get_pixel().r, without 65k Color allocations)
+	if noiseImage.get_format() != Image.FORMAT_L8: noiseImage.convert(Image.FORMAT_L8)
+	var noiseBytes = noiseImage.get_data()
 	for y in size.y:
 		mapDict.push_back([])
 		for x in size.x:
-			var elevation = noiseImage.get_pixel(x,y).r - float(inputSeaLevel)
+			var elevation = noiseBytes[y * size.x + x] / 255.0 - float(inputSeaLevel)
 			
 			if inputOceanEdgeH:
 				if x < 20:
@@ -58,72 +61,54 @@ func createNewTerrain():
 	setupRegions()
 	
 	
+#Regions are connected areas of one terrain type, labelled by an iterative flood fill.
+#The start region is labelled at once; the rest is labelled within a few ms per frame,
+#which finishes during the countdown.
+const REGION_BUDGET_USEC = 3000
+
 func setupRegions():
+	var frameStart = Time.get_ticks_usec()
 	for y in inputSizeY:
 		for x in inputSizeX:
 			if mapDict[y][x].region == -1:
-				await recursiveAddToRegion(Vector2i(x,y) , nextRegionToAdd , mapDict[y][x].terrain)
+				floodRegion([Vector2i(x,y)], nextRegionToAdd, mapDict[y][x].terrain)
 				nextRegionToAdd += 1
-				if is_instance_valid(get_tree()):
+				if Time.get_ticks_usec() - frameStart > REGION_BUDGET_USEC:
+					if not is_instance_valid(get_tree()): return
 					await get_tree().process_frame
-				
+					frameStart = Time.get_ticks_usec()
+					
 var nextRegionToAdd: int = 2
 
 func setupStartingTerrain():
 	mapDict[inputSizeX/2][inputSizeY/2].terrain = Root.terrain.GRASS
 	mapDict[inputSizeY/2][inputSizeX/2].region = 0
+	var startTiles: Array[Vector2i] = [Vector2i(inputSizeX/2, inputSizeY/2)]
 	for x in randi()%4 + 3:
 		for y in randi()%3 + 3:
-			mapDict[inputSizeY/2 + y][inputSizeX/2 + x].terrain = Root.terrain.GRASS
-			mapDict[inputSizeY/2 - y][inputSizeX/2 - x].terrain = Root.terrain.GRASS
-			mapDict[inputSizeY/2 - y][inputSizeX/2 + x].terrain = Root.terrain.GRASS
-			mapDict[inputSizeY/2 - y][inputSizeX/2 + x].terrain = Root.terrain.GRASS
-			mapDict[inputSizeY/2 + y][inputSizeX/2 + x].region = 0
-			mapDict[inputSizeY/2 - y][inputSizeX/2 - x].region = 0
-			mapDict[inputSizeY/2 - y][inputSizeX/2 + x].region = 0
-			mapDict[inputSizeY/2 - y][inputSizeX/2 + x].region = 0
-	recursiveAddToRegion(Vector2i(inputSizeX/2,inputSizeY/2 ) , 0 , Root.terrain.GRASS)
+			for tile in [Vector2i(inputSizeX/2 + x, inputSizeY/2 + y), Vector2i(inputSizeX/2 - x, inputSizeY/2 - y), Vector2i(inputSizeX/2 + x, inputSizeY/2 - y)]:
+				mapDict[tile.y][tile.x].terrain = Root.terrain.GRASS
+				mapDict[tile.y][tile.x].region = -1
+				startTiles.push_back(tile)
+	mapDict[inputSizeY/2][inputSizeX/2].region = -1
+	floodRegion(startTiles, 0, Root.terrain.GRASS)
 
-func recursiveAddToRegion(tileLocation: Vector2i , requestedRegion: int , terrain: int ):
-	if mapDict[tileLocation.y][tileLocation.x].region != -1: return
-	mapDict[tileLocation.y][tileLocation.x].region = requestedRegion
-	
-	if is_instance_valid(get_tree()):
-		await get_tree().process_frame
-		if tileLocation.y - 1 >= 0:
-			if mapDict[tileLocation.y - 1][tileLocation.x].terrain == terrain:
-				recursiveAddToRegion(tileLocation + Vector2i(0,-1) , requestedRegion , terrain)
-		if tileLocation.y + 1 < mapDict.size() :
-			if mapDict[tileLocation.y + 1][tileLocation.x].terrain == terrain:
-				recursiveAddToRegion(tileLocation + Vector2i(0,1) , requestedRegion , terrain)	
-		if tileLocation.x - 1 >= 0:
-			if mapDict[tileLocation.y][tileLocation.x - 1].terrain == terrain:
-				recursiveAddToRegion(tileLocation + Vector2i(-1,0) , requestedRegion , terrain)
-		if tileLocation.x + 1 < mapDict[1].size() :
-			if mapDict[tileLocation.y ][tileLocation.x + 1].terrain == terrain:
-				recursiveAddToRegion(tileLocation + Vector2i(1,0) , requestedRegion , terrain)	
+#labels every tile of `terrain` connected to `seeds` that has no region yet
+func floodRegion(seeds: Array, requestedRegion: int, terrain: int) -> void:
+	var stack: Array[Vector2i] = []
+	for tile in seeds:
+		if mapDict[tile.y][tile.x].region == -1:
+			mapDict[tile.y][tile.x].region = requestedRegion
+			stack.push_back(tile)
+	while not stack.is_empty():
+		var tile = stack.pop_back()
+		for next in [tile + Vector2i(0,-1), tile + Vector2i(0,1), tile + Vector2i(-1,0), tile + Vector2i(1,0)]:
+			if next.y < 0 || next.y >= mapDict.size() || next.x < 0 || next.x >= mapDict[0].size(): continue
+			var cell = mapDict[next.y][next.x]
+			if cell.region == -1 && cell.terrain == terrain:
+				cell.region = requestedRegion
+				stack.push_back(next)
 				
-			
-var currentTerrainType:int = -10
-func createTerrainGroups():
-	var size = Vector2i(inputSizeX, inputSizeY)
-	for y in size.y:
-		for x in size.x:
-			var tile = mapDict[y][x]
-			if tile.region == -1:
-				match tile.terrainType:
-					Root.terrain.WATER:tile.region = -2
-					Root.terrain.HILLS:tile.region = -3
-
-#func setRegion(terrainType):
-	
-		
-					
-func searchForRegionByTile(y,x):
-	if mapDict.has(y):
-		if mapDict.has(x):
-			if mapDict[y][x].terrain == currentTerrainType:
-				pass
 			
 func getTerrainType(elevation: float) -> int: #returns Root.terrain
 	if elevation > 0.9: return Root.terrain.HILLS

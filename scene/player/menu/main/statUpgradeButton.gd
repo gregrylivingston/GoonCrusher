@@ -24,11 +24,6 @@ func refresh():
 		await get_tree().process_frame
 		refresh()
 
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta):
-	pass
-
-
 
 func _on_upgrade_pressed():
 	if SaveManager.requestStatUpgrade(myStat):

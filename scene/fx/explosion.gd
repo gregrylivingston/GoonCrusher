@@ -14,13 +14,11 @@ func _ready():
 	scale = Vector2( myScale , myScale )
 
 
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta):
+func _process(_delta):
 	rotation = -get_parent().rotation
-#	$PointLight2D.texture = sprite_frames.get_frame_texture("default", frame)
-	pass
 
 func _on_animation_finished():
 	if scale.x < 1.2:
 		get_tree().create_tween().tween_property(self , "scale" , scale * randf_range(1.02,1.08) , 0.1)
 		play()
+	else: queue_free()

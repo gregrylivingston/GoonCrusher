@@ -27,7 +27,3 @@ func nextCount(num: String):
 	$AnimationPlayer.current_animation = "countdown"
 	$AnimationPlayer.seek(0)
 	$AnimationPlayer.play()
-
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta):
-	pass

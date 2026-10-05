@@ -1,17 +1,19 @@
 extends HBoxContainer
 
 
-# Called when the node enters the scene tree for the first time.
-func _ready():
-	pass # Replace with function body.
+var shownWave = -1
+var shownSecond = -1
 
-
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta):
+func _process(_delta):
 	if Region.currentRegion.has("time"):
-		%WaveProgressBar.value = int(Region.currentRegion.time) % Region.waveLength
-		%Label_wave.text = "Survive Wave " + str(Region.currentRegion.wave)
-		%WaveProgressBar.max_value = int(Region.currentRegion.wave * Region.waveLength)
+		var second = int(Region.currentRegion.time)
+		if second != shownSecond:
+			shownSecond = second
+			%WaveProgressBar.value = second % Region.waveLength
+		if Region.currentRegion.wave != shownWave:
+			shownWave = Region.currentRegion.wave
+			%Label_wave.text = "Survive Wave " + str(shownWave)
+			%WaveProgressBar.max_value = int(shownWave * Region.waveLength)
 
 func updatePlayerRegion(tile):
 	if tile.terrain != Root.terrain.WATER && tile.terrain != Root.terrain.HILLS:

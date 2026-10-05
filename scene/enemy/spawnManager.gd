@@ -28,13 +28,37 @@ var basicGoons
 	goon.ZULU:preload("res://scene/enemy/walker/zulu/zulu.tscn")
 }
 
+const GOON_CAP = 250          #same for every player and preset
+const DESPAWN_DISTANCE = 8000.0
+const SWEEP_SECONDS = 0.5
+
 var giantTimer:float = 0
 var spawners
 var liveGoons: int = 0
+var goons: Array[Node] = []
+var pendingSpawns: Array = []
+var sweepTimer: float = 0.0
 
 func registerGoon(newGoon: Node) -> void:
 	liveGoons += 1
-	newGoon.tree_exiting.connect(func(): liveGoons -= 1)
+	goons.push_back(newGoon)
+	newGoon.tree_exiting.connect(onGoonExiting.bind(newGoon))
+
+func onGoonExiting(goon: Node) -> void:
+	liveGoons -= 1
+	goons.erase(goon)
+
+func canSpawn() -> bool:
+	return liveGoons < GOON_CAP
+
+#frees goons left far behind. Before this ran only when a goon finished idling.
+func despawnSweep() -> void:
+	if not is_instance_valid(Root.playerCar): return
+	var carPosition = Root.playerCar.global_position
+	var view = get_viewport().get_canvas_transform().affine_inverse() * get_viewport().get_visible_rect()
+	for goon in goons.duplicate():
+		if is_instance_valid(goon) && not goon.is_queued_for_deletion() && goon.global_position.distance_to(carPosition) > DESPAWN_DISTANCE && not view.has_point(goon.global_position):
+			goon.queue_free()
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
@@ -74,5 +98,13 @@ func _process(delta):
 		giantTimer = 0
 	timeCount += delta
 	if timeCount > spawnTimer:
-		for i in spawners:i.spawn()
+		pendingSpawns.append_array(spawners)
 		timeCount = 0
+	#one spawner per frame, so a wave is spread over five frames instead of one
+	if not pendingSpawns.is_empty():
+		var spawner = pendingSpawns.pop_front()
+		if is_instance_valid(spawner): spawner.spawn()
+	sweepTimer -= delta
+	if sweepTimer <= 0.0:
+		sweepTimer = SWEEP_SECONDS
+		despawnSweep()
