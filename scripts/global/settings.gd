@@ -355,6 +355,7 @@ static func legacy_volume(db: float) -> float:
 #--- boot -----------------------------------------------------------------------------------
 
 func bootSafety(args) -> void:
+	if DisplayServer.get_name() == "headless": return #tests and imports never reach the menu; they are not crashed boots
 	var pending = get_value("meta/boot_pending_count")
 	var askedFor = args.has("--safe-mode")
 	if not askedFor: values["meta/safe_mode_handled"] = false
