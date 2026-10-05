@@ -113,7 +113,7 @@ func startLevel() -> void:
 		Root.mainMenu.startLevel(LEVELS + cfg.level + ".tscn") #the real menu path: threaded load
 		return
 	Region.resetRegions()
-	get_tree().change_scene_to_file(LEVELS + cfg.level + ".tscn")
+	get_tree().change_scene_to_node(RunView.wrap(load(LEVELS + cfg.level + ".tscn").instantiate()))
 
 func onNodeAdded(node: Node) -> void:
 	if stripText && node is CanvasItem && node.material is ShaderMaterial && node.material.shader && node.material.shader.code.contains("VERTEX_ID>>1"):
@@ -132,6 +132,31 @@ func _physics_process(_delta):
 	car.health = 100.0 #god mode
 	car.fuel = 100.0
 	drive(car)
+
+
+#S6 measures streaming, so the car must keep going: a car that covers under 400 px in 3 s (grinding
+#round a ring of rocks never trips the speed check above) backs up; if that fails twice it is lifted
+#900 px along the route
+var progressFrom := Vector2.INF
+var progressTimer: float = 0.0
+var failedRecoveries: int = 0
+func checkRouteProgress(car) -> void:
+	progressTimer += get_physics_process_delta_time()
+	if progressTimer < 3.0: return
+	progressTimer = 0.0
+	if progressFrom != Vector2.INF && car.global_position.distance_to(progressFrom) < 400.0:
+		failedRecoveries += 1
+		if failedRecoveries >= 2:
+			var heading = 0.0 if levelTime < seconds / 2.0 else -PI / 2.0
+			car.global_position += Vector2.from_angle(heading) * 900.0
+			car.rotation = heading
+			car.velocity = Vector2.ZERO
+			failedRecoveries = 0
+		else:
+			recoverTime = 2.4
+	else:
+		failedRecoveries = 0
+	progressFrom = car.global_position
 
 func drive(car) -> void:
 	var wanted = []
@@ -162,6 +187,7 @@ func drive(car) -> void:
 			recoverTime = 2.4
 	else:
 		stuckTime = 0.0
+	if cfg.pattern == "route" && levelTime > 6.0: checkRouteProgress(car)
 	for action in ["Accelerate", "Brake", "TurnLeft", "TurnRight"]:
 		if action in wanted && not Input.is_action_pressed(action): Input.action_press(action)
 		elif not action in wanted && Input.is_action_pressed(action): Input.action_release(action)

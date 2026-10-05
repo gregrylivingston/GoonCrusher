@@ -314,7 +314,7 @@ func startLevel(path: String) -> void:
 		Root.selectedCarScene = ResourceLoader.load_threaded_get(carScene) #held so the cache keeps it
 	await get_tree().process_frame #let the label draw before the level is built
 	var scene = ResourceLoader.load_threaded_get(path)
-	if scene: get_tree().change_scene_to_packed(scene)
+	if scene: get_tree().change_scene_to_node(RunView.wrap(scene.instantiate()))
 	else: get_tree().change_scene_to_file(path)
 
 func _on_unlock_pressed():

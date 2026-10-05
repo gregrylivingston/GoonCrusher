@@ -98,7 +98,7 @@ const DEFAULTS := {
 #allowed values for enumerated keys; numeric keys not listed here are clamped by RANGES
 const OPTIONS := {
 	"display/window_mode": [3, 4, 0],
-	"display/render_res": ["native", "auto", "cap900"],
+	"display/render_res": ["native", "auto", "cap900", "720", "540"],
 	"display/vsync": [1, 2, 0],
 	"display/max_fps": [0, 30, 60, 120, 144, -1],
 	"display/menu_fps": [30, 0],
@@ -578,7 +578,7 @@ func applyRenderResolution() -> void:
 	var cap = false
 	match get_value("display/render_res"):
 		"cap900": cap = window.size.x > base.x || window.size.y > base.y
-		"auto": cap = window.size.x * window.size.y > 1920 * 1080
+		"auto", "720", "540": cap = window.size.x * window.size.y > 1920 * 1080 #720/540 apply to runs (RunView); menus behave as Auto
 	#viewport mode draws at 1600x900 and scales up; the logical canvas stays 1600x900 either way
 	var mode = Window.CONTENT_SCALE_MODE_VIEWPORT if cap else Window.CONTENT_SCALE_MODE_CANVAS_ITEMS
 	if window.content_scale_mode != mode: window.content_scale_mode = mode
