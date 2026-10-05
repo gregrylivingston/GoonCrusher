@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://maftjaqqaasp"]
 
 [ext_resource type="PackedScene" uid="uid://bepxjqhida0n8" path="res://scene/player/ui/roadButton.tscn" id="1_w3c8s"]
-[ext_resource type="Texture2D" uid="uid://w03tvhxtmrv4" path="res://texture/icon/icons8-coin-48 (1).png" id="2_v7bbs"]
+[ext_resource type="Texture2D" uid="uid://brujb5nubwa3a" path="res://texture/icon/coin_flat.svg" id="2_v7bbs"]
 [ext_resource type="Script" path="res://scene/player/menu/main/statUpgradeButton.gd" id="3_57udn"]
 [ext_resource type="AudioStream" uid="uid://78ld7kj5444p" path="res://sound/fx/short-success-sound-glockenspie.mp3" id="4_liifr"]
 [ext_resource type="Shader" uid="uid://cwca4ap0gs4m5" path="res://shader/3dtext.gdshader" id="gc_3dtext"]

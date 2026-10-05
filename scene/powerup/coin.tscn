@@ -2,7 +2,7 @@
 
 [ext_resource type="PackedScene" uid="uid://b7r4ro32w40xi" path="res://scene/powerup/powerup.tscn" id="1_r6hoh"]
 [ext_resource type="Shader" path="res://shader/shine.gdshader" id="2_3dlwv"]
-[ext_resource type="Texture2D" uid="uid://w03tvhxtmrv4" path="res://texture/icon/icons8-coin-48 (1).png" id="2_pgcic"]
+[ext_resource type="Texture2D" uid="uid://dwpf5lthjuo11" path="res://texture/icon/coin.svg" id="2_pgcic"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_gyedc"]
 shader = ExtResource("2_3dlwv")

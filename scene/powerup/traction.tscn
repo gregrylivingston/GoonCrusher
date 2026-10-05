@@ -1,7 +1,7 @@
 [gd_scene load_steps=4 format=3 uid="uid://bgogx6yxekbjp"]
 
 [ext_resource type="PackedScene" uid="uid://b7r4ro32w40xi" path="res://scene/powerup/powerup.tscn" id="1_w67np"]
-[ext_resource type="Texture2D" uid="uid://b282uef7te4fk" path="res://texture/icon/wheel.png" id="2_j6qei"]
+[ext_resource type="Texture2D" uid="uid://d2xyor68hbsks" path="res://texture/icon/traction.svg" id="2_j6qei"]
 
 [sub_resource type="OccluderPolygon2D" id="OccluderPolygon2D_slg3i"]
 cull_mode = 1

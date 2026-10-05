@@ -1,7 +1,7 @@
 [gd_scene load_steps=7 format=3 uid="uid://bogdlh0ch1tuf"]
 
 [ext_resource type="PackedScene" uid="uid://b7r4ro32w40xi" path="res://scene/powerup/powerup.tscn" id="1_fbpuo"]
-[ext_resource type="Texture2D" uid="uid://clvv6qdf7lboq" path="res://texture/icon/purse.png" id="2_bhoik"]
+[ext_resource type="Texture2D" uid="uid://dpq11gv0pafbp" path="res://texture/icon/purse.svg" id="2_bhoik"]
 [ext_resource type="Shader" path="res://shader/shine.gdshader" id="2_kfenv"]
 [ext_resource type="Script" path="res://scene/powerup/purse.gd" id="3_aqf17"]
 

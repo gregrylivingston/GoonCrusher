@@ -4,59 +4,59 @@ extends Panel
 var isSpinning: bool = false
 var slotContents =[{ ###note coin shows up twice
 		"type":Root.upgrade.PURSE,
-		"icon":"res://texture/icon/purse.png",
+		"icon":"res://texture/icon/purse.svg",
 		},
 		{
 		"type":Root.upgrade.ARMOR,
-		"icon":"res://texture/icon/shield.png",
+		"icon":"res://texture/icon/armor.svg",
 	},
 	{
 		"type":Root.upgrade.GEM,
-		"icon":"res://texture/icon/icons8-gem-48.png",
+		"icon":"res://texture/icon/gem.svg",
 	},
 	{
 		"type":Root.upgrade.TRACTION,
-		"icon":"res://texture/icon/wheel.png",
+		"icon":"res://texture/icon/traction.svg",
 	},
 	{
 		"type":Root.upgrade.COIN,
-		"icon":"res://texture/icon/icons8-coin-48 (1).png",
+		"icon":"res://texture/icon/coin.svg",
 	},
 	{
 		"type":Root.upgrade.STEERING,
-		"icon":"res://texture/icon/steering.png",
+		"icon":"res://texture/icon/steering.svg",
 	},
 	{
 		"type":Root.upgrade.ENGINE,
-		"icon":"res://texture/icon/engine.png",
+		"icon":"res://texture/icon/engine.svg",
 	},
 	{
 		"type":Root.upgrade.FUEL,
-		"icon":"res://texture/icon/gas.png",
+		"icon":"res://texture/icon/fuel.svg",
 	},
 	{
 		"type":Root.upgrade.HEALTH,
-		"icon":"res://texture/icon/heart.png",
+		"icon":"res://texture/icon/health.svg",
 	},
 	{
 		"type":Root.upgrade.COIN,
-		"icon":"res://texture/icon/icons8-coin-48 (1).png",
+		"icon":"res://texture/icon/coin.svg",
 	},
 	{
 		"type":Root.upgrade.OIL,
-		"icon":"res://texture/icon/oil.png",
+		"icon":"res://texture/icon/oil.svg",
 	},
 	{
 		"type":Root.upgrade.HEADLIGHTS,
-		"icon":"res://texture/icon/headlight.png",
+		"icon":"res://texture/icon/headlights.svg",
 	},
 	{
 		"type":Root.upgrade.CLOVER,
-		"icon":"res://texture/icon/clover.png",
+		"icon":"res://texture/icon/clover.svg",
 	},
 	{
 		"type":Root.upgrade.LUCK,
-		"icon":"res://texture/icon/luck.png",
+		"icon":"res://texture/icon/luck.svg",
 	},
 ]
 

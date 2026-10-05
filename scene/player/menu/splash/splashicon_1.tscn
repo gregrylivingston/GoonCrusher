@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://uhoyncya2scj"]
 
-[ext_resource type="Texture2D" uid="uid://bipfb4etolpw2" path="res://texture/icon/heart.png" id="2_nb155"]
+[ext_resource type="Texture2D" uid="uid://cjavrijia4yp0" path="res://texture/icon/health_flat.svg" id="2_nb155"]
 [ext_resource type="Script" path="res://scene/player/menu/splash/splashicon_1.gd" id="3_6ocdv"]
 [ext_resource type="Shader" uid="uid://cwca4ap0gs4m5" path="res://shader/3dtext.gdshader" id="gc_3dtext"]
 

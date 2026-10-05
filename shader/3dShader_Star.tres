@@ -1,6 +1,6 @@
 [gd_resource type="ShaderMaterial" format=3 uid="uid://bn8224ky2vc0j"]
 
-[ext_resource type="Texture2D" uid="uid://djs2pk1xs4sql" path="res://texture/icon/star.png" id="1_ppsou"]
+[ext_resource type="Texture2D" uid="uid://dygwh2im72q0u" path="res://texture/icon/star_flat.svg" id="1_ppsou"]
 [ext_resource type="Shader" uid="uid://cwca4ap0gs4m5" path="res://shader/3dtext.gdshader" id="gc_3dtext"]
 
 [resource]

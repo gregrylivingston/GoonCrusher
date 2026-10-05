@@ -3,8 +3,8 @@
 [ext_resource type="Script" path="res://scene/player/menu/main/top_menu.gd" id="1_dcbjq"]
 [ext_resource type="PackedScene" uid="uid://bepxjqhida0n8" path="res://scene/player/ui/roadButton.tscn" id="2_bmaru"]
 [ext_resource type="Shader" path="res://shader/3dtext.gdshader" id="3_j4luq"]
-[ext_resource type="Texture2D" uid="uid://cr8043p5ajma" path="res://texture/icon/gear.png" id="4_kg02w"]
-[ext_resource type="Texture2D" uid="uid://cajdmmcoybumc" path="res://texture/icon/quit.png" id="4_s3ccf"]
+[ext_resource type="Texture2D" uid="uid://dd5xhoidb4mn2" path="res://texture/icon/settings_flat.svg" id="4_kg02w"]
+[ext_resource type="Texture2D" uid="uid://4ijdq5wgfqmb" path="res://texture/icon/quit_flat.svg" id="4_s3ccf"]
 [ext_resource type="Texture2D" uid="uid://cd0i5ggjfhg7s" path="res://texture/icon/discord.png" id="5_w0kg5"]
 [ext_resource type="Texture2D" uid="uid://caxh4upcywiq8" path="res://texture/icon/steam.png" id="6_j1otw"]
 

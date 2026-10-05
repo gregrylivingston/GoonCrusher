@@ -10,7 +10,7 @@
 [ext_resource type="Texture2D" uid="uid://dlgpwix6wtodc" path="res://shader/emtpywhitegradient.tres" id="6_falni"]
 [ext_resource type="AudioStream" uid="uid://cv82k8fnavddt" path="res://sound/fx/slotmachine/slotlever.mp3" id="6_pqh6i"]
 [ext_resource type="PackedScene" uid="uid://bepxjqhida0n8" path="res://scene/player/ui/roadButton.tscn" id="6_vjuwu"]
-[ext_resource type="Texture2D" uid="uid://clb0tyqiwegeo" path="res://texture/icon/icons8-gem-48.png" id="7_wnnpu"]
+[ext_resource type="Texture2D" uid="uid://c4jtoaca8fpkl" path="res://texture/icon/gem_flat.svg" id="7_wnnpu"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wfh4x"]
 content_margin_left = 20.0

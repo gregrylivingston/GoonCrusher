@@ -1,7 +1,7 @@
 [gd_scene load_steps=4 format=3 uid="uid://cj1bw767v5imn"]
 
 [ext_resource type="PackedScene" uid="uid://b7r4ro32w40xi" path="res://scene/powerup/powerup.tscn" id="1_uxtcd"]
-[ext_resource type="Texture2D" uid="uid://bipfb4etolpw2" path="res://texture/icon/heart.png" id="2_ro20u"]
+[ext_resource type="Texture2D" uid="uid://281fr3eyu506" path="res://texture/icon/health.svg" id="2_ro20u"]
 
 [sub_resource type="OccluderPolygon2D" id="OccluderPolygon2D_m1rik"]
 cull_mode = 1

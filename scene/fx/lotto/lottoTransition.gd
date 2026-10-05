@@ -69,38 +69,38 @@ func destory():
 	
 var slotContents =[{
 		"type":"purse",
-		"icon":preload("res://texture/icon/purse.png"),
+		"icon":preload("res://texture/icon/purse.svg"),
 		},
 		{
 		"type":"armor",
-		"icon":preload("res://texture/icon/shield.png"),
+		"icon":preload("res://texture/icon/armor.svg"),
 	},
 	{
 		"type":"gem",
-		"icon":preload("res://texture/icon/icons8-gem-48.png"),
+		"icon":preload("res://texture/icon/gem.svg"),
 	},
 	{
 		"type":"traction",
-		"icon":preload("res://texture/icon/wheel.png"),
+		"icon":preload("res://texture/icon/traction.svg"),
 	},
 	{
 		"type":"steering",
-		"icon":preload("res://texture/icon/steering.png"),
+		"icon":preload("res://texture/icon/steering.svg"),
 	},
 	{
 		"type":"engine",
-		"icon":preload("res://texture/icon/engine.png"),
+		"icon":preload("res://texture/icon/engine.svg"),
 	},
 	{
 		"type":"fuel",
-		"icon":preload("res://texture/icon/gas.png"),
+		"icon":preload("res://texture/icon/fuel.svg"),
 	},
 	{
 		"type":"health",
-		"icon":preload("res://texture/icon/heart.png"),
+		"icon":preload("res://texture/icon/health.svg"),
 	},
 	{
 		"type":"coin",
-		"icon":preload("res://texture/icon/icons8-coin-48 (1).png"),
+		"icon":preload("res://texture/icon/coin.svg"),
 	},
 ]

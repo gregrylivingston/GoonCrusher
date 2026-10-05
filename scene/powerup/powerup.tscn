@@ -2,7 +2,7 @@
 
 [ext_resource type="Material" uid="uid://b2nnqweaskeli" path="res://shader/shader_edgeglow.tres" id="1_bejnl"]
 [ext_resource type="Script" path="res://scene/powerup/powerup.gd" id="2_2bp38"]
-[ext_resource type="Texture2D" uid="uid://bwlwtwutv2vx1" path="res://texture/icon/gas.png" id="2_a675s"]
+[ext_resource type="Texture2D" uid="uid://yqm5ddufxikg" path="res://texture/icon/fuel.svg" id="2_a675s"]
 [ext_resource type="AudioStream" uid="uid://78ld7kj5444p" path="res://sound/fx/short-success-sound-glockenspie.mp3" id="4_y3svm"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_3mcnq"]

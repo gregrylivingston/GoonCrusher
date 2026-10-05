@@ -1,7 +1,7 @@
 [gd_scene load_steps=4 format=3 uid="uid://4lh7dd54kbqe"]
 
 [ext_resource type="PackedScene" uid="uid://b7r4ro32w40xi" path="res://scene/powerup/powerup.tscn" id="1_6sqci"]
-[ext_resource type="Texture2D" uid="uid://clb0tyqiwegeo" path="res://texture/icon/icons8-gem-48.png" id="2_po3lq"]
+[ext_resource type="Texture2D" uid="uid://ccgi2eo3i0uvt" path="res://texture/icon/gem.svg" id="2_po3lq"]
 
 [sub_resource type="OccluderPolygon2D" id="OccluderPolygon2D_4b1m0"]
 cull_mode = 1

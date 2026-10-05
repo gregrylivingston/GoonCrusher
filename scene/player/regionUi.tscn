@@ -5,10 +5,10 @@
 [ext_resource type="Material" uid="uid://dkh0a5rlpp5og" path="res://shader/mat_star_yellow.tres" id="2_xvj3x"]
 [ext_resource type="Material" uid="uid://d0lj6sppa3i0j" path="res://shader/fancy_flat_text.tres" id="4_1ugrq"]
 [ext_resource type="FontFile" uid="uid://hnnpevcc2v8w" path="res://style/font/Tektur/Tektur_SemiCondensed-ExtraBold.ttf" id="5_iuvtm"]
-[ext_resource type="Texture2D" uid="uid://c4ruanw5s8kja" path="res://texture/icon/mutation.png" id="5_twvs2"]
+[ext_resource type="Texture2D" uid="uid://dqht5hdg4lg07" path="res://texture/icon/mutation_flat.svg" id="5_twvs2"]
 [ext_resource type="StyleBox" uid="uid://cjukasfxrv1k3" path="res://style/stylboxbox_progressbarBackground.tres" id="6_ydsit"]
 [ext_resource type="Material" uid="uid://c4e4nqe6cks3c" path="res://shader/rainbow_shader.tres" id="7_5pdb3"]
-[ext_resource type="Texture2D" uid="uid://djs2pk1xs4sql" path="res://texture/icon/star.png" id="8_1v6uh"]
+[ext_resource type="Texture2D" uid="uid://dygwh2im72q0u" path="res://texture/icon/star_flat.svg" id="8_1v6uh"]
 [ext_resource type="Shader" uid="uid://cwca4ap0gs4m5" path="res://shader/3dtext.gdshader" id="gc_3dtext"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_qh28y"]

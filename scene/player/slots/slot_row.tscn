@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://scene/player/slots/slot_row.gd" id="1_4i20n"]
 [ext_resource type="PackedScene" uid="uid://b5tlxv0rpgobo" path="res://scene/player/slots/slot_award_icon.tscn" id="2_k51nk"]
-[ext_resource type="Texture2D" uid="uid://w03tvhxtmrv4" path="res://texture/icon/icons8-coin-48 (1).png" id="6_qiej4"]
+[ext_resource type="Texture2D" uid="uid://dwpf5lthjuo11" path="res://texture/icon/coin.svg" id="6_qiej4"]
 [ext_resource type="Texture2D" uid="uid://c85uvqgpmca0e" path="res://scene/player/slots/slot_row_gradient.tres" id="8_m7djd"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ml7ts"]
