@@ -13,4 +13,3 @@ func setValue(value):
 	#	updateText( " " + str(value) )
 	#else:
 		updateText(str(value))
-

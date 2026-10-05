@@ -40,4 +40,3 @@ var startPosition
 func flyToUi(lerpAmount):
 	var screen_coords = uiControlNode.get_viewport_transform() * uiControlNode.global_position
 	global_position = startPosition.lerp( get_viewport_transform().affine_inverse() * screen_coords , lerpAmount)
-

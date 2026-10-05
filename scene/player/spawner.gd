@@ -10,4 +10,3 @@ func spawn():
 			var newWalker = Root.getGoon()
 			newWalker.position = coordinates
 			Root.levelRoot.add_child(newWalker)
-

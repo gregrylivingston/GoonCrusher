@@ -47,4 +47,3 @@ func sendReward(body):
 	newPowerup.sendReward(body, true)
 	body.playPurseRewardAudio()	
 	Root.mainMenu.uiUpdate()
-

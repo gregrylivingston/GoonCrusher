@@ -17,4 +17,3 @@ func _ready():
 func _process(delta):
 	velocity.y += 0.7
 	position += velocity
-

@@ -72,4 +72,3 @@ func startFocusAnimation():
 		$AudioStreamPlayer.play()
 		get_tree().create_tween().tween_method(set3dAnimationAngle, animationMin, PI , animTransitionTimer)
 		#set3dAnimationAngle(PI)
-

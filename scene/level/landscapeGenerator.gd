@@ -134,7 +134,3 @@ func getTerrainType(elevation: float) -> int: #returns Root.terrain
 	elif elevation > 0.1: return Root.terrain.MOSS   #.15 (this was too high)
 	elif elevation > -0.21: return Root.terrain.SAND   #.15 (this was too high)
 	else: return Root.terrain.WATER
-
-
-
-

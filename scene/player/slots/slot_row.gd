@@ -108,4 +108,3 @@ func getActiveType():
 	
 func getActiveTexture():
 	return $VBoxContainer.get_child(spins).texture
-

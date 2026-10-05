@@ -150,4 +150,3 @@ func destroy():
 		var newPowerup = Root.getPowerupFromWeights(powerupDropDict)
 		newPowerup.position = global_position
 		Root.levelRoot.add_child(newPowerup)
-
