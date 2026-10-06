@@ -4,9 +4,7 @@ class_name SettingsMenu extends Control
 #the Settings autoload. "Revert changes" restores the values from when the overlay opened,
 #"Reset tab" restores defaults. Controller: LB/RB tabs, B back, Y reset tab, Start close.
 
-const THEME = preload("res://style/roadRogue.tres")
 const PREVIEW_SOUND = preload("res://sound/ui/click_2.wav")
-const ACCENT = Color(0.93, 0.6, 0.16)
 const GAMEPLAY_TAG = "Affects gameplay"
 
 var tabs: Array = []
@@ -27,7 +25,7 @@ var captureDialog: SettingsDialog
 
 func _ready():
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	theme = THEME
+	theme = MenuTheme.theme()
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	previousFocus = get_viewport().gui_get_focus_owner()
@@ -97,6 +95,8 @@ func buildSchema() -> Array:
 				"info":"Shows the run clock on the HUD.", "gameplay":"In Sprint and Marathon the timer is information you lose when it is hidden.", "perf":"None"},
 			{"type":"choice", "key":"gameplay/confirm_quit", "label":"Confirm Abandon / Quit", "options":onOff(),
 				"info":"Abandon and Quit in the pause menu need a second press.", "perf":"None"},
+			{"type":"choice", "key":"gameplay/car_paint", "label":"Car Paint", "options":[["weathered", "Weathered"], ["showroom", "Showroom"]],
+				"info":"Weathered: rust, dust and faded paint, as in each driver's painting. Showroom: the same cars, clean and glossy. Only the look changes; dents and damage show on both.", "perf":"None"},
 			{"type":"button", "label":"Reset Progress", "button":"Reset...", "action":resetProgress,
 				"info":"Deletes all coins, cars, upgrades and level unlocks. Your settings are kept. Press twice to confirm.", "perf":"None"},
 		]},
@@ -130,6 +130,9 @@ func graphicsRows() -> Array:
 		{"type":"choice", "key":"gfx/tire_marks", "label":"Tire Marks", "options":[[0, "Off"], [1, "Short"], [2, "Full"]],
 			"info":"Skid marks on the ground. Short: rear tyres only, gone after 6 seconds. Full: all tyres, 20 seconds.",
 			"perf":"Small."},
+		{"type":"choice", "key":"gfx/damage_fx", "label":"Damage Effects", "options":[[1, "Low"], [2, "Full"]],
+			"info":"Effects from a damaged car. Low: engine smoke only. Full: also flames, a fuel drip trail and sparks from a wrecked wheel. Dents and flickering headlights always show, because they tell you what is broken.",
+			"perf":"Small. Only a damaged car makes any, from small capped pools."},
 		{"type":"choice", "key":"gfx/pickup_fx", "label":"Pickup Glow", "options":[[0, "Simple"], [1, "Full"]],
 			"info":"Simple keeps the full-width outline around pickups but drops the moving shine.",
 			"perf":"Small to medium, depending on how many pickups are on screen."},
@@ -218,11 +221,8 @@ static func makeButton(text: String) -> Button:
 	button.text = text
 	button.add_theme_font_size_override("font_size", 24)
 	button.custom_minimum_size = Vector2(160, 48)
-	var focusStyle = StyleBoxFlat.new()
-	focusStyle.bg_color = Color(0.93, 0.6, 0.16, 0.25)
-	focusStyle.set_corner_radius_all(4)
-	button.add_theme_stylebox_override("focus", focusStyle)
-	button.add_theme_stylebox_override("hover", focusStyle)
+	button.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	MenuTheme.addSounds(button)
 	return button
 
 func buildShell() -> void:
@@ -231,13 +231,7 @@ func buildShell() -> void:
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(dim)
 	var panel = PanelContainer.new()
-	var style = StyleBoxFlat.new()
-	style.bg_color = Color(0.07, 0.05, 0.05, 0.94)
-	style.border_color = ACCENT
-	style.set_border_width_all(3)
-	style.set_corner_radius_all(8)
-	style.set_content_margin_all(24)
-	panel.add_theme_stylebox_override("panel", style)
+	panel.add_theme_stylebox_override("panel", MenuTheme.box(Color(0.055, 0.047, 0.043, 0.95), HudTheme.RIM, 16, 3, Vector4(24, 24, 24, 24)))
 	panel.set_anchors_preset(Control.PRESET_FULL_RECT)
 	panel.offset_left = 90
 	panel.offset_right = -90
@@ -252,16 +246,17 @@ func buildShell() -> void:
 	tabRow.alignment = BoxContainer.ALIGNMENT_CENTER
 	tabRow.add_theme_constant_override("separation", 10)
 	layout.add_child(tabRow)
-	tabRow.add_child(hint("LB"))
+	tabRow.add_child(KeyHint.make(PackedStringArray(["ui_tab_prev"])))
 	for i in tabs.size():
 		var button = makeButton(tabs[i].name)
 		button.focus_mode = Control.FOCUS_NONE
 		button.toggle_mode = true
-		button.add_theme_font_size_override("font_size", 26)
+		button.theme_type_variation = "TabButton"
+		button.custom_minimum_size = Vector2(0, 48)
 		button.pressed.connect(showTab.bind(i))
 		tabRow.add_child(button)
 		tabButtons.push_back(button)
-	tabRow.add_child(hint("RB"))
+	tabRow.add_child(KeyHint.make(PackedStringArray(["ui_tab_next"])))
 
 	var body = HBoxContainer.new()
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -279,11 +274,7 @@ func buildShell() -> void:
 	scroll.add_child(rowBox)
 
 	var info = PanelContainer.new()
-	var infoStyle = StyleBoxFlat.new()
-	infoStyle.bg_color = Color(1, 1, 1, 0.05)
-	infoStyle.set_corner_radius_all(6)
-	infoStyle.set_content_margin_all(18)
-	info.add_theme_stylebox_override("panel", infoStyle)
+	info.theme_type_variation = "InfoPanel"
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body.add_child(info)
 	var infoBox = VBoxContainer.new()
@@ -308,8 +299,9 @@ func buildShell() -> void:
 	footerRow.alignment = BoxContainer.ALIGNMENT_CENTER
 	footerRow.add_theme_constant_override("separation", 30)
 	layout.add_child(footerRow)
-	for entry in [["Revert changes", revertChanges], ["Reset tab", resetTab], ["Close", close]]:
-		var button = makeButton(entry[0])
+	for entry in [["Revert changes", revertChanges, []], ["Reset tab", resetTab, ["ui_reset_tab"]], ["Close", close, ["ui_cancel"]]]:
+		var button = MenuTheme.button(entry[0], PackedStringArray(entry[2]))
+		button.custom_minimum_size = Vector2(230, 52)
 		button.pressed.connect(entry[1])
 		footerRow.add_child(button)
 		footer.push_back(button)
@@ -326,7 +318,6 @@ func showTab(index: int) -> void:
 	resetArmed = false
 	for i in tabButtons.size():
 		tabButtons[i].button_pressed = i == currentTab
-		tabButtons[i].add_theme_color_override("font_color", Color.WHITE if i == currentTab else ACCENT)
 	for row in rows: row.queue_free()
 	rows.clear()
 	for def in tabs[currentTab].rows:

@@ -5,10 +5,13 @@ class_name AIDriver extends Node2D
 #only what a player could: the screen by day, the headlight beam at night.
 #Every physics tick the controller calls think(), then reads isPressed(). Layers:
 #  goal      what to go for: the mode's objective, a pickup, a goon, or a region worth stars
-#  route     A* over the terrain map (AIRoute), string-pulled to the farthest waypoint in sight
+#  route     A* over the terrain map (AIRoute), string-pulled to the farthest waypoint in sight;
+#            near the station, a visibility graph that lines the car up with the lot's gap
 #  control   candidate key plans are simulated 1 s ahead with the car's own physics
-#            (OverheadCarBody2D.integrate), swept against rocks, walls and water; cheapest wins
-#  recovery  a car that stops making progress reverses out, and drops the goal it was stuck on
+#            (OverheadCarBody2D.integrate), swept against rocks, walls and water, and charged for
+#            time spent slow or side-on among goons; the cheapest wins
+#  recovery  a car that stops making progress reverses out and drops the goal it was stuck on;
+#            trapped three times, it leaves along its own breadcrumb trail
 
 const CONTROLLER = preload("res://scene/player/controller/playerCarController.gd")
 
@@ -33,7 +36,7 @@ const PLANS = [
 	{"steer":0, "steerTicks":0, "throttle":Throttle.BRAKE},
 	{"steer":-1, "steerTicks":HOLD, "throttle":Throttle.BRAKE}, {"steer":1, "steerTicks":HOLD, "throttle":Throttle.BRAKE},
 ]
-#only offered when slow: backing out of a pocket of rocks
+#only offered when every forward plan is blocked (or while escaping): backing out of a pocket
 const REVERSE_PLANS = [
 	{"steer":0, "steerTicks":0, "throttle":Throttle.REVERSE},
 	{"steer":-1, "steerTicks":HOLD, "throttle":Throttle.REVERSE}, {"steer":1, "steerTicks":HOLD, "throttle":Throttle.REVERSE},
@@ -47,17 +50,16 @@ const TURN_COST = 0.6         #per radian the car still has to turn at the end o
 const SAME_PLAN_BONUS = 0.08  #keeps the choice from flickering between near-equal plans
 const COMMIT_BONUS = 1.3      #the current goal's utility is multiplied by this
 
-const GOAL_RADIUS = {"pickup":70.0, "goon":80.0, "station":300.0, "roam":600.0, "patrol":600.0}
+const GOAL_RADIUS = {"pickup":70.0, "goon":80.0, "station":300.0, "roam":600.0, "patrol":600.0, "escape":300.0}
 const PURSE_QUANTITY = 10.0   #purse.tscn is a "coin" powerup with this quantity
 const ECO_MIN_SPEED = 250.0   #fuel saving never slows the car below this (crushing needs 100)
+const FUEL_NEAR_PX = 3000.0   #a known fuel pickup this close lifts the fuel-saving cap
 const FUEL_HOPE = 1.15        #fuel saving assumes about this much more fuel will turn up on the way
-const CRUSH_SPEED = 140.0     #below this goons can't be crushed, so they are obstacles, not targets
-const GOON_TARGET_PX = 2500.0
-const GOON_CLOSE_PX = 500.0
-const GOON_AHEAD_ANGLE = 1.1  #radians either side of the nose
+const CRUSH_SPEED = 140.0     #below this (with a margin over the game's 100) a touch costs health and crushes nothing
+const GOON_TARGET_PX = 2500.0 #goons further than this are left to come to the car
 const SLOW_GOON_COST = 1.5    #per second spent below CRUSH_SPEED, per goon within SLOW_GOON_PX
 const SLOW_GOON_PX = 350.0
-const FLANK_COST = 4.0        #per second a goon spends beside the car within FLANK_PX (doubled mid-attack)
+const FLANK_COST = 1.0        #per second a goon spends beside the car within FLANK_PX (doubled mid-attack)
 const FLANK_PX = 260.0
 const BUMPER_CONE = 0.8       #cosine: goons this close to straight ahead meet the bumper
 const REVERSE_IF_BLOCKED_SECONDS = 0.4 #reverse plans are tried only when every forward plan hits this soon
@@ -66,9 +68,25 @@ const HEADLIGHT_REACH_PX = 2000.0
 const HEADLIGHT_HALF_ANGLE = 0.45
 const FULL_SIGHT_PX = 4000.0
 const ROAM_MIN_PX = 6000.0
-const STATION_APPROACH_PX = [1100.0, 2000.0] #where the car lines up, out in front of the station's gap
+const CAREFUL_ROCK_PX = 450.0  #a pickup with a rock this close is approached slowly...
+const CAREFUL_FROM_PX = 1200.0 #...from this far out...
+const CAREFUL_SPEED = 260.0    #...at this speed (rock damage grows with speed)
+const AMONG_ROCKS_SECONDS = 4.0 #and its time estimate gets this much longer
+const AMONG_ROCKS_MIN_VALUE = 20.0 #pickups among rocks worth less than this are left alone
+const STATION_INNER_PX = 1100.0 #the station graph: markers this far out in front of the gap...
+const STATION_OUTER_PX = 2000.0
+const STATION_SIDE_PX = 1400.0  #...corners this far to either side of the gap's line...
+const STATION_BACK_PX = 1900.0  #...and this far behind the driveway
+const STATION_GRAPH_PX = 6000.0 #the graph is used within this distance of the driveway
+const STATION_CONE = 0.6        #radians either side of the gap's line from which the last legs start
+const STATION_SLOW_PX = 2500.0  #within this of the driveway the car slows to STATION_SPEED
+const STATION_SPEED = 450.0
 const STUCK_WINDOW = 5        #progress is sampled every 0.5 s over this many samples
 const STUCK_PX = 150.0
+const TRAIL_TICKS = 15        #the breadcrumb trail is sampled 4 times a second...
+const TRAIL_SAMPLES = 60      #...over the last 15 s
+const ESCAPE_BACK_SAMPLES = 24 #an escape heads for the trail at least 6 s back...
+const ESCAPE_MIN_PX = 600.0   #...and at least this far away
 
 var car: OverheadCarBody2D
 var route: AIRoute
@@ -82,7 +100,10 @@ var plan: Dictionary = PLANS[0]
 var planTick := 0
 var planPath := PackedVector2Array()
 var planHit := false
-var speedCap := INF
+var speedCap := INF           #fuel saving (updateSpeedCap)
+var throttleCap := INF        #what the throttle actually holds to: speedCap, or slower near rocks
+var rockyPickups := {}        #pickup instance id -> amongRocks
+var goalCareful := false      #the goal sits among rocks (fuel in a rock ring): go in slowly
 
 var goal: Dictionary = {}
 var goalTick := 0
@@ -96,15 +117,22 @@ var routeTick := -9999
 var raceDistance := 0.0       #px left along the route to the station (races)
 var roamPoint := Vector2.INF
 var roamUntil := 0
-var stationApproach: Array = [] #the driveway, then points out in front of the station's gap
+var stationPoints: Array = []   #the station graph's points: driveway, inner and outer marker, corners
+var stationEdges: Array = []    #distance matrix between them, INF where a wall is in the way
+var stationGap := Vector2.RIGHT  #from the driveway out through the gap
+var approachHop := -1           #the station point the car is heading for (for --trace)
 var progress: Array[Vector2] = []
 var recoverUntil := 0
 var stuckTicks := []
+var trail := PackedVector2Array() #where the car has been, every TRAIL_TICKS
+var escapePoint := Vector2.INF
+var escapeUntil := 0
 var stuckOn := {}             #goal key -> times the car got stuck chasing it
 
 var space: PhysicsDirectSpaceState2D
 var query := PhysicsShapeQueryParameters2D.new()
-var bodyShape := RectangleShape2D.new()   #the car's footprint with a margin
+var bodyShape := RectangleShape2D.new()   #the car's footprint with a margin, for sweeps
+var exactShape := RectangleShape2D.new()  #the footprint itself, for overlap tests (tight gaps stay usable)
 var startShape := RectangleShape2D.new()  #smaller, so a car touching a rock can still back away
 var halfSize := Vector2(80, 40)
 var excludes: Array[RID] = []
@@ -133,6 +161,7 @@ func _ready():
 	var area = car.get_node_or_null("carBodyArea/CollisionShape2D")
 	if area && area.shape is RectangleShape2D: halfSize = area.shape.size / 2.0
 	bodyShape.size = halfSize * 2.0 + Vector2(20, 24)
+	exactShape.size = halfSize * 2.0 + Vector2(4, 4)
 	startShape.size = halfSize * 2.0 - Vector2(16, 16)
 	query.collision_mask = 1 #rocks, walls and hills (goons are on it too, and are excluded)
 
@@ -155,7 +184,14 @@ func think() -> void:
 	aim = aimPoint(goalPosition())
 	if tick % SCAN_TICKS == 1 && tick >= recoverUntil: choosePlan()
 	checkProgress()
-	keys = keysFor(plan, tick - planTick, forwardSpeed(), speedCap)
+	if tick % TRAIL_TICKS == 0:
+		trail.push_back(car.global_position)
+		if trail.size() > TRAIL_SAMPLES: trail.remove_at(0)
+	throttleCap = speedCap
+	if goalCareful && car.global_position.distance_to(goalPosition()) < CAREFUL_FROM_PX: throttleCap = minf(throttleCap, CAREFUL_SPEED)
+	if goal.get("kind") == "station" && not stationPoints.is_empty() && car.global_position.distance_to(stationPoints[0]) < STATION_SLOW_PX:
+		throttleCap = minf(throttleCap, STATION_SPEED)
+	keys = keysFor(plan, tick - planTick, forwardSpeed(), throttleCap)
 	if speedCap < INF: stats.eco_seconds += 1.0 / Engine.physics_ticks_per_second
 	if debug && tick % SCAN_TICKS == 1: queue_redraw()
 
@@ -185,6 +221,11 @@ func goalPosition() -> Vector2:
 #the car doesn't dither. Sprint only takes detours the clock can afford.
 func updateGoal() -> void:
 	updateSpeedCap()
+	if tick < escapeUntil:
+		if car.global_position.distance_to(escapePoint) > GOAL_RADIUS.escape:
+			goal = {"kind":"escape", "pos":escapePoint, "value":1000.0, "key":"escape"}
+			return
+		escapeUntil = 0
 	var carPos = car.global_position
 	var options: Array = []
 	var need = fuelNeed()
@@ -198,16 +239,14 @@ func updateGoal() -> void:
 		if AIRoute.isBlocked(route.terrainAt(p.global_position)): continue
 		var value = pickupValue(p.powerup, p.quantity, car.fuel, car.health, need)
 		options.push_back({"kind":"pickup", "node":p, "value":value, "key":str(id), "type":p.powerup})
-	#goons walk to the car anyway: only those ahead, or already close, are worth steering for
+	#goons only die by being crushed, so crushing is also the defence: every goon left alive joins
+	#the horde. Goons inside the turning circle are left to etaTo's loop penalty.
 	if is_instance_valid(Root.spawnManager) && not protecting():
-		var forward = car.global_transform.x.normalized()
 		var near: Array = []
 		for g in Root.spawnManager.goons:
 			if is_instance_valid(g) && not g.isDying() && g.global_position.distance_squared_to(carPos) < GOON_TARGET_PX * GOON_TARGET_PX && canSee(g.global_position):
 				near.push_back(g)
 		for g in near:
-			var offset = g.global_position - carPos
-			if offset.length() > GOON_CLOSE_PX && absf(forward.angle_to(offset)) > GOON_AHEAD_ANGLE: continue
 			var neighbours = 0
 			for other in near:
 				if other != g && other.global_position.distance_squared_to(g.global_position) < 350.0 * 350.0: neighbours += 1
@@ -226,6 +265,9 @@ func updateGoal() -> void:
 		if isRace && not objective.is_empty():
 			var detour = (carPos.distance_to(pos) + pos.distance_to(aim if aim != Vector2.INF else objective.pos) - carPos.distance_to(aim if aim != Vector2.INF else objective.pos)) / cruiseSpeed()
 			if detour > (allowedDetour if option.get("type") != "fuel" || need < 0.3 else allowedDetour * 3.0 + 4.0): continue
+		if option.kind == "pickup" && amongRocks(option.node):
+			if option.value < AMONG_ROCKS_MIN_VALUE: continue #a coin is not worth a pocket of rocks
+			eta += AMONG_ROCKS_SECONDS
 		var utility = option.value / (eta + 1.0)
 		if option.key == goal.get("key"): utility *= COMMIT_BONUS
 		if utility > bestUtility:
@@ -236,6 +278,7 @@ func updateGoal() -> void:
 		goal = best
 		goalTick = tick
 		goalEta = etaTo(goalPosition())
+		goalCareful = goal.kind == "pickup" && amongRocks(goal.node)
 		var label = goal.get("type", goal.kind)
 		stats.goals[label] = stats.goals.get(label, 0) + 1
 	elif goal.has("pos") && best.has("pos"):
@@ -269,34 +312,110 @@ func objectiveGoal() -> Dictionary:
 		roamUntil = tick + 30 * Engine.physics_ticks_per_second
 	return {"kind":"roam", "pos":roamPoint, "value":4.0, "key":"roam"}
 
-#The station lot is walled with one gap. Like a landing approach: the gap's direction is found once
-#(probing outward from the driveway for the most room), and the car aims for the innermost of the
-#driveway and two points out in front of the gap that it has a clear, car-wide run to, so it turns
-#in lined up instead of sliding along the wall.
+#The station lot is walled with one gap. Around it the car keeps a small visibility graph: the
+#driveway, two markers out in front of the gap (found once by probing outward from the driveway
+#for the most room) and four corners clear of the lot, joined wherever a car-wide sweep is clear of
+#walls. The inner marker and the driveway can only be entered from within STATION_CONE of the gap's
+#line, so the last leg is always a straight run in. The car steers for the first point on the
+#shortest way through that graph, so from any side it drives round the lot and turns in lined up,
+#instead of pushing into a wall or reaching the gap side-on at full speed.
 func stationTarget() -> Vector2:
 	var driveway = Root.station.get_node("driveway/CollisionShape2D").global_position
-	if stationApproach.is_empty():
-		var best = Vector2.RIGHT
-		var bestRoom = -1.0
-		for i in 32:
-			var direction = Vector2.from_angle(i * TAU / 32.0)
-			var hit = space.intersect_ray(PhysicsRayQueryParameters2D.create(driveway, driveway + direction * STATION_APPROACH_PX[0], 1, [car.get_rid()]))
-			var room = driveway.distance_to(hit.position) if hit else STATION_APPROACH_PX[0]
-			room += direction.dot((car.global_position - driveway).normalized()) * 20.0 #ties: the side facing the car
-			if room > bestRoom:
-				bestRoom = room
-				best = direction
-		stationApproach = [driveway]
-		for distance in STATION_APPROACH_PX: stationApproach.push_back(driveway + best * distance)
-	if car.global_position.distance_to(driveway) < STATION_APPROACH_PX[STATION_APPROACH_PX.size() - 1] * 1.5:
-		for point in stationApproach:
-			if pathIsClear(car.global_position, point): return point
-	return stationApproach[stationApproach.size() - 1]
+	var carPos = car.global_position
+	if carPos.distance_to(driveway) > STATION_GRAPH_PX: return driveway #far off: the route handles it
+	if stationPoints.is_empty(): buildStationGraph(driveway)
+	var carEdges = PackedFloat32Array()
+	for i in stationPoints.size():
+		carEdges.push_back(carPos.distance_to(stationPoints[i]) if stationEdgeAllowed(carPos, i) && clearOfWalls(carPos, stationPoints[i]) else INF)
+	var hop = firstHop(stationPoints, stationEdges, carEdges)
+	approachHop = hop
+	return stationPoints[hop] if hop >= 0 else stationPoints[2]
 
-#can the car's footprint slide straight from a to b without touching a rock or wall
-func pathIsClear(a: Vector2, b: Vector2) -> bool:
-	if excludes.is_empty(): refreshExcludes()
-	return sweep(a, b - a, b - a, false) >= 1.0
+func buildStationGraph(driveway: Vector2) -> void:
+	var gap = Vector2.RIGHT
+	var bestRoom = -1.0
+	for i in 32:
+		var direction = Vector2.from_angle(i * TAU / 32.0)
+		var hit = space.intersect_ray(PhysicsRayQueryParameters2D.create(driveway, driveway + direction * STATION_INNER_PX, 1, [car.get_rid()]))
+		var room = driveway.distance_to(hit.position) if hit else STATION_INNER_PX
+		room += direction.dot((car.global_position - driveway).normalized()) * 20.0 #ties: the side facing the car
+		if room > bestRoom:
+			bestRoom = room
+			gap = direction
+	stationGap = gap
+	var side = gap.orthogonal() * STATION_SIDE_PX
+	stationPoints = [driveway, driveway + gap * STATION_INNER_PX, driveway + gap * STATION_OUTER_PX,
+		driveway + gap * STATION_INNER_PX + side, driveway + gap * STATION_INNER_PX - side,
+		driveway - gap * STATION_BACK_PX + side, driveway - gap * STATION_BACK_PX - side]
+	stationEdges = []
+	for i in stationPoints.size():
+		var row = PackedFloat32Array()
+		for j in stationPoints.size():
+			var open = i != j && stationEdgeAllowed(stationPoints[i], j) && clearOfWalls(stationPoints[i], stationPoints[j])
+			row.push_back(stationPoints[i].distance_to(stationPoints[j]) if open else INF)
+		stationEdges.push_back(row)
+
+#the driveway (0) and the inner marker (1) are entered only from the gap's line
+func stationEdgeAllowed(from: Vector2, to: int) -> bool:
+	if to > 1: return true
+	var offset = from - stationPoints[0]
+	return offset.length() < 1.0 || absf(stationGap.angle_to(offset)) < STATION_CONE
+
+#Dijkstra from the car (carEdges: its distance to each point, INF where blocked) to point 0, over
+#`edges` (a distance matrix, INF where blocked). Returns the first point on the way, -1 if none.
+static func firstHop(points: Array, edges: Array, carEdges: PackedFloat32Array) -> int:
+	var count = points.size()
+	var best = PackedFloat32Array()
+	var via = PackedInt32Array() #the first hop on the best way to each point
+	var done = []
+	for i in count:
+		best.push_back(carEdges[i])
+		via.push_back(i if carEdges[i] < INF else -1)
+		done.push_back(false)
+	for _step in count:
+		var next = -1
+		for i in count:
+			if not done[i] && best[i] < INF && (next < 0 || best[i] < best[next]): next = i
+		if next < 0: break
+		if next == 0: return via[0]
+		done[next] = true
+		for j in count:
+			if not done[j] && edges[next][j] < INF && best[next] + edges[next][j] < best[j]:
+				best[j] = best[next] + edges[next][j]
+				via[j] = via[next]
+	return via[0]
+
+#can a car-wide footprint slide from a to b without touching a rock or wall (goons are ignored:
+#they move, and the planner deals with them)
+func clearOfWalls(a: Vector2, b: Vector2) -> bool:
+	var keep = excludes
+	excludes = [car.get_rid()]
+	if is_instance_valid(Root.spawnManager):
+		for g in Root.spawnManager.goons:
+			if is_instance_valid(g): excludes.push_back(g.get_rid())
+	var clear = sweep(a, b - a, b - a, false) >= 1.0
+	excludes = keep
+	return clear
+
+#a pickup with rocks around it (fuel in a rock ring) is slow and risky to collect; rocks don't
+#move, so the answer is kept per pickup
+func amongRocks(pickup: Node) -> bool:
+	var id = pickup.get_instance_id()
+	if not rockyPickups.has(id): rockyPickups[id] = rocksNear(pickup.global_position, CAREFUL_ROCK_PX)
+	return rockyPickups[id]
+
+#is there a rock or wall within `radius` of a point
+func rocksNear(point: Vector2, radius: float) -> bool:
+	var circle = CircleShape2D.new()
+	circle.radius = radius
+	var around = PhysicsShapeQueryParameters2D.new()
+	around.shape = circle
+	around.transform = Transform2D(0.0, point)
+	around.collision_mask = 1
+	around.exclude = [car.get_rid()]
+	for hit in space.intersect_shape(around, 8):
+		if hit.collider is StaticBody2D || hit.collider is TileMap: return true
+	return false
 
 #Region stars: a region pays a star for each 60 s spent in it, up to 3 (Region.gd), so stay in a
 #region until it has paid out, then head for one that hasn't. Land only, preferably ahead.
@@ -366,9 +485,9 @@ func protecting() -> bool:
 
 func healthReserve() -> float:
 	match mode:
-		Root.gameModes.GOONCRUSHER: return 15.0 + maxf(Root.levelRoot.seconds, 0.0) * 0.08
+		Root.gameModes.GOONCRUSHER: return 10.0 + maxf(Root.levelRoot.seconds, 0.0) * 0.04
 		Root.gameModes.SPRINT, Root.gameModes.MARATHON: return 20.0
-	return 35.0
+	return 25.0
 
 #0 when the tank will last the run, 1 when the car is about to run dry
 func fuelNeed() -> float:
@@ -387,10 +506,11 @@ func fuelPerSecond() -> float:
 
 #Pulse and glide: throttle only below a cruise speed the tank can sustain. Holding speed v takes the
 #throttle a share duty(v) = (drag v^2 + friction v) / force of the time, so a slower car burns far
-#less per second (Countdown) and per px (races). No cap when a fuel pickup is known.
+#less per second (Countdown) and per px (races). No cap while a fuel pickup is close by and not
+#given up on; one seen far away doesn't count, or the car would burn its tank getting there.
 func updateSpeedCap() -> void:
 	speedCap = INF
-	if known.values().any(func(p): return is_instance_valid(p) && p.powerup == "fuel"): return
+	if known.values().any(func(p): return is_instance_valid(p) && p.powerup == "fuel" && blacklist.get(str(p.get_instance_id()), 0) <= tick 			&& p.global_position.distance_to(car.global_position) < FUEL_NEAR_PX): return
 	var burn = fuelPerSecond()
 	var cap = INF
 	match mode:
@@ -459,18 +579,19 @@ func canSee(point: Vector2) -> bool:
 	var reach = HEADLIGHT_REACH_PX * car.get_node("headlamps/headlights").scale.x
 	return offset.length() < reach && absf(car.global_transform.x.angle_to(offset)) < HEADLIGHT_HALF_ANGLE
 
-#goons are on the obstacle layer too. A car fast enough to crush them ignores them in its sweeps;
-#a slow one steers around them, since every touch costs health without crushing
+#Goons are on the obstacle layer too. The sweeps ignore them (they are targets: a slow car should
+#floor it through, crush speed takes a third of a second, and scoreRollout charges for time spent
+#slow among them), except in protect mode, when the car steers around them like rocks.
 func refreshExcludes() -> void:
 	excludes = [car.get_rid()]
 	nearGoons.clear()
 	nearGoonsLunging.clear()
 	if not is_instance_valid(Root.spawnManager): return
 	var carPos = car.global_position
-	var fast = car.velocity.length() >= CRUSH_SPEED && not protecting()
+	var crushing = not protecting()
 	for g in Root.spawnManager.goons:
 		if is_instance_valid(g) && not g.isDying() && g.global_position.distance_squared_to(carPos) < 1800.0 * 1800.0:
-			if fast: excludes.push_back(g.get_rid())
+			if crushing: excludes.push_back(g.get_rid())
 			nearGoons.push_back(g.global_position)
 			nearGoonsLunging.push_back(1 if g.myMode == Walker.mode.PREPAREATTACK || g.myMode == Walker.mode.ATTACK else 0)
 
@@ -532,7 +653,8 @@ func choosePlan() -> void:
 	lastCosts.clear()
 	for candidate in PLANS: best = cheaper(best, candidate)
 	#reversing is for getting out of a pocket, not for driving: only when everything ahead is blocked
-	if best.rollout.get("hitSeconds", INF) < REVERSE_IF_BLOCKED_SECONDS && car.velocity.length() < REVERSE_BELOW_SPEED:
+	var blocked = best.rollout.get("hitSeconds", INF) < REVERSE_IF_BLOCKED_SECONDS && car.velocity.length() < REVERSE_BELOW_SPEED
+	if blocked || tick < escapeUntil:
 		for candidate in REVERSE_PLANS: best = cheaper(best, candidate)
 	if best.plan != plan: planTick = tick
 	plan = best.plan
@@ -560,7 +682,7 @@ func simulate(candidate: Dictionary, ticks: int) -> Dictionary:
 	var headings = PackedVector2Array([forward])
 	var speeds = PackedFloat32Array([vel.length()])
 	for t in ticks:
-		var held = keysFor(candidate, t, vel.dot(forward.normalized()), speedCap)
+		var held = keysFor(candidate, t, vel.dot(forward.normalized()), throttleCap)
 		input.acceleration = 0.0
 		input.braking = false
 		if held & ACCEL:
@@ -595,7 +717,7 @@ func scoreRollout(rollout: Dictionary, target: Vector2) -> float:
 	var last = path.size() - 1
 	var endSpeed = speeds[last]
 	for i in range(1, path.size()):
-		#a car below crush speed among goons is chewed up: each touch costs health and crushes nothing
+		#goons beside the path lunge at the body; a car below crush speed among them is chewed up
 		if not nearGoons.is_empty():
 			cost += FLANK_COST * segment * flankExposure(path[i], headings[i])
 			if speeds[i] < CRUSH_SPEED: cost += SLOW_GOON_COST * segment * goonsNear(path[i])
@@ -632,12 +754,15 @@ func scoreRollout(rollout: Dictionary, target: Vector2) -> float:
 #The first segment uses a smaller shape and skips the overlap test, so a car already touching a
 #rock can still choose to back or steer away from it.
 func sweep(from: Vector2, heading: Vector2, motion: Vector2, first: bool) -> float:
-	query.shape = startShape if first else bodyShape
 	query.transform = Transform2D(heading.angle(), from)
 	query.exclude = excludes
-	#cast_motion ignores anything the shape already overlaps, so test that first
+	#cast_motion ignores anything the shape already overlaps, so test that first, with the real
+	#footprint: the margin would make every plan in a tight pocket look like a crash
 	query.motion = Vector2.ZERO
-	if not first && not space.intersect_shape(query, 1).is_empty(): return 0.0
+	if not first:
+		query.shape = exactShape
+		if not space.intersect_shape(query, 1).is_empty(): return 0.0
+	query.shape = startShape if first else bodyShape
 	query.motion = motion
 	var result = space.cast_motion(query)
 	return result[0] if result.size() > 0 else 1.0
@@ -656,7 +781,8 @@ func footprintTerrain(pos: Vector2, heading: Vector2) -> int:
 #--- recovery ---------------------------------------------------------------------------------
 
 #Twice a second: a car that has moved less than STUCK_PX in 2.5 s reverses out on the plan with
-#the most room, and drops its goal for 10 s. Three times in 20 s and it heads somewhere else.
+#the most room, and drops its goal for 10 s (for good after twice). Three times in 20 s and it
+#escapes back along its breadcrumb trail.
 func checkProgress() -> void:
 	if tick % 30 != 0: return
 	progress.push_back(car.global_position)
@@ -672,10 +798,17 @@ func checkProgress() -> void:
 	stuckTicks.push_back(tick)
 	stuckTicks = stuckTicks.filter(func(t): return tick - t < 20 * Engine.physics_ticks_per_second)
 	if stuckTicks.size() >= 3:
+		#trapped (a pocket of rocks, a crowd): leave the way the car came in. Its trail from a few
+		#seconds back is known to be drivable; reversing is allowed until it gets there.
 		stuckTicks.clear()
 		stats.escapes += 1
-		roamPoint = car.global_position - car.global_transform.x * 2500.0
-		roamUntil = tick + 8 * Engine.physics_ticks_per_second
+		escapePoint = car.global_position - car.global_transform.x * 1500.0
+		for i in range(trail.size() - 1 - ESCAPE_BACK_SAMPLES, -1, -1):
+			if trail[i].distance_to(car.global_position) > ESCAPE_MIN_PX:
+				escapePoint = trail[i]
+				break
+		escapeUntil = tick + 8 * Engine.physics_ticks_per_second
+		goal = {}
 	refreshExcludes()
 	var bestRoom = -INF
 	for candidate in REVERSE_PLANS:

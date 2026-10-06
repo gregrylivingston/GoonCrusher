@@ -28,11 +28,10 @@ func _process(_delta):
 func openPause() -> void:
 	if get_tree().paused || Settings.menu_open || get_tree().get_nodes_in_group("pauseMenu").size() > 0: return
 	get_tree().paused = true
-	for i in get_tree().get_nodes_in_group("visibleWhenPaused"):i.visible = true
 	add_child( load("res://scene/player/menu/pauseMenu.tscn").instantiate() )
 
-#the stat list the pause menu shows
-func updateStats():$carPanel.updateStats()
+#car.reward() calls this when a stat changes; the systems strip shows stats, so redraw it now
+func updateStats(): $Systems.queue_redraw()
 
 #HUD Scale (Accessibility). Each authored HUD control is scaled about its point nearest its anchor,
 #so corner widgets stay in their corners. Menus added at runtime (pause, slots, countdown, summary)

@@ -81,46 +81,28 @@ func getRegion(regionNumber: int , terrainType: int) -> Dictionary:
 		currentRegionNumber = regionNumber
 		return newRegion
 		
+var rng := RandomNumberGenerator.new()
+
+#A region belongs to one faction (Goons.gd): Wild Things near the start and on early levels, the Goon
+#Tribe further out, the Scrap Gang furthest out and on late levels. Its three goons come from that faction.
 func createRegion(terrain: int) -> Dictionary:#terrain is Enum Root.terrain
+	var distance: float = Root.playerCar.global_position.length() if is_instance_valid(Root.playerCar) else 0.0
+	var faction := Goons.factionFor(distance, SaveManager.playerData.selectedLevel if SaveManager.playerData else 0, rng.randf_range(-Goons.FACTION_JITTER, Goons.FACTION_JITTER))
 	var thisRegion = {
 		"name": names[ terrain ][ randi()%names[terrain].size() - 1 ],
 		"terrain":terrain,
 		"giantism":randi()%100,
 		"time":0.0,
 		"wave":1,
-		"goon":[
-			getRandomGoon(terrain),getRandomGoon(terrain),getRandomGoon(terrain),
-		],
+		"faction":faction,
+		"goon":Goons.regionGoons(faction, terrain, rng),
 		"terrain_modulate":randf_range(0.8,1.12),
 	}
 	return thisRegion
 
-var terrainGoons = {
-	Root.terrain.SAND:[
-		Root.goon.FIREKIN, Root.goon.SHELLBACK, Root.goon.SKELETON
-	],
-	Root.terrain.MOSS:[
-		Root.goon.SHELLBACK, Root.goon.RAT, Root.goon.GREMLIN, Root.goon.LIZARD
-	],
-	Root.terrain.GRASS:[
-		Root.goon.DEVIL, Root.goon.PIKEMAN, Root.goon.SAMURAI, Root.goon.SPARTAN, Root.goon.SOLDIER
-	],
-	Root.terrain.MUD:[
-		Root.goon.ZULU, Root.goon.SMASHER, Root.goon.IMMORTAL, Root.goon.VIKING, Root.goon.SPARTAN,  Root.goon.SOLDIER
-	],
-	Root.terrain.DIRT:[
-		Root.goon.ROCKMAN, Root.goon.DOOMCART, Root.goon.GREMLIN, Root.goon.SKELETON
-	],
-	Root.terrain.SNOW:[
-		Root.goon.GOONBEAR, Root.goon.ROCKMAN, Root.goon.LIZARD,  Root.goon.SKELETON
-	],
-}
+func factionName(faction: int = -1) -> String:
+	return Goons.factionName(currentRegion.get("faction", Goons.faction.TRIBE) if faction < 0 else faction)
 
-func getRandomGoon(terrain: int): #accepts Root.terrain
-	return terrainGoons[terrain][ randi()%terrainGoons[terrain].size()-1 ]
-	
-	
-	
 func updatePlayerRegion(tile):
 	if currentRegionNumber != tile.region:
 		Root.playerRoot.animateNewRegion(true)

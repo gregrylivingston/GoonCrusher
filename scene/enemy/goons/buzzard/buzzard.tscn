@@ -1,0 +1,30 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="PackedScene" path="res://scene/enemy/walker/walker.tscn" id="base"]
+[ext_resource type="SpriteFrames" path="res://scene/enemy/goons/buzzard/buzzard_frames.tres" id="frames"]
+[ext_resource type="Texture2D" path="res://scene/enemy/goons/buzzard/art/buzzard_decal.png" id="decal"]
+
+[sub_resource type="CapsuleShape2D" id="shape"]
+radius = 7.8
+height = 15.6
+
+[sub_resource type="OccluderPolygon2D" id="occluder"]
+cull_mode = 1
+polygon = PackedVector2Array(-39.5, -5, -37.5, -6.5, -0.5, -17.5, 0.5, -17.5, 37, -6.5, 40, -2, 39, 0, 4.5, 21, -5, 21, -39.5, 0)
+
+[node name="buzzard" instance=ExtResource("base")]
+goonId = &"buzzard"
+decal = ExtResource("decal")
+eyes = PackedVector2Array(-2, -10.8, 2, -10.8)
+bodyRadius = 7.8
+
+[node name="CollisionShape2D" parent="." index="0"]
+position = Vector2(-0.0, 0.0)
+shape = SubResource("shape")
+
+[node name="Sprite" parent="." index="1"]
+scale = Vector2(1.3333, 1.3333)
+sprite_frames = ExtResource("frames")
+
+[node name="LightOccluder2D" parent="." index="2"]
+occluder = SubResource("occluder")

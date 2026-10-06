@@ -1,0 +1,30 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="PackedScene" path="res://scene/enemy/walker/walker.tscn" id="base"]
+[ext_resource type="SpriteFrames" path="res://scene/enemy/goons/torch/torch_frames.tres" id="frames"]
+[ext_resource type="Texture2D" path="res://scene/enemy/goons/torch/art/torch_decal.png" id="decal"]
+
+[sub_resource type="CapsuleShape2D" id="shape"]
+radius = 15.2
+height = 30.4
+
+[sub_resource type="OccluderPolygon2D" id="occluder"]
+cull_mode = 1
+polygon = PackedVector2Array(-19.5, -4.5, -2.5, -19.5, 18, -26, 22, -26, 27, -21.5, 27, -16.5, 16.5, 5, 6.5, 17.5, -8.5, 14, -20, 2)
+
+[node name="torch" instance=ExtResource("base")]
+goonId = &"torch"
+decal = ExtResource("decal")
+eyes = PackedVector2Array(-4.8, -7.6, 4.8, -7.6)
+bodyRadius = 15.2
+
+[node name="CollisionShape2D" parent="." index="0"]
+position = Vector2(-0.0, 0.0)
+shape = SubResource("shape")
+
+[node name="Sprite" parent="." index="1"]
+scale = Vector2(1.3333, 1.3333)
+sprite_frames = ExtResource("frames")
+
+[node name="LightOccluder2D" parent="." index="2"]
+occluder = SubResource("occluder")

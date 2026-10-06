@@ -1,0 +1,30 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="PackedScene" path="res://scene/enemy/walker/walker.tscn" id="base"]
+[ext_resource type="SpriteFrames" path="res://scene/enemy/goons/snapper/snapper_frames.tres" id="frames"]
+[ext_resource type="Texture2D" path="res://scene/enemy/goons/snapper/art/snapper_decal.png" id="decal"]
+
+[sub_resource type="CapsuleShape2D" id="shape"]
+radius = 17.1
+height = 83.6
+
+[sub_resource type="OccluderPolygon2D" id="occluder"]
+cull_mode = 1
+polygon = PackedVector2Array(-23, -13.5, -2.5, -49, 2, -49, 20.5, -14.5, 22.5, -10, 22.5, 13, 9.5, 62, 6.5, 62.5, -21, 14, -23, 9)
+
+[node name="snapper" instance=ExtResource("base")]
+goonId = &"snapper"
+decal = ExtResource("decal")
+eyes = PackedVector2Array(-3.5, -29, 3.5, -29)
+bodyRadius = 17.1
+
+[node name="CollisionShape2D" parent="." index="0"]
+position = Vector2(-6.8, 0.0)
+shape = SubResource("shape")
+
+[node name="Sprite" parent="." index="1"]
+scale = Vector2(1.3333, 1.3333)
+sprite_frames = ExtResource("frames")
+
+[node name="LightOccluder2D" parent="." index="2"]
+occluder = SubResource("occluder")

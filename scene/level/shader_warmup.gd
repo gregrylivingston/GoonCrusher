@@ -21,11 +21,11 @@ func _ready():
 	occluder.occluder.polygon = PackedVector2Array([Vector2(40, -10), Vector2(60, -10), Vector2(60, 10), Vector2(40, 10)])
 	add_child(occluder)
 
-	var goonScene = Root.spawnManager.goonScene.values()[0] if is_instance_valid(Root.spawnManager) else null
+	var goonScene = Root.spawnManager.warmupScene() if is_instance_valid(Root.spawnManager) else null
 	if goonScene:
 		for giant in [false, true]:
 			var goon = goonScene.instantiate()
-			var sprite = goon.get_node("Walker").duplicate()
+			var sprite = goon.get_node("Sprite").duplicate()
 			if not giant: sprite.material = null
 			sprite.position = Vector2(-80 if giant else -40, 0)
 			add_child(sprite)

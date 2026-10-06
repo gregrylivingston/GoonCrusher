@@ -1,8 +1,7 @@
-[gd_scene load_steps=19 format=3 uid="uid://ck730mtu8o5o8"]
+[gd_scene load_steps=17 format=3 uid="uid://ck730mtu8o5o8"]
 
-[ext_resource type="Shader" path="res://shader/flashiness.gdshader" id="1_1hpc4"]
-[ext_resource type="SpriteFrames" uid="uid://lyldd0udb2f" path="res://scene/enemy/walker/devil/walkingDevil.tres" id="1_mmdcr"]
 [ext_resource type="Script" path="res://scene/enemy/walker/walker.gd" id="2_ogk1f"]
+[ext_resource type="Shader" path="res://shader/flashiness.gdshader" id="1_1hpc4"]
 [ext_resource type="AudioStream" uid="uid://cx4bb003v21gi" path="res://sound/fx/walker/walker_snarling/snarling_1.mp3" id="2_v4qqt"]
 [ext_resource type="AudioStream" uid="uid://dihcfehli7r6b" path="res://sound/fx/walker/metal_bash1-46582.mp3" id="3_1d64k"]
 [ext_resource type="AudioStream" uid="uid://bndssphim4iug" path="res://sound/fx/walker/walker_snarling/snarling_2.mp3" id="3_1vsyv"]
@@ -16,8 +15,9 @@
 [ext_resource type="AudioStream" uid="uid://bqe4fnccfmg6x" path="res://sound/fx/walker/walker_snarling/snarling_6.mp3" id="7_s4hpd"]
 [ext_resource type="AudioStream" uid="uid://db0up7mlvpgvx" path="res://sound/fx/walker/walker_snarling/snarling_7.mp3" id="8_ttoab"]
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_je6xf"]
-size = Vector2(32, 32)
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_base"]
+radius = 16.0
+height = 32.0
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_ogm8y"]
 shader = ExtResource("1_1hpc4")
@@ -25,30 +25,28 @@ shader_parameter/speed = 1.0
 shader_parameter/tint = Color(128.498, 1, 1, 1)
 shader_parameter/span = 0.231
 
-[sub_resource type="OccluderPolygon2D" id="OccluderPolygon2D_iva72"]
+[sub_resource type="OccluderPolygon2D" id="OccluderPolygon2D_base"]
 cull_mode = 1
-polygon = PackedVector2Array(-12, -4, -11, 6, -6, 12, 5, 15, 17, 10, 27, -1, 7, -18, -5, -12)
+polygon = PackedVector2Array(-12, -12, 12, -12, 12, 12, -12, 12)
 
 [node name="CharacterBody2D" type="CharacterBody2D"]
 collision_layer = 3
 collision_mask = 3
 script = ExtResource("2_ogk1f")
-attackDamage = 3.0
 audio_charge = Array[AudioStreamMP3]([ExtResource("2_v4qqt"), ExtResource("3_1vsyv"), ExtResource("4_5a5y4"), ExtResource("5_k0trl"), ExtResource("6_yj2mn"), ExtResource("7_s4hpd"), ExtResource("8_ttoab")])
 audio_hit = Array[AudioStreamMP3]([ExtResource("3_1d64k"), ExtResource("4_u5tvo"), ExtResource("5_hwxlo")])
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-position = Vector2(-1, -2.5)
-shape = SubResource("RectangleShape2D_je6xf")
+rotation = 1.5708
+shape = SubResource("CapsuleShape2D_base")
 
-[node name="Walker" type="AnimatedSprite2D" parent="."]
+[node name="Sprite" type="AnimatedSprite2D" parent="."]
 material = SubResource("ShaderMaterial_ogm8y")
 rotation = 1.5708
-sprite_frames = ExtResource("1_mmdcr")
-animation = &"attack"
-autoplay = "default"
-frame = 2
-frame_progress = 0.0652032
+
+[node name="LightOccluder2D" type="LightOccluder2D" parent="."]
+rotation = 1.5708
+occluder = SubResource("OccluderPolygon2D_base")
 
 [node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("3_8yt8i")
@@ -59,9 +57,3 @@ bus = &"FX"
 stream = ExtResource("4_x7wx2")
 volume_db = 10.0
 bus = &"FX"
-
-[node name="LightOccluder2D" type="LightOccluder2D" parent="."]
-occluder = SubResource("OccluderPolygon2D_iva72")
-
-[connection signal="animation_finished" from="Walker" to="." method="_on_walker_animation_finished"]
-[connection signal="animation_looped" from="Walker" to="." method="_on_walker_animation_looped"]

@@ -1,0 +1,50 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>goon bake</title></head>
+<body>
+<!-- Opened by bake_goons.py in headless Edge as bake_goons.html#<goon>,<goon>,... Writes every frame and the
+     shape data for those goons as JSON into #out; the script reads it back with --dump-dom. -->
+<pre id="out"></pre>
+<script src="goon_gen.js"></script>
+<script>
+(function(){
+	const RES = 0.75; //frames are baked at 0.75x game size; the goon scene shows them at scale 1/0.75
+	const A = window.GoonArt, G = window.GOONS, out = {res: RES, goons: {}, error: null};
+	const ANIMS = ["walk", "idle", "windup", "attack", "special", "stun"];
+	const png = cv => cv.toDataURL("image/png");
+
+	//convex hull of the solid pixels (alpha > 140 skips the soft shadow), in game px around the centre
+	function hull(cv, res){
+		const w = cv.width, h = cv.height, data = cv.getContext("2d").getImageData(0, 0, w, h).data, pts = [];
+		for(let y = 0; y < h; y += 1) for(let x = 0; x < w; x += 1) if(data[(y * w + x) * 4 + 3] > 140) pts.push([x, y]);
+		if(pts.length < 3) return [];
+		pts.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+		const cross = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+		const lower = [], upper = [];
+		for(const p of pts){ while(lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], p) <= 0) lower.pop(); lower.push(p); }
+		for(let i = pts.length - 1; i >= 0; i--){ const p = pts[i]; while(upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], p) <= 0) upper.pop(); upper.push(p); }
+		let poly = lower.slice(0, -1).concat(upper.slice(0, -1));
+		//drop the vertex that removes the least area until 10 remain
+		const area = (a, b, c) => Math.abs(cross(a, b, c)) / 2;
+		while(poly.length > 10){ let best = 0, bestA = Infinity;
+			for(let i = 0; i < poly.length; i++){ const a = area(poly[(i + poly.length - 1) % poly.length], poly[i], poly[(i + 1) % poly.length]); if(a < bestA){ bestA = a; best = i; } }
+			poly.splice(best, 1); }
+		return poly.map(p => [+((p[0] - w / 2) / res).toFixed(1), +((p[1] - h / 2) / res).toFixed(1)]);
+	}
+
+	try {
+		const ids = decodeURIComponent(location.hash.slice(1)).split(",").filter(Boolean);
+		for(const id of ids){
+			const d = G[id]; if(!d) throw new Error("unknown goon " + id);
+			const files = {}, frames = {};
+			for(const anim of ANIMS){ frames[anim] = A.FRAMES[anim]; for(let i = 0; i < A.FRAMES[anim]; i++) files[id + "_" + anim + i + ".png"] = png(A.bake(d, anim, i, RES).cv); }
+			files[id + "_decal.png"] = png(A.bake(d, "splat", 0, RES).cv);
+			//shape data comes from a crisper bake of the first walk frame
+			const ref = A.bake(d, "walk", 0, 2);
+			const shape = hull(ref.cv, 2);
+			out.goons[id] = {files, frames, box: d.box, shape, eyes: ref.eyes.map(e => [+e[0].toFixed(1), +e[1].toFixed(1)]), flyer: !!d.flyer, R: d.R, kind: d.kind};
+		}
+	} catch(e) { out.error = String(e && e.stack || e); }
+	document.getElementById("out").textContent = JSON.stringify(out);
+})();
+</script>
+</body></html>

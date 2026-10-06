@@ -1,0 +1,30 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="PackedScene" path="res://scene/enemy/walker/walker.tscn" id="base"]
+[ext_resource type="SpriteFrames" path="res://scene/enemy/goons/goonling/goonling_frames.tres" id="frames"]
+[ext_resource type="Texture2D" path="res://scene/enemy/goons/goonling/art/goonling_decal.png" id="decal"]
+
+[sub_resource type="CapsuleShape2D" id="shape"]
+radius = 9.5
+height = 19.0
+
+[sub_resource type="OccluderPolygon2D" id="occluder"]
+cull_mode = 1
+polygon = PackedVector2Array(-12.5, -3.5, -5, -9, 1.5, -10, 12, -8, 13.5, -4.5, 11, 2.5, 6, 11, 3, 11.5, -8.5, 6, -13.5, 1)
+
+[node name="goonling" instance=ExtResource("base")]
+goonId = &"goonling"
+decal = ExtResource("decal")
+eyes = PackedVector2Array(-2.7, -6.7, 2.7, -6.7)
+bodyRadius = 9.5
+
+[node name="CollisionShape2D" parent="." index="0"]
+position = Vector2(-0.0, 0.0)
+shape = SubResource("shape")
+
+[node name="Sprite" parent="." index="1"]
+scale = Vector2(1.3333, 1.3333)
+sprite_frames = ExtResource("frames")
+
+[node name="LightOccluder2D" parent="." index="2"]
+occluder = SubResource("occluder")

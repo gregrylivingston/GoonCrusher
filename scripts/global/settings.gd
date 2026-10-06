@@ -28,6 +28,7 @@ const PRESET := {
 	"gfx/simple_cone":     [true, true, false, false],
 	"gfx/smoke":           [0, 1, 2, 2],
 	"gfx/tire_marks":      [0, 1, 2, 2],
+	"gfx/damage_fx":       [1, 2, 2, 2],     #car damage effects: smoke only, everything
 	"gfx/pickup_fx":       [0, 0, 1, 1],
 	"gfx/celebration":     [0, 1, 2, 2],
 	"gfx/reward_fx":       [0, 1, 2, 2],
@@ -61,6 +62,7 @@ const DEFAULTS := {
 	"gfx/simple_cone": false,
 	"gfx/smoke": 2,
 	"gfx/tire_marks": 2,
+	"gfx/damage_fx": 2,
 	"gfx/pickup_fx": 1,
 	"gfx/celebration": 2,
 	"gfx/reward_fx": 2,
@@ -81,6 +83,7 @@ const DEFAULTS := {
 	"gameplay/speed_units": "mph",
 	"gameplay/show_timer": true,
 	"gameplay/confirm_quit": true,
+	"gameplay/car_paint": "weathered", #cosmetic: "weathered" or "showroom" sheets (docs/CAR_ART.md)
 
 	"controls/deadzone": 0.5,
 	"controls/vibration": 2,
@@ -108,11 +111,13 @@ const OPTIONS := {
 	"gfx/lighting": [0, 1, 2],
 	"gfx/smoke": [0, 1, 2],
 	"gfx/tire_marks": [0, 1, 2],
+	"gfx/damage_fx": [1, 2],
 	"gfx/pickup_fx": [0, 1],
 	"gfx/celebration": [0, 1, 2],
 	"gfx/reward_fx": [0, 1, 2],
 	"audio_perf/max_sfx": [8, 12, 24],
 	"gameplay/speed_units": ["mph", "kmh"],
+	"gameplay/car_paint": ["weathered", "showroom"],
 	"controls/vibration": [0, 1, 2],
 	"access/giant_style": [0, 1, 2],
 	"access/giant_color": [0, 1, 2, 3, 4],

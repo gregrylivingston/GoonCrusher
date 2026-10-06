@@ -1,15 +1,9 @@
-[gd_scene load_steps=9 format=3 uid="uid://djw7lxqiihniw"]
+[gd_scene format=3 uid="uid://djw7lxqiihniw"]
 
-[ext_resource type="Shader" path="res://shader/rainbowfill.gdshader" id="1_8qixc"]
+[ext_resource type="FontFile" path="res://style/font/Tektur/Tektur-ExtraBold.ttf" id="4_font"]
 [ext_resource type="Script" path="res://scene/player/countdown.gd" id="1_cpgwf"]
 [ext_resource type="Theme" uid="uid://co40pijjc7hbw" path="res://style/roadRogue.tres" id="2_ueqa7"]
 [ext_resource type="AudioStream" uid="uid://cav5bmw6h4h2q" path="res://sound/ui/countdown.mp3" id="3_k2tqi"]
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_hpku8"]
-shader = ExtResource("1_8qixc")
-shader_parameter/strength = 1.0
-shader_parameter/speed = 0.15
-shader_parameter/angle = 125.0
 
 [sub_resource type="Animation" id="Animation_6m4pn"]
 length = 0.001
@@ -76,7 +70,6 @@ layer = 128
 
 [node name="Label" type="Label" parent="."]
 process_mode = 3
-material = SubResource("ShaderMaterial_hpku8")
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -84,7 +77,11 @@ grow_horizontal = 2
 grow_vertical = 2
 scale = Vector2(1e-05, 1e-05)
 theme = ExtResource("2_ueqa7")
-theme_override_font_sizes/font_size = 500
+theme_override_colors/font_color = Color(1, 0.827451, 0.419608, 1)
+theme_override_colors/font_outline_color = Color(0.305882, 0.0666667, 0.0431373, 1)
+theme_override_constants/outline_size = 48
+theme_override_fonts/font = ExtResource("4_font")
+theme_override_font_sizes/font_size = 420
 text = "3"
 horizontal_alignment = 1
 vertical_alignment = 1

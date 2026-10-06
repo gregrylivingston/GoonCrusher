@@ -1,0 +1,30 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="PackedScene" path="res://scene/enemy/walker/walker.tscn" id="base"]
+[ext_resource type="SpriteFrames" path="res://scene/enemy/goons/yipper/yipper_frames.tres" id="frames"]
+[ext_resource type="Texture2D" path="res://scene/enemy/goons/yipper/art/yipper_decal.png" id="decal"]
+
+[sub_resource type="CapsuleShape2D" id="shape"]
+radius = 7.3
+height = 40.1
+
+[sub_resource type="OccluderPolygon2D" id="occluder"]
+cull_mode = 1
+polygon = PackedVector2Array(-10, -8.5, -3.5, -22, 1, -24, 3, -22, 9.5, -8.5, 9.5, 8, 2, 26.5, -3.5, 29.5, -5.5, 26.5, -10, 8)
+
+[node name="yipper" instance=ExtResource("base")]
+goonId = &"yipper"
+decal = ExtResource("decal")
+eyes = PackedVector2Array(-2.1, -15.6, 2.1, -15.6)
+bodyRadius = 7.3
+
+[node name="CollisionShape2D" parent="." index="0"]
+position = Vector2(-2.8, 0.0)
+shape = SubResource("shape")
+
+[node name="Sprite" parent="." index="1"]
+scale = Vector2(1.3333, 1.3333)
+sprite_frames = ExtResource("frames")
+
+[node name="LightOccluder2D" parent="." index="2"]
+occluder = SubResource("occluder")

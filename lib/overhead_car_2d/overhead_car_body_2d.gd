@@ -42,16 +42,28 @@ const GRIP_MIN := 0.05
 const GRIP_FAST_MAX := 0.40
 const GRIP_SLOW_MAX := 0.95
 
-#Groundwork for system damage (docs/HUD.md). Each system has a condition from 0 to 100, and the
-#stat it scales keeps CONDITION_FLOOR of its value at 0%. Nothing lowers condition yet and physics
-#doesn't read it; the HUD already draws it (lamp glow, red part of each rating underline).
+#System damage (docs/HUD.md, docs/CAR_ART.md). Each system has a condition from 0 to 100, and the
+#stat it scales keeps CONDITION_FLOOR of its value at 0%. Wall hits wear the system on the side that
+#hit (zoneForHit), physics reads the factor in integrate(), and the car art shows it (car_damage.gdshader).
 const SYSTEM_STATS := {"lights":"headlights", "engine":"engine", "steering":"steering", "tires":"traction", "tank":"oil"}
 const CONDITION_FLOOR := {"lights":0.35, "engine":0.6, "steering":0.7, "tires":0.5, "tank":0.4}
+const ZONE_WEAR_PER_SPEED := 0.035 #condition a wall hit takes per px/s of speed, before armor (a 500 px/s hit takes 17.5)
+const ZONE_WEAR_MIN_SPEED := 80.0 #slower bumps and scrapes against a wall don't wear a system
+const ZONE_COOLDOWN_TICKS := 30   #a system takes wall wear at most every half second
+const GOON_SCUFF := 2.0           #condition a goon bump that doesn't crush takes from the side it hit
+const FUEL_LEAK_MAX := 0.006      #extra fuel per moving tick with the tank at 0%; starts below 50%
 var condition := {"lights":100.0, "engine":100.0, "steering":100.0, "tires":100.0, "tank":100.0}
 var runStartStats := {} #UPGRADEABLE_STATS when the run began (base + upgrades), before any pickup
+var zoneCooldown := {}  #system -> physics ticks until it can take wall wear again
+signal conditionChanged(system: String, value: float)
 
 func setCondition(system: String, value: float) -> void:
-	condition[system] = clampf(value, 0.0, 100.0)
+	var v := clampf(value, 0.0, 100.0)
+	if is_equal_approx(v, condition[system]): return
+	condition[system] = v
+	if system == "lights": setHeadlightStrength()
+	updateDamageLook()
+	conditionChanged.emit(system, v)
 
 #how much of a system's stat still works: 1 when undamaged, CONDITION_FLOOR at 0%
 func conditionFactor(system: String) -> float:
@@ -94,7 +106,7 @@ var introAudio: Array[AudioStreamMP3] = []
 @export var lowGasAudio: Array[AudioStreamMP3] = []
 @export var lowHealthAudio: Array[AudioStreamMP3] = []
 @export var engineNoise: AudioStreamMP3
-@export var carDamagedTexture: Texture2D
+@export var art: CarArtSet #the baked sheets, zone mask and shadow (scene/car/<car>/art/)
 
 class CarInput:
 	var steering := 0.0      # -1.0 (left) to 1.0 (right)
@@ -131,11 +143,40 @@ func _ready():
 		luck += SaveManager.getUpgradeLevel(Root.upgrade.LUCK)
 	for stat in UPGRADEABLE_STATS: runStartStats[stat] = self[stat]
 
-	$headlamps/carhighlight.texture = $sprite.texture
-	$headlamps/carhighlight.scale = $sprite.scale
-	$headlamps/carhighlight.position = $sprite.position
+	halfWidth = $carBodyArea/CollisionShape2D.shape.size.y / 2.0
+	applyArt()
+	Settings.changed.connect(onSettingChanged)
 	setHeadlightStrength()
 	stopCarFX()
+
+#the paint the player picked (cosmetic), the damage sheets and the night silhouette light
+func applyArt() -> void:
+	if art == null: return
+	var sheets := art.sheets(Settings.get_value("gameplay/car_paint"))
+	var body: Sprite2D = $sprite/body
+	body.texture = sheets[0]
+	body.material.set_shader_parameter("dented_tex", sheets[1])
+	body.material.set_shader_parameter("wrecked_tex", sheets[2])
+	body.material.set_shader_parameter("zone_mask", art.zoneMask)
+	$sprite/shadow.texture = art.shadow
+	$headlamps/carhighlight.texture = sheets[0]
+	$headlamps/carhighlight.scale = $sprite.scale * body.scale
+	$headlamps/carhighlight.position = $sprite.position
+	lastDamageLook = PackedFloat32Array()
+	updateDamageLook()
+
+func onSettingChanged(key: String, _value) -> void:
+	if key == "gameplay/car_paint": applyArt()
+
+#hull, lights, engine, steering, tires, tank as 0 (like new) to 1 (wrecked), for car_damage.gdshader
+var lastDamageLook := PackedFloat32Array()
+func updateDamageLook() -> void:
+	if not is_node_ready() || art == null: return
+	var look := PackedFloat32Array([1.0 - clampf(health, 0.0, 100.0) / 100.0])
+	for system in ["lights", "engine", "steering", "tires", "tank"]: look.push_back(1.0 - condition[system] / 100.0)
+	if look == lastDamageLook: return
+	lastDamageLook = look
+	$sprite/body.material.set_shader_parameter("damage", look)
 
 var gasWarningGiven = false
 func resetGasWarning(): gasWarningGiven = false
@@ -155,8 +196,6 @@ func makeHealthWarning():
 	$"AudioStream-Voice".stream = lowHealthAudio[ randi_range(0, lowHealthAudio.size()-1)]
 	$"AudioStream-Voice".play()
 	$"AudioStream-CarDamage".play()
-	$sprite.texture = carDamagedTexture
-	$headlamps/carhighlight.texture = carDamagedTexture
 	await get_tree().create_timer(200).timeout
 	resetHealthWarning()
 
@@ -195,6 +234,7 @@ func _physics_process(delta):
 	_car_input.steering = clamp(_car_input.steering, -1.0, 1.0)
 	_car_input.acceleration = clamp(_car_input.acceleration, -1.0, 1.0)
 	if isDestroyed: _car_input.acceleration = 0.0
+	if not zoneCooldown.is_empty(): tickZoneCooldowns()
 	if fuel <= 0 && not isDestroyed: outOfFuel()		
 	
 	if fuel <= 35 && not gasWarningGiven && not $"AudioStream-Voice".playing && isPlayer:makeGasWarning()
@@ -212,14 +252,16 @@ func _physics_process(delta):
 	
 	#finding colliders
 	for i in get_slide_collision_count():
-		var collider = get_slide_collision( i ).get_collider()
+		var collision = get_slide_collision( i )
+		var collider = collision.get_collider()
 		##colide with an unmovable static object like a rock
 		#note: walls are TileMap nodes; moving them to TileMapLayer needs this check updated
 		if velocity.length() > 0.01 && ( collider is StaticBody2D || collider is TileMap):
-			collideWithFixedObject( get_slide_collision(i) )
+			collideWithFixedObject( collision )
 		elif collider is CharacterBody2D:
 			damage(5)
-			if velocity.length() > 100:crushGoon(collider)
+			#a crush never wears the car; a slow bump, or a goon that resists (shield, shell, heavy), scuffs it
+			if not (velocity.length() > 100 && crushGoon(collider)): wearSystem(hitZone(collision), GOON_SCUFF)
 		#else: print(collider.get_class())
 
 	if velocity.length() == 0:
@@ -232,9 +274,13 @@ func _physics_process(delta):
 #ahead from predicted states, so it must only read the car's stats, never change them.
 func integrate(pos: Vector2, forward: Vector2, vel: Vector2, input: CarInput, delta: float) -> Array:
 	# Base steering wheel angle and acceleration
-	var steer_angle = input.steering * deg_to_rad( 8 + ( steering / 4.0 ) )
+	#damaged systems keep CONDITION_FLOOR of their stat (read only, so the AI's prediction matches)
+	var steer_stat = steering * conditionFactor("steering")
+	var engine_stat = engine * conditionFactor("engine")
+	var traction_stat = traction * conditionFactor("tires")
+	var steer_angle = input.steering * deg_to_rad( 8 + ( steer_stat / 4.0 ) )
 
-	var acceleration = input.acceleration * forward * ( engine + 14 ) * 10 * ( 2.2 - abs(input.steering))
+	var acceleration = input.acceleration * forward * ( engine_stat + 14 ) * 10 * ( 2.2 - abs(input.steering))
 
 	# Apply friction
 	if abs(vel.length()) < 5:
@@ -245,20 +291,20 @@ func integrate(pos: Vector2, forward: Vector2, vel: Vector2, input: CarInput, de
 		friction_force *= 3
 	acceleration += drag_force + friction_force
 	if input.braking:
-		acceleration += - ( (5 + traction) * 50 / ( vel.length() + 1)  ) * vel
+		acceleration += - ( (5 + traction_stat) * 50 / ( vel.length() + 1)  ) * vel
 
 	# Calculate steering
 	var rear_wheel = pos - forward * wheel_base / 2.0 + vel * delta
 	var front_wheel = pos + forward * wheel_base / 2.0 + vel.rotated(steer_angle) * delta
 	var new_heading = (front_wheel - rear_wheel).normalized()
-	var grip = gripFor(traction_slow, traction, grip_slow_max, grip_per_traction)
+	var grip = gripFor(traction_slow, traction_stat, grip_slow_max, grip_per_traction)
 	if vel.length() > slip_speed:
-		grip = gripFor(traction_fast, traction, grip_fast_max, grip_per_traction)
+		grip = gripFor(traction_fast, traction_stat, grip_fast_max, grip_per_traction)
 	var d = new_heading.dot(vel.normalized())
 	if d >= 0:
 		vel = vel.lerp(new_heading * vel.length(), grip)
 	if d < 0:
-		vel = -new_heading * min(vel.length(), ( engine + 20 ) * 20)#10
+		vel = -new_heading * min(vel.length(), ( engine_stat + 20 ) * 20)#10
 	return [new_heading, vel + acceleration * delta]
 
 var sparks = preload("res://scene/fx/spark/spark.tscn")
@@ -270,20 +316,57 @@ func collideWithFixedObject( collision ):
 		spark.global_position = collision.get_position()
 		Root.levelRoot.add_child(spark)
 	damage( WALL_DAMAGE_PER_SPEED * velocity.length() ) #armor is applied once, in damage()
+	if velocity.length() >= ZONE_WEAR_MIN_SPEED:
+		wearSystem(hitZone(collision), ZONE_WEAR_PER_SPEED * velocity.length() * 100.0 / (maxf(armor, 0.0) + 100.0))
 	velocity *= 0.85
+
+#which system a hit wears, from the hit's normal and point in car space. The car faces +x and the
+#normal points from the obstacle to the car. Front centre: engine; front corners: lights; sides ahead
+#of the middle: steering; sides behind it: tires; the rear: the tank.
+static func zoneForHit(localNormal: Vector2, localPoint: Vector2, carHalfWidth: float) -> String:
+	if localNormal.x < -0.6: return "lights" if absf(localPoint.y) > carHalfWidth * 0.45 else "engine"
+	if localNormal.x > 0.6: return "tank"
+	return "steering" if localPoint.x > 0.0 else "tires"
+
+var halfWidth := 40.0 #half the car's footprint (carBodyArea), set in _ready
+func hitZone(collision: KinematicCollision2D) -> String:
+	return zoneForHit(collision.get_normal().rotated(-rotation), to_local(collision.get_position()), halfWidth)
+
+#wears a system, at most once per ZONE_COOLDOWN_TICKS so scraping along a wall can't empty it at once
+func wearSystem(system: String, amount: float) -> void:
+	if amount <= 0.0 || zoneCooldown.get(system, 0) > 0: return
+	zoneCooldown[system] = ZONE_COOLDOWN_TICKS
+	setCondition(system, condition[system] - amount)
+
+func tickZoneCooldowns() -> void:
+	for system in zoneCooldown.keys():
+		zoneCooldown[system] -= 1
+		if zoneCooldown[system] <= 0: zoneCooldown.erase(system)
+
+#every system back to new (the station driveway, in the modes where it doesn't end the run)
+func repairAll() -> void:
+	for system in condition: setCondition(system, 100.0)
+
+#extra fuel lost per moving tick: none above 50% tank condition, FUEL_LEAK_MAX at 0%
+static func fuelLeak(tankCondition: float) -> float:
+	return FUEL_LEAK_MAX * clampf(1.0 - tankCondition / 50.0, 0.0, 1.0)
 
 func stopCarFX():
 	if engineAudio.playing:engineAudio.stop()
 	if carDamageAudio.playing:carDamageAudio.stop()
 	smoke.visible = false
 
-func crushGoon(collider):
-	if is_instance_valid(collider):
-		if not collider.isDying():
-			if isPlayer: Settings.vibrate(0.4, 0.0, 0.08)
-			collider.destroy()
-			reward("currentGoonsCrushed", 1) #credited now; the flying icon is only for show
-			RewardFlyers.flyUpgrade(Root.upgrade.CURRENTGOONSCRUSHED, collider.global_position)
+#false when the goon resisted: some need more speed, a hit from the side, or can't be hit right now
+#(Walker.tryCrush, docs/GOONS.md). The goon handles the bounce and any damage itself.
+func crushGoon(collider) -> bool:
+	if not is_instance_valid(collider) || collider.isDying(): return true
+	if collider.has_method("tryCrush"):
+		if not collider.tryCrush(self, velocity.length()): return false
+	else: collider.destroy()
+	if isPlayer: Settings.vibrate(0.4, 0.0, 0.08)
+	reward("currentGoonsCrushed", 1) #credited now; the flying icon is only for show
+	RewardFlyers.flyUpgrade(Root.upgrade.CURRENTGOONSCRUSHED, collider.global_position)
+	return true
 
 var isVibratingLeft = 4
 var vibrationSteps = 0
@@ -306,7 +389,7 @@ func activeCarEffects(delta):
 	if not engineAudio.playing: engineAudio.play()
 	if not carDamageAudio.playing && healthWarningGiven: carDamageAudio.play()
 	engineAudio.pitch_scale = 1  +  ( velocity.length() / 400 ) 
-	fuel -= fuelBurn(_car_input.acceleration, oil)
+	fuel -= fuelBurn(_car_input.acceleration, oil * conditionFactor("tank")) + fuelLeak(condition.tank)
 
 	#body shake: the sprite slides between two offsets, one tick at a time (no tween per shake)
 	vibrationSteps += 1
@@ -411,6 +494,7 @@ func reward(powerup: String , quantity, forShowOnly: bool = false):
 		rewarded.emit(powerup, quantity)
 	health = clamp(health, -10.0, 100.0)
 	fuel = clamp(fuel, -10.0, 100.0)
+	if powerup == "health": updateDamageLook()
 	if powerup != "coin" && powerup != "health" && powerup != "fuel" && powerup != "currentGoonsCrushed": 
 		if powerup != "gem": powerupsCollected += 1
 		if  powerupAudio.size() > 0 && not $"AudioStream-Voice".playing:
@@ -441,7 +525,8 @@ static func gripFor(baseGrip: float, tractionStat: float, maxGrip: float, perPoi
 
 
 func setHeadlightStrength():
-	$headlamps/headlights.scale = Vector2( 1.0 + float(headlights)/100 , 1.0 + float(headlights)/100)
+	var reach = 1.0 + headlights * conditionFactor("lights") / 100.0
+	$headlamps/headlights.scale = Vector2(reach, reach)
 
 func playPurseRewardAudio():
 	if  purseAudio.size() > 0 && not $"AudioStream-Voice".playing:
@@ -458,6 +543,7 @@ func spendGems(numOfGems: int):
 
 func damage(damage: float):
 	health -= (damage * 7) / ( armor + 100)
+	updateDamageLook()
 	if health <= 0:
 		destroy()
 
@@ -469,6 +555,7 @@ func destroy():
 		$"AudioStream-Explosion".play()
 		if isPlayer: Settings.vibrate(1.0, 1.0, 0.6)
 		isDestroyed = true
+		for system in condition: setCondition(system, 0.0) #the art goes fully wrecked
 		for i in randi_range(1,2):
 			var newExplosion = Root.levelRoot.explosionScene.instantiate()
 			newExplosion.position = Vector2( randi_range( 50,90 ) , randi_range( -50,20 ))

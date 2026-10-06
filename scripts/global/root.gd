@@ -4,9 +4,6 @@ enum gameModes {  GOONCRUSHER , SPRINT, MARATHON, DEFENSE, GOONPOCALYPSE }
 enum endCondition { NOGAS , NOHEALTH , NOTIME , SUCCESS , ABANDONED } #append only: the values are ints
 enum upgrade { HEALTH , FUEL , ARMOR , ENGINE , TRACTION , STEERING , CLOVER , LUCK , HEADLIGHTS , OIL , COIN , PURSE , GEM , SLOTMACHINE, CURRENTGOONSCRUSHED}
 enum terrain { GRASS , SAND , MUD , WATER , HILLS , MOSS , DIRT , SNOW}
-enum goon { DEVIL , SPARTAN , SAMURAI , FIREKIN, PIKEMAN , GOONBEAR , DOOMCART , GREMLIN , 
-SHELLBACK , IMMORTAL , LIZARD , RAT , ROCKMAN , SKELETON , SMASHER ,
-SOLDIER , VIKING , ZULU }
 
 var playerCar: OverheadCarBody2D #the car in a run; null in the main menu
 var station  #this is the gas-station / house thing

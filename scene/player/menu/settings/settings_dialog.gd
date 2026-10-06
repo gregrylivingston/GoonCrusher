@@ -5,7 +5,6 @@ class_name SettingsDialog extends Control
 
 signal chosen(index: int)
 
-const THEME = preload("res://style/roadRogue.tres")
 
 var message: String
 var buttons: PackedStringArray
@@ -42,7 +41,7 @@ static func detectToast() -> SettingsDialog:
 
 func _ready():
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	theme = THEME
+	theme = MenuTheme.theme()
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	var dim = ColorRect.new()
@@ -54,13 +53,7 @@ func _ready():
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(center)
 	var panel = PanelContainer.new()
-	var style = StyleBoxFlat.new()
-	style.bg_color = Color(0.08, 0.06, 0.06, 0.95)
-	style.border_color = Color(0.93, 0.6, 0.16)
-	style.set_border_width_all(3)
-	style.set_corner_radius_all(6)
-	style.set_content_margin_all(28)
-	panel.add_theme_stylebox_override("panel", style)
+	panel.add_theme_stylebox_override("panel", MenuTheme.box(Color(0.055, 0.047, 0.043, 0.95), HudTheme.RIM, 14, 3, Vector4(28, 28, 28, 28)))
 	center.add_child(panel)
 	var box = VBoxContainer.new()
 	box.add_theme_constant_override("separation", 24)

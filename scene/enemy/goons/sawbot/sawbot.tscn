@@ -1,0 +1,30 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="PackedScene" path="res://scene/enemy/walker/walker.tscn" id="base"]
+[ext_resource type="SpriteFrames" path="res://scene/enemy/goons/sawbot/sawbot_frames.tres" id="frames"]
+[ext_resource type="Texture2D" path="res://scene/enemy/goons/sawbot/art/sawbot_decal.png" id="decal"]
+
+[sub_resource type="CapsuleShape2D" id="shape"]
+radius = 10.6
+height = 38.2
+
+[sub_resource type="OccluderPolygon2D" id="occluder"]
+cull_mode = 1
+polygon = PackedVector2Array(-13, -16, -6.5, -27, 0.5, -28.5, 10.5, -22.5, 12.5, -16, 13, 4.5, 10.5, 14.5, 7, 16.5, -8.5, 12, -13.5, 4.5)
+
+[node name="sawbot" instance=ExtResource("base")]
+goonId = &"sawbot"
+decal = ExtResource("decal")
+eyes = PackedVector2Array(0, -4.8)
+bodyRadius = 10.6
+
+[node name="CollisionShape2D" parent="." index="0"]
+position = Vector2(6.0, -0.2)
+shape = SubResource("shape")
+
+[node name="Sprite" parent="." index="1"]
+scale = Vector2(1.3333, 1.3333)
+sprite_frames = ExtResource("frames")
+
+[node name="LightOccluder2D" parent="." index="2"]
+occluder = SubResource("occluder")

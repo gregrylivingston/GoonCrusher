@@ -1,0 +1,109 @@
+extends GameTest
+
+#The AI driver (scripts/ai/, docs/AI_DRIVER.md): its route planner, its prediction of the car, and
+#the rules it scores goals and plans with. Nothing here starts a run.
+
+const CHUNK = Vector2(5120, 2560)
+
+#a 16x16 grass map with a north-south wall of water at map column 10, open only at row 3
+func walledMap() -> PackedByteArray:
+	var map = PackedByteArray()
+	map.resize(16 * 16)
+	map.fill(Root.terrain.GRASS)
+	for y in 16:
+		if y != 3: map[y * 16 + 10] = Root.terrain.WATER
+	return map
+
+#world position of the middle of map cell (x, y); map cell (8, 8) is chunk (0, 0)
+func cellMiddle(x: int, y: int) -> Vector2:
+	return (Vector2(x - 8, y - 8) + Vector2(0.5, 0.5)) * CHUNK
+
+func test_route_goes_round_water():
+	var route = AIRoute.new(walledMap(), Vector2i(16, 16), CHUNK)
+	var result = route.plan(cellMiddle(4, 8), cellMiddle(13, 8))
+	assert_true(result.reached, "the far side is reachable through the gap")
+	var throughGap = false
+	for point in result.points:
+		assert_false(AIRoute.isBlocked(route.terrainAt(point)), "every waypoint is on land: %s" % str(point))
+		if route.terrainAt(point) == Root.terrain.GRASS && absf(point.y - cellMiddle(10, 3).y) < CHUNK.y: throughGap = true
+	assert_true(throughGap, "the route uses the gap in row 3")
+	assert_false(route.lineIsClear(cellMiddle(4, 8), cellMiddle(13, 8)), "the straight line crosses water")
+	assert_true(route.lineIsClear(cellMiddle(4, 8), cellMiddle(8, 8)), "a line on grass is clear")
+
+func test_route_to_an_island_is_partial():
+	var map = walledMap()
+	map[3 * 16 + 10] = Root.terrain.HILLS #close the gap: hills are walls too
+	var route = AIRoute.new(map, Vector2i(16, 16), CHUNK)
+	var result = route.plan(cellMiddle(4, 8), cellMiddle(13, 8))
+	assert_false(result.reached, "nothing reaches the far side")
+	assert_eq(route.terrainAt(cellMiddle(40, 8)), Root.terrain.WATER, "outside the map is water")
+
+func test_pickup_values_follow_need():
+	var fullTank = AIDriver.pickupValue("fuel", 20, 95.0, 100.0, 0.0)
+	var halfTank = AIDriver.pickupValue("fuel", 20, 50.0, 100.0, 0.0)
+	var runningDry = AIDriver.pickupValue("fuel", 20, 15.0, 100.0, 1.0)
+	assert_gt(halfTank, fullTank, "fuel is worth more the less of it would be wasted")
+	assert_gt(runningDry, halfTank, "and much more when the car is running dry")
+	assert_gt(AIDriver.pickupValue("health", 20, 50.0, 30.0, 0.0), AIDriver.pickupValue("health", 20, 50.0, 95.0, 0.0), "health likewise")
+	assert_gt(AIDriver.pickupValue("coin", AIDriver.PURSE_QUANTITY, 50.0, 100.0, 0.0), AIDriver.pickupValue("coin", 1, 50.0, 100.0, 0.0), "a purse beats a coin")
+	assert_gt(AIDriver.goonValue(3), AIDriver.goonValue(0), "a pack is worth more than one goon")
+
+func test_plan_keys():
+	var tapLeft = {"steer":-1, "steerTicks":6, "throttle":AIDriver.Throttle.ON}
+	assert_eq(AIDriver.keysFor(tapLeft, 0, 0.0, INF), AIDriver.LEFT | AIDriver.ACCEL, "a tap steers and accelerates")
+	assert_eq(AIDriver.keysFor(tapLeft, 6, 0.0, INF), AIDriver.ACCEL, "then lets go of the wheel")
+	assert_eq(AIDriver.keysFor(tapLeft, 0, 400.0, 300.0), AIDriver.LEFT, "no throttle above the speed cap")
+	var brake = {"steer":0, "steerTicks":0, "throttle":AIDriver.Throttle.BRAKE}
+	assert_eq(AIDriver.keysFor(brake, 0, 300.0, INF), AIDriver.BRAKE, "brakes while moving")
+	assert_eq(AIDriver.keysFor(brake, 0, 30.0, INF), 0, "but never so long that it starts reversing")
+
+func test_steering_ramps_and_recentres():
+	var controller = load("res://scene/player/controller/playerCarController.gd")
+	var wheel = 0.0
+	for i in 5: wheel = controller.nextSteering(wheel, true, false, 4)
+	assert_almost_eq(wheel, -0.25, 0.0001, "holding left turns the wheel 0.05 a tick at traction 4")
+	wheel = controller.nextSteering(wheel, false, false, 4)
+	assert_almost_eq(wheel, -0.225, 0.0001, "letting go recentres it")
+
+func test_station_graph_shortest_first_hop():
+	#0 is the goal; the car sees only 2, and 2 reaches 0 through 1
+	var points = [Vector2(0, 0), Vector2(100, 0), Vector2(200, 0)]
+	var edges = [
+		PackedFloat32Array([INF, 100.0, INF]),
+		PackedFloat32Array([100.0, INF, 100.0]),
+		PackedFloat32Array([INF, 100.0, INF]),
+	]
+	assert_eq(AIDriver.firstHop(points, edges, PackedFloat32Array([INF, INF, 50.0])), 2, "first hop is the only visible point")
+	assert_eq(AIDriver.firstHop(points, edges, PackedFloat32Array([500.0, INF, 50.0])), 2, "a long direct run loses to a shorter way round")
+	assert_eq(AIDriver.firstHop(points, edges, PackedFloat32Array([150.0, INF, 50.0])), 0, "a short direct run wins")
+	assert_eq(AIDriver.firstHop(points, edges, PackedFloat32Array([INF, INF, INF])), -1, "nothing visible, no hop")
+
+#a sedan out of the tree's way: not the player, not processing
+func makeCar() -> OverheadCarBody2D:
+	var car = load("res://scene/car/sedan/sedan.tscn").instantiate()
+	car.isPlayer = false
+	car.process_mode = Node.PROCESS_MODE_DISABLED
+	return add_child_autofree(car)
+
+func test_prediction_uses_the_cars_physics_without_touching_it():
+	var car = makeCar()
+	car.velocity = Vector2(300, 0)
+	var input = OverheadCarBody2D.CarInput.new()
+	input.acceleration = 1.0
+	var next = car.integrate(car.position, car.transform.x, car.velocity, input, 1.0 / 60.0)
+	assert_eq(car.velocity, Vector2(300, 0), "integrate never changes the car")
+	assert_gt(next[1].x, 300.0, "full throttle speeds it up")
+
+	var driver = AIDriver.new()
+	driver.car = car
+	var straight = driver.simulate(AIDriver.PLANS[0], 60)
+	var end: Vector2 = straight.path[straight.path.size() - 1]
+	assert_gt(end.x - car.position.x, 100.0, "driving straight goes forward")
+	assert_almost_eq(end.y, car.position.y, 1.0, "and stays on its line")
+	var left = driver.simulate({"steer":-1, "steerTicks":AIDriver.HOLD, "throttle":AIDriver.Throttle.ON}, 60)
+	var heading: Vector2 = left.headings[left.headings.size() - 1]
+	assert_true(heading.angle() < -0.2, "holding left turns the nose left (negative angle): %s" % heading.angle())
+	assert_between(driver.sustainableSpeed(0.3), 1.0, driver.topSpeed() - 1.0, "a part-time throttle holds less than top speed")
+	var v = driver.sustainableSpeed(0.3)
+	assert_almost_eq((car.drag * v * v + car.friction * v) / driver.engineForce(), 0.3, 0.001, "and that speed needs exactly that much throttle")
+	driver.free()

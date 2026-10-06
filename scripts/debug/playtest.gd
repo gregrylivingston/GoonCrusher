@@ -16,6 +16,12 @@ extends Node
 const LEVELS = "res://scene/level/levels/"
 const SCRATCH_SAVE = "user://playtest/playtest_save.tres"
 const MODE_ALIASES = {"countdown":"GOONCRUSHER"}
+#one CSV row per run, in this order (damage is health lost; see _physics_process for the split)
+const COLUMNS = ["run", "level", "mode", "car", "seed", "upgrades", "sight", "reason", "won", "level_time",
+	"clock", "time_left", "station_px", "route_reached", "crushed", "coin", "star", "payout", "gem",
+	"slot_machines", "fuel_pickups", "health_pickups", "purses", "coins_picked", "gems_picked", "stat_pickups",
+	"damage_rocks", "damage_goon_contact", "damage_goon_attacks", "crush_misses", "min_fuel", "min_health",
+	"end_fuel", "end_health", "distance_px", "avg_speed", "top_speed", "eco_seconds", "stuck", "escapes", "goals"]
 
 var options := {}
 var jobs: Array = []
@@ -32,6 +38,7 @@ var lastPosition := Vector2.ZERO
 var clockSeen := false
 var slotPressTimer := 0.0
 var lastStuck := 0
+var speedBefore := 0.0 #the car's speed going into its last tick
 
 func _ready():
 	options = parseArgs()
@@ -109,7 +116,7 @@ func startNext() -> void:
 	row = {"run":jobIndex + 1, "level":job.level, "mode":job.mode.to_lower(), "car":job.car, "seed":job.seed,
 		"upgrades":upgrades, "sight":str(options.get("sight", "human")),
 		"fuel_pickups":0, "health_pickups":0, "purses":0, "coins_picked":0, "gems_picked":0, "stat_pickups":0,
-		"damage_rocks":0.0, "damage_goon_contact":0.0, "damage_goon_attacks":0.0, "min_fuel":100.0, "min_health":100.0, "distance_px":0.0, "timeout":false}
+		"crush_misses":0, "damage_rocks":0.0, "damage_goon_contact":0.0, "damage_goon_attacks":0.0, "min_fuel":100.0, "min_health":100.0, "distance_px":0.0, "timeout":false}
 	print("PLAYTEST_RUN %d/%d %s %s %s seed=%d" % [jobIndex + 1, jobs.size(), job.level, job.mode.to_lower(), job.car, job.seed])
 	Region.resetRegions()
 	Root.isRunActive = false
@@ -118,7 +125,8 @@ func startNext() -> void:
 
 func onNodeAdded(node: Node) -> void:
 	if jobIndex < 0 || jobIndex >= jobs.size(): return
-	if node is landscapeGenerator: node.inputSeed = jobs[jobIndex].seed
+	if node is Level: seed(jobs[jobIndex].seed) #again, as late as possible: the menu frames between use the RNG too
+	elif node is landscapeGenerator: node.inputSeed = jobs[jobIndex].seed
 	elif node is OverheadCarBody2D && node.isPlayer: node.ready.connect(onCarReady.bind(node), CONNECT_ONE_SHOT)
 
 func onCarReady(newCar: OverheadCarBody2D) -> void:
@@ -163,6 +171,7 @@ func _physics_process(delta):
 		elif touchingGoon(): row.damage_goon_contact += drop #the car ran into it (crushes cost health too)
 		else: row.damage_goon_attacks += drop #a goon lunged into the car's body
 	prevHealth = car.health
+	countMissedCrushes()
 	row.min_fuel = minf(row.min_fuel, car.fuel)
 	row.min_health = minf(row.min_health, car.health)
 	row.distance_px += car.global_position.distance_to(lastPosition)
@@ -187,7 +196,7 @@ func trace() -> void:
 	print("PLAYTEST_TRACE t=%.0f pos=(%d,%d) v=%d hp=%.0f fuel=%.0f goal=%s aim=%s plan=%d/%d/%d cap=%.0f goons=%d stuck=%d" % [levelTime,
 		car.global_position.x, car.global_position.y, car.velocity.length(), car.health, car.fuel, goalText, aimText,
 		driver.plan.steer, mini(driver.plan.steerTicks, 99), driver.plan.throttle, minf(driver.speedCap, 9999.0), GameStats.goons(), driver.stats.stuck])
-	print("PLAYTEST_COSTS " + " ".join(driver.lastCosts))
+	print("PLAYTEST_COSTS hop=%d " % driver.approachHop + " ".join(driver.lastCosts))
 
 func wallName() -> String:
 	for i in car.get_slide_collision_count():
@@ -213,6 +222,17 @@ func printMap() -> void:
 			else: line += letters[tileManager.tileAt(chunk).terrain]
 		print("PLAYTEST_MAP %4d %s" % [y, line])
 
+#Goons the car hit at crushing speed (over 200 px/s going in) that survived the hit. Should stay 0
+#while every hit at speed crushes; a goon that can resist a crush shows up here.
+func countMissedCrushes() -> void:
+	var counted = {}
+	for i in car.get_slide_collision_count():
+		var collider = car.get_slide_collision(i).get_collider()
+		if collider is Walker && is_instance_valid(collider) && not collider.isDying() && speedBefore > 200.0 && not counted.has(collider):
+			counted[collider] = true
+			row.crush_misses += 1
+	speedBefore = car.velocity.length()
+
 func touchingGoon() -> bool:
 	for i in car.get_slide_collision_count():
 		if car.get_slide_collision(i).get_collider() is CharacterBody2D: return true
@@ -226,7 +246,9 @@ func touchingWall() -> bool:
 
 #a slot machine pauses the run: tap Accelerate to stop each reel, then claim (never reroll)
 func tapSlotMachine(delta: float) -> void:
-	if get_tree().get_nodes_in_group("slotMachine").is_empty(): return
+	if get_tree().get_nodes_in_group("slotMachine").is_empty():
+		if Input.is_action_pressed("Accelerate"): Input.action_release("Accelerate")
+		return
 	slotPressTimer -= delta
 	if Input.is_action_pressed("Accelerate"): Input.action_release("Accelerate")
 	elif slotPressTimer <= 0.0:
@@ -267,13 +289,17 @@ func recordRun() -> void:
 	await get_tree().create_timer(0.5).timeout
 	startNext()
 
+#a file written with other columns (an older harness) is moved aside, not appended to
 func appendCsv(values: Dictionary) -> void:
 	var path = "user://playtest/results%s.csv" % str(options.get("tag", ""))
+	var header = ",".join(COLUMNS)
+	if FileAccess.file_exists(path) && FileAccess.open(path, FileAccess.READ).get_line() != header:
+		DirAccess.rename_absolute(path, path.get_basename() + "_old_%d.csv" % Time.get_unix_time_from_system())
 	var isNew = not FileAccess.file_exists(path)
 	var file = FileAccess.open(path, FileAccess.WRITE if isNew else FileAccess.READ_WRITE)
 	file.seek_end()
-	if isNew: file.store_line(",".join(values.keys()))
-	file.store_line(",".join(values.values().map(func(v): return str(v))))
+	if isNew: file.store_line(header)
+	file.store_line(",".join(COLUMNS.map(func(column): return str(values.get(column, "")))))
 	file.close()
 
 #one line per level x mode x car: wins, endings and averages

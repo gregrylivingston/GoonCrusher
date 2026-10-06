@@ -14,11 +14,9 @@ func addHud() -> Node:
 	await get_tree().process_frame
 	return hud
 
-#RewardFlyers aims a pickup at the first node in "<powerup>ui"; it must be a visible HUD widget,
-#not the stat list that only shows while paused
+#RewardFlyers aims a pickup at the first node in "<powerup>ui"; it must be a HUD widget
 func test_every_pickup_flies_to_a_hud_widget():
 	var hud = await addHud()
-	var carPanel = hud.get_node("carPanel")
 	for path in DirAccess.get_files_at("res://scene/powerup/"):
 		if not path.ends_with(".tscn") || path == "powerup.tscn": continue
 		var sample = load("res://scene/powerup/" + path).instantiate()
@@ -28,7 +26,6 @@ func test_every_pickup_flies_to_a_hud_widget():
 		assert_true(is_instance_valid(target), "nothing in %s (%s)" % [group, path])
 		if is_instance_valid(target):
 			assert_true(hud.is_ancestor_of(target), "%s is outside the HUD" % group)
-			assert_false(carPanel.is_ancestor_of(target), "%s lands on the paused stat list" % group)
 	hud.free()
 
 func test_stat_pickups_land_on_their_lamp():

@@ -22,6 +22,11 @@ const GAIN := Color(1.0, 0.761, 0.227)           #rating underline: added by pic
 const BOLD := preload("res://style/font/Tektur/Tektur-ExtraBold.ttf")
 const BODY := preload("res://style/font/Tektur/Tektur-Medium.ttf")
 
+const COIN_ICON := preload("res://texture/icon/coin.svg")
+const GEM_ICON := preload("res://texture/icon/gem.svg")
+const STAR_ICON := preload("res://texture/icon/star.svg")
+const LOCK_ICON := preload("res://texture/icon/lock.svg")
+
 static var boxes := {}
 
 #green, amber or red for a 0-100 amount (hull, system condition)

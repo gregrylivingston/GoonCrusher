@@ -1,4 +1,4 @@
-[gd_scene load_steps=36 format=3 uid="uid://bkypbefgkke6a"]
+[gd_scene format=3 uid="uid://bkypbefgkke6a"]
 
 [ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="1_ehr7y"]
 [ext_resource type="AudioStream" uid="uid://c8tjwnheipx8b" path="res://scene/car/sedan/audio/sedan_lowHealth_1.mp3" id="7_6itbh"]
@@ -27,15 +27,14 @@
 [ext_resource type="AudioStream" uid="uid://o51m6bd6j6l7" path="res://scene/car/sedan/audio/sedan_lowhealth_5.mp3" id="30_fkxbp"]
 [ext_resource type="AudioStream" uid="uid://dk8dxgulkdxvl" path="res://sound/fx/engine/rally-car1.mp3" id="31_0usg3"]
 [ext_resource type="AudioStream" uid="uid://cact61dubj8r1" path="res://scene/car/sedan/audio/sedan_joy_12.mp3" id="31_in17m"]
-[ext_resource type="Texture2D" uid="uid://4wtuy8w4hpfn" path="res://scene/car/sedan/sedan1.png" id="32_af747"]
-[ext_resource type="Texture2D" uid="uid://ltiunalnocyg" path="res://scene/car/sedan/sedan0.png" id="32_nbaif"]
 [ext_resource type="AudioStream" uid="uid://4cceyga6ii76" path="res://scene/car/sedan/audio/sedan_joy_13.mp3" id="32_t58lr"]
 [ext_resource type="AudioStream" uid="uid://cb4eedoem5ayl" path="res://scene/car/sedan/audio/sedan_joy_14.mp3" id="33_qe272"]
 [ext_resource type="Shader" path="res://shader/3dtext.gdshader" id="42_glbmw"]
 [ext_resource type="Resource" path="res://scene/car/sedan/sedan_info.tres" id="ci_info"]
+[ext_resource type="Resource" path="res://scene/car/sedan/art/sedan_art.tres" id="ca_art"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_v2r7d"]
-size = Vector2(203, 73)
+size = Vector2(212, 86.28)
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_77p8g"]
 resource_local_to_scene = true
@@ -55,27 +54,40 @@ powerupAudio = Array[AudioStreamMP3]([ExtResource("13_uwfhs"), ExtResource("14_7
 lowGasAudio = Array[AudioStreamMP3]([ExtResource("9_6gq7h"), ExtResource("26_r14mo"), ExtResource("27_cjef7")])
 lowHealthAudio = Array[AudioStreamMP3]([ExtResource("7_6itbh"), ExtResource("10_r38dw"), ExtResource("28_dickn"), ExtResource("29_cqd2r"), ExtResource("30_fkxbp")])
 engineNoise = ExtResource("31_0usg3")
-carDamagedTexture = ExtResource("32_af747")
+art = ExtResource("ca_art")
 info = ExtResource("ci_info")
 
 [node name="CollisionShape2D" parent="." index="2"]
-position = Vector2(84.09, -2.5)
-polygon = PackedVector2Array(20.91, -36.5, 27.91, 1.5, 19.91, 37.5, -3.09, 44.5, -33.09, 45.5, -33.09, -44.5, -3.09, -43.5)
+position = Vector2(0, 0)
+polygon = PackedVector2Array(103, 0, 101.8, 22.8, 99.5, 28.3, 95.9, 32.2, 87.2, 36.6, 70.1, 41.2, 48, 42.6, 48, -42.6, 70.1, -41.2, 87.2, -36.6, 95.9, -32.2, 99.5, -28.3, 101.8, -22.8)
 
 [node name="CollisionShape2D_rear" parent="." index="3"]
-polygon = PackedVector2Array(-28, -30.5, -21, -37.5, 0, -40.5, 0, 41.5, -21, 40.5, -29, 31.5)
-
-[node name="sprite" parent="." index="5"]
-texture = ExtResource("32_nbaif")
+position = Vector2(0, 0)
+polygon = PackedVector2Array(-68, 42.3, -89.2, 37.8, -95.9, 34.7, -99.5, 31.2, -102.7, 20.9, -102.9, 16.6, -103, 0, -102.7, -20.9, -99.5, -31.2, -95.9, -34.7, -89.2, -37.8, -68, -42.3)
 
 [node name="tireLocation" parent="sprite" index="0"]
-position = Vector2(34.9999, 58)
+position = Vector2(37, 62)
 
 [node name="tireLocation2" parent="sprite" index="1"]
-position = Vector2(-34.9998, 50.0001)
+position = Vector2(-37, 62)
+
+[node name="tireLocation3" parent="sprite" index="2"]
+position = Vector2(37, -62)
+
+[node name="tireLocation4" parent="sprite" index="3"]
+position = Vector2(-37, -62)
+
+[node name="Smoke" parent="sprite/exhaust" index="0"]
+position = Vector2(-18.92, 109)
+
+[node name="taillamps" parent="headlamps" index="1"]
+position = Vector2(5, 0)
+
+[node name="headlights" parent="headlamps" index="2"]
+position = Vector2(-17, 0)
 
 [node name="CollisionShape2D" parent="carBodyArea" index="0"]
-position = Vector2(3.5, -2.5)
+position = Vector2(0, 0)
 shape = SubResource("RectangleShape2D_v2r7d")
 
 [node name="Label" parent="indicator" index="0"]

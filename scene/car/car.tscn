@@ -1,7 +1,6 @@
 [gd_scene format=3 uid="uid://dbkp41oxg03o6"]
 
 [ext_resource type="Script" path="res://lib/overhead_car_2d/overhead_car_body_2d.gd" id="1_ibwir"]
-[ext_resource type="Texture2D" uid="uid://dthtmohgw8u1f" path="res://scene/car/audi/Audi.png" id="2_33x0l"]
 [ext_resource type="PackedScene" uid="uid://cl3halv7uu2tw" path="res://scene/player/controller/playerCarController.tscn" id="2_idgy8"]
 [ext_resource type="AudioStream" uid="uid://dahxhxgy1qfrn" path="res://sound/fx/engine/rally-car2.mp3" id="3_hfwa2"]
 [ext_resource type="AudioStream" uid="uid://dd240qte30ido" path="res://sound/fx/tires_squal_loop.wav" id="4_jbkbo"]
@@ -16,6 +15,8 @@
 [ext_resource type="Theme" uid="uid://co40pijjc7hbw" path="res://style/roadRogue.tres" id="15_oqhda"]
 [ext_resource type="Texture2D" uid="uid://dwf10tykle8ow" path="res://texture/fx/circle_05.png" id="17_csael"]
 [ext_resource type="Texture2D" path="res://texture/fx/headlight_cone.png" id="gc_cone"]
+[ext_resource type="Shader" path="res://shader/car_damage.gdshader" id="cd_shader"]
+[ext_resource type="Script" path="res://scene/car/damage_fx.gd" id="cd_fx"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_cdhyb"]
 atlas = ExtResource("6_s186q")
@@ -133,6 +134,10 @@ animations = [{
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_vq4ld"]
 size = Vector2(160.25, 79)
 
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_cardamage"]
+resource_local_to_scene = true
+shader = ExtResource("cd_shader")
+
 [node name="Car" type="CharacterBody2D"]
 z_index = 1
 script = ExtResource("1_ibwir")
@@ -155,7 +160,6 @@ polygon = PackedVector2Array(-24, -43.5, 0, -43.5, 0, 41.5, -21, 40.5, -28, -6.5
 
 [node name="sprite" type="Sprite2D" parent="."]
 rotation = 1.5708
-texture = ExtResource("2_33x0l")
 
 [node name="tireLocation" type="Node2D" parent="sprite"]
 position = Vector2(35, 70)
@@ -186,6 +190,16 @@ animation = &"new_animation"
 autoplay = "new_animation"
 script = ExtResource("7_jq5da")
 temporary = false
+
+[node name="shadow" type="Sprite2D" parent="sprite"]
+self_modulate = Color(1, 1, 1, 0.8)
+texture_filter = 4
+scale = Vector2(0.5, 0.5)
+
+[node name="body" type="Sprite2D" parent="sprite"]
+texture_filter = 4
+material = SubResource("ShaderMaterial_cardamage")
+scale = Vector2(0.5, 0.5)
 
 [node name="AudioStream-Engine" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("3_hfwa2")
@@ -377,3 +391,6 @@ theme = ExtResource("15_oqhda")
 theme_override_font_sizes/font_size = 40
 text = "4.7 km"
 horizontal_alignment = 1
+
+[node name="damageFx" type="Node2D" parent="."]
+script = ExtResource("cd_fx")

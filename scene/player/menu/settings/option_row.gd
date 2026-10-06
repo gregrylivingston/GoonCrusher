@@ -12,7 +12,7 @@ signal activated(row: OptionRow)
 
 const FONT_SIZE = 24
 const NORMAL = Color(0, 0, 0, 0)
-const FOCUSED = Color(0.93, 0.6, 0.16, 0.22)
+const FOCUSED = Color(0.941, 0.627, 0.188, 0.16)
 
 var def: Dictionary
 var valueLabel: Label
@@ -29,7 +29,9 @@ func _init(definition: Dictionary):
 func _ready():
 	style = StyleBoxFlat.new()
 	style.bg_color = NORMAL
-	style.set_corner_radius_all(4)
+	style.set_corner_radius_all(10)
+	style.set_border_width_all(2)
+	style.border_color = Color(0, 0, 0, 0)
 	style.content_margin_left = 12
 	style.content_margin_right = 12
 	style.content_margin_top = 4
@@ -143,6 +145,7 @@ func makeValueLabel() -> Label:
 
 func onFocus(isFocused: bool) -> void:
 	style.bg_color = FOCUSED if isFocused else NORMAL
+	style.border_color = HudTheme.RIM if isFocused else Color(0, 0, 0, 0)
 	if def.type == "binding": refresh()
 	if isFocused: row_focused.emit(self)
 

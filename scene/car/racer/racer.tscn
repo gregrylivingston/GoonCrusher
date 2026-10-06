@@ -1,7 +1,6 @@
 [gd_scene format=3 uid="uid://26c7khgh5lqa"]
 
 [ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="1_kgqi5"]
-[ext_resource type="Texture2D" uid="uid://3ntiq5bget7n" path="res://scene/car/racer/Black_viper.png" id="2_7a10q"]
 [ext_resource type="PackedScene" uid="uid://551dlp73phd4" path="res://texture/animation/smoke.tscn" id="12_ivv6c"]
 [ext_resource type="AudioStream" uid="uid://cqekjds0xrm5u" path="res://scene/car/racer/audio/racer_purse_1.mp3" id="12_ysw7g"]
 [ext_resource type="AudioStream" uid="uid://de5k2pamnbme6" path="res://scene/car/racer/audio/racer_purse_2.mp3" id="13_mhftg"]
@@ -19,9 +18,10 @@
 [ext_resource type="AudioStream" uid="uid://c06qvnqxya6yh" path="res://scene/car/racer/audio/racer_healthwarning_1.mp3" id="25_i6fyi"]
 [ext_resource type="Shader" uid="uid://cwca4ap0gs4m5" path="res://shader/3dtext.gdshader" id="gc_3dtext"]
 [ext_resource type="Resource" path="res://scene/car/racer/racer_info.tres" id="ci_info"]
+[ext_resource type="Resource" path="res://scene/car/racer/art/racer_art.tres" id="ca_art"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_l3dom"]
-size = Vector2(198, 81)
+size = Vector2(204, 98.35)
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_3mb4d"]
 resource_local_to_scene = true
@@ -41,37 +41,43 @@ purseAudio = Array[AudioStreamMP3]([ExtResource("12_ysw7g"), ExtResource("13_mhf
 powerupAudio = Array[AudioStreamMP3]([ExtResource("14_5e0m1"), ExtResource("15_8o26u"), ExtResource("16_rvyge"), ExtResource("17_s5ex8"), ExtResource("18_pirrt"), ExtResource("19_gdkom"), ExtResource("20_2bfxb"), ExtResource("21_y7erb"), ExtResource("22_u0ryi")])
 lowGasAudio = Array[AudioStreamMP3]([ExtResource("23_5lx7c"), ExtResource("24_gnl76")])
 lowHealthAudio = Array[AudioStreamMP3]([ExtResource("25_i6fyi")])
-carDamagedTexture = ExtResource("2_7a10q")
+art = ExtResource("ca_art")
 info = ExtResource("ci_info")
 
 [node name="CollisionShape2D" parent="." index="2"]
-polygon = PackedVector2Array(-38, -48.5, 13, -43.5, 34, -29.5, 41, 3.5, 33, 30.5, 14, 43.5, -33, 52.5)
+position = Vector2(0, 0)
+polygon = PackedVector2Array(99, 0, 97.9, 18.5, 95.6, 24, 90.7, 29.3, 61.7, 45, 58.8, 45.7, 55.8, 46.1, 44, 45.8, 44, -45.8, 55.8, -46.1, 58.8, -45.7, 61.7, -45, 90.7, -29.3, 95.6, -24, 97.9, -18.5)
 
 [node name="CollisionShape2D_rear" parent="." index="3"]
-polygon = PackedVector2Array(-48, -36.5, -38, -45.5, -20.1392, -44.56, -20, 45.5, -40, 43.5, -50, 30.5)
-
-[node name="sprite" parent="." index="5"]
-position = Vector2(-11, 7)
-scale = Vector2(1.1, 1.1)
-texture = ExtResource("2_7a10q")
+position = Vector2(0, 0)
+polygon = PackedVector2Array(-64, 48, -87.5, 37.5, -94.6, 32, -98.4, 22.6, -99, 0, -98.4, -22.6, -94.6, -32, -87.5, -37.5, -64, -48)
 
 [node name="tireLocation" parent="sprite" index="0"]
-position = Vector2(20.9093, 69.9999)
+position = Vector2(41, 60)
 
 [node name="tireLocation2" parent="sprite" index="1"]
-position = Vector2(-37.2725, 68.1819)
+position = Vector2(-41, 60)
 
 [node name="tireLocation3" parent="sprite" index="2"]
-position = Vector2(26.9998, -60.0001)
+position = Vector2(40, -60)
 
 [node name="tireLocation4" parent="sprite" index="3"]
-position = Vector2(-44.0002, -59.9998)
+position = Vector2(-40, -60)
+
+[node name="Smoke" parent="sprite/exhaust" index="0"]
+position = Vector2(-20.68, 105)
+
+[node name="taillamps" parent="headlamps" index="1"]
+position = Vector2(9, 0)
+
+[node name="headlights" parent="headlamps" index="2"]
+position = Vector2(-21, 0)
 
 [node name="Smoke2" parent="sprite/exhaust" index="1" instance=ExtResource("12_ivv6c")]
-position = Vector2(-35.4542, 105.455)
+position = Vector2(20.68, 105)
 
 [node name="CollisionShape2D" parent="carBodyArea" index="0"]
-position = Vector2(-12, -3.5)
+position = Vector2(0, 0)
 shape = SubResource("RectangleShape2D_l3dom")
 
 [node name="Label" parent="indicator" index="0"]

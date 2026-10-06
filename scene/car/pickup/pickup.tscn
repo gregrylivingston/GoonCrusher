@@ -1,7 +1,6 @@
 [gd_scene format=3 uid="uid://cvuiarwiynwx7"]
 
 [ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="1_150xb"]
-[ext_resource type="Texture2D" uid="uid://dfa1wuwohdn01" path="res://scene/car/pickup/Mini_truck.png" id="2_36nav"]
 [ext_resource type="AudioStream" uid="uid://dy14pxuvdlu4t" path="res://scene/car/pickup/audio/pickup_intro_3.mp3" id="5_okret"]
 [ext_resource type="AudioStream" uid="uid://bmm7o56pay30j" path="res://scene/car/pickup/audio/pickup_intro_5.mp3" id="7_7wal3"]
 [ext_resource type="AudioStream" uid="uid://cjc6djo0c0yhn" path="res://scene/car/pickup/audio/pickup_joy_1.mp3" id="11_01t5h"]
@@ -30,9 +29,10 @@
 [ext_resource type="AudioStream" uid="uid://lb8eraxs3ek2" path="res://scene/car/pickup/audio/pickup_joy_14.mp3" id="34_3wios"]
 [ext_resource type="Shader" uid="uid://cwca4ap0gs4m5" path="res://shader/3dtext.gdshader" id="gc_3dtext"]
 [ext_resource type="Resource" path="res://scene/car/pickup/pickup_info.tres" id="ci_info"]
+[ext_resource type="Resource" path="res://scene/car/pickup/art/pickup_art.tres" id="ca_art"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_782i6"]
-size = Vector2(192, 81)
+size = Vector2(220, 92.58)
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_nupcy"]
 resource_local_to_scene = true
@@ -51,30 +51,40 @@ purseAudio = Array[AudioStreamMP3]([ExtResource("17_4jiup"), ExtResource("18_7dv
 powerupAudio = Array[AudioStreamMP3]([ExtResource("11_01t5h"), ExtResource("12_libsm"), ExtResource("13_3ksbf"), ExtResource("14_q4hv0"), ExtResource("15_iv1yi"), ExtResource("16_g2ua3"), ExtResource("17_ireah"), ExtResource("18_ty8uw"), ExtResource("19_yvkl7"), ExtResource("20_4xfjq"), ExtResource("21_sxtnt"), ExtResource("22_atv5c"), ExtResource("33_mc6sl"), ExtResource("34_3wios")])
 lowGasAudio = Array[AudioStreamMP3]([ExtResource("23_73te5"), ExtResource("24_cyqhs"), ExtResource("7_7wal3")])
 lowHealthAudio = Array[AudioStreamMP3]([ExtResource("25_yxhmr"), ExtResource("26_4efuk"), ExtResource("5_okret")])
-carDamagedTexture = ExtResource("2_36nav")
+art = ExtResource("ca_art")
 info = ExtResource("ci_info")
 
 [node name="CollisionShape2D" parent="." index="2"]
-polygon = PackedVector2Array(-20, -49.5, 13, -49.5, 24, -41.5, 26, 34.5, 11, 39.5, -19, 39.5, -29, 51.5, -28, -56.5)
+position = Vector2(0, 0)
+polygon = PackedVector2Array(107, 0, 106.3, 27.9, 104.3, 33.7, 101, 37.3, 92.7, 41.1, 75.7, 44.7, 52, 45, 52, -45, 75.7, -44.7, 92.7, -41.1, 101, -37.3, 104.3, -33.7, 106.3, -27.9)
 
 [node name="CollisionShape2D_rear" parent="." index="3"]
-polygon = PackedVector2Array(-33, -41.5, -21, -46.5, -8, -45.5, -9, 38.5, -22, 38.5, -32, 33.5)
+position = Vector2(0, 0)
+polygon = PackedVector2Array(-72, 46.2, -99.6, 42.6, -104.3, 39.9, -106.3, 35.8, -106.7, -33.5, -104.3, -39.9, -99.6, -42.6, -72, -46.2)
 
-[node name="sprite" parent="." index="5"]
-position = Vector2(3, 3)
-texture = ExtResource("2_36nav")
+[node name="tireLocation" parent="sprite" index="0"]
+position = Vector2(38, 70)
 
 [node name="tireLocation2" parent="sprite" index="1"]
-position = Vector2(-47.9998, 67.0002)
+position = Vector2(-38, 70)
 
 [node name="tireLocation3" parent="sprite" index="2"]
-position = Vector2(26.9998, -60.0001)
+position = Vector2(38, -68)
 
 [node name="tireLocation4" parent="sprite" index="3"]
-position = Vector2(-44.0002, -59.9998)
+position = Vector2(-38, -68)
+
+[node name="Smoke" parent="sprite/exhaust" index="0"]
+position = Vector2(-19.8, 113)
+
+[node name="taillamps" parent="headlamps" index="1"]
+position = Vector2(1, 0)
+
+[node name="headlights" parent="headlamps" index="2"]
+position = Vector2(-13, 0)
 
 [node name="CollisionShape2D" parent="carBodyArea" index="0"]
-position = Vector2(-8, -6.5)
+position = Vector2(0, 0)
 shape = SubResource("RectangleShape2D_782i6")
 
 [node name="Label" parent="indicator" index="0"]

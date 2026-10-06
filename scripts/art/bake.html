@@ -1,0 +1,24 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>car bake</title></head>
+<body>
+<!-- Opened by bake_cars.py in headless Edge as bake.html#<car>. Writes every file for that car as JSON
+     into #out; the script reads it back with --dump-dom. -->
+<pre id="out"></pre>
+<script src="car_gen.js"></script>
+<script>
+(function(){
+	const RES = 2; //sheets are authored at 2x; the car scene shows them at scale 0.5
+	const key = location.hash.slice(1), A = window.CarArt, out = {files:{}, geometry:null, error:null};
+	try {
+		if(!A.CARS[key]) throw new Error("unknown car " + key);
+		const png = cv => cv.toDataURL("image/png");
+		for(const look of ["a", "c"]) for(const stage of [0, 1, 2])
+			out.files[key + "_" + look + stage + ".png"] = png(A.render(key, {style: look.toUpperCase(), stage, res: RES, shadow: false}));
+		out.files[key + "_mask.png"] = png(A.maskCanvas(key, RES));
+		out.files[key + "_shadow.png"] = png(A.renderShadow(key, RES));
+		out.geometry = A.sceneGeometry(key);
+	} catch(e) { out.error = String(e && e.stack || e); }
+	document.getElementById("out").textContent = JSON.stringify(out);
+})();
+</script>
+</body></html>

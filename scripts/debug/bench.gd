@@ -5,7 +5,8 @@ extends Node
 #  Godot_console.exe --path . --windowed --resolution 1600x900 -- --bench=S2 --seconds=90
 #Options: --seconds=N, --preset=potato|low|medium|high, --set=gfx/lighting:0;gfx/smoke:1 (any
 #setting, not saved), --shot=5;30 (screenshots at those level seconds), --open-settings (S1 only),
-#--notext.
+#--notext, --car=taxi (another car than the scenario's), --damage=engine:30;tank:10 (system conditions,
+#held for the whole run; e.g. to look at the damaged car art or time the damage effects).
 #Game mode: --mode=gooncrusher|sprint|marathon|defense|goonpocalypse (default gooncrusher) sets the
 #scratch save's gameMode before the level loads. --level-seconds=N replaces the level's authored
 #seconds (Sprint derives its clock from them). Without --level-seconds the bench keeps a
@@ -46,6 +47,7 @@ var pursesSpawned: int = 0
 var stripText: bool = false
 var shots: Array = []
 var headlights: int = -1
+var damage := {} #--damage: system -> condition
 var loadStart: int = 0
 var loadReported := false
 var longestLoadFrame: float = 0.0
@@ -69,7 +71,8 @@ func _ready():
 		push_error("Unknown bench scenario " + id)
 		get_tree().quit(1)
 		return
-	cfg = SCENARIOS[id]
+	cfg = SCENARIOS[id].duplicate()
+	if args.has("car"): cfg.car = str(args.car)
 	seconds = float(args.get("seconds", cfg.seconds))
 	if args.has("mode"):
 		var modeName = str(args.mode).to_upper()
@@ -97,6 +100,10 @@ func _ready():
 			if kv.size() == 2: Settings.set_value(kv[0], str_to_var(kv[1]), false)
 	label = str(args.get("tag", ""))
 	headlights = int(args.get("headlights", -1))
+	if args.has("damage"):
+		for pair in str(args.damage).split(";"):
+			var kv = pair.split(":")
+			if kv.size() == 2: damage[kv[0]] = float(kv[1])
 	if args.has("shot"):
 		for t in str(args.shot).split(";"): shots.push_back(float(t))
 	if args.has("open-settings"):
@@ -251,6 +258,8 @@ func levelEvents() -> void:
 		runEndReported = true
 		print("BENCH_RUN_ENDED mode=%s reason=%s level_time=%.1f station=%s" % [Root.gameModes.find_key(gameMode),
 			Root.endCondition.find_key(Root.levelRoot.endReason), levelTime, str(Root.station.global_position) if is_instance_valid(Root.station) else "none"])
+	for system in damage:
+		if Root.playerCar.condition.get(system, -1.0) != damage[system]: Root.playerCar.setCondition(system, damage[system])
 	if headlights >= 0 && Root.playerCar.headlights != headlights:
 		Root.playerCar.headlights = headlights
 		Root.playerCar.setHeadlightStrength()
@@ -328,6 +337,7 @@ func finish() -> void:
 		"max_goons": maxColumn(8), "max_chunks": maxColumn(9), "end_nodes": int(rows[rows.size() - 1].split(",")[7]),
 	}
 	print("BENCH_SUMMARY " + JSON.stringify(summary))
+	if is_instance_valid(Root.playerCar): print("BENCH_CAR health=%.0f condition=%s" % [Root.playerCar.health, str(Root.playerCar.condition)])
 	var summaryPath = "user://bench/summary.csv"
 	var isNew = not FileAccess.file_exists(summaryPath)
 	var sfile = FileAccess.open(summaryPath, FileAccess.READ_WRITE if not isNew else FileAccess.WRITE)

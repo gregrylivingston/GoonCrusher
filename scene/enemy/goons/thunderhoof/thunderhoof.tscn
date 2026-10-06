@@ -1,0 +1,30 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="PackedScene" path="res://scene/enemy/walker/walker.tscn" id="base"]
+[ext_resource type="SpriteFrames" path="res://scene/enemy/goons/thunderhoof/thunderhoof_frames.tres" id="frames"]
+[ext_resource type="Texture2D" path="res://scene/enemy/goons/thunderhoof/art/thunderhoof_decal.png" id="decal"]
+
+[sub_resource type="CapsuleShape2D" id="shape"]
+radius = 17.2
+height = 62.2
+
+[sub_resource type="OccluderPolygon2D" id="occluder"]
+cull_mode = 1
+polygon = PackedVector2Array(-23, -13, -17, -38, 1.5, -43, 16.5, -38, 23, -10, 21.5, 16, 4, 39.5, 0, 40, -21, 18.5, -22, 16)
+
+[node name="thunderhoof" instance=ExtResource("base")]
+goonId = &"thunderhoof"
+decal = ExtResource("decal")
+eyes = PackedVector2Array(-4.7, -31.5, 4.7, -31.5)
+bodyRadius = 17.2
+
+[node name="CollisionShape2D" parent="." index="0"]
+position = Vector2(1.5, 0.0)
+shape = SubResource("shape")
+
+[node name="Sprite" parent="." index="1"]
+scale = Vector2(1.3333, 1.3333)
+sprite_frames = ExtResource("frames")
+
+[node name="LightOccluder2D" parent="." index="2"]
+occluder = SubResource("occluder")

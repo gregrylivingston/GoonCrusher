@@ -15,6 +15,7 @@ var slotTransition = preload("res://scene/fx/lotto/lottoTransition.tscn")
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	add_to_group("slotMachine")
+	restyle()
 	Root.playerCar.slotMachines += 1
 	$slotMachineBonusSound.stream = load(winSound[ randi_range( 0 , winSound.size() -1 ) ] )
 	$slotMachineBonusSound.play()
@@ -54,6 +55,7 @@ var keyPressDelay = .25
 var delayKeyPress = true
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
+	syncButtons()
 	if Input.is_action_just_pressed("Accelerate") && delayKeyPress == false:
 		if isReady:
 			_on_play_button_pressed()
@@ -66,6 +68,51 @@ func _process(delta):
 
 
 
+
+#the menu look (docs/UI.md): a smoked panel, gold-framed reels and one row of themed buttons with
+#key hints. The original buttons stay (hidden) because the logic reads and sets their state;
+#syncButtons mirrors it onto the new row every frame. Accelerate and Brake work as before.
+var spinButton: Button
+var rerollButton: Button
+var claimButton: Button
+
+func restyle() -> void:
+	InputGlyphs.ensureMenuActions()
+	var panel: Panel = $Panel/Panel
+	panel.theme = MenuTheme.theme()
+	panel.add_theme_stylebox_override("panel", MenuTheme.box(Color(0.055, 0.047, 0.043, 0.94), HudTheme.RIM, 18, 4))
+	var reels: Panel = $Panel/Panel/Panel2
+	reels.add_theme_stylebox_override("panel", MenuTheme.box(Color(0.05, 0.04, 0.035, 1.0), HudTheme.GOLD, 14, 4))
+	reels.offset_left = 40
+	reels.offset_right = -40
+	reels.offset_bottom = -132
+	$Panel/Panel/Panel/Label.text = "FREE SPIN" if isGoonCrushBonus else "SLOT MACHINE"
+	$Panel/Panel/VBoxContainer.visible = false
+	var row = HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 22)
+	row.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
+	row.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	row.offset_top = -108
+	row.offset_bottom = -30
+	panel.add_child(row)
+	spinButton = MenuTheme.button("SPIN", PackedStringArray(["Accelerate"]), true)
+	rerollButton = MenuTheme.button("Reroll  (1 gem)", PackedStringArray(["Brake"]), false, HudTheme.GEM_ICON)
+	claimButton = MenuTheme.button("COLLECT", PackedStringArray(["Accelerate"]), true)
+	for entry in [[spinButton, _on_play_button_pressed, 300], [rerollButton, _on_reroll_button_pressed, 300], [claimButton, _on_claim_button_pressed, 300]]:
+		entry[0].custom_minimum_size = Vector2(entry[2], 70)
+		entry[0].focus_mode = Control.FOCUS_NONE #the keys drive it; buttons are for the mouse
+		entry[0].pressed.connect(entry[1])
+		row.add_child(entry[0])
+	syncButtons()
+
+func syncButtons() -> void:
+	if not is_instance_valid(spinButton): return
+	spinButton.disabled = $Panel/Panel/VBoxContainer/play_button.disabled
+	rerollButton.disabled = $Panel/Panel/VBoxContainer/reroll_button.disabled
+	claimButton.disabled = $Panel/Panel/VBoxContainer/claim_button.disabled
+	claimButton.visible = not claimButton.disabled
+	spinButton.visible = not claimButton.visible
 
 var bonusSound = [
 	"res://sound/fx/slotmachine/bonus_1.mp3",

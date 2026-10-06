@@ -17,4 +17,5 @@ func _on_driveway_body_entered(body):
 		if not is_instance_valid(Root.levelRoot) || Root.levelRoot.hasEnded || body.health <= 0 || body.isWrecked: return
 		if SaveManager.playerData.gameMode == Root.gameModes.SPRINT ||  SaveManager.playerData.gameMode == Root.gameModes.MARATHON:
 			Root.levelRoot.endLevel(true, Root.endCondition.SUCCESS )
+		elif body.has_method("repairAll"): body.repairAll() #in the other modes the station is a free repair shop
 		

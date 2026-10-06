@@ -1,7 +1,6 @@
 [gd_scene format=3 uid="uid://ckgx8r2itxy2s"]
 
 [ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="1_0vonh"]
-[ext_resource type="Texture2D" uid="uid://dthtmohgw8u1f" path="res://scene/car/audi/Audi.png" id="10_uci38"]
 [ext_resource type="AudioStream" uid="uid://d3bcqglbjoxdb" path="res://scene/car/audi/audio/audi_purse_1.mp3" id="12_jy1aj"]
 [ext_resource type="AudioStream" uid="uid://nyexq4tqe2ip" path="res://scene/car/audi/audio/audi_purse_2.mp3" id="13_xblaa"]
 [ext_resource type="AudioStream" uid="uid://bkkpsa67kvuwh" path="res://scene/car/audi/audio/audi_joy_1.mp3" id="14_liqj8"]
@@ -17,9 +16,10 @@
 [ext_resource type="AudioStream" uid="uid://cnrkticdpt4s1" path="res://scene/car/audi/audio/audi_healthwarning_1.mp3" id="24_bxlei"]
 [ext_resource type="Shader" uid="uid://cwca4ap0gs4m5" path="res://shader/3dtext.gdshader" id="gc_3dtext"]
 [ext_resource type="Resource" path="res://scene/car/audi/audi_info.tres" id="ci_info"]
+[ext_resource type="Resource" path="res://scene/car/audi/art/audi_art.tres" id="ca_art"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_oqcx7"]
-size = Vector2(177, 80)
+size = Vector2(202, 95.48)
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_fwe8f"]
 resource_local_to_scene = true
@@ -38,17 +38,40 @@ purseAudio = Array[AudioStreamMP3]([ExtResource("12_jy1aj"), ExtResource("13_xbl
 powerupAudio = Array[AudioStreamMP3]([ExtResource("14_liqj8"), ExtResource("15_wat4l"), ExtResource("16_k0v2r"), ExtResource("17_okcyt"), ExtResource("18_g5gt6"), ExtResource("19_fw6ak"), ExtResource("20_f8bt6"), ExtResource("21_ifbqo")])
 lowGasAudio = Array[AudioStreamMP3]([ExtResource("22_kv4mi"), ExtResource("23_y1c7h")])
 lowHealthAudio = Array[AudioStreamMP3]([ExtResource("24_bxlei")])
-carDamagedTexture = ExtResource("10_uci38")
+art = ExtResource("ca_art")
 info = ExtResource("ci_info")
 
 [node name="CollisionShape2D" parent="." index="2"]
-polygon = PackedVector2Array(-33, -47.5, -3.00002, -47.5, 17, -35.5, 33, -12.5, 34, 13.5, 19, 33.5, -1, 47.5, -31, 48.5)
+position = Vector2(0, 0)
+polygon = PackedVector2Array(98, 0, 96.9, 16.4, 94.7, 21.6, 89.8, 26.7, 61.1, 40.9, 43, 44, 43, -44, 61.1, -40.9, 89.8, -26.7, 94.7, -21.6, 96.9, -16.4)
 
 [node name="CollisionShape2D_rear" parent="." index="3"]
-polygon = PackedVector2Array(-30, -29.5, -22, -37.5, -10, -41.5, -11, 45.5, -26, 39.5, -33, 29.5, -38, -2.5)
+position = Vector2(0, 0)
+polygon = PackedVector2Array(-63, 45.9, -84.9, 37.4, -93.6, 31.3, -97.4, 22.1, -98, 0, -97.4, -22.1, -93.6, -31.3, -84.9, -37.4, -63, -45.9)
+
+[node name="tireLocation" parent="sprite" index="0"]
+position = Vector2(39, 56)
+
+[node name="tireLocation2" parent="sprite" index="1"]
+position = Vector2(-39, 56)
+
+[node name="tireLocation3" parent="sprite" index="2"]
+position = Vector2(38, -58)
+
+[node name="tireLocation4" parent="sprite" index="3"]
+position = Vector2(-38, -58)
+
+[node name="Smoke" parent="sprite/exhaust" index="0"]
+position = Vector2(-20.24, 104)
+
+[node name="taillamps" parent="headlamps" index="1"]
+position = Vector2(10, 0)
+
+[node name="headlights" parent="headlamps" index="2"]
+position = Vector2(-22, 0)
 
 [node name="CollisionShape2D" parent="carBodyArea" index="0"]
-position = Vector2(-6.5, -1)
+position = Vector2(0, 0)
 shape = SubResource("RectangleShape2D_oqcx7")
 
 [node name="Label" parent="indicator" index="0"]

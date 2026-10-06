@@ -13,7 +13,6 @@ The HUD is `scene/player/playerRoot.tscn` (class `GameUI`). It was rebuilt in Oc
 | `Tach`, `Fuel` | `hud_dial.gd` | bottom left | Tachometer with the gear (`car.gear`), and the fuel dial. |
 | `Speedo`, `Hull` | `hud_dial.gd` | bottom right | Speedometer and the hull (health) dial. |
 | `Systems` | `hud_systems.gd` | bottom center | One lamp per car system, each with a rating underline. |
-| `carPanel` | `car_panel.gd` | (off screen) | Only the stat list the pause menu shows (`visibleWhenPaused`). |
 
 `hud_theme.gd` (class `HudTheme`) holds the colors, the Tektur fonts and the draw helpers.
 
@@ -41,7 +40,7 @@ The widgets draw with `_draw()`, and each one redraws only when its numbers chan
 | luck, clover | The payout (they change what goons drop) |
 | currentGoonsCrushed, slotmachine | The crush pill |
 
-The pause-screen stat rows used to own these groups. They no longer do, because `get_first_node_in_group` would pick them first. `tests/game/test_hud.gd` checks that every powerup scene has a target inside the HUD and outside `carPanel`.
+`tests/game/test_hud.gd` checks that every powerup scene has a target inside the HUD. (The old pause-screen stat list, `car_panel`, owned these groups and is gone; the pause card shows the stats now.)
 
 ## The systems strip
 

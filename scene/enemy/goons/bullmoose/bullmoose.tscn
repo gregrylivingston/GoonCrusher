@@ -1,0 +1,30 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="PackedScene" path="res://scene/enemy/walker/walker.tscn" id="base"]
+[ext_resource type="SpriteFrames" path="res://scene/enemy/goons/bullmoose/bullmoose_frames.tres" id="frames"]
+[ext_resource type="Texture2D" path="res://scene/enemy/goons/bullmoose/art/bullmoose_decal.png" id="decal"]
+
+[sub_resource type="CapsuleShape2D" id="shape"]
+radius = 27.9
+height = 70.5
+
+[sub_resource type="OccluderPolygon2D" id="occluder"]
+cull_mode = 1
+polygon = PackedVector2Array(-36, -44, -1.5, -58, 1, -58, 35.5, -44, 37, -36.5, 22.5, 19, 3.5, 36, -4, 36, -23, 19, -37.5, -37)
+
+[node name="bullmoose" instance=ExtResource("base")]
+goonId = &"bullmoose"
+decal = ExtResource("decal")
+eyes = PackedVector2Array(-5, -36.8, 5, -36.8)
+bodyRadius = 27.9
+
+[node name="CollisionShape2D" parent="." index="0"]
+position = Vector2(11.0, 0.0)
+shape = SubResource("shape")
+
+[node name="Sprite" parent="." index="1"]
+scale = Vector2(1.3333, 1.3333)
+sprite_frames = ExtResource("frames")
+
+[node name="LightOccluder2D" parent="." index="2"]
+occluder = SubResource("occluder")

@@ -1,0 +1,30 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="PackedScene" path="res://scene/enemy/walker/walker.tscn" id="base"]
+[ext_resource type="SpriteFrames" path="res://scene/enemy/goons/bandit/bandit_frames.tres" id="frames"]
+[ext_resource type="Texture2D" path="res://scene/enemy/goons/bandit/art/bandit_decal.png" id="decal"]
+
+[sub_resource type="CapsuleShape2D" id="shape"]
+radius = 8.1
+height = 40.1
+
+[sub_resource type="OccluderPolygon2D" id="occluder"]
+cull_mode = 1
+polygon = PackedVector2Array(-11, -8.5, -3, -21.5, 0.5, -22.5, 6, -17, 10.5, -9, 10.5, 8, 1, 29, -3.5, 31, -6, 27, -11, 8)
+
+[node name="bandit" instance=ExtResource("base")]
+goonId = &"bandit"
+decal = ExtResource("decal")
+eyes = PackedVector2Array(-2.5, -14.9, 2.5, -14.9)
+bodyRadius = 8.1
+
+[node name="CollisionShape2D" parent="." index="0"]
+position = Vector2(-4.2, 0.0)
+shape = SubResource("shape")
+
+[node name="Sprite" parent="." index="1"]
+scale = Vector2(1.3333, 1.3333)
+sprite_frames = ExtResource("frames")
+
+[node name="LightOccluder2D" parent="." index="2"]
+occluder = SubResource("occluder")
