@@ -31,14 +31,14 @@ All ten items are in commit `b60aba9`, together with the perf/settings commits o
 
 | Item | What changed |
 |---|---|
-| Goon physics layer | Goons are on layer 3 "Goon" (`collision_layer = 4`) with mask 1+2 (world, car body), so they no longer collide with each other. The car's mask is 1+3 (`collision_mask = 5`) so it still crushes them, and the water `Area2D` (`landscapeMap_water.tscn`) masks 1+3 so it still drowns both. Pickups and the station driveway (mask 1) no longer test goons at all. `Walker.savedLayers` defaults to the new pair, and `setSolid` restores it. Layer 2 is renamed "CarBody" (`carBodyArea`). The S4 numbers are in `PERFORMANCE.md`. |
+| Goon physics layer | Goons are on layer 3 "Goon" (`collision_layer = 4`) with mask 1+2 (world, car body), so they no longer collide with each other. The car's mask is 1+3 (`collision_mask = 5`) so it still crushes them, and the water `Area2D` (`landscapeMap_water.tscn`) masks 1+3 so it still drowns both. Pickups and the station driveway (mask 1) no longer test goons at all. `Walker.savedLayers` defaults to the new pair, and `setSolid` restores it. Layer 2 is renamed "CarBody" (`carBodyArea`). Not benchmarked yet: re-run S4 (package 1) to see what it saved against Low's 55.0 / 37.9. |
 | `meta` in the save | `PlayerData.meta` holds the sections `records`, `hints`, `lifetime`, `medals` and `achievements`. `SAVE_VERSION` is 4, `migrate()` adds any missing section and keeps existing contents, and `reset_save()` now migrates the template too. Each car's `records` gained `score`. |
 | Explosion pooling | `ExplosionPool` (`scene/fx/explosion_pool.gd`) lives on the level, which exposes `Level.explode(worldPosition)`. It keeps at most 16 explosions and restarts the oldest when they are all burning. The car's wreck uses it. `goon_fx.gd`'s `blast()` still instantiates its own explosions and should switch to `Root.levelRoot.explode(pos)`; that file belongs to the goon work. |
 
 ### T1-1 to T1-4
 | ID | What changed | Numbers to check in the playtest (package 1) |
 |---|---|---|
-| T1-1 Run log | Debug builds append a row per run to `user://runlog.csv` (`scripts/debug/run_log.gd`, `RunLog`, called from `gameSummary.buildGameSummary`). Columns: date, version, driver (player or ai), car, upgrade total, level, mode, seconds, coins, stars, payout, crushes, giants, regions visited, end reason, gems, slot machines, top speed, end fuel and health, plus score, stations and barrier for the new modes. A file with other columns is moved aside. The car counts `giantsCrushed`. | — |
+| T1-1 Run log | Debug builds append a row per run to `user://runlog.csv` (`scripts/debug/run_log.gd`, `RunLog`, called from `gameSummary.buildGameSummary`). Columns: date, version, driver (player or ai), car, upgrade total, level, mode, seconds, coins, stars, payout, crushes, giants, regions visited, end reason, gems, slot machines, top speed, end fuel and health, plus score, leg (the Marathon leg being driven) and barrier for the new modes. A file with other columns is moved aside. The car counts `giantsCrushed`. | — |
 | T1-2 Goonpocalypse | Spawning escalates 2× faster (`SpawnManager.POCALYPSE_ESCALATION`) down to a 0.6 s floor (`POCALYPSE_SPAWN_FLOOR`; other modes keep 1.0 s). Region waves keep paying stars with no cap (`Region.waveCap()`). Score = crushes + 5 × giants + seconds / 2 (`Level.pocalypseScore`). Surviving 2× the level's seconds (`POCALYPSE_TARGET`) beats the mode (its star), even if the run then ends in a wreck or Abandon. The ticket stamps it SURVIVED. Best time and best score are kept per level and car in `meta.records.goonpocalypse` and per car in `records.time`/`records.score` (`SaveManager.recordGoonpocalypse`), shown on the ticket (NEW BEST), the driver's records and the mode card. The HUD shows the score and the time to the star. | Escalation 2×, floor 0.6 s, target 2×. Crowds reach the 250 cap much sooner, so re-run S4. |
 | T1-3 Marathon | A relay of `MARATHON_LEGS` = 5 Sprint-length legs. The first is placed as in Sprint. Each station but the last adds that leg's Sprint clock, fills the tank, restores 35 health, repairs every system and opens a free slot machine (`Level.stationReached`). The next station is placed with `placeObjective` a Sprint distance away, within 60° of the last leg's heading (`tileManager.placeNextStation`). The reached station is retired and unpinned (`unpinChunk`), so it unloads once the car leaves. A car coasting in on an empty tank is saved: `outOfFuel` checks the tank again before ending the run. The last station gives SUCCESS. The HUD shows "STATION 2 OF 5". The AI driver rebuilds its station graph when the station changes. | Legs 5, heal 35, the 60° turn. |
 | T1-4 Defense | The clock counts down from the level's seconds and is won at 0 (`Level.timeUpCondition`). The station's walls are a barrier with 1000 health (`station.gd`: `startBarrier`, `damage`, `nearestWallPoint`); the walls redden as it drops, and at 0 the run ends with the new `BASEDESTROYED` ("OVERRUN"). Four spawners ring the station at 4000 px. Goons march on the nearest wall point and hit it once per windup + attack + at least 2 s of rest (`Walker.siege`), unless the car comes within 650 px, when their verb hunts the car as usual. Burrowers, flyers and Scrap Gang vehicles always hunt the car. Goons near the station are kept by the despawn sweep. The car starts outside the lot's gap; parked in the driveway it refuels at 4 per second, and entering repairs it. The HUD shows a barrier bar. | Barrier 1000, rest 2 s, ring 4000, 4 spawners, aggro 650, refuel 4/s. The first AI run with a 300 barrier and 0.6 s rest lost it in 45 s. |
@@ -129,14 +129,11 @@ All four are in the landscape generator and the car's friction, in this order.
 ### Package 5: Slot machine and gems
 Gems pay for rerolls, so both items decide what a gem is worth.
 
-**T1-9. Slot machine: matches, jackpots, and luck that matters.**
-- **Already done:** the reels advance per physics tick and are pooled.
-- **Problem:** claiming turns the three results into three separate powerups with no pair or triple logic (`slotMachine.gd`). The reels pick uniformly, and neither luck nor clover affects them. `lottoTransition.gd`'s `createIcon` assigns a String `type` to `slot_award_icon.gd`'s `Root.upgrade` field.
-- **Proposal:** a pair gives ×2, a triple ×5 plus the full celebration; three gems give +1 star, three purses a purse rain; luck gives a `luck / 500` chance that reel 3 copies reel 2; fix the type.
-- **Effort:** S–M.
+**T1-9. Slot machine: matches, jackpots, and luck that matters.** **Done** with the pickup expansion (docs/PICKUPS.md): the reels show pickups by rarity tier (`SlotSymbols`), Dice and a run-coin bet tilt them rarer, a pair pays twice and a triple five times, three stars are the jackpot (+1 star and a purse rain), and Dice gives a `luck / 500` chance that reel 3 copies reel 2. The award icon's `type` is untyped now, which fixes the lotto String bug.
 
 **T1-10. Give banked gems a use.**
 - **Problem:** `playerData.gem` is only displayed. In a run, gems only pay for rerolls.
+- **Done:** the run setup's Gadget button buys a starting gadget for 1 to 4 banked gems (`Pickups.LOADOUT`), and The Deal deals a new hand for a gem.
 - **Proposal, cheapest first:** a gem pouch (carry up to 3 banked gems into a run); Second Wind (once per run, pay gems to continue with 50 health and 50 fuel; it must hook in before `endLevel`, because `hasEnded` makes every end final; not in Goonpocalypse); upgrade respec; paint jobs.
 - **Effort:** M.
 
@@ -180,7 +177,7 @@ The goon overhaul (docs/GOONS.md) did most of what Tier 2 asked for. What's left
 | T2-2 Movement archetypes | **Done:** chargers, dodgers and shielded goons are verbs. |
 | T2-3 On-death effects | **Partly done:** Splitters burst into Goonlings and Doomcarts explode. Open: goons that leave fire behind or reassemble (the old skeleton and firekin ideas, now for the new roster), and drowning credit (package 2). |
 | T2-5 Swarms and thrown attacks | **Partly done:** Rat Pack and herds; lobbers and shooters (GoonFx projectiles, pooled). Open: true swarms. |
-| T2-7 Timed powerups | **Open:** nitro, plow, magnet, horn shockwave, shield, goon bait (Defense could use it), "+15 s" in Sprint and Marathon. **Effort:** M. |
+| T2-7 Timed powerups | **Done**, and far beyond: 78 pickups in nine kinds and five rarities, with timed power-ups, held gadgets (Use), casino and skill games, world props, events, supply drops and mode specials (docs/PICKUPS.md). Open: tuning them all (package 1). |
 
 ### Package 10: Post-launch (Tier 3)
 
@@ -196,6 +193,17 @@ The goon overhaul (docs/GOONS.md) did most of what Tier 2 asked for. What's left
 
 ---
 
+## Maybe
+
+Ideas the author is on the fence about. Not planned; listed so they aren't lost.
+
+**Curses (Deals & Curses).** These are opt-in risks for bigger rewards, from the pickup plan (October 2026). They were held back because they add ways to lose a run. If they come back, they would be a `K.CURSE` kind in `Pickups.DATA`, and the art already exists in `scripts/art/pickup_icons.js` (`idol`, `glass`, `moon`, `bargain`, `sack`, which the generator skips).
+- **Cursed Idol** (Uncommon, 30 s): coins x3 and the drop rate doubles, but goons move 40% faster, and it can't be ended early.
+- **Glass Cannon** (Rare, 20 s): crush at any speed, but armour drops to 0 and walls hit twice as hard.
+- **Blood Moon** (Rare, 60 s): night falls at once (the level's CanvasModulate), and goons crushed at night pay double.
+- **Devil's Bargain** (Epic, at Marathon stations and the Defense lot): trade 30 hull or half your fuel for a random Epic.
+- **Gremlin Sack** (Common, a Mystery Box dud): two Gremlins hop on. The Mystery Box would then have a 1-in-8 curse chance.
+
 ## Decisions already made
 
 - **Mode list for 1.0:** all five modes are playable. The demo offers Countdown and Sprint.
@@ -209,7 +217,7 @@ The goon overhaul (docs/GOONS.md) did most of what Tier 2 asked for. What's left
 
 1. **Marathon and Defense:** they are playable now. Do they ship in 1.0 or in a free update, and what does the store page say?
 2. **Payout model:** keep stars as a multiplier, or move to an additive model with a win bonus? Goonpocalypse's uncapped waves make long runs pay a lot under the multiplier.
-3. **The slot machine:** is it core? It pauses play on every crush award and now at every Marathon station. Keep it as the signature moment (T1-9), make it skippable, or make stopping the reels a skill?
+3. **The slot machine:** answered. Pauses are fine as long as they're fun, so the slot stays as the signature moment, with paylines and bets (T1-9). Crush goals alternate between it and The Deal, and Marathon stations open the Pit Shop first.
 4. **Fuel pressure:** about 87 s of throttle per tank in the stock sedan. Should fuel be the main way runs end, or health?
 5. **Price and length target:** this sets every economy number in T1-11 and T2-15.
 6. **Gems:** confirm gems are never sold. Is a gem-paid continue (Second Wind) acceptable?

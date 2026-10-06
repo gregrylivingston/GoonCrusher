@@ -694,7 +694,7 @@ func applyLighting() -> void:
 #--- key and button bindings ----------------------------------------------------------------
 #Each rebindable action has two keyboard slots and one controller slot. Only actions the player
 #changed are stored in controls/bindings; the rest keep the project defaults.
-const REBINDABLE := {"Accelerate":"Accelerate", "Brake":"Brake", "TurnLeft":"Steer Left", "TurnRight":"Steer Right", "ui_menu":"Pause"}
+const REBINDABLE := {"Accelerate":"Accelerate", "Brake":"Brake", "TurnLeft":"Steer Left", "TurnRight":"Steer Right", "UseItem":"Use Gadget", "ui_menu":"Pause"}
 const JOY_BUTTON_NAMES := ["A", "B", "X", "Y", "Back", "Guide", "Start", "L3", "R3", "LB", "RB", "D-Up", "D-Down", "D-Left", "D-Right"]
 const JOY_AXIS_NAMES := ["LS", "LS", "RS", "RS", "LT", "RT"]
 var defaultBindings := {}

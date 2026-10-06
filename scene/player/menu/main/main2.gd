@@ -261,6 +261,39 @@ func buildSetup() -> void:
 	startButton.add_theme_font_size_override("font_size", 30)
 	startButton.pressed.connect(onStartPressed)
 	setup.add_child(startButton)
+	loadoutButton = MenuTheme.button("", PackedStringArray(["ui_upgrade"]), false)
+	loadoutButton.position = Vector2(200, 744)
+	loadoutButton.size = Vector2(390, 68)
+	loadoutButton.pressed.connect(cycleLoadout)
+	setup.add_child(loadoutButton)
+	refreshLoadout()
+
+#---------- the gadget loadout ----------
+#Banked gems buy one gadget to start a run with (Pickups.LOADOUT). The choice is kept in
+#meta.records.loadout; the gems are spent when the run starts.
+var loadoutButton: Button
+
+func loadoutChoice() -> String:
+	var id: String = SaveManager.playerData.meta.get("records", {}).get("loadout", "")
+	return id if Pickups.LOADOUT.has(id) else ""
+
+func cycleLoadout() -> void:
+	var options := [""] + Pickups.LOADOUT.keys()
+	var at := options.find(loadoutChoice())
+	for i in options.size():
+		at = wrapi(at + 1, 0, options.size())
+		if options[at] == "" || SaveManager.playerData.gem >= Pickups.LOADOUT[options[at]]: break
+	SaveManager.playerData.meta.records["loadout"] = options[at]
+	SaveManager.save_character_data()
+	refreshLoadout()
+
+func refreshLoadout() -> void:
+	if not is_instance_valid(loadoutButton): return
+	var id := loadoutChoice()
+	if id != "" && SaveManager.playerData.gem < Pickups.LOADOUT[id]: id = ""
+	loadoutButton.text = "GADGET:  NONE" if id == "" else "%s  -  %d GEM%s" % [Pickups.displayName(id).to_upper(), Pickups.LOADOUT[id], "" if Pickups.LOADOUT[id] == 1 else "S"]
+	loadoutButton.icon = Pickups.texture(id) if id != "" else null
+	loadoutButton.add_theme_constant_override("icon_max_width", 34)
 
 #a level as a poster: its art, "1  EASY" with a star per mode beaten, and a lock when locked
 func makePoster(index: int) -> Control:
@@ -573,6 +606,10 @@ func refreshMedallion(column: Control, mode: int, selected: bool, level: Diction
 func onStartPressed() -> void:
 	var index = SaveManager.playerData.selectedLevel
 	if screen == Screen.SETUP && isLevelSelectable(index) && Root.isModePlayable(selectedLevelForModes(), SaveManager.getGameMode()):
+		var gadget := loadoutChoice()
+		if gadget != "" && SaveManager.playerData.gem >= Pickups.LOADOUT[gadget]:
+			SaveManager.playerData.gem -= Pickups.LOADOUT[gadget]
+			Pickups.loadout = gadget #the car takes it in its first tick (OverheadCarBody2D.tickPickups)
 		startLevel(SaveManager.playerData.levels[index].scene)
 
 #the mode shown when run setup opens: the saved one if it can be started here, else Countdown
@@ -629,6 +666,7 @@ func _input(event: InputEvent) -> void:
 		elif event.is_action_pressed("ui_records"): openRecords()
 		elif event.is_action_pressed("ui_codex"): openGoonopedia()
 		elif event.is_action_pressed("ui_menu"): openSettings()
+		elif event.is_action_pressed("ui_upgrade"): cycleLoadout()
 		elif event.is_action_pressed("ui_accept") && get_viewport().gui_get_focus_owner() == null: onStartPressed()
 		else: handled = false
 	if handled: get_viewport().set_input_as_handled()
@@ -647,7 +685,7 @@ func updateHints() -> void:
 		child.queue_free()
 	var hints: Array
 	if screen == Screen.SETUP:
-		hints = [[["ui_tab_prev", "ui_tab_next"], "Level"], [["ui_left", "ui_right"], "Mode"], [["ui_accept"], "Start"], [["ui_records"], "Records"], [["ui_codex"], "Goonopedia"], [["ui_cancel"], "Back"]]
+		hints = [[["ui_tab_prev", "ui_tab_next"], "Level"], [["ui_left", "ui_right"], "Mode"], [["ui_accept"], "Start"], [["ui_upgrade"], "Gadget"], [["ui_records"], "Records"], [["ui_codex"], "Goonopedia"], [["ui_cancel"], "Back"]]
 	elif upgrading:
 		hints = [[["ui_up", "ui_down"], "Choose"], [["ui_accept"], "Buy"], [["ui_cancel"], "Done"]]
 	else:
@@ -712,6 +750,7 @@ func statUpdatesUiUpdate() -> void:
 	shownCoins = SaveManager.playerData.coin
 	coinsLabel.text = DriverCard.formatCoins(shownCoins)
 	gemsLabel.text = str(SaveManager.playerData.gem)
+	refreshLoadout()
 	for card in cards: card.refresh()
 	updateHints()
 

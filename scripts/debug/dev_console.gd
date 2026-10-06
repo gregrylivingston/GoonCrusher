@@ -180,6 +180,7 @@ func registerCommands() -> void:
 	add("god", cmdGod, "god [on | off]", "keep health and fuel full (water still wrecks the car)", "Run")
 	add("ai", cmdAi, "ai [on | off]", "the AI drives this run and every run after, drawing its plan (green, red when it expects a hit), goal (yellow) and route (blue); docs/AI_DRIVER.md", "Run")
 	add("give", cmdGive, "give <what> [amount]", "credit a pickup to the car: %s" % ", ".join(giveable()), "Run")
+	add("pickup", cmdPickup, "pickup <id> [count]", "collect any pickup from Pickups.DATA (docs/PICKUPS.md), e.g. nitro, deal, claw, goldgoon", "Run")
 	add("win", cmdWin, "win", "end the run as a success (beats the mode, as playing it would)", "Run")
 	add("lose", cmdLose, "lose", "end the run as a wreck", "Run")
 	add("night", cmdNight, "night", "turn night on now (the level's own cycle carries on)", "Run")
@@ -336,7 +337,7 @@ func cmdSave(args: Array) -> String:
 			var backup = backupSave()
 			if backup.begins_with("Error"): return backup
 			SaveManager.reset_save()
-			if is_instance_valid(Root.mainMenu): Root.mainMenu.selectCar(SaveManager.playerData.cars[SaveManager.playerData.selectedCar])
+			if is_instance_valid(Root.mainMenu) && Root.mainMenu.is_node_ready(): Root.mainMenu.selectCar(SaveManager.playerData.selectedCar, false) #the card menu takes an index
 			refreshMenu()
 			return backup + "\nSave reset to a new game"
 	return "Error: " + commands.save.usage
@@ -359,12 +360,11 @@ func progressChanged() -> void:
 #redraws whichever main menu page is showing; nothing in a run
 func refreshMenu() -> void:
 	var menu = Root.mainMenu
-	if not is_instance_valid(menu) || not menu.is_inside_tree(): return
-	match menu.menuMode:
-		menu.menuModes.RIDER: menu.disableLockedCars(Root.selectedCar)
-		menu.menuModes.LEVEL: menu.setupLevel(SaveManager.playerData.levels[SaveManager.playerData.selectedLevel])
-		menu.menuModes.GAMEMODE: menu.selectGameMode(SaveManager.getGameMode())
-	menu.statUpdatesUiUpdate()
+	if not is_instance_valid(menu) || not menu.is_inside_tree() || not menu.is_node_ready(): return
+	#the card menu (main2.gd, docs/UI.md): driver cards and the bank, and the level posters and mode
+	#medallions when run setup is showing. Duck-typed, so a menu rewrite can't break progress commands.
+	if menu.has_method("statUpdatesUiUpdate"): menu.statUpdatesUiUpdate()
+	if "screen" in menu && "Screen" in menu && menu.screen == menu.Screen.SETUP && menu.has_method("refreshSetup"): menu.refreshSetup(false)
 
 
 #--- run ------------------------------------------------------------------------------------
@@ -415,6 +415,15 @@ func cmdGive(args: Array) -> String:
 	var field = "currentGoonsCrushed" if args[0] == "crushed" else args[0]
 	car.reward(field, amount) #crushed past a goal opens the free slot machine, as crushing would
 	return "%s is now %s" % [args[0], str(car[field])]
+
+func cmdPickup(args: Array) -> String:
+	var car = runCar()
+	if car == null: return NO_RUN
+	if args.is_empty() || not Pickups.has(args[0]): return "Error: pickup <id> [count]; ids: %s" % ", ".join(Pickups.DATA.keys())
+	var count = parseAmount(args[1]) if args.size() > 1 else 1
+	if count == null: return "Error: '%s' is not a number" % args[1]
+	for i in count: PickupEffects.collect(car, args[0], car.global_position)
+	return "Collected %s x%d" % [Pickups.displayName(args[0]), count]
 
 func cmdWin(_args: Array) -> String:
 	if runCar() == null: return NO_RUN

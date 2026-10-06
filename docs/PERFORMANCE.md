@@ -182,7 +182,7 @@ Render Resolution on Low:
 - **Startup:** 2.5 s to the menu (was 3.7–5.4 s). The longest frame during a level load is 75–85 ms (was a 1.7 s freeze).
 - **Night is fill-bound on the HD 620:** a 1280x720 window ran S3 at 121 fps, against 57 at 1080p. That is why 720p and 540p exist.
 - **The menu's 3D text costs 2.9 ms per frame,** confirmed by measuring with it off.
-- **Low's S4 1% low is 37.9,** under the target of 45. The remaining cost is goon-against-goon physics when 250 goons crowd the car on screen; off-screen LOD can't help there. Running 2D physics on its own thread was slower.
+- **Low's S4 1% low is 37.9,** under the target of 45. The remaining cost is goon-against-goon physics when 250 goons crowd the car on screen; off-screen LOD can't help there. Running 2D physics on its own thread was slower. Goons now have their own physics layer and no longer collide with each other (`docs/GAMEPLAY_SUGGESTIONS.md`, shared prerequisites); S4 has not been re-measured since, and the goon overhaul changed the crowd too.
 - **Compatibility (ANGLE) is slower** on this machine: 15–55% before the changes, and S3 21.0 / 7.5 before. It is a troubleshooting option, not a default.
 
 ---

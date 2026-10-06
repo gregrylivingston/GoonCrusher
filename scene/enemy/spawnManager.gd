@@ -93,6 +93,7 @@ func _ready():
 	spawners = get_tree().get_nodes_in_group("spawner")
 
 func increaseGiantOdds():
+	if is_instance_valid(Root.playerCar) && Root.playerCar.hasBuff("panic"): return #Panic Button: escalation holds
 	giantOdds += 1
 	gameTimeProgress += 1
 	spawnTimer = clampf(spawnTimer - escalationSpeed , spawnFloor, 6.0)

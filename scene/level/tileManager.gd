@@ -314,6 +314,10 @@ func loadChunk(chunk:Vector2i , myScene = null): #if an instantiated scene isn't
 		#a scene that was passed in (a station) is always added, so it can never be left out of the tree
 		if myScene != null || (tile.terrain != Root.terrain.WATER && tile.terrain != Root.terrain.HILLS):
 			var newObjectTile = createNewTileObject(targetPosition, chunkRng(chunk), myScene)
+			if myScene == null: #pickup props (crates, skill challenges); never in a station's or the start chunk
+				var propRng = chunkRng(chunk)
+				propRng.seed = hash([propRng.seed, "props"])
+				PickupWorld.decorateChunk(newObjectTile, propRng)
 			loadedObjects[chunk] = newObjectTile
 			add_child(newObjectTile)
 	return tile

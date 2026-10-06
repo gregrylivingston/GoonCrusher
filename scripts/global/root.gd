@@ -108,6 +108,9 @@ const LUCK_WEIGHT_BONUS = { upgrade.PURSE: 0.3, upgrade.GEM: 0.1, upgrade.SLOTMA
 #picks a drop from a goon's weight table, with the player's luck raising the high-value prizes.
 #The caller's table is never changed.
 func getPowerupFromWeights( powerupWeightDict:Dictionary ) -> Powerup:
+	if powerupWeightDict.has(Pickups.ROLL): #a goon's drop: rarity tier, then item (scripts/global/pickups.gd)
+		var info: Dictionary = powerupWeightDict[Pickups.ROLL]
+		return Pickups.make(Pickups.rollForCar(info.get("faction", -1), info.get("bump", 0)))
 	var carLuck = Root.playerCar.luck if is_instance_valid(Root.playerCar) else 0
 	var weights = luckAdjustedWeights(powerupWeightDict, carLuck)
 	var weightTotal := 0.0

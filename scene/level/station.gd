@@ -47,6 +47,13 @@ func damage(amount: float) -> void:
 	tintWalls()
 	if barrier <= 0.0 && is_instance_valid(Root.levelRoot): Root.levelRoot.endLevel(false, Root.endCondition.BASEDESTROYED)
 
+## A Barricade Kit brought into the lot (PickupEffects.onStationReached); never past BARRIER_MAX.
+func repairBarrier(amount: float) -> void:
+	if not hasBarrier: return
+	barrier = minf(BARRIER_MAX, barrier + amount)
+	barrier_changed.emit(barrier)
+	tintWalls()
+
 #the walls redden as the barrier wears down
 func tintWalls() -> void:
 	var health = barrier / BARRIER_MAX
@@ -60,9 +67,10 @@ func tintWalls() -> void:
 func _on_driveway_body_entered(body):
 	if not body.has_method("getIsPlayer"): return
 	if not active || not is_instance_valid(Root.levelRoot) || Root.levelRoot.hasEnded || body.health <= 0 || body.isWrecked: return
+	PickupEffects.onStationReached(body, self) #a Delivery's star and Barricade Kits, before the run can end
 	match SaveManager.playerData.gameMode:
 		Root.gameModes.SPRINT: Root.levelRoot.endLevel(true, Root.endCondition.SUCCESS)
-		Root.gameModes.MARATHON: Root.levelRoot.stationReached(self)
+		Root.gameModes.MARATHON: Root.levelRoot.stationReached.call_deferred(self) #it places the next station: not inside a physics callback
 		_:
 			if body.has_method("repairAll"): body.repairAll() #a free repair shop
 			if hasBarrier:

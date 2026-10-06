@@ -57,7 +57,8 @@ func test_level_numbers_come_from_the_scene():
 	var plain = Goonopedia.readLevelStats(load("res://scene/level/levels/level_mud_1.tscn").get_state())
 	assert_eq(int(plain.seconds), 420)
 
-func test_drop_shares_add_up():
-	var total := 0.0
-	for key in Root.upgrade.values(): total += Goonopedia.dropShare(key)
-	assert_true(absf(total - 100.0) < 0.01, "shares sum to 100%%, got %f" % total)
+func test_drop_shares_add_up_in_every_mode():
+	for mode in Root.gameModes.values():
+		var total := 0.0
+		for id in Pickups.DATA: total += Goonopedia.dropShare(id, mode)
+		assert_true(absf(total - 100.0) < 0.01, "mode %d: shares sum to 100%%, got %f" % [mode, total])

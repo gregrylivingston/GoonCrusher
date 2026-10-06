@@ -7,7 +7,8 @@ class_name AIDriver extends Node2D
 #  goal      what to go for: the mode's objective, a pickup, a goon, or a region worth stars
 #  route     A* over the terrain map (AIRoute), string-pulled to the farthest waypoint in sight;
 #            near the station, a visibility graph that lines the car up with the lot's gap
-#  control   candidate key plans are simulated 1.5 s ahead with the car's own physics
+#  control   candidate key plans are simulated 0.75 s ahead with the car's own physics, then swept on
+#            straight out to lookaheadPx
 #            (OverheadCarBody2D.integrate), swept against rocks, walls and water, and charged for
 #            time spent slow or side-on among goons; the cheapest wins
 #  recovery  a car that stops making progress reverses out and drops the goal it was stuck on;
@@ -21,26 +22,28 @@ const LEFT = 4
 const RIGHT = 8
 enum Throttle { ON, BRAKE, REVERSE }
 
-const SCAN_TICKS = 6      #re-plan 10 times a second (each plan is simulated p.horizonTicks ahead)
 const GOAL_TICKS = 15     #re-pick the goal 4 times a second
 const SAMPLE_TICKS = 6    #the simulated path is swept for collisions in 0.1 s segments
 const HOLD = 9999         #a steer key held for the whole plan
 
-#forward plans: steer left or right for a tap (0.1 s), a turn (0.3 s) or the whole second, or go straight
+#forward plans: steer left or right for a tap (0.1 s), a turn (0.3 s), a swerve (0.6 s: the usual way
+#round a rock) or the whole plan, then straighten; or go straight
 const PLANS = [
 	{"steer":0, "steerTicks":0, "throttle":Throttle.ON},
 	{"steer":-1, "steerTicks":6, "throttle":Throttle.ON}, {"steer":1, "steerTicks":6, "throttle":Throttle.ON},
 	{"steer":-1, "steerTicks":18, "throttle":Throttle.ON}, {"steer":1, "steerTicks":18, "throttle":Throttle.ON},
+	{"steer":-1, "steerTicks":36, "throttle":Throttle.ON}, {"steer":1, "steerTicks":36, "throttle":Throttle.ON},
 	{"steer":-1, "steerTicks":HOLD, "throttle":Throttle.ON}, {"steer":1, "steerTicks":HOLD, "throttle":Throttle.ON},
 	{"steer":0, "steerTicks":0, "throttle":Throttle.BRAKE},
 	{"steer":-1, "steerTicks":HOLD, "throttle":Throttle.BRAKE}, {"steer":1, "steerTicks":HOLD, "throttle":Throttle.BRAKE},
 ]
-#only offered when every forward plan is blocked (or while escaping): backing out of a pocket
+#offered when the car is nearly stopped, when every forward plan hits something soon, or while escaping
 const REVERSE_PLANS = [
 	{"steer":0, "steerTicks":0, "throttle":Throttle.REVERSE},
 	{"steer":-1, "steerTicks":HOLD, "throttle":Throttle.REVERSE}, {"steer":1, "steerTicks":HOLD, "throttle":Throttle.REVERSE},
 ]
 const REVERSE_BELOW_SPEED = 150.0
+const STOPPED_SPEED = 60.0   #below this, reversing is always among the choices (three-point turns)
 
 #costs are in seconds of estimated arrival time; the tunable ones are profile parameters (AIProfiles)
 const LETHAL_COST = 1000.0    #driving into water
@@ -130,7 +133,7 @@ var nearGoonsLunging := PackedByteArray() #1 where that goon is winding up or ma
 var nearGoonsNeed := PackedFloat32Array() #the speed each one takes to crush (INF: can't be crushed now)
 
 #what the run looked like to the driver; the playtest harness reports these
-var stats := {"stuck":0, "escapes":0, "eco_seconds":0.0, "route_reached":true, "goals":{}}
+var stats := {"stuck":0, "escapes":0, "eco_seconds":0.0, "route_reached":true, "goals":{}, "think_usec":0}
 
 #attaches a driver to a car whose _ready has run; options: sight ("human"/"full"), debug (bool),
 #profile (an AIProfiles spec, such as "crusher" or "default+horizonTicks=120")
@@ -168,13 +171,27 @@ func isPressed(action: String) -> bool:
 func think() -> void:
 	keys = 0
 	if not is_instance_valid(Root.levelRoot) || car.isDestroyed || not Root.levelRoot.clockReady: return
+	var started = Time.get_ticks_usec()
+	decide()
+	stats.think_usec += Time.get_ticks_usec() - started
+
+func decide() -> void:
 	tick += 1
 	space = car.get_world_2d().direct_space_state
 	if route == null: buildRoute()
+	var t0 = Time.get_ticks_usec()
 	if goal.is_empty() || not goalValid() || tick % GOAL_TICKS == 1: updateGoal()
+	var t1 = Time.get_ticks_usec()
 	aim = aimPoint(goalPosition())
-	if tick % SCAN_TICKS == 1 && tick >= recoverUntil: choosePlan()
+	var t2 = Time.get_ticks_usec()
+	if tick % p.scanTicks == 1 && tick >= recoverUntil: choosePlan()
+	var t3 = Time.get_ticks_usec()
 	checkProgress()
+	var t4 = Time.get_ticks_usec()
+	stats.usec_goal = stats.get("usec_goal", 0) + t1 - t0
+	stats.usec_aim = stats.get("usec_aim", 0) + t2 - t1
+	stats.usec_plan = stats.get("usec_plan", 0) + t3 - t2
+	stats.usec_recover = stats.get("usec_recover", 0) + t4 - t3
 	if tick % TRAIL_TICKS == 0:
 		trail.push_back(car.global_position)
 		if trail.size() > TRAIL_SAMPLES: trail.remove_at(0)
@@ -186,7 +203,7 @@ func think() -> void:
 	if goal.get("kind") == "goon" && goalValid(): throttleCap = maxf(throttleCap, crushNeed(goal.node) * CRUSH_MARGIN * 1.05)
 	keys = keysFor(plan, tick - planTick, forwardSpeed(), throttleCap)
 	if speedCap < INF: stats.eco_seconds += 1.0 / Engine.physics_ticks_per_second
-	if debug && tick % SCAN_TICKS == 1: queue_redraw()
+	if debug && tick % p.scanTicks == 1: queue_redraw()
 
 func buildRoute() -> void:
 	var generator = Root.levelRoot.get_node("TileManager/landscapeGenerator")
@@ -467,6 +484,7 @@ static func pickupValue(kind: String, quantity: float, fuel: float, health: floa
 		"gem": return 25.0
 		"slotmachine": return 50.0
 		"engine": return 10.0
+	if Pickups.DATA.has(kind) && Pickups.DATA[kind].has("ai"): return Pickups.DATA[kind]["ai"] #docs/PICKUPS.md
 	return 7.0 #+1 to another stat
 
 #crushing pays coins only through drops and milestone stars; a pack is worth more than one
@@ -652,19 +670,32 @@ func choosePlan() -> void:
 	refreshExcludes()
 	var best = {"cost":INF}
 	lastCosts.clear()
-	for candidate in PLANS: best = cheaper(best, candidate)
-	#reversing is for getting out of a pocket, not for driving: only when everything ahead is blocked
-	var blocked = best.rollout.get("hitSeconds", INF) < p.reverseIfBlocked && car.velocity.length() < REVERSE_BELOW_SPEED
-	if blocked || tick < escapeUntil:
-		for candidate in REVERSE_PLANS: best = cheaper(best, candidate)
+	var ticks = horizonTicks()
+	for candidate in PLANS: best = cheaper(best, candidate, ticks)
+	#backing up is fine, just not the first choice (reverseCost): it is weighed whenever the car is
+	#nearly stopped, or slow with everything ahead blocked soon
+	var speed = car.velocity.length()
+	var blocked = best.rollout.get("hitSeconds", INF) < p.reverseIfBlocked && speed < REVERSE_BELOW_SPEED
+	if blocked || (p.reverseWhenStopped && speed < STOPPED_SPEED) || tick < escapeUntil:
+		for candidate in REVERSE_PLANS: best = cheaper(best, candidate, ticks)
 	if best.plan != plan: planTick = tick
 	plan = best.plan
 	planPath = best.rollout.path
 	planHit = best.rollout.get("hit", false)
 
-func cheaper(best: Dictionary, candidate: Dictionary) -> Dictionary:
-	var rollout = simulate(candidate, p.horizonTicks)
+#how far ahead plans are simulated: at least p.horizonTicks, and long enough to cover lookaheadPx at
+#the current speed (a fast car needs the room to brake or swerve), up to maxHorizonTicks
+func horizonTicks() -> int:
+	var ticks = p.lookaheadPx / maxf(car.velocity.length(), 1.0) * Engine.physics_ticks_per_second
+	return int(clampf(ticks, p.horizonTicks, maxf(p.maxHorizonTicks, p.horizonTicks)))
+
+func cheaper(best: Dictionary, candidate: Dictionary, ticks: int) -> Dictionary:
+	var t0 = Time.get_ticks_usec()
+	var rollout = simulate(candidate, ticks)
+	var t1 = Time.get_ticks_usec()
 	var cost = scoreRollout(rollout, aim)
+	stats.usec_sim = stats.get("usec_sim", 0) + t1 - t0
+	stats.usec_score = stats.get("usec_score", 0) + Time.get_ticks_usec() - t1
 	if candidate == plan: cost -= p.samePlanBonus
 	lastCosts.push_back("%d/%d/%d=%.1f%s" % [candidate.steer, mini(candidate.steerTicks, 99), candidate.throttle, cost, "!" if rollout.get("hit", false) else ""])
 	return {"cost":cost, "plan":candidate, "rollout":rollout} if cost < best.cost else best
@@ -754,9 +785,12 @@ func scoreRollout(rollout: Dictionary, target: Vector2) -> float:
 	if endSpeed < cruise: cost += (cruise - endSpeed) * (cruise - endSpeed) / (2.0 * engineForce() * cruise)
 	cost += absf(headings[last].angle_to(toTarget)) * p.turnCost
 	if not rollout.get("hit", false) && endSpeed > 200.0:
-		#past the plan: a car-wide sweep along where it ends up pointing, as far as it would travel in
-		#probeSeconds. A wall there means the next plan must swerve or brake hard.
-		var reach = maxf(400.0, endSpeed * p.probeSeconds)
+		#Looking further than the plan, cheaply: a car-wide straight sweep from where it ends, along
+		#where it ends up pointing, out to lookaheadPx from the start (or probeSeconds of travel at the
+		#end speed, if that is further). A wall there means the next plans must swerve or brake hard,
+		#so plans already steering clear of it win, well before the car gets close.
+		var travelled = path[0].distance_to(end)
+		var reach = maxf(400.0, maxf(p.lookaheadPx - travelled, endSpeed * p.probeSeconds))
 		var heading = headings[last].normalized()
 		var clear = sweep(end, heading, heading * reach, false)
 		if clear < 1.0: cost += p.probeCost * (1.0 - clear)
@@ -867,7 +901,7 @@ func checkProgress() -> void:
 func roomiest(candidates: Array) -> Dictionary:
 	var best = {"room":-INF}
 	for candidate in candidates:
-		var rollout = simulate(candidate, p.horizonTicks)
+		var rollout = simulate(candidate, horizonTicks())
 		var room = 0.0
 		for i in range(1, rollout.path.size()):
 			var fraction = sweep(rollout.path[i - 1], rollout.headings[i - 1], rollout.path[i] - rollout.path[i - 1], i == 1)

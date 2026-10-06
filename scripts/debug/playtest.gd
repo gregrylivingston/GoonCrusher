@@ -23,7 +23,7 @@ const COLUMNS = ["run", "level", "mode", "car", "profile", "seed", "upgrades", "
 	"clock", "time_left", "station_px", "station_left_px", "route_reached", "crushed", "coin", "star", "payout", "gem",
 	"slot_machines", "fuel_pickups", "health_pickups", "purses", "coins_picked", "gems_picked", "stat_pickups",
 	"damage_rocks", "damage_goon_contact", "damage_goon_attacks", "crush_misses", "min_fuel", "min_health",
-	"end_fuel", "end_health", "distance_px", "avg_speed", "top_speed", "eco_seconds", "stuck", "escapes", "goals"]
+	"end_fuel", "end_health", "distance_px", "avg_speed", "top_speed", "eco_seconds", "stuck", "escapes", "ai_ms", "goals"]
 
 var options := {}
 var jobs: Array = []
@@ -288,6 +288,11 @@ func recordRun() -> void:
 		row.eco_seconds = snappedf(driver.stats.eco_seconds, 0.1)
 		row.route_reached = driver.stats.route_reached
 		row.goals = JSON.stringify(driver.stats.goals).replace(",", ";") #one CSV cell
+		row.ai_ms = snappedf(driver.stats.think_usec / 1000.0 / maxf(levelTime, 0.1), 0.1) #driver CPU per game second
+		if options.has("trace"):
+			var parts = []
+			for key in ["usec_goal", "usec_aim", "usec_plan", "usec_sim", "usec_score", "usec_recover"]: parts.push_back("%s=%.0f" % [key.trim_prefix("usec_"), driver.stats.get(key, 0) / 1000.0 / maxf(levelTime, 0.1)])
+			print("PLAYTEST_AI_MS per game second: " + " ".join(parts))
 	row.score = snappedf(runScore(row), 0.1)
 	results.push_back(row.duplicate())
 	print("PLAYTEST_RESULT " + JSON.stringify(row))
@@ -308,20 +313,24 @@ func appendCsv(values: Dictionary) -> void:
 	file.store_line(",".join(COLUMNS.map(func(column): return str(values.get(column, "")))))
 	file.close()
 
-#How well a run was played, 0 to about 150, so profiles can be ranked within a mode:
-#  countdown/defense: % of the clock survived, +25 for surviving it, +0.1 per crush (up to 200)
-#  sprint/marathon: a win is 100 + 50 x the share of the clock left; a loss is up to 50 for the
-#    share of the way to the station covered
-#  goonpocalypse: a point per 3 s survived, +0.1 per crush (up to 300)
+#How well a run was played, so profiles can be ranked within a mode: coins, since payout (coins x
+#stars) is what buys cars and upgrades, plus the mode's own result. scripts/ai/tournament.py
+#computes the same score from the CSV, so keep the two in step.
+#  coins: 30 x log10(1 + payout): 60 for 100, 90 for 1000, 104 for 3000 (one huge run can't swamp the rest)
+#  countdown: + 50 x the share of the clock survived
+#  sprint/marathon: + 50 + 25 x the share of the clock left for a win; up to 25 for the share of the
+#    way to the station covered for a loss
+#  goonpocalypse/defense: + 50 x the share of 300 s survived
 static func runScore(result: Dictionary) -> float:
 	var clock = maxf(float(result.get("clock", 1.0)), 1.0)
+	var coins = 30.0 * log(1.0 + maxf(float(result.payout), 0.0)) / log(10.0)
 	match result.mode:
-		"gooncrusher", "defense":
-			return 100.0 * minf(result.level_time / clock, 1.0) + (25.0 if result.won else 0.0) + minf(result.crushed, 200) * 0.1
+		"gooncrusher":
+			return coins + 50.0 * minf(result.level_time / clock, 1.0)
 		"sprint", "marathon":
-			if result.won: return 100.0 + 50.0 * result.time_left / clock
-			return 50.0 * clampf(1.0 - float(result.station_left_px) / maxf(float(result.get("station_px", 1)), 1.0), 0.0, 1.0)
-	return result.level_time / 3.0 + minf(result.crushed, 300) * 0.1
+			if result.won: return coins + 50.0 + 25.0 * result.time_left / clock
+			return coins + 25.0 * clampf(1.0 - float(result.station_left_px) / maxf(float(result.get("station_px", 1)), 1.0), 0.0, 1.0)
+	return coins + 50.0 * minf(result.level_time / 300.0, 1.0)
 
 #one line per level x mode x car x profile (wins, endings and averages), then each mode's profiles
 #ranked by average score

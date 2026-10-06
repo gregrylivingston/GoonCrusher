@@ -14,6 +14,7 @@ func _process(delta):
 			currentRegion.wave += 1
 			Root.playerCar.star += 1
 			Root.playerRoot.animateNewRegion(true)
+			PickupWorld.waveChest() #an Uncommon-or-better pickup for surviving the wave
 
 
 var names: Dictionary = {

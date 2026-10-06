@@ -8,7 +8,9 @@ func _ready():
 	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
 	$VersionTracker.text = Root.versionText()
 	%ModeLabel.text = Root.gameModeDescription[SaveManager.playerData.gameMode].name
+	addPickupWidgets()
 	setupHudScale()
+	add_child(HudChance.new()) #toasts, the scratch card, beacons: over everything, not HUD-scaled
 	if is_instance_valid(Root.playerCar):
 		updateStats()
 	else: await get_tree().create_timer(1).timeout
@@ -32,6 +34,21 @@ func openPause() -> void:
 
 #car.reward() calls this when a stat changes; the systems strip shows stats, so redraw it now
 func updateStats(): $Systems.queue_redraw()
+
+#the held gadget and the timed power-up rings, above the systems strip (hud_items.gd)
+func addPickupWidgets() -> void:
+	var items = HudItems.new()
+	items.name = "Items"
+	items.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	items.anchor_left = 0.5
+	items.anchor_right = 0.5
+	items.anchor_top = 1.0
+	items.anchor_bottom = 1.0
+	items.offset_left = -300.0
+	items.offset_right = 300.0
+	items.offset_top = -124.0
+	items.offset_bottom = -50.0
+	add_child(items)
 
 #HUD Scale (Accessibility). Each authored HUD control is scaled about its point nearest its anchor,
 #so corner widgets stay in their corners. Menus added at runtime (pause, slots, countdown, summary)
@@ -74,6 +91,9 @@ func updateGoonsCrushed():
 		crushingAwardLevel += 1
 		Root.playerCar.star += 1
 		get_tree().paused = true
+		if crushingAwardLevel % 2 == 0: #every other goal deals The Deal instead of the slot machine
+			PickupDeal.open(true)
+			return
 		var newMachine = preload("res://scene/player/slots/slotMachine.tscn").instantiate()
 		newMachine.isGoonCrushBonus = true
 		Root.levelRoot.add_child(newMachine)
