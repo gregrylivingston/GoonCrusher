@@ -58,6 +58,7 @@ const DISTRICT_STEP := 32 #district seeds every this many cells (about 40,000 px
 const DISTRICT_JITTER := 8
 const EDGE_CELLS := 2
 const WINDOW := Vector2i(12, 6) #3 x 3 chunks, for the barrier share
+const LANDMARK_SEARCH := 10 #cells round a district's centroid its landmark may stand
 const DEFENSE_LANE_PX := 4000.0
 const DEFENSE_LANES := 3
 const LANE_HALF_PX := 1000.0 #cells this close to a lane's line are cleared
@@ -177,6 +178,7 @@ func run(job: Dictionary) -> void:
 	def = job.def
 	weights = job.get("weights", PackedFloat32Array())
 	field = WorldField.make(seedValue, def)
+	if not field.colFlag.is_empty(): def["_lattice"] = field.lattice() #the chunk rasters reuse it (job.def becomes the map's snapshot)
 	startPos = def.get("startPosition", Vector2.ZERO)
 	var startCell := cellOf(startPos)
 	startIndex = startCell.y * W + startCell.x
@@ -853,9 +855,31 @@ func districtTable() -> Array:
 		var entry: Array = sums[d]
 		var ids := PackedInt32Array(neighbours[d].keys())
 		ids.sort()
-		table.push_back({"id": d, "cells": entry[0], "centroid": entry[1] / maxf(entry[0], 1.0),
-			"firstCell": entry[2], "neighbours": ids, "inStart": entry[3]})
+		var centroid: Vector2 = entry[1] / maxf(entry[0], 1.0)
+		table.push_back({"id": d, "cells": entry[0], "centroid": centroid,
+			"firstCell": entry[2], "neighbours": ids, "inStart": entry[3], "landmark": landmarkCell(d, centroid)})
 	return table
+
+## Where a district's landmark stands: the centre of the open cell nearest its centroid (in the district,
+## not reserved, all eight neighbours passable, so it never narrows a way through), searched in growing
+## squares; INF when none is near enough. ChunkRecipe finds the exact spot round it.
+func landmarkCell(d: int, centroid: Vector2) -> Vector2:
+	var c := cellOf(centroid)
+	for r in LANDMARK_SEARCH + 1:
+		for dy in range(-r, r + 1):
+			for dx in range(-r, r + 1):
+				if maxi(absi(dx), absi(dy)) != r: continue
+				var cell := c + Vector2i(dx, dy)
+				if cell.x < 1 || cell.y < 1 || cell.x >= W - 1 || cell.y >= H - 1: continue
+				var i := cell.y * W + cell.x
+				if district[i] != d || flags[i] & (BLOCKED | RESERVED) != 0: continue
+				var open := true
+				for n in DIRS8:
+					if flags[i + n.y * W + n.x] & BLOCKED != 0:
+						open = false
+						break
+				if open: return cellCentre(cell)
+	return Vector2.INF
 
 #--- routing -----------------------------------------------------------------------------------------
 
@@ -953,22 +977,41 @@ static func fineRaster(job: Dictionary) -> void:
 			if fl & FILL != 0:
 				if isWater: fillW[l] = -1.0
 				else: fillH[l] = -1.0
+	var wallT := f.wallTerrain
+	var shallowsOn := f.shallows
+	#what depends only on the column, worked out once (the same doubles the loop used to compute per cell)
+	var colX := PackedFloat64Array()
+	var colTx := PackedFloat64Array()
+	var colAx := PackedFloat64Array() #1 - tx
+	var colL := PackedInt32Array()    #i0 - lo.x
+	var colOwn := PackedInt32Array()  #the nearest coarse centre's x
+	for i in FIELD_W:
+		var x := origin.x + (i - 0.5) * FINE
+		var u := (x - ORIGIN.x) / CELL - 0.5
+		var i0 := floori(u)
+		var tx := u - i0
+		colX.push_back(x)
+		colTx.push_back(tx)
+		colAx.push_back(1.0 - tx)
+		colL.push_back(i0 - lo.x)
+		colOwn.push_back(floori(u + 0.5))
 	for j in FIELD_H:
 		var y := origin.y + (j - 0.5) * FINE
 		var w := (y - ORIGIN.y) / CELL - 0.5
 		var j0 := floori(w)
 		var ty := w - j0
-		var lj := j0 - lo.y
+		var ay := 1.0 - ty
+		var rowL := (j0 - lo.y) * LOCAL_W
 		var ownY := floori(w + 0.5)
+		var rowOwn := (ownY - lo.y) * LOCAL_W - lo.x
 		for i in FIELD_W:
-			var x := origin.x + (i - 0.5) * FINE
-			var u := (x - ORIGIN.x) / CELL - 0.5
-			var i0 := floori(u)
-			var tx := u - i0
-			var l := lj * LOCAL_W + i0 - lo.x
-			var w00 := (1.0 - tx) * (1.0 - ty)
-			var w10 := tx * (1.0 - ty)
-			var w01 := (1.0 - tx) * ty
+			var x := colX[i]
+			var tx := colTx[i]
+			var ax := colAx[i]
+			var l := rowL + colL[i]
+			var w00 := ax * ay
+			var w10 := tx * ay
+			var w01 := ax * ty
 			var w11 := tx * ty
 			var cw := signW[l] * w00 + signW[l + 1] * w10 + signW[l + LOCAL_W] * w01 + signW[l + LOCAL_W + 1] * w11
 			var ch := signH[l] * w00 + signH[l + 1] * w10 + signH[l + LOCAL_W] * w01 + signH[l + LOCAL_W + 1] * w11
@@ -977,10 +1020,10 @@ static func fineRaster(job: Dictionary) -> void:
 			var wallField := maxf(v.y, ch - A_LO)
 			var t := int(v.z)
 			#the nearest centre: a blocked cell is always blocked round its centre
-			var own := Vector2i(floori(u + 0.5), ownY)
-			var ownKind := kind[(own.y - lo.y) * LOCAL_W + own.x - lo.x]
+			var ownX := colOwn[i]
+			var ownKind := kind[rowOwn + ownX]
 			if ownKind != 0:
-				var oc := cellCentre(own)
+				var oc := cellCentre(Vector2i(ownX, ownY))
 				var pillar := -0.5 + sqrt((x - oc.x) * (x - oc.x) + (y - oc.y) * (y - oc.y)) / (PILLAR_PX * 2.0)
 				if ownKind == 1: waterField = minf(waterField, pillar)
 				else: wallField = minf(wallField, pillar)
@@ -992,6 +1035,7 @@ static func fineRaster(job: Dictionary) -> void:
 				waterField = minf(waterField, fw + 0.7)
 				wallField = minf(wallField, fh + 0.7)
 				#crossings in this cell or a 4-neighbour open their full width
+				var own := Vector2i(ownX, ownY)
 				for k in 5:
 					var cell: Vector2i = own + SELF_AND_DIRS4[k]
 					if not inMap(cell): continue
@@ -1011,10 +1055,10 @@ static func fineRaster(job: Dictionary) -> void:
 							if across < f.bridgeHalf: bridge = true
 						_:
 							if across < f.passHalf: wallField = maxf(wallField, 0.45)
-			if wallField < 0.0: t = f.wallTerrain
+			if wallField < 0.0: t = wallT
 			elif bridge && v.x < BAND: t = BRIDGE
 			elif waterField < 0.0: t = WATER
-			elif (ford || f.shallows) && waterField < BAND: t = SHALLOWS
+			elif (ford || shallowsOn) && waterField < BAND: t = SHALLOWS
 			if bridge && v.x < 0.0: waterField = v.x #the water under the deck, for the art
 			water[j * FIELD_W + i] = waterField
 			wall[j * FIELD_W + i] = wallField

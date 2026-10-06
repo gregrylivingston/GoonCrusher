@@ -391,11 +391,55 @@ func collideWithFixedObject( collision, hitVelocity = null ):
 		var spark = sparks.instantiate()
 		spark.global_position = collision.get_position()
 		Root.levelRoot.add_child(spark)
-	var impact = wallImpact(collision.get_normal(), hitVelocity if hitVelocity != null else velocity)
-	damage( WALL_DAMAGE_PER_SPEED * velocity.length() * impact ) #armor is applied once, in damage()
-	if velocity.length() >= ZONE_WEAR_MIN_SPEED:
-		wearSystem(hitZone(collision), ZONE_WEAR_PER_SPEED * velocity.length() * 100.0 / (maxf(armor, 0.0) + 100.0))
-	velocity *= wallSpeedKeep(impact)
+	var moving: Vector2 = hitVelocity if hitVelocity != null else velocity
+	var hurt := wallTick(collision.get_normal(), moving, Engine.get_physics_frames())
+	if hurt > 0.0:
+		var before := health
+		damage(hurt) #armor is applied once, in damage()
+		wallHealthLost += before - health
+		if moving.length() >= ZONE_WEAR_MIN_SPEED:
+			wearSystem(hitZone(collision), ZONE_WEAR_PER_SPEED * hurt / WALL_DAMAGE_PER_SPEED * 100.0 / (maxf(armor, 0.0) + 100.0))
+	velocity *= wallSpeedKeep(wallImpact(collision.get_normal(), moving))
+
+#Wall damage is per contact, not per tick. Meeting a wall (none touched in the last WALL_CONTACT_GAP_TICKS)
+#is a hit: WALL_DAMAGE_PER_SPEED x the speed going in x impact. Staying against it is a scrape, which costs
+#at most every WALL_SCRAPE_TICKS a small amount capped at WALL_SCRAPE_MAX (about 1 health a second at
+#most for a stock car), unless the car drives into the wall again at WALL_REHIT_SPEED or more (the speed
+#component into it), which is a new hit. Speed is still lost every contact tick (wallSpeedKeep), and zone
+#wear follows the damage, under its own 30-tick cooldown.
+const WALL_CONTACT_GAP_TICKS := 10
+const WALL_REHIT_SPEED := 150.0
+const WALL_SCRAPE_TICKS := 15
+const WALL_SCRAPE_MAX := 4.0
+enum WallContact { HIT, SCRAPE, NONE }
+var wallHealthLost := 0.0    #health this run's wall hits and scrapes took (the playtest's damage_rocks)
+var lastWallTick := -1000    #physics frame of the last wall contact
+var lastWallHitTick := -1000 #...and of the last full hit
+var nextScrapeTick := 0      #a scrape costs nothing before this frame
+
+## What one tick of wall contact counts as: `intoSpeed` is the speed into the wall (along its normal),
+## `continuing` whether the car was already touching a wall, `scrapeDue` whether the scrape cooldown is over
+static func wallContact(intoSpeed: float, continuing: bool, scrapeDue: bool) -> int:
+	if not continuing || intoSpeed >= WALL_REHIT_SPEED: return WallContact.HIT
+	return WallContact.SCRAPE if scrapeDue else WallContact.NONE
+
+## One tick of wall contact on physics frame `now`, moving at `moving` against a wall with this normal: the
+## damage it costs before armor (0 for a scrape still cooling down), and the contact state kept up to date
+func wallTick(normal: Vector2, moving: Vector2, now: int) -> float:
+	var kind := wallContact(absf(normal.dot(moving)), now - lastWallTick <= WALL_CONTACT_GAP_TICKS, now >= nextScrapeTick)
+	if kind == WallContact.HIT && now == lastWallHitTick: kind = WallContact.NONE #two pieces of one wall in one tick: one hit
+	lastWallTick = now
+	if kind == WallContact.NONE: return 0.0
+	if kind == WallContact.HIT: lastWallHitTick = now
+	nextScrapeTick = now + WALL_SCRAPE_TICKS
+	return wallDamage(kind, moving.length(), wallImpact(normal, moving))
+
+## Damage before armor for a contact of that kind at `speed` (px/s) and `impact` (wallImpact)
+static func wallDamage(kind: int, speed: float, impact: float) -> float:
+	match kind:
+		WallContact.HIT: return WALL_DAMAGE_PER_SPEED * speed * impact
+		WallContact.SCRAPE: return minf(WALL_DAMAGE_PER_SPEED * speed * WALL_IMPACT_MIN, WALL_SCRAPE_MAX)
+	return 0.0
 
 #which system a hit wears, from the hit's normal and point in car space. The car faces +x and the
 #normal points from the obstacle to the car. Front centre: engine; front corners: lights; sides ahead
@@ -454,13 +498,19 @@ func crushGoon(collider) -> bool:
 		if not collider.tryCrush(self, velocity.length()): return false
 	else: collider.destroy()
 	if isPlayer: Settings.vibrate(0.4, 0.0, 0.08)
-	var id = collider.get("goonId")
-	if id: crushedById[id] = crushedById.get(id, 0) + 1
+	creditGoon(collider)
 	if collider.get("isGiant"): giantsCrushed += 1
 	reward("currentGoonsCrushed", 1) #credited now; the flying icon is only for show
 	RewardFlyers.flyUpgrade(Root.upgrade.CURRENTGOONSCRUSHED, collider.global_position)
 	if isPlayer: PickupEffects.onCrush(self, collider.global_position)
 	return true
+
+#a goon this car killed, by its bumper or anything it set off (SpawnManager.creditCrush: blasts, shells,
+#drownings): the Goonopedia's per-goon count (gameSummary)
+func creditGoon(goon: Object) -> void:
+	if goon == null || not is_instance_valid(goon): return
+	var id = goon.get("goonId")
+	if id: crushedById[id] = crushedById.get(id, 0) + 1
 
 var isVibratingLeft = 4
 var vibrationSteps = 0

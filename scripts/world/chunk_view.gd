@@ -2,14 +2,17 @@ class_name ChunkView extends RefCounted
 ## One applied chunk (docs/WORLD.md, "Apply"): the nodes a ChunkRecipe turns into, taken from the WorldSkin's
 ## pools on the main thread a few at a time (step) and handed back the same way (release), so neither a
 ## load nor an unload costs more than the TileManager's per-frame budget. Stages, in order:
-##   GROUND   the chunk's control block into the ring, 8 ground quads of 1280 x 1280 (lights stay local)
+##   GROUND   the chunk's control block into the ring (one step), then 8 ground quads of 1280 x 1280 (another)
 ##   BODY     one StaticBody2D (layer 1) with a ConvexPolygonShape2D per wall piece
-##   OCCLUDE  wall occluders (LightOccluder2D, open polylines, metadata gc_world)
-##   LINES    shore foam and wall lips (Line2D, the baked strips tiled)
-##   DECOR    one MultiMeshInstance2D per decor id
+##   OCCLUDE  wall occluders (LightOccluder2D, open polylines, metadata gc_world), one a step
+##   LINES    shore foam and wall lips (Line2D, the baked strips tiled), one a step
+##   DECOR    one MultiMeshInstance2D per decor id, one a step
 ##   PROPS    pooled prop scenes (TALL, LOW, WALL); STATEFUL ones instanced, with their taken-set bit
-##   PICKUPS  the recipe's pickups, skipping the ones the taken set says were collected
-##   EXTRAS   PickupWorld.decorateChunk's props, moved onto the recipe's open spots
+##   PICKUPS  the recipe's pickups, skipping the ones the taken set says were collected (from the skin's
+##            stock of ready-made pickups when it has one)
+##   EXTRAS   PickupWorld.decorateChunk's props, moved onto the recipe's open spots; then a few steps topping
+##            up the skin's pickup stock, so the next chunk's pickup steps only add nodes to the tree
+## Every step is one piece: the longest is a single node (a prop, a pickup) or the control blit.
 
 enum { GROUND, BODY, OCCLUDE, LINES, DECOR, PROPS, PICKUPS, EXTRAS, DONE }
 
@@ -48,14 +51,17 @@ func step(skin: WorldSkin, tm: Node, deadline: int) -> bool:
 		match stage:
 			GROUND: applyGround(skin, tm)
 			BODY: applyBody(skin, tm)
-			OCCLUDE: applyOccluders(skin, tm)
-			LINES: applyLines(skin, tm)
-			DECOR: applyDecor(skin, tm)
+			OCCLUDE:
+				if applyOccluder(skin, tm): nextStage()
+			LINES:
+				if applyLine(skin, tm): nextStage()
+			DECOR:
+				if applyDecor(skin, tm): nextStage()
 			PROPS:
 				if applyProp(skin, tm): nextStage()
 			PICKUPS:
-				if applyPickup(tm): nextStage()
-			EXTRAS: applyExtras(tm)
+				if applyPickup(skin, tm): nextStage()
+			EXTRAS: applyExtras(skin, tm)
 		var took := Time.get_ticks_usec() - began
 		if took > stageMaxUsec[was]: stageMaxUsec[was] = took
 		if Time.get_ticks_usec() >= deadline: break
@@ -66,7 +72,10 @@ func nextStage() -> void:
 	index = 0
 
 func applyGround(skin: WorldSkin, tm: Node) -> void:
-	skin.writeControl(chunk, recipe.control)
+	if index == 0:
+		skin.writeControl(chunk, recipe.control)
+		index = 1
+		return
 	for k in 8:
 		var quad := skin.newQuad()
 		quad.position = origin + Vector2(k % 4, k / 4) * WorldSkin.QUAD
@@ -91,37 +100,46 @@ func applyBody(skin: WorldSkin, tm: Node) -> void:
 		tm.wallLayer.add_child(body)
 	nextStage()
 
-func applyOccluders(skin: WorldSkin, tm: Node) -> void:
-	for poly in recipe.occluders:
-		var occ := skin.newOccluder()
-		occ.occluder.polygon = poly
-		occ.position = origin
-		tm.wallLayer.add_child(occ)
-		occluders.push_back(occ)
-	nextStage()
+## One occluder; true when there are no more
+func applyOccluder(skin: WorldSkin, tm: Node) -> bool:
+	if index >= recipe.occluders.size(): return true
+	var occ := skin.newOccluder()
+	occ.occluder.polygon = recipe.occluders[index]
+	occ.position = origin
+	tm.wallLayer.add_child(occ)
+	occluders.push_back(occ)
+	index += 1
+	return false
 
-func applyLines(skin: WorldSkin, tm: Node) -> void:
-	for entry in recipe.lines:
-		var line := skin.newLine()
-		line.texture = skin.strips[entry[0]]
-		line.points = entry[1]
-		line.position = origin
-		tm.edgeLayer.add_child(line)
-		lines.push_back(line)
-	nextStage()
+## One edge line; true when there are no more
+func applyLine(skin: WorldSkin, tm: Node) -> bool:
+	if index >= recipe.lines.size(): return true
+	var entry: Array = recipe.lines[index]
+	index += 1
+	var line := skin.newLine()
+	line.texture = skin.strips[entry[0]]
+	line.points = entry[1]
+	line.position = origin
+	tm.edgeLayer.add_child(line)
+	lines.push_back(line)
+	return false
 
-func applyDecor(skin: WorldSkin, tm: Node) -> void:
-	for id in recipe.decor:
-		var sid := StringName(id)
-		if not skin.decorMeshes.has(sid): continue
-		var buffer: PackedFloat32Array = recipe.decor[id]
-		var mmi := skin.newMultiMesh(sid)
-		mmi.multimesh.instance_count = buffer.size() / 12
-		mmi.multimesh.buffer = buffer
-		mmi.position = origin
-		tm.decorLayer.add_child(mmi)
-		mmis.push_back([sid, mmi])
-	nextStage()
+## One decor MultiMesh; true when there are no more
+func applyDecor(skin: WorldSkin, tm: Node) -> bool:
+	var ids: Array = recipe.decor.keys()
+	if index >= ids.size(): return true
+	var id = ids[index]
+	index += 1
+	var sid := StringName(id)
+	if not skin.decorMeshes.has(sid): return false
+	var buffer: PackedFloat32Array = recipe.decor[id]
+	var mmi := skin.newMultiMesh(sid)
+	mmi.multimesh.instance_count = buffer.size() / 12
+	mmi.multimesh.buffer = buffer
+	mmi.position = origin
+	tm.decorLayer.add_child(mmi)
+	mmis.push_back([sid, mmi])
+	return false
 
 ## One prop; true when there are no more
 func applyProp(skin: WorldSkin, tm: Node) -> bool:
@@ -153,14 +171,14 @@ func applyProp(skin: WorldSkin, tm: Node) -> bool:
 	return false
 
 ## One pickup (a coin line's coins one each); true when there are no more
-func applyPickup(tm: Node) -> bool:
+func applyPickup(skin: WorldSkin, tm: Node) -> bool:
 	if index >= recipe.pickups.size(): return true
 	var p: Array = recipe.pickups[index]
 	index += 1
 	var bit: int = p[2]
 	if bit >= 0 && tm.isTaken(chunk, bit): return false
 	if tm.reservedAt(origin + p[1], 0.0): return false
-	var node: Node2D = Pickups.make(p[0])
+	var node: Node2D = skin.takePickup(p[0])
 	node.position = p[1] - ChunkRecipe.CHUNK * 0.5
 	if bit >= 0: node.set_meta(&"worldSlot", Vector3i(chunk.x, chunk.y, bit))
 	objects.add_child(node)
@@ -169,7 +187,12 @@ func applyPickup(tm: Node) -> bool:
 ## PickupWorld.decorateChunk's props (crates, the Speed Trap...), never in the start's or a station's chunk.
 ## It scatters them round the chunk's middle; each group (things within 500 px of the first) is moved onto
 ## one of the recipe's open spots, and a group with no spot left is dropped. They join the tree once placed.
-func applyExtras(tm: Node) -> void:
+func applyExtras(skin: WorldSkin, tm: Node) -> void:
+	if index > 0:
+		#the extras are in: top the pickup stock up, one pickup a step
+		if not skin.stockPickup(): nextStage()
+		return
+	index = 1
 	if tm.decoratesChunk(chunk):
 		extras = Node2D.new()
 		PickupWorld.decorateChunk(extras, tm.chunkRng(chunk, "props"))
@@ -192,7 +215,6 @@ func applyExtras(tm: Node) -> void:
 			used += 1
 			node.position += delta
 		objects.add_child(extras)
-	nextStage()
 
 ## Hands the nodes back a few at a time; true once everything is out
 func release(skin: WorldSkin, deadline: int) -> bool:

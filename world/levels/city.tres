@@ -10,6 +10,8 @@ poster = "res://world/art/posters/city.png"
 act = 3
 order = 6
 blurb = "A street grid between buildings, parks, lots and canals. Bridges cross the canals where the streets do."
+barrier = "Building blocks wall every street, and canals cut across the grid, bridged at each street."
+surfaces = "Asphalt streets, concrete lots, park grass. The canals drown."
 startPosition = Vector2(2129, 1227)
 seconds = 500
 spawnTimer = 2.9
@@ -62,13 +64,13 @@ dressing = {
 }
 }
 pickupTable = {
-&"coinline": 5,
-&"fuel": 3,
-&"health": 2,
-&"purse": 2,
-&"slot": 1
+&"coinline": 48,
+&"fuel": 38,
+&"health": 7,
+&"purse": 4,
+&"slot": 3
 }
-pickupsPerChunk = 4
+pickupsPerChunk = 1
 palette = {
 &"ground": Color(0.46, 0.45, 0.43, 1),
 &"accent": Color(0.38, 0.36, 0.34, 1),

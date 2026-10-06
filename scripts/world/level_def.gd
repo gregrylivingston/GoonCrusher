@@ -13,6 +13,10 @@ class_name LevelDef extends Resource
 @export var order: int = 0
 ## One line for the Goonopedia: the level's signature barrier and surfaces.
 @export_multiline var blurb: String
+## The Goonopedia's BARRIER line: what walls the level in and how to get through
+@export var barrier: String
+## The Goonopedia's SURFACES line: the ground and its hazards
+@export var surfaces: String
 
 @export_group("Run")
 @export var startPosition := Vector2(2129, 1227)

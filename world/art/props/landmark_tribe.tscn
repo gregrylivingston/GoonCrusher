@@ -1,6 +1,8 @@
 [gd_scene format=3]
 
 [ext_resource type="Texture2D" path="res://world/art/props/landmark_tribe.png" id="tex"]
+[ext_resource type="Texture2D" path="res://world/art/props/landmark_tribe_beacon.png" id="beacon"]
+[ext_resource type="Material" path="res://shader/world_beacon.tres" id="beaconMat"]
 
 [sub_resource type="ConvexPolygonShape2D" id="shape"]
 points = PackedVector2Array(-102.7, -41.3, -61.3, -92, 16, -109.3, 61.3, -92, 102.7, -41.3, 109.3, 16, 70.7, 85.3, -17.3, 109.3, -84, 72, -109.3, 16)
@@ -25,3 +27,8 @@ shape = SubResource("shape")
 [node name="LightOccluder2D" type="LightOccluder2D" parent="."]
 occluder = SubResource("occluder")
 metadata/gc_world = true
+
+[node name="Beacon" type="Sprite2D" parent="."]
+material = ExtResource("beaconMat")
+scale = Vector2(1.3333, 1.3333)
+texture = ExtResource("beacon")

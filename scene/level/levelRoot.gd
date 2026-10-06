@@ -28,6 +28,14 @@ const REFERENCE_SPEED = 450.0
 #at its sand and mud top speed, so a run is possible without fuel pickups
 const SPRINT_MAX_DISTANCE = 32000.0
 const SPRINT_Y_SPREAD = 0.25 #the station's y offset is up to this share of the distance, either way
+#The clock is set from the A* route on the coarse map (1280 px cells), which is shorter than the drive: the
+#fine walls, pools, props and fords inside passable cells, the corners, and the lot's single gap (east
+#side) that a car arriving from anywhere else has to drive round to. So the route gets a share on top per
+#grammar (more where walls are dense) plus a fixed approach allowance (driveLengthFor).
+const ROUTE_FACTOR = {&"meadow": 1.08, &"bayou": 1.12, &"canyon": 1.15, &"quarry": 1.12, &"mountain": 1.15,
+	&"highway": 1.05, &"city": 1.12, &"yard": 1.15}
+const ROUTE_FACTOR_DEFAULT = 1.1
+const STATION_APPROACH_PX = 1500.0
 
 #Marathon: a relay of Sprint-length legs. Each station but the last adds that leg's clock, refuels,
 #patches the car up and opens a free slot machine; the last one wins.
@@ -115,7 +123,7 @@ func onWorldReady() -> void:
 	match SaveManager.playerData.gameMode:
 		Root.gameModes.SPRINT, Root.gameModes.MARATHON:
 			if is_instance_valid(Root.station):
-				seconds = sprintSeconds(routeLengthTo(Root.station.global_position), levelSeconds, slack())
+				seconds = sprintSeconds(driveLength(routeLengthTo(Root.station.global_position)), levelSeconds, slack())
 				legHeading = (Root.station.global_position - startPosition).angle()
 		Root.gameModes.DEFENSE:
 			if is_instance_valid(Root.station): setupDefense()
@@ -139,6 +147,13 @@ func routeLengthTo(target: Vector2) -> float:
 	var tileManager = get_node_or_null("TileManager")
 	if tileManager == null || tileManager.lastRouteLength <= 0.0: return straight
 	return maxf(tileManager.lastRouteLength, straight)
+
+#the drive the clock allows for, from the coarse route's length (px): ROUTE_FACTOR and STATION_APPROACH_PX
+static func driveLengthFor(routePx: float, grammar: StringName) -> float:
+	return routePx * ROUTE_FACTOR.get(grammar, ROUTE_FACTOR_DEFAULT) + STATION_APPROACH_PX
+
+func driveLength(routePx: float) -> float:
+	return driveLengthFor(routePx, def.grammar if def else &"")
 
 #the Sprint clock: the drive's length (the route on the coarse map) at REFERENCE_SPEED, plus the level's
 #slack (LevelDef.sprintSlack when given, else the curve over the level's seconds)
@@ -199,7 +214,7 @@ func stationReached(station: Node2D) -> void:
 	var turn := (WorldGen.hashf(tileManager.worldSeed, WorldGen.TAG_LEG, leg, 0) * 2.0 - 1.0) * MARATHON_TURN
 	var next = tileManager.placeNextStation(from, legHeading + turn, levelSeconds)
 	legHeading = (next.global_position - from).angle()
-	seconds += sprintSeconds(maxf(tileManager.lastRouteLength, from.distance_to(next.global_position)), levelSeconds, slack())
+	seconds += sprintSeconds(driveLength(maxf(tileManager.lastRouteLength, from.distance_to(next.global_position))), levelSeconds, slack())
 	call_deferred("openPitShop")
 
 #Marathon stations: the pit shop sells pickups for run coins, then the free slot machine opens

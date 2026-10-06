@@ -18,6 +18,8 @@ const DEFAULTS = {
 	                           #sedan at 744 px/s needs about 800 px to brake or swerve round a rock)
 	"probeCost": 4.0,          #cost of that sweep finding a wall, scaled by how close it is
 	"hitCost": 6.0,            #cost of hitting a rock or wall at 400 px/s within the plan (grows with speed)
+	"smashCost": 0.25,         #cost of driving through a breakable prop (fence, hedge...) fast enough to smash it
+	"smashMargin": 1.15,       #a breakable counts as passable only at this multiple of its smash speed or more
 	"turnCost": 0.6,           #seconds per radian the car still has to turn at the end of a plan
 	"samePlanBonus": 0.08,     #keeps the choice from flickering between near-equal plans
 	#forward over backward

@@ -317,7 +317,7 @@ func drown() -> void:
 		f.ring(global_position, bodyRadius * scale.x * 1.6)
 		if credited: f.label(global_position, "SPLASH")
 	destroy(&"drown")
-	if credited && is_instance_valid(Root.spawnManager): Root.spawnManager.creditCrush(global_position)
+	if credited && is_instance_valid(Root.spawnManager): Root.spawnManager.creditCrush(global_position, self)
 
 ## Pressed against a wall long enough that it will never get through (SpawnManager.despawnSweep)
 func isStuck() -> bool:

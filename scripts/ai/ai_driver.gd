@@ -350,7 +350,7 @@ func stationTarget() -> Vector2:
 		buildStationGraph(driveway)
 	var carEdges = PackedFloat32Array()
 	for i in stationPoints.size():
-		carEdges.push_back(carPos.distance_to(stationPoints[i]) if stationEdgeAllowed(carPos, i) && clearOfWalls(carPos, stationPoints[i]) else INF)
+		carEdges.push_back(carPos.distance_to(stationPoints[i]) if stationEdgeAllowed(carPos, i) && linedUpFor(i) && clearOfWalls(carPos, stationPoints[i]) else INF)
 	var hop = firstHop(stationPoints, stationEdges, carEdges)
 	approachHop = hop
 	return stationPoints[hop] if hop >= 0 else stationPoints[2]
@@ -378,6 +378,16 @@ func buildStationGraph(driveway: Vector2) -> void:
 			var open = i != j && stationEdgeAllowed(stationPoints[i], j) && clearOfWalls(stationPoints[i], stationPoints[j])
 			row.push_back(stationPoints[i].distance_to(stationPoints[j]) if open else INF)
 		stationEdges.push_back(row)
+
+#The last legs (to the inner marker and the driveway) also need the car heading in along the gap's line,
+#or slow enough to turn in: a car crossing the line side-on at 450 px/s overshoots the gap by a turning
+#circle and loops round the lot again (phase-3 sprints lost 30-40 s that way). Otherwise it goes on to the
+#outer marker (or a corner), turns there and comes in lined up.
+const STATION_ALIGN = 1.0        #radians between the heading and the way in (-stationGap) for a last leg at speed
+const STATION_TURN_SPEED = 300.0 #below this any heading will do
+func linedUpFor(point: int) -> bool:
+	if point > 1 || car.velocity.length() < STATION_TURN_SPEED: return true
+	return absf(car.global_transform.x.angle_to(-stationGap)) < STATION_ALIGN
 
 #the driveway (0) and the inner marker (1) are entered only from the gap's line
 func stationEdgeAllowed(from: Vector2, to: int) -> bool:
@@ -438,7 +448,8 @@ func rocksNear(point: Vector2, radius: float) -> bool:
 	around.collision_mask = 1
 	around.exclude = [car.get_rid()]
 	for hit in space.intersect_shape(around, 8):
-		if World.isWall(hit.collider): return true
+		#a fence or hedge is smashed on the way in (carefulSpeed is too slow for some: then the planner treats it as a wall)
+		if World.isWall(hit.collider) && not (BreakableProp.isBreakable(hit.collider) && not hit.collider.get_meta(&"explosive", false)): return true
 	return false
 
 #Region stars: a region (a district of the world map) pays a star for each 60 s spent in it, up to 3
@@ -568,9 +579,15 @@ func sustainableSpeed(duty: float) -> float:
 func engineForce() -> float:
 	return (car.engine + 14) * 10 * 2.2
 
-#seconds of clock left over if the car drove the rest of the route now
+#seconds of clock left over if the car drove the rest of the route now. The route (coarse A*) is shorter
+#than the drive, so it is stretched the way the clock was (Level.driveLengthFor: the grammar's factor, plus
+#the lot approach while the car is still out of the station graph's reach)
 func raceSlack() -> float:
-	return Root.levelRoot.seconds - raceDistance / cruiseSpeed() * 1.1
+	var level = Root.levelRoot
+	var drive = raceDistance
+	if level.has_method("driveLength"):
+		drive = level.driveLength(raceDistance) if raceDistance > STATION_GRAPH_PX else raceDistance * Level.ROUTE_FACTOR_DEFAULT
+	return level.seconds - drive / cruiseSpeed() * 1.1
 
 #how many seconds a race can spend on a detour
 func detourBudget() -> float:
@@ -792,7 +809,9 @@ func scoreRollout(rollout: Dictionary, target: Vector2) -> float:
 			cost += LETHAL_COST * WET_CORNER_SHARE * segment
 		if ground == Root.terrain.SHALLOWS: cost += SHALLOWS_COST * segment
 		cost += waterAheadCost(path[i - 1], path[i], speeds[i]) * segment
-		var fraction = 0.0 if World.isWallTerrain(ground) else sweep(path[i - 1], headings[i - 1], path[i] - path[i - 1], i == 1)
+		sweepSmashes = 0
+		var fraction = 0.0 if World.isWallTerrain(ground) else sweep(path[i - 1], headings[i - 1], path[i] - path[i - 1], i == 1, minf(speeds[i - 1], speeds[i]))
+		cost += p.smashCost * sweepSmashes #through a fence or hedge at speed: a little slower, never a wall hit
 		if fraction < 1.0:
 			rollout.hit = true
 			rollout.hitSeconds = (i - 1 + fraction) * segment
@@ -819,7 +838,7 @@ func scoreRollout(rollout: Dictionary, target: Vector2) -> float:
 		var travelled = path[0].distance_to(end)
 		var reach = maxf(400.0, maxf(p.lookaheadPx - travelled, endSpeed * p.probeSeconds))
 		var heading = headings[last].normalized()
-		var clear = sweep(end, heading, heading * reach, false)
+		var clear = sweep(end, heading, heading * reach, false, endSpeed)
 		if clear < 1.0: cost += p.probeCost * (1.0 - clear)
 		var wet = WorldHooks.lethalAhead(end, heading, reach) #deep water counts like a wall there, only more so
 		if wet < INF: cost += p.probeCost * 2.0 * (1.0 - wet / (reach + WorldHooks.FINE))
@@ -873,19 +892,63 @@ static func countMet(met: Dictionary) -> Vector2i:
 #how far along `motion` the car's footprint gets before touching a rock or wall (1 = clear)
 #The first segment uses a smaller shape and skips the overlap test, so a car already touching a
 #rock can still choose to back or steer away from it.
-func sweep(from: Vector2, heading: Vector2, motion: Vector2, first: bool) -> float:
-	query.transform = Transform2D(heading.angle(), from)
+#`speed` is the car's predicted speed there: a breakable prop (fence, hedge, hay bale, crate,
+#barricade) it would meet at smashMargin x its smash speed or more is driven through, as the car
+#does (it smashes it with no wall damage); sweepSmashes counts them for smashCost. Slower, or an
+#explosive (barrel, tank: never free), it is a wall. Speed 0 (the default) treats every prop as a wall.
+var sweepSmashes := 0
+const SWEEP_PASSES = 4 #at most this many breakables are driven through in one sweep
+func sweep(from: Vector2, heading: Vector2, motion: Vector2, first: bool, speed := 0.0) -> float:
+	sweepSmashes = 0
+	var pose = Transform2D(heading.angle(), from)
+	query.transform = pose
 	query.exclude = excludes
-	#cast_motion ignores anything the shape already overlaps, so test that first, with the real
-	#footprint: the margin would make every plan in a tight pocket look like a crash
-	query.motion = Vector2.ZERO
-	if not first:
-		query.shape = exactShape
-		if not space.intersect_shape(query, 1).is_empty(): return 0.0
-	query.shape = startShape if first else bodyShape
-	query.motion = motion
-	var result = space.cast_motion(query)
-	return result[0] if result.size() > 0 else 1.0
+	var passed: Array[RID] = []
+	for attempt in SWEEP_PASSES:
+		#cast_motion ignores anything the shape already overlaps, so test that first, with the real
+		#footprint: the margin would make every plan in a tight pocket look like a crash
+		query.motion = Vector2.ZERO
+		if not first:
+			query.shape = exactShape
+			var overlaps = space.intersect_shape(query, 4)
+			if not overlaps.is_empty():
+				if not passThrough(overlaps, speed, passed): return 0.0
+				continue
+		query.shape = startShape if first else bodyShape
+		query.motion = motion
+		var result = space.cast_motion(query)
+		if result.size() == 0 || result[0] >= 1.0: return 1.0
+		if speed <= 0.0: return result[0]
+		#what it would touch: through it if it is a breakable this speed smashes
+		query.transform = Transform2D(pose.get_rotation(), from + motion * result[1])
+		query.motion = Vector2.ZERO
+		var touched = space.get_rest_info(query)
+		query.transform = pose
+		if touched.is_empty() || not passThrough([touched], speed, passed): return result[0]
+	return 0.0
+
+#true when every hit (intersect_shape or get_rest_info results) is a breakable the car smashes at
+#`speed`; they are then left out of the query (`passed`) and counted in sweepSmashes
+func passThrough(hits: Array, speed: float, passed: Array[RID]) -> bool:
+	if speed <= 0.0: return false
+	for hit in hits:
+		var collider = hit.get("collider") if hit.has("collider") else instance_from_id(hit.get("collider_id", 0))
+		if not smashableAt(collider, speed, p.smashMargin): return false
+	for hit in hits:
+		passed.push_back(hit.rid)
+		sweepSmashes += 1
+	var skip: Array[RID] = excludes.duplicate()
+	skip.append_array(passed)
+	query.exclude = skip
+	return true
+
+#would the car smash this prop at `speed` (with a margin over its smash speed)? Explosives never count:
+#driving into a barrel is a blast, not a shortcut.
+static func smashableAt(collider: Object, speed: float, margin := 1.15) -> bool:
+	if collider == null || not is_instance_valid(collider): return false
+	if not (collider.has_method("smash") || BreakableProp.isBreakable(collider)): return false
+	if collider.get_meta(&"explosive", false) || collider.get_meta(&"smashed", false): return false
+	return speed >= OverheadCarBody2D.smashSpeedOf(collider) * margin
 
 #the worst ground under the car's corners (plus a margin): a lethal terrain (water) if any corner is
 #over one, else a wall terrain (hills, buildings), else shallows, else GRASS. Read from World (the
@@ -950,7 +1013,7 @@ func roomiest(candidates: Array) -> Dictionary:
 		var room = 0.0
 		for i in range(1, rollout.path.size()):
 			if World.isLethal(footprintTerrain(rollout.path[i], rollout.headings[i])): break #no room in the water
-			var fraction = sweep(rollout.path[i - 1], rollout.headings[i - 1], rollout.path[i] - rollout.path[i - 1], i == 1)
+			var fraction = sweep(rollout.path[i - 1], rollout.headings[i - 1], rollout.path[i] - rollout.path[i - 1], i == 1, minf(rollout.speeds[i - 1], rollout.speeds[i]))
 			room += fraction
 			if fraction < 1.0: break
 		if room > best.room: best = {"room":room, "plan":candidate, "path":rollout.path}

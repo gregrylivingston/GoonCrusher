@@ -206,9 +206,11 @@ func goonsNear(pos: Vector2, radius: float) -> Array:
 		if is_instance_valid(goon) && goon.global_position.distance_squared_to(pos) < r2: out.push_back(goon)
 	return out
 
-## A goon killed by something the player set off (a blast, a kicked shell) counts as a crush.
-func creditCrush(pos: Vector2) -> void:
+## A goon killed by something the player set off (a blast, a kicked shell, a drowning) counts as a crush.
+## Pass the goon so it also counts for the Goonopedia (crushedById), as a bumper crush does.
+func creditCrush(pos: Vector2, goon: Object = null) -> void:
 	if not is_instance_valid(Root.playerCar): return
+	if goon != null && Root.playerCar.has_method("creditGoon"): Root.playerCar.creditGoon(goon)
 	Root.playerCar.reward("currentGoonsCrushed", 1)
 	RewardFlyers.flyUpgrade(Root.upgrade.CURRENTGOONSCRUSHED, pos)
 

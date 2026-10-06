@@ -10,6 +10,8 @@ poster = "res://world/art/posters/highway.png"
 act = 2
 order = 5
 blurb = "A highway runs east with branch roads off it. Asphalt is fast; oil slicks, jersey barriers and pile-ups are not."
+barrier = "Rock outcrops off the road; jersey barriers and pile-ups on it."
+surfaces = "Fast asphalt, oil slicks with no grip, sand and dirt verges, gas station lots."
 startPosition = Vector2(2129, 1227)
 seconds = 460
 spawnTimer = 3.2
@@ -66,13 +68,13 @@ dressing = {
 }
 }
 pickupTable = {
-&"coinline": 5,
-&"fuel": 3,
-&"health": 2,
-&"purse": 1,
-&"slot": 1
+&"coinline": 46,
+&"fuel": 40,
+&"health": 7,
+&"purse": 4,
+&"slot": 3
 }
-pickupsPerChunk = 3
+pickupsPerChunk = 1
 palette = {
 &"ground": Color(0.66, 0.56, 0.4, 1),
 &"accent": Color(0.56, 0.46, 0.34, 1),

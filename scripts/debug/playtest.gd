@@ -35,6 +35,7 @@ var recorded := false
 var levelTime := 0.0
 var maxSeconds := 900.0
 var prevHealth := 100.0
+var prevWallLost := 0.0
 var lastPosition := Vector2.ZERO
 var clockSeen := false
 var slotPressTimer := 0.0
@@ -144,6 +145,7 @@ func onCarReady(newCar: OverheadCarBody2D) -> void:
 	driver = AIDriver.attach(car, {"sight":row.sight, "debug":options.has("ai-debug"), "profile":row.profile})
 	car.rewarded.connect(onRewarded)
 	prevHealth = car.health
+	prevWallLost = 0.0
 	lastPosition = car.global_position
 
 func onRewarded(powerup: String, quantity) -> void:
@@ -176,12 +178,17 @@ func _physics_process(delta):
 	if car.isWrecked && waterDeath.is_empty() && World.lethalAt(car.global_position): waterDeath = waterSnapshot()
 	#this runs before the car's tick, so health and collisions are both from the tick before
 	var drop = prevHealth - car.health
-	if drop > 0.0:
-		if touchingWall():
-			row.damage_rocks += drop
-			if options.has("trace") && drop > 1.0: print("PLAYTEST_HIT t=%.1f v=%d drop=%.1f plan=%s predicted_hit=%s goal=%s with=%s" % [levelTime, car.velocity.length(), drop, str(driver.plan), str(driver.planHit), driver.goal.get("kind", "-"), wallName()])
-		elif touchingGoon(): row.damage_goon_contact += drop #the car ran into it (crushes cost health too)
-		else: row.damage_goon_attacks += drop #a goon lunged into the car's body
+	#walls: exactly what the car's wall hits and scrapes took (a car pinned to a wall by goons used to have their
+	#attacks counted as wall damage); the rest is goons
+	var wallDrop = car.wallHealthLost - prevWallLost
+	prevWallLost = car.wallHealthLost
+	if wallDrop > 0.0:
+		row.damage_rocks += wallDrop
+		drop -= wallDrop
+		if options.has("trace") && wallDrop > 1.0: print("PLAYTEST_HIT t=%.1f v=%d drop=%.1f plan=%s predicted_hit=%s goal=%s with=%s" % [levelTime, car.velocity.length(), wallDrop, str(driver.plan), str(driver.planHit), driver.goal.get("kind", "-"), wallName()])
+	if drop > 0.001:
+		if touchingGoon(): row.damage_goon_contact += drop #the car ran into it (crushes cost health too)
+		else: row.damage_goon_attacks += drop #a goon lunged into the car's body (or a blast, fire, spikes)
 	prevHealth = car.health
 	countMissedCrushes()
 	row.min_fuel = minf(row.min_fuel, car.fuel)
@@ -189,11 +196,15 @@ func _physics_process(delta):
 	row.distance_px += car.global_position.distance_to(lastPosition)
 	lastPosition = car.global_position
 	if options.has("trace") && Engine.get_physics_frames() % Engine.physics_ticks_per_second == 0: trace()
+	if row.mode == "defense" && Engine.get_physics_frames() % (Engine.physics_ticks_per_second * 10) == 0: traceDefense()
 	if options.has("trace") && driver.stats.stuck != lastStuck:
 		lastStuck = driver.stats.stuck
 		var station = Root.station.global_position.distance_to(car.global_position) if is_instance_valid(Root.station) else -1.0
 		print("PLAYTEST_STUCK t=%.1f pos=(%d,%d) station=%d goal=%s goons_near=%d touching=%s" % [levelTime, car.global_position.x, car.global_position.y,
-			station, driver.goal.get("kind", "-"), driver.nearGoons.size(), wallName() if touchingWall() else ("goon" if touchingGoon() else "-")])
+			station, driver.goal.get("kind", "-"), driver.nearGoons.size(), wallName() if touchingWall() else ("goon" if touchingGoon() else "-")]
+			+ " near=%s water=%s keys=%d accel=%.1f slides=%d ground=%s fwd=%.0f buffs=%s" % [nearStatics(car.global_position, 320.0), str(WorldHooks.nearLethal(car.global_position, 400.0)),
+			driver.keys, car._car_input.acceleration, car.get_slide_collision_count(), World.letter(World.terrainAt(car.global_position)), driver.forwardSpeed(), str(car.buffs.keys())]
+			+ " overlap=%s" % overlapping())
 	if levelTime > maxSeconds:
 		row.timeout = true
 		Root.levelRoot.endLevel(false, Root.endCondition.ABANDONED)
@@ -209,6 +220,59 @@ func trace() -> void:
 		car.global_position.x, car.global_position.y, car.velocity.length(), car.health, car.fuel, goalText, aimText,
 		driver.plan.steer, mini(driver.plan.steerTicks, 99), driver.plan.throttle, minf(driver.speedCap, 9999.0), GameStats.goons(), driver.stats.stuck])
 	print("PLAYTEST_COSTS hop=%d " % driver.approachHop + " ".join(driver.lastCosts))
+
+#Defense, every 10 s: the barrier, and the goons marching on the station, at its walls, and wedged on the way
+func traceDefense() -> void:
+	var station = Root.station
+	if not is_instance_valid(station) || not is_instance_valid(Root.spawnManager): return
+	var marching := 0
+	var atWalls := 0
+	var wedged := 0
+	var near := 0
+	for g in Root.spawnManager.goons:
+		if not is_instance_valid(g) || g.dead: continue
+		if g.global_position.distance_to(station.global_position) < 1500.0: near += 1
+		if g.state == &"siege": atWalls += 1
+		elif g.sieging(car): marching += 1
+		if g.isStuck(): wedged += 1
+	print("PLAYTEST_DEFENSE t=%.0f barrier=%.0f goons=%d marching=%d at_walls=%d within_1500=%d wedged=%d car_to_station=%d" % [levelTime,
+		station.barrier, Root.spawnManager.goons.size(), marching, atWalls, near, wedged, car.global_position.distance_to(station.global_position)])
+
+#--trace: what the car's own collision polygons (the front bumper and the rear; the middle of the car has
+#none) overlap right now, "F"/"R" plus "*" for the one enabled: a car wedged inside a shape can't move
+func overlapping() -> String:
+	var parts := PackedStringArray()
+	for nodeName in ["CollisionShape2D", "CollisionShape2D_rear"]:
+		var node = car.get_node_or_null(nodeName)
+		if not node is CollisionPolygon2D: continue
+		var shape := ConvexPolygonShape2D.new()
+		shape.points = node.polygon
+		var q := PhysicsShapeQueryParameters2D.new()
+		q.shape = shape
+		q.transform = node.global_transform
+		q.collision_mask = 1
+		q.exclude = [car.get_rid()]
+		var names := PackedStringArray()
+		for hit in car.get_world_2d().direct_space_state.intersect_shape(q, 8):
+			var c = hit.collider
+			names.push_back(String(c.get_meta(&"propId", c.name)) if c is Node else "?")
+		parts.push_back("%s%s:%s" % ["F" if nodeName == "CollisionShape2D" else "R", "" if node.disabled else "*", "+".join(names) if not names.is_empty() else "-"])
+	return " ".join(parts)
+
+#--trace: what solid things are within `radius` of a point: prop ids (BreakableProp metadata) or "wall"
+func nearStatics(pos: Vector2, radius: float) -> String:
+	var circle := CircleShape2D.new()
+	circle.radius = radius
+	var q := PhysicsShapeQueryParameters2D.new()
+	q.shape = circle
+	q.transform = Transform2D(0.0, pos)
+	q.collision_mask = 1
+	q.exclude = [car.get_rid()]
+	var names := {}
+	for hit in car.get_world_2d().direct_space_state.intersect_shape(q, 16):
+		var id := String(hit.collider.get_meta(&"propId", "wall")) if hit.collider is Node else "?"
+		names[id] = names.get(id, 0) + 1
+	return ",".join(names.keys().map(func(k): return "%s%s" % [k, "x%d" % names[k] if names[k] > 1 else ""])) if not names.is_empty() else "-"
 
 func wallName() -> String:
 	for i in car.get_slide_collision_count():
@@ -384,7 +448,7 @@ func finish() -> void:
 		var endings = {}
 		for result in runs: endings[result.reason] = endings.get(result.reason, 0) + 1
 		var summary = {"combo":key, "runs":runs.size(), "wins":runs.filter(func(r): return r.won).size(), "endings":endings}
-		for field in ["score", "level_time", "crushed", "payout", "star", "damage_rocks", "damage_goon_contact", "damage_goon_attacks", "min_fuel", "stuck", "avg_speed"]:
+		for field in ["score", "level_time", "crushed", "payout", "star", "damage_rocks", "damage_goon_contact", "damage_goon_attacks", "min_fuel", "stuck", "escapes", "avg_speed"]:
 			var total = 0.0
 			for result in runs: total += float(result.get(field, 0))
 			summary["avg_" + field] = snappedf(total / runs.size(), 0.1)

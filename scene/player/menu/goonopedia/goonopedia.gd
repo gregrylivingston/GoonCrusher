@@ -415,6 +415,23 @@ func tipRow(text: String) -> void:
 	row.add_child(label)
 	detail.add_child(row)
 
+#a chip naming a fact and its text (a level's barrier, its surfaces); nothing for empty text
+func factRow(tag: String, text: String, color: Color) -> void:
+	if text == "": return
+	var row = HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	var c = chip(tag, color)
+	c.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	c.custom_minimum_size.x = 112
+	row.add_child(c)
+	var label = Label.new()
+	label.text = text
+	label.theme_type_variation = "BodyLabel"
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(label)
+	detail.add_child(row)
+
 #rows of [label, value text] or [label, value text, bar 0-100, bonus 0-100, icon]
 func statTable(rows: Array) -> void:
 	var table = GridContainer.new()
@@ -678,6 +695,8 @@ func levelDetail(entry: Dictionary) -> void:
 		if def.blurb != "": paragraph(def.blurb)
 		var grammar: String = Levels.GRAMMAR_TEXT.get(def.grammar, "")
 		if grammar != "": paragraph(grammar, "MutedLabel")
+		factRow("BARRIER", def.barrier, HudTheme.RIM)
+		factRow("SURFACES", def.surfaces, HudTheme.RIM)
 	var beatRow = HBoxContainer.new()
 	beatRow.add_theme_constant_override("separation", 8)
 	var beatLabel = Label.new()

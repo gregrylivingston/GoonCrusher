@@ -24,6 +24,7 @@ JOBS = ["ground", "edge", "prop", "decor", "station", "poster"]
 BATCH = {"ground": 5, "edge": 8, "prop": 5, "decor": 8, "station": 5, "poster": 1}
 FACTIONS = ["wild", "tribe", "scrap"]
 #VRAM-compressed (BC7 on desktop) files; everything else imports lossless. All get mipmaps.
+BEACON_MATERIAL = "res://shader/world_beacon.tres"
 VRAM = re.compile(r"^(ground/(?!macro_noise).*|posters/.*|station/station_(lot|roof)\.png)$")
 
 def run_page(browser, job, ids, budget=120000):
@@ -133,10 +134,22 @@ occluder = SubResource("occluder")
 metadata/gc_world = true
 """
 	disabled = "" if m.get("solid", True) else "disabled = true\n"
+	#a landmark's beacon: a glow sprite at final brightness, added on top and unlit (shader/world_beacon.gdshader)
+	ext_beacon = node_beacon = ""
+	if m.get("beacon"):
+		ext_beacon = """[ext_resource type="Texture2D" path="%s" id="beacon"]
+[ext_resource type="Material" path="%s" id="beaconMat"]
+""" % (RES_DIR + "props/" + m["beacon"], BEACON_MATERIAL)
+		node_beacon = """
+[node name="Beacon" type="Sprite2D" parent="."]
+material = ExtResource("beaconMat")
+scale = Vector2({sc:.4f}, {sc:.4f})
+texture = ExtResource("beacon")
+""".format(sc=1.0 / m["res"])
 	return """[gd_scene format=3]
 
 [ext_resource type="Texture2D" path="{tex}" id="tex"]
-
+{ext_beacon}
 [sub_resource type="ConvexPolygonShape2D" id="shape"]
 points = {pts}
 {sub_occ}
@@ -151,7 +164,7 @@ texture = ExtResource("tex")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("shape")
-{disabled}{node_occ}""".format(tex=tex, pts=vec_array(hull), sub_occ=sub_occ, pid=pid, meta="\n".join(meta), sc=1.0 / m["res"], disabled=disabled, node_occ=node_occ)
+{disabled}{node_occ}{node_beacon}""".format(tex=tex, ext_beacon=ext_beacon, pts=vec_array(hull), sub_occ=sub_occ, pid=pid, meta="\n".join(meta), sc=1.0 / m["res"], disabled=disabled, node_occ=node_occ, node_beacon=node_beacon)
 
 def manifest_entry(pid, m, tags):
 	res = lambda name: RES_DIR + ("decor/" if m["class"] == "DECOR" else "props/") + name
@@ -167,6 +180,7 @@ def manifest_entry(pid, m, tags):
 		if b.get("blastOnly"): e["breakable"]["blastOnly"] = True
 	if "solid" in m: e["solid"] = m["solid"]
 	if m.get("atlas"): e["atlas"] = m["atlas"]
+	if m.get("beacon"): e["beacon"] = res(m["beacon"])
 	if m["class"] != "DECOR": e["scene"] = RES_DIR + "props/" + pid + ".tscn"
 	return e
 

@@ -111,6 +111,10 @@ var spacingA := 0.0
 var spacingB := 0.0
 var spacingC := 0.0
 var chance := PackedFloat32Array()
+#G_PLAIN * f1.. (lineDistance's divisor), the same doubles lineDistance computes, made once
+var g1 := 1.0
+var g2 := 1.0
+var g4 := 1.0
 #lattice grammars: street / fence flags per global coarse column and row
 var colFlag := PackedByteArray()
 var rowFlag := PackedByteArray()
@@ -223,7 +227,8 @@ func setup(mapSeed: int, def: Dictionary) -> void:
 			chance = PackedFloat32Array([feat("buildingShare", 0.45), feat("parkShare", 0.2), feat("lotShare", 0.25), feat("canalShare", 0.1)])
 			halfA = feat("canalWidth", 1040.0) / 2.0
 			halfB = feat("sidewalk", 110.0)
-			buildLattice(TAG_COL, TAG_ROW)
+			if def.has("_lattice"): useLattice(def["_lattice"])
+			else: buildLattice(TAG_COL, TAG_ROW)
 			barrierCap = float(features.get("barrierCap", 0.35))
 		Grammar.YARD:
 			f1 = 1.0 / 900.0; n1 = noise(70, f1) #scrap pile lumps
@@ -237,6 +242,10 @@ func setup(mapSeed: int, def: Dictionary) -> void:
 			halfC = feat("conveyorWidth", 640.0) / 2.0
 			passHalf = 640.0
 			barrierCap = float(features.get("barrierCap", 0.35))
+
+	g1 = G_PLAIN * f1
+	g2 = G_PLAIN * f2
+	g4 = G_PLAIN * f4
 
 func feat(key: String, fallback: float) -> float:
 	return float(features.get(key, fallback))
@@ -277,24 +286,25 @@ func sample(x: float, y: float) -> Vector3:
 	#the ocean round the map
 	var edge := minf(MAP_HALF.x - absf(x), MAP_HALF.y - absf(y))
 	if edge < EDGE_PX + BIG * UNIT: v.x = minf(v.x, (edge - EDGE_PX) / UNIT)
-	#the start bubble: no barrier, and the level's main ground (roads and streets stay)
+	#the start bubble: no barrier, and the level's main ground (roads and streets stay, without oil)
 	var dx := x - start.x
 	var dy := y - start.y
 	var d2 := dx * dx + dy * dy
 	if d2 < START_CLEAR * START_CLEAR:
 		v.x = maxf(v.x, 1.0)
 		v.y = maxf(v.y, 1.0)
-		if v.z != ASPHALT: v.z = main
+		if v.z == OIL: v.z = ASPHALT #a slick road stays road (it used to become the main ground: a sand hole in the highway)
+		elif v.z != ASPHALT: v.z = main
 	return v
 
 ## The plain ground: baseTerrain by a broad noise band, with accent patches
 func surfaceBase(x: float, y: float) -> int:
-	var b := clampf(0.5 + nBase.get_noise_2d(x, y) * 1.15, 0.0, 0.9999)
-	var s: int = base[int(b * base.size())]
+	#an accent patch replaces the band, so the band's (3-octave) noise is only read outside one
 	if not accents.is_empty() && nAcc.get_noise_2d(x, y) > 0.5:
 		var pick := clampf(0.5 + nPick.get_noise_2d(x, y) * 0.9, 0.0, 0.9999)
-		s = accents[int(pick * accents.size())]
-	return s
+		return accents[int(pick * accents.size())]
+	var b := clampf(0.5 + nBase.get_noise_2d(x, y) * 1.15, 0.0, 0.9999)
+	return base[int(b * base.size())]
 
 ## px from the zero line of a plain noise layer of frequency f
 static func lineDistance(n: FastNoiseLite, f: float, x: float, y: float, shift := 0.0) -> float:
@@ -304,13 +314,12 @@ static func lineDistance(n: FastNoiseLite, f: float, x: float, y: float, shift :
 #n3 is high; dirt tracks along n4's zero lines. Creeks are deep water with a shallows band; the coarse map
 #cuts fords through them.
 func meadow(x: float, y: float) -> Vector3:
-	var s := surfaceBase(x, y)
-	if lineDistance(n4, f4, x, y) < halfB: s = DIRT
+	var s := DIRT if absf(n4.get_noise_2d(x, y)) / g4 < halfB else surfaceBase(x, y)
 	var fw := BIG
 	var strength := smoothstep(-0.45, -0.15, n2.get_noise_2d(x, y))
 	if strength > 0.05:
 		var hw := halfA * strength + halfC * smoothstep(threshA, threshA + 0.15, n3.get_noise_2d(x, y)) * strength
-		fw = (lineDistance(n1, f1, x, y) - hw) / UNIT
+		fw = (absf(n1.get_noise_2d(x, y)) / g1 - hw) / UNIT
 	return Vector3(fw, BIG, s)
 
 #Snapper Bayou: lakes where the fbm n1 rises above threshA, plus two braided channels either side of n2's
@@ -320,39 +329,37 @@ func bayou(x: float, y: float) -> Vector3:
 	var fw := (threshA - n1.get_noise_2d(x, y)) / (G_FBM * f1) / UNIT
 	var c := n2.get_noise_2d(x, y)
 	var a := smoothstep(-0.5, -0.2, n3.get_noise_2d(x, y))
-	if a > 0.05: fw = minf(fw, (absf(c - threshB) / (G_PLAIN * f2) - halfA * a) / UNIT)
+	if a > 0.05: fw = minf(fw, (absf(c - threshB) / g2 - halfA * a) / UNIT)
 	var b := smoothstep(-0.2, 0.1, n4.get_noise_2d(x, y))
-	if b > 0.05: fw = minf(fw, (absf(c + threshB) / (G_PLAIN * f2) - halfA * b) / UNIT)
+	if b > 0.05: fw = minf(fw, (absf(c + threshB) / g2 - halfA * b) / UNIT)
 	return Vector3(fw, BIG, s)
 
 #Red Canyon: canyon walls along the ridged zero lines of n1 (masked by n2), mesas where the fbm n3 rises
 #above threshA, wash lanes along n4's zero lines, dunes where n5 is high. The coarse map cuts passes.
 func canyon(x: float, y: float) -> Vector3:
-	var s := surfaceBase(x, y)
-	if lineDistance(n4, f4, x, y) < halfB: s = WASH
-	elif n5.get_noise_2d(x, y) > threshB: s = SAND
+	var s := WASH
+	if absf(n4.get_noise_2d(x, y)) / g4 >= halfB: s = SAND if n5.get_noise_2d(x, y) > threshB else surfaceBase(x, y)
 	var fh := (threshA - n3.get_noise_2d(x, y)) / (G_FBM * f3) / UNIT
 	var strength := smoothstep(-0.55, -0.25, n2.get_noise_2d(x, y))
-	if strength > 0.05: fh = minf(fh, (lineDistance(n1, f1, x, y) - halfA * strength) / UNIT)
+	if strength > 0.05: fh = minf(fh, (absf(n1.get_noise_2d(x, y)) / g1 - halfA * strength) / UNIT)
 	return Vector3(BIG, fh, s)
 
 #Frostbite Pass: mountain ranges along n1's zero lines (masked by n2) and massifs where the fbm n3 peaks;
 #frozen lakes (ICE) where the fbm n4 is high and deep-snow drifts where n5 is. The coarse map cuts passes.
 func mountain(x: float, y: float) -> Vector3:
-	var s := surfaceBase(x, y)
-	if n4.get_noise_2d(x, y) > threshB: s = ICE
-	elif n5.get_noise_2d(x, y) > threshC: s = DEEPSNOW
+	var s := ICE
+	if n4.get_noise_2d(x, y) <= threshB: s = DEEPSNOW if n5.get_noise_2d(x, y) > threshC else surfaceBase(x, y)
 	var fh := (threshA - n3.get_noise_2d(x, y)) / (G_FBM * f3) / UNIT
 	var strength := smoothstep(-0.6, -0.3, n2.get_noise_2d(x, y))
-	if strength > 0.05: fh = minf(fh, (lineDistance(n1, f1, x, y) - halfA * strength) / UNIT)
+	if strength > 0.05: fh = minf(fh, (absf(n1.get_noise_2d(x, y)) / g1 - halfA * strength) / UNIT)
 	return Vector3(BIG, fh, s)
 
 #Goon Quarry: noise ground and haul roads (n1's zero lines), with one set piece slot per spacingA-px macro
 #cell: a terraced pit (a ring wall with ramps), a junk fort (a ring wall with gates) or a tyre camp (open,
 #reserved for props). Small mud pits sit on a 2560 px lattice.
 func quarry(x: float, y: float) -> Vector3:
-	var s := surfaceBase(x, y)
-	if lineDistance(n1, f1, x, y) < halfA: s = DIRT
+	var s := -1 #the plain ground (a haul road's dirt or the base), worked out last unless something covers it
+	var haul := absf(n1.get_noise_2d(x, y)) / g1 < halfA
 	var fh := BIG
 	lookupPiece(floori(x / spacingA), floori(y / spacingA))
 	if _pieceType != PIECE_NONE:
@@ -372,6 +379,7 @@ func quarry(x: float, y: float) -> Vector3:
 	if fh >= BIG:
 		var pit := mudPit(floori(x / spacingB), floori(y / spacingB))
 		if pit != Vector2.INF && (x - pit.x) * (x - pit.x) + (y - pit.y) * (y - pit.y) < halfC * halfC: s = MUDPIT
+	if s < 0: s = DIRT if haul else surfaceBase(x, y)
 	return Vector3(BIG, fh, s)
 
 var _mudPits := {} #lattice cell -> its mud pit's centre, or INF for none
@@ -385,7 +393,7 @@ func mudPit(gx: int, gy: int) -> Vector2:
 	if WorldGen.hashf(worldSeed, TAG_MUDPIT, gx, gy) < 0.14:
 		var cx := (gx + 0.2 + 0.6 * WorldGen.hashf(worldSeed, TAG_MUDPIT + 1000, gx, gy)) * spacingB
 		var cy := (gy + 0.2 + 0.6 * WorldGen.hashf(worldSeed, TAG_MUDPIT + 2000, gx, gy)) * spacingB
-		if lineDistance(n1, f1, cx, cy) > halfA + 300.0: pit = Vector2(cx, cy)
+		if absf(n1.get_noise_2d(cx, cy)) / g1 > halfA + 300.0: pit = Vector2(cx, cy)
 	_mudPits[key] = pit
 	return pit
 
@@ -437,7 +445,7 @@ func piecesIn(rect: Rect2) -> Array:
 #x; oil on the asphalt; rock outcrops (the only walls) keep 1600 px off the roads; gas station lots sit
 #beside the highways every spacingC px.
 func highway(x: float, y: float) -> Vector3:
-	var s := surfaceBase(x, y)
+	var s := -1 #the base ground, worked out last unless a road or lot covers it
 	#the nearest highway row, and its neighbour only when the point is near the halfway line (the warp is
 	#under halfC px)
 	var rowF := (y - start.y) / spacingA
@@ -463,6 +471,7 @@ func highway(x: float, y: float) -> Vector3:
 		if (x - gas.x) * (x - gas.x) + (y - gas.y) * (y - gas.y) < 900.0 * 900.0: s = LOT
 	var fh := BIG
 	if road > 1600.0: fh = minf(maxf((threshB - n4.get_noise_2d(x, y)) / (G_FBM * f4) / UNIT, (1600.0 - road) / UNIT), BIG)
+	if s < 0: s = surfaceBase(x, y)
 	return Vector3(BIG, fh, s)
 
 var _highwayBase := {} #highway k -> its warp at the start's x (so it passes the start's row there)
@@ -508,11 +517,53 @@ func buildLattice(colTag: int, rowTag: int) -> void:
 			var centreY := (c + 0.5) * CELL
 			var canal := WorldGen.hashf(worldSeed, TAG_CANAL, c, 0) < chance[3] && absf(centreY - start.y) > 6000.0
 			rowFlag[i] = 2 if canal else 1
+	buildNearest()
 
 func latticeLine(c: int, tag: int) -> bool:
 	var off := posmod(c, 5)
 	var pattern := WorldGen.ihash(worldSeed, tag, floori(c / 5.0), 0) & 1
 	return off == 0 || off == (2 if pattern == 0 else 3)
+
+## The lattice as the coarse build made it (WorldGen.run puts it in the def snapshot), so the chunk rasters
+## don't hash it again: [colFlag, rowFlag, leftStreet, rightStreet, rowAbove, rowBelow]
+func useLattice(l: Array) -> void:
+	colFlag = l[0]
+	rowFlag = l[1]
+	leftStreet = l[2]
+	rightStreet = l[3]
+	rowAbove = l[4]
+	rowBelow = l[5]
+
+func lattice() -> Array:
+	return [colFlag, rowFlag, leftStreet, rightStreet, rowAbove, rowBelow]
+
+#per lattice index: the nearest street column left and right of a column, the nearest street or canal row
+#above and below a row (city() used to walk these one cell at a time)
+var leftStreet := PackedInt32Array()
+var rightStreet := PackedInt32Array()
+var rowAbove := PackedInt32Array()
+var rowBelow := PackedInt32Array()
+
+func buildNearest() -> void:
+	var n := 2 * LATTICE_OFFSET
+	leftStreet.resize(n)
+	rightStreet.resize(n)
+	rowAbove.resize(n)
+	rowBelow.resize(n)
+	var col := -1 - LATTICE_OFFSET #outside the lattice counts as a street
+	var row := -1 - LATTICE_OFFSET
+	for i in n:
+		leftStreet[i] = col
+		rowAbove[i] = row
+		if colFlag[i] != 0: col = i - LATTICE_OFFSET
+		if rowFlag[i] != 0: row = i - LATTICE_OFFSET
+	col = n - LATTICE_OFFSET
+	row = n - LATTICE_OFFSET
+	for i in range(n - 1, -1, -1):
+		rightStreet[i] = col
+		rowBelow[i] = row
+		if colFlag[i] != 0: col = i - LATTICE_OFFSET
+		if rowFlag[i] != 0: row = i - LATTICE_OFFSET
 
 func isStreetCol(cx: int) -> bool:
 	var i := cx + LATTICE_OFFSET
@@ -543,14 +594,26 @@ func city(x: float, y: float) -> Vector3:
 		var fw := (absf(y - (cy + 0.5) * CELL) - halfA) / UNIT
 		return Vector3(fw, BIG, ASPHALT if col else LOT)
 	if col || row == 1: return Vector3(BIG, BIG, ASPHALT)
-	var lx := cx - 1
-	while not isStreetCol(lx): lx -= 1
-	var rx := cx + 1
-	while not isStreetCol(rx): rx += 1
-	var ty := cy - 1
-	while streetRow(ty) == 0: ty -= 1
-	var by := cy + 1
-	while streetRow(by) == 0: by += 1
+	var ix := cx + LATTICE_OFFSET
+	var iy := cy + LATTICE_OFFSET
+	var lx := 0
+	var rx := 0
+	var ty := 0
+	var by := 0
+	if ix >= 0 && ix < leftStreet.size() && iy >= 0 && iy < rowAbove.size():
+		lx = leftStreet[ix]
+		rx = rightStreet[ix]
+		ty = rowAbove[iy]
+		by = rowBelow[iy]
+	else:
+		lx = cx - 1
+		while not isStreetCol(lx): lx -= 1
+		rx = cx + 1
+		while not isStreetCol(rx): rx += 1
+		ty = cy - 1
+		while streetRow(ty) == 0: ty -= 1
+		by = cy + 1
+		while streetRow(by) == 0: by += 1
 	var edge := minf(minf(x - (lx + 1) * CELL, rx * CELL - x), minf(y - (ty + 1) * CELL, by * CELL - y))
 	match blockType(lx, ty):
 		BLOCK_BUILDING: return Vector3(BIG, (halfB - edge) / UNIT, LOT)
@@ -595,8 +658,6 @@ func yard(x: float, y: float) -> Vector3:
 	var cy := floori(y / CELL)
 	var ox := posmod(cx, p)
 	var oy := posmod(cy, p)
-	var s := surfaceBase(x, y)
-	if n2.get_noise_2d(x, y) > threshA: s = OIL
 	if ox == 0 && oy == 0: return Vector3(BIG, BIG, LOT)
 	if ox == 0 || oy == 0:
 		var vertical := ox == 0
@@ -613,8 +674,8 @@ func yard(x: float, y: float) -> Vector3:
 	var py := floori(float(cy) / p)
 	if WorldGen.hashf(worldSeed, TAG_PLOT, px, py) < chance[2]: return Vector3(BIG, BIG, LOT) #tank farm
 	if spacingB > 0.0 && posmod(py, int(spacingB)) == 0 && oy == p / 2 && absf(y - (cy + 0.5) * CELL) < halfC:
-		s = CONVEYOR
-	return Vector3(BIG, BIG, s)
+		return Vector3(BIG, BIG, CONVEYOR)
+	return Vector3(BIG, BIG, OIL if n2.get_noise_2d(x, y) > threshA else surfaceBase(x, y))
 
 ## The belt direction code (WorldMap.beltDirAt) of the conveyor in plot row py: 1 = +x, 2 = -x
 func beltCode(cy: int) -> int:

@@ -98,6 +98,8 @@ func test_goons_drown_in_deep_water_and_the_car_gets_the_splash():
 	pushed.touchedByCar()
 	assert_true(pushed.checkWater(car), "drowned")
 	assert_eq(car.currentGoonsCrushed, 1, "shoved in by the car: a crush")
+	assert_eq(car.crushedById.get(&"grunt", 0), 1, "and it counts for the Goonopedia, like a bumper crush")
+	assert_eq(car.crushedById.size(), 1, "the unpushed one doesn't")
 	var dry := spawnGoon(&"grunt", Vector2(300, 0))
 	assert_false(dry.checkWater(car), "on grass nothing happens")
 	var hopper := spawnGoon(&"grunt", Vector2(-300, 800))

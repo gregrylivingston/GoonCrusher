@@ -74,6 +74,12 @@ var keep := {}    #chunks never evicted now (round the car)
 var fineStats := {"count": 0, "usec": 0, "maxUsec": 0, "waits": 0}
 var recipeStats := {"count": 0, "usec": 0, "maxUsec": 0}
 var spawnCounter := 0
+## chunk -> Array of [landmark prop id, world position]: each district's landmark (setupDistricts)
+var landmarks := {}
+## district id -> its tint as a 4-bit code (0..15) for the ground shader (ChunkRecipe puts it in the control
+## block's flags byte); TINT_LOW..TINT_HIGH on screen
+var tintCodes := PackedByteArray()
+const LANDMARK_IDS := ["landmark_wild", "landmark_tribe", "landmark_scrap"]
 
 var _cx := 1 << 30
 var _cy := 0
@@ -127,6 +133,8 @@ static func fromJob(job: Dictionary, levelDef: LevelDef) -> WorldMap:
 ## Faction, goons, name, tint and giantism for every district, seeded per district
 func setupDistricts(table: Array) -> void:
 	districts.clear()
+	landmarks.clear()
+	tintCodes.clear()
 	var usedNames := {}
 	var seconds: Array = NAME_SECOND.get(grammar, NAME_SECOND[&"meadow"])
 	var startIndex := coarseIndex(startPosition)
@@ -155,6 +163,11 @@ func setupDistricts(table: Array) -> void:
 		d.name = name
 		d.tint = 0.9 + 0.18 * WorldGen.hashf(worldSeed, WorldGen.TAG_TINT, id, 0)
 		d.giantism = WorldGen.ihash(worldSeed, WorldGen.TAG_GIANT, id, 0) % 100
+		tintCodes.push_back(clampi(roundi((d.tint - 0.9) / 0.18 * 15.0), 0, 15))
+		var at: Vector2 = d.get("landmark", Vector2.INF)
+		if at != Vector2.INF:
+			var chunk := WorldGen.chunkOf(at)
+			landmarks.get_or_add(chunk, []).push_back([LANDMARK_IDS[clampi(faction, 0, 2)], at])
 		districts.push_back(d)
 
 #--- fine rasters ------------------------------------------------------------------------------------
@@ -168,7 +181,28 @@ func fineJob(chunk: Vector2i) -> Dictionary:
 		job.ctx = recipeContext
 		job.aux = aux
 		job.factions = chunkFactions(chunk)
+		job.tints = chunkTints(chunk)
+		var here: Array = landmarks.get(chunk, [])
+		if not here.is_empty(): job.landmarks = here.duplicate(true)
 	return job
+
+## The district tint codes of a chunk's 8 coarse cells (row-major, 4 x 2). A cell on a barrier takes the
+## nearest district's within a few cells (so a tint never stops short of a wall or a creek), else the middle.
+func chunkTints(chunk: Vector2i) -> PackedByteArray:
+	var out := PackedByteArray()
+	var base := WorldGen.chunkCell(chunk)
+	for k in 8:
+		var cell := base + Vector2i(k % 4, k / 4)
+		var d := districtOfCell(cell)
+		if d < 0:
+			for r in range(1, 4):
+				for dy in range(-r, r + 1):
+					for dx in range(-r, r + 1):
+						if d >= 0 || maxi(absi(dx), absi(dy)) != r: continue
+						d = districtOfCell(cell + Vector2i(dx, dy))
+				if d >= 0: break
+		out.push_back(tintCodes[d] if d >= 0 && d < tintCodes.size() else 8)
+	return out
 
 ## The district faction of a chunk's 8 coarse cells (row-major, 4 x 2), -1 where there is none
 func chunkFactions(chunk: Vector2i) -> PackedInt32Array:

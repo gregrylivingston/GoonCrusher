@@ -119,3 +119,43 @@ func test_profiles_resolve_overrides():
 	for profile in AIProfiles.PROFILES:
 		for key in AIProfiles.PROFILES[profile]:
 			assert_true(AIProfiles.DEFAULTS.has(key), "%s sets a known key: %s" % [profile, key])
+
+#breakable props are passable for the planner when the predicted speed smashes them, walls otherwise;
+#explosives never count as a way through
+func test_breakables_are_passable_only_at_smash_speed():
+	var fence = StaticBody2D.new()
+	fence.set_meta(&"smashSpeed", 180.0)
+	assert_true(AIDriver.smashableAt(fence, 250.0, 1.15), "well above its smash speed: drive through")
+	assert_false(AIDriver.smashableAt(fence, 200.0, 1.15), "within the margin: a wall")
+	assert_false(AIDriver.smashableAt(fence, 0.0, 1.15), "standing still: a wall")
+	var barrel = StaticBody2D.new()
+	barrel.set_meta(&"smashSpeed", 120.0)
+	barrel.set_meta(&"explosive", true)
+	assert_false(AIDriver.smashableAt(barrel, 900.0, 1.15), "an explosive is never free")
+	var rock = StaticBody2D.new()
+	assert_false(AIDriver.smashableAt(rock, 900.0, 1.15), "a rock is a rock")
+	assert_false(AIDriver.smashableAt(null, 900.0, 1.15))
+	fence.set_meta(&"smashed", true)
+	assert_false(AIDriver.smashableAt(fence, 900.0, 1.15), "already smashed: its collision is off anyway")
+	assert_true(AIProfiles.DEFAULTS.has("smashCost") && AIProfiles.DEFAULTS.has("smashMargin"), "tunable per profile")
+	for node in [fence, barrel, rock]: node.free()
+
+#the last legs into the station (inner marker, driveway) are taken only heading in along the gap's line,
+#or slowly: side-on at speed the car would overshoot the gap and loop round the lot
+func test_station_last_legs_need_the_car_lined_up():
+	var car = makeCar()
+	var driver = AIDriver.new()
+	driver.car = car
+	driver.stationGap = Vector2.RIGHT #the gap faces east: the way in is west
+	driver.stationPoints = [Vector2.ZERO, Vector2(1100, 0), Vector2(2000, 0)]
+	car.velocity = Vector2(-450, 0)
+	car.rotation = PI #heading west, into the lot
+	assert_true(driver.linedUpFor(1), "heading in along the line: go for the inner marker")
+	assert_true(driver.linedUpFor(0), "and the driveway")
+	car.rotation = PI / 2.0 #heading south, across the line
+	car.velocity = Vector2(0, 450)
+	assert_false(driver.linedUpFor(1), "side-on at speed: not yet")
+	assert_true(driver.linedUpFor(2), "the outer marker is always fine")
+	car.velocity = Vector2(0, 200)
+	assert_true(driver.linedUpFor(1), "slow enough to turn in")
+	driver.free()

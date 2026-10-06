@@ -10,6 +10,8 @@ poster = "res://world/art/posters/frostbite.png"
 act = 2
 order = 4
 blurb = "Ridged ranges wall the valleys, with passes between. Frozen lakes give no grip and deep snow drags."
+barrier = "Mountain ranges wall the valleys, with passes between them."
+surfaces = "Packed snow, deep snow that drags, frozen lakes with no grip at all."
 startPosition = Vector2(2129, 1227)
 seconds = 420
 spawnTimer = 3.5
@@ -61,13 +63,13 @@ dressing = {
 }
 }
 pickupTable = {
-&"coinline": 3,
-&"fuel": 4,
-&"health": 3,
-&"purse": 1,
-&"slot": 1
+&"coinline": 40,
+&"fuel": 44,
+&"health": 8,
+&"purse": 4,
+&"slot": 4
 }
-pickupsPerChunk = 3
+pickupsPerChunk = 1
 palette = {
 &"ground": Color(0.85, 0.88, 0.92, 1),
 &"accent": Color(0.7, 0.76, 0.84, 1),

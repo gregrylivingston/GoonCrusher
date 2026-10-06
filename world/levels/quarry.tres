@@ -10,6 +10,8 @@ poster = "res://world/art/posters/quarry.png"
 act = 2
 order = 3
 blurb = "Haul roads link a terraced pit, a junk fort with gates and tyre camps. The Tribe digs here, and the mud pits swallow speed."
+barrier = "The terraced pit and the junk fort's ring walls, with ramps and gates."
+surfaces = "Dirt haul roads, mud, concrete yards and mud pits that swallow speed. Barrels explode."
 startPosition = Vector2(2129, 1227)
 seconds = 380
 spawnTimer = 3.8
@@ -67,13 +69,13 @@ dressing = {
 }
 }
 pickupTable = {
-&"coinline": 4,
-&"fuel": 3,
-&"health": 2,
-&"purse": 2,
-&"slot": 1
+&"coinline": 40,
+&"fuel": 44,
+&"health": 7,
+&"purse": 5,
+&"slot": 4
 }
-pickupsPerChunk = 3
+pickupsPerChunk = 1
 palette = {
 &"ground": Color(0.5, 0.44, 0.36, 1),
 &"accent": Color(0.42, 0.36, 0.28, 1),

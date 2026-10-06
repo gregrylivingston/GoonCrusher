@@ -182,6 +182,8 @@ func test_an_applied_chunk_keeps_the_node_budget_and_the_taken_set():
 	add_child_autofree(tm)
 	var chunk := WorldGen.chunkOf(map.startPosition) + Vector2i(1, 0)
 	var recipe := recipeFor(map, chunk)
+	assert_false(recipe.is_empty(), "a recipe")
+	if recipe.is_empty(): return
 	var view := ChunkView.new(chunk, recipe)
 	while not view.step(skin, tm, Time.get_ticks_usec() + 100000): pass
 	assert_true(view.isDone())
@@ -214,9 +216,182 @@ func test_time_sliced_apply_takes_several_frames_and_pools_nodes():
 	tm.map = map
 	add_child_autofree(tm)
 	var chunk := WorldGen.chunkOf(map.startPosition) + Vector2i(-1, 1)
-	var view := ChunkView.new(chunk, recipeFor(map, chunk))
+	var recipe := recipeFor(map, chunk)
+	assert_false(recipe.is_empty(), "a recipe")
+	if recipe.is_empty(): return
+	var view := ChunkView.new(chunk, recipe)
 	var steps := 0
 	while not view.step(skin, tm, 0): steps += 1 #a zero budget: one piece per call
 	assert_gt(steps, 6, "applied over several steps")
 	while not view.release(skin, 0): pass
 	assert_true(skin.pools.get("quad", []).size() >= 8, "ground quads went back to the pool")
+
+#a profile, not a check: per level, the mean raster and recipe phase times (this thread) over a strip of chunks
+#round the start, so a change to the recipe's hot spots can be measured. Prints one line per level.
+func test_recipe_profile():
+	var all := {}
+	var rasterAll := 0
+	var recipeAll := 0
+	var worstAll := 0
+	var n := 0
+	for id in Levels.ORDER:
+		var w := world(id, 1)
+		var map: WorldMap = w[0]
+		var start := WorldGen.chunkOf(map.startPosition)
+		var phases := {}
+		var print_ := PackedStringArray()
+		var raster := 0
+		var recipe := 0
+		var worst := 0
+		var count := 0
+		for k in 24:
+			var chunk := start + Vector2i(k % 6 - 3, k / 6 - 2)
+			#the fastest of three builds (this box is noisy), phases from that build
+			var r := {}
+			var rr := {}
+			for rep in 3:
+				if map.fine.has(chunk): map.forget(chunk)
+				map.buildNow(chunk)
+				var got := map.recipeOf(chunk)
+				if got.is_empty(): break
+				if not r.is_empty():
+					for key in ["control", "pieces", "occluders", "lines", "props", "pickups", "decor", "spots"]:
+						assert_eq(var_to_str(got[key]).md5_text(), var_to_str(r[key]).md5_text(), "%s %s: a rebuild repeats %s" % [id, chunk, key])
+				if r.is_empty() || got.usec + map.rasters[chunk].usec < r.usec + rr.usec:
+					r = got
+					rr = map.rasters[chunk]
+			if r.is_empty(): continue
+			print_.push_back(var_to_str([rr.terrain, rr.water, rr.wall]).md5_text())
+			for key in ["control", "pieces", "occluders", "lines", "props", "pickups", "decor", "spots"]: print_.push_back(var_to_str(r[key]).md5_text())
+			raster += rr.usec
+			recipe += r.usec
+			worst = maxi(worst, r.usec + rr.usec)
+			count += 1
+			for key in r.get("phases", {}):
+				phases[key] = phases.get(key, 0) + r.phases[key]
+				all[key] = all.get(key, 0) + r.phases[key]
+		var parts := PackedStringArray()
+		for key in phases: parts.push_back("%s %.2f" % [key, phases[key] / 1000.0 / maxi(count, 1)])
+		print("  FINGERPRINT %s %s" % [id, "".join(print_).md5_text()])
+		print("  PROFILE %s raster %.2f recipe %.2f worst(raster+recipe) %.1f ms | %s" % [id, raster / 1000.0 / maxi(count, 1), recipe / 1000.0 / maxi(count, 1), worst / 1000.0, ", ".join(parts)])
+		rasterAll += raster
+		recipeAll += recipe
+		worstAll = maxi(worstAll, worst)
+		n += count
+	var parts := PackedStringArray()
+	for key in all: parts.push_back("%s %.2f" % [key, all[key] / 1000.0 / maxi(n, 1)])
+	print("  PROFILE all raster %.2f recipe %.2f worst %.1f ms | %s" % [rasterAll / 1000.0 / maxi(n, 1), recipeAll / 1000.0 / maxi(n, 1), worstAll / 1000.0, ", ".join(parts)])
+	assert_gt(n, 0)
+
+#a profile of the raster's parts: making the WorldField (noise objects, lattices) and sampling it 924 times
+func test_raster_profile():
+	var parts := PackedStringArray()
+	for id in Levels.ORDER:
+		var w := world(id, 1)
+		var map: WorldMap = w[0]
+		var t0 := Time.get_ticks_usec()
+		var f: WorldField
+		for k in 20: f = WorldField.make(map.worldSeed, map.snapshot)
+		var make := (Time.get_ticks_usec() - t0) / 20.0
+		var origin := map.startPosition + Vector2(7000, 3000)
+		t0 = Time.get_ticks_usec()
+		for j in 22:
+			for i in 42: f.sample(origin.x + i * 128.0, origin.y + j * 128.0)
+		var samples := Time.get_ticks_usec() - t0
+		parts.push_back("%s make %.2f sample924 %.2f" % [id, make / 1000.0, samples / 1000.0])
+	print("  RASTER_PROFILE " + ", ".join(parts))
+
+#a profile of what ChunkView's slowest single steps cost: making a pickup and a stateful prop and adding it to
+#the tree (first time and the median of the next eight)
+func test_apply_step_profile():
+	var parent := Node2D.new()
+	add_child_autofree(parent)
+	var parts := PackedStringArray()
+	for id in ["coin", "fuel", "health", "purse", "slotmachine"]:
+		var times := []
+		for k in 9:
+			var t0 := Time.get_ticks_usec()
+			var node: Node2D = Pickups.make(id)
+			parent.add_child(node)
+			times.push_back(Time.get_ticks_usec() - t0)
+		var rest: Array = times.slice(1)
+		rest.sort()
+		parts.push_back("%s first %.2f median %.2f" % [id, times[0] / 1000.0, rest[4] / 1000.0])
+	var skin: WorldSkin = world(&"prairie", 1)[2]
+	for id in [&"crate", &"haybale", &"fence", &"hedge"]:
+		if not skin.propScenes.has(id): continue
+		var times := []
+		for k in 9:
+			var t0 := Time.get_ticks_usec()
+			var node: StaticBody2D = skin.propScenes[id].instantiate()
+			if skin.breakableScript: node.set_script(skin.breakableScript)
+			parent.add_child(node)
+			times.push_back(Time.get_ticks_usec() - t0)
+		var rest: Array = times.slice(1)
+		rest.sort()
+		parts.push_back("%s first %.2f median %.2f" % [id, times[0] / 1000.0, rest[4] / 1000.0])
+	print("  APPLY_PROFILE " + ", ".join(parts))
+
+#every district gets a landmark cell near its middle, and the recipe of that chunk stands the faction's
+#landmark there (on open ground, within the budgets, checked like any prop)
+func test_districts_get_their_landmarks():
+	var report := PackedStringArray()
+	for id in Levels.ORDER:
+		var map: WorldMap = world(id, 1)[0]
+		var withCell := 0
+		for d in map.districts:
+			if d.get("landmark", Vector2.INF) != Vector2.INF: withCell += 1
+		assert_true(withCell >= map.districts.size() * 0.8, "%s: %d of %d districts have a landmark spot" % [id, withCell, map.districts.size()])
+		var tried := 0
+		var placed := 0
+		for chunk in map.landmarks:
+			if tried >= 6: break
+			tried += 1
+			var recipe := recipeFor(map, chunk)
+			var label := "%s landmark chunk %s" % [id, chunk]
+			checkBudgets(recipe, label)
+			checkPlacement(recipe, map, chunk, label)
+			for entry in map.landmarks[chunk]:
+				for p in recipe.props:
+					if p[0] == entry[0] && (Vector2(chunk) * ChunkRecipe.CHUNK + p[1]).distance_to(entry[1]) <= ChunkRecipe.LANDMARK_STEP * ChunkRecipe.LANDMARK_RINGS + 1.0:
+						placed += 1
+						break
+		assert_true(placed >= tried * 0.8, "%s: %d of %d landmarks stood" % [id, placed, tried])
+		report.push_back("%s %d/%d" % [id, placed, tried])
+	print("  landmarks placed: " + ", ".join(report))
+
+#city rooftops: the recipe dresses BUILDING cells with the rooftop atlas, well inside the parapet, and adds no
+#collision for it
+func test_city_roofs_are_dressed_and_add_no_collision():
+	var map: WorldMap = world(&"city", 1)[0]
+	var start := WorldGen.chunkOf(map.startPosition)
+	var dressed := 0
+	for k in 12:
+		var chunk := start + Vector2i(k % 4 - 2, k / 4 - 1)
+		var recipe := recipeFor(map, chunk)
+		if not recipe.decor.has("rooftop"): continue
+		var buf: PackedFloat32Array = recipe.decor["rooftop"]
+		assert_eq(buf.size() % 12, 0)
+		var raster: Dictionary = map.rasters[chunk]
+		for n in range(0, buf.size(), 12):
+			var p := Vector2(buf[n + 3], buf[n + 7])
+			var t: int = raster.terrain[clampi(floori(p.y / 128.0), 0, 19) * 40 + clampi(floori(p.x / 128.0), 0, 39)]
+			assert_eq(t, Root.terrain.BUILDING, "%s: rooftop decor on a roof" % chunk)
+			assert_true(ChunkRecipe.fieldAt(raster.wall, p) <= -ChunkRecipe.ROOF_INSET + 0.001, "%s: inside the parapet" % chunk)
+			dressed += 1
+	assert_gt(dressed, 0, "some roofs are dressed")
+	print("  city rooftop decor near the start: %d" % dressed)
+
+#the control block's flags byte carries the district tint code in its high bits
+func test_control_carries_the_district_tint():
+	var map: WorldMap = world(&"prairie", 1)[0]
+	var chunk := WorldGen.chunkOf(map.startPosition) + Vector2i(1, 0)
+	var recipe := recipeFor(map, chunk)
+	var tints := map.chunkTints(chunk)
+	for j in ChunkRecipe.FH:
+		for i in ChunkRecipe.FW:
+			var k := ((j + 1) * ChunkRecipe.RW + i + 1) * 4 + 3
+			var want: int = tints[(j / 10) * 4 + i / 10]
+			assert_eq(recipe.control[k] >> 4, want, "cell %d,%d tint code" % [i, j])
+			assert_true(recipe.control[k] & 15 < 16)
+			if recipe.control[k] >> 4 != want: return

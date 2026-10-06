@@ -17,7 +17,7 @@ const GROUND_SHADER := "res://shader/ground.gdshader"
 const DECOR_SHADER := "res://shader/world_decor.gdshader"
 const GLOW_SHADER := "res://shader/world_decor_glow.gdshader"
 const BREAKABLE := "res://scripts/world/breakable.gd"
-const STRIPS: Array[String] = ["shore_foam", "cliff_lip", "canyon_rim", "mesa_lip", "kerb", "snow_ridge", "hedge", "scrapwall"]
+const STRIPS: Array[String] = ["shore_foam", "cliff_lip", "canyon_rim", "mesa_lip", "kerb", "snow_ridge", "hedge", "scrapwall", "roof_edge"]
 ## Ground material by terrain id (Root.terrain order)
 const MATERIAL_OF: Array[String] = ["grass", "sand", "mud", "water", "rock", "moss", "dirt", "snow", "asphalt", "ice",
 	"oil", "shallows", "wash", "conveyor", "mudpit", "deepsnow", "lot", "roof", "bridge"]
@@ -26,7 +26,11 @@ const GRAMMAR_TERRAIN := {
 	&"meadow": [6, 11], &"bayou": [11, 18], &"canyon": [12, 1, 6, 4], &"quarry": [6, 2, 16, 14, 4],
 	&"mountain": [9, 15, 7, 4], &"highway": [8, 10, 6, 16, 4], &"city": [8, 16, 0, 5, 18, 17], &"yard": [6, 16, 10, 13, 4],
 }
-const WALL_STRIP := {&"canyon": "mesa_lip", &"mountain": "snow_ridge", &"city": "kerb", &"yard": "scrapwall"}
+const WALL_STRIP := {&"canyon": "mesa_lip", &"mountain": "snow_ridge", &"city": "roof_edge", &"yard": "scrapwall"}
+## Decor the recipe lays on rooftops (BUILDING cells), by grammar
+const ROOF_DECOR := {&"city": &"rooftop"}
+## Every level loads these (one per district, ChunkRecipe.placeLandmarks), whatever its dressing
+const LANDMARKS: Array[StringName] = [&"landmark_wild", &"landmark_tribe", &"landmark_scrap"]
 const WALL_TINT := {
 	&"canyon": Color(1.16, 0.84, 0.7), &"mountain": Color(1.12, 1.14, 1.2), &"quarry": Color(1.04, 0.99, 0.93),
 	&"highway": Color(1.1, 0.95, 0.82), &"yard": Color(0.78, 0.74, 0.7),
@@ -44,6 +48,9 @@ const CHAIN_PROPS := [&"fence", &"hedge", &"jersey", &"fortwall"]
 const DECOR_PLACE := {&"paint": "road", &"streetglow": "road", &"oilstain": "any", &"reeds": "wet", &"cracks": "any"}
 const PICKUP_IDS := {"fuel": "fuel", "health": "health", "purse": "purse", "slot": "slotmachine"}
 const POOL_CAP := {"quad": 200, "body": 16, "occluder": 160, "line": 160, "mmi": 24, "prop": 40}
+## Ready-made pickups kept out of the tree (ChunkView takes them, then tops the stock up in spare steps): coins
+## come in lines, so more of them
+const PICKUP_STOCK := {"coin": 14, "other": 2}
 
 static var manifestCache := {}
 
@@ -211,6 +218,10 @@ func dressingIds() -> Dictionary:
 			if entry.is_empty(): continue
 			var list := decor if entry.get("class", "") == "DECOR" else props
 			if not StringName(id) in list: list.push_back(StringName(id))
+	var roof: StringName = ROOF_DECOR.get(grammar, &"")
+	if roof != &"" && manifest.has(String(roof)) && not roof in decor: decor.push_back(roof)
+	for id in LANDMARKS:
+		if manifest.has(String(id)) && not id in props: props.push_back(id)
 	return {"decor": decor, "props": props}
 
 func setupProps() -> void:
@@ -249,7 +260,7 @@ func recipeContext(lots: Array, lanes: Array) -> Dictionary:
 		var size: Array = entry.get("sizePx", [100, 100])
 		var occluder: bool = entry.get("occluder", false)
 		props[String(id)] = {"w": float(size[0]), "h": float(size[1]), "radius": maxf(size[0], size[1]) * 0.5,
-			"nodes": 3 + (1 if occluder else 0), "occluder": occluder,
+			"nodes": 3 + (1 if occluder else 0) + (1 if entry.get("beacon") else 0), "occluder": occluder,
 			"chain": id in CHAIN_PROPS, "breakable": entry.get("breakable") != null, "variants": entry.variants.size(),
 			"road": id in ROAD_PROPS}
 	var decor := {}
@@ -275,6 +286,7 @@ func recipeContext(lots: Array, lanes: Array) -> Dictionary:
 		"pickupTable": pickupTable, "pickupsPerChunk": def.pickupsPerChunk, "pickupIds": PICKUP_IDS,
 		"propsPerChunk": int(def.features.get("props", 16)), "decorPerChunk": int(def.features.get("decor", 110)),
 		"start": def.startPosition, "lots": lots, "lanes": lanes, "lotTerrain": Root.terrain.LOT,
+		"roofDecor": String(ROOF_DECOR.get(grammar, &"")) if decorMeshes.has(ROOF_DECOR.get(grammar, &"")) else "",
 	}
 
 ## Loads and pools a few of everything a chunk uses before the run starts (behind the loading), so the first
@@ -288,8 +300,30 @@ func prewarm() -> void:
 		var id: String = PICKUP_IDS.get(String(kind), "coin")
 		var scene: String = Pickups.def(id).get("scene", Pickups.GENERIC_SCENE)
 		keepLoaded.push_back(load(scene))
+		if not id in stockIds: stockIds.push_back(id)
 	keepLoaded.push_back(load(Pickups.def("coin").get("scene", Pickups.GENERIC_SCENE)))
+	if not "coin" in stockIds: stockIds.push_front("coin")
+	while stockPickup(): pass
 	for k in 24: give("quad", newQuad(), POOL_CAP.quad)
+
+#--- the pickup stock ---------------------------------------------------------------------------------
+
+var stockIds: Array[String] = [] #the level's pickup ids (prewarm)
+
+## A pickup for a chunk: a ready-made one when the stock has it, else a new one
+func takePickup(id: String) -> Node2D:
+	var node = take("pickup:" + id)
+	return node if node != null else Pickups.make(id)
+
+## Makes one pickup the stock is short of; false when it is full
+func stockPickup() -> bool:
+	for id in stockIds:
+		var want: int = PICKUP_STOCK.coin if id == "coin" else PICKUP_STOCK.other
+		var pool: Array = pools.get_or_add("pickup:" + id, [])
+		if pool.size() < want:
+			pool.push_back(Pickups.make(id))
+			return true
+	return false
 
 #--- pools -------------------------------------------------------------------------------------------
 

@@ -8,7 +8,7 @@ const ART := "res://world/art/"
 const CLASSES := ["DECOR", "LOW", "TALL", "STATEFUL", "WALL"]
 const GROUNDS := ["grass", "moss", "dirt", "sand", "mud", "mudpit", "snow", "deepsnow", "ice", "asphalt", "lot", "wash",
 	"oil", "shallows", "water", "conveyor", "rock", "roof", "bridge", "gravel"]
-const EDGES := ["shore_foam", "cliff_lip", "canyon_rim", "mesa_lip", "kerb", "hedge", "scrapwall", "snow_ridge"]
+const EDGES := ["shore_foam", "cliff_lip", "canyon_rim", "mesa_lip", "kerb", "hedge", "scrapwall", "snow_ridge", "roof_edge"]
 const STATION := ["station_lot", "station_wall", "station_roof", "station_lamp", "station_pump"]
 const POSTERS := ["prairie", "bayou", "canyon", "quarry", "frostbite", "highway", "city", "crusher"]
 #the prop catalog of the world spec (section 6)
@@ -19,6 +19,9 @@ const CATALOG := ["rock", "boulder", "rock_white", "rock_ice", "oak", "pine", "c
 	"tufts", "pebbles", "cracks", "bones", "paint", "oilstain"]
 const BREAKABLE := ["haybale", "fence", "hedge", "crate", "barricade"]
 const EXPLOSIVE := ["barrel", "tank"]
+#added after the spec: canyon's red rocks and the city's rooftop decor
+const EXTRA := ["rock_red", "boulder_red", "rooftop"]
+const LANDMARKS := ["landmark_wild", "landmark_tribe", "landmark_scrap"]
 
 func manifest() -> Dictionary:
 	var data = JSON.parse_string(FileAccess.get_file_as_string(ART + "props.json"))
@@ -107,7 +110,17 @@ func test_scenes_match_the_manifest():
 		if occ: assert_true(occ.get_meta("gc_world", false), "%s: occluder is marked gc_world" % id)
 		if p.breakable is Dictionary: assert_eq(node.get_meta("smashSpeed", -1.0), float(p.breakable.smashSpeed), "%s: smashSpeed metadata" % id)
 		assert_eq(node.get_meta("explosive", false), p.explosive, "%s: explosive metadata" % id)
+		var beacon: Sprite2D = node.get_node_or_null("Beacon")
+		assert_eq(beacon != null, p.has("beacon"), "%s: a Beacon node exactly when the manifest names one" % id)
+		if beacon:
+			assert_true(beacon.texture != null && beacon.texture.resource_path == p.beacon, "%s: the beacon's glow texture" % id)
+			assert_true(beacon.material is ShaderMaterial && beacon.material.shader.resource_path == "res://shader/world_beacon.gdshader", "%s: the shared beacon material" % id)
 		node.free()
+
+func test_landmarks_have_beacons_and_extras_exist():
+	for id in LANDMARKS: assert_true(props().get(id, {}).has("beacon"), "%s: a beacon" % id)
+	for id in EXTRA: assert_true(props().has(id), "%s: in the manifest" % id)
+	assert_eq(props().get("rooftop", {}).get("class", ""), "DECOR", "rooftop is decor (no collision)")
 
 func test_level_dressing_names_known_props():
 	for id in Levels.ORDER:

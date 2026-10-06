@@ -10,6 +10,8 @@ poster = "res://world/art/posters/bayou.png"
 act = 1
 order = 1
 blurb = "Basins fill into lakes and braided channels split the land. Boardwalk bridges cross the deep water; the shallows slow you down."
+barrier = "Lakes and braided channels. Boardwalk bridges cross the deep water."
+surfaces = "Mud that drags, moss and grass, shallows that slow you down, deep water that drowns."
 startPosition = Vector2(2129, 1227)
 seconds = 300
 spawnTimer = 4.6
@@ -61,13 +63,13 @@ dressing = {
 }
 }
 pickupTable = {
-&"coinline": 4,
-&"fuel": 3,
-&"health": 2,
-&"purse": 1,
-&"slot": 1
+&"coinline": 35,
+&"fuel": 48,
+&"health": 8,
+&"purse": 5,
+&"slot": 4
 }
-pickupsPerChunk = 4
+pickupsPerChunk = 1
 palette = {
 &"ground": Color(0.33, 0.4, 0.26, 1),
 &"accent": Color(0.38, 0.33, 0.22, 1),

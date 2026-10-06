@@ -14,7 +14,9 @@ The goons are original art drawn by a code generator, in the same top-down Dust 
 | `scene/enemy/goon_verbs.gd` | `GoonVerbs`, the 21 behaviours as small state machines. |
 | `scene/enemy/goon_fx.gd` | `GoonFx`: telegraphs, projectiles, hazards, blasts, tethers, crush decals, bits, labels and delayed drops. |
 | `scene/enemy/spawnManager.gd` | Spawning (single goons, packs, bursts), scene loading, the night flag, crush credit. |
-| `scripts/global/Region.gd` | Gives each region a faction and its three goons. |
+| `scripts/world/level_roster.gd` | `LevelRoster`: who holds the land on a level (`LevelDef.factionBand`, `LevelDef.roster`) and a district's three goons. |
+| `scripts/global/Region.gd` | The run's regions, one per world district (`WorldMap.districts`): faction, goons, name, tint and the wave timer. |
+| `scripts/world/world_hooks.gd` | `WorldHooks`: how goons read the world (walls, deep water, banks, line of sight). See "The world" below. |
 | `tests/game/test_goons.gd` | Registry vs. baked art, faction coverage, faction and wave rules, crush rules. |
 
 After a bake that adds new PNGs, run `Godot_console.exe --headless --path . --import`, then set `mipmaps/generate=true` in the new frames' `.import` files and import again. Re-bakes keep the existing `.import` files.
@@ -27,12 +29,13 @@ After a bake that adds new PNGs, run `Godot_console.exe --headless --path . --im
 | Goon Tribe | 2 | One mutant species with tools and tricks | Violet skin, pointed ears, an orange rag, car-junk kit |
 | Scrap Gang | 3 | Anything with an engine or wheels: human raiders, goon drivers, junk machines | Gang teal on every vehicle |
 
-- **Which faction holds a region** (`Goons.factionFor`): the score is distance from the start in chunks × 0.35, plus level index × 0.3, ± 0.4 of random jitter. Below 1.0 the region is Wild, below 2.2 it's Tribe, and above that it's Scrap. So level 1 starts wild and gets tribal further out, while the last level starts tribal and is Scrap Gang further out. The constants are at the top of `goons.gd`.
-- **A region's three goons** (`Goons.regionGoons`) all come from its faction and live on its terrain. Goon 1 is fodder (rank 1); goons 2 and 3 are specials or heavies.
+- **Regions are districts.** The world generator splits each map into districts of about 40,000 px, bounded by the level's barriers (docs/WORLD.md). `WorldMap.setupDistricts` decides each one's faction, goons, name, tint, giantism and landmark once, seeded per district, and `Region.setDistricts` turns them into the run's regions. Each district has a faction landmark near its middle (`landmark_wild`, `_tribe`, `_scrap`, with a glowing top that reads at night; docs/WORLD_ART.md).
+- **Which faction holds a district** (`LevelRoster.factionAt`): the score is the district centroid's distance from the start in chunks × `Goons.DISTANCE_WEIGHT` (0.35), ± `Goons.FACTION_JITTER` (0.4) seeded per district, clamped to the level's `factionBand` (`world/levels/<id>.tres`). The start's own district scores as distance 0. Below `Goons.WILD_BELOW` (1.0) it is Wild, below `TRIBE_BELOW` (2.2) Tribe, else Scrap. So Prairie Run (band 0.0-1.4) is wild with tribal edges, and The Crusher (2.4-3.6) is all Scrap Gang. `Goons.factionFor` (with its level-index weight) is only the fallback when there is no level def.
+- **A district's three goons** (`LevelRoster.pickGoons`) come from the level's roster for that faction (`LevelDef.roster`, validated against `Goons.DATA` and padded from the faction's pool when short; a faction a level lists no goons for falls back to the Tribe's). Goon 1 is the lowest rank present (fodder); goons 2 and 3 are specials or heavies.
 - **Wave mix** (`WAVE_MIX`): in wave 1 a region spawns its goon 1 95% of the time, and goons 2 and 3 grow more common over waves 2 to 4. The HUD reveals goons 2 and 3 on the same schedule. Global time adds a wave every 2 minutes.
-- **Region data:** `Region.currentRegion.faction` (a `Goons.faction` value) and `Region.factionName()`. The keys `name`, `giantism`, `time`, `wave` and `goon` are unchanged; `goon` now holds goon ids.
+- **Region data:** `Region.currentRegion.faction` (a `Goons.faction` value) and `Region.factionName()`. The keys `name`, `giantism`, `time`, `wave` and `goon` are unchanged; `goon` holds goon ids. The player's region changes when the car's coarse cell (1,280 px) enters another district; the wave counter carries over between districts of the same faction.
 - **Goonopedia:** a goon shows once it has been crushed. The dev console's `unlock goons` (also part of `unlock all`) reveals all of them, and `lock goons` hides them again.
-- **Testing:** `-- --faction=wild|tribe|scrap` forces every region's faction, and `-- --goons=a,b,c` forces its three goons. Both work with `--playtest` and `--bench`.
+- **Testing:** `-- --faction=wild|tribe|scrap` forces every district's faction, and `-- --goons=a,b,c` forces its three goons. Both work with `--playtest` and `--bench`.
 
 ## The roster
 
@@ -108,7 +111,7 @@ A goon resists when any of these holds:
 A resisted hit calls the verb's `onResist`. That usually means `bounceCar`: the car keeps 35% of its speed and is pushed back, takes damage, and a label shows why ("BLOCKED", "TOO HEAVY", "HEAD-ON", "ROCK", "SHELL").
 
 **Death** (`destroy(cause)`):
-- **Causes:** `crush`, `boom` (killed by a blast), `self` (blew itself up) and `drown` (deep water, `Walker.drown`; leaves no decal, a splash ring instead).
+- **Causes:** `crush`, `boom` (killed by a blast), `self` (blew itself up) and `drown`. Drowning no longer comes from water areas (the old `Water.gd` `Area2D` on the water tiles is gone with the TileMaps): `Walker.checkWater` reads `World.lethalAt` (the fine grid, deep water that isn't a bridge deck) every 4 ticks and calls `Walker.drown`, which leaves no decal, a splash ring instead (see "The world" below).
 - **What it leaves:** a pooled crush decal with a tyre print along the car's heading, bits in the faction's colours, death sounds, and the old Clover-based pickup chance. The node frees at once.
 - **Credit:** goons killed by blasts or a kicked shell count as crushes (`SpawnManager.creditCrush`). So does a goon that drowns within 3 s of the car touching it (a crush try, a bump, a lunge that hit, or the car alongside it), with a "SPLASH" label.
 
@@ -149,5 +152,3 @@ Everything is delta-based. Telegraphs, projectiles, blasts and fire are unshaded
 - Every goon still uses the old snarl, bash and death sounds. Vehicles need engine sounds, and critters need their own.
 - The tuning (speeds, crush thresholds, timings) comes from a headless playtest or two and has not been played by hand.
 - Giants are now 1.6× size and 1.5× speed; they were 4× speed in the demo.
-- Region names don't reflect the faction yet.
-- The Goonopedia/bestiary, if one is added, can read names and roles from `Goons.DATA`.

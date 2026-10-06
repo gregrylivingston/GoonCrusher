@@ -10,6 +10,8 @@ poster = "res://world/art/posters/prairie.png"
 act = 1
 order = 0
 blurb = "A creek winds through open meadow, with fords every chunk and deep pools that drown. Smash through hedgerows and fences."
+barrier = "A creek with deep pools winds through the meadow. Ford it where the shallows are."
+surfaces = "Grass and moss, fast dirt tracks, shallows that slow you down, deep pools that drown. Hedgerows, fences and hay bales smash at speed."
 startPosition = Vector2(2866, 1583)
 seconds = 250
 spawnTimer = 5.0
@@ -67,13 +69,13 @@ dressing = {
 }
 }
 pickupTable = {
-&"coinline": 5,
-&"fuel": 3,
-&"health": 2,
-&"purse": 1,
-&"slot": 1
+&"coinline": 33,
+&"fuel": 50,
+&"health": 8,
+&"purse": 5,
+&"slot": 4
 }
-pickupsPerChunk = 4
+pickupsPerChunk = 1
 palette = {
 &"ground": Color(0.42, 0.55, 0.3, 1),
 &"accent": Color(0.5, 0.6, 0.32, 1),

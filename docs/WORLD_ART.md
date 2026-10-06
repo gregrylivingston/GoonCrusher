@@ -10,8 +10,9 @@ The world's ground, edges, props, station textures and level posters are origina
 | `scripts/art/world_gen.js` | The generator (`window.WorldArt`): `GROUND` (materials), `EDGE` (strips), `PROPS` (the catalog: class, size and a draw function per prop), `STATION`, `POSTER` (one vignette per level) and the bake functions. **Change world art here.** |
 | `scripts/art/bake_world.html`, `scripts/art/bake_world.py` | The bake. `python scripts/art/bake_world.py [job ...] [--only id,id]` opens `bake_world.html#<job>:<ids>` in headless Edge (3 in parallel) and writes the files, `props.json`, the prop scenes and every `.import` file. |
 | `world/art/ground/` | 20 seamless materials (`<name>.png`, 512²) and `macro_noise.png` (256², greyscale). |
-| `world/art/edges/` | 8 edge strips for `Line2D` (512×96). |
-| `world/art/props/` | Each prop's variants (`<id>.png`, `<id>_v1.png`...), breakable and explosive states (`<id>_broken.png`, `<id>_debris.png`) and its scene (`<id>.tscn`). |
+| `world/art/edges/` | 9 edge strips for `Line2D` (512×96). |
+| `world/art/props/` | Each prop's variants (`<id>.png`, `<id>_v1.png`...), breakable and explosive states (`<id>_broken.png`, `<id>_debris.png`), the landmarks' beacon glows (`<id>_beacon.png`) and its scene (`<id>.tscn`). |
+| `shader/world_beacon.gdshader`, `shader/world_beacon.tres` | The landmarks' beacon: additive, unlit, a slow breath and a double flash, out of step per landmark; `gc_motion` (Reduce Motion) calms it. One shared material. |
 | `world/art/decor/` | One atlas per decor id (`<id>.png`, a row of 4 square cells). |
 | `world/art/props.json` | The prop manifest (below). |
 | `world/art/station/` | `station_lot`, `station_roof` (512² tiles), `station_wall` (strip), `station_lamp` and `station_pump` (sprites). |
@@ -52,6 +53,7 @@ Godot_console.exe --headless --path . --import
 - Seamless: every noise call wraps its lattice (`fbm(u*k, v*k, seed, oct, k)`), and strokes and pebbles near an edge are drawn again on the far side (`wrapAt`). Sample them with repeat on.
 - `conveyor` moves along **+x**: cleats run across x every 32 texels and the worn chevrons point +x. Rotate the UVs with the belt direction.
 - `bridge` planks run across x (each board's long axis is y), so a deck laid along x has boards across the direction of travel.
+- `ice` and `shallows` keep their cell patterns faint so the 1024 px repeat doesn't show: the ice's Voronoi cracks are masked by a second noise and kept under 16% (the skate scratches carry the look), and the shallows' caustics are ridged noise (organic lines, no cells) at about 13%.
 - `macro_noise.png` is 256² tileable greyscale, stretched to the full 0-255 range, for macro variation and organic borders between materials in the ground shader.
 - 512² BC7 with mipmaps is about 350 KB of VRAM per material.
 
@@ -69,8 +71,9 @@ Godot_console.exe --headless --path . --import
 | `snow_ridge` | the bank's crest | blue lee shadow |
 | `hedge` | symmetric: AO, hedge body in the middle, AO | |
 | `scrapwall` | symmetric: AO, junk panels, tyres and teal daubs in the middle, AO | |
+| `roof_edge` | the roof: AO cast by the parapet, its inner face, the lit coping (joints every 40 texels), its outer face on the contour | the building's AO on the pavement |
 
-One-sided strips put the barrier (water, cliff top, canyon, kerb) at the top (v = 0). Which side of a `Line2D` that lands on depends on the direction of its points, so build contours with a consistent winding and reverse the points if the lip faces the wrong way.
+`roof_edge` is the city's wall strip (`WorldSkin.WALL_STRIP`): city blocks used to get `kerb`, whose stones then lay on the roof. One-sided strips put the barrier (water, cliff top, canyon, kerb, roof) at the top (v = 0). Which side of a `Line2D` that lands on depends on the direction of its points, so build contours with a consistent winding and reverse the points if the lip faces the wrong way.
 
 ## Props
 
@@ -96,6 +99,8 @@ Sizes are the solid sprite (alpha > 140) in world px; the hull may be smaller (`
 | `boulder` | TALL | 280×235 | 2 | yes | three fused rocks |
 | `rock_white` | TALL | 145×125 | 2 | yes | pale limestone (quarry, frostbite) |
 | `rock_ice` | TALL | 144×120 | 2 | yes | ice block |
+| `rock_red` | TALL | about 141×119 | 3 | yes | red and ochre sandstone with strata, for Red Canyon (the grey `rock` looked out of place on the red ground) |
+| `boulder_red` | TALL | about 280×235 | 2 | yes | three fused sandstone rocks (canyon) |
 | `oak` | TALL | 271×237 | 3 | yes | hull is the canopy core (r 58) |
 | `pine` | TALL | 180×172 | 3 | yes | variant 2 is snowy; core r 36 |
 | `cypress` | TALL | 213×213 | 2 | yes | Spanish moss; core r 48 |
@@ -132,8 +137,9 @@ Sizes are the solid sprite (alpha > 140) in world px; the hull may be smaller (`
 | `scrapheap` | TALL | 264×237 | 3 | yes | |
 | `container` | TALL | 484×189 | 3 | yes | rust, slate, olive |
 | `tank` | STATEFUL | 299×299 | 1 | yes | explosive; blast only |
-| `landmark_wild` / `_tribe` / `_scrap` | TALL | about 430 | 1 | yes | district landmarks; hull is the centre piece |
+| `landmark_wild` / `_tribe` / `_scrap` | TALL | about 430 | 1 | yes | district landmarks; hull is the centre piece; a beacon glow each (amber embers, the Tribe's glowing eyes and rag-orange torches, a teal antenna light) |
 | `tufts`, `pebbles`, `cracks`, `bones`, `paint`, `oilstain`, `reeds`, `streetglow` | DECOR | 64-384 cells | 4 cells | | |
+| `rooftop` | DECOR | 160 cells | 4 cells | | city roofs: AC unit, vent cluster, water tank, skylight. Not in any dressing table: `ChunkRecipe.placeRoofs` lays it on BUILDING cells (`WorldSkin.ROOF_DECOR`) |
 
 ### How a prop is baked
 
@@ -141,8 +147,9 @@ Sizes are the solid sprite (alpha > 140) in world px; the hull may be smaller (`
 2. Grime goes on source-atop; then the centred shadow (the silhouette, blurred), the rim (the silhouette stamped 12 times 1 px out) and the body.
 3. The hull is the convex hull of the body's pixels with alpha > 140 (or of the `core` drawing), reduced to at most 10 points by dropping the vertex that removes the least area, in world px around the sprite's centre. One hull serves the collision shape and the occluder.
 4. **Wrecks** load `car_gen.js` and call `CarArt.render(car, {style: 'A', stage: 2})` at 0.75, then desaturate them and add rust and moss, so the wrecks are the player's own car models.
-5. **Breakables** also bake `<id>_broken.png` (what stays on the ground, no collision) and `<id>_debris.png` (a row of 4 square cells of flying pieces, for particles or flyers). Explosives bake a scorched `_broken` and a shard `_debris` strip. The tank's `smashSpeed` is 100000 with `blastOnly`: only explosions break it.
-6. **Decor** atlases are a row of 4 square cells (`atlas.cellTexels` wide each), with no rim and at most a faint shadow. Use one `MultiMeshInstance2D` per decor id and pick the cell per instance, for example with the instance's custom data in a small canvas shader's `vertex()`: `UV.x = (UV.x + floor(INSTANCE_CUSTOM.x * 4.0)) / 4.0;` (enable `use_custom_data` on the MultiMesh). `streetglow` is a warm light pool baked at final brightness, meant for additive blending (`atlas.blend = "add"`).
+5. **Beacons:** a design with `beacon(c)` also bakes `<id>_beacon.png`: glows drawn at final brightness in the prop's own frame (same canvas size and centre as the sprite), no rim or shadow. The manifest gets `beacon` and the scene a `Beacon` node.
+6. **Breakables** also bake `<id>_broken.png` (what stays on the ground, no collision) and `<id>_debris.png` (a row of 4 square cells of flying pieces, for particles or flyers). Explosives bake a scorched `_broken` and a shard `_debris` strip. The tank's `smashSpeed` is 100000 with `blastOnly`: only explosions break it.
+7. **Decor** atlases are a row of 4 square cells (`atlas.cellTexels` wide each), with no rim and at most a faint shadow. Use one `MultiMeshInstance2D` per decor id and pick the cell per instance, for example with the instance's custom data in a small canvas shader's `vertex()`: `UV.x = (UV.x + floor(INSTANCE_CUSTOM.x * 4.0)) / 4.0;` (enable `use_custom_data` on the MultiMesh). `streetglow` is a warm light pool baked at final brightness, meant for additive blending (`atlas.blend = "add"`).
 
 ### Scenes
 
@@ -152,6 +159,7 @@ Sizes are the solid sprite (alpha > 140) in world px; the hull may be smaller (`
 - `Sprite2D` at scale 1.3333 with variant 0. Swap `texture` for another variant from the manifest.
 - `CollisionShape2D` with a `ConvexPolygonShape2D` from the hull (disabled when the manifest says `solid: false`).
 - `LightOccluder2D` with the same polygon, `cull_mode = 2` (one-sided, wound like `scene/scenery/rocks1.tscn`), and metadata `gc_world = true`, so it stays on at Lighting Low. Only when the manifest says `occluder: true`.
+- `Beacon` (landmarks): a `Sprite2D` at scale 1.3333 with the `_beacon.png` glow and the shared `res://shader/world_beacon.tres` material (`blend_add, unshaded`), so the landmark's top reads at night with no real light (world lights stay at 0 per chunk). It counts as one more node in `ChunkRecipe`'s budget.
 
 The root is a `StaticBody2D`, so the car's wall-hit checks (`World.isWall`) treat props as walls with no extra code. A later phase adds the breakable script.
 
@@ -184,6 +192,7 @@ The root is a `StaticBody2D`, so the car's wall-hit checks (`World.isWall`) trea
 - `breakable`: `null`, or `{smashSpeed, broken, debris, debrisCells}` plus `blastOnly` for the tank.
 - `solid`: present and `false` when the prop must not collide (decor, the manhole).
 - `atlas` (decor only): `{cells, cellPx, cellTexels, blend}`.
+- `beacon` (landmarks): the glow texture's path.
 - `tags.levels` and `tags.faction` come from the levels' dressing tables (faction keys 0, 1, 2 become `wild`, `tribe`, `scrap`).
 
 ## Station
@@ -212,13 +221,13 @@ Each `POSTER` entry is a `ground(X, Y, o)` function (per pixel: materials, blend
 | Group | Files | Disk | VRAM (estimated, with mipmaps) |
 |---|---|---|---|
 | ground (BC7, macro lossless) | 21 | 10.4 MB | 7.3 MB |
-| edges | 8 | 0.4 MB | 2.1 MB |
-| props (lossless) | 102 | 4.1 MB | 20.7 MB |
-| decor | 8 | 0.4 MB | 3.2 MB |
+| edges | 9 | 0.4 MB | 2.4 MB |
+| props (lossless) | 110 | 4.6 MB | 23.5 MB |
+| decor | 9 | 0.4 MB | 3.4 MB |
 | station | 5 | 1.2 MB | 1.1 MB |
 | posters (BC7) | 8 | 27.4 MB | 19.6 MB |
 
-A level loads only its own materials (4-6, about 2 MB) and the props its dressing names (a third to a half of the props), so world textures per level stay around 15 MB, well inside the 48 MB budget. If props ever need trimming, switch `props/*` to VRAM compression in `VRAM` in `bake_world.py` (BC7 keeps the alpha clean).
+A level loads only its own materials (4-6, about 2 MB), the props its dressing names (a third to a half of the props) and the three landmarks with their beacons (about 2.2 MB), so world textures per level stay around 17 MB, well inside the 48 MB budget. If props ever need trimming, switch `props/*` to VRAM compression in `VRAM` in `bake_world.py` (BC7 keeps the alpha clean).
 
 ## Adding a prop
 

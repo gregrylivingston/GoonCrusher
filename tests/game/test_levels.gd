@@ -207,6 +207,16 @@ func test_sprint_clocks_fit_the_stock_sedan():
 			assert_gt(SEDAN_SLOWEST_TOP_SPEED, distance / clock, "%s: the sedan is fast enough even on sand" % id)
 			assert_gt(SEDAN_TANK_SECONDS * 0.8, distance / SEDAN_SLOWEST_TOP_SPEED, "%s: one tank is enough" % id)
 
+#the coarse route underestimates the drive: every grammar adds a share and the lot approach on top
+func test_sprint_clock_allows_for_the_real_drive():
+	for id in Levels.ORDER:
+		var def := Levels.get_def(id)
+		assert_true(Level.ROUTE_FACTOR.has(def.grammar), "%s: its grammar (%s) has a route factor" % [id, def.grammar])
+		var drive = Level.driveLengthFor(30000.0, def.grammar)
+		assert_gt(drive, 30000.0 + Level.STATION_APPROACH_PX, "%s: longer than the route plus the approach" % id)
+		assert_gt(30000.0 * 1.25 + Level.STATION_APPROACH_PX, drive, "%s: but not by more than a quarter" % id)
+	assert_almost_eq(Level.driveLengthFor(10000.0, &"nowhere"), 10000.0 * Level.ROUTE_FACTOR_DEFAULT + Level.STATION_APPROACH_PX, 0.01, "unknown grammar: the default")
+
 func test_snapshot_is_a_plain_copy():
 	var def := Levels.get_def(&"prairie")
 	var snap := def.snapshot()

@@ -362,7 +362,7 @@ class Turtle extends Verb:
 				for o in Root.spawnManager.goonsNear(g.global_position, g.bodyRadius * 2.2):
 					if o != g && not o.dead:
 						o.destroy(&"crush")
-						Root.spawnManager.creditCrush(o.global_position)
+						Root.spawnManager.creditCrush(o.global_position, o)
 				if g.drift.length() < 40.0:
 					g.invulnerable = false
 					stunFor(1.4)

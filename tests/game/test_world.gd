@@ -279,6 +279,40 @@ func test_wall_impact_scales_with_the_angle():
 	assert_almost_eq(OverheadCarBody2D.wallSpeedKeep(0.15), 1.0 - 0.15 * 0.15, 0.0001, "a scrape keeps 97.75%")
 	assert_gt(OverheadCarBody2D.wallSpeedKeep(0.5), OverheadCarBody2D.wallSpeedKeep(0.9), "squarer hits lose more")
 
+func test_wall_contact_kinds():
+	var C = OverheadCarBody2D.WallContact
+	assert_eq(OverheadCarBody2D.wallContact(20.0, false, false), C.HIT, "meeting a wall is a hit, however slow")
+	assert_eq(OverheadCarBody2D.wallContact(50.0, true, true), C.SCRAPE, "staying against it is a scrape")
+	assert_eq(OverheadCarBody2D.wallContact(50.0, true, false), C.NONE, "a scrape still cooling down costs nothing")
+	assert_eq(OverheadCarBody2D.wallContact(OverheadCarBody2D.WALL_REHIT_SPEED, true, false), C.HIT, "driving into it hard again is a new hit")
+	var hit = OverheadCarBody2D.wallDamage(C.HIT, 600.0, 1.0)
+	assert_almost_eq(hit, OverheadCarBody2D.WALL_DAMAGE_PER_SPEED * 600.0, 0.001, "a head-on hit: full speed")
+	assert_almost_eq(OverheadCarBody2D.wallDamage(C.HIT, 600.0, 0.5), hit * 0.5, 0.001, "scaled by the impact")
+	assert_almost_eq(OverheadCarBody2D.wallDamage(C.SCRAPE, 2000.0, 0.15), OverheadCarBody2D.WALL_SCRAPE_MAX, 0.001, "a scrape is capped")
+	assert_eq(OverheadCarBody2D.wallDamage(C.NONE, 600.0, 1.0), 0.0)
+
+#a wall hit costs its damage once; scraping along the wall afterwards costs a small capped amount per second
+func test_scraping_along_a_wall_costs_little():
+	var car = makeCar()
+	var normal = Vector2(0, -1) #a wall below the car
+	var first = car.wallTick(normal, Vector2(400, 300), 1000) #in at an angle: impact 0.6
+	assert_almost_eq(first, OverheadCarBody2D.WALL_DAMAGE_PER_SPEED * 500.0 * 0.6, 0.01, "the hit: speed x impact")
+	var scrape := 0.0
+	var hits := 0
+	for t in range(1001, 1061): #a second along it at 500 px/s, nearly parallel
+		var d = car.wallTick(normal, Vector2(500, 5), t)
+		scrape += d
+		if d > OverheadCarBody2D.WALL_SCRAPE_MAX: hits += 1
+	assert_eq(hits, 0, "no second hit while scraping")
+	var perSecond = 60.0 / OverheadCarBody2D.WALL_SCRAPE_TICKS * OverheadCarBody2D.WALL_SCRAPE_MAX
+	assert_between(scrape, 0.1, perSecond + 0.01, "a second of scraping costs at most %.1f before armor" % perSecond)
+	var oldModel = OverheadCarBody2D.WALL_DAMAGE_PER_SPEED * 500.0 * OverheadCarBody2D.WALL_IMPACT_MIN * 60.0
+	assert_gt(oldModel / 4.0, scrape, "far less than a tick-by-tick scrape (%.0f)" % oldModel)
+	assert_almost_eq(car.wallTick(normal, Vector2(500, 5), 1061), 0.0, 0.0001, "the scrape is still cooling down")
+	assert_gt(car.wallTick(normal, Vector2(300, 400), 1062), 20.0, "turning hard into the wall is a new hit")
+	assert_gt(car.wallTick(normal, Vector2(500, 5), 1200), 0.0, "after a gap, touching again is a new contact")
+	assert_almost_eq(car.wallTick(normal, Vector2(500, 5), 1200), 0.0, 0.0001, "and only one per tick")
+
 func test_breakables_need_their_smash_speed():
 	var plain = StaticBody2D.new()
 	assert_almost_eq(OverheadCarBody2D.smashSpeedOf(plain), 0.0, 0.0001, "no smashSpeed: 0")

@@ -165,7 +165,7 @@ func blast(pos: Vector2, r: float, dmg: float) -> void:
 	for o in Root.spawnManager.goonsNear(pos, r):
 		if not o.dead && WorldHooks.lineClear(pos, o.global_position):
 			o.destroy(&"boom")
-			Root.spawnManager.creditCrush(o.global_position)
+			Root.spawnManager.creditCrush(o.global_position, o)
 	if is_instance_valid(Root.levelRoot) && Root.levelRoot.has_method("explode"): Root.levelRoot.explode(pos) #pooled, at most 16 live
 	if is_inside_tree(): BreakableProp.blastAt(get_tree(), pos, r) #barrels and tanks: a hop per CHAIN_DELAY, each once
 

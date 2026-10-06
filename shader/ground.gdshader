@@ -5,7 +5,9 @@ shader_type canvas_item;
 // world cell modulo the ring's size, written by each chunk as it is applied (ChunkRecipe.control):
 //   R  material layer of the cell's surface (water and wall cells carry a neighbour's surface)
 //   G  water field, B wall field: 0.5 on the edge, below inside, FIELD_RANGE field units either way
-//   A  flags: 1 bridge deck (no water drawn), 2 rotate the material 90 degrees, 4 conveyor belt, 8 belt reversed
+//   A  flags: 1 bridge deck (no water drawn), 2 rotate the material 90 degrees, 4 conveyor belt, 8 belt reversed;
+//      high 4 bits the district's tint code (0..15 -> TINT_LOW..TINT_HIGH brightness on the open ground), so
+//      district borders read faintly (blended across the warped cells, like the surfaces)
 // The fields are interpolated between cell centres, so water and wall edges are smooth and match the
 // collision contours (marching squares over the same values).
 // gc_ground_quality 0: the nearest cell's material only, no macro noise, no water or belt animation.
@@ -27,6 +29,8 @@ const float CELL = 128.0;
 const float TILE = 1024.0; // world px one 512 texel material tile covers
 const float FIELD_RANGE = 1.0;
 const float BELT_SPEED = 0.244; // 250 px/s in tile units
+const float TINT_LOW = 0.93;
+const float TINT_HIGH = 1.05;
 
 varying vec2 world;
 
@@ -39,7 +43,11 @@ vec4 cellAt(vec2 c) {
 }
 
 int flagsOf(vec4 c) {
-	return int(c.a * 255.0 + 0.5);
+	return int(c.a * 255.0 + 0.5) & 15;
+}
+
+float tintOf(vec4 c) {
+	return mix(TINT_LOW, TINT_HIGH, float(int(c.a * 255.0 + 0.5) >> 4) / 15.0);
 }
 
 float layerOf(vec4 c) {
@@ -73,7 +81,7 @@ void fragment() {
 
 	if (wall > -aaWall && (water > -aaWater || deck)) {
 		if (gc_ground_quality == 0 || deck) {
-			col = surface(near, uv);
+			col = surface(near, uv) * tintOf(near);
 		} else {
 			// organic borders: the surfaces are looked up at a point pushed about by the macro noise (two
 			// scales, up to about half a cell), so the cells' stair-steps wander; the fields stay where they are
@@ -93,6 +101,8 @@ void fragment() {
 				col = surface(ma, uv) * (1.0 - w.x) * (1.0 - w.y) + surface(mb, uv) * w.x * (1.0 - w.y)
 					+ surface(mc, uv) * (1.0 - w.x) * w.y + surface(md, uv) * w.x * w.y;
 			}
+			col *= tintOf(ma) * (1.0 - w.x) * (1.0 - w.y) + tintOf(mb) * w.x * (1.0 - w.y)
+				+ tintOf(mc) * (1.0 - w.x) * w.y + tintOf(md) * w.x * w.y;
 			col *= mix(0.9, 1.08, texture(macro_noise, world / 7168.0).r);
 		}
 		// contact shadow at the foot of walls

@@ -7,18 +7,22 @@ class_name ChunkRecipe extends RefCounted
 ##
 ## Job keys (besides the raster's, see WorldGen.fineRaster): ctx (WorldSkin.recipeContext: the level's
 ## tables, made once on the main thread and only read here), factions (PackedInt32Array: the district
-## faction of the chunk's 8 coarse cells, -1 on a barrier), aux (the coarse aux bytes: belt directions).
+## faction of the chunk's 8 coarse cells, -1 on a barrier), aux (the coarse aux bytes: belt directions),
+## tints (PackedByteArray: the district tint code, 0-15, of the 8 coarse cells), landmarks (Array of [prop
+## id, world position]: the districts' landmarks that stand in this chunk; WorldMap.landmarks).
 ## Writes job.recipe, a Dictionary in chunk-local px (the chunk's top-left corner is 0, 0):
 ##   control:  PackedByteArray, 42 x 22 RGBA8 (the chunk's 40 x 20 fine cells plus a one-cell apron) for the
 ##             ground shader: R the material layer of the cell's surface (water and wall cells take a
 ##             neighbour's surface), G the water field and B the wall field (FIELD_RANGE units either way of
-##             0.5, linear), A flags (FLAG_*)
+##             0.5, linear), A flags (FLAG_*, low 4 bits) and the district's tint code (high 4 bits, job.tints)
 ##   pieces:   Array of convex PackedVector2Array: the walls' collision (one StaticBody2D)
 ##   occluders: Array of open PackedVector2Array polylines along the walls, solid on the right (cull_mode 2)
 ##   lines:    Array of [strip index (ctx.strips), PackedVector2Array]: the shore foam and wall lips for
 ##             Line2D, barrier on the left, so the strip's top (v = 0) lies on it
-##   decor:    {decor id: PackedFloat32Array}: a MultiMesh buffer (2D transform + custom data, 12 floats)
-##   props:    Array of [id, pos, rotation, variant, bit (taken-set bit, -1 for none), occluder (bool)]
+##   decor:    {decor id: PackedFloat32Array}: a MultiMesh buffer (2D transform + custom data, 12 floats);
+##             in the city also the rooftop dressing (ctx.roofDecor) on BUILDING cells
+##   props:    Array of [id, pos, rotation, variant, bit (taken-set bit, -1 for none), occluder (bool)]; a
+##             district landmark first (it is placed before anything else)
 ##   pickups:  Array of [pickup id (Pickups), pos, bit]
 ##   spots:    Array of Vector2: open places for PickupWorld.decorateChunk's props
 ##   counts:   {nodes, occluders, pieces, props, pickups, decor, lines, dropped}
@@ -69,6 +73,7 @@ const TAG_PICKUP := 202
 const TAG_PROP := 203
 const TAG_DECOR := 204
 const TAG_SPOT := 205
+const TAG_ROOF := 206
 
 #terrain ids (Root.terrain, mirrored: worker code never touches the autoload)
 const WATER := 3
@@ -78,6 +83,17 @@ const OIL := 10
 const CONVEYOR := 13
 const MUDPIT := 14
 const BRIDGE := 18
+const BUILDING := 17
+
+#rooftops (city): decor on BUILDING cells this far inside the roof's edge (field units), spaced, square to
+#the street grid, at most ROOF_MAX a chunk
+const ROOF_INSET := 0.3
+const ROOF_GAP := 190.0
+const ROOF_MAX := 48
+const ROOF_TRIES := 6 #darts per interior roof cell
+#landmarks: searched outward from the district's spot in rings of LANDMARK_STEP px
+const LANDMARK_STEP := 128.0
+const LANDMARK_RINGS := 8
 
 var chunk := Vector2i.ZERO
 var mapSeed := 0
@@ -86,10 +102,21 @@ var terrain := PackedByteArray()
 var water := PackedFloat32Array()
 var wall := PackedFloat32Array()
 var factions := PackedInt32Array()
+var tints := PackedByteArray()
 var majority := 0
 var rng := RandomNumberGenerator.new()
-var reserved: Array = [] #[centre, radius] of everything placed so far (props, pickups, spots)
+var resPos := PackedVector2Array() #centres and radii of everything placed so far (props, pickups, spots)
+var resRad := PackedFloat64Array()
 var origin := Vector2.ZERO
+#read from ctx once per recipe (the hot placement loops would look them up thousands of times)
+var startAt := Vector2.INF
+var lotRects: Array = []
+var laneSegs: Array = []
+var spawnTable := PackedByteArray()
+var blockedTable := PackedByteArray()
+var lotTerrain := 16
+var minWater := 0.0 #the lowest raster field values (controlBytes): no contour to trace when neither is below 0
+var minWall := 0.0
 
 static func build(job: Dictionary) -> void:
 	var t0 := Time.get_ticks_usec()
@@ -106,6 +133,7 @@ func run(job: Dictionary) -> Dictionary:
 	water = raster.water
 	wall = raster.wall
 	factions = job.get("factions", PackedInt32Array([0, 0, 0, 0, 0, 0, 0, 0]))
+	tints = job.get("tints", PackedByteArray())
 	origin = Vector2(chunk) * CHUNK
 	var votes := {}
 	for f in factions:
@@ -117,13 +145,27 @@ func run(job: Dictionary) -> Dictionary:
 			best = votes[f]
 			majority = f
 	rng.seed = WorldGen.ihash(mapSeed, TAG_RECIPE, chunk.x, chunk.y)
+	startAt = ctx.get("start", Vector2.INF)
+	lotRects = ctx.get("lots", [])
+	laneSegs = ctx.get("lanes", [])
+	spawnTable = ctx.spawnable
+	blockedTable = ctx.blocked
+	lotTerrain = ctx.get("lotTerrain", 16)
 
+	var t := Time.get_ticks_usec()
+	var phases := {}
 	var out := {"control": controlBytes(job.get("aux", PackedByteArray()), job.get("coarseW", WorldGen.W))}
+	t = lap(phases, "control", t)
 	#walls: collision pieces, occluders and lips
-	var wallGrid := paddedGrid(wall)
-	var wallLoops := traceLoops(wallGrid, GW, GH, Vector2(-1.5, -1.5) * FINE, FINE)
+	var wallGrid := PackedFloat32Array()
+	var wallLoops: Array = []
+	if minWall < 0.0:
+		wallGrid = paddedGrid(wall)
+		wallLoops = traceLoops(wallGrid, GW, GH, Vector2(-1.5, -1.5) * FINE, FINE)
+	t = lap(phases, "trace", t)
 	var walls := wallPieces(wallLoops)
 	out.pieces = walls.pieces
+	t = lap(phases, "pieces", t)
 	var occluders := chains(wallLoops, SIMPLIFY[walls.level], wallGrid)
 	occluders = splitSpan(occluders, SPAN)
 	occluders.sort_custom(func(a, b): return polyLength(a) > polyLength(b))
@@ -138,7 +180,7 @@ func run(job: Dictionary) -> Dictionary:
 		for line in splitSpan(chains(wallLoops, LINE_SIMPLIFY, wallGrid), SPAN): lines.push_back([wallStrip, reversed(line)])
 	#water: the shore foam (the shader draws the water itself from the field)
 	var waterStrip: int = ctx.get("waterStrip", -1)
-	if waterStrip >= 0:
+	if waterStrip >= 0 && minWater < 0.0:
 		var waterGrid := paddedGrid(water)
 		var waterLoops := traceLoops(waterGrid, GW, GH, Vector2(-1.5, -1.5) * FINE, FINE)
 		for line in splitSpan(offBridges(chains(waterLoops, LINE_SIMPLIFY, waterGrid)), SPAN): lines.push_back([waterStrip, reversed(line)])
@@ -147,14 +189,23 @@ func run(job: Dictionary) -> Dictionary:
 		lines.pop_back()
 		dropped += 1
 	out.lines = lines
+	t = lap(phases, "lines", t)
 
 	#things on the ground: decorateChunk's spots first, then pickups, then props, then decor
 	resetReservations()
+	var landmarks := placeLandmarks(job.get("landmarks", []))
 	out.spots = placeSpots()
 	out.pickups = placePickups()
-	var props := placeProps()
+	t = lap(phases, "pickups", t)
+	var props := landmarks + placeProps()
+	t = lap(phases, "props", t)
 	var decor := placeDecor()
+	var roofs := placeRoofs()
+	if roofs.count > 0:
+		decor.buffers[roofs.id] = roofs.buffer
+		decor.count += roofs.count
 	out.decor = decor.buffers
+	t = lap(phases, "decor", t)
 
 	#the node budget: ground quads, the body, occluders, lines, one MultiMesh per decor id, then props
 	var fixed: int = GROUND_NODES + (1 if not out.pieces.is_empty() else 0) + occluders.size() + lines.size() + decor.buffers.size()
@@ -180,7 +231,15 @@ func run(job: Dictionary) -> Dictionary:
 	out.counts = {"nodes": nodes, "occluders": occluders.size() + propOccluders, "pieces": out.pieces.size(),
 		"props": kept.size(), "pickups": out.pickups.size(), "decor": decor.count, "lines": lines.size(),
 		"dropped": dropped, "simplify": SIMPLIFY[walls.level]}
+	lap(phases, "rest", t)
+	out.phases = phases
 	return out
+
+## Adds the usec since `since` to phases[key]; returns now
+static func lap(phases: Dictionary, key: String, since: int) -> int:
+	var now := Time.get_ticks_usec()
+	phases[key] = phases.get(key, 0) + now - since
+	return now
 
 #--- control texture ---------------------------------------------------------------------------------
 
@@ -192,47 +251,73 @@ func controlBytes(aux: PackedByteArray, coarseW: int) -> PackedByteArray:
 	var blocked: PackedByteArray = ctx.blocked
 	var layerOf: PackedByteArray = ctx.layerOf
 	var mainLayer: int = ctx.get("mainLayer", 0)
-	#surface ids over the apron: own cells, the apron copying the nearest own cell
+	#surface ids over the apron: own cells, the apron copying the nearest own cell; water and wall cells
+	#(-1 in layers) take a passable neighbour's surface below
 	var surf := PackedInt32Array()
 	surf.resize(RW * RH)
-	for j in RH:
-		for i in RW:
-			surf[j * RW + i] = terrain[clampi(j - 1, 0, FH - 1) * FW + clampi(i - 1, 0, FW - 1)]
-	#water and wall cells take a passable neighbour's surface (a few dilation passes, then the main ground)
 	var layers := PackedInt32Array()
 	layers.resize(RW * RH)
-	for k in RW * RH:
-		var t := surf[k]
-		layers[k] = -1 if blocked[t] != 0 else layerOf[t]
+	var open := PackedInt32Array() #the blocked cells still without a layer
+	for j in RH:
+		var row := clampi(j - 1, 0, FH - 1) * FW
+		for i in RW:
+			var k := j * RW + i
+			var t: int = terrain[row + clampi(i - 1, 0, FW - 1)]
+			surf[k] = t
+			if blocked[t] != 0:
+				layers[k] = -1
+				open.push_back(k)
+			else:
+				layers[k] = layerOf[t]
+	#a few dilation passes: each blocked cell takes the first of its +x, -x, +y, -y neighbours that had a layer
+	#before the pass (the rest keep the main ground)
 	for pass_ in 6:
-		var changed := false
-		var next := layers.duplicate()
-		for j in RH:
-			for i in RW:
-				var k := j * RW + i
-				if layers[k] >= 0: continue
-				for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
-					var x: int = i + d.x
-					var y: int = j + d.y
-					if x < 0 || y < 0 || x >= RW || y >= RH: continue
-					if layers[y * RW + x] >= 0:
-						next[k] = layers[y * RW + x]
-						changed = true
-						break
-		layers = next
-		if not changed: break
+		if open.is_empty(): break
+		var still := PackedInt32Array()
+		var setK := PackedInt32Array()
+		var setV := PackedInt32Array()
+		for k in open:
+			var i := k % RW
+			var v := -1
+			if i + 1 < RW && layers[k + 1] >= 0: v = layers[k + 1]
+			elif i > 0 && layers[k - 1] >= 0: v = layers[k - 1]
+			elif k + RW < RW * RH && layers[k + RW] >= 0: v = layers[k + RW]
+			elif k >= RW && layers[k - RW] >= 0: v = layers[k - RW]
+			if v >= 0:
+				setK.push_back(k)
+				setV.push_back(v)
+			else:
+				still.push_back(k)
+		if setK.is_empty(): break
+		for n in setK.size(): layers[setK[n]] = setV[n]
+		open = still
 	var out := PackedByteArray()
 	out.resize(RW * RH * 4)
 	var cell0 := WorldGen.cellOf(origin)
-	for j in RH:
-		for i in RW:
-			var k := j * RW + i
-			var t := surf[k]
-			var flags := 0
+	#each cell's district tint (the coarse cell's; the apron takes its nearest own cell's), as the flags' high bits
+	var tintBits := PackedInt32Array()
+	tintBits.resize(RW * RH)
+	if tints.size() == 8:
+		for j in RH:
+			var cy := 0 if j <= FH / 2 else 1
+			for i in RW:
+				var cx := clampi(floori((clampi(i - 1, 0, FW - 1) * FINE) / WorldGen.CELL), 0, 3)
+				tintBits[j * RW + i] = (tints[cy * 4 + cx] & 15) << 4
+	else:
+		tintBits.fill(8 << 4)
+	var k4 := 0
+	minWater = water[0]
+	minWall = wall[0]
+	for k in RW * RH:
+		var t := surf[k]
+		var flags := 0
+		if t == BRIDGE || t == CONVEYOR:
+			var i := k % RW
+			var j := k / RW
 			if t == BRIDGE:
 				flags |= FLAG_BRIDGE
 				if runLength(surf, i, j, Vector2i(0, 1)) > runLength(surf, i, j, Vector2i(1, 0)): flags |= FLAG_ROTATE
-			elif t == CONVEYOR:
+			else:
 				flags |= FLAG_BELT
 				var cx := clampi(floori(((i - 0.5) * FINE) / WorldGen.CELL), 0, 3) + cell0.x
 				var cy := clampi(floori(((j - 0.5) * FINE) / WorldGen.CELL), 0, 1) + cell0.y
@@ -240,10 +325,17 @@ func controlBytes(aux: PackedByteArray, coarseW: int) -> PackedByteArray:
 				if not aux.is_empty() && cx >= 0 && cy >= 0 && cx < coarseW && cy * coarseW + cx < aux.size(): code = aux[cy * coarseW + cx]
 				if code == 3 || code == 4: flags |= FLAG_ROTATE
 				if code == 2 || code == 4: flags |= FLAG_REVERSE
-			out[k * 4] = layers[k] if layers[k] >= 0 else mainLayer
-			out[k * 4 + 1] = encodeField(water[k])
-			out[k * 4 + 2] = encodeField(wall[k])
-			out[k * 4 + 3] = flags
+		var layer := layers[k]
+		out[k4] = layer if layer >= 0 else mainLayer
+		#encodeField, inlined (FIELD_RANGE is 1)
+		var fw := water[k]
+		var fh := wall[k]
+		if fw < minWater: minWater = fw
+		if fh < minWall: minWall = fh
+		out[k4 + 1] = clampi(roundi((fw * 0.5 + 0.5) * 255.0), 0, 255)
+		out[k4 + 2] = clampi(roundi((fh * 0.5 + 0.5) * 255.0), 0, 255)
+		out[k4 + 3] = flags | tintBits[k]
+		k4 += 4
 	return out
 
 static func runLength(surf: PackedInt32Array, i: int, j: int, d: Vector2i) -> int:
@@ -287,12 +379,20 @@ static func traceLoops(v: PackedFloat32Array, gw: int, gh: int, at0: Vector2, st
 	var pts := {}
 	var nxt := {}
 	for j in gh - 1:
+		#a sliding window along the row: the square's right corners become the next one's left corners
+		var top := j * gw
+		var bottom := top + gw
+		var b := v[top]
+		var c := v[bottom]
+		var right := (1 if b < 0.0 else 0) | (2 if c < 0.0 else 0) #b below 0: bit 1, c: bit 2 (as a, d next)
 		for i in gw - 1:
-			var a := v[j * gw + i]
-			var b := v[j * gw + i + 1]
-			var c := v[(j + 1) * gw + i + 1]
-			var d := v[(j + 1) * gw + i]
-			var code := (1 if a < 0.0 else 0) | (2 if b < 0.0 else 0) | (4 if c < 0.0 else 0) | (8 if d < 0.0 else 0)
+			var a := b
+			var d := c
+			var left := right
+			b = v[top + i + 1]
+			c = v[bottom + i + 1]
+			right = (1 if b < 0.0 else 0) | (2 if c < 0.0 else 0)
+			var code := (left & 1) | (right & 1) << 1 | (right & 2) << 1 | (left & 2) << 2
 			if code == 0 || code == 15: continue
 			#edges: 0 top, 1 right, 2 bottom, 3 left
 			var segs: Array = []
@@ -682,18 +782,22 @@ func factionAt(p: Vector2) -> int:
 ## Outside every reservation: the start's core, station lots, Defense lanes, things already placed
 func isFree(p: Vector2, radius: float) -> bool:
 	var w := origin + p
-	var start: Vector2 = ctx.get("start", Vector2.INF)
-	if w.distance_to(start) < START_CORE + radius: return false
-	for lot in ctx.get("lots", []):
+	if w.distance_to(startAt) < START_CORE + radius: return false
+	for lot in lotRects:
 		if lot.grow(radius).has_point(w): return false
-	for lane in ctx.get("lanes", []):
+	for lane in laneSegs:
 		if Geometry2D.get_closest_point_to_segment(w, lane[0], lane[1]).distance_to(w) < LANE_HALF + radius: return false
-	for r in reserved:
-		if p.distance_to(r[0]) < r[1] + radius: return false
+	for n in resPos.size():
+		if p.distance_to(resPos[n]) < resRad[n] + radius: return false
 	return true
 
 func resetReservations() -> void:
-	reserved.clear()
+	resPos.clear()
+	resRad.clear()
+
+func reserve(p: Vector2, radius: float) -> void:
+	resPos.push_back(p)
+	resRad.push_back(radius)
 
 func inChunk(p: Vector2, margin: float) -> bool:
 	return p.x >= margin && p.y >= margin && p.x <= CHUNK.x - margin && p.y <= CHUNK.y - margin
@@ -713,12 +817,73 @@ func placeSpots() -> Array:
 			if not spawnable(terrainAt(q)) || not clearOf(q, 0.3): ok = false
 		if not ok: continue
 		out.push_back(p)
-		reserved.push_back([p, 450.0])
+		reserve(p, 450.0)
+	return out
+
+## The districts' landmarks standing in this chunk (TALL props, placed before anything else): each at the
+## first spot round its district's cell, ring by ring, where it fits like any prop (open spawnable ground off
+## the roads, clear of water and walls, outside the start's core, station lots and lanes). Same entries as
+## placeProps. A landmark with no room in the chunk is left out.
+func placeLandmarks(list: Array) -> Array:
+	var out: Array = []
+	for entry in list:
+		var id: String = entry[0]
+		if not ctx.props.has(id): continue
+		var info: Dictionary = ctx.props[id]
+		var want: Vector2 = entry[1] - origin
+		var at := Vector2.INF
+		for ring in LANDMARK_RINGS + 1:
+			var steps := maxi(1, ring * 8)
+			for s in steps:
+				var p := want + Vector2.from_angle(TAU * s / steps) * ring * LANDMARK_STEP
+				if propFits(p, 0.0, info, id):
+					at = p
+					break
+			if at != Vector2.INF: break
+		if at == Vector2.INF: continue
+		out.push_back([id, at, 0.0, 0, -1, info.occluder])
+		reserve(at, info.radius + PROP_GAP * 0.5)
+	return out
+
+## Rooftop dressing (the city's BUILDING blocks): ctx.roofDecor's atlas cells on roof cells well inside the
+## parapet, spaced, square to the street grid. No collision (decor). {id, buffer, count}
+func placeRoofs() -> Dictionary:
+	var id: String = ctx.get("roofDecor", "")
+	var out := {"id": id, "buffer": PackedFloat32Array(), "count": 0}
+	if id == "" || minWall >= -ROOF_INSET: return out
+	var r := RandomNumberGenerator.new()
+	r.seed = WorldGen.ihash(mapSeed, TAG_ROOF, chunk.x, chunk.y)
+	var placed := PackedVector2Array()
+	var buf := PackedFloat32Array()
+	for j in FH:
+		for i in FW:
+			if terrain[j * FW + i] != BUILDING: continue
+			for dart in ROOF_TRIES:
+				if out.count >= ROOF_MAX: break
+				var p := Vector2((i + r.randf()) * FINE, (j + r.randf()) * FINE)
+				var roll := r.randf()
+				var quarter := r.randi() % 4
+				var sc := r.randf_range(1.15, 1.6)
+				if fieldAt(wall, p) > -ROOF_INSET: continue
+				var near := false
+				for q in placed:
+					if q.distance_squared_to(p) < ROOF_GAP * ROOF_GAP:
+						near = true
+						break
+				if near: continue
+				#AC units and vents are common, tanks and skylights rarer
+				var cell := 0 if roll < 0.38 else (1 if roll < 0.68 else (3 if roll < 0.86 else 2))
+				var rot := quarter * PI * 0.5
+				var c := cos(rot) * sc
+				var sn := sin(rot) * sc
+				buf.append_array([c, -sn, 0.0, p.x, sn, c, 0.0, p.y, (cell + 0.5) / 4.0, 0.0, 0.0, 0.0])
+				placed.push_back(p)
+				out.count += 1
+	out.buffer = buf
 	return out
 
 func spawnable(t: int) -> bool:
-	var s: PackedByteArray = ctx.spawnable
-	return t >= 0 && t < s.size() && s[t] != 0
+	return t >= 0 && t < spawnTable.size() && spawnTable[t] != 0
 
 ## The level's pickups: pickupsPerChunk kinds from pickupTable, each on open spawnable ground. Bits number
 ## them for the taken set (coins one each); past bit 31 a pickup has none and comes back on a reload.
@@ -754,7 +919,7 @@ func placePickups() -> Array:
 				for c in coins:
 					out.push_back(["coin", c, bit if bit < 32 else -1])
 					bit += 1
-					reserved.push_back([c, 70.0])
+					reserve(c, 70.0)
 				break
 		else:
 			var id: String = ctx.get("pickupIds", {}).get(kind, kind)
@@ -763,7 +928,7 @@ func placePickups() -> Array:
 				if not pickupFits(p, 90.0): continue
 				out.push_back([id, p, bit if bit < 32 else -1])
 				bit += 1
-				reserved.push_back([p, 90.0])
+				reserve(p, 90.0)
 				break
 	return out
 
@@ -786,13 +951,43 @@ func pickFrom(table: Dictionary, r: RandomNumberGenerator) -> String:
 		if roll < 0.0: return String(k)
 	return String(table.keys().back())
 
+## The faction tables of a ctx entry ({faction: {id: weight}}) as [ids, weights, total] per faction, so a pick
+## doesn't walk a Dictionary twice. pickFrom's result, roll for roll.
+static func pickTables(tables: Dictionary) -> Dictionary:
+	var out := {}
+	for f in tables:
+		var table: Dictionary = tables[f]
+		var ids := PackedStringArray()
+		var weights := PackedFloat64Array()
+		var total := 0.0
+		for k in table:
+			ids.push_back(String(k))
+			weights.push_back(float(table[k]))
+			total += float(table[k])
+		out[f] = [ids, weights, total]
+	return out
+
+static func pickFast(entry: Array, r: RandomNumberGenerator) -> String:
+	var total: float = entry[2]
+	if total <= 0.0: return ""
+	var ids: PackedStringArray = entry[0]
+	var weights: PackedFloat64Array = entry[1]
+	var roll := r.randf() * total
+	for n in ids.size():
+		roll -= weights[n]
+		if roll < 0.0: return ids[n]
+	return ids[ids.size() - 1]
+
 ## Open share of the chunk (passable fine cells)
 func openShare() -> float:
-	var blocked: PackedByteArray = ctx.blocked
-	var open := 0
-	for t in terrain:
-		if blocked[t] == 0: open += 1
-	return float(open) / terrain.size()
+	if openShareCache < 0.0:
+		var open := 0
+		for t in terrain:
+			if blockedTable[t] == 0: open += 1
+		openShareCache = float(open) / terrain.size()
+	return openShareCache
+
+var openShareCache := -1.0
 
 ## Props by the dressing of each spot's district faction (LOW, TALL, STATEFUL, WALL from props.json), Poisson
 ## spaced by dart throwing: never on a blocked, lethal, shallows, bridge or belt cell, never on a road
@@ -802,6 +997,7 @@ func placeProps() -> Array:
 	var out: Array = []
 	var tables: Dictionary = ctx.get("propTables", {})
 	if tables.is_empty(): return out
+	var picks := pickTables(tables)
 	var r := RandomNumberGenerator.new()
 	r.seed = WorldGen.ihash(mapSeed, TAG_PROP, chunk.x, chunk.y)
 	var target := roundi(float(ctx.get("propsPerChunk", 16)) * openShare())
@@ -809,9 +1005,9 @@ func placeProps() -> Array:
 	for attempt in target * 14:
 		if out.size() >= target: break
 		var p := Vector2(r.randf_range(100.0, CHUNK.x - 100.0), r.randf_range(100.0, CHUNK.y - 100.0))
-		var table: Dictionary = tables.get(factionAt(p), tables.get(majority, {}))
-		if table.is_empty(): table = tables.values()[0]
-		var id := pickFrom(table, r)
+		var entry: Array = picks.get(factionAt(p), picks.get(majority, EMPTY_PICK))
+		if entry[0].is_empty(): entry = picks.values()[0]
+		var id := pickFast(entry, r)
 		if id == "": continue
 		var info: Dictionary = ctx.props[id]
 		var rot := r.randf() * TAU
@@ -831,7 +1027,7 @@ func placeProps() -> Array:
 				bit = breakBit
 				breakBit += 1
 			out.push_back([id, q, rot, r.randi() % maxi(int(info.variants), 1), bit, info.occluder])
-			reserved.push_back([q, info.radius + PROP_GAP * 0.5])
+			reserve(q, info.radius + PROP_GAP * 0.5)
 		if out.size() >= target: break
 	return out
 
@@ -856,35 +1052,52 @@ func placeDecor() -> Dictionary:
 	var count := 0
 	var tables: Dictionary = ctx.get("decorTables", {})
 	if tables.is_empty(): return {"buffers": buffers, "count": 0}
+	var picks := pickTables(tables)
 	var r := RandomNumberGenerator.new()
 	r.seed = WorldGen.ihash(mapSeed, TAG_DECOR, chunk.x, chunk.y)
 	var target := roundi(float(ctx.get("decorPerChunk", 110)) * openShare())
 	var decorInfo: Dictionary = ctx.get("decor", {})
+	#instances go into one flat list first (each with its id's index), then one buffer per id in the order the
+	#ids first came up: appending to a buffer held in a Dictionary would copy it every time
+	var order := PackedStringArray()
+	var slotOf := {}
+	var slots := PackedInt32Array()
+	var flat := PackedFloat32Array()
 	for attempt in target * 3:
 		if count >= target: break
 		var p := Vector2(r.randf() * CHUNK.x, r.randf() * CHUNK.y)
-		var table: Dictionary = tables.get(factionAt(p), tables.get(majority, {}))
-		if table.is_empty(): continue
-		var id := pickFrom(table, r)
+		var entry: Array = picks.get(factionAt(p), picks.get(majority, EMPTY_PICK))
+		if entry[0].is_empty(): continue
+		var id := pickFast(entry, r)
 		if id == "": continue
 		var info: Dictionary = decorInfo[id]
 		var t := terrainAt(p)
 		if not decorFits(t, p, info): continue
 		var rot := r.randf() * TAU
-		var s := r.randf_range(0.8, 1.2)
+		var sc := r.randf_range(0.8, 1.2)
 		var cell := r.randi() % 4
-		var buf: PackedFloat32Array = buffers.get(id, PackedFloat32Array())
-		var c := cos(rot) * s
-		var sn := sin(rot) * s
-		buf.append_array(PackedFloat32Array([c, -sn, 0.0, p.x, sn, c, 0.0, p.y, (cell + 0.5) / 4.0, 0.0, 0.0, 0.0]))
-		buffers[id] = buf
+		var slot: int = slotOf.get(id, -1)
+		if slot < 0:
+			slot = order.size()
+			slotOf[id] = slot
+			order.push_back(id)
+		var c := cos(rot) * sc
+		var sn := sin(rot) * sc
+		slots.push_back(slot)
+		flat.append_array([c, -sn, 0.0, p.x, sn, c, 0.0, p.y, (cell + 0.5) / 4.0, 0.0, 0.0, 0.0])
 		count += 1
+	for slot in order.size():
+		var buf := PackedFloat32Array()
+		for n in slots.size():
+			if slots[n] == slot: buf.append_array(flat.slice(n * 12, n * 12 + 12))
+		buffers[order[slot]] = buf
 	return {"buffers": buffers, "count": count}
 
+static var EMPTY_PICK := [PackedStringArray(), PackedFloat64Array(), 0.0]
+
 func decorFits(t: int, p: Vector2, info: Dictionary) -> bool:
-	var blocked: PackedByteArray = ctx.blocked
-	if t < 0 || t >= blocked.size() || blocked[t] != 0 || t == BRIDGE || t == CONVEYOR: return false
-	var road: bool = t == ASPHALT || t == OIL || t == ctx.get("lotTerrain", 16)
+	if t < 0 || t >= blockedTable.size() || blockedTable[t] != 0 || t == BRIDGE || t == CONVEYOR: return false
+	var road: bool = t == ASPHALT || t == OIL || t == lotTerrain
 	match info.get("place", ""):
 		"road": if not road: return false
 		"wet": if t != SHALLOWS && fieldAt(water, p) > 0.6: return false

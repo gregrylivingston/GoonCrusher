@@ -68,3 +68,16 @@ func test_drop_shares_add_up_in_every_mode():
 		var total := 0.0
 		for id in Pickups.DATA: total += Goonopedia.dropShare(id, mode)
 		assert_true(absf(total - 100.0) < 0.01, "mode %d: shares sum to 100%%, got %f" % [mode, total])
+
+func test_every_level_card_names_its_act_barrier_and_surfaces():
+	var page = add_child_autofree(Goonopedia.new())
+	page.setTab(Goonopedia.Tab.LEVELS)
+	for i in Levels.count():
+		var def := Levels.defAt(i)
+		assert_true(def.barrier != "" && def.surfaces != "", "%s: barrier and surfaces text" % def.id)
+		page.showDetail({"kind": "level", "key": i})
+		var texts := PackedStringArray()
+		for node in page.detail.find_children("*", "Label", true, false): texts.push_back(node.text)
+		var all := "\n".join(texts)
+		for want in ["ACT %d" % def.act, "BARRIER", "SURFACES", def.barrier, def.surfaces]:
+			assert_true(all.contains(want), "%s card shows %s" % [def.id, want])

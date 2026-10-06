@@ -10,6 +10,8 @@ poster = "res://world/art/posters/canyon.png"
 act = 1
 order = 2
 blurb = "Ridged canyon walls and mesas box the roads in. A pass opens every chunk, and the dry washes are the fast lanes."
+barrier = "Red canyon walls and mesas. A pass opens through them every chunk."
+surfaces = "Hardpan dirt, sand dunes that drag, dry washes that run fast."
 startPosition = Vector2(2129, 1227)
 seconds = 340
 spawnTimer = 4.2
@@ -40,15 +42,15 @@ accents = [12, 1]
 dressing = {
 0: {
 &"saguaro": 5,
-&"rock": 4,
-&"boulder": 2,
+&"rock_red": 4,
+&"boulder_red": 2,
 &"deadtree": 2,
 &"bones": 3,
 &"carcass": 2,
 &"pebbles": 6
 },
 1: {
-&"rock": 3,
+&"rock_red": 3,
 &"totem": 2,
 &"tent": 2,
 &"firepit": 2,
@@ -56,7 +58,7 @@ dressing = {
 &"barrel": 1
 },
 2: {
-&"rock": 3,
+&"rock_red": 3,
 &"wreck": 2,
 &"tyres": 2,
 &"barrel": 2,
@@ -64,13 +66,13 @@ dressing = {
 }
 }
 pickupTable = {
-&"coinline": 4,
-&"fuel": 4,
-&"health": 2,
-&"purse": 1,
-&"slot": 1
+&"coinline": 37,
+&"fuel": 46,
+&"health": 8,
+&"purse": 5,
+&"slot": 4
 }
-pickupsPerChunk = 3
+pickupsPerChunk = 1
 palette = {
 &"ground": Color(0.62, 0.42, 0.28, 1),
 &"accent": Color(0.7, 0.55, 0.38, 1),
