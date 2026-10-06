@@ -32,6 +32,7 @@ const PRESET := {
 	"gfx/pickup_fx":       [0, 0, 1, 1],
 	"gfx/celebration":     [0, 1, 2, 2],
 	"gfx/reward_fx":       [0, 1, 2, 2],
+	"gfx/ground":          [0, 1, 1, 1],        #ground detail (gc_ground_quality): simple, full
 	"audio_perf/max_sfx":  [8, 12, 24, 24],
 }
 
@@ -66,6 +67,7 @@ const DEFAULTS := {
 	"gfx/pickup_fx": 1,
 	"gfx/celebration": 2,
 	"gfx/reward_fx": 2,
+	"gfx/ground": 1,
 	"audio_perf/max_sfx": 24,
 
 	"audio/master": 0.8,
@@ -115,6 +117,7 @@ const OPTIONS := {
 	"gfx/pickup_fx": [0, 1],
 	"gfx/celebration": [0, 1, 2],
 	"gfx/reward_fx": [0, 1, 2],
+	"gfx/ground": [0, 1],
 	"audio_perf/max_sfx": [8, 12, 24],
 	"gameplay/speed_units": ["mph", "kmh"],
 	"gameplay/car_paint": ["weathered", "showroom"],
@@ -557,6 +560,7 @@ func applyShaderGlobals() -> void:
 		tint = Color(tint.r / peak, tint.g / peak, tint.b / peak)
 	RenderingServer.global_shader_parameter_set("gc_giant_color", tint)
 	RenderingServer.global_shader_parameter_set("gc_flash", 0.3 if get_value("access/reduce_flashing") else 1.0)
+	RenderingServer.global_shader_parameter_set("gc_ground_quality", get_value("gfx/ground"))
 
 func applyAudio() -> void:
 	for channel in AUDIO_BUSES:

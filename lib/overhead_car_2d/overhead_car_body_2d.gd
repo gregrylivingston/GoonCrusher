@@ -262,9 +262,12 @@ func _physics_process(delta):
 		var collision = get_slide_collision( i )
 		var collider = collision.get_collider()
 		##colide with an unmovable static object like a rock
-		#a breakable (fence, hedge, crate...) hit fast enough is smashed, with no wall damage
-		if collider.has_method("smash") && hitVelocity.length() >= smashSpeedOf(collider):
-			collider.smash(self)
+		#a breakable (fence, hedge, crate...) hit fast enough is smashed, with no wall damage; an explosive
+		#(barrel) goes off. Baked props carry smashSpeed as metadata (BreakableProp), scripted ones as a property.
+		if (collider.has_method("smash") || BreakableProp.isBreakable(collider)) && hitVelocity.length() >= smashSpeedOf(collider):
+			if collider.has_method("smash"): collider.smash(self)
+			else: BreakableProp.smashNode(collider, self)
+			velocity = hitVelocity * BreakableProp.SPEED_KEEP #the slide stopped the car; a smash barely slows it
 		elif velocity.length() > 0.01 && World.isWall(collider):
 			collideWithFixedObject( collision, hitVelocity )
 		elif collider is CharacterBody2D:
@@ -373,10 +376,12 @@ static func wallImpact(normal: Vector2, vel: Vector2) -> float:
 static func wallSpeedKeep(impact: float) -> float:
 	return lerpf(1.0, WALL_SPEED_KEEP, impact)
 
-#the speed a breakable needs to be smashed (its smashSpeed; 0 when it has none)
+#the speed a breakable needs to be smashed (its smashSpeed property, else BreakableProp's metadata; 0 when
+#it has neither)
 static func smashSpeedOf(breakable: Object) -> float:
 	var need = breakable.get("smashSpeed")
-	return float(need) if need != null else 0.0
+	if need != null: return float(need)
+	return BreakableProp.speedOf(breakable) if BreakableProp.isBreakable(breakable) else 0.0
 
 var sparks = preload("res://scene/fx/spark/spark.tscn")
 func collideWithFixedObject( collision, hitVelocity = null ):

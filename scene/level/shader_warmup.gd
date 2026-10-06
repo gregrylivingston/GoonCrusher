@@ -35,6 +35,16 @@ func _ready():
 		for child in pickup.get_children(): child.free() #keep only the sprite and its material
 		pickup.set_script(null)
 		add_child(pickup)
+	#the world's ground and decor shaders (gc_ground_quality), lit and unlit
+	for path in ["res://shader/ground.gdshader", "res://shader/world_decor.gdshader", "res://shader/world_decor_glow.gdshader"]:
+		var quad = MeshInstance2D.new()
+		var mesh = QuadMesh.new()
+		mesh.size = Vector2(32, 32)
+		quad.mesh = mesh
+		quad.material = ShaderMaterial.new()
+		quad.material.shader = load(path)
+		quad.position = Vector2(80, 0)
+		add_child(quad)
 	var puff = load("res://texture/animation/smoke.tscn").instantiate()
 	puff.pooled = true
 	add_child(puff)

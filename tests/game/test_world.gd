@@ -321,15 +321,6 @@ func test_bridges_and_shallows_are_safe():
 		for i in 5: car.checkGround(Vector2(10, 10))
 	assert_eq(car.destroyed, 0)
 
-func test_water_area_drowns_goons_but_not_the_car():
-	var goon = load("res://scene/enemy/walker/walker.tscn").instantiate()
-	var car = load("res://scene/car/car.tscn").instantiate()
-	var water = load("res://scene/level/terrain/landscapeMap_water.tscn").instantiate()
-	var area = water.get_node("Area2D")
-	assert_true(area.collision_mask & goon.collision_layer != 0, "water drowns goons")
-	assert_eq(area.collision_mask & car.collision_layer, 0, "the car dies by World.lethalAt, not the Area2D")
-	for node in [goon, car, water]: node.free()
-
 #--- lighting ------------------------------------------------------------------------------------
 
 func test_lighting_low_keeps_world_occluders():
@@ -351,7 +342,7 @@ func test_lighting_low_keeps_world_occluders():
 
 func test_rocks_walls_and_the_station_mark_their_occluders():
 	Settings.set_value("gfx/lighting", 0, false)
-	var rock = load("res://scene/scenery/rocks1.tscn").instantiate()
+	var rock = load("res://world/art/props/rock.tscn").instantiate()
 	add_child_autofree(rock)
 	assert_true(rock.get_node("LightOccluder2D").get_meta("gc_world", false), "rock occluders are world geometry")
 	assert_true(rock.get_node("LightOccluder2D").visible, "and stay on at Lighting Low")
@@ -359,7 +350,9 @@ func test_rocks_walls_and_the_station_mark_their_occluders():
 	assert_true(wall.get_node("LightOccluder2D").get_meta("gc_world", false), "concrete walls too")
 	wall.free()
 	var station = load("res://scene/level/station.tscn").instantiate()
-	assert_true(station.get_node("Polygon2D/house/LightOccluder2D").get_meta("gc_world", false), "and the station house")
+	assert_true(station.get_node("house/LightOccluder2D").get_meta("gc_world", false), "and the station house")
+	for side in ["wallNorth", "wallSouth", "wallWest", "wallEast"]:
+		assert_true(station.get_node(side + "/LightOccluder2D").get_meta("gc_world", false), "and the station's %s" % side)
 	station.free()
 	var goon = load("res://scene/enemy/walker/walker.tscn").instantiate()
 	for occluder in goon.find_children("*", "LightOccluder2D", true, false):

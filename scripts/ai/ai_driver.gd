@@ -48,6 +48,7 @@ const STOPPED_SPEED = 60.0   #below this, reversing is always among the choices 
 #costs are in seconds of estimated arrival time; the tunable ones are profile parameters (AIProfiles)
 const LETHAL_COST = 1000.0    #driving into water
 const SHALLOWS_COST = 0.3     #per second of a plan with a wheel in shallows: slow and slippery, never deadly
+const WET_CORNER_SHARE = 0.3  #per second of a plan with a corner (not the centre) over deep water, this share of LETHAL_COST
 
 const GOAL_RADIUS = {"pickup":70.0, "goon":80.0, "station":300.0, "roam":600.0, "patrol":600.0, "escape":300.0}
 const PURSE_QUANTITY = 10.0   #purse.tscn is a "coin" powerup with this quantity
@@ -94,6 +95,7 @@ var planHit := false
 var speedCap := INF           #fuel saving (updateSpeedCap)
 var throttleCap := INF        #what the throttle actually holds to: speedCap, or slower near rocks
 var rockyPickups := {}        #pickup instance id -> amongRocks
+var wetPickups := {}          #pickup instance id -> too close to deep water to go for (nearWater)
 var goalCareful := false      #the goal sits among rocks (fuel in a rock ring): go in slowly
 
 var goal: Dictionary = {}
@@ -185,6 +187,9 @@ func decide() -> void:
 	var t1 = Time.get_ticks_usec()
 	aim = aimPoint(goalPosition())
 	var t2 = Time.get_ticks_usec()
+	#a recovery plan runs blind for a second; deep water coming up ends it, so the planner takes over
+	if tick < recoverUntil && car.velocity.length() > 50.0 && WorldHooks.lethalAhead(car.global_position, car.velocity.normalized(), car.velocity.length() * 0.8 + 200.0) < INF:
+		recoverUntil = tick
 	if tick % p.scanTicks == 1 && tick >= recoverUntil: choosePlan()
 	var t3 = Time.get_ticks_usec()
 	checkProgress()
@@ -202,6 +207,10 @@ func decide() -> void:
 		throttleCap = minf(throttleCap, p.stationSpeed)
 	#going for a goon: fast enough to crush it, whatever fuel saving says
 	if goal.get("kind") == "goon" && goalValid(): throttleCap = maxf(throttleCap, crushNeed(goal.node) * CRUSH_MARGIN * 1.05)
+	#deep water ahead: lift off early (the plans brake or turn; shallows give little grip to do it with)
+	var speed := car.velocity.length()
+	if speed > p.waterSpeed && WorldHooks.lethalAhead(car.global_position, car.velocity / speed, speed * p.waterLookSeconds * 1.5) < INF:
+		throttleCap = minf(throttleCap, p.waterSpeed)
 	keys = keysFor(plan, tick - planTick, forwardSpeed(), throttleCap)
 	if speedCap < INF: stats.eco_seconds += 1.0 / Engine.physics_ticks_per_second
 	if debug && tick % p.scanTicks == 1: queue_redraw()
@@ -245,7 +254,7 @@ func updateGoal() -> void:
 		if not is_instance_valid(pickup) || pickup.is_queued_for_deletion() || not pickup.visible || not pickup.has_node("Area2D"):
 			known.erase(id)
 			continue
-		if AIRoute.isBlocked(route.terrainAt(pickup.global_position)): continue
+		if AIRoute.isBlocked(route.terrainAt(pickup.global_position)) || wetPickup(pickup): continue
 		var value = pickupValue(pickup.powerup, pickup.quantity, car.fuel, car.health, need) * p.pickupScale
 		options.push_back({"kind":"pickup", "node":pickup, "value":value, "key":str(id), "type":pickup.powerup})
 	#goons only die by being crushed, so crushing is also the defence: every goon left alive joins
@@ -254,6 +263,7 @@ func updateGoal() -> void:
 		var near: Array = []
 		for g in Root.spawnManager.goons:
 			if is_instance_valid(g) && not g.isDying() && g.global_position.distance_squared_to(carPos) < p.goonTargetPx * p.goonTargetPx && canSee(g.global_position):
+				if p.waterGoonPx > 0.0 && WorldHooks.nearLethal(g.global_position, p.waterGoonPx): continue #lured to the bank: let it swim
 				near.push_back(g)
 		for g in near:
 			var neighbours = 0
@@ -314,7 +324,9 @@ func objectiveGoal() -> Dictionary:
 		Root.gameModes.DEFENSE:
 			if is_instance_valid(Root.station):
 				if roamPoint == Vector2.INF || tick > roamUntil || car.global_position.distance_to(roamPoint) < GOAL_RADIUS.patrol:
-					roamPoint = Root.station.global_position + Vector2.from_angle(randf() * TAU) * randf_range(600.0, 1800.0)
+					for attempt in 8: #a patrol point on dry land, clear of the water's edge
+						roamPoint = Root.station.global_position + Vector2.from_angle(randf() * TAU) * randf_range(600.0, 1800.0)
+						if not nearWater(roamPoint): break
 					roamUntil = tick + 15 * Engine.physics_ticks_per_second
 				return {"kind":"patrol", "pos":roamPoint, "value":4.0, "key":"patrol"}
 	if roamPoint == Vector2.INF || tick > roamUntil || car.global_position.distance_to(roamPoint) < GOAL_RADIUS.roam:
@@ -457,10 +469,20 @@ func pickRoamPoint() -> Vector2:
 			score += 1.5 * forward.dot((centre - car.global_position).normalized())
 			if score > bestScore:
 				var spot = centre + Vector2(randf_range(-400, 400), randf_range(-400, 400))
-				if not AIRoute.isBlocked(route.terrainAt(spot)) && route.plan(car.global_position, spot).reached:
+				if not AIRoute.isBlocked(route.terrainAt(spot)) && not nearWater(spot) && route.plan(car.global_position, spot).reached:
 					bestScore = score
 					best = spot
 	return best if best != Vector2.INF else car.global_position + forward * 2000.0
+
+#too close to deep water to drive to at speed: within waterTargetPx of a lethal cell, unless on a bridge deck
+func nearWater(point: Vector2) -> bool:
+	return route.terrainAt(point) != Root.terrain.BRIDGE && WorldHooks.nearLethal(point, p.waterTargetPx)
+
+#pickups don't move, so the answer is kept per pickup
+func wetPickup(pickup: Node) -> bool:
+	var id = pickup.get_instance_id()
+	if not wetPickups.has(id): wetPickups[id] = nearWater(pickup.global_position)
+	return wetPickups[id]
 
 static func isRegionMaxed(region: int) -> bool:
 	if region < 0: return true #barriers pay nothing
@@ -761,9 +783,15 @@ func scoreRollout(rollout: Dictionary, target: Vector2) -> float:
 			if speeds[i] < CRUSH_SPEED: cost += p.slowGoonCost * segment * goonsNear(path[i])
 		var ground = footprintTerrain(path[i], headings[i])
 		if World.isLethal(ground):
-			rollout.hitSeconds = i * segment
-			return LETHAL_COST * (2.0 - float(i) / last)
+			#the car dies once its centre is over deep water: that ends the plan. A corner over it (the
+			#footprint has a margin) is a near miss: very dear, but a plan that keeps the centre out still
+			#beats one that doesn't when every choice is wet (a car already on the edge)
+			if World.lethalAt(path[i]) || World.lethalAt(path[i].lerp(path[i - 1], 0.5)):
+				rollout.hitSeconds = i * segment
+				return LETHAL_COST * (2.0 - float(i) / last)
+			cost += LETHAL_COST * WET_CORNER_SHARE * segment
 		if ground == Root.terrain.SHALLOWS: cost += SHALLOWS_COST * segment
+		cost += waterAheadCost(path[i - 1], path[i], speeds[i]) * segment
 		var fraction = 0.0 if World.isWallTerrain(ground) else sweep(path[i - 1], headings[i - 1], path[i] - path[i - 1], i == 1)
 		if fraction < 1.0:
 			rollout.hit = true
@@ -793,7 +821,21 @@ func scoreRollout(rollout: Dictionary, target: Vector2) -> float:
 		var heading = headings[last].normalized()
 		var clear = sweep(end, heading, heading * reach, false)
 		if clear < 1.0: cost += p.probeCost * (1.0 - clear)
+		var wet = WorldHooks.lethalAhead(end, heading, reach) #deep water counts like a wall there, only more so
+		if wet < INF: cost += p.probeCost * 2.0 * (1.0 - wet / (reach + WorldHooks.FINE))
 	return cost + metCost(met)
+
+#Deep water along the direction of travel within waterLookSeconds of a point of a plan: the closer and the
+#faster, the more it costs per second of the plan, so plans that turn away or brake early win long before
+#the footprint would touch it (by then, at 700 px/s on shallows, it is too late to stop)
+func waterAheadCost(from: Vector2, to: Vector2, speed: float) -> float:
+	if speed < 100.0 || p.waterNearCost <= 0.0: return 0.0
+	var motion = to - from
+	if motion.length_squared() < 1.0: return 0.0
+	var reach = speed * p.waterLookSeconds
+	var wet = WorldHooks.lethalAhead(to, motion.normalized(), reach)
+	if wet == INF: return 0.0
+	return p.waterNearCost * (1.0 - wet / (reach + WorldHooks.FINE)) * speed / 400.0
 
 #a crush takes crushReward off a plan; bouncing off a goon too tough to crush costs like a light wall hit
 func metCost(met: Dictionary) -> float:
@@ -886,7 +928,7 @@ func checkProgress() -> void:
 		stats.escapes += 1
 		escapePoint = car.global_position - car.global_transform.x * 1500.0
 		for i in range(trail.size() - 1 - ESCAPE_BACK_SAMPLES, -1, -1):
-			if trail[i].distance_to(car.global_position) > ESCAPE_MIN_PX:
+			if trail[i].distance_to(car.global_position) > ESCAPE_MIN_PX && not World.lethalAt(trail[i]):
 				escapePoint = trail[i]
 				break
 		escapeUntil = tick + 8 * Engine.physics_ticks_per_second
@@ -904,9 +946,10 @@ func checkProgress() -> void:
 func roomiest(candidates: Array) -> Dictionary:
 	var best = {"room":-INF}
 	for candidate in candidates:
-		var rollout = simulate(candidate, horizonTicks())
+		var rollout = simulate(candidate, maxi(horizonTicks(), Engine.physics_ticks_per_second + 30)) #at least the blind second and then some
 		var room = 0.0
 		for i in range(1, rollout.path.size()):
+			if World.isLethal(footprintTerrain(rollout.path[i], rollout.headings[i])): break #no room in the water
 			var fraction = sweep(rollout.path[i - 1], rollout.headings[i - 1], rollout.path[i] - rollout.path[i - 1], i == 1)
 			room += fraction
 			if fraction < 1.0: break

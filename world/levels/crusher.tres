@@ -6,7 +6,7 @@
 script = ExtResource("1_def")
 id = &"crusher"
 displayName = "The Crusher"
-poster = "res://texture/background/iceBackground.png"
+poster = "res://world/art/posters/crusher.png"
 act = 3
 order = 7
 blurb = "The Scrap Gang's home: yard plots walled by scrap mountains, container rows, tank farms and conveyor lanes."
@@ -70,7 +70,6 @@ pickupTable = {
 &"slot": 1
 }
 pickupsPerChunk = 3
-objectTiles = Array[int]([0])
 palette = {
 &"ground": Color(0.44, 0.4, 0.36, 1),
 &"accent": Color(0.36, 0.33, 0.3, 1),

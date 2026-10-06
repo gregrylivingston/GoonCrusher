@@ -19,6 +19,9 @@ extends Node
 #copy, so a benchmark never changes player progress. Columns include chunk_ms (main-thread chunk
 #build/apply time that frame, read from TileManager.chunkMs when the world code provides it; 0
 #otherwise) and occluders (visible LightOccluder2Ds, sampled every 0.5 s like lights).
+#--pattern=none|sine|circle|route replaces the scenario's driving. --at=water|wall|x,y moves the car, once the
+#world is ready, next to the nearest deep water or wall (a coarse barrier cell beside open ground) or to a
+#world point, to look at the world's edges (with --shot). --zoom=0.4 holds the camera's zoom. --seed=N plays another map than 1337 (a playtest's seed, say).
 
 const LEVELS = "res://scene/level/levels/"
 const SCENARIOS = {
@@ -65,6 +68,8 @@ var gameMode: int = Root.gameModes.GOONCRUSHER #--mode
 var levelSeconds: float = -1.0 #--level-seconds; -1 keeps the level's own
 var runEndReported := false
 var worldReported := false
+var at := "" #--at
+var zoom := 0.0 #--zoom
 
 func _ready():
 	var args = parseArgs()
@@ -80,6 +85,9 @@ func _ready():
 		return
 	cfg = SCENARIOS[id].duplicate()
 	if args.has("car"): cfg.car = str(args.car)
+	if args.has("pattern"): cfg.pattern = str(args.pattern)
+	at = str(args.get("at", ""))
+	zoom = float(args.get("zoom", 0.0))
 	if cfg.level != "": levelPath = resolveLevel(cfg.level)
 	if args.has("level"):
 		levelPath = resolveLevel(str(args.level))
@@ -174,7 +182,7 @@ func onNodeAdded(node: Node) -> void:
 	if stripText && node is CanvasItem && node.material is ShaderMaterial && node.material.shader && node.material.shader.code.contains("VERTEX_ID>>1"):
 		node.material = null
 	if node is TileManager:
-		node.worldSeed = 1337
+		node.worldSeed = int(parseArgs().get("seed", 1337)) #--seed=N: another map
 	elif node is Level:
 		if levelSeconds >= 0.0: node.seconds = levelSeconds #before _ready, so every mode sees it
 	elif node is SpawnManager:
@@ -286,12 +294,14 @@ func levelEvents() -> void:
 		Root.levelRoot.seconds = maxf(Root.levelRoot.seconds, 30.0) #a benchmark run never ends on time
 	if Root.levelRoot.clockReady && not worldReported:
 		worldReported = true
+		if at != "": moveCar()
 		print("BENCH_WORLD mode=%s clock=%.1f station=%s start=%s" % [Root.gameModes.find_key(gameMode), Root.levelRoot.seconds,
 			str(Root.station.global_position) if is_instance_valid(Root.station) else "none", str(Root.levelRoot.startPosition)])
 	if Root.levelRoot.hasEnded && not runEndReported:
 		runEndReported = true
 		print("BENCH_RUN_ENDED mode=%s reason=%s level_time=%.1f station=%s" % [Root.gameModes.find_key(gameMode),
 			Root.endCondition.find_key(Root.levelRoot.endReason), levelTime, str(Root.station.global_position) if is_instance_valid(Root.station) else "none"])
+	if zoom > 0.0 && Root.playerCar.has_node("Camera2D"): Root.playerCar.get_node("Camera2D").zoom = Vector2(zoom, zoom)
 	for system in damage:
 		if Root.playerCar.condition.get(system, -1.0) != damage[system]: Root.playerCar.setCondition(system, damage[system])
 	if headlights >= 0 && Root.playerCar.headlights != headlights:
@@ -310,6 +320,34 @@ func levelEvents() -> void:
 		var purse = Root.getSpecificPowerup(Root.upgrade.PURSE)
 		purse.global_position = Root.playerCar.global_position
 		Root.levelRoot.add_child(purse)
+
+#--at: the car beside the nearest barrier of a kind (water or wall), facing it from 900 px, or at x,y
+func moveCar() -> void:
+	var map: WorldMap = Root.worldMap
+	var car = Root.playerCar
+	if map == null || not is_instance_valid(car): return
+	var target := Vector2.INF
+	if at.contains(","):
+		target = Vector2(float(at.get_slice(",", 0)), float(at.get_slice(",", 1)))
+	else:
+		var start := map.coarseCell(car.global_position)
+		for ring in range(2, 60):
+			for dy in range(-ring, ring + 1):
+				for dx in range(-ring, ring + 1):
+					if maxi(absi(dx), absi(dy)) != ring || target != Vector2.INF: continue
+					var cell := start + Vector2i(dx, dy)
+					var i := map.cellIndex(cell)
+					if i < 0 || map.flags[i] & WorldGen.BLOCKED == 0: continue
+					var water := map.terrain[i] == Root.terrain.WATER
+					if water != (at == "water"): continue
+					for d in WorldGen.DIRS4:
+						if target == Vector2.INF && map.cellReachable(cell + d * 2) && map.cellPassable(cell + d):
+							target = WorldGen.cellCentre(cell + d)
+							car.rotation = Vector2(-d).angle()
+	if target == Vector2.INF: return
+	car.global_position = target
+	car.velocity = Vector2.ZERO
+	print("BENCH_AT %s %s" % [at, target])
 
 func screenshot(t: float) -> void:
 	await RenderingServer.frame_post_draw

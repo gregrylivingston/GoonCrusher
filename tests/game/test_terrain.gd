@@ -81,9 +81,9 @@ func test_rasters_build_on_the_worker_pool():
 	direct.buildNow(Vector2i(1, 1))
 	assert_eq(pooled.fine[Vector2i(1, 1)], direct.fine[Vector2i(1, 1)], "a worker raster matches one built in place")
 
-func test_chunk_tiles_map_new_surfaces_to_old_scenes():
+func test_chunk_tiles_summarise_with_terrain_ids():
 	var city := WorldMap.build(3, Levels.get_def(&"city"))
 	for x in range(-6, 7):
 		for y in range(-6, 7):
 			var t: int = city.chunkTile(Vector2i(x, y)).terrain
-			assert_true(t >= 0 && t <= 7, "chunk scenes are the 8 old landscape maps (%d)" % t)
+			assert_true(t >= 0 && t < World.count(), "a chunk's summary is a terrain id (%d)" % t)

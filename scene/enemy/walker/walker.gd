@@ -69,6 +69,13 @@ var dead := false
 var lastCarRotation := 0.0
 var carSpin := 0.0 #the car's turn rate (rad/s), for goons that can be shaken off
 var savedLayers := Vector2i(4, 3) #layer 3 (Goon) only, so goons never collide with each other; mask: world and car
+#the world (WorldHooks): water drowns a solid goon (checked every WATER_TICKS ticks, staggered), a drowning
+#within DROWN_CREDIT_SECONDS of the car's touch counts as a crush; a goon pressing a barrier on screen for
+#STUCK_SECONDS may be swept away
+const WATER_TICKS := 4
+var waterPhase := 0
+var lastCarTouch := -INF #seconds (GoonVerbs.now)
+var stuckTime := 0.0
 
 @onready var sprite: AnimatedSprite2D = $Sprite
 
@@ -88,6 +95,7 @@ func _ready():
 	turnRate = def.get("turn", turnRate)
 	tele = def.get("tele", tele)
 	savedLayers = Vector2i(collision_layer, collision_mask)
+	waterPhase = get_instance_id() % WATER_TICKS
 	if isGiant:
 		scale = Vector2(1.6, 1.6)
 		speed *= GIANT_SPEED
@@ -123,6 +131,7 @@ func _physics_process(delta):
 	if not is_instance_valid(car): return
 	if Pickups.goonTickSkipped(): return #Time Warp
 	stateTime += delta
+	if (Engine.get_physics_frames() + waterPhase) % WATER_TICKS == 0 && checkWater(car): return
 	if state == &"move" || state == &"siege" || state == &"lured":
 		var lure := Pickups.lureFor(global_position, def.get("verb", &"lunge")) #Goon Bait, Flare
 		if lure != Vector2.INF:
@@ -234,11 +243,19 @@ func advance(v: Vector2, delta: float) -> void:
 	if Root.spawnManager.needsFullPhysics(global_position):
 		move_and_slide()
 		#the car takes contact damage every tick it touches a goon, so goons that bump it back off
+		var pressing := false
 		for i in get_slide_collision_count():
-			if get_slide_collision(i).get_collider() == Root.playerCar:
+			var c = get_slide_collision(i).get_collider()
+			if c == Root.playerCar:
+				touchedByCar()
+				stuckTime = 0.0
 				verb.onTouch(Root.playerCar)
 				return
-	else: global_position += v * delta
+			if World.isWall(c): pressing = true
+		#walking into a barrier and getting nowhere: after STUCK_SECONDS the despawn sweep may take it
+		if pressing && get_real_velocity().length() < v.length() * 0.3: stuckTime += delta
+		else: stuckTime = maxf(0.0, stuckTime - delta * 2.0)
+	else: global_position = WorldHooks.slideStep(global_position, v * delta) #off screen: no physics, the grid's walls and water
 
 ## Where the car will be in `lead` seconds.
 func predict(car: Node2D, lead: float) -> Vector2:
@@ -256,6 +273,7 @@ func lungeStep(car: Node2D, moveSpeed: float, delta: float) -> void:
 	if hitDone: return
 	for i in get_slide_collision_count():
 		if get_slide_collision(i).get_collider() == car:
+			touchedByCar()
 			hitCar(car, attackDamage, sys)
 			hitDone = true
 			return
@@ -275,11 +293,42 @@ func setSolid(solid: bool) -> void:
 	collision_layer = savedLayers.x if solid else 0
 	collision_mask = savedLayers.y if solid else 0
 
+#--- water -------------------------------------------------------------------------------------
+
+## The car touched or shoved this goon: a drowning soon after is the player's doing
+func touchedByCar() -> void:
+	lastCarTouch = GoonVerbs.now()
+
+## Every WATER_TICKS ticks: a solid goon over deep water drowns (buried, hopping, flying and riding goons
+## aren't solid, so they're immune until they land). True when it drowned.
+func checkWater(car: Node2D) -> bool:
+	if collision_layer == 0: return false
+	if distTo(car) < bodyRadius * scale.x + 110.0: touchedByCar() #shoved along by the bumper
+	if not World.lethalAt(global_position): return false
+	drown()
+	return true
+
+## Into the water: a splash, and a crush ("SPLASH") when the car put it there
+func drown() -> void:
+	if dead: return
+	var credited := WorldHooks.drownCredited(GoonVerbs.now(), lastCarTouch)
+	var f = fx()
+	if f:
+		f.ring(global_position, bodyRadius * scale.x * 1.6)
+		if credited: f.label(global_position, "SPLASH")
+	destroy(&"drown")
+	if credited && is_instance_valid(Root.spawnManager): Root.spawnManager.creditCrush(global_position)
+
+## Pressed against a wall long enough that it will never get through (SpawnManager.despawnSweep)
+func isStuck() -> bool:
+	return stuckTime >= WorldHooks.STUCK_SECONDS
+
 #--- crushing -----------------------------------------------------------------------------------
 
 ## The car calls this when it touches the goon above 100 px/s. False means the goon resisted.
 func tryCrush(car: Node2D, carSpeed: float) -> bool:
 	if dead: return true
+	touchedByCar()
 	if car.has_method("crushOverride") && car.crushOverride(self): #a plow, spikes, monster tires, a golden ride
 		verb.beforeCrush(car, carSpeed)
 		destroy(&"crush")

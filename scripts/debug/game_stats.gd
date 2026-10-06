@@ -8,7 +8,7 @@ static func goons() -> int:
 
 static func chunks() -> int:
 	if is_instance_valid(Root.levelRoot) && Root.levelRoot.has_node("TileManager"):
-		return Root.levelRoot.get_node("TileManager").loadedLandscapes.size()
+		return Root.levelRoot.get_node("TileManager").loadedCount()
 	return 0
 
 #walks the tree, so only call this a few times per second

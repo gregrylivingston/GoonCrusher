@@ -188,7 +188,7 @@ The root is a `StaticBody2D`, so the car's wall-hit checks (`World.isWall`) trea
 
 ## Station
 
-`station_lot` (concrete slabs, 256 px joints, oil stains and tyre smears) and `station_roof` (worn shingles) are 512² seamless tiles; `station_wall` is a strip like the others (wall top above, AO below); `station_lamp` (lamp post with a lit fixture) and `station_pump` (a pump island) are sprites at 0.75 with the prop rim and shadow. Nothing uses them yet: the station scene still has its photo textures until the art phase rebuilds it.
+`station_lot` (concrete slabs, 256 px joints, oil stains and tyre smears) and `station_roof` (worn shingles) are 512² seamless tiles; `station_wall` is a strip like the others (wall top above, AO below); `station_lamp` (lamp post with a lit fixture) and `station_pump` (a pump island) are sprites at 0.75 with the prop rim and shadow. `scene/level/station.tscn` is built from them: `lot` is a Sprite2D region over the LOT at scale 2, `walls` one tiled Line2D (width 142, so the 35-texel wall top covers the 52 px wall bodies and its shadow falls inside the lot) traced clockwise so the strip's top faces out, the house roof two Sprite2D halves at scale 2 (the south one flipped) with a ridge and eaves, two pumps on the driveway apron and a lamp over each post light, all at 1.3333. The collision (`wallNorth`/`South`/`West`/`East`, `house`) and lights keep the old layout; `tintWalls` reddens `walls`.
 
 ## Posters
 
@@ -205,7 +205,7 @@ The root is a `StaticBody2D`, so the car's wall-hit checks (`World.isWall`) trea
 | `city` | a street grid at dusk with lamps, a canal under two bridges, rooftops, a park, a parking lot, a police car |
 | `crusher` | scrap mountains, container rows, two conveyor lanes, a tank farm, a crane |
 
-Each `POSTER` entry is a `ground(X, Y, o)` function (per pixel: materials, blend, tint, AO, lip, foam, paint) and a `dress(p)` function that queues props, decor, tyre tracks, the car and goons; the queue draws by layer and y. `city` gets a dusk multiply before its lights. Every poster gets a soft vignette and no text. `LevelDef.poster` still points at the old paintings; the level phase switches it to these paths.
+Each `POSTER` entry is a `ground(X, Y, o)` function (per pixel: materials, blend, tint, AO, lip, foam, paint) and a `dress(p)` function that queues props, decor, tyre tracks, the car and goons; the queue draws by layer and y. `city` gets a dusk multiply before its lights. Every poster gets a soft vignette and no text. Every `LevelDef.poster` (`world/levels/<id>.tres`) points at its poster here; the old paintings are deleted.
 
 ## Budget
 

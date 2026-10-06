@@ -2,6 +2,10 @@ extends Node2D
 
 #The gas station: Sprint's finish, one of Marathon's relay stops, Defense's base, and in the other modes a
 #free repair shop. The lot is walled, with its gap on the east side.
+#Art (world/art/station, docs/WORLD_ART.md): `lot` tiles the concrete slabs, `walls` is one Line2D of the
+#wall strip around the lot (wall top over the wallNorth/South/West/East bodies, its shadow falling inward),
+#the house has a two-slope shingle roof, two pump islands mark the driveway and lamp posts sit over the
+#Lights (lightRole: Lights/PointLight2D is "station", Lights/<post>/PointLight2D a "post").
 
 const LOT := Rect2(-770, -539, 1518, 1104) #the walled lot, walls included, from the station's origin
 const BARRIER_MAX := 1000.0     #Defense: the walls' health; goons at the walls wear it down (Walker.siege)
@@ -19,8 +23,7 @@ func _ready():
 	setNighttime(is_instance_valid(Root.levelRoot) && not Root.levelRoot.isDaytime)
 
 func setNighttime(isNighttime: bool):
-	if isNighttime:	$Polygon2D/Lights.visible = true
-	else: $Polygon2D/Lights.visible = false
+	$Lights.visible = isNighttime
 
 #Marathon: a reached station stays where it is, but its driveway does nothing more
 func retire() -> void:
@@ -57,8 +60,7 @@ func repairBarrier(amount: float) -> void:
 #the walls redden as the barrier wears down
 func tintWalls() -> void:
 	var health = barrier / BARRIER_MAX
-	for wall in $Polygon2D.get_children():
-		if wall.name.begins_with("concreteWall"): wall.self_modulate = Color(1.0, lerpf(0.3, 1.0, health), lerpf(0.25, 1.0, health))
+	$walls.self_modulate = Color(1.0, lerpf(0.3, 1.0, health), lerpf(0.25, 1.0, health))
 
 #--- the driveway ---------------------------------------------------------------------------------
 

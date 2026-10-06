@@ -6,7 +6,7 @@
 script = ExtResource("1_def")
 id = &"city"
 displayName = "Rust City"
-poster = "res://texture/background/desertBackground.png"
+poster = "res://world/art/posters/city.png"
 act = 3
 order = 6
 blurb = "A street grid between buildings, parks, lots and canals. Bridges cross the canals where the streets do."
@@ -69,7 +69,6 @@ pickupTable = {
 &"slot": 1
 }
 pickupsPerChunk = 4
-objectTiles = Array[int]([0])
 palette = {
 &"ground": Color(0.46, 0.45, 0.43, 1),
 &"accent": Color(0.38, 0.36, 0.34, 1),

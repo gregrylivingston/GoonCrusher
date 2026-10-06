@@ -108,9 +108,21 @@ A goon resists when any of these holds:
 A resisted hit calls the verb's `onResist`. That usually means `bounceCar`: the car keeps 35% of its speed and is pushed back, takes damage, and a label shows why ("BLOCKED", "TOO HEAVY", "HEAD-ON", "ROCK", "SHELL").
 
 **Death** (`destroy(cause)`):
-- **Causes:** `crush`, `boom` (killed by a blast), `self` (blew itself up) and `drown` (Water.gd; leaves no decal).
+- **Causes:** `crush`, `boom` (killed by a blast), `self` (blew itself up) and `drown` (deep water, `Walker.drown`; leaves no decal, a splash ring instead).
 - **What it leaves:** a pooled crush decal with a tyre print along the car's heading, bits in the faction's colours, death sounds, and the old Clover-based pickup chance. The node frees at once.
-- **Credit:** goons killed by blasts or a kicked shell count as crushes (`SpawnManager.creditCrush`).
+- **Credit:** goons killed by blasts or a kicked shell count as crushes (`SpawnManager.creditCrush`). So does a goon that drowns within 3 s of the car touching it (a crush try, a bump, a lunge that hit, or the car alongside it), with a "SPLASH" label.
+
+## The world
+
+Goons read the world through `WorldHooks` (`scripts/world/world_hooks.gd`): grid reads on the run's `WorldMap`, O(1) each, never physics queries, so all 250 can use them.
+
+- **Water:** every 4 physics ticks (staggered by instance id) a solid goon over a lethal cell drowns (`Walker.checkWater`). Not-solid goons (buried, hopping, flying, riding the car) are immune until they land. A drowned Bandit's loot washes up on the nearest dry cell (`WorldHooks.bankNear`).
+- **Off screen** (outside the physics view) goons move without collision, so `advance` steps them with `WorldHooks.slideStep`: the whole step if open, else along one axis, else they hold. Water counts as blocked there, so no goon drowns unseen. On screen, walls are real `StaticBody2D`s and `move_and_slide` handles them.
+- **Stuck:** a goon pressing a wall on screen and getting nowhere for 4 s (`Walker.isStuck`) is freed by the despawn sweep once it is off screen, whatever its distance. Defense keeps every goon near the station.
+- **Spawns:** spawn points must be `World.spawnableAt` (3 tries in `spawner.gd`); pack members that would land on water start at the pack's spot. Snappers spawn by a log prop and the Rat Pack out of a manhole when one is within 1,500 px of the spot and at least 1,600 px from the car (`SpawnManager.preferredSpot`).
+- **Props:** `SpawnManager.onNodeAdded` tags props as they stream in (`BreakableProp.tag`): `prop_log`, `prop_manhole`, `prop_crate` (Bandit bait: the Bandit breaks a crate open and steals what spills), `prop_carcass` (Buzzard perches, like crush decals) and `prop_explosive`.
+- **FX:** shots, quills and harpoons stop at wall cells, and lobs don't leave fire or slime on them. Blasts don't reach the car or goons behind a wall cell (`WorldHooks.lineClear`); water stops nothing. Every blast sets off explosive props in its radius (`BreakableProp.blastAt`): barrels and tanks chain a hop per 0.12 s, each once. A kicked shell rebounds off wall cells and off rocks, props and walls. Oil and slime are never laid on shallows or within a fine cell of deep water. Harpoon and magnet tethers snap ("SNAPPED") when the car is within 400 px of deep water.
+- **Chargers** (Tusker, Rammer) that hit a wall mid-charge stop with a "BONK" and are stunned twice as long: lure them into rocks.
 
 ## GoonFx
 
@@ -118,10 +130,10 @@ A resisted hit calls the verb's `onResist`. That usually means `bounceCar`: the 
 |---|---|---|
 | Crush decals | 64 | Sprite2D pool under goons, fade over 8 s. Buzzards land on them. |
 | Telegraphs | 48 | arrow, ring, land, crack, aim, aura, beam. Drawn unshaded under goons. |
-| Projectiles | 24 | Bolts, quills, harpoons, and arcs that land as fire, slime or a bomb |
+| Projectiles | 24 | Bolts, quills, harpoons (stopped by wall cells), and arcs that land as fire, slime or a bomb |
 | Hazards | 24 | fire (tyres), slime (slows), oil (skids), spikes (tyres). The oldest is dropped when full. |
-| Blasts | none | Hurt the car within r+40 and kill goons within r. Each plays an explosion from the level's pool (`Root.levelRoot.explode`, at most 16 live). |
-| Tethers | one per goon | Harpoon (drag; a hard swerve breaks it) and magnet (pull). Both break past 650 px. |
+| Blasts | none | Hurt the car within r+40 and kill goons within r, unless a wall cell is in between. Each plays an explosion from the level's pool (`Root.levelRoot.explode`, at most 16 live) and sets off explosive props in reach. |
+| Tethers | one per goon | Harpoon (drag; a hard swerve breaks it) and magnet (pull). Both break past 650 px, and near deep water. |
 | Bits, labels | 90, 12 | Visual only |
 
 Everything is delta-based. Telegraphs, projectiles, blasts and fire are unshaded, so night never hides a threat. Goons light their eyes (two additive unshaded sprites) when the level's CanvasModulate drops below 0.4.

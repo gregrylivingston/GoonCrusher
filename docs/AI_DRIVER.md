@@ -128,6 +128,7 @@ Every candidate is scored **value ÷ (seconds to get there + 1)**. The current g
   - While the goal is a goon, the throttle may go 15% past its crush speed, whatever fuel saving says.
   - Goons only die by being crushed, so every goon left alive joins the horde. Crushing is also the defence.
   - Below a health reserve the car stops hunting and steers around goons like rocks (protect mode). The reserve is 10 + 0.04 × the seconds left in Countdown, 20 in races and 25 otherwise.
+- **Deep water:** pickups and roam or patrol points within 400 px of deep water are skipped (`waterTargetPx`; a bridge deck is fine), and goons within 350 px of it aren't hunted (`waterGoonPx`): they drown on their own. Above 340 px/s the throttle lifts while deep water lies ahead within 1.35 s of travel (`waterSpeed`).
 - **Unreachable goals:** a goal chased for 2.5× its estimated time (at least 3 s) is dropped for 10 s. One the car gets stuck on twice is dropped for the rest of the run.
 
 ### Mode rules
@@ -161,7 +162,8 @@ Every candidate is scored **value ÷ (seconds to get there + 1)**. The current g
 - **Prediction:** each plan is simulated 0.75 s ahead (`horizonTicks`), tick by tick, with the car's own physics, `OverheadCarBody2D.integrate()`, and the controller's key rules (`playerCarController.nextSteering`). The prediction therefore includes the steering ramp, tyre slip, drag and terrain friction, and any handling change made inside `integrate()`.
 - **Sweeps:** the predicted path is swept in 0.1 s segments with the car's footprint against rocks, walls and hills.
   - Godot's `cast_motion` ignores anything the shape already overlaps, so each segment first tests for overlap with the exact footprint.
-  - Water anywhere under the car is treated as death.
+  - Deep water under the car's centre (the car dies two ticks after its centre is over it) ends the plan with a death cost; under a corner of its footprint (with a 40 px margin) it costs 300 s per second, so when every plan is wet the one that keeps the centre dry wins.
+  - **Deep water ahead** (`waterAheadCost`): at each 0.1 s point of a plan, deep water along the direction of travel within 0.9 s of travel (`waterLookSeconds`) costs up to 8 s per second (`waterNearCost`), more the closer and the faster. The end-of-plan probe charges for deep water like a wall, twice over. At 700 px/s on shallows the car can't stop in the 256 px band, so this is what makes it brake or turn while it still can.
 - **A plan's cost** is its estimated seconds to the goal:
   - Time used, plus the rest of the way at cruise speed, plus the time lost getting back up to cruise speed, (c − v)² / (2ac).
   - Plus 0.6 s per radian still to turn.
@@ -176,6 +178,7 @@ Every candidate is scored **value ÷ (seconds to get there + 1)**. The current g
 ### Recovery rules
 
 - **Stuck:** moving less than 150 px in 2.5 s. The car drops its current pickup or goon goal and, for 1 s, takes the forward plan with the most room if one has at least 0.5 s clear (`recoverForward`); only otherwise does it reverse on the reverse plan with the most room.
+- **Water:** neither the recovery plan (the one with the most room stops counting at deep water) nor an escape point (never a lethal trail point) leads into deep water.
 - **Escape:** three stuck events in 20 s. The car drives back to where its breadcrumb trail was at least 6 s and 600 px ago, the way it came in, which is known to be drivable. Reversing is allowed until it gets there.
 
 ## What the playtests show

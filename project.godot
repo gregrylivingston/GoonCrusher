@@ -170,3 +170,7 @@ gc_flash={
 "type": "float",
 "value": 1.0
 }
+gc_ground_quality={
+"type": "int",
+"value": 1
+}

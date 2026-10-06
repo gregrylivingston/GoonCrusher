@@ -43,15 +43,12 @@ class_name LevelDef extends Resource
 @export var baseTerrain: Array = []
 ## Root.terrain ids sprinkled over the base as surface accents
 @export var accents: Array = []
-## Goons.faction -> {prop id: weight}
+## Goons.faction -> {prop id: weight}: props.json ids, DECOR ones as MultiMesh decor (ChunkRecipe). features
+## "props" and "decor" set how many of each a fully open chunk gets (16 and 110 by default).
 @export var dressing: Dictionary = {}
 ## pickup kind -> weight
 @export var pickupTable: Dictionary = {}
 @export var pickupsPerChunk: int = 3
-## Interim, until the world generator places props and pickups: the old TileManager object pools
-## (TileManager.objectTypes) this level's chunks draw from, copied from the level that sat at its index
-## before the revamp. Empty keeps the TileManager's default (rocks only).
-@export var objectTiles: Array[int] = []
 
 @export_group("Look")
 ## ground colours for the shader fallback: name -> Color
