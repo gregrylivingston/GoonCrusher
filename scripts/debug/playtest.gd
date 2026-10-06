@@ -268,7 +268,7 @@ func recordRun() -> void:
 	row.reason = reason
 	row.won = Root.levelRoot.endReason == Root.endCondition.SUCCESS
 	row.level_time = snappedf(levelTime, 0.1)
-	row.time_left = snappedf(Root.levelRoot.seconds, 0.1) if row.mode not in ["goonpocalypse", "defense"] else 0.0
+	row.time_left = snappedf(Root.levelRoot.seconds, 0.1) if row.mode != "goonpocalypse" else 0.0
 	row.station_left_px = int(car.global_position.distance_to(Root.station.global_position)) if is_instance_valid(Root.station) else 0
 	row.crushed = car.currentGoonsCrushed
 	row.coin = car.coin
@@ -309,14 +309,14 @@ func appendCsv(values: Dictionary) -> void:
 	file.close()
 
 #How well a run was played, 0 to about 150, so profiles can be ranked within a mode:
-#  countdown: % of the clock survived, +25 for surviving it, +0.1 per crush (up to 200)
+#  countdown/defense: % of the clock survived, +25 for surviving it, +0.1 per crush (up to 200)
 #  sprint/marathon: a win is 100 + 50 x the share of the clock left; a loss is up to 50 for the
 #    share of the way to the station covered
-#  goonpocalypse/defense: a point per 3 s survived, +0.1 per crush (up to 300)
+#  goonpocalypse: a point per 3 s survived, +0.1 per crush (up to 300)
 static func runScore(result: Dictionary) -> float:
 	var clock = maxf(float(result.get("clock", 1.0)), 1.0)
 	match result.mode:
-		"gooncrusher":
+		"gooncrusher", "defense":
 			return 100.0 * minf(result.level_time / clock, 1.0) + (25.0 if result.won else 0.0) + minf(result.crushed, 200) * 0.1
 		"sprint", "marathon":
 			if result.won: return 100.0 + 50.0 * result.time_left / clock

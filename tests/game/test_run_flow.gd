@@ -103,6 +103,8 @@ func test_clock_end_conditions_and_display():
 	assert_eq(Level.timeUpCondition(Root.gameModes.GOONCRUSHER), Root.endCondition.SUCCESS, "Countdown is won at 0")
 	assert_eq(Level.timeUpCondition(Root.gameModes.SPRINT), Root.endCondition.NOTIME)
 	assert_eq(Level.timeUpCondition(Root.gameModes.MARATHON), Root.endCondition.NOTIME)
+	assert_eq(Level.timeUpCondition(Root.gameModes.DEFENSE), Root.endCondition.SUCCESS, "Defense is won by holding out")
+	assert_eq(Level.timeUpCondition(Root.gameModes.DEFENSE, true), Root.endCondition.NOHEALTH)
 	assert_eq(Level.timeUpCondition(Root.gameModes.GOONCRUSHER, true), Root.endCondition.NOHEALTH, "a wrecked car has not survived Countdown")
 	assert_eq(Level.timeUpCondition(Root.gameModes.SPRINT, true), Root.endCondition.NOTIME)
 	assert_eq(timerScript.formatClock(0), "0 : 00")

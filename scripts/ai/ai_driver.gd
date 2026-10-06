@@ -49,6 +49,7 @@ const GOAL_RADIUS = {"pickup":70.0, "goon":80.0, "station":300.0, "roam":600.0, 
 const PURSE_QUANTITY = 10.0   #purse.tscn is a "coin" powerup with this quantity
 const FUEL_NEAR_PX = 3000.0   #a known fuel pickup this close lifts the fuel-saving cap
 const CRUSH_SPEED = 140.0     #below this (with a margin over the game's 100) a touch costs health and crushes nothing
+const CRUSH_MARGIN = 1.1      #a plan counts on a crush only this far above the goon's crush speed
 const SLOW_GOON_PX = 350.0
 const FLANK_PX = 260.0
 const BUMPER_CONE = 0.8       #cosine: goons this close to straight ahead meet the bumper
@@ -106,6 +107,7 @@ var roamUntil := 0
 var stationPoints: Array = []   #the station graph's points: driveway, inner and outer marker, corners
 var stationEdges: Array = []    #distance matrix between them, INF where a wall is in the way
 var stationGap := Vector2.RIGHT  #from the driveway out through the gap
+var graphStation: Node = null    #the station the graph was built for (Marathon moves on to a new one)
 var approachHop := -1           #the station point the car is heading for (for --trace)
 var progress: Array[Vector2] = []
 var recoverUntil := 0
@@ -125,6 +127,7 @@ var excludes: Array[RID] = []
 var lastCosts := PackedStringArray() #every plan's cost at the last choice, for --trace
 var nearGoons := PackedVector2Array() #goons near the car, refreshed with every plan choice
 var nearGoonsLunging := PackedByteArray() #1 where that goon is winding up or making an attack
+var nearGoonsNeed := PackedFloat32Array() #the speed each one takes to crush (INF: can't be crushed now)
 
 #what the run looked like to the driver; the playtest harness reports these
 var stats := {"stuck":0, "escapes":0, "eco_seconds":0.0, "route_reached":true, "goals":{}}
@@ -151,7 +154,7 @@ func _ready():
 	bodyShape.size = halfSize * 2.0 + Vector2(20, 24)
 	exactShape.size = halfSize * 2.0 + Vector2(4, 4)
 	startShape.size = halfSize * 2.0 - Vector2(16, 16)
-	query.collision_mask = 1 #rocks, walls and hills (goons are on it too, and are excluded)
+	query.collision_mask = 1 #rocks, walls and hills (goons have their own layer)
 
 func isPressed(action: String) -> bool:
 	match action:
@@ -179,6 +182,8 @@ func think() -> void:
 	if goalCareful && car.global_position.distance_to(goalPosition()) < CAREFUL_FROM_PX: throttleCap = minf(throttleCap, p.carefulSpeed)
 	if goal.get("kind") == "station" && not stationPoints.is_empty() && car.global_position.distance_to(stationPoints[0]) < STATION_SLOW_PX:
 		throttleCap = minf(throttleCap, p.stationSpeed)
+	#going for a goon: fast enough to crush it, whatever fuel saving says
+	if goal.get("kind") == "goon" && goalValid(): throttleCap = maxf(throttleCap, crushNeed(goal.node) * CRUSH_MARGIN * 1.05)
 	keys = keysFor(plan, tick - planTick, forwardSpeed(), throttleCap)
 	if speedCap < INF: stats.eco_seconds += 1.0 / Engine.physics_ticks_per_second
 	if debug && tick % SCAN_TICKS == 1: queue_redraw()
@@ -236,6 +241,7 @@ func updateGoal() -> void:
 				near.push_back(g)
 		for g in near:
 			var neighbours = 0
+			if crushNeed(g) > topSpeed() * 0.95: continue #too tough for this car: leave it be
 			for other in near:
 				if other != g && other.global_position.distance_squared_to(g.global_position) < 350.0 * 350.0: neighbours += 1
 			options.push_back({"kind":"goon", "node":g, "value":goonValue(neighbours, p.goonValue, p.goonPackBonus), "key":str(g.get_instance_id())})
@@ -311,7 +317,9 @@ func stationTarget() -> Vector2:
 	var driveway = Root.station.get_node("driveway/CollisionShape2D").global_position
 	var carPos = car.global_position
 	if carPos.distance_to(driveway) > STATION_GRAPH_PX: return driveway #far off: the route handles it
-	if stationPoints.is_empty(): buildStationGraph(driveway)
+	if stationPoints.is_empty() || graphStation != Root.station:
+		graphStation = Root.station
+		buildStationGraph(driveway)
 	var carEdges = PackedFloat32Array()
 	for i in stationPoints.size():
 		carEdges.push_back(carPos.distance_to(stationPoints[i]) if stationEdgeAllowed(carPos, i) && clearOfWalls(carPos, stationPoints[i]) else INF)
@@ -574,14 +582,19 @@ func refreshExcludes() -> void:
 	excludes = [car.get_rid()]
 	nearGoons.clear()
 	nearGoonsLunging.clear()
+	nearGoonsNeed.clear()
 	if not is_instance_valid(Root.spawnManager): return
 	var carPos = car.global_position
 	var crushing = not protecting()
+	var reachable = topSpeed() * 0.95
 	for g in Root.spawnManager.goons:
 		if is_instance_valid(g) && not g.isDying() && g.global_position.distance_squared_to(carPos) < 1800.0 * 1800.0:
-			if crushing: excludes.push_back(g.get_rid())
+			var need = crushNeed(g)
+			#one the car can't get fast enough to crush is a wall that hits back (it bounces the car)
+			if crushing && need <= reachable: excludes.push_back(g.get_rid())
 			nearGoons.push_back(g.global_position)
 			nearGoonsLunging.push_back(1 if g.myMode == Walker.mode.PREPAREATTACK || g.myMode == Walker.mode.ATTACK else 0)
+			nearGoonsNeed.push_back(need)
 
 #Goons beside the car's path: close enough to lunge (most goon damage lands this way, on the
 #body, even at speed), but not in front of the bumper where they would be crushed.
@@ -712,7 +725,7 @@ func scoreRollout(rollout: Dictionary, target: Vector2) -> float:
 	for i in range(1, path.size()):
 		#forwards is how the game is played: rolling backwards costs, whatever it gains
 		if forwards[i] < -20.0: cost += p.reverseCost * segment
-		if crushing && speeds[i] >= CRUSH_SPEED: bumperGoons(path[i], headings[i], met)
+		if crushing && speeds[i] >= CRUSH_SPEED: bumperGoons(path[i], headings[i], speeds[i], met)
 		#goons beside the path lunge at the body; a car below crush speed among them is chewed up
 		if not nearGoons.is_empty():
 			cost += p.flankCost * segment * flankExposure(path[i], headings[i])
@@ -730,7 +743,7 @@ func scoreRollout(rollout: Dictionary, target: Vector2) -> float:
 			last = i
 			endSpeed = 0.0
 			break
-		if path[i].distance_to(target) < radius: return cost + i * segment - p.crushReward * met.size() #gets there within the plan
+		if path[i].distance_to(target) < radius: return cost + i * segment + metCost(met) #gets there within the plan
 	var end = path[last]
 	var toTarget = target - end
 	cost += last * segment
@@ -747,16 +760,40 @@ func scoreRollout(rollout: Dictionary, target: Vector2) -> float:
 		var heading = headings[last].normalized()
 		var clear = sweep(end, heading, heading * reach, false)
 		if clear < 1.0: cost += p.probeCost * (1.0 - clear)
-	return cost - p.crushReward * met.size()
+	return cost + metCost(met)
 
-#goons in front of the bumper at a point of a plan, added to `met` (by index into nearGoons)
-func bumperGoons(point: Vector2, heading: Vector2, met: Dictionary) -> void:
+#a crush takes crushReward off a plan; bouncing off a goon too tough to crush costs like a light wall hit
+func metCost(met: Dictionary) -> float:
+	if met.is_empty(): return 0.0
+	var counts = countMet(met)
+	return -p.crushReward * counts.x + p.hitCost * 0.5 * counts.y
+
+#Goons in front of the bumper at a point of a plan, added to `met` (by index into nearGoons): true
+#if the car is fast enough to crush that one (Walker.tryCrush), false if it would bounce off.
+func bumperGoons(point: Vector2, heading: Vector2, speed: float, met: Dictionary) -> void:
 	var forward = heading.normalized()
 	for i in nearGoons.size():
 		if met.has(i): continue
 		var offset = nearGoons[i] - point
 		var along = offset.dot(forward)
-		if along > halfSize.x * 0.3 && along < halfSize.x + 60.0 && absf(offset.cross(forward)) < halfSize.y + 10.0: met[i] = true
+		if along > halfSize.x * 0.3 && along < halfSize.x + 60.0 && absf(offset.cross(forward)) < halfSize.y + 10.0:
+			met[i] = speed >= nearGoonsNeed[i] * CRUSH_MARGIN
+
+#the speed a goon takes to crush now: its crush speed, or its front armor while that is up (the
+#car meets it head-on, so assume it faces the car); INF while invulnerable
+static func crushNeed(goon: Node) -> float:
+	if goon.get("invulnerable"): return INF
+	var need = float(goon.get("crushSpeed")) if goon.get("crushSpeed") != null else 100.0
+	var armor = goon.get("frontArmor")
+	if armor != null && armor > 0.0 && goon.get("verb") != null && goon.verb.frontArmorActive(): need = maxf(need, armor)
+	return need
+
+#crushes and bounces in a plan's `met`
+static func countMet(met: Dictionary) -> Vector2i:
+	var crushed = 0
+	for i in met:
+		if met[i]: crushed += 1
+	return Vector2i(crushed, met.size() - crushed)
 
 #how far along `motion` the car's footprint gets before touching a rock or wall (1 = clear)
 #The first segment uses a smaller shape and skips the overlap test, so a car already touching a

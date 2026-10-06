@@ -5,12 +5,8 @@ extends Label
 func _ready():
 	showTimer()
 	Settings.changed.connect(onSettingChanged)
-	#Countdown (GOONCRUSHER), Sprint and Marathon count down; these two count up from 0
-	match SaveManager.playerData.gameMode:
-		Root.gameModes.DEFENSE:
-			timeIsCountingDown = 1
-		Root.gameModes.GOONPOCALYPSE:
-			timeIsCountingDown = 1
+	#every mode counts down except Goonpocalypse, which counts up from 0
+	if SaveManager.playerData.gameMode == Root.gameModes.GOONPOCALYPSE: timeIsCountingDown = 1
 
 	await get_tree().process_frame
 	showTime()
@@ -32,8 +28,10 @@ func onClockReady() -> void:
 func _process(delta):
 	if not clockReady: return
 	Root.levelRoot.seconds += delta * timeIsCountingDown
+	Root.levelRoot.elapsed += delta
+	Root.levelRoot.onClockTick()
 	if timeIsCountingDown < 0 && Root.levelRoot.seconds <= 0.0:
-		#the clock ran out: Countdown is won, Sprint and Marathon are lost (Level.timeUpCondition)
+		#the clock ran out: Countdown and Defense are won, Sprint and Marathon are lost (Level.timeUpCondition)
 		Root.levelRoot.seconds = 0.0
 		showTime()
 		Root.levelRoot.timeRanOut()

@@ -2,7 +2,7 @@
 
 [ext_resource type="PackedScene" uid="uid://b7r4ro32w40xi" path="res://scene/powerup/powerup.tscn" id="1_k58dp"]
 [ext_resource type="Shader" path="res://shader/shine.gdshader" id="2_2r8cv"]
-[ext_resource type="Texture2D" uid="uid://r6nqp2khheft" path="res://scene/enemy/walker/devil/texture/0081.png" id="2_eumlk"]
+[ext_resource type="Texture2D" path="res://scene/enemy/goons/grunt/art/grunt_idle0.png" id="2_eumlk"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_hujyj"]
 shader = ExtResource("2_2r8cv")

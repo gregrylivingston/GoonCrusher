@@ -4,6 +4,7 @@ extends CanvasLayer
 #  `  (backtick) opens and closes it; Esc closes; Up/Down walk the history; Tab completes a command.
 #  `help` lists the commands; several can be given on one line, separated by ';'.
 #  At startup:  Godot_console.exe --path . -- --console="unlock all;coins 50k"
+#`unlock goons` (or `unlock all`) reveals every goon in the Goonopedia.
 #Progress commands (unlock, lock, coins, gems, upgrades, save) change the real save, so back it up
 #first. Run commands (heal, fuel, god, ai, give, win, lose, night, day) act on the current run.
 
@@ -167,12 +168,12 @@ func add(cmd: String, fn: Callable, usage: String, help: String, group: String) 
 func registerCommands() -> void:
 	add("help", cmdHelp, "help [command]", "list the commands, or explain one", "Console")
 	add("clear", cmdClear, "clear", "clear the console", "Console")
-	add("unlock", cmdUnlock, "unlock cars [name...] | levels | modes | all", "cars: free every driver (or the named ones). levels: open every level. modes: mark Countdown and Sprint beaten on every level, which opens every mode", "Progress")
-	add("lock", cmdLock, "lock cars | levels | modes | all", "undo unlock: cars back to their prices, levels and beaten modes back to a new save's", "Progress")
+	add("unlock", cmdUnlock, "unlock cars [name...] | levels | modes | goons | all", "cars: free every driver (or the named ones). levels: open every level. modes: mark Countdown and Sprint beaten on every level, which opens every mode. goons: reveal every goon in the Goonopedia", "Progress")
+	add("lock", cmdLock, "lock cars | levels | modes | goons | all", "undo unlock: cars back to their prices, levels, beaten modes and Goonopedia goons back to a new save's", "Progress")
 	add("coins", cmdCoins, "coins [amount | set amount]", "add coins to the bank (negative takes them away; 50k and 2m work)", "Progress")
 	add("gems", cmdGems, "gems [amount | set amount]", "add gems to the bank", "Progress")
 	add("upgrades", cmdUpgrades, "upgrades max | reset [all]", "the selected car's (or every car's) upgrades to the cap or to 0", "Progress")
-	add("unfinished", cmdUnfinished, "unfinished on | off", "let Coming Soon modes (Marathon, Defense) be started; this session only", "Progress")
+	add("unfinished", cmdUnfinished, "unfinished on | off", "let Coming Soon modes (any in Root.MODE_AVAILABLE set to false) be started; this session only", "Progress")
 	add("save", cmdSave, "save [backup | open | reset]", "show the save; back it up; open its folder; reset it (backs up first)", "Progress")
 	add("heal", cmdHeal, "heal", "full health", "Run")
 	add("fuel", cmdFuel, "fuel", "full fuel", "Run")
@@ -221,8 +222,9 @@ func setUnlocks(what: String, unlock: bool, names: Array) -> String:
 		"car", "cars", "driver", "drivers": return setCars(unlock, names)
 		"level", "levels": return setLevels(unlock)
 		"mode", "modes": return setModes(unlock)
-		"all": return "\n".join([setCars(unlock, []), setLevels(unlock), setModes(unlock)])
-	return "Error: unknown '%s' (cars, levels, modes or all)" % what
+		"goon", "goons", "goonopedia": return setGoons(unlock)
+		"all": return "\n".join([setCars(unlock, []), setLevels(unlock), setModes(unlock), setGoons(unlock)])
+	return "Error: unknown '%s' (cars, levels, modes, goons or all)" % what
 
 #every car, or the named ones, bought for nothing; locking puts the default prices back
 func setCars(unlock: bool, names: Array) -> String:
@@ -246,6 +248,16 @@ func setLevels(unlock: bool) -> String:
 	var open = levels.filter(func(l): return l.unlocked).size()
 	return "Levels: %d of %d unlocked" % [open, levels.size()]
 
+#the Goonopedia reveals a goon once it has been crushed (Goonopedia.isDiscovered), so unlocking counts
+#every goon in Goons.DATA as crushed once, keeping real counts; locking empties the list like a new save
+func setGoons(unlock: bool) -> String:
+	var crushed: Dictionary = SaveManager.playerData.goonsCrushed
+	if not unlock:
+		crushed.clear()
+		return "Goons: Goonopedia back to a new save's (none discovered)"
+	for id in Goons.DATA: crushed[String(id)] = maxi(crushed.get(String(id), 0), 1)
+	return "Goons: all %d revealed in the Goonopedia" % Goons.DATA.size()
+
 #Countdown and Sprint beaten opens every mode (Root.isModeUnlocked); locking clears every beaten mode
 func setModes(unlock: bool) -> String:
 	for level in SaveManager.playerData.levels:
@@ -255,7 +267,8 @@ func setModes(unlock: bool) -> String:
 		else:
 			for mode in level.gamemodeBeat: level.gamemodeBeat[mode] = false
 	if not unlock: return "Modes: every beaten mode cleared"
-	var note = "" if Root.devAllModesAvailable else " (Marathon and Defense stay Coming Soon; see unfinished)"
+	var comingSoon = Root.MODE_AVAILABLE.keys().filter(func(m): return not Root.MODE_AVAILABLE[m])
+	var note = "" if Root.devAllModesAvailable || comingSoon.is_empty() else " (Coming Soon modes stay hidden; see unfinished)"
 	return "Modes: Countdown and Sprint marked beaten on every level, so every mode is open on unlocked levels" + note
 
 func cmdCoins(args: Array) -> String: return changeBank("coin", args)

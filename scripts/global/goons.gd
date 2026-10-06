@@ -24,6 +24,7 @@ enum T { GRASS, SAND, MUD, WATER, HILLS, MOSS, DIRT, SNOW }
 ## lunge (speed multiplier while attacking), dmg (car damage() units), sys (car system the attack wears),
 ## crush (crush speed px/s), front (head-on crush speed; 0 = none), arc (half-width of the front in radians, default 1.05), turn (rad/s), pack (spawn group size),
 ## tele (telegraph: arrow, ring, land, aim, crack, none). rank: 1 fodder, 2 special, 3 heavy.
+## Tiers: Scrap Gang hits hardest per hit (they hit less often, since they peel off), then Tribe, then Wild.
 ## A stock sedan tops out near 433 px/s, so crush thresholds stay at or under 400: heavies need near-top speed, not upgrades.
 const DATA := {
 	#---------------------------------------------------------------- Wild Things (tier 1)
@@ -88,29 +89,29 @@ const DATA := {
 
 	#---------------------------------------------------------------- Scrap Gang (tier 3): anything with an engine or wheels
 	&"spoke": {"name":"Spoke", "faction":faction.SCRAP, "rank":1, "biomes":[T.GRASS, T.SAND, T.DIRT, T.MUD], "verb":&"rider",
-		"speed":300, "act":"ram", "dmg":5, "sys":"engine", "front":240},
+		"speed":300, "act":"ram", "dmg":8, "sys":"engine", "front":240},
 	&"chainer": {"name":"Chainer", "faction":faction.SCRAP, "rank":2, "biomes":[T.GRASS, T.SAND, T.DIRT], "verb":&"rider",
-		"speed":300, "act":"swipe", "dmg":4, "sys":"steering", "front":240},
+		"speed":270, "act":"swipe", "dmg":6, "sys":"steering", "front":240},
 	&"torcher": {"name":"Torcher", "faction":faction.SCRAP, "rank":2, "biomes":[T.SAND, T.DIRT], "verb":&"rider",
 		"speed":320, "act":"burn", "sys":"tires", "front":240},
 	&"harpooner": {"name":"Harpooner", "faction":faction.SCRAP, "rank":3, "biomes":[T.MUD, T.SNOW, T.DIRT], "verb":&"rider",
 		"speed":260, "act":"harpoon", "sys":"steering", "front":240},
 	&"sidecar": {"name":"Sidecar", "faction":faction.SCRAP, "rank":2, "biomes":[T.GRASS, T.MUD, T.SAND], "verb":&"rider",
-		"speed":280, "act":"bomb", "dmg":6, "sys":"hull", "front":240},
+		"speed":280, "act":"bomb", "dmg":9, "sys":"hull", "front":240},
 	&"plowboss": {"name":"Plowboss", "faction":faction.SCRAP, "rank":3, "biomes":[T.MUD, T.SNOW, T.DIRT], "verb":&"rider",
-		"speed":200, "act":"ram", "dmg":10, "sys":"engine", "front":99999, "arc":0.75, "crush":200},
+		"speed":200, "act":"ram", "dmg":12, "sys":"engine", "front":99999, "arc":0.75, "crush":200},
 	&"karter": {"name":"Karter", "faction":faction.SCRAP, "rank":1, "biomes":[T.GRASS, T.MOSS, T.MUD], "verb":&"rider",
-		"speed":280, "act":"tailgate", "dmg":3, "sys":"tank", "front":200},
+		"speed":280, "act":"tailgate", "dmg":5, "sys":"tank", "front":200},
 	&"slick": {"name":"Slick", "faction":faction.SCRAP, "rank":2, "biomes":[T.GRASS, T.SAND, T.MOSS], "verb":&"rider",
 		"speed":260, "act":"oil", "sys":"tires", "front":240, "crush":220},
 	&"boostjack": {"name":"Boostjack", "faction":faction.SCRAP, "rank":2, "biomes":[T.DIRT, T.SNOW, T.MOSS], "verb":&"rider",
-		"speed":200, "act":"boost", "dmg":10, "blast":110},
+		"speed":200, "act":"boost", "dmg":12, "blast":110},
 	&"shredder": {"name":"Shredder", "faction":faction.SCRAP, "rank":2, "biomes":[T.MUD, T.SNOW, T.MOSS], "verb":&"rider",
-		"speed":280, "act":"swipe", "dmg":3, "sys":"tires", "front":240},
+		"speed":270, "act":"swipe", "dmg":5, "sys":"tires", "front":240},
 	&"sawbot": {"name":"Sawbot", "faction":faction.SCRAP, "rank":1, "biomes":[T.SNOW, T.MOSS, T.GRASS], "verb":&"rider",
-		"speed":240, "act":"saw", "dmg":3, "sys":"tires"},
+		"speed":240, "act":"saw", "dmg":5, "sys":"tires"},
 	&"turret": {"name":"Turret", "faction":faction.SCRAP, "rank":2, "biomes":[T.SAND, T.SNOW, T.GRASS, T.MOSS], "verb":&"rider",
-		"speed":140, "act":"shoot", "range":[360, 480], "windT":0.6, "cd":1.6, "dmg":2, "sys":"lights", "tele":"aim"},
+		"speed":140, "act":"shoot", "range":[360, 480], "windT":0.6, "cd":1.6, "dmg":3, "sys":"lights", "tele":"aim"},
 	&"magnet": {"name":"Magnet", "faction":faction.SCRAP, "rank":3, "biomes":[T.DIRT, T.SNOW, T.MUD, T.MOSS], "verb":&"rider",
 		"speed":220, "act":"magnet", "sys":"steering", "crush":200},
 }

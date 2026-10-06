@@ -1,10 +1,9 @@
 class_name HudRegion extends Control
 
 #Top-left chip under the crush goal: the region you're in, its goon size, and the wave timer.
-#Each region pays a star for every wave you survive in it, up to 3 (Region.gd).
+#Each region pays a star for every wave you survive in it, up to 3 (Region.gd); no limit in Goonpocalypse.
 
 const MUTATION_ICON := preload("res://texture/icon/mutation.svg")
-const LAST_WAVE := 4         #Region stops paying stars when the wave reaches this
 
 var regionName := ""
 var giantism := 0
@@ -35,7 +34,7 @@ func _draw() -> void:
 	var time: float = Region.currentRegion.get("time", 0.0)
 	var length = Region.waveLength
 	var detail := ""
-	if wave >= LAST_WAVE:
+	if wave >= Region.waveCap():
 		HudTheme.arc(self, ring, 15, 0.0, 360.0, HudTheme.SKY, 5)
 		detail = "All waves survived"
 	elif wave > 0:

@@ -2,6 +2,11 @@ class_name SpawnManager extends Node
 
 @export var spawnTimer: float = 6.0
 @export var escalationSpeed = 0.15
+var spawnFloor := 1.0 #spawnTimer never escalates below this (s)
+
+#Goonpocalypse escalates faster and further: it is the endless mode
+const POCALYPSE_ESCALATION := 2.0
+const POCALYPSE_SPAWN_FLOOR := 0.6
 
 const GOON_CAP = 250          #same for every player and preset
 const DESPAWN_DISTANCE = 8000.0
@@ -57,8 +62,11 @@ func despawnSweep() -> void:
 	if not is_instance_valid(Root.playerCar): return
 	var carPosition = Root.playerCar.global_position
 	var view = get_viewport().get_canvas_transform().affine_inverse() * get_viewport().get_visible_rect()
+	#Defense: goons marching on the station are kept however far the car has driven
+	var base = Root.station.global_position if SaveManager.playerData.gameMode == Root.gameModes.DEFENSE && is_instance_valid(Root.station) else Vector2.INF
 	for goon in goons.duplicate():
 		if is_instance_valid(goon) && not goon.is_queued_for_deletion() && goon.global_position.distance_to(carPosition) > DESPAWN_DISTANCE && not view.has_point(goon.global_position):
+			if base != Vector2.INF && goon.global_position.distance_to(base) < DESPAWN_DISTANCE: continue
 			goon.queue_free()
 
 #night is the level's CanvasModulate going dark; goons light their eyes and night goons wake
@@ -75,6 +83,9 @@ func nightSweep() -> void:
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	Root.spawnManager = self
+	if SaveManager.playerData.gameMode == Root.gameModes.GOONPOCALYPSE:
+		escalationSpeed *= POCALYPSE_ESCALATION
+		spawnFloor = POCALYPSE_SPAWN_FLOOR
 	fx = GoonFx.new()
 	fx.name = "GoonFx"
 	add_child(fx)
@@ -84,7 +95,7 @@ func _ready():
 func increaseGiantOdds():
 	giantOdds += 1
 	gameTimeProgress += 1
-	spawnTimer = clampf(spawnTimer - escalationSpeed , 1.0, 6.0)
+	spawnTimer = clampf(spawnTimer - escalationSpeed , spawnFloor, 6.0)
 
 #--- goon scenes --------------------------------------------------------------------------------
 

@@ -1,12 +1,16 @@
 extends Node
 
 var waveLength: int = 60
+const LAST_WAVE := 4 #a region stops paying stars at this wave, except in Goonpocalypse
+
+func waveCap() -> int:
+	return 1 << 30 if SaveManager.playerData && SaveManager.playerData.gameMode == Root.gameModes.GOONPOCALYPSE else LAST_WAVE
 
 
 func _process(delta):
 	if currentRegion.has("time") && Root.isRunActive:
 		currentRegion.time += delta
-		if currentRegion.wave * waveLength < currentRegion.time && currentRegion.wave < 4:
+		if currentRegion.wave * waveLength < currentRegion.time && currentRegion.wave < waveCap():
 			currentRegion.wave += 1
 			Root.playerCar.star += 1
 			Root.playerRoot.animateNewRegion(true)

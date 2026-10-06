@@ -8,6 +8,7 @@
 [ext_resource type="Script" path="res://scene/player/hud/hud_payout.gd" id="7_payout"]
 [ext_resource type="Script" path="res://scene/player/hud/hud_dial.gd" id="8_dial"]
 [ext_resource type="Script" path="res://scene/player/hud/hud_systems.gd" id="9_systems"]
+[ext_resource type="Script" path="res://scene/player/hud/hud_objective.gd" id="10_objective"]
 [ext_resource type="PackedScene" uid="uid://c6ebkh5b1f4nr" path="res://scene/player/versionTracker.tscn" id="18_2aufu"]
 
 [sub_resource type="Animation" id="Animation_1ke8o"]
@@ -197,6 +198,19 @@ theme_override_font_sizes/font_size = 42
 text = "0 : 00"
 horizontal_alignment = 1
 script = ExtResource("3_hepv3")
+
+[node name="Objective" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -170.0
+offset_top = 84.0
+offset_right = 170.0
+offset_bottom = 126.0
+grow_horizontal = 2
+mouse_filter = 2
+script = ExtResource("10_objective")
 
 [node name="TopRight" type="Control" parent="."]
 layout_mode = 3

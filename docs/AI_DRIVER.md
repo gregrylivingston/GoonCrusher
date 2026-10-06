@@ -121,6 +121,8 @@ Every candidate is scored **value ÷ (seconds to get there + 1)**. The current g
   - Under 20 points they are skipped altogether. A coin isn't worth a pocket of rocks.
   - The car approaches them at 260 px/s.
 - **Goons:** 14 points, plus 4 for each other goon within 350 px (up to 6), for goons within 3000 px.
+  - Each goon has its own crush speed (`Walker.crushSpeed`, 100–400 px/s), or a higher one head-on while its front armor is up, and some are invulnerable for a while (`AIDriver.crushNeed`). A goon this car can't reach the speed to crush is never a goal. It stays in the obstacle sweeps, since hitting it bounces the car and hurts.
+  - While the goal is a goon, the throttle may go 15% past its crush speed, whatever fuel saving says.
   - Goons only die by being crushed, so every goon left alive joins the horde. Crushing is also the defence.
   - Below a health reserve the car stops hunting and steers around goons like rocks (protect mode). The reserve is 10 + 0.04 × the seconds left in Countdown, 20 in races and 25 otherwise.
 - **Unreachable goals:** a goal chased for 2.5× its estimated time (at least 3 s) is dropped for 10 s. One the car gets stuck on twice is dropped for the rest of the run.
@@ -164,7 +166,7 @@ Every candidate is scored **value ÷ (seconds to get there + 1)**. The current g
   - Plus 1.5 s per second per goon within 350 px while below crush speed. A slow car among goons is chewed up: every touch costs health and crushes nothing.
   - Plus a smaller cost per goon beside the path, inside lunge range but outside the bumper, doubled if it is already winding up an attack.
   - Plus 3 s per second spent rolling backwards (`reverseCost`). Going forwards is how the game is played.
-  - Minus 1.5 s for each goon the plan would meet with the bumper at crush speed (`crushReward`), so of two otherwise equal plans the car takes the one through goons.
+  - Minus 1.5 s for each goon the plan would meet with the bumper at 10% over that goon's crush speed (`crushReward`), so of two otherwise equal plans the car takes the one through goons. A goon met too slowly to crush adds half a wall hit instead: it would bounce the car.
   - Plus up to 2 s if a car-wide sweep from the plan's end, along where it ends up pointing, finds a wall within 1.2 s of travel at its end speed (`probeSeconds`). The planner thereby looks past its own horizon.
 - **Goons in the sweeps:** they are left out, because they are targets. A slow car should floor it through, since crush speed takes a third of a second. Protect mode puts them back in.
 

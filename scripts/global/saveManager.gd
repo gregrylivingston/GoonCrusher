@@ -4,7 +4,7 @@ extends Node
 #The demo and the full game share this file, so demo progress carries over: load_data() merges
 #each save with the current defaults (migrate()) before anything reads it.
 
-const SAVE_VERSION := 3 #2: every level's gamemodeBeat has a GOONPOCALYPSE key. 3: goonsCrushed (older saves load it empty)
+const SAVE_VERSION := 4 #2: every level's gamemodeBeat has a GOONPOCALYPSE key. 3: goonsCrushed (older saves load it empty). 4: meta, and a score record per car
 var save_path = "user://saveData_0.1.tres"
 var playerData: PlayerData
 var saveTimer: Timer
@@ -39,7 +39,7 @@ func load_data():
 
 func reset_save():
 	playerData = load("res://scene/player/save/playerData.tres").duplicate(true)
-	playerData.saveVersion = SAVE_VERSION
+	migrate() #the template is a saved file too, and may lack fields added since it was written
 	save_character_data()
 	flush()
 	return playerData
@@ -49,7 +49,9 @@ func reset_save():
 #Returns true when anything changed.
 func migrate() -> bool:
 	var defaults = PlayerData.new()
-	var before = var_to_str([playerData.cars, playerData.levels, playerData.saveVersion, playerData.selectedCar, playerData.selectedLevel, playerData.gameMode])
+	var before = var_to_str([playerData.cars, playerData.levels, playerData.saveVersion, playerData.selectedCar, playerData.selectedLevel, playerData.gameMode, playerData.meta])
+	for section in defaults.meta:
+		if not playerData.meta.get(section) is Dictionary: playerData.meta[section] = {}
 	for defaultCar in defaults.cars:
 		var saved = playerData.cars.filter(func(c): return c.name == defaultCar.name)
 		if saved.is_empty():
@@ -79,7 +81,7 @@ func migrate() -> bool:
 	playerData.selectedLevel = clampi(playerData.selectedLevel, 0, playerData.levels.size() - 1)
 	playerData.gameMode = clampi(playerData.gameMode, 0, Root.gameModes.size() - 1)
 	playerData.saveVersion = SAVE_VERSION
-	return before != var_to_str([playerData.cars, playerData.levels, playerData.saveVersion, playerData.selectedCar, playerData.selectedLevel, playerData.gameMode])
+	return before != var_to_str([playerData.cars, playerData.levels, playerData.saveVersion, playerData.selectedCar, playerData.selectedLevel, playerData.gameMode, playerData.meta])
 
 #marks the save dirty; it is written one second after the last change, on scene change and on exit
 func save_character_data():
@@ -209,3 +211,29 @@ func selectPreviousGameMode():
 	playerData.gameMode = wrap( playerData.gameMode  -1, 0 , Root.gameModes.size() )
 	save_character_data()
 	return playerData.gameMode
+
+#--- per-level records (meta.records) -----------------------------------------------------------
+#Keyed by the level scene's file name (level_grass_1), so reordering levels keeps them, then by car.
+
+static func levelKey(level: Dictionary) -> String:
+	return str(level.get("scene", level.get("name", ""))).get_file().get_basename()
+
+## The best Goonpocalypse run on this level with this car: {"time": seconds, "score": points}, zeros if none.
+func bestGoonpocalypse(levelIndex: int, carName: String) -> Dictionary:
+	var byLevel: Dictionary = playerData.meta.records.get("goonpocalypse", {})
+	return byLevel.get(levelKey(playerData.levels[levelIndex]), {}).get(carName, {"time":0, "score":0})
+
+## Keeps the better time and the better score (each on its own), here and in the car's records.
+## Returns which of them are new bests: {"time": bool, "score": bool}.
+func recordGoonpocalypse(levelIndex: int, carName: String, seconds: int, score: int) -> Dictionary:
+	var best = bestGoonpocalypse(levelIndex, carName).duplicate()
+	var newBest = {"time": seconds > best.time, "score": score > best.score}
+	best.time = maxi(best.time, seconds)
+	best.score = maxi(best.score, score)
+	var byLevel: Dictionary = playerData.meta.records.get_or_add("goonpocalypse", {})
+	byLevel.get_or_add(levelKey(playerData.levels[levelIndex]), {})[carName] = best
+	var records = getCarByName(carName).records
+	records.time = maxi(records.time, seconds)
+	records.score = maxi(records.get("score", 0), score)
+	save_character_data()
+	return newBest

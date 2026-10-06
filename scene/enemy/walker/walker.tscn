@@ -30,7 +30,7 @@ cull_mode = 1
 polygon = PackedVector2Array(-12, -12, 12, -12, 12, 12, -12, 12)
 
 [node name="CharacterBody2D" type="CharacterBody2D"]
-collision_layer = 3
+collision_layer = 4
 collision_mask = 3
 script = ExtResource("2_ogk1f")
 audio_charge = Array[AudioStreamMP3]([ExtResource("2_v4qqt"), ExtResource("3_1vsyv"), ExtResource("4_5a5y4"), ExtResource("5_k0trl"), ExtResource("6_yj2mn"), ExtResource("7_s4hpd"), ExtResource("8_ttoab")])

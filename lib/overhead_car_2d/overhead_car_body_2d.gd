@@ -88,6 +88,7 @@ var gem:int = 0
 var star: int = 0
 var currentGoonsCrushed:int = 0
 var crushedById := {} #goon id -> crushes this run, credited to the save's goonsCrushed by gameSummary
+var giantsCrushed: int = 0 #by the car itself; Goonpocalypse's score and the run log read it
 var slotMachines:int = 0
 
 @export var isPlayer = true
@@ -379,6 +380,7 @@ func crushGoon(collider) -> bool:
 	if isPlayer: Settings.vibrate(0.4, 0.0, 0.08)
 	var id = collider.get("goonId")
 	if id: crushedById[id] = crushedById.get(id, 0) + 1
+	if collider.get("isGiant"): giantsCrushed += 1
 	reward("currentGoonsCrushed", 1) #credited now; the flying icon is only for show
 	RewardFlyers.flyUpgrade(Root.upgrade.CURRENTGOONSCRUSHED, collider.global_position)
 	return true
@@ -572,11 +574,9 @@ func destroy():
 		isDestroyed = true
 		for system in condition: setCondition(system, 0.0) #the art goes fully wrecked
 		for i in randi_range(1,2):
-			var newExplosion = Root.levelRoot.explosionScene.instantiate()
-			newExplosion.position = Vector2( randi_range( 50,90 ) , randi_range( -50,20 ))
+			Root.levelRoot.explode(to_global(Vector2( randi_range( 50,90 ) , randi_range( -50,20 ))))
 			var modColor = 1.0 - (i/10.0)
 			$sprite.modulate = Color(modColor,modColor,modColor,1.0)
-			add_child(newExplosion)
 			await get_tree().create_timer(randf_range(0.01 , 1.0)).timeout
 		if isPlayer:
 			$sprite.modulate = Color(0.8,0.8,0.8,1.0)
@@ -610,6 +610,9 @@ func outOfFuel():
 	isDestroyed = true
 	_car_input.acceleration = 0.0
 	await get_tree().create_timer(2.5).timeout
+	if fuel > 0.0 && not isWrecked: #coasted into a Marathon station, which filled the tank
+		isDestroyed = false
+		return
 	Root.levelRoot.endLevel(false, Root.endCondition.NOGAS)
 	
 func setForwardCollisionMode(setting: bool):#activate or deactive bumper collision based on gear

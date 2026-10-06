@@ -140,6 +140,7 @@ shader = ExtResource("cd_shader")
 
 [node name="Car" type="CharacterBody2D"]
 z_index = 1
+collision_mask = 5
 script = ExtResource("1_ibwir")
 engineNoise = ExtResource("3_hfwa2")
 

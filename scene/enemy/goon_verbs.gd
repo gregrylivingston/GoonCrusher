@@ -331,12 +331,12 @@ class Hitcher extends Verb:
 #==================================================================================================
 ## Pulls into its car-roof shell when you rush it. Kick the shell above 460 px/s and it flattens goons.
 class Turtle extends Verb:
-	const KICK_SPEED := 400.0
+	const KICK_SPEED := 350.0
 	const HIDE_COOLDOWN := 3.0 #after coming out it can't hide again for a while: that's the window
 	var hideCd := 0.0
 	func move(delta: float, car: Node2D) -> void:
 		hideCd = maxf(0.0, hideCd - delta)
-		if hideCd <= 0.0 && GoonVerbs.bearingDown(car, g.global_position, 230.0, 250.0):
+		if hideCd <= 0.0 && GoonVerbs.bearingDown(car, g.global_position, 180.0, 300.0):
 			g.setState(&"hide")
 			g.play(&"special", 0.25)
 			g.invulnerable = true
@@ -883,14 +883,16 @@ class Rider extends Verb:
 
 	func peelOff() -> void:
 		g.setState(&"recover")
-		g.recT = 1.0
+		g.recT = 1.2 if act == "swipe" || act == "tailgate" else 1.0
 		g.cooldown = 2.0
 		side = -side
 
 	func tick(delta: float, car: Node2D) -> void:
 		if g.state == &"recover":
 			#drives away rather than standing still
-			drive(g.global_position + Vector2.from_angle(g.rotation + 0.6 * side) * 200.0, g.speedNow() * 0.8, delta)
+			#swipers and tailgaters coast after their hit: that's the window to T-bone them
+			var coast := 0.5 if act == "swipe" || act == "tailgate" else 0.8
+			drive(g.global_position + Vector2.from_angle(g.rotation + 0.6 * side) * 200.0, g.speedNow() * coast, delta)
 			if g.stateTime >= g.recT: g.setState(&"move")
 			return
 		super.tick(delta, car)

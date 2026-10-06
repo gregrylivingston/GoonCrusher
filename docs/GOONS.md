@@ -31,6 +31,7 @@ After a bake that adds new PNGs, run `Godot_console.exe --headless --path . --im
 - **A region's three goons** (`Goons.regionGoons`) all come from its faction and live on its terrain. Goon 1 is fodder (rank 1); goons 2 and 3 are specials or heavies.
 - **Wave mix** (`WAVE_MIX`): in wave 1 a region spawns its goon 1 95% of the time, and goons 2 and 3 grow more common over waves 2 to 4. The HUD reveals goons 2 and 3 on the same schedule. Global time adds a wave every 2 minutes.
 - **Region data:** `Region.currentRegion.faction` (a `Goons.faction` value) and `Region.factionName()`. The keys `name`, `giantism`, `time`, `wave` and `goon` are unchanged; `goon` now holds goon ids.
+- **Goonopedia:** a goon shows once it has been crushed. The dev console's `unlock goons` (also part of `unlock all`) reveals all of them, and `lock goons` hides them again.
 - **Testing:** `-- --faction=wild|tribe|scrap` forces every region's faction, and `-- --goons=a,b,c` forces its three goons. Both work with `--playtest` and `--bench`.
 
 ## The roster
@@ -57,7 +58,7 @@ After a bake that adds new PNGs, run `Godot_console.exe --headless --path . --im
 | Yeti | Tribe | lunge | 360 px/s to crush |
 | Doomcart | Tribe | bomber | Lights a fuse and rushes you; the blast kills goons too |
 | Gremlin | Tribe | hitcher | Rides the car and sabotages it until you swerve |
-| Shellback | Tribe | turtle | Hides in its shell (at most 2.5 s, then 3 s before it can hide again); kick the shell above 400 px/s |
+| Shellback | Tribe | turtle | Hides in its shell (at most 2.5 s, then 3 s before it can hide again); kick the shell above 350 px/s |
 | Foreman | Tribe | boss | Goons near it move 35% faster |
 | Skink | Tribe | burrow | Moves underground, surfaces to bite |
 | Rat Pack | Tribe | pack | Packs of six that scatter and regroup |

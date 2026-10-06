@@ -7,8 +7,9 @@ The HUD is `scene/player/playerRoot.tscn` (class `GameUI`). It was rebuilt in Oc
 | Node | Script | Anchor | Shows |
 |---|---|---|---|
 | `TopLeft/CrushPill` | `hud_crush.gd` | top left | Goons left to the next crush goal, its progress bar and the star it pays. |
-| `TopLeft/RegionChip` | `hud_region.gd` | top left | Region name, goon size (giantism) and the wave ring: "survive m:ss for a star". |
+| `TopLeft/RegionChip` | `hud_region.gd` | top left | Region name, goon size (giantism) and the wave ring: "survive m:ss for a star", up to `Region.waveCap()` waves (no cap in Goonpocalypse). |
 | `TopCenter/ModeLabel`, `TopCenter/Timer` | `Timer.gd` (unchanged) | top center | Mode name and run clock. `Timer` keeps group `runTimer`. |
+| `Objective` | `hud_objective.gd` | top center, under the clock | The mode's own goal: Goonpocalypse score and time to the star, Marathon "STATION n OF 5", Defense barrier bar. Hidden in Countdown and Sprint. |
 | `TopRight` | `hud_payout.gd` | top right | Pause button, coins x stars = payout (`Root.computePayout`), gems. |
 | `Tach`, `Fuel` | `hud_dial.gd` | bottom left | Tachometer with the gear (`car.gear`), and the fuel dial. |
 | `Speedo`, `Hull` | `hud_dial.gd` | bottom right | Speedometer and the hull (health) dial. |

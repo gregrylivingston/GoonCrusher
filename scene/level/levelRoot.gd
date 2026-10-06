@@ -2,9 +2,12 @@ class_name Level extends Node2D
 
 var spawnerScene = preload("res://scene/player/spawner.tscn")
 var explosionScene = preload("res://scene/fx/explosion.tscn") #loaded with the level, not with every car
+var explosions: ExplosionPool
 var playerCar: OverheadCarBody2D
 var playerController
-@export var seconds = 600 #the run clock. Countdown, Sprint and Marathon count it down; Defense and Goonpocalypse count up from 0
+@export var seconds = 600 #the run clock. Every mode counts it down except Goonpocalypse, which counts up from 0
+var levelSeconds: float #the level's authored seconds, kept after the mode replaces `seconds`
+var elapsed := 0.0 #run-clock seconds that have passed, whichever way the clock counts (Timer.gd)
 
 var isDaytime: bool = true
 var hasEnded := false #endLevel runs once per run, whichever ending gets there first
@@ -22,7 +25,29 @@ const REFERENCE_SPEED = 450.0
 const SPRINT_MAX_DISTANCE = 32000.0
 const SPRINT_Y_SPREAD = 0.25 #the station's y offset is up to this share of the distance, either way
 
+#Marathon: a relay of Sprint-length legs. Each station but the last adds that leg's clock, refuels,
+#patches the car up and opens a free slot machine; the last one wins.
+const MARATHON_LEGS = 5
+const MARATHON_TURN = PI / 3 #each leg heads off within this of the last leg's heading
+const MARATHON_HEAL = 35.0   #health restored at each station
+var leg := 1
+var legHeading := 0.0
+
+#Goonpocalypse: endless. Surviving POCALYPSE_TARGET x the level's seconds beats the mode (its star);
+#after that it is a chase for score and time (SaveManager.recordGoonpocalypse).
+const POCALYPSE_TARGET = 2.0
+var targetReached := false
+
+#Defense: hold the station until the clock runs out. Goons spawn on a ring around it and march on its
+#walls (Walker.siege); the station's barrier health is in station.gd.
+const DEFENSE_RING = 4000.0
+const DEFENSE_SPAWNERS = 4
+const DEFENSE_START = Vector2(1250, 290) #outside the lot's gap (its east side), from the station's origin
+
 func _ready():
+	levelSeconds = seconds
+	explosions = ExplosionPool.new(explosionScene)
+	add_child(explosions)
 
 	#add my car
 	var newPosition = $Car.position
@@ -50,15 +75,9 @@ func _ready():
 		Root.gameModes.GOONPOCALYPSE:createCountdownSpawners()
 		Root.gameModes.MARATHON:createSprintSpawners()
 		Root.gameModes.SPRINT:createSprintSpawners()
-		#DEFENSE: its spawner goes under the station, which exists only once the world is ready
+		#DEFENSE: its spawners ring the station, which exists only once the world is ready
 
-	match SaveManager.playerData.gameMode:
-		Root.gameModes.DEFENSE:
-			seconds = 0
-		Root.gameModes.GOONPOCALYPSE:
-			seconds = 0
-		Root.gameModes.MARATHON:
-			seconds = seconds * 5 #this is 5 times the length of sprint or countdown
+	if SaveManager.playerData.gameMode == Root.gameModes.GOONPOCALYPSE: seconds = 0
 
 	#the TileManager waits at least one frame before placing stations, so this is never too late
 	var tileManager = $TileManager
@@ -68,15 +87,12 @@ func _ready():
 #the map is built and every station is placed and in the tree
 func onWorldReady() -> void:
 	match SaveManager.playerData.gameMode:
-		Root.gameModes.SPRINT:
+		Root.gameModes.SPRINT, Root.gameModes.MARATHON:
 			if is_instance_valid(Root.station):
-				seconds = sprintSeconds(startPosition.distance_to(Root.station.global_position), seconds)
+				seconds = sprintSeconds(startPosition.distance_to(Root.station.global_position), levelSeconds)
+				legHeading = (Root.station.global_position - startPosition).angle()
 		Root.gameModes.DEFENSE:
-			if is_instance_valid(Root.station):
-				var spawner = newSpawner(Vector2i(4000,800), Root.station)
-				#SpawnManager lists the "spawner" group once, a frame after it starts; this one may come later
-				if is_instance_valid(Root.spawnManager) && Root.spawnManager.spawners is Array && not spawner in Root.spawnManager.spawners:
-					Root.spawnManager.spawners.push_back(spawner)
+			if is_instance_valid(Root.station): setupDefense()
 	clockReady = true
 	get_tree().call_group("runTimer", "onClockReady")
 
@@ -94,11 +110,11 @@ static func sprintSlack(levelSeconds: float) -> float:
 static func sprintSeconds(distancePx: float, levelSeconds: float) -> float:
 	return distancePx / REFERENCE_SPEED * sprintSlack(levelSeconds)
 
-#how a run ends when a counting-down clock reaches 0 (Root.endCondition): Countdown is won, the races are lost.
-#A wrecked car (exploding, its NOHEALTH ending still pending) has not survived Countdown. A car that only
-#ran out of fuel has, matching the rolling finish in station.gd.
+#how a run ends when a counting-down clock reaches 0 (Root.endCondition): Countdown and Defense are won,
+#the races are lost. A wrecked car (exploding, its NOHEALTH ending still pending) has not survived. A car
+#that only ran out of fuel has, matching the rolling finish in station.gd.
 static func timeUpCondition(gameMode: int, wrecked: bool = false) -> int:
-	if gameMode != Root.gameModes.GOONCRUSHER: return Root.endCondition.NOTIME
+	if gameMode != Root.gameModes.GOONCRUSHER && gameMode != Root.gameModes.DEFENSE: return Root.endCondition.NOTIME
 	return Root.endCondition.NOHEALTH if wrecked else Root.endCondition.SUCCESS
 
 func timeRanOut() -> void:
@@ -106,6 +122,74 @@ func timeRanOut() -> void:
 	var wrecked = is_instance_valid(car) && (car.isWrecked || car.health <= 0)
 	var condition = timeUpCondition(SaveManager.playerData.gameMode, wrecked)
 	endLevel(condition == Root.endCondition.SUCCESS, condition)
+
+#--- Goonpocalypse ------------------------------------------------------------------------------
+
+func pocalypseTarget() -> float:
+	return levelSeconds * POCALYPSE_TARGET
+
+#crushes, plus 5 per giant, plus a point for every 2 s survived
+static func pocalypseScore(crushes: int, giants: int, survived: float) -> int:
+	return crushes + 5 * giants + int(survived / 2.0)
+
+func runScore() -> int:
+	var car = Root.playerCar
+	return pocalypseScore(car.currentGoonsCrushed, car.giantsCrushed, elapsed) if is_instance_valid(car) else 0
+
+#Timer.gd calls this every frame the clock runs
+func onClockTick() -> void:
+	if targetReached || SaveManager.playerData.gameMode != Root.gameModes.GOONPOCALYPSE || hasEnded: return
+	if seconds >= pocalypseTarget():
+		targetReached = true #the mode is beaten however the run ends (endLevel)
+		$AudioStreamPlayer.stream = load("res://sound/fx/slotmachine/winner_3.mp3")
+		$AudioStreamPlayer.play()
+
+#--- Marathon -----------------------------------------------------------------------------------
+
+#the active station's driveway calls this in Marathon
+func stationReached(station: Node2D) -> void:
+	if leg >= MARATHON_LEGS:
+		endLevel(true, Root.endCondition.SUCCESS)
+		return
+	leg += 1
+	var car = Root.playerCar
+	car.fuel = 100.0 #a car coasting in on an empty tank is saved: outOfFuel checks the tank again
+	car.health = minf(100.0, car.health + MARATHON_HEAL)
+	car.repairAll()
+	car.updateDamageLook()
+	car.resetGasWarning()
+	car.resetHealthWarning()
+	var from = station.global_position
+	var next = $TileManager.placeNextStation(from, legHeading + randf_range(-MARATHON_TURN, MARATHON_TURN), levelSeconds)
+	legHeading = (next.global_position - from).angle()
+	seconds += sprintSeconds(from.distance_to(next.global_position), levelSeconds)
+	call_deferred("openFreeSlotMachine")
+
+func openFreeSlotMachine() -> void:
+	if hasEnded || get_tree().paused: return
+	get_tree().paused = true
+	add_child(preload("res://scene/player/slots/slotMachine.tscn").instantiate())
+
+#--- Defense ------------------------------------------------------------------------------------
+
+#the car starts outside the lot, facing away from it; spawners ring the station
+func setupDefense() -> void:
+	var station = Root.station
+	var car = Root.playerCar
+	car.global_position = station.global_position + DEFENSE_START
+	car.rotation = 0.0
+	car.velocity = Vector2.ZERO
+	startPosition = car.global_position
+	if car.has_node("Camera2D"): car.get_node("Camera2D").reset_smoothing()
+	var turn = randf() * TAU
+	for i in DEFENSE_SPAWNERS:
+		var spawner = newSpawner(Vector2.from_angle(turn + i * TAU / DEFENSE_SPAWNERS) * DEFENSE_RING, station)
+		#SpawnManager lists the "spawner" group once, a frame after it starts; these may come later
+		if is_instance_valid(Root.spawnManager) && Root.spawnManager.spawners is Array && not spawner in Root.spawnManager.spawners:
+			Root.spawnManager.spawners.push_back(spawner)
+	station.startBarrier()
+
+#--- spawners and the day -----------------------------------------------------------------------
 
 func createCountdownSpawners():
 	newSpawner( Vector2i(4000,2000)) 
@@ -143,7 +227,7 @@ func setNighttime(isNighttime: bool):
 		Root.playerCar.turnOnHeadlights(false)
 	
 #spawners are children of the car by default, so their offsets rotate with it
-func newSpawner( spawnerPosition: Vector2i, parent: Node = null ):
+func newSpawner( spawnerPosition: Vector2, parent: Node = null ):
 	var newSpawner = spawnerScene.instantiate()
 	newSpawner.position = spawnerPosition
 	(parent if parent != null else Root.playerCar).add_child(newSpawner)
@@ -158,6 +242,7 @@ func newSpawner( spawnerPosition: Vector2i, parent: Node = null ):
 #paused the tree (SceneTreeTimers run while paused), return at once.
 func endLevel(levelCompleted: bool, reason):  #reason takes Root.endCondition
 	if hasEnded: return
+	if targetReached: levelCompleted = true #Goonpocalypse ends in a wreck, but surviving the target beat it
 	hasEnded = true
 	endReason = reason
 	if is_instance_valid(Root.playerCar): Root.playerCar.isDestroyed = true
@@ -170,6 +255,10 @@ func endLevel(levelCompleted: bool, reason):  #reason takes Root.endCondition
 	add_child( gameSummary )
 	get_tree().paused = true
 
+
+#a pooled explosion at a world position
+func explode(worldPosition: Vector2) -> void:
+	explosions.explode(worldPosition)
 
 func getTileByCoordinates(coord: Vector2i):
 	return $TileManager.getTile(coord)

@@ -43,14 +43,25 @@ func test_unlock_levels_and_modes():
 		assert_true(level.unlocked, "%s unlocked" % level.name)
 		for mode in [M.GOONCRUSHER, M.SPRINT, M.GOONPOCALYPSE, M.MARATHON, M.DEFENSE]:
 			assert_true(Root.isModeUnlocked(level, mode), "%s open on %s" % [M.find_key(mode), level.name])
-	assert_false(Root.isModePlayable(SaveManager.playerData.levels[0], M.MARATHON), "Marathon is still Coming Soon")
+	assert_eq(Root.isModePlayable(SaveManager.playerData.levels[0], M.MARATHON), not Root.IS_DEMO, "Marathon opens with Sprint beaten")
 	Console.execute("unfinished on")
-	assert_true(Root.isModePlayable(SaveManager.playerData.levels[0], M.MARATHON), "unfinished on lets it start")
+	assert_true(Root.isModePlayable(SaveManager.playerData.levels[0], M.DEFENSE), "unfinished on lets any mode start")
 	Console.execute("lock all")
 	var defaults = PlayerData.new().levels
 	for i in defaults.size():
 		assert_eq(SaveManager.playerData.levels[i].unlocked, defaults[i].unlocked, "level %d back to the default" % i)
 		assert_false(Root.isModeUnlocked(SaveManager.playerData.levels[i], M.SPRINT), "level %d: Sprint locked again" % i)
+
+func test_unlock_and_lock_goons():
+	SaveManager.playerData.goonsCrushed = {"grunt": 5}
+	Console.execute("unlock goons")
+	for id in Goons.DATA: assert_true(Goonopedia.isDiscovered(id), "%s revealed" % id)
+	assert_eq(SaveManager.playerData.goonsCrushed["grunt"], 5, "real crush counts are kept")
+	Console.execute("lock goons")
+	if not Goonopedia.REVEAL_ALL:
+		for id in Goons.DATA: assert_false(Goonopedia.isDiscovered(id), "%s hidden again" % id)
+	Console.execute("unlock all")
+	assert_true(Goonopedia.isDiscovered(&"plowboss"), "unlock all includes the goons")
 
 func test_coins_and_gems():
 	Console.execute("coins 500")

@@ -112,23 +112,31 @@ func setupByGamemode() -> void:
 #Every station goes through placeObjective (on land, inside the map) and is pinned.
 func placeStations() -> void:
 	var startChunk = startChunkOf()
-	var levelSeconds: float = Root.levelRoot.seconds
+	var levelSeconds: float = Root.levelRoot.levelSeconds
 	match SaveManager.playerData.gameMode:
-		Root.gameModes.SPRINT:
+		Root.gameModes.SPRINT, Root.gameModes.MARATHON:
 			#by distance: SPRINT_DRIVE_FRACTION of the level's seconds at REFERENCE_SPEED. Level.onWorldReady
-			#then sets the clock from the real distance to where the station landed.
+			#then sets the clock from the real distance to where the station landed. Marathon's first leg is
+			#a Sprint; placeNextStation places the rest.
 			var offset: Vector2 = Level.sprintOffsetPx(levelSeconds, randf_range(-1.0, 1.0))
 			placeStation(startChunk + Vector2i(roundi(offset.x / tilesize.x), roundi(offset.y / tilesize.y)))
-		Root.gameModes.MARATHON:
-			#far away; placeObjective clamps it inside the map (Marathon is unfinished, T1-3)
-			placeStation(Vector2i( randi_range( levelSeconds * 0.7 , levelSeconds * 0.72),  randi_range( levelSeconds * 0.2 , levelSeconds * -0.2 ) ))
 		Root.gameModes.DEFENSE:
 			placeStation(startChunk)
 
-func placeStation(desiredChunk: Vector2i) -> void:
+func placeStation(desiredChunk: Vector2i, forbidden := NO_CHUNK) -> void:
 	var myStation = load("res://scene/level/station.tscn").instantiate()
 	Root.station = myStation
-	pinChunk(placeObjective(desiredChunk), myStation)
+	pinChunk(placeObjective(desiredChunk, forbidden), myStation)
+
+#Marathon's next leg: the reached station is retired and unpinned (it unloads once the car leaves),
+#and a new one goes a Sprint's distance from it along `heading`. Returns the new station.
+func placeNextStation(from: Vector2, heading: float, levelSeconds: float) -> Node2D:
+	var fromChunk = chunkOf(from)
+	if is_instance_valid(Root.station) && Root.station.has_method("retire"): Root.station.retire()
+	unpinChunk(fromChunk)
+	var offset: Vector2 = Level.sprintOffsetPx(levelSeconds, randf_range(-1.0, 1.0)).rotated(heading)
+	placeStation(chunkOf(from + offset), fromChunk)
+	return Root.station
 
 func startChunkOf() -> Vector2i:
 	return chunkOf(Root.levelRoot.startPosition) if is_instance_valid(Root.levelRoot) else Vector2i.ZERO
@@ -136,12 +144,12 @@ func startChunkOf() -> Vector2i:
 const OBJECTIVE_MAX_CHUNKS = 100 #objectives stay within this many chunks of the map centre, on each axis
 
 #The chunk an objective should go in: desiredChunk clamped to the map, then the nearest land chunk
-#(not WATER or HILLS), preferring one whose neighbours are land too. Sprint and Marathon never get
-#the start chunk.
-func placeObjective(desiredChunk: Vector2i) -> Vector2i:
+#(not WATER or HILLS), preferring one whose neighbours are land too, and never `forbidden`. Sprint and
+#Marathon never get the start chunk unless another chunk is forbidden.
+const NO_CHUNK = Vector2i(-99999, -99999)
+func placeObjective(desiredChunk: Vector2i, forbidden := NO_CHUNK) -> Vector2i:
 	var generator = $landscapeGenerator
-	var forbidden = Vector2i(-99999, -99999)
-	if SaveManager.playerData.gameMode in [Root.gameModes.SPRINT, Root.gameModes.MARATHON]: forbidden = startChunkOf()
+	if forbidden == NO_CHUNK && SaveManager.playerData.gameMode in [Root.gameModes.SPRINT, Root.gameModes.MARATHON]: forbidden = startChunkOf()
 	return findObjectiveChunk(generator.terrainMap, Vector2i(generator.inputSizeX, generator.inputSizeY), desiredChunk, forbidden, OBJECTIVE_MAX_CHUNKS)
 
 const OBJECTIVE_NEIGHBOUR_SEARCH = 3 #rings searched past the first land chunk for one with land neighbours
@@ -208,6 +216,10 @@ func pinChunk(chunk: Vector2i, myScene) -> void:
 	pinnedChunks[chunk] = true
 	unloadChunk(chunk, true)
 	loadChunk(chunk, myScene)
+
+#the chunk unloads by distance again, objects and all, like any other
+func unpinChunk(chunk: Vector2i) -> void:
+	pinnedChunks.erase(chunk)
 
 
 var playerChunk: Vector2i = Vector2i(-999,-999)

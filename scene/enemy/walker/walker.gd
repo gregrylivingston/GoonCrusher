@@ -68,7 +68,7 @@ var resistTimer := 0.0
 var dead := false
 var lastCarRotation := 0.0
 var carSpin := 0.0 #the car's turn rate (rad/s), for goons that can be shaken off
-var savedLayers := Vector2i(3, 3)
+var savedLayers := Vector2i(4, 3) #layer 3 (Goon) only, so goons never collide with each other; mask: world and car
 
 @onready var sprite: AnimatedSprite2D = $Sprite
 
@@ -98,6 +98,8 @@ func _ready():
 	cooldown = randf() * 1.5
 	sprite.play(&"walk")
 	sprite.frame = randi() % 8
+	if SaveManager.playerData.gameMode == Root.gameModes.DEFENSE && is_instance_valid(Root.station) && def.get("verb", &"lunge") not in SIEGE_SKIP:
+		siegeTarget = Root.station
 	verb = GoonVerbs.make(def.get("verb", &"lunge"), self)
 	verb.setup()
 	if is_instance_valid(Root.spawnManager) && Root.spawnManager.isNight: setNight(true)
@@ -124,7 +126,51 @@ func _physics_process(delta):
 	resistTimer = maxf(0.0, resistTimer - delta)
 	carSpin = angle_difference(lastCarRotation, car.rotation) / delta
 	lastCarRotation = car.rotation
+	if siegeTarget:
+		if sieging(car):
+			siege(delta)
+			return
+		if state == &"siege": setState(&"move") #the car came close: the verb takes over
 	verb.tick(delta, car)
+
+#--- Defense: the siege -------------------------------------------------------------------------
+#In Defense a goon walks to the station's walls and hits them, unless the car comes within SIEGE_AGGRO,
+#when its verb hunts the car as usual. Verbs with their own movement (burrowers, flyers, vehicles) always
+#hunt the car. Verbs never see the station.
+
+const SIEGE_AGGRO := 650.0
+const SIEGE_REST := 2.0 #at least this long between blows on the wall
+const SIEGE_SKIP := [&"burrow", &"flyer", &"rider"]
+var siegeTarget: Node2D = null #Defense's station; null in every other mode
+
+func sieging(car: Node2D) -> bool:
+	if not is_instance_valid(siegeTarget): return false
+	return (state == &"move" || state == &"siege") && distTo(car) > SIEGE_AGGRO
+
+func siege(delta: float) -> void:
+	var wall: Vector2 = siegeTarget.nearestWallPoint(global_position)
+	var reach := bodyRadius * scale.x + 30.0
+	var distance := global_position.distance_to(wall)
+	if state != &"siege":
+		if distance > reach:
+			chase(wall, speedNow(), delta)
+			return
+		setState(&"siege")
+		hitDone = false
+	elif distance > reach * 2.0: #knocked away from the wall
+		setState(&"move")
+		return
+	if distance > 1.0: faceTo((wall - global_position).angle(), delta)
+	if stateTime < windT: play(&"windup", windT)
+	elif stateTime < windT + atkT: play(&"attack", atkT)
+	else:
+		if not hitDone:
+			hitDone = true
+			siegeTarget.damage(attackDamage)
+		play(&"idle")
+		if stateTime >= windT + atkT + maxf(recT, SIEGE_REST):
+			stateTime = 0.0
+			hitDone = false
 
 #--- helpers the verbs use ----------------------------------------------------------------------
 

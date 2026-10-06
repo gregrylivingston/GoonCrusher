@@ -11,60 +11,64 @@ class_name PlayerData extends Resource
 #goon id (Goons.DATA) -> how many the player has crushed, over every run; the Goonopedia reveals a goon
 #once it is crushed. Credited by gameSummary when a run ends.
 @export var goonsCrushed := {}
+#Everything that isn't a car or a level, one section per feature. migrate() adds any section an
+#older save lacks. records: best runs per level and car (SaveManager.recordGoonpocalypse); hints: one-time
+#tips already shown; lifetime: totals over every run; medals and achievements: earned ids.
+@export var meta := {"records":{}, "hints":{}, "lifetime":{}, "medals":{}, "achievements":{}}
 
 @export var cars = [
 	{	"name":"sedan",
 		"cost":0,
 		"upgrades":{},
-		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,},
+		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,"score":0,},
 		"scene":"res://scene/car/sedan/sedan.tscn",
 	},
 	{	"name":"van",
 		"cost":1000,
 		"upgrades":{},
-		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,},
+		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,"score":0,},
 		"scene":"res://scene/car/van/van.tscn",
 	},
 	{	"name":"taxi",
 		"cost":2000,
 		"upgrades":{},
-		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,},
+		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,"score":0,},
 		"scene":"res://scene/car/taxi/taxi.tscn",
 	},	
 	{	"name":"pickup",
 		"cost":2500,
 		"upgrades":{},
-		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,},
+		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,"score":0,},
 		"scene":"res://scene/car/pickup/pickup.tscn",
 	},
 	{	"name":"semi",
 		"cost":5000,
 		"upgrades":{},
-		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,},
+		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,"score":0,},
 		"scene":"res://scene/car/semi/semi.tscn",
 	},
 	{	"name":"audi",
 		"cost":10000,
 		"upgrades":{},
-		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,},
+		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,"score":0,},
 		"scene":"res://scene/car/audi/audi.tscn"
 	},
 	{	"name":"racer",
 		"cost":10000,
 		"upgrades":{},
-		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,},
+		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,"score":0,},
 		"scene":"res://scene/car/racer/racer.tscn"
 	},
 	{	"name":"police",
 		"cost":25000,
 		"upgrades":{},
-		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,},
+		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,"score":0,},
 		"scene":"res://scene/car/police/police.tscn",
 	},
 	{	"name":"ambulance",
 		"cost":35000,
 		"upgrades":{},
-		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,},
+		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,"score":0,},
 		"scene":"res://scene/car/ambulance/ambulance.tscn",
 	}
 ]

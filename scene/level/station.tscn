@@ -279,3 +279,4 @@ position = Vector2(-65.5, 194)
 shape = SubResource("RectangleShape2D_3v8c0")
 
 [connection signal="body_entered" from="driveway" to="." method="_on_driveway_body_entered"]
+[connection signal="body_exited" from="driveway" to="." method="_on_driveway_body_exited"]

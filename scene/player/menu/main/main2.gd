@@ -515,6 +515,9 @@ func refreshSetup(animate := true) -> void:
 	for i in MODE_ORDER.size(): refreshMedallion(medallions[i], MODE_ORDER[i], MODE_ORDER[i] == mode, forModes)
 	modeTitle.text = Root.gameModeDescription[mode].name
 	modeText.text = Root.gameModeDescription[mode].description
+	if mode == Root.gameModes.GOONPOCALYPSE:
+		var best = SaveManager.bestGoonpocalypse(selected, SaveManager.playerData.cars[SaveManager.playerData.selectedCar].name)
+		if best.time > 0: modeText.text += "\nBest here: %d:%02d, score %d" % [best.time / 60, best.time % 60, best.score]
 	var reason = "" if isLevelSelectable(selected) else ("Not in the demo" if isDemoLockedLevel(selected) else "Beat the level before it to unlock")
 	if reason == "": reason = Root.modeLockReason(forModes, mode)
 	modeLock.text = reason

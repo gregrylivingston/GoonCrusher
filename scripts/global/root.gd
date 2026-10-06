@@ -1,7 +1,7 @@
 extends Node
 
 enum gameModes {  GOONCRUSHER , SPRINT, MARATHON, DEFENSE, GOONPOCALYPSE }
-enum endCondition { NOGAS , NOHEALTH , NOTIME , SUCCESS , ABANDONED } #append only: the values are ints
+enum endCondition { NOGAS , NOHEALTH , NOTIME , SUCCESS , ABANDONED , BASEDESTROYED } #append only: the values are ints
 enum upgrade { HEALTH , FUEL , ARMOR , ENGINE , TRACTION , STEERING , CLOVER , LUCK , HEADLIGHTS , OIL , COIN , PURSE , GEM , SLOTMACHINE, CURRENTGOONSCRUSHED}
 enum terrain { GRASS , SAND , MUD , WATER , HILLS , MOSS , DIRT , SNOW}
 
@@ -35,8 +35,8 @@ const MODE_AVAILABLE = {
 	gameModes.GOONCRUSHER: true,
 	gameModes.SPRINT: true,
 	gameModes.GOONPOCALYPSE: true,
-	gameModes.MARATHON: false,
-	gameModes.DEFENSE: false,
+	gameModes.MARATHON: true,
+	gameModes.DEFENSE: true,
 }
 
 static func versionText() -> String:
@@ -148,15 +148,15 @@ var gameModeDescription: Dictionary = {
 	},
 	Root.gameModes.DEFENSE:{
 		"name":"DEFENSE",
-		"description":"Stop the goons from reaching the barrier.",
+		"description":"Hold the station until the clock runs out. Goons march on its walls: crush them before they break through.",
 	},
 	Root.gameModes.MARATHON:{
 		"name":"MARATHON",
-		"description":"Outlast, outwit, and survive in this marathon race.",
+		"description":"A relay of five stations. Each one refuels you, patches you up and adds time. Reach the last.",
 	},
 	Root.gameModes.GOONPOCALYPSE:{
 		"name":"GOONPOCALYPSE",
-		"description":"Survive as long as you can against increasingly powerful waves of goon.",
+		"description":"Endless, and it only gets worse. Survive twice the level's clock for the star, then chase your best score.",
 	},
 }
 	

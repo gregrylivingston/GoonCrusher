@@ -20,6 +20,7 @@ const STAMPS := {
 	Root.endCondition.NOGAS: ["OUT OF GAS", Color(0.78, 0.14, 0.11)],
 	Root.endCondition.NOTIME: ["TIME'S UP", Color(0.78, 0.14, 0.11)],
 	Root.endCondition.NOHEALTH: ["WRECKED", Color(0.78, 0.14, 0.11)],
+	Root.endCondition.BASEDESTROYED: ["OVERRUN", Color(0.78, 0.14, 0.11)],
 }
 
 var summaryTimer: float = -2.0
@@ -127,21 +128,30 @@ func reasonLine() -> String:
 			"Crash Course In Defeat!",
 			"Gooned! Car Kaput. Retry?"
 		],
+		Root.endCondition.BASEDESTROYED:[
+			"The Walls Fell. The Goons Moved In.",
+			"Station Overrun. Goons Pumping Gas.",
+			"Barrier Down. Goons Everywhere.",
+			"They Got Through. Hold It Longer Next Time.",
+		],
 	}
 	var lines: Array = reasonDict.get(reason, ["Run Over"])
 	return lines[randi() % lines.size()]
 
 func buildGameSummary():
 	Root.playerRoot.visible = false
-	if levelCompleted && reason != Root.endCondition.ABANDONED:
+	var level = Root.levelRoot
+	#a Goonpocalypse run that survived its target beat the mode, even when it was abandoned afterwards
+	if levelCompleted && (reason != Root.endCondition.ABANDONED || level.targetReached):
 		SaveManager.currentLevelPassed()
 	else:
 		$AudioStreamPlayer_highImpact.play()
 	var car = Root.playerCar
 	var records = SaveManager.getCarByName(car.carId).records
-	var level = SaveManager.playerData.levels[SaveManager.playerData.selectedLevel]
-	var mode = Root.gameModeDescription[SaveManager.playerData.gameMode].name
-	var body = buildTicket("%s  -  %s  -  %s" % [mode, level.name.to_upper(), car.charName.to_upper()], reasonLine())
+	var levelIndex = SaveManager.playerData.selectedLevel
+	var gameMode = SaveManager.playerData.gameMode
+	var mode = Root.gameModeDescription[gameMode].name
+	var body = buildTicket("%s  -  %s  -  %s" % [mode, SaveManager.playerData.levels[levelIndex].name.to_upper(), car.charName.to_upper()], reasonLine())
 
 	#records: compare before updating, so a beaten record gets its badge
 	var crushed = car.currentGoonsCrushed
@@ -149,7 +159,15 @@ func buildGameSummary():
 	var paid = Root.computePayout(car.coin, car.star)
 	var powerups = car.powerupsCollected
 	var timer = get_tree().get_first_node_in_group("runTimer")
-	addRow("Time", timer.text if is_instance_valid(timer) else "-", false)
+	var newBest = {"time": false, "score": false}
+	if gameMode == Root.gameModes.GOONPOCALYPSE:
+		newBest = SaveManager.recordGoonpocalypse(levelIndex, car.carId, int(level.elapsed), level.runScore())
+	addRow("Time", timer.text if is_instance_valid(timer) else "-", newBest.time)
+	match gameMode: #one row for the mode's own goal
+		Root.gameModes.GOONPOCALYPSE: addRow("Score", str(level.runScore()), newBest.score)
+		Root.gameModes.MARATHON: addRow("Stations", "%d / %d" % [level.leg - (0 if reason == Root.endCondition.SUCCESS else 1), Level.MARATHON_LEGS], false)
+		Root.gameModes.DEFENSE:
+			if is_instance_valid(Root.station): addRow("Barrier", "%d%%" % ceili(100.0 * Root.station.barrier / Root.station.BARRIER_MAX), false)
 	addRow("Top speed", Settings.speed_text(car._highest_measured_speed), topSpeed > records.speed)
 	addRow("Goons crushed", str(crushed), crushed > records.goonsCrushed)
 	addRow("Coins", str(car.coin), false)
@@ -164,6 +182,7 @@ func buildGameSummary():
 	records.gem = maxi(records.gem, car.gem)
 	records.slotMachines = maxi(records.slotMachines, car.slotMachines)
 	var discovered = Goonopedia.creditCrushes(car.crushedById)
+	if OS.is_debug_build(): RunLog.append(car, level, reason, paid)
 
 	#pay now and save, so quitting from the summary can't lose the run; the menu only animates it
 	SaveManager.addCoins(paid)
@@ -173,7 +192,9 @@ func buildGameSummary():
 	SaveManager.save_character_data()
 	SaveManager.flush()
 	var stampInfo = STAMPS.get(reason, ["GAME OVER", Color(0.78, 0.14, 0.11)])
+	if level.targetReached: stampInfo = ["SURVIVED", Color(0.17, 0.55, 0.26)]
 	stamp = makeStamp(stampInfo[0], stampInfo[1])
+	if rows.get_child_count() > 7: stamp.position.y += 40 * (rows.get_child_count() - 7) #stays under the payout
 	reveal.push_back(stamp)
 	addContinue("CONTINUE", "Any button speeds up the count")
 	var notes = []
@@ -194,6 +215,8 @@ func buildAchievementSummary():
 	addRow("Powerups", str(records.powerups), false)
 	addRow("Gems", str(records.gem), false)
 	addRow("Slot machines", str(records.slotMachines), false)
+	if records.get("time", 0) > 0: addRow("Longest Goonpocalypse", "%d:%02d" % [records.time / 60, records.time % 60], false)
+	if records.get("score", 0) > 0: addRow("Goonpocalypse score", str(records.score), false)
 	addContinue("CLOSE", "")
 	for part in reveal: part.visible = true
 	reveal.clear()
