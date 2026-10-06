@@ -62,6 +62,9 @@ func applyDef() -> void:
 		spawnManager.spawnTimer = def.spawnTimer
 		spawnManager.giantOdds = def.giantOdds
 		spawnManager.escalationSpeed = def.escalationSpeed
+	var tileManager = get_node_or_null("TileManager")
+	if tileManager && not def.objectTiles.is_empty(): #interim: the old object pools, read in TileManager._ready
+		tileManager.requestedObjectTiles = def.objectTiles.duplicate()
 
 #Sprint and Marathon slack: the def's, else the old curve over the level's seconds
 func slack() -> float:

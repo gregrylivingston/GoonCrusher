@@ -29,7 +29,7 @@ Godot_console.exe --headless --fixed-fps 60 --path . -- --playtest --uncapped --
 
 | Option | Default | |
 |---|---|---|
-| `--level=a,b` | `level_grass_1` | level scene names in `scene/level/levels/` |
+| `--level=a,b` | `prairie` | level ids (`Levels.ORDER`), 0-based indices or old scene names |
 | `--mode=a,b` | `countdown` | `countdown`, `sprint`, `goonpocalypse`, `marathon`, `defense` |
 | `--car=a,b` | `sedan` | car names from the save (`sedan`, `van`, `police`, ...) |
 | `--profiles=a,b` | `default` | AI profiles to play (below); each is another dimension like car or mode |

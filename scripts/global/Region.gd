@@ -114,8 +114,9 @@ func createRegion(terrain: int) -> Dictionary:#terrain is Enum Root.terrain
 	if not forcedGoons.is_empty():
 		goons = [forcedGoons[0], forcedGoons[1 % forcedGoons.size()], forcedGoons[2 % forcedGoons.size()]]
 		faction = Goons.DATA[goons[0]].faction
+	var pool: Array = names.get(terrain, names[Root.terrain.GRASS]) #the newer surfaces have no name table yet
 	var thisRegion = {
-		"name": names[ terrain ][ randi()%names[terrain].size() - 1 ],
+		"name": pool[ randi()%pool.size() - 1 ],
 		"terrain":terrain,
 		"giantism":randi()%100,
 		"time":0.0,

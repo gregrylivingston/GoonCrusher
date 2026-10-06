@@ -179,6 +179,7 @@ func test_level_root_copies_the_def():
 	assert_eq(spawn.giantOdds, def.giantOdds, "giants")
 	assert_almost_eq(spawn.escalationSpeed, def.escalationSpeed, 0.0001, "escalation")
 	assert_almost_eq(level.slack(), def.sprintSlack, 0.0001, "sprint slack")
+	assert_eq(Array(level.get_node("TileManager").requestedObjectTiles), Array(def.objectTiles), "the interim object pools")
 	level.seconds = 99
 	level.applyDef()
 	assert_eq(level.seconds, 99, "applied once, so the bench's later overrides stand")

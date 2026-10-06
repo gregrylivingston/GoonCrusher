@@ -131,7 +131,7 @@ static func onLand(p: Vector2) -> bool:
 	var tm = Root.levelRoot.get_node_or_null("TileManager")
 	if tm == null: return true
 	var tile: Dictionary = tm.tileAt(tm.chunkOf(p))
-	return tile.terrain != Root.terrain.WATER && tile.terrain != Root.terrain.HILLS
+	return World.isPassable(tile.terrain)
 
 static func beacon(node: Node2D, color: Color, icon: Texture2D) -> void:
 	beacons.push_back([node, color, icon])

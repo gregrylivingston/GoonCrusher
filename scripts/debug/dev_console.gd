@@ -335,8 +335,7 @@ func cmdLevel(args: Array) -> String:
 			var def := Levels.defAt(i)
 			lines.push_back("%s %d %-10s %-16s act %d  %s" % [">" if i == data.selectedLevel else " ", i, Levels.ORDER[i], def.displayName if def else "?",
 				def.act if def else 0, "open" if data.levels[i].unlocked else "locked"])
-		return "
-".join(lines)
+		return "\n".join(lines)
 	var id := Levels.resolve(args[0])
 	if id == &"": return "Error: unknown level '%s' (%s)" % [args[0], Levels.idsText()]
 	data.selectedLevel = Levels.indexOf(id)

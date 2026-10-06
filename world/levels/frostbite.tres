@@ -66,6 +66,7 @@ pickupTable = {
 &"slot": 1
 }
 pickupsPerChunk = 3
+objectTiles = Array[int]([0, 2, 0])
 palette = {
 &"ground": Color(0.85, 0.88, 0.92, 1),
 &"accent": Color(0.7, 0.76, 0.84, 1),

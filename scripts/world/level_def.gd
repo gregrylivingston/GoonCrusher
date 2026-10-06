@@ -46,6 +46,10 @@ class_name LevelDef extends Resource
 ## pickup kind -> weight
 @export var pickupTable: Dictionary = {}
 @export var pickupsPerChunk: int = 3
+## Interim, until the world generator places props and pickups: the old TileManager object pools
+## (TileManager.objectTypes) this level's chunks draw from, copied from the level that sat at its index
+## before the revamp. Empty keeps the TileManager's default (rocks only).
+@export var objectTiles: Array[int] = []
 
 @export_group("Look")
 ## ground colours for the shader fallback: name -> Color

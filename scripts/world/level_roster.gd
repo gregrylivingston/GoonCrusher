@@ -12,10 +12,16 @@ const MIN_HIGH := 2
 static var cache := {} #"<level id>:<faction>" -> validated, padded Array of ids
 
 ## The faction score of a spot `distancePx` from the start, as Goons.factionFor scores it without the
-## level index, clamped to the level's band
+## level index, clamped to the level's band. The band's top is exclusive (bandTop), so a band that ends on
+## a threshold (The Quarry's 2.2 = Goons.TRIBE_BELOW) never reaches the faction above it.
 static func factionScore(distancePx: float, jitter: float, band: Vector2) -> float:
 	var score := distancePx / Goons.CHUNK_PX * Goons.DISTANCE_WEIGHT + jitter
-	return clampf(score, minf(band.x, band.y), maxf(band.x, band.y))
+	return clampf(score, minf(band.x, band.y), bandTop(band))
+
+const BAND_EDGE := 0.001
+## The highest score a band allows: just under its top
+static func bandTop(band: Vector2) -> float:
+	return maxf(maxf(band.x, band.y) - BAND_EDGE, minf(band.x, band.y))
 
 static func factionForScore(score: float) -> int:
 	if score < Goons.WILD_BELOW: return Goons.faction.WILD

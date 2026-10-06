@@ -230,8 +230,8 @@ Godot_console.exe --path . -- --bench=S2 --mode=sprint --level-seconds=8 --secon
 | ID | Scenario | Stresses |
 |---|---|---|
 | S1 | Main menu idle | 3D text fill |
-| S2 | Day drive, `level_grass_1`, sedan | terrain, smoke, streaming |
-| S3 | Night, `level_mud_3`, police car, circling | lights, shadows, occluders |
+| S2 | Day drive, `prairie` (was `level_grass_1` before the world revamp), sedan | terrain, smoke, streaming |
+| S3 | Night, `quarry` (was `level_mud_3`), police car, circling | lights, shadows, occluders |
 | S4 | Late-game night crowd (S3 plus maximum spawn pressure) | goon physics, draw calls |
 | S5 | 5 slot claims | celebrations, reels |
 | S6 | 10-minute drive | streaming, hitches |

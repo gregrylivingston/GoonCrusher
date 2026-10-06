@@ -720,7 +720,7 @@ static func levelStats(def: LevelDef) -> Dictionary:
 static func factionsOn(def: LevelDef) -> Array:
 	var out := []
 	var low := LevelRoster.factionForScore(minf(def.factionBand.x, def.factionBand.y))
-	var high := LevelRoster.factionForScore(maxf(def.factionBand.x, def.factionBand.y))
+	var high := LevelRoster.factionForScore(LevelRoster.bandTop(def.factionBand))
 	for f in range(low, high + 1):
 		var source := LevelRoster.rosterFaction(def, f)
 		if source == f: out.push_back(f)
@@ -934,8 +934,8 @@ class FactionRoad extends Control:
 			var chunks = (i + 0.5) / slices * CHUNKS
 			var score = chunks * Goons.DISTANCE_WEIGHT #the band clamps the jittered score
 			var j = Goons.FACTION_JITTER
-			var wild = 1.0 if band.y < Goons.WILD_BELOW else (0.0 if band.x >= Goons.WILD_BELOW else clampf((Goons.WILD_BELOW - score + j) / (2.0 * j), 0.0, 1.0))
-			var scrap = 1.0 if band.x >= Goons.TRIBE_BELOW else (0.0 if band.y < Goons.TRIBE_BELOW else clampf((score - Goons.TRIBE_BELOW + j) / (2.0 * j), 0.0, 1.0))
+			var wild = 1.0 if band.y <= Goons.WILD_BELOW else (0.0 if band.x >= Goons.WILD_BELOW else clampf((Goons.WILD_BELOW - score + j) / (2.0 * j), 0.0, 1.0))
+			var scrap = 1.0 if band.x >= Goons.TRIBE_BELOW else (0.0 if band.y <= Goons.TRIBE_BELOW else clampf((score - Goons.TRIBE_BELOW + j) / (2.0 * j), 0.0, 1.0))
 			var tribe = maxf(0.0, 1.0 - wild - scrap)
 			var color = FACTION_COLORS[0] * wild + FACTION_COLORS[1] * tribe + FACTION_COLORS[2] * scrap
 			color.a = 1.0
