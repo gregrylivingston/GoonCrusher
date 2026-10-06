@@ -1,0 +1,22 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://world/art/props/barricade.png" id="tex"]
+
+[sub_resource type="ConvexPolygonShape2D" id="shape"]
+points = PackedVector2Array(-125.3, -28, -102.7, -40, -73.3, -45.3, 118.7, -40, 122.7, -36, 125.3, -12, 106.7, 37.3, 101.3, 48, -117.3, 48, -129.3, 20)
+
+[node name="barricade" type="StaticBody2D"]
+collision_layer = 1
+collision_mask = 0
+metadata/propId = &"barricade"
+metadata/propClass = &"STATEFUL"
+metadata/smashSpeed = 350.0
+metadata/broken = "res://world/art/props/barricade_broken.png"
+metadata/debris = "res://world/art/props/barricade_debris.png"
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(1.3333, 1.3333)
+texture = ExtResource("tex")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("shape")

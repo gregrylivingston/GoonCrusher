@@ -1,0 +1,27 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://world/art/props/jersey.png" id="tex"]
+
+[sub_resource type="ConvexPolygonShape2D" id="shape"]
+points = PackedVector2Array(-160, -18.7, -154.7, -25.3, 154.7, -25.3, 160, -18.7, 160, 18.7, 157.3, 24, 154.7, 25.3, -154.7, 25.3, -157.3, 24, -160, 18.7)
+
+[sub_resource type="OccluderPolygon2D" id="occluder"]
+cull_mode = 2
+polygon = PackedVector2Array(-160, -18.7, -154.7, -25.3, 154.7, -25.3, 160, -18.7, 160, 18.7, 157.3, 24, 154.7, 25.3, -154.7, 25.3, -157.3, 24, -160, 18.7)
+
+[node name="jersey" type="StaticBody2D"]
+collision_layer = 1
+collision_mask = 0
+metadata/propId = &"jersey"
+metadata/propClass = &"WALL"
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(1.3333, 1.3333)
+texture = ExtResource("tex")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("shape")
+
+[node name="LightOccluder2D" type="LightOccluder2D" parent="."]
+occluder = SubResource("occluder")
+metadata/gc_world = true

@@ -1,0 +1,19 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://world/art/props/wreck.png" id="tex"]
+
+[sub_resource type="ConvexPolygonShape2D" id="shape"]
+points = PackedVector2Array(-42.7, -72, -37.3, -93.3, 37.3, -92, 44, -56, 44, 52, 37.3, 96, -21.3, 98.7, -37.3, 97.3, -42.7, 74.7, -48, -25.3)
+
+[node name="wreck" type="StaticBody2D"]
+collision_layer = 1
+collision_mask = 0
+metadata/propId = &"wreck"
+metadata/propClass = &"LOW"
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(1.3333, 1.3333)
+texture = ExtResource("tex")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("shape")

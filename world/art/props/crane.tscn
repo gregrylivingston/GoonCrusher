@@ -1,0 +1,27 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://world/art/props/crane.png" id="tex"]
+
+[sub_resource type="ConvexPolygonShape2D" id="shape"]
+points = PackedVector2Array(-274.7, -109.3, -25.3, -109.3, -25.3, 109.3, -274.7, 109.3)
+
+[sub_resource type="OccluderPolygon2D" id="occluder"]
+cull_mode = 2
+polygon = PackedVector2Array(-274.7, -109.3, -25.3, -109.3, -25.3, 109.3, -274.7, 109.3)
+
+[node name="crane" type="StaticBody2D"]
+collision_layer = 1
+collision_mask = 0
+metadata/propId = &"crane"
+metadata/propClass = &"TALL"
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(1.3333, 1.3333)
+texture = ExtResource("tex")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("shape")
+
+[node name="LightOccluder2D" type="LightOccluder2D" parent="."]
+occluder = SubResource("occluder")
+metadata/gc_world = true

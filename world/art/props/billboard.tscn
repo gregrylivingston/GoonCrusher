@@ -1,0 +1,27 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://world/art/props/billboard.png" id="tex"]
+
+[sub_resource type="ConvexPolygonShape2D" id="shape"]
+points = PackedVector2Array(-189.3, -8, -124, -12, 124, -12, 189.3, -8, 180, 26.7, 156, 33.3, -13.3, 36, -156, 33.3, -180, 26.7, -189.3, 4)
+
+[sub_resource type="OccluderPolygon2D" id="occluder"]
+cull_mode = 2
+polygon = PackedVector2Array(-189.3, -8, -124, -12, 124, -12, 189.3, -8, 180, 26.7, 156, 33.3, -13.3, 36, -156, 33.3, -180, 26.7, -189.3, 4)
+
+[node name="billboard" type="StaticBody2D"]
+collision_layer = 1
+collision_mask = 0
+metadata/propId = &"billboard"
+metadata/propClass = &"TALL"
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(1.3333, 1.3333)
+texture = ExtResource("tex")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("shape")
+
+[node name="LightOccluder2D" type="LightOccluder2D" parent="."]
+occluder = SubResource("occluder")
+metadata/gc_world = true
