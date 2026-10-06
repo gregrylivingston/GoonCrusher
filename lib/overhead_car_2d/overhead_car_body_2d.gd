@@ -144,6 +144,12 @@ func _ready():
 		clover += SaveManager.getUpgradeLevel(Root.upgrade.CLOVER)
 		luck += SaveManager.getUpgradeLevel(Root.upgrade.LUCK)
 	for stat in UPGRADEABLE_STATS: runStartStats[stat] = self[stat]
+	if isPlayer:
+		buffFx = CarBuffFx.new()
+		add_child(buffFx)
+		if Pickups.loadout != "": #a gadget bought with gems in run setup
+			giveItem(Pickups.loadout)
+			Pickups.loadout = ""
 
 	halfWidth = $carBodyArea/CollisionShape2D.shape.size.y / 2.0
 	applyArt()
@@ -237,7 +243,8 @@ func _physics_process(delta):
 	_car_input.acceleration = clamp(_car_input.acceleration, -1.0, 1.0)
 	if isDestroyed: _car_input.acceleration = 0.0
 	if not zoneCooldown.is_empty(): tickZoneCooldowns()
-	if fuel <= 0 && not isDestroyed: outOfFuel()		
+	if isPlayer: tickPickups()
+	if fuel <= 0 && not isDestroyed: outOfFuel()
 	
 	if fuel <= 35 && not gasWarningGiven && not $"AudioStream-Voice".playing && isPlayer:makeGasWarning()
 	if health <= 50 && not healthWarningGiven && not $"AudioStream-Voice".playing && isPlayer:makeHealthWarning()
@@ -263,7 +270,8 @@ func _physics_process(delta):
 		elif collider is CharacterBody2D:
 			if goonBumpReady(collider): damage(5)
 			#a crush never wears the car; a slow bump, or a goon that resists (shield, shell, heavy), scuffs it
-			if not (velocity.length() > 100 && crushGoon(collider)): wearSystem(hitZone(collision), GOON_SCUFF)
+			#a plow, spikes, monster tires or a golden ride crush at any speed (crushOverride)
+			if not (velocity.length() > (0.0 if crushBuffActive() else 100.0) && crushGoon(collider)): wearSystem(hitZone(collision), GOON_SCUFF)
 		#else: print(collider.get_class())
 
 	if velocity.length() == 0:
@@ -281,14 +289,20 @@ func integrate(pos: Vector2, forward: Vector2, vel: Vector2, input: CarInput, de
 	var engine_stat = engine * conditionFactor("engine")
 	var traction_stat = traction * conditionFactor("tires")
 	var steer_angle = input.steering * deg_to_rad( 8 + ( steer_stat / 4.0 ) )
+	#Nitro (a timed pickup): more thrust, and less drag so the top speed rises by `top`
+	var thrust := 1.0
+	var dragScale := 1.0
+	if buffs.has("nitro"):
+		thrust = Pickups.DATA["nitro"]["thrust"]
+		dragScale = thrust / pow(Pickups.DATA["nitro"]["top"], 2.0)
 
-	var acceleration = input.acceleration * forward * ( engine_stat + 14 ) * 10 * ( 2.2 - abs(input.steering))
+	var acceleration = input.acceleration * forward * ( engine_stat + 14 ) * 10 * ( 2.2 - abs(input.steering)) * thrust
 
 	# Apply friction
 	if abs(vel.length()) < 5:
 		vel = Vector2.ZERO
 	var friction_force = vel * -friction
-	var drag_force = vel * vel.length() * -drag
+	var drag_force = vel * vel.length() * -drag * dragScale
 	if vel.length() < 100:
 		friction_force *= 3
 	acceleration += drag_force + friction_force
@@ -337,6 +351,7 @@ func hitZone(collision: KinematicCollision2D) -> String:
 #wears a system, at most once per ZONE_COOLDOWN_TICKS so scraping along a wall can't empty it at once
 func wearSystem(system: String, amount: float) -> void:
 	if amount <= 0.0 || zoneCooldown.get(system, 0) > 0: return
+	if buffs.has("shield") || buffs.has("golden") || (system == "tires" && buffs.has("spikes")): return
 	zoneCooldown[system] = ZONE_COOLDOWN_TICKS
 	setCondition(system, condition[system] - amount)
 
@@ -383,6 +398,7 @@ func crushGoon(collider) -> bool:
 	if collider.get("isGiant"): giantsCrushed += 1
 	reward("currentGoonsCrushed", 1) #credited now; the flying icon is only for show
 	RewardFlyers.flyUpgrade(Root.upgrade.CURRENTGOONSCRUSHED, collider.global_position)
+	if isPlayer: PickupEffects.onCrush(self, collider.global_position)
 	return true
 
 var isVibratingLeft = 4
@@ -406,7 +422,7 @@ func activeCarEffects(delta):
 	if not engineAudio.playing: engineAudio.play()
 	if not carDamageAudio.playing && healthWarningGiven: carDamageAudio.play()
 	engineAudio.pitch_scale = 1  +  ( velocity.length() / 400 ) 
-	fuel -= fuelBurn(_car_input.acceleration, oil * conditionFactor("tank")) + fuelLeak(condition.tank)
+	if not buffs.has("freetank"): fuel -= fuelBurn(_car_input.acceleration, oil * conditionFactor("tank")) + fuelLeak(condition.tank)
 
 	#body shake: the sprite slides between two offsets, one tick at a time (no tween per shake)
 	vibrationSteps += 1
@@ -505,6 +521,9 @@ var ui
 var powerupsCollected = 0
 signal rewarded(powerup: String, quantity) #a credited reward (not a show-only one); the playtest harness counts these
 func reward(powerup: String , quantity, forShowOnly: bool = false):
+	if powerup == "coin" && not forShowOnly:
+		if buffs.has("frenzy"): quantity *= 2 #Coin Frenzy
+		coinsSinceBet += int(quantity)
 	if not forShowOnly:
 		if UPGRADEABLE_STATS.has(powerup): self[powerup] = addCapped(self[powerup], quantity)
 		else: self[powerup] += quantity
@@ -543,6 +562,7 @@ static func gripFor(baseGrip: float, tractionStat: float, maxGrip: float, perPoi
 
 func setHeadlightStrength():
 	var reach = 1.0 + headlights * conditionFactor("lights") / 100.0
+	if buffs.has("flood"): reach *= Pickups.DATA["flood"]["reach"]
 	$headlamps/headlights.scale = Vector2(reach, reach)
 
 func playPurseRewardAudio():
@@ -559,6 +579,7 @@ func spendGems(numOfGems: int):
 		return false
 
 func damage(damage: float):
+	if blockedByPickup(damage): return
 	health -= (damage * 7) / ( armor + 100)
 	updateDamageLook()
 	if health <= 0:
@@ -618,3 +639,124 @@ func outOfFuel():
 func setForwardCollisionMode(setting: bool):#activate or deactive bumper collision based on gear
 	$CollisionShape2D.disabled = not setting
 	$CollisionShape2D_rear.disabled = setting
+
+#--- pickups (scripts/global/pickups.gd, docs/PICKUPS.md) ---------------------------------------
+#Timed power-ups count down in physics ticks. integrate() only reads `buffs`, so the AI driver's
+#prediction of boosted handling stays pure. Gadgets wait in one slot for the Use button.
+const MAX_BUFFS := 4      #a fifth timed power-up replaces the one with the least time left
+var buffs := {}           #pickup id -> physics ticks left
+var buffTicks := {}       #pickup id -> ticks it started with (the HUD ring drains from this)
+var heldItem := ""        #a gadget waiting for Use
+var heldCharges := 0
+var shieldHits := 0
+var starFragments := 0    #three make a star
+var blueprints := 0       #free garage upgrades, credited by gameSummary however the run ends
+var lotteryTickets: Array = [] #each [crushes, speed, coins] digit guesses, checked by gameSummary
+var hasParcel := false    #Delivery
+var barricades := 0       #Defense: Barricade Kits being carried to the lot
+var airborneTicks := 0    #Jump Jets
+var comboCount := 0       #Crush Combo: crushes in the current chain
+var comboTick := -100000  #physics frame of the chain's last crush
+var bestCombo := 0
+var coinsSinceBet := 0    #Double or Nothing's stake
+var turboKit := false     #Turbo Kit: exhaust flames at full throttle
+var buffFx: CarBuffFx
+var useWasDown := false
+
+func hasBuff(id: String) -> bool:
+	return buffs.has(id)
+
+func addBuff(id: String) -> void:
+	var t := Pickups.ticks(id)
+	if t <= 0: return
+	if not buffs.has(id) && buffs.size() >= MAX_BUFFS:
+		var shortest = buffs.keys()[0]
+		for k in buffs:
+			if buffs[k] < buffs[shortest]: shortest = k
+		endBuff(shortest)
+	buffs[id] = buffs.get(id, 0) + t
+	buffTicks[id] = buffs[id]
+	match id:
+		"shield": shieldHits = Pickups.DATA["shield"]["hits"]
+		"flood": setHeadlightStrength()
+		"timewarp": Pickups.timeWarp = true
+	if is_instance_valid(buffFx): buffFx.onBuff(id, true)
+
+## `expired`: the clock ran out, rather than the effect being used up or replaced.
+func endBuff(id: String, expired := false) -> void:
+	if not buffs.has(id): return
+	buffs.erase(id)
+	buffTicks.erase(id)
+	match id:
+		"flood": setHeadlightStrength()
+		"timewarp": Pickups.timeWarp = false
+		"potato":
+			if expired: PickupEffects.potatoFailed(self)
+	if is_instance_valid(buffFx): buffFx.onBuff(id, false)
+
+func tickPickups() -> void:
+	if not buffs.is_empty():
+		for id in buffs.keys():
+			buffs[id] -= 1
+			if buffs[id] <= 0: endBuff(id, true)
+	if airborneTicks > 0:
+		airborneTicks -= 1
+		if airborneTicks == 0: Gadgets.land(self)
+	if heldItem == "" || isDestroyed:
+		useWasDown = false
+		return
+	var down: bool
+	if myController.driver: down = Gadgets.aiWantsUse(self)
+	else: down = not Settings.menu_open && InputMap.has_action("UseItem") && Input.is_action_pressed("UseItem")
+	if down && not useWasDown && not PickupEffects.useTakenByPrompt(): useItem()
+	useWasDown = down
+
+## Takes a gadget into the slot. The same gadget adds its charges; a different one replaces the held
+## one only when it is at least as rare, else it is sold for coins. Returns false when it was sold.
+func giveItem(id: String) -> bool:
+	var charges: int = Pickups.DATA[id].get("charges", 1)
+	if heldItem == id:
+		heldCharges += charges
+		return true
+	if heldItem == "" || Pickups.rarity(id) >= Pickups.rarity(heldItem):
+		heldItem = id
+		heldCharges = charges
+		return true
+	return false
+
+func useItem() -> void:
+	var id := heldItem
+	if not Gadgets.use(self, id): return
+	heldCharges -= 1
+	if heldCharges <= 0:
+		heldItem = ""
+		heldCharges = 0
+
+func crushBuffActive() -> bool:
+	return buffs.has("golden") || buffs.has("monster") || buffs.has("plow") || buffs.has("spikes")
+
+## True when a buff crushes this goon whatever its speed, armour or shell (Walker.tryCrush asks).
+func crushOverride(goon: Node2D) -> bool:
+	if buffs.has("golden") || buffs.has("monster"): return true
+	var local := to_local(goon.global_position)
+	if buffs.has("plow") && local.x > 0.0 && absf(local.angle()) < 0.9: return true
+	if buffs.has("spikes") && absf(local.y) > halfWidth * 0.5: return true
+	return false
+
+## Golden Ride and Jump Jets ignore damage; a Bubble Shield soaks it, and real hits (more than a
+## crush's contact bump) use up its charges.
+func blockedByPickup(amount: float) -> bool:
+	if buffs.has("golden") || airborneTicks > 0: return true
+	if buffs.has("shield"):
+		if amount > 5.0:
+			shieldHits -= 1
+			if is_instance_valid(buffFx): buffFx.shieldFlash()
+			if shieldHits <= 0: endBuff("shield")
+		return true
+	return false
+
+## Damage that ignores armour and shields (a Hot Potato going off on the roof).
+func loseHealth(amount: float) -> void:
+	health -= amount
+	updateDamageLook()
+	if health <= 0: destroy()

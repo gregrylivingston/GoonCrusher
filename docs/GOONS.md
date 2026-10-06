@@ -92,7 +92,9 @@ After a bake that adds new PNGs, run `Godot_console.exe --headless --path . --im
   - `play(anim, duration)` stretches an animation to fit the tell or attack.
   - `walkAnim(speed)` advances the walk by ground covered, so feet never skate.
 - **LOD:** off screen, `advance` moves without collision queries, as before.
-- **Contact:** the car takes `damage(5)` on every tick it touches a goon, so a goon that bumps the car outside an attack steps back (`onTouch`). Riders peel off.
+- **Contact:** the car takes `damage(5)` at most once per goon every 30 ticks (`goonBumpReady` in the car). A goon that bumps the car outside an attack also steps back (`onTouch`), and riders peel off.
+- **Physics layer:** goons are on their own layer (layer 3 "Goon": `collision_layer` 4, mask 3; `savedLayers` defaults to `Vector2i(4, 3)` for `setSolid`), so they don't collide with each other. Kicked shells and blasts find goons by distance (`SpawnManager.goonsNear`), not by collision.
+- **Defense:** `walker.gd` has a siege block (`siegeTarget`, `sieging`, state `siege`). When the car is far away, a goon in `move` marches on the station and hits it. Verbs in `SIEGE_SKIP` (burrow, flyer, rider) don't siege. Keep this block when editing `walker.gd`.
 
 ## Crushing
 
@@ -118,7 +120,7 @@ A resisted hit calls the verb's `onResist`. That usually means `bounceCar`: the 
 | Telegraphs | 48 | arrow, ring, land, crack, aim, aura, beam. Drawn unshaded under goons. |
 | Projectiles | 24 | Bolts, quills, harpoons, and arcs that land as fire, slime or a bomb |
 | Hazards | 24 | fire (tyres), slime (slows), oil (skids), spikes (tyres). The oldest is dropped when full. |
-| Blasts | none | Hurt the car within r+40 and kill goons within r. Each also spawns the level's explosion scene. |
+| Blasts | none | Hurt the car within r+40 and kill goons within r. Each plays an explosion from the level's pool (`Root.levelRoot.explode`, at most 16 live). |
 | Tethers | one per goon | Harpoon (drag; a hard swerve breaks it) and magnet (pull). Both break past 650 px. |
 | Bits, labels | 90, 12 | Visual only |
 

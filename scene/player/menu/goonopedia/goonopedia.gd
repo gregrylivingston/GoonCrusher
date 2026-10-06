@@ -91,8 +91,8 @@ const STAT_UPGRADES := [Root.upgrade.ENGINE, Root.upgrade.STEERING, Root.upgrade
 const MODE_RULES := {
 	Root.gameModes.GOONCRUSHER: "The clock counts down from the level's time. Still driving when it hits zero? You win.",
 	Root.gameModes.SPRINT: "Reach the gas station before the clock runs out. The further away the station, the more time you get.",
-	Root.gameModes.MARATHON: "A long race to the station, with the clock against you.",
-	Root.gameModes.DEFENSE: "Hold the line at the station.",
+	Root.gameModes.MARATHON: "A relay of stations against the clock. Each one refuels and repairs you, and its pit shop sells pickups for run coins.",
+	Root.gameModes.DEFENSE: "Hold the station until the clock runs out. Barricade Kits patch its walls and Sentry Turrets help guard them.",
 	Root.gameModes.GOONPOCALYPSE: "No finish line. The clock counts up, and the run lasts as long as you do.",
 }
 const MODE_UNLOCK := {
@@ -745,53 +745,66 @@ static func sceneProperty(state: SceneState, nodePath: String, property: StringN
 
 #---------- pickups ----------
 
+#Every pickup in Pickups.DATA, by kind. The original 14 are always shown; the rest stay silhouettes
+#until collected or played (Pickups.discover, meta.pickups).
 func buildPickups() -> void:
-	progressLabel.text = "PICKUPS  %d" % PICKUP_TEXT.size()
-	section("PICKUPS", "dropped by crushed goons")
-	var g = grid(5)
-	for key in PICKUP_TEXT:
-		if not Root.powerup.has(key): continue
-		var picked = pickupInfo(key)
-		tile(g, {"kind": "pickup", "key": key}, picked.texture, PICKUP_TEXT[key][0], Vector2(124, 124))
+	var ids := Pickups.DATA.keys()
+	progressLabel.text = "PICKUPS  %d / %d" % [ids.filter(pickupKnown).size(), ids.size()]
+	for kind in Pickups.KIND_ORDER:
+		section(Pickups.KIND_NAMES[kind].to_upper(), Pickups.KIND_NOTES[kind], Pickups.rarityColor(kind % 5))
+		var g = grid(5)
+		for id in Pickups.ids(kind):
+			var known := pickupKnown(id)
+			tile(g, {"kind": "pickup", "key": id}, Pickups.texture(id), Pickups.displayName(id) if known else "???", Vector2(124, 124), not known)
 
-#texture and amount of a pickup, read from a throwaway instance of its scene (never added to the tree)
-static func pickupInfo(key: int) -> Dictionary:
-	var node = Root.powerup[key].instantiate()
-	var out = {"texture": node.texture, "quantity": node.quantity}
-	node.free()
-	return out
+static func pickupKnown(id: String) -> bool:
+	return Pickups.def(id).has("scene") || Pickups.isDiscovered(id)
 
-static var dropTable = null
-#a pickup's share of goon drops, from the walker's drop table, before Dice. Read from a bare Walker
-#(never added to the tree), because exported builds don't keep script default values.
-static func dropShare(key: int) -> float:
-	if dropTable == null:
-		var walker = Walker.new()
-		dropTable = walker.powerupDropDict.duplicate()
-		walker.free()
-	var table: Dictionary = dropTable
-	if not table.has(key): return 0.0
+## A pickup's share of goon drops in `mode` (a Root.gameModes value; -1: the selected mode), before
+## Dice, faction and the pity counter, counting night-only pickups as if it were night.
+static func dropShare(id: String, mode := -1) -> float:
+	if mode < 0: mode = SaveManager.playerData.gameMode if SaveManager.playerData else 0
+	var d := Pickups.def(id)
+	if d.get("w", 0) <= 0 || not Pickups.allowedIn(id, mode): return 0.0
+	var tiers := Pickups.tierWeights(0.0)
+	var tierTotal := 0.0
+	for t in tiers.size():
+		if not Pickups.candidates(t, mode, true).is_empty(): tierTotal += tiers[t]
+	var inTier := Pickups.candidates(d.rarity, mode, true)
 	var total := 0.0
-	for k in table: total += table[k]
-	return table[key] / total * 100.0 if total > 0.0 else 0.0
+	for k in inTier: total += inTier[k]
+	if total <= 0.0 || tierTotal <= 0.0: return 0.0
+	return tiers[d.rarity] / tierTotal * inTier[id] / total * 100.0
 
 func pickupDetail(entry: Dictionary) -> void:
-	var key: int = entry.key
-	var picked = pickupInfo(key)
+	var id: String = entry.key
+	var d := Pickups.def(id)
+	var known := pickupKnown(id)
 	var panel = hero(200)
-	heroPicture(panel, picked.texture, TextureRect.STRETCH_KEEP_ASPECT_CENTERED, 40.0)
-	var chips = [["STAT", HudTheme.SKY]] if key in STAT_UPGRADES else []
-	titleRow(PICKUP_TEXT[key][0].to_upper(), chips)
-	var text: String = PICKUP_TEXT[key][1]
-	paragraph(text % int(picked.quantity) if "%d" in text else text)
-	if key in STAT_UPGRADES:
+	var picture = heroPicture(panel, Pickups.texture(id), TextureRect.STRETCH_KEEP_ASPECT_CENTERED, 40.0)
+	if not known: picture.modulate = SHADOW
+	var r := Pickups.rarity(id)
+	titleRow(Pickups.displayName(id).to_upper() if known else "???", [[Pickups.RARITY_NAMES[r].to_upper(), Pickups.rarityColor(r)], [Pickups.KIND_NAMES[d.kind].to_upper(), HudTheme.SKY]])
+	if not known:
+		paragraph("Not found yet. " + ("Look for it out in the world." if d.get("w", 0) <= 0 else "Crushed goons drop it."), "MutedLabel")
+		return
+	paragraph(d.get("text", ""))
+	if d.get("stat", false):
 		paragraph("Run pickups stack up to %d per stat. Upgrades bought in the garage stay for good." % OverheadCarBody2D.STAT_CAP, "MutedLabel")
-	var share = dropShare(key)
 	var rows = []
-	if share > 0.0: rows.push_back(["Share of drops", "%.0f%%" % share if share >= 1.0 else "%.1f%%" % share, share * 2.0])
-	if Root.LUCK_WEIGHT_BONUS.has(key): rows.push_back(["Dice", "makes it more likely"])
+	var share = dropShare(id)
+	if share > 0.0: rows.push_back(["Share of drops", "%.1f%%" % share if share >= 0.1 else "%.2f%%" % share, minf(share * 4.0, 100.0)])
+	if d.has("secs") && d.kind == Pickups.K.BOOST: rows.push_back(["Lasts", "%d s" % d.secs])
+	if d.has("charges"): rows.push_back(["Uses", str(d.charges)])
+	if d.has("modes"): rows.push_back(["Modes", ", ".join(d.modes.map(func(m): return Root.gameModeDescription[m].name))])
+	if d.get("night", false): rows.push_back(["When", "Night only"])
+	var factions: Dictionary = d.get("fac", {})
+	if not factions.is_empty(): rows.push_back(["More from", ", ".join(factions.keys().map(func(f): return Goons.factionName(f)))])
 	if not rows.is_empty(): statTable(rows)
-	tipRow("A crushed goon drops a pickup about %d%% of the time, plus about half a percent per point of Clover." % roundi(10.0 / 201.0 * 100.0))
+	match d.kind:
+		Pickups.K.GADGET: tipRow("Gadgets wait in the slot above the systems strip. Press %s to use one. A rarer gadget replaces the one you hold; a commoner one is sold for coins." % InputGlyphs.label("UseItem"))
+		Pickups.K.BOOST: tipRow("Up to four power-ups run at once; their rings drain above the systems strip.")
+		_: tipRow("A crushed goon drops a pickup about %d%% of the time, plus about half a percent per point of Clover. Dice makes the drop rarer." % roundi(10.0 / 201.0 * 100.0))
 
 #---------- modes ----------
 
@@ -843,7 +856,7 @@ func systemDetail(entry: Dictionary) -> void:
 	paragraph(s[2])
 	if OverheadCarBody2D.CONDITION_FLOOR.has(system):
 		paragraph("At 0%% it still keeps %d%% of your %s." % [roundi(OverheadCarBody2D.CONDITION_FLOOR[system] * 100.0), SYSTEM_STAT_NAMES.get(system, system)], "MutedLabel")
-		tipRow("Wall hits wear the side that hit. The gas station repairs everything in modes where it isn't the finish.")
+		tipRow("Wall hits wear the side that hit. A Wrench, a Toolbox or the system's own part repairs it on the road; the gas station repairs everything in modes where it isn't the finish.")
 	var attackers = Goons.DATA.keys().filter(func(id): return attacks(Goons.DATA[id], system))
 	var known = attackers.filter(isDiscovered).map(func(id): return Goons.DATA[id].name)
 	var hidden = attackers.size() - known.size()

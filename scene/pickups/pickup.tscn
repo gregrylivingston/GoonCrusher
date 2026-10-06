@@ -1,0 +1,9 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" uid="uid://b7r4ro32w40xi" path="res://scene/powerup/powerup.tscn" id="1_base"]
+[ext_resource type="Script" path="res://scene/pickups/pickup.gd" id="2_script"]
+
+[node name="Pickup" instance=ExtResource("1_base")]
+script = ExtResource("2_script")
+powerup = "coin"
+quantity = 1.0

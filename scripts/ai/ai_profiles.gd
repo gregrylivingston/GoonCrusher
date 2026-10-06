@@ -10,15 +10,20 @@ class_name AIProfiles extends RefCounted
 
 const DEFAULTS = {
 	#planning
-	"horizonTicks": 90,        #how far ahead each plan is simulated (60 ticks = 1 s)
-	"probeSeconds": 1.2,       #past the plan's end, a car-wide sweep looks this far ahead at the end speed
-	"probeCost": 2.0,          #cost of finding a wall straight ahead at the end of a plan (scaled by how close)
+	"scanTicks": 8,            #plans are re-chosen every this many ticks (7.5 times a second)
+	"horizonTicks": 45,        #each plan is simulated tick by tick this far ahead (60 ticks = 1 s)...
+	"maxHorizonTicks": 45,     #...or, when this is larger, far enough to cover lookaheadPx at the current speed (costly)
+	"lookaheadPx": 1600.0,     #past the plan, a car-wide straight sweep along its end heading reaches this far from
+	"probeSeconds": 1.5,       #the start, or this many seconds of travel at the end speed if further (a stock
+	                           #sedan at 744 px/s needs about 800 px to brake or swerve round a rock)
+	"probeCost": 4.0,          #cost of that sweep finding a wall, scaled by how close it is
 	"hitCost": 6.0,            #cost of hitting a rock or wall at 400 px/s within the plan (grows with speed)
 	"turnCost": 0.6,           #seconds per radian the car still has to turn at the end of a plan
 	"samePlanBonus": 0.08,     #keeps the choice from flickering between near-equal plans
 	#forward over backward
-	"reverseCost": 3.0,        #seconds of cost per second a plan spends rolling backwards
-	"reverseIfBlocked": 0.4,   #reverse plans are tried only when every forward plan hits within this many seconds
+	"reverseCost": 0.5,        #seconds of cost per second a plan spends rolling backwards: forward preferred, not required
+	"reverseIfBlocked": 1.0,   #when slow, reverse plans are also weighed if every forward plan hits within this many seconds
+	"reverseWhenStopped": true, #a nearly stopped car always weighs backing up too (three-point turns)
 	"recoverForward": true,    #a stuck car first tries to turn out forwards, and reverses only if that has no room
 	#goons
 	"crushReward": 1.5,        #seconds taken off a plan for each goon it would meet with the bumper at speed
@@ -45,13 +50,14 @@ const DEFAULTS = {
 const PROFILES = {
 	"default": {},
 	#the driver as first tuned (2026-10-05), before notes on going forward, looking further and crushing
-	"v1": {"horizonTicks": 60, "probeSeconds": 0.0, "probeCost": 0.6, "reverseCost": 0.0, "recoverForward": false,
+	"v1": {"scanTicks": 6, "horizonTicks": 60, "lookaheadPx": 0.0, "maxHorizonTicks": 60, "probeSeconds": 0.0, "probeCost": 0.6,
+		"reverseCost": 0.0, "reverseIfBlocked": 0.4, "reverseWhenStopped": false, "recoverForward": false,
 		"crushReward": 0.0, "goonValue": 12.0, "goonTargetPx": 2500.0},
 	#plays for crushes: goons are worth more, meeting them pays, flanks matter less
 	"crusher": {"crushReward": 3.0, "goonValue": 24.0, "goonPackBonus": 6.0, "goonTargetPx": 3500.0, "flankCost": 0.5,
 		"reserveBase": 5.0, "reservePerSecond": 0.02},
 	#looks two seconds ahead and further past the plan
-	"farsight": {"horizonTicks": 120, "probeSeconds": 2.0},
+	"farsight": {"horizonTicks": 120, "lookaheadPx": 2400.0, "maxHorizonTicks": 180, "probeSeconds": 2.0},
 	#keeps health: walls and flanks cost more, and it stops hunting sooner
 	"cautious": {"hitCost": 10.0, "flankCost": 3.0, "slowGoonCost": 3.0, "crushReward": 0.5, "reserveBase": 25.0,
 		"reservePerSecond": 0.08},

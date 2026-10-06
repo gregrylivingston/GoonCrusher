@@ -43,7 +43,7 @@ The menus were rebuilt in October 2026 from the "Marquee Cards" direction (conce
 - an underline against 100: cream for the car's base stat, gold for upgrades bought
 - the next upgrade's price, always shown and dimmed when you can't afford it
 
-**Run setup.** Level posters (LB/RB) with the five mode medallions under them (Left/Right). Accept starts the run, Back returns to the garage.
+**Run setup.** Level posters (LB/RB) with the five mode medallions under them (Left/Right). Accept starts the run, Back returns to the garage. **Gadget (U / Y)** cycles a starting gadget bought with banked gems (`Pickups.LOADOUT`, 1 to 4 gems), skipping ones you can't afford; the choice is kept in `meta.records.loadout` and paid at Start.
 
 - **Posters:** each shows a star per mode beaten on that level, and a lock for locked levels.
 - **Medallions:** a gold star when the mode is beaten, a dim star when it's playable, a lock when it isn't. The reason a mode is locked shows under its description, and Start reads LOCKED or COMING SOON.
@@ -65,13 +65,13 @@ A reference to the game's content, opened from the main menu with G / View or th
 | Goons | `Goons.DATA`, grouped by faction | speed, damage, crush speed, head-on armour, the system it wears, pack size, biomes, and the player's crush count |
 | Cars | the save's `cars` and their `CarInfo` | base stats plus upgrades bought (the driver card's bar), price, best run; one line of "strong / weak" against the other cars' averages |
 | Levels | the save's `levels` | clock, starting spawn rate and giant odds read from the level scene's `SceneState` (one level at a time on a worker thread, never instantiated), modes beaten, and a strip showing which faction holds the land along the road out (`Goons.factionFor`, jitter included) |
-| Pickups | `Root.powerup` (minus the crush counter) | amount, read from a throwaway instance of the scene; share of goon drops, from a bare `Walker`'s `powerupDropDict` |
+| Pickups | `Pickups.DATA`, grouped by kind (docs/PICKUPS.md) | rarity and kind chips, the registry's text, share of goon drops in the selected mode (`dropShare(id, mode)`), duration, uses, modes, night-only, factions that drop more of it |
 | Modes | `Root.gameModeDescription` | availability, unlock rule, levels beaten |
 | Systems | the car's systems | `CONDITION_FLOOR` and the goons whose attack wears each one |
 
-Only the plain-language text lives in the script: `VERB_TEXT` (behaviour and tip per verb), `ACT_TEXT` (Scrap Gang acts), `TRAIT_TEXT` (DATA flags), `PICKUP_TEXT`, `MODE_RULES`, `SYSTEMS`. A goon's DATA can carry `"blurb"` and `"tip"` strings to override its verb's text. `test_goonopedia.gd` fails if a goon uses a verb or act with no text.
+Only the plain-language text lives in the script: `VERB_TEXT` (behaviour and tip per verb), `ACT_TEXT` (Scrap Gang acts), `TRAIT_TEXT` (DATA flags), `PICKUP_TEXT` (stat names for the Cars tab; pickup text lives in `Pickups.DATA`), `MODE_RULES`, `SYSTEMS`. A goon's DATA can carry `"blurb"` and `"tip"` strings to override its verb's text. `test_goonopedia.gd` fails if a goon uses a verb or act with no text.
 
-**Discovery.** Goons show as silhouettes named "???" until the player crushes one; the card then shows their faction, rank and habitat. Every crush the car makes is counted per goon id (`crushedById`), and `gameSummary` adds the run's counts to `PlayerData.goonsCrushed` (save version 3) and names first-time goons on the ticket ("New in the Goonopedia: ..."). Goons killed by blasts or water don't count. Set `REVEAL_ALL` to show everything.
+**Discovery.** Goons show as silhouettes named "???" until the player crushes one; the card then shows their faction, rank and habitat. Every crush the car makes is counted per goon id (`crushedById`), and `gameSummary` adds the run's counts to `PlayerData.goonsCrushed` (save version 3) and names first-time goons on the ticket ("New in the Goonopedia: ..."). Goons killed by blasts or water don't count. Set `REVEAL_ALL` to show everything. Pickups work the same way: the original 14 always show, and the rest stay "???" until collected or played (`Pickups.discover`, `meta.pickups`).
 
 ## In-run menus
 
@@ -84,6 +84,8 @@ Only the plain-language text lives in the script: `VERB_TEXT` (behaviour and tip
 - **Records.** The same ticket with `isGameSummary = false`, showing the selected driver's bests, plus the longest Goonpocalypse and its best score once there is one. The run setup card adds "Best here" for Goonpocalypse on the selected level and car.
 - **Countdown** (`scene/player/countdown.tscn`). A gold numeral matching the HUD clock. A green "GO!" shows for half a second after the run unpauses, so the pause length (and the AI driver's harness) is unchanged.
 - **Slot machine** (`slotMachine.gd`). `restyle()` gives it the smoked panel, gold-framed reels and a row of themed Spin / Reroll / Collect buttons with key hints. The original buttons stay hidden because the logic reads their state; `syncButtons()` mirrors it every frame. Accelerate and Brake work as before.
+- **Pickup menus** (`scene/pickups/menus/`, docs/PICKUPS.md). The Deal (three cards: Steer to choose, Accelerate to take, Brake for a new hand at 1 gem, Use to raise the hand for run coins), the Claw Crane, and Marathon's Pit Shop share `PickupMenu`: a dimmed screen, one `CardPanel`, key hints, and 0.6 s before keys count. They pause the run, close through the countdown, and join group `slotMachine` so the harnesses tap through them.
+- **Slot machine bet.** Before the first spin, Steer Left and Right set a bet of 0, 25, 100 or 250 run coins (the BET button); it tilts the reels rarer. Paylines are in docs/PICKUPS.md.
 - **Settings** (`settings/*`). Same layout and rows. It uses `MenuTheme`, pill tabs with LB/RB (Q/E) chips, an orange-rimmed focused row, orange slider fills, and footer buttons with their keys.
 
 ## Tests

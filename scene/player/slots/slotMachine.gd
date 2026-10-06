@@ -15,6 +15,7 @@ var slotTransition = preload("res://scene/fx/lotto/lottoTransition.tscn")
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	add_to_group("slotMachine")
+	SlotSymbols.bet = 0
 	restyle()
 	Root.playerCar.slotMachines += 1
 	$slotMachineBonusSound.stream = load(winSound[ randi_range( 0 , winSound.size() -1 ) ] )
@@ -56,6 +57,9 @@ var delayKeyPress = true
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
 	syncButtons()
+	if isReady && not betPaid && activeSlots.size() == 3 && delayKeyPress == false:
+		if Input.is_action_just_pressed("TurnRight"): changeBet(1)
+		elif Input.is_action_just_pressed("TurnLeft"): changeBet(-1)
 	if Input.is_action_just_pressed("Accelerate") && delayKeyPress == false:
 		if isReady:
 			_on_play_button_pressed()
@@ -99,6 +103,11 @@ func restyle() -> void:
 	spinButton = MenuTheme.button("SPIN", PackedStringArray(["Accelerate"]), true)
 	rerollButton = MenuTheme.button("Reroll  (1 gem)", PackedStringArray(["Brake"]), false, HudTheme.GEM_ICON)
 	claimButton = MenuTheme.button("COLLECT", PackedStringArray(["Accelerate"]), true)
+	betButton = MenuTheme.button("BET  0", PackedStringArray(["TurnRight"]), false, HudTheme.COIN_ICON)
+	betButton.custom_minimum_size = Vector2(230, 70)
+	betButton.focus_mode = Control.FOCUS_NONE
+	betButton.pressed.connect(changeBet.bind(1))
+	row.add_child(betButton)
 	for entry in [[spinButton, _on_play_button_pressed, 300], [rerollButton, _on_reroll_button_pressed, 300], [claimButton, _on_claim_button_pressed, 300]]:
 		entry[0].custom_minimum_size = Vector2(entry[2], 70)
 		entry[0].focus_mode = Control.FOCUS_NONE #the keys drive it; buttons are for the mouse
@@ -106,8 +115,21 @@ func restyle() -> void:
 		row.add_child(entry[0])
 	syncButtons()
 
+#Bet: run coins that tilt the reels toward rarer prizes (SlotSymbols.weights). Chosen before the first
+#spin with Steer Left and Right, and paid when it starts.
+var betButton: Button
+var betPaid := false
+
+func changeBet(step: int) -> void:
+	if betPaid: return
+	var level = wrapi(SlotSymbols.bet + step, 0, SlotSymbols.BETS.size())
+	while level > 0 && Root.playerCar.coin < SlotSymbols.BETS[level]: level -= 1
+	SlotSymbols.bet = level
+	betButton.text = "BET  %d" % SlotSymbols.BETS[level]
+
 func syncButtons() -> void:
 	if not is_instance_valid(spinButton): return
+	if is_instance_valid(betButton): betButton.visible = not betPaid && activeSlots.size() == 3
 	spinButton.disabled = $Panel/Panel/VBoxContainer/play_button.disabled
 	rerollButton.disabled = $Panel/Panel/VBoxContainer/reroll_button.disabled
 	claimButton.disabled = $Panel/Panel/VBoxContainer/claim_button.disabled
@@ -130,6 +152,9 @@ var winSound = [
 
 func _on_play_button_pressed():
 	if not isReady: return null
+	if not betPaid:
+		betPaid = true
+		Root.playerCar.coin -= SlotSymbols.BETS[SlotSymbols.bet]
 	$slotMahineLever.play()
 	if activeSlots.size() > 0:   #keep playing
 		$slotMachineBonusSound.stream = load(bonusSound[ randi_range( 0 , bonusSound.size() -1 ) ] )
@@ -172,14 +197,12 @@ func _on_claim_button_pressed():
 	myBackground.destory()
 	visible = false
 	var myIconArray: Array[Texture2D] = []   #used to pass icons to splash
-	for slot in [$Panel/Panel/Panel2/HBoxContainer/slotRow, $Panel/Panel/Panel2/HBoxContainer/slotRow2, $Panel/Panel/Panel2/HBoxContainer/slotRow3]:
-		myIconArray.push_back( slot.getActiveTexture() )
-		var newPowerup = Root.getSpecificPowerup(slot.getActiveType())
-		newPowerup.global_position = Root.playerCar.global_position
-		newPowerup.process_mode = Node.PROCESS_MODE_ALWAYS
-		Root.levelRoot.add_child(newPowerup)
-		newPowerup.sendReward(Root.playerCar, false)
-	
+	var rows = [$Panel/Panel/Panel2/HBoxContainer/slotRow, $Panel/Panel/Panel2/HBoxContainer/slotRow2, $Panel/Panel/Panel2/HBoxContainer/slotRow3]
+	var reels = rows.map(func(row): return row.getActiveType())
+	#Dice: a luck / 500 chance that reel 3 lands on reel 2's symbol
+	if randf() < Root.playerCar.luck / 500.0: reels[2] = reels[1]
+	for reel in reels: myIconArray.push_back(SlotSymbols.texture(reel))
+	payReels(reels)
 	var splashScreen = load("res://scene/player/menu/splash/splashscreen_1.tscn").instantiate()
 	splashScreen.myIcons = myIconArray
 	Root.levelRoot.add_child(splashScreen)
@@ -191,3 +214,21 @@ func _on_claim_button_pressed():
 	Root.playerCar.add_child(countdownScreen.instantiate())
 	queue_free()
 		
+
+#Paylines (SlotSymbols.payouts): a pair pays its symbol twice, a triple five times; one or two stars are
+#Star Fragments, three are the jackpot (+1 star and a purse rain). Credited now, before the splash.
+func payReels(reels: Array) -> void:
+	var car = Root.playerCar
+	var pays := SlotSymbols.payouts(reels)
+	SlotSymbols.bet = 0
+	for id in pays:
+		if id == SlotSymbols.STAR:
+			if pays[id] == 3:
+				car.star += 1
+				for i in 5: PickupEffects.dropAndCollect(car, "purse", car.global_position)
+				PickupEffects.toast("JACKPOT  -  +1 STAR", HudTheme.GOLD, HudTheme.STAR_ICON)
+			else:
+				for i in pays[id]: PickupEffects.addStarFragment(car)
+			continue
+		if pays[id] > 1: PickupEffects.toast("%s  -  %s x%d" % ["TRIPLE" if reels.count(id) == 3 else "PAIR", Pickups.displayName(id).to_upper(), pays[id]], Pickups.rarityColor(Pickups.rarity(id)), Pickups.texture(id))
+		for i in pays[id]: PickupEffects.collect(car, id, car.global_position)

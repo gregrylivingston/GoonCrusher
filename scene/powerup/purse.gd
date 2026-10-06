@@ -7,6 +7,7 @@ const MAX_COINS = 100
 func sendReward(body, forShowOnly: bool = false):
 	if has_node("Area2D"): $Area2D.queue_free()
 	visible = false
+	if not forShowOnly: Pickups.discover("purse")
 	var coinsToReward = randi_range( MIN_COINS , MAX_COINS )
 	body.reward("coin", coinsToReward * RewardFlyers.infoFor(Root.upgrade.COIN).get("quantity", 1), forShowOnly)
 	body.playPurseRewardAudio()

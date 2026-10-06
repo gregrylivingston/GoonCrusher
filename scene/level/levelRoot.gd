@@ -61,6 +61,8 @@ func _ready():
 	add_child(Root.playerCar)
 
 	Root.levelRoot = self
+	Pickups.resetRun()
+	add_child(PickupWorld.new()) #supply drops, events and chunk props (scene/pickups/pickup_world.gd)
 	var warmup = ShaderWarmup.new() #compiles gameplay shaders behind the countdown
 	warmup.position = newPosition + Vector2(0, 150)
 	add_child(warmup)
@@ -163,7 +165,12 @@ func stationReached(station: Node2D) -> void:
 	var next = $TileManager.placeNextStation(from, legHeading + randf_range(-MARATHON_TURN, MARATHON_TURN), levelSeconds)
 	legHeading = (next.global_position - from).angle()
 	seconds += sprintSeconds(from.distance_to(next.global_position), levelSeconds)
-	call_deferred("openFreeSlotMachine")
+	call_deferred("openPitShop")
+
+#Marathon stations: the pit shop sells pickups for run coins, then the free slot machine opens
+func openPitShop() -> void:
+	if hasEnded || get_tree().paused: return
+	PitShop.open()
 
 func openFreeSlotMachine() -> void:
 	if hasEnded || get_tree().paused: return

@@ -156,6 +156,7 @@ func buildGameSummary():
 	#records: compare before updating, so a beaten record gets its badge
 	var crushed = car.currentGoonsCrushed
 	var topSpeed = int(car._highest_measured_speed / 10)
+	var lottery = PickupEffects.payLottery(car, topSpeed) #before the payout, so stars multiply it
 	var paid = Root.computePayout(car.coin, car.star)
 	var powerups = car.powerupsCollected
 	var timer = get_tree().get_first_node_in_group("runTimer")
@@ -174,6 +175,8 @@ func buildGameSummary():
 	addRow("Powerups", str(powerups), powerups > records.powerups)
 	addRow("Gems", str(car.gem), car.gem > records.gem)
 	addRow("Slot machines", str(car.slotMachines), car.slotMachines > records.slotMachines)
+	if not car.lotteryTickets.is_empty(): addRow("Lottery", "+%d  (%d matched)" % lottery, false)
+	if car.bestCombo >= 3: addRow("Best combo", str(car.bestCombo), false)
 	addPayout(body, car.coin, car.star, paid, paid > records.coin)
 	records.goonsCrushed = maxi(records.goonsCrushed, crushed)
 	records.speed = maxi(records.speed, topSpeed)
@@ -183,6 +186,8 @@ func buildGameSummary():
 	records.slotMachines = maxi(records.slotMachines, car.slotMachines)
 	var discovered = Goonopedia.creditCrushes(car.crushedById)
 	if OS.is_debug_build(): RunLog.append(car, level, reason, paid)
+
+	var blueprinted = PickupEffects.creditBlueprints(car) #free garage upgrades, however the run ended
 
 	#pay now and save, so quitting from the summary can't lose the run; the menu only animates it
 	SaveManager.addCoins(paid)
@@ -199,6 +204,7 @@ func buildGameSummary():
 	addContinue("CONTINUE", "Any button speeds up the count")
 	var notes = []
 	if not discovered.is_empty(): notes.push_back("New in the Goonopedia: " + ", ".join(discovered))
+	if not blueprinted.is_empty(): notes.push_back("Blueprint: a free upgrade to " + ", ".join(blueprinted))
 	var advice = Settings.take_advisor_message()
 	if advice != "": notes.push_back(advice)
 	if not notes.is_empty(): addFooterNote("   -   ".join(notes))

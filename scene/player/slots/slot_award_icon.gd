@@ -1,3 +1,3 @@
 extends TextureRect
 
-@export var type: Root.upgrade = Root.upgrade.COIN
+var type = "coin" #a pickup id (scripts/global/pickups.gd) or SlotSymbols.STAR

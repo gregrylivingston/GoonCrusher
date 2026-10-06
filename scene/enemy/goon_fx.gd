@@ -164,10 +164,7 @@ func blast(pos: Vector2, r: float, dmg: float) -> void:
 		if not o.dead:
 			o.destroy(&"boom")
 			Root.spawnManager.creditCrush(o.global_position)
-	if is_instance_valid(Root.levelRoot) && "explosionScene" in Root.levelRoot:
-		var e = Root.levelRoot.explosionScene.instantiate()
-		e.global_position = pos
-		Root.levelRoot.add_child(e)
+	if is_instance_valid(Root.levelRoot) && Root.levelRoot.has_method("explode"): Root.levelRoot.explode(pos) #pooled, at most 16 live
 
 func blastLater(pos: Vector2, delay: float, r: float, dmg: float) -> void:
 	pendingBlasts.push_back({"pos": pos, "t": delay, "r": r, "dmg": dmg})

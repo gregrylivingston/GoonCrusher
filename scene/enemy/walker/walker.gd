@@ -121,7 +121,17 @@ func _physics_process(delta):
 	if dead: return
 	var car = Root.playerCar
 	if not is_instance_valid(car): return
+	if Pickups.goonTickSkipped(): return #Time Warp
 	stateTime += delta
+	if state == &"move" || state == &"siege" || state == &"lured":
+		var lure := Pickups.lureFor(global_position, def.get("verb", &"lunge")) #Goon Bait, Flare
+		if lure != Vector2.INF:
+			if state != &"lured": setState(&"lured")
+			if def.get("verb", &"") == &"flyer": chase(lure + Vector2.from_angle(stateTime * 0.8) * 220.0, speedNow(), delta, 3.0) #circles it
+			elif global_position.distance_to(lure) > 40.0: chase(lure, speedNow(), delta)
+			else: play(&"idle")
+			return
+		if state == &"lured": setState(&"move")
 	cooldown = maxf(0.0, cooldown - delta)
 	resistTimer = maxf(0.0, resistTimer - delta)
 	carSpin = angle_difference(lastCarRotation, car.rotation) / delta
@@ -270,6 +280,10 @@ func setSolid(solid: bool) -> void:
 ## The car calls this when it touches the goon above 100 px/s. False means the goon resisted.
 func tryCrush(car: Node2D, carSpeed: float) -> bool:
 	if dead: return true
+	if car.has_method("crushOverride") && car.crushOverride(self): #a plow, spikes, monster tires, a golden ride
+		verb.beforeCrush(car, carSpeed)
+		destroy(&"crush")
+		return true
 	var resisted: bool = invulnerable || carSpeed < crushSpeed
 	if not resisted && frontArmor > 0.0 && carSpeed < frontArmor && verb.frontArmorActive() && facing(car): resisted = true
 	if not resisted && not verb.allowCrush(car, carSpeed): resisted = true
@@ -313,8 +327,14 @@ func destroy(cause: StringName = &"crush"):
 	Audio.play($AudioStreamPlayer2D2.stream, 7.0 + randf_range(0.0,5.0), randf_range(0.95,1.05))
 	Audio.play($AudioStreamPlayer2D.stream, 7.0 + randf_range(0.0,8.0), randf_range(0.95,1.05))
 	if f && cause != &"drown" && is_instance_valid(Root.playerCar) && randi_range(0,200) + Root.playerCar.clover > 190:
-		f.dropLater(global_position, powerupDropDict)
+		f.dropLater(global_position, dropTable())
 	queue_free()
+
+## What GoonFx drops later: Pickups rolls it then (Root.getPowerupFromWeights), by this goon's faction.
+## Giants and bosses drop one rarity tier up. powerupDropDict is the pre-rarity table, kept for reference.
+func dropTable() -> Dictionary:
+	var bump := 1 if isGiant || def.get("verb", &"") == &"boss" else 0
+	return {Pickups.ROLL: {"faction": def.get("faction", -1), "bump": bump}}
 
 #--- night --------------------------------------------------------------------------------------
 

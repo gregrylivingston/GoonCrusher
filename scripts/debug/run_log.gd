@@ -7,7 +7,7 @@ class_name RunLog extends RefCounted
 const PATH := "user://runlog.csv"
 const COLUMNS := ["date", "version", "driver", "car", "upgrades", "level", "mode", "seconds", "coins", "stars", "payout",
 	"crushes", "giants", "regions", "reason", "gems", "slot_machines", "top_speed_px", "end_fuel", "end_health",
-	"score", "stations", "barrier"]
+	"score", "leg", "barrier"]
 
 static func append(car: OverheadCarBody2D, level: Level, reason: int, payout: int, path := PATH) -> void:
 	write(row(car, level, reason, payout), path)
@@ -40,7 +40,7 @@ static func row(car: OverheadCarBody2D, level: Level, reason: int, payout: int) 
 		"end_fuel": snappedf(car.fuel, 0.1),
 		"end_health": snappedf(car.health, 0.1),
 		"score": level.runScore() if mode == Root.gameModes.GOONPOCALYPSE else "",
-		"stations": level.leg if mode == Root.gameModes.MARATHON else "",
+		"leg": level.leg if mode == Root.gameModes.MARATHON else "",
 		"barrier": int(Root.station.barrier) if mode == Root.gameModes.DEFENSE && is_instance_valid(Root.station) else "",
 	}
 
