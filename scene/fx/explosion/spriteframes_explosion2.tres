@@ -1,4 +1,4 @@
-[gd_resource type="SpriteFrames" load_steps=66 format=3 uid="uid://bcmg4gqlj4mmm"]
+[gd_resource type="SpriteFrames" format=3 uid="uid://bcmg4gqlj4mmm"]
 
 [ext_resource type="Texture2D" uid="uid://ckp6mtnutebsg" path="res://scene/fx/explosion/particlefx_10.png" id="1_23bai"]
 
@@ -453,7 +453,7 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_m1vq3")
 }],
-"loop": false,
+"loop": 0,
 "name": &"default",
 "speed": 60.0
 }]

@@ -1,7 +1,7 @@
-[gd_scene load_steps=5 format=3 uid="uid://dvjl4lmqtkimn"]
+[gd_scene format=3 uid="uid://dvjl4lmqtkimn"]
 
 [ext_resource type="PackedScene" uid="uid://b7r4ro32w40xi" path="res://scene/powerup/powerup.tscn" id="1_p6gb1"]
-[ext_resource type="Shader" path="res://shader/shine.gdshader" id="2_6s8kv"]
+[ext_resource type="Shader" uid="uid://bfjrjdxfld668" path="res://shader/shine.gdshader" id="2_6s8kv"]
 [ext_resource type="Texture2D" uid="uid://duhs0pmyevi0g" path="res://texture/icon/oil.svg" id="3_qo8nj"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_cnlfs"]
@@ -15,7 +15,7 @@ shader_parameter/pattern = 0
 shader_parameter/inside = false
 shader_parameter/add_margins = true
 
-[node name="Powerup" instance=ExtResource("1_p6gb1")]
+[node name="Powerup" unique_id=1248831731 instance=ExtResource("1_p6gb1")]
 material = SubResource("ShaderMaterial_cnlfs")
 texture = ExtResource("3_qo8nj")
 powerup = "oil"

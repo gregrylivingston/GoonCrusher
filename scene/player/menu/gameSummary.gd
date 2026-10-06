@@ -163,6 +163,7 @@ func buildGameSummary():
 	records.powerups = maxi(records.powerups, powerups)
 	records.gem = maxi(records.gem, car.gem)
 	records.slotMachines = maxi(records.slotMachines, car.slotMachines)
+	var discovered = Goonopedia.creditCrushes(car.crushedById)
 
 	#pay now and save, so quitting from the summary can't lose the run; the menu only animates it
 	SaveManager.addCoins(paid)
@@ -175,8 +176,11 @@ func buildGameSummary():
 	stamp = makeStamp(stampInfo[0], stampInfo[1])
 	reveal.push_back(stamp)
 	addContinue("CONTINUE", "Any button speeds up the count")
+	var notes = []
+	if not discovered.is_empty(): notes.push_back("New in the Goonopedia: " + ", ".join(discovered))
 	var advice = Settings.take_advisor_message()
-	if advice != "": addFooterNote(advice)
+	if advice != "": notes.push_back(advice)
+	if not notes.is_empty(): addFooterNote("   -   ".join(notes))
 
 #---------- records ----------
 

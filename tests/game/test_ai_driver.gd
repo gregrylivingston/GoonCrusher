@@ -107,3 +107,15 @@ func test_prediction_uses_the_cars_physics_without_touching_it():
 	var v = driver.sustainableSpeed(0.3)
 	assert_almost_eq((car.drag * v * v + car.friction * v) / driver.engineForce(), 0.3, 0.001, "and that speed needs exactly that much throttle")
 	driver.free()
+
+func test_profiles_resolve_overrides():
+	var crusher = AIProfiles.resolve("crusher")
+	assert_eq(crusher.crushReward, AIProfiles.PROFILES.crusher.crushReward, "a profile's own value wins")
+	assert_eq(crusher.hitCost, AIProfiles.DEFAULTS.hitCost, "and the rest come from DEFAULTS")
+	var tweaked = AIProfiles.resolve("crusher+horizonTicks=120+recoverForward=false")
+	assert_eq(tweaked.horizonTicks, 120, "overrides after + are applied")
+	assert_eq(tweaked.recoverForward, false, "booleans too")
+	assert_eq(AIProfiles.resolve("").size(), AIProfiles.DEFAULTS.size(), "an empty spec is the defaults")
+	for profile in AIProfiles.PROFILES:
+		for key in AIProfiles.PROFILES[profile]:
+			assert_true(AIProfiles.DEFAULTS.has(key), "%s sets a known key: %s" % [profile, key])

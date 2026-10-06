@@ -41,6 +41,7 @@ rotation = 1.5708
 shape = SubResource("CapsuleShape2D_base")
 
 [node name="Sprite" type="AnimatedSprite2D" parent="."]
+texture_filter = 4
 material = SubResource("ShaderMaterial_ogm8y")
 rotation = 1.5708
 

@@ -83,11 +83,29 @@ func getRegion(regionNumber: int , terrainType: int) -> Dictionary:
 		
 var rng := RandomNumberGenerator.new()
 
+#Testing: `-- --faction=wild|tribe|scrap` forces every region's faction, `-- --goons=spoke,karter,turret`
+#forces its three goons (cycled if fewer are given). Also read by playtest and bench runs.
+var forcedFaction := -1
+var forcedGoons: Array = []
+
+func _ready() -> void:
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--faction="): forcedFaction = ["wild", "tribe", "scrap"].find(arg.get_slice("=", 1))
+		elif arg.begins_with("--goons="):
+			for id in arg.get_slice("=", 1).split(","):
+				if Goons.DATA.has(StringName(id)): forcedGoons.push_back(StringName(id))
+				else: push_warning("--goons: unknown goon " + id)
+
 #A region belongs to one faction (Goons.gd): Wild Things near the start and on early levels, the Goon
 #Tribe further out, the Scrap Gang furthest out and on late levels. Its three goons come from that faction.
 func createRegion(terrain: int) -> Dictionary:#terrain is Enum Root.terrain
 	var distance: float = Root.playerCar.global_position.length() if is_instance_valid(Root.playerCar) else 0.0
 	var faction := Goons.factionFor(distance, SaveManager.playerData.selectedLevel if SaveManager.playerData else 0, rng.randf_range(-Goons.FACTION_JITTER, Goons.FACTION_JITTER))
+	if forcedFaction >= 0: faction = forcedFaction
+	var goons := Goons.regionGoons(faction, terrain, rng)
+	if not forcedGoons.is_empty():
+		goons = [forcedGoons[0], forcedGoons[1 % forcedGoons.size()], forcedGoons[2 % forcedGoons.size()]]
+		faction = Goons.DATA[goons[0]].faction
 	var thisRegion = {
 		"name": names[ terrain ][ randi()%names[terrain].size() - 1 ],
 		"terrain":terrain,
@@ -95,7 +113,7 @@ func createRegion(terrain: int) -> Dictionary:#terrain is Enum Root.terrain
 		"time":0.0,
 		"wave":1,
 		"faction":faction,
-		"goon":Goons.regionGoons(faction, terrain, rng),
+		"goon":goons,
 		"terrain_modulate":randf_range(0.8,1.12),
 	}
 	return thisRegion

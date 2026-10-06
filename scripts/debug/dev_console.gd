@@ -5,7 +5,7 @@ extends CanvasLayer
 #  `help` lists the commands; several can be given on one line, separated by ';'.
 #  At startup:  Godot_console.exe --path . -- --console="unlock all;coins 50k"
 #Progress commands (unlock, lock, coins, gems, upgrades, save) change the real save, so back it up
-#first. Run commands (heal, fuel, god, give, win, lose, night, day) act on the current run.
+#first. Run commands (heal, fuel, god, ai, give, win, lose, night, day) act on the current run.
 
 const TOGGLE_KEY := KEY_QUOTELEFT
 const ERROR_COLOR := Color(1.0, 0.45, 0.4)
@@ -18,6 +18,7 @@ var history: PackedStringArray = []
 var historyIndex := 0
 var previousFocus: Control
 var godMode := false
+var aiMode := false #the AI driver (scripts/ai/) drives every run's car until `ai off`
 var commands := {} #name -> {"fn", "usage", "help", "group"}, in help order
 
 func _ready():
@@ -47,9 +48,13 @@ func _input(event):
 		toggle(false)
 		get_viewport().set_input_as_handled()
 
-#god mode: health and fuel are topped up every tick (water and other instant wrecks still end the run)
+#god mode: health and fuel are topped up every tick (water and other instant wrecks still end the run).
+#ai mode: a run's car without a driver gets one, so it carries on into the next run.
 func _physics_process(_delta):
-	if not godMode || not is_instance_valid(Root.playerCar): return
+	if not is_instance_valid(Root.playerCar): return
+	if aiMode && Root.playerCar.is_node_ready() && Root.playerCar.myController.driver == null:
+		AIDriver.attach(Root.playerCar, {"debug":true})
+	if not godMode: return
 	Root.playerCar.health = 100.0
 	Root.playerCar.fuel = 100.0
 
@@ -172,6 +177,7 @@ func registerCommands() -> void:
 	add("heal", cmdHeal, "heal", "full health", "Run")
 	add("fuel", cmdFuel, "fuel", "full fuel", "Run")
 	add("god", cmdGod, "god [on | off]", "keep health and fuel full (water still wrecks the car)", "Run")
+	add("ai", cmdAi, "ai [on | off]", "the AI drives this run and every run after, drawing its plan (green, red when it expects a hit), goal (yellow) and route (blue); docs/AI_DRIVER.md", "Run")
 	add("give", cmdGive, "give <what> [amount]", "credit a pickup to the car: %s" % ", ".join(giveable()), "Run")
 	add("win", cmdWin, "win", "end the run as a success (beats the mode, as playing it would)", "Run")
 	add("lose", cmdLose, "lose", "end the run as a wreck", "Run")
@@ -373,8 +379,16 @@ func cmdFuel(_args: Array) -> String:
 
 func cmdGod(args: Array) -> String:
 	godMode = (args[0] in ["on", "1", "true"]) if not args.is_empty() else not godMode
-	set_physics_process(godMode)
+	set_physics_process(godMode || aiMode)
 	return "God mode " + ("on" if godMode else "off")
+
+func cmdAi(args: Array) -> String:
+	aiMode = (args[0] in ["on", "1", "true"]) if not args.is_empty() else not aiMode
+	set_physics_process(godMode || aiMode)
+	if not aiMode && is_instance_valid(Root.playerCar) && Root.playerCar.myController.driver != null:
+		Root.playerCar.myController.driver.queue_free()
+		Root.playerCar.myController.driver = null #the keys are the player's again
+	return "AI driver " + ("on: it takes the wheel now and in every run until `ai off`" if aiMode else "off")
 
 static func giveable() -> Array:
 	return OverheadCarBody2D.UPGRADEABLE_STATS + ["coin", "gem", "star", "crushed", "health", "fuel"]

@@ -2,23 +2,25 @@ extends Node
 
 #Automated playtesting with the AI driver (docs/AI_DRIVER.md). Inert unless the user args include
 #--playtest. Runs are real: no god mode, the real clock, the real endings. Every level x mode x car
-#combination is played --runs times, with map seeds --seed, --seed+1, ...; each run adds a row to
-#user://playtest/results<tag>.csv and prints PLAYTEST_RESULT, and the end prints PLAYTEST_SUMMARY
-#per combination. Fastest: headless, with frames decoupled from real time.
+#x AI profile combination is played --runs times, with map seeds --seed, --seed+1, ...; each run
+#adds a row to user://playtest/results<tag>.csv and prints PLAYTEST_RESULT, and the end prints
+#PLAYTEST_SUMMARY per combination and PLAYTEST_RANKING per mode (profiles by average score, see
+#runScore). Fastest: headless, with frames decoupled from real time. scripts/ai/tournament.py runs
+#several profiles in parallel processes and ranks them.
 #  Godot_console.exe --headless --fixed-fps 60 --path . -- --playtest --uncapped --mode=sprint --runs=5
 #Options: --level=level_grass_1[,...]  --mode=countdown|sprint|goonpocalypse|marathon|defense[,...]
-#  --car=sedan[,...]  --runs=N  --seed=N  --upgrades=N|save (every stat at level N; default 0, the
+#  --car=sedan[,...]  --profiles=default[,crusher,...] (AIProfiles specs)  --runs=N  --seed=N  --upgrades=N|save (every stat at level N; default 0, the
 #  stock car; "save" keeps the save's)  --sight=human|full  --max-seconds=N (level time before a run
 #  is cut short, default 900)  --ai-debug (draw the AI's plan; not headless)  --trace (state once a
 #  second)  --tag=name
 #Progress goes to a scratch save, as with the benchmark, so the real save is never touched.
 
 const LEVELS = "res://scene/level/levels/"
-const SCRATCH_SAVE = "user://playtest/playtest_save.tres"
+const SCRATCH_SAVE = "user://playtest/playtest_save%s.tres" #per --tag, so parallel processes don't share one
 const MODE_ALIASES = {"countdown":"GOONCRUSHER"}
 #one CSV row per run, in this order (damage is health lost; see _physics_process for the split)
-const COLUMNS = ["run", "level", "mode", "car", "seed", "upgrades", "sight", "reason", "won", "level_time",
-	"clock", "time_left", "station_px", "route_reached", "crushed", "coin", "star", "payout", "gem",
+const COLUMNS = ["run", "level", "mode", "car", "profile", "seed", "upgrades", "sight", "score", "reason", "won", "level_time",
+	"clock", "time_left", "station_px", "station_left_px", "route_reached", "crushed", "coin", "star", "payout", "gem",
 	"slot_machines", "fuel_pickups", "health_pickups", "purses", "coins_picked", "gems_picked", "stat_pickups",
 	"damage_rocks", "damage_goon_contact", "damage_goon_attacks", "crush_misses", "min_fuel", "min_health",
 	"end_fuel", "end_health", "distance_px", "avg_speed", "top_speed", "eco_seconds", "stuck", "escapes", "goals"]
@@ -49,7 +51,7 @@ func _ready():
 	Settings.on_menu_ready() #runs leave the menu before main2 reports it, which would count as a crashed boot
 	Settings.set_value("display/pause_unfocused", false, false)
 	DirAccess.make_dir_recursive_absolute("user://playtest")
-	SaveManager.save_path = SCRATCH_SAVE
+	SaveManager.save_path = SCRATCH_SAVE % str(options.get("tag", ""))
 	maxSeconds = float(options.get("max-seconds", 900.0))
 	var firstSeed = int(options.get("seed", 1))
 	for level in listArg("level", "level_grass_1"):
@@ -59,8 +61,10 @@ func _ready():
 			if not Root.gameModes.has(key): return fail("Unknown mode " + modeName)
 			for carName in listArg("car", "sedan"):
 				if carIndex(carName) < 0: return fail("Unknown car " + carName)
-				for i in int(options.get("runs", 1)):
-					jobs.push_back({"level":level, "mode":key, "car":carName, "seed":firstSeed + i})
+				for profile in listArg("profiles", "default"):
+					if not AIProfiles.PROFILES.has(profile.split("+")[0]): return fail("Unknown AI profile " + profile)
+					for i in int(options.get("runs", 1)):
+						jobs.push_back({"level":level, "mode":key, "car":carName, "profile":profile, "seed":firstSeed + i})
 	get_tree().node_added.connect(onNodeAdded)
 	await get_tree().create_timer(1.0).timeout
 	startNext()
@@ -113,11 +117,11 @@ func startNext() -> void:
 	clockSeen = false
 	lastStuck = 0
 	levelTime = 0.0
-	row = {"run":jobIndex + 1, "level":job.level, "mode":job.mode.to_lower(), "car":job.car, "seed":job.seed,
+	row = {"run":jobIndex + 1, "level":job.level, "mode":job.mode.to_lower(), "car":job.car, "profile":job.profile, "seed":job.seed,
 		"upgrades":upgrades, "sight":str(options.get("sight", "human")),
 		"fuel_pickups":0, "health_pickups":0, "purses":0, "coins_picked":0, "gems_picked":0, "stat_pickups":0,
 		"crush_misses":0, "damage_rocks":0.0, "damage_goon_contact":0.0, "damage_goon_attacks":0.0, "min_fuel":100.0, "min_health":100.0, "distance_px":0.0, "timeout":false}
-	print("PLAYTEST_RUN %d/%d %s %s %s seed=%d" % [jobIndex + 1, jobs.size(), job.level, job.mode.to_lower(), job.car, job.seed])
+	print("PLAYTEST_RUN %d/%d %s %s %s %s seed=%d" % [jobIndex + 1, jobs.size(), job.level, job.mode.to_lower(), job.car, job.profile, job.seed])
 	Region.resetRegions()
 	Root.isRunActive = false
 	get_tree().paused = false
@@ -131,7 +135,7 @@ func onNodeAdded(node: Node) -> void:
 
 func onCarReady(newCar: OverheadCarBody2D) -> void:
 	car = newCar
-	driver = AIDriver.attach(car, {"sight":row.sight, "debug":options.has("ai-debug")})
+	driver = AIDriver.attach(car, {"sight":row.sight, "debug":options.has("ai-debug"), "profile":row.profile})
 	car.rewarded.connect(onRewarded)
 	prevHealth = car.health
 	lastPosition = car.global_position
@@ -265,6 +269,7 @@ func recordRun() -> void:
 	row.won = Root.levelRoot.endReason == Root.endCondition.SUCCESS
 	row.level_time = snappedf(levelTime, 0.1)
 	row.time_left = snappedf(Root.levelRoot.seconds, 0.1) if row.mode not in ["goonpocalypse", "defense"] else 0.0
+	row.station_left_px = int(car.global_position.distance_to(Root.station.global_position)) if is_instance_valid(Root.station) else 0
 	row.crushed = car.currentGoonsCrushed
 	row.coin = car.coin
 	row.star = car.star
@@ -283,6 +288,7 @@ func recordRun() -> void:
 		row.eco_seconds = snappedf(driver.stats.eco_seconds, 0.1)
 		row.route_reached = driver.stats.route_reached
 		row.goals = JSON.stringify(driver.stats.goals).replace(",", ";") #one CSV cell
+	row.score = snappedf(runScore(row), 0.1)
 	results.push_back(row.duplicate())
 	print("PLAYTEST_RESULT " + JSON.stringify(row))
 	appendCsv(row)
@@ -302,21 +308,49 @@ func appendCsv(values: Dictionary) -> void:
 	file.store_line(",".join(COLUMNS.map(func(column): return str(values.get(column, "")))))
 	file.close()
 
-#one line per level x mode x car: wins, endings and averages
+#How well a run was played, 0 to about 150, so profiles can be ranked within a mode:
+#  countdown: % of the clock survived, +25 for surviving it, +0.1 per crush (up to 200)
+#  sprint/marathon: a win is 100 + 50 x the share of the clock left; a loss is up to 50 for the
+#    share of the way to the station covered
+#  goonpocalypse/defense: a point per 3 s survived, +0.1 per crush (up to 300)
+static func runScore(result: Dictionary) -> float:
+	var clock = maxf(float(result.get("clock", 1.0)), 1.0)
+	match result.mode:
+		"gooncrusher":
+			return 100.0 * minf(result.level_time / clock, 1.0) + (25.0 if result.won else 0.0) + minf(result.crushed, 200) * 0.1
+		"sprint", "marathon":
+			if result.won: return 100.0 + 50.0 * result.time_left / clock
+			return 50.0 * clampf(1.0 - float(result.station_left_px) / maxf(float(result.get("station_px", 1)), 1.0), 0.0, 1.0)
+	return result.level_time / 3.0 + minf(result.crushed, 300) * 0.1
+
+#one line per level x mode x car x profile (wins, endings and averages), then each mode's profiles
+#ranked by average score
 func finish() -> void:
 	var groups = {}
 	for result in results:
-		var key = "%s %s %s" % [result.level, result.mode, result.car]
+		var key = "%s %s %s %s" % [result.level, result.mode, result.car, result.profile]
 		groups.get_or_add(key, []).push_back(result)
 	for key in groups:
 		var runs: Array = groups[key]
 		var endings = {}
 		for result in runs: endings[result.reason] = endings.get(result.reason, 0) + 1
 		var summary = {"combo":key, "runs":runs.size(), "wins":runs.filter(func(r): return r.won).size(), "endings":endings}
-		for field in ["level_time", "crushed", "payout", "star", "damage_rocks", "damage_goon_contact", "damage_goon_attacks", "min_fuel", "stuck", "avg_speed"]:
+		for field in ["score", "level_time", "crushed", "payout", "star", "damage_rocks", "damage_goon_contact", "damage_goon_attacks", "min_fuel", "stuck", "avg_speed"]:
 			var total = 0.0
 			for result in runs: total += float(result.get(field, 0))
 			summary["avg_" + field] = snappedf(total / runs.size(), 0.1)
 		print("PLAYTEST_SUMMARY " + JSON.stringify(summary))
+	var byMode = {}
+	for result in results: byMode.get_or_add(result.mode, {}).get_or_add(result.profile, []).push_back(result)
+	for mode in byMode:
+		var ranking = []
+		for profile in byMode[mode]:
+			var runs: Array = byMode[mode][profile]
+			var total = 0.0
+			for result in runs: total += result.score
+			ranking.push_back([total / runs.size(), profile, runs.size()])
+		ranking.sort_custom(func(a, b): return a[0] > b[0])
+		for i in ranking.size():
+			print("PLAYTEST_RANKING %s #%d %s score=%.1f runs=%d" % [mode, i + 1, ranking[i][1], ranking[i][0], ranking[i][2]])
 	print("PLAYTEST_DONE %d runs, results in %s" % [results.size(), ProjectSettings.globalize_path("user://playtest/")])
 	get_tree().quit(0)

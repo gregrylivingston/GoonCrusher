@@ -8,6 +8,9 @@ class_name PlayerData extends Resource
 @export var selectedCar: int = 0
 @export var selectedLevel: int = 0
 @export var gameMode: int = 0
+#goon id (Goons.DATA) -> how many the player has crushed, over every run; the Goonopedia reveals a goon
+#once it is crushed. Credited by gameSummary when a run ends.
+@export var goonsCrushed := {}
 
 @export var cars = [
 	{	"name":"sedan",

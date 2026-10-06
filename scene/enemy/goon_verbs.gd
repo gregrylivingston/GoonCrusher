@@ -54,8 +54,16 @@ class Verb extends RefCounted:
 	func onResist(car: Node2D, speed: float) -> void:
 		if speed < g.crushSpeed: g.bounceCar(car, g.attackDamage, g.sys, "TOO HEAVY")
 		else: g.bounceCar(car, 2.0, "hull")
+		g.global_position += (g.global_position - car.global_position).normalized() * 10.0
 	func onDeath(_cause: StringName) -> void: pass
 	func telegraphRadius() -> float: return g.bodyRadius * 3.0
+	## Walked or drove into the car outside an attack: step back, so contact damage stays a bump.
+	func onTouch(car: Node2D) -> void:
+		if g.state != &"move": return
+		g.global_position += (g.global_position - car.global_position).normalized() * 8.0
+		g.recT = 0.5
+		g.setState(&"recover")
+		g.cooldown = maxf(g.cooldown, 0.6)
 
 	func tick(delta: float, car: Node2D) -> void:
 		match g.state:
@@ -175,17 +183,18 @@ class Dodger extends Verb:
 		dodgeCd = maxf(0.0, dodgeCd - delta)
 		var to := car.global_position - g.global_position
 		g.chase(car.global_position + to.orthogonal().normalized() * sin(zig) * 90.0, g.speedNow(), delta)
-		if dodgeCd <= 0.0 && GoonVerbs.bearingDown(car, g.global_position, 190.0, 220.0):
+		if dodgeCd <= 0.0 && GoonVerbs.bearingDown(car, g.global_position, 160.0, 220.0):
+			dodgeCd = 4.0
+			if randf() < 0.3: return #fumbles it sometimes, so it isn't uncatchable
 			var side := signf(car.transform.y.dot(g.global_position - car.global_position))
 			dodgeDir = car.transform.y * (side if side != 0.0 else 1.0)
 			g.setState(&"dodge")
 			g.play(&"special", 0.32)
-			dodgeCd = 2.6
 			return
 		if g.cooldown <= 0.0 && to.length() < g.windDist: startWindup(car)
 	func other(delta: float, _car: Node2D) -> void:
 		if g.state == &"dodge":
-			g.advance(dodgeDir * 430.0, delta)
+			g.advance(dodgeDir * 360.0, delta)
 			if g.stateTime > 0.32:
 				g.setState(&"move")
 				g.fx().dust(g.global_position)
@@ -306,7 +315,7 @@ class Hitcher extends Verb:
 				g.global_position = car.to_global(offset)
 				g.rotation = car.rotation + offAngle + sin(g.stateTime * 20.0) * 0.1
 				tickT += delta
-				if tickT >= 1.0:
+				if tickT >= 1.5:
 					tickT = 0.0
 					g.hitCar(car, 1.0, "engine" if randf() < 0.5 else "lights")
 				shake = shake + delta if absf(g.carSpin) > 1.7 else maxf(0.0, shake - delta * 0.5)
@@ -322,9 +331,12 @@ class Hitcher extends Verb:
 #==================================================================================================
 ## Pulls into its car-roof shell when you rush it. Kick the shell above 460 px/s and it flattens goons.
 class Turtle extends Verb:
-	const KICK_SPEED := 460.0
+	const KICK_SPEED := 400.0
+	const HIDE_COOLDOWN := 3.0 #after coming out it can't hide again for a while: that's the window
+	var hideCd := 0.0
 	func move(delta: float, car: Node2D) -> void:
-		if GoonVerbs.bearingDown(car, g.global_position, 230.0, 250.0):
+		hideCd = maxf(0.0, hideCd - delta)
+		if hideCd <= 0.0 && GoonVerbs.bearingDown(car, g.global_position, 230.0, 250.0):
 			g.setState(&"hide")
 			g.play(&"special", 0.25)
 			g.invulnerable = true
@@ -336,8 +348,9 @@ class Turtle extends Verb:
 				if g.stateTime >= 0.25: g.setState(&"hidden")
 			&"hidden":
 				g.sprite.pause()
-				if g.stateTime > 1.6 && not GoonVerbs.bearingDown(car, g.global_position, 230.0, 250.0):
+				if g.stateTime > 2.5 || (g.stateTime > 1.6 && not GoonVerbs.bearingDown(car, g.global_position, 230.0, 250.0)):
 					g.invulnerable = false
+					hideCd = HIDE_COOLDOWN
 					g.setState(&"move")
 			&"slide":
 				g.rotation += delta * 9.0
@@ -671,7 +684,7 @@ class Flyer extends Verb:
 		orbit += delta * 0.8
 		g.chase(car.global_position + Vector2.from_angle(orbit) * 260.0, g.speedNow(), delta, 3.0)
 		g.play(&"walk")
-		if g.cooldown <= 0.0 && g.distTo(car) < 300.0: startWindup(car, 0.5)
+		if g.cooldown <= 0.0 && g.distTo(car) < g.windDist: startWindup(car, 0.5)
 	func telegraphRadius() -> float: return 40.0
 	func beginAttack() -> void:
 		g.setState(&"dive")
@@ -724,6 +737,7 @@ class Herd extends Verb:
 			dir = (car.global_position + car.velocity * 1.5 - g.global_position).normalized()
 	func onResist(car: Node2D, _speed: float) -> void:
 		g.bounceCar(car, g.attackDamage, g.sys, "STAMPEDE")
+	func onTouch(_car: Node2D) -> void: pass #a stampede doesn't stop for you
 
 #==================================================================================================
 ## The Scrap Gang: anything with wheels. Drives like a car (turn rate, acceleration) and does its act:
@@ -850,6 +864,8 @@ class Rider extends Verb:
 					if c == car && not g.hitDone:
 						g.hitDone = true
 						g.hitCar(car, g.attackDamage, g.sys)
+						peelOff() #a ram is one hit, not a shove
+						return
 				if g.stateTime >= (1.2 if act == "boost" else 0.8):
 					if act == "boost": boom()
 					else: peelOff()
@@ -902,5 +918,8 @@ class Rider extends Verb:
 	func onResist(car: Node2D, speed: float) -> void:
 		g.bounceCar(car, g.attackDamage * 0.5 + 2.0, "engine", "PLOW" if g.frontArmor > 9000.0 else "HEAD-ON")
 		v *= 0.3
+		peelOff() #back away, or the car keeps taking contact damage every tick
+	func onTouch(_car: Node2D) -> void:
+		if g.state == &"move" || g.state == &"drop" || g.state == &"pull": peelOff()
 	func onDeath(cause: StringName) -> void:
 		if act == "boost" && cause == &"crush": g.fx().blastLater(g.global_position, 0.25, g.def.get("blast", 110.0), g.attackDamage)

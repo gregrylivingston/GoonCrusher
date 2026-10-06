@@ -72,6 +72,7 @@ func addDecal(tex: Texture2D, pos: Vector2, rot: float, scl: float, carHeading: 
 	if decalPool.size() < MAX_DECALS:
 		s = Sprite2D.new()
 		s.z_index = -2
+		s.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 		var t := Sprite2D.new()
 		t.name = "tread"
 		t.texture = treadTexture
@@ -106,7 +107,7 @@ func nearestDecal(pos: Vector2, maxDist: float):
 	return best
 
 func bits(pos: Vector2, faction: int) -> void:
-	var cols := [[Color("#8a7050"), Color("#5b4636")], [Color("#9a8aa8"), ORANGE, Color("#3a3046")], [Color("#8d8f8c"), Color("#2aa6a1"), Color("#4a4c4f")]][clampi(faction, 0, 2)]
+	var cols = [[Color("#8a7050"), Color("#5b4636")], [Color("#9a8aa8"), ORANGE, Color("#3a3046")], [Color("#8d8f8c"), Color("#2aa6a1"), Color("#4a4c4f")]][clampi(faction, 0, 2)]
 	for i in 7:
 		if bitsList.size() >= MAX_BITS: return
 		var v := Vector2.from_angle(randf() * TAU) * randf_range(120.0, 340.0)
@@ -361,7 +362,7 @@ func drawGround() -> void:
 			"aim":
 				var dir := Vector2.from_angle(o.rotation)
 				for i in 30:
-					var a := o.global_position + dir * (o.bodyRadius + i * 14.0)
+					var a: Vector2 = o.global_position + dir * (o.bodyRadius + i * 14.0)
 					g.draw_line(a, a + dir * 5.0, tele(0.35 + 0.5 * p), 3.0)
 			"aura":
 				dashedCircle(g, o.global_position, t.r * (0.6 + 0.4 * p), Color(ORANGE, 0.6 * (1.0 - p)), 3.0)
@@ -375,7 +376,7 @@ func drawGround() -> void:
 			if not is_instance_valid(o) || o.dead: continue
 			if o.isBuffed(): g.draw_circle(o.global_position, o.bodyRadius * 1.3, Color(ORANGE, 0.28))
 			if o.def.get("shield", false) && (o.state == &"move" || o.state == &"windup") && o.facing(Root.playerCar):
-				var a := o.rotation
+				var a: float = o.rotation
 				g.draw_arc(o.global_position + Vector2.from_angle(a) * o.bodyRadius * 1.1, 14.0, a - 1.1, a + 1.1, 8, Color(1, 1, 0.94, 0.45 + 0.35 * sin(Time.get_ticks_msec() / 125.0)), 3.0)
 			if o.state == &"buried" && o.global_position.distance_to(carPos) < 260.0:
 				g.draw_arc(o.global_position, 26.0, 0.0, TAU, 24, tele(0.45), 2.0)

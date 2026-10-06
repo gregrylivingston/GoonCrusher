@@ -1,0 +1,63 @@
+extends GameTest
+
+#The Goonopedia (docs/UI.md): every goon in Goons.DATA gets a tile and stays a silhouette until crushed,
+#every tab and detail card builds, and a run's crushes are credited to the save. The save's
+#goonsCrushed is swapped for a scratch dictionary and put back, so the save is never written.
+
+var savedCrushes: Dictionary
+
+func before_each():
+	savedCrushes = SaveManager.playerData.goonsCrushed
+	SaveManager.playerData.goonsCrushed = {}
+
+func after_each():
+	SaveManager.playerData.goonsCrushed = savedCrushes
+
+func test_every_goon_has_a_tile_and_is_hidden_until_crushed():
+	var first: StringName = Goons.DATA.keys()[0]
+	SaveManager.playerData.goonsCrushed[String(first)] = 3
+	var page = add_child_autofree(Goonopedia.new())
+	assert_eq(page.tiles.size(), Goons.DATA.size(), "one tile per goon")
+	var names = page.tiles.map(func(t): return t.get_node("caption").text)
+	assert_true(Goons.DATA[first].name in names, "a crushed goon shows its name")
+	assert_eq(names.count("???"), Goons.DATA.size() - 1, "the rest are unknown")
+	assert_true(page.progressLabel.text.contains("1 / %d" % Goons.DATA.size()))
+
+func test_every_tab_and_card_builds():
+	SaveManager.playerData.goonsCrushed[String(Goons.DATA.keys()[0])] = 1
+	var page = add_child_autofree(Goonopedia.new())
+	for i in Goonopedia.TAB_NAMES.size():
+		page.setTab(i)
+		assert_true(page.tiles.size() > 0, Goonopedia.TAB_NAMES[i] + " has entries")
+		for t in page.tiles:
+			t.focus_entered.emit()
+			assert_true(page.detail.get_child_count() > 0, "%s card for %s" % [Goonopedia.TAB_NAMES[i], t.get_node("caption").text])
+
+func test_every_verb_and_act_has_words():
+	for id in Goons.DATA:
+		var d: Dictionary = Goons.DATA[id]
+		if d.has("blurb"): continue
+		assert_true(Goonopedia.VERB_TEXT.has(d.get("verb", &"lunge")), "%s: add its verb to Goonopedia.VERB_TEXT" % id)
+		if d.get("verb") == &"rider": assert_true(Goonopedia.ACT_TEXT.has(d.get("act", "ram")), "%s: add its act to Goonopedia.ACT_TEXT" % id)
+
+func test_crushes_are_credited_and_first_ones_named():
+	var ids = Goons.DATA.keys()
+	var found = Goonopedia.creditCrushes({ids[0]: 2, ids[1]: 1})
+	assert_eq(found.size(), 2)
+	assert_true(Goons.DATA[ids[0]].name in found)
+	found = Goonopedia.creditCrushes({ids[0]: 5})
+	assert_eq(found.size(), 0, "already known")
+	assert_eq(SaveManager.playerData.goonsCrushed[String(ids[0])], 7)
+
+func test_level_numbers_come_from_the_scene():
+	var stats = Goonopedia.readLevelStats(load("res://scene/level/levels/level_grass_1.tscn").get_state())
+	assert_eq(int(stats.seconds), 250)
+	assert_eq(stats.spawn, 5.0)
+	assert_eq(stats.giants, -20)
+	var plain = Goonopedia.readLevelStats(load("res://scene/level/levels/level_mud_1.tscn").get_state())
+	assert_eq(int(plain.seconds), 420)
+
+func test_drop_shares_add_up():
+	var total := 0.0
+	for key in Root.upgrade.values(): total += Goonopedia.dropShare(key)
+	assert_true(absf(total - 100.0) < 0.01, "shares sum to 100%%, got %f" % total)

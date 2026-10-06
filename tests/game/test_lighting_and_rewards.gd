@@ -13,7 +13,7 @@ func before_each():
 func after_each():
 	for key in saved: Settings.values[key] = saved[key]
 	Settings.apply_all()
-	Root.playerCar = savedCar
+	Root.playerCar = savedCar if is_instance_valid(savedCar) else null
 
 func test_headlight_cone_scales_with_the_upgrade_at_every_lighting_level():
 	var car = load("res://scene/car/sedan/sedan.tscn").instantiate()

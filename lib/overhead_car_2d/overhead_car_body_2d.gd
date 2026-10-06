@@ -87,6 +87,7 @@ var coin:int = 0
 var gem:int = 0
 var star: int = 0
 var currentGoonsCrushed:int = 0
+var crushedById := {} #goon id -> crushes this run, credited to the save's goonsCrushed by gameSummary
 var slotMachines:int = 0
 
 @export var isPlayer = true
@@ -259,7 +260,7 @@ func _physics_process(delta):
 		if velocity.length() > 0.01 && ( collider is StaticBody2D || collider is TileMap):
 			collideWithFixedObject( collision )
 		elif collider is CharacterBody2D:
-			damage(5)
+			if goonBumpReady(collider): damage(5)
 			#a crush never wears the car; a slow bump, or a goon that resists (shield, shell, heavy), scuffs it
 			if not (velocity.length() > 100 && crushGoon(collider)): wearSystem(hitZone(collision), GOON_SCUFF)
 		#else: print(collider.get_class())
@@ -356,6 +357,18 @@ func stopCarFX():
 	if carDamageAudio.playing:carDamageAudio.stop()
 	smoke.visible = false
 
+#contact damage counts once per goon per GOON_BUMP_TICKS, not every tick the two touch, so a big goon
+#(a Scrap Gang van, a Thunderhoof) pressed against the car doesn't drain health per frame
+const GOON_BUMP_TICKS := 30
+var goonBumps := {}
+func goonBumpReady(goon: Object) -> bool:
+	var now := Engine.get_physics_frames()
+	var id := goon.get_instance_id()
+	if now - goonBumps.get(id, -GOON_BUMP_TICKS) < GOON_BUMP_TICKS: return false
+	if goonBumps.size() > 64: goonBumps.clear()
+	goonBumps[id] = now
+	return true
+
 #false when the goon resisted: some need more speed, a hit from the side, or can't be hit right now
 #(Walker.tryCrush, docs/GOONS.md). The goon handles the bounce and any damage itself.
 func crushGoon(collider) -> bool:
@@ -364,6 +377,8 @@ func crushGoon(collider) -> bool:
 		if not collider.tryCrush(self, velocity.length()): return false
 	else: collider.destroy()
 	if isPlayer: Settings.vibrate(0.4, 0.0, 0.08)
+	var id = collider.get("goonId")
+	if id: crushedById[id] = crushedById.get(id, 0) + 1
 	reward("currentGoonsCrushed", 1) #credited now; the flying icon is only for show
 	RewardFlyers.flyUpgrade(Root.upgrade.CURRENTGOONSCRUSHED, collider.global_position)
 	return true

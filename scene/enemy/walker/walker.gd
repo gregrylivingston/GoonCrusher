@@ -84,6 +84,7 @@ func _ready():
 	sys = def.get("sys", sys)
 	crushSpeed = def.get("crush", crushSpeed)
 	frontArmor = def.get("front", frontArmor)
+	frontArc = def.get("arc", frontArc)
 	turnRate = def.get("turn", turnRate)
 	tele = def.get("tele", tele)
 	savedLayers = Vector2i(collision_layer, collision_mask)
@@ -174,7 +175,13 @@ func chase(target: Vector2, moveSpeed: float, delta: float, rate := -1.0) -> voi
 
 func advance(v: Vector2, delta: float) -> void:
 	velocity = v
-	if Root.spawnManager.needsFullPhysics(global_position): move_and_slide()
+	if Root.spawnManager.needsFullPhysics(global_position):
+		move_and_slide()
+		#the car takes contact damage every tick it touches a goon, so goons that bump it back off
+		for i in get_slide_collision_count():
+			if get_slide_collision(i).get_collider() == Root.playerCar:
+				verb.onTouch(Root.playerCar)
+				return
 	else: global_position += v * delta
 
 ## Where the car will be in `lead` seconds.

@@ -6,6 +6,7 @@ extends CanvasLayer
 #  RUN SETUP  level poster cards with the five mode medallions under them. LB/RB picks a level,
 #             Left/Right a mode, Accept starts the run, Back returns to the garage.
 #The save holds every selection; this only draws it. Built in code with MenuTheme.
+#  G / View opens the Goonopedia (goonopedia.gd) over either screen.
 #Other scripts call: startLevel(path), animateCoins(from, to), statUpdatesUiUpdate(), add_child(menu).
 
 enum Screen { GARAGE, SETUP }
@@ -169,6 +170,7 @@ func buildTopBar() -> void:
 	left.add_theme_constant_override("separation", 10)
 	for item in [[QUIT_ICON, "Quit game", func(): get_tree().quit()],
 			[SETTINGS_ICON, "Settings", openSettings],
+			[Goonopedia.ICON, "Goonopedia", openGoonopedia],
 			[DISCORD_ICON, "Discord", func(): OS.shell_open("https://discord.gg/CRwgEe4Gve")],
 			[STEAM_ICON, "Wishlist on Steam", func(): OS.shell_open("https://store.steampowered.com/app/1941650/GOONCRUSHER/")]]:
 		var b = MenuTheme.button("", PackedStringArray(), false, item[0])
@@ -607,6 +609,7 @@ func _input(event: InputEvent) -> void:
 		elif event.is_action_pressed("ui_tab_next") || event.is_action_pressed("ui_right"): selectCar(SaveManager.playerData.selectedCar + 1)
 		elif event.is_action_pressed("ui_upgrade"): setUpgrading(true)
 		elif event.is_action_pressed("ui_records"): openRecords()
+		elif event.is_action_pressed("ui_codex"): openGoonopedia()
 		elif event.is_action_pressed("ui_menu"): openSettings()
 		elif event.is_action_pressed("ui_accept") && get_viewport().gui_get_focus_owner() == null: cards[SaveManager.playerData.selectedCar].onMainPressed()
 		else: handled = false
@@ -621,6 +624,7 @@ func _input(event: InputEvent) -> void:
 		elif event.is_action_pressed("ui_left"): stepMode(-1)
 		elif event.is_action_pressed("ui_right"): stepMode(1)
 		elif event.is_action_pressed("ui_records"): openRecords()
+		elif event.is_action_pressed("ui_codex"): openGoonopedia()
 		elif event.is_action_pressed("ui_menu"): openSettings()
 		elif event.is_action_pressed("ui_accept") && get_viewport().gui_get_focus_owner() == null: onStartPressed()
 		else: handled = false
@@ -640,20 +644,29 @@ func updateHints() -> void:
 		child.queue_free()
 	var hints: Array
 	if screen == Screen.SETUP:
-		hints = [[["ui_tab_prev", "ui_tab_next"], "Level"], [["ui_left", "ui_right"], "Mode"], [["ui_accept"], "Start"], [["ui_records"], "Records"], [["ui_cancel"], "Back"]]
+		hints = [[["ui_tab_prev", "ui_tab_next"], "Level"], [["ui_left", "ui_right"], "Mode"], [["ui_accept"], "Start"], [["ui_records"], "Records"], [["ui_codex"], "Goonopedia"], [["ui_cancel"], "Back"]]
 	elif upgrading:
 		hints = [[["ui_up", "ui_down"], "Choose"], [["ui_accept"], "Buy"], [["ui_cancel"], "Done"]]
 	else:
 		var locked = cards[SaveManager.playerData.selectedCar].isLocked()
 		hints = [[["ui_tab_prev", "ui_tab_next"], "Driver"], [["ui_accept"], "Unlock" if locked else "Drive"]]
 		if not locked: hints.push_back([["ui_upgrade"], "Upgrade"])
-		hints.append_array([[["ui_records"], "Records"], [["ui_menu"], "Settings"]])
+		hints.append_array([[["ui_records"], "Records"], [["ui_codex"], "Goonopedia"], [["ui_menu"], "Settings"]])
 	for hint in hints: hintBar.add_child(KeyHint.make(PackedStringArray(hint[0]), hint[1], 16))
 
 #---------- overlays and runs ----------
 
 func openSettings() -> void:
 	add_child(load("res://scene/player/menu/settings/settings.tscn").instantiate())
+
+func openGoonopedia() -> void:
+	if overlayOpen(): return
+	Goonopedia.open(self).closed.connect(onOverlayClosed)
+
+#focus back to the screen under an overlay
+func onOverlayClosed() -> void:
+	if screen == Screen.SETUP: startButton.grab_focus()
+	else: cards[SaveManager.playerData.selectedCar].mainButton.grab_focus()
 
 func openRecords() -> void:
 	var scene = load("res://scene/player/menu/gameSummary.tscn").instantiate()

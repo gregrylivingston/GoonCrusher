@@ -4,7 +4,7 @@ extends Node
 #The demo and the full game share this file, so demo progress carries over: load_data() merges
 #each save with the current defaults (migrate()) before anything reads it.
 
-const SAVE_VERSION := 2 #2: every level's gamemodeBeat has a GOONPOCALYPSE key
+const SAVE_VERSION := 3 #2: every level's gamemodeBeat has a GOONPOCALYPSE key. 3: goonsCrushed (older saves load it empty)
 var save_path = "user://saveData_0.1.tres"
 var playerData: PlayerData
 var saveTimer: Timer

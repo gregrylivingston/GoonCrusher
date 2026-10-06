@@ -50,6 +50,7 @@ static func ensureMenuActions() -> void:
 	addEvent("ui_cancel", pad(JOY_BUTTON_B))
 	addIfMissing("ui_upgrade", key(KEY_U), pad(JOY_BUTTON_Y))
 	addIfMissing("ui_records", key(KEY_R), pad(JOY_BUTTON_X))
+	addIfMissing("ui_codex", key(KEY_G), pad(JOY_BUTTON_BACK)) #the Goonopedia
 
 static func addIfMissing(action: String, keyEvent: InputEvent, padEvent: InputEvent) -> void:
 	if InputMap.has_action(action): return

@@ -7,7 +7,7 @@ The menus were rebuilt in October 2026 from the "Marquee Cards" direction (conce
 | File | Class | What it does |
 |---|---|---|
 | `menu_theme.gd` | `MenuTheme` | Builds the menus' `Theme` in code from `HudTheme`, so menus and HUD can't drift apart. Give a menu's root Control `theme = MenuTheme.theme()`. Also has helpers: `button(text, actions, primary, icon)`, `chip`, `priceChip`, `iconRect`, `box`, `addSounds`. |
-| `input_glyphs.gd` | `InputGlyphs` | Tracks whether the player last used a controller (`usingPad`) and names an action's binding on that device (`label("ui_accept")` gives "Enter" or "A"). Bindings come from `InputMap`, so rebinding shows up. `ensureMenuActions()` adds `ui_upgrade` (U / Y), `ui_records` (R / X), and controller A/B on `ui_accept`/`ui_cancel`, which the project didn't bind. |
+| `input_glyphs.gd` | `InputGlyphs` | Tracks whether the player last used a controller (`usingPad`) and names an action's binding on that device (`label("ui_accept")` gives "Enter" or "A"). Bindings come from `InputMap`, so rebinding shows up. `ensureMenuActions()` adds `ui_upgrade` (U / Y), `ui_records` (R / X), `ui_codex` (G / View), and controller A/B on `ui_accept`/`ui_cancel`, which the project didn't bind. |
 | `key_hint.gd` | `KeyHint` | One chip per action, then a label: `KeyHint.make(["ui_accept"], "Drive")`. It switches as soon as the player changes device, and hides when the action has no binding on that device. |
 
 **Theme variations.**
@@ -54,6 +54,25 @@ The menus were rebuilt in October 2026 from the "Marquee Cards" direction (conce
 
 **Other scripts call these:** `startLevel(path)` (bench), `animateCoins(from, to)` and `statUpdatesUiUpdate()` (SaveManager), and `add_child(menu)` (settings, dialogs).
 
+## Goonopedia (`scene/player/menu/goonopedia/goonopedia.gd`)
+
+A reference to the game's content, opened from the main menu with G / View or the book button in the top bar. It's a full-screen overlay (group `menuOverlay`), built in code like the main menu. Six pill tabs (LB/RB, Q/E): **Goons, Cars, Levels, Pickups, Modes, Systems**. Each tab is a grid of tiles on the left and a detail card for the focused tile on the right. Back closes it and emits `closed`.
+
+**Where the content comes from.** Nothing is listed by hand, so new content shows up by itself:
+
+| Tab | Entries | Numbers |
+|---|---|---|
+| Goons | `Goons.DATA`, grouped by faction | speed, damage, crush speed, head-on armour, the system it wears, pack size, biomes, and the player's crush count |
+| Cars | the save's `cars` and their `CarInfo` | base stats plus upgrades bought (the driver card's bar), price, best run; one line of "strong / weak" against the other cars' averages |
+| Levels | the save's `levels` | clock, starting spawn rate and giant odds read from the level scene's `SceneState` (one level at a time on a worker thread, never instantiated), modes beaten, and a strip showing which faction holds the land along the road out (`Goons.factionFor`, jitter included) |
+| Pickups | `Root.powerup` (minus the crush counter) | amount, read from a throwaway instance of the scene; share of goon drops, from a bare `Walker`'s `powerupDropDict` |
+| Modes | `Root.gameModeDescription` | availability, unlock rule, levels beaten |
+| Systems | the car's systems | `CONDITION_FLOOR` and the goons whose attack wears each one |
+
+Only the plain-language text lives in the script: `VERB_TEXT` (behaviour and tip per verb), `ACT_TEXT` (Scrap Gang acts), `TRAIT_TEXT` (DATA flags), `PICKUP_TEXT`, `MODE_RULES`, `SYSTEMS`. A goon's DATA can carry `"blurb"` and `"tip"` strings to override its verb's text. `test_goonopedia.gd` fails if a goon uses a verb or act with no text.
+
+**Discovery.** Goons show as silhouettes named "???" until the player crushes one; the card then shows their faction, rank and habitat. Every crush the car makes is counted per goon id (`crushedById`), and `gameSummary` adds the run's counts to `PlayerData.goonsCrushed` (save version 3) and names first-time goons on the ticket ("New in the Goonopedia: ..."). Goons killed by blasts or water don't count. Set `REVEAL_ALL` to show everything.
+
 ## In-run menus
 
 - **Pause** (`pauseMenu.gd`). A center card: Continue (Esc / Menu), Settings, Abandon run (it says how many coins the run keeps), and Quit game. These are separate buttons, and with Confirm Abandon / Quit on, each asks for a second press. Under them are the mode, clock and crush count, and the car's stats with a gold +N for what pickups added. It replaces the old paused stat list (`car_panel`, removed).
@@ -76,6 +95,8 @@ The menus were rebuilt in October 2026 from the "Marquee Cards" direction (conce
 - coin formatting
 - pause having separate Abandon and Quit buttons
 - the records ticket
+
+`tests/game/test_goonopedia.gd` covers the Goonopedia: one tile per goon, silhouettes until crushed, every tab and card building, crush crediting, level numbers read from the scene, and drop shares adding up to 100%.
 
 None of these tests write the save.
 
