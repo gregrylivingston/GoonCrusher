@@ -12,9 +12,9 @@ var shownKey := []
 func _ready() -> void:
 	mouse_filter = MOUSE_FILTER_IGNORE
 
-#called through GameUI when the car enters a tile; water and hills keep the last region's name
+#called through GameUI when the car enters a tile; impassable ones (water, hills) keep the last region's name
 func updatePlayerRegion(tile) -> void:
-	if tile.terrain == Root.terrain.WATER || tile.terrain == Root.terrain.HILLS: return
+	if not World.isPassable(tile.terrain): return
 	var region = Region.getRegion(tile.region, tile.terrain)
 	regionName = str(region.name)
 	giantism = region.giantism

@@ -144,7 +144,7 @@ func startChunkOf() -> Vector2i:
 const OBJECTIVE_MAX_CHUNKS = 100 #objectives stay within this many chunks of the map centre, on each axis
 
 #The chunk an objective should go in: desiredChunk clamped to the map, then the nearest land chunk
-#(not WATER or HILLS), preferring one whose neighbours are land too, and never `forbidden`. Sprint and
+#(World.isSpawnable: not water, hills or shallows), preferring one whose neighbours are land too, and never `forbidden`. Sprint and
 #Marathon never get the start chunk unless another chunk is forbidden.
 const NO_CHUNK = Vector2i(-99999, -99999)
 func placeObjective(desiredChunk: Vector2i, forbidden := NO_CHUNK) -> Vector2i:
@@ -200,8 +200,7 @@ static func ringChunks(centre: Vector2i, ring: int) -> Array[Vector2i]:
 static func isLandChunk(terrain: PackedByteArray, mapSize: Vector2i, chunk: Vector2i) -> bool:
 	var cell = chunk + mapSize / 2
 	if cell.x < 0 || cell.y < 0 || cell.x >= mapSize.x || cell.y >= mapSize.y || terrain.is_empty(): return false
-	var type = terrain[cell.y * mapSize.x + cell.x]
-	return type != Root.terrain.WATER && type != Root.terrain.HILLS
+	return World.isSpawnable(terrain[cell.y * mapSize.x + cell.x])
 
 static func hasLandNeighbours(terrain: PackedByteArray, mapSize: Vector2i, chunk: Vector2i) -> bool:
 	for step in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
@@ -312,7 +311,7 @@ func loadChunk(chunk:Vector2i , myScene = null): #if an instantiated scene isn't
 		add_child(newLandscapeMap)
 		
 		#a scene that was passed in (a station) is always added, so it can never be left out of the tree
-		if myScene != null || (tile.terrain != Root.terrain.WATER && tile.terrain != Root.terrain.HILLS):
+		if myScene != null || World.isPassable(tile.terrain):
 			var newObjectTile = createNewTileObject(targetPosition, chunkRng(chunk), myScene)
 			if myScene == null: #pickup props (crates, skill challenges); never in a station's or the start chunk
 				var propRng = chunkRng(chunk)

@@ -25,7 +25,7 @@ func test_goons_have_their_own_layer_and_never_collide_with_each_other():
 	assert_true(car.collision_mask & goon.collision_layer != 0, "the car still meets goons, so it can crush them")
 	var water = load("res://scene/level/terrain/landscapeMap_water.tscn").instantiate()
 	assert_true(water.get_node("Area2D").collision_mask & goon.collision_layer != 0, "water still drowns goons")
-	assert_true(water.get_node("Area2D").collision_mask & car.collision_layer != 0, "and the car")
+	assert_eq(water.get_node("Area2D").collision_mask & car.collision_layer, 0, "but not the car: it dies by World.lethalAt (test_world)")
 	var pickup = Root.getSpecificPowerup(Root.upgrade.COIN)
 	assert_eq(pickup.get_node("Area2D").collision_mask & goon.collision_layer, 0, "pickups no longer test goons")
 	for node in [goon, car, water, pickup]: node.free()
@@ -57,7 +57,7 @@ func test_goonpocalypse_records_keep_the_best_time_and_score_separately():
 	assert_eq(SaveManager.bestGoonpocalypse(2, "van"), {"time": 0, "score": 0}, "per level")
 	assert_eq(SaveManager.getCarByName("van").records.time, 100, "the car's own records follow")
 	assert_eq(SaveManager.getCarByName("van").records.score, 70)
-	assert_true(SaveManager.playerData.meta.records.goonpocalypse.has("level_grass_2"), "keyed by the level's scene name")
+	assert_true(SaveManager.playerData.meta.records.goonpocalypse.has(String(Levels.ORDER[1])), "keyed by the level's id")
 
 func test_goonpocalypse_score_and_waves():
 	assert_eq(Level.pocalypseScore(10, 2, 61.0), 10 + 10 + 30)

@@ -1,13 +1,12 @@
 class_name AIRoute extends RefCounted
 
-#Long-range routing for the AI driver (docs/AI_DRIVER.md). A* over the terrain map, where water
-#(instant death: its Area2D covers the whole chunk) and hills (walls) are solid. A chunk is
+#Long-range routing for the AI driver (docs/AI_DRIVER.md). A* over the terrain map, where every
+#terrain World's table calls impassable (lethal water, walls) is solid and the rest are weighted by
+#its routeWeight (sand and mud 1.4: the car's top speed there is about 2/3 of grass). A chunk is
 #5120x2560 px, so each is split into two square cells of 2560 px to keep A* distances true.
 #Pure data: it reads the landscapeGenerator's terrainMap and never touches the scene.
 
 const SPLIT = 2 #cells per chunk along x
-const SLOW_WEIGHT = 1.4 #sand and mud: the car's top speed there is about 2/3 of grass
-const SNOW_WEIGHT = 1.2
 
 var grid := AStarGrid2D.new()
 var terrain: PackedByteArray
@@ -33,11 +32,10 @@ func _init(terrainMap: PackedByteArray, mapSizeChunks: Vector2i, chunkSizePx: Ve
 			for sx in SPLIT:
 				var cell = Vector2i(x * SPLIT + sx, y)
 				if isBlocked(type): grid.set_point_solid(cell)
-				elif type == Root.terrain.SAND || type == Root.terrain.MUD: grid.set_point_weight_scale(cell, SLOW_WEIGHT)
-				elif type == Root.terrain.SNOW: grid.set_point_weight_scale(cell, SNOW_WEIGHT)
+				elif World.routeWeight(type) != 1.0: grid.set_point_weight_scale(cell, World.routeWeight(type))
 
 static func isBlocked(type: int) -> bool:
-	return type == Root.terrain.WATER || type == Root.terrain.HILLS
+	return not World.isPassable(type)
 
 #terrain under a world position; outside the map is water
 func terrainAt(worldPosition: Vector2) -> int:

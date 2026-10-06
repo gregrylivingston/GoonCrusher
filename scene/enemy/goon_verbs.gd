@@ -499,7 +499,7 @@ class Roller extends Verb:
 			if c == car:
 				g.bounceCar(car, g.attackDamage, "hull", "ROCK")
 				hit = true
-			elif c is StaticBody2D || c is TileMap: hit = true
+			elif World.isWall(c): hit = true
 		if hit || g.stateTime > ROLL_TIME:
 			g.invulnerable = false
 			stunFor(1.6)
@@ -858,7 +858,7 @@ class Rider extends Verb:
 				g.move_and_slide()
 				for i in g.get_slide_collision_count():
 					var c = g.get_slide_collision(i).get_collider()
-					if act == "boost" && (c == car || c is StaticBody2D || c is TileMap):
+					if act == "boost" && (c == car || World.isWall(c)):
 						boom()
 						return
 					if c == car && not g.hitDone:

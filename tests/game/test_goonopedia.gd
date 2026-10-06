@@ -49,13 +49,19 @@ func test_crushes_are_credited_and_first_ones_named():
 	assert_eq(found.size(), 0, "already known")
 	assert_eq(SaveManager.playerData.goonsCrushed[String(ids[0])], 7)
 
-func test_level_numbers_come_from_the_scene():
-	var stats = Goonopedia.readLevelStats(load("res://scene/level/levels/level_grass_1.tscn").get_state())
-	assert_eq(int(stats.seconds), 250)
-	assert_eq(stats.spawn, 5.0)
-	assert_eq(stats.giants, -20)
-	var plain = Goonopedia.readLevelStats(load("res://scene/level/levels/level_mud_1.tscn").get_state())
-	assert_eq(int(plain.seconds), 420)
+func test_level_numbers_come_from_the_def():
+	var def := Levels.get_def(&"prairie")
+	var stats = Goonopedia.levelStats(def)
+	assert_eq(int(stats.seconds), def.seconds)
+	assert_eq(stats.spawn, def.spawnTimer)
+	assert_eq(stats.giants, def.giantOdds)
+	assert_eq(Goonopedia.levelName(0), def.displayName, "names come from the registry")
+
+func test_level_tab_lists_the_factions_a_band_reaches():
+	assert_true(Goons.faction.WILD in Goonopedia.factionsOn(Levels.get_def(&"prairie")), "the prairie is wild")
+	var crusher = Goonopedia.factionsOn(Levels.get_def(&"crusher"))
+	assert_false(Goons.faction.WILD in crusher, "no Wild Things in The Crusher")
+	assert_true(Goons.faction.SCRAP in crusher)
 
 func test_drop_shares_add_up_in_every_mode():
 	for mode in Root.gameModes.values():

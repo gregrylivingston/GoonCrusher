@@ -1,0 +1,76 @@
+[gd_resource type="Resource" script_class="LevelDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/level_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"frostbite"
+displayName = "Frostbite Pass"
+poster = "res://texture/background/mud_background2.png"
+act = 2
+order = 4
+blurb = "Ridged ranges wall the valleys, with passes between. Frozen lakes give no grip and deep snow drags."
+startPosition = Vector2(2129, 1227)
+seconds = 420
+spawnTimer = 3.5
+giantOdds = 8
+escalationSpeed = 0.16
+sprintSlack = 1.3
+modes = []
+factionBand = Vector2(0.2, 2.6)
+roster = {
+0: [&"jackalope", &"yipper", &"bullmoose"],
+1: [&"skink", &"yeti", &"boulder", &"nightcrawler"],
+2: [&"sawbot", &"plowboss", &"harpooner", &"boostjack"]
+}
+grammar = &"mountain"
+features = {
+"ridgeFrequency": 6e-05,
+"rangeAbove": 0.78,
+"passEvery": 1,
+"passWidth": 1500.0,
+"iceLakeThreshold": 0.64,
+"deepSnowDensity": 0.3,
+"pineDensity": 0.45
+}
+baseTerrain = [7, 7, 15, 7, 9]
+accents = [9, 15]
+dressing = {
+0: {
+&"pine": 7,
+&"rock_ice": 3,
+&"rock_white": 3,
+&"stump": 2,
+&"carcass": 1
+},
+1: {
+&"pine": 5,
+&"cabin": 2,
+&"totem": 1,
+&"firepit": 2,
+&"rock_white": 2
+},
+2: {
+&"pine": 4,
+&"snowcat": 1,
+&"wreck": 1,
+&"barrel": 1,
+&"rock_ice": 2
+}
+}
+pickupTable = {
+&"coinline": 3,
+&"fuel": 4,
+&"health": 3,
+&"purse": 1,
+&"slot": 1
+}
+pickupsPerChunk = 3
+palette = {
+&"ground": Color(0.85, 0.88, 0.92, 1),
+&"accent": Color(0.7, 0.76, 0.84, 1),
+&"ice": Color(0.62, 0.78, 0.88, 1),
+&"rock": Color(0.42, 0.44, 0.5, 1)
+}
+nightTint = Color(0.06, 0.08, 0.16, 1)
+ambience = &"wind"

@@ -26,7 +26,7 @@ func test_map_is_deterministic_and_fully_labelled():
 	assert_eq(centre.terrain, Root.terrain.GRASS, "the start cell is grass")
 	assert_eq(centre.region, 0, "the start cell is region 0")
 	for i in a.terrainMap.size():
-		var noRegion = a.terrainMap[i] == Root.terrain.WATER || a.terrainMap[i] == Root.terrain.HILLS
+		var noRegion = not World.isPassable(a.terrainMap[i])
 		if noRegion != (a.regionMap[i] == -2):
 			fail("cell %d: terrain %d has region %d" % [i, a.terrainMap[i], a.regionMap[i]])
 			break

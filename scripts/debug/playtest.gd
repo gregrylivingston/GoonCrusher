@@ -8,14 +8,13 @@ extends Node
 #runScore). Fastest: headless, with frames decoupled from real time. scripts/ai/tournament.py runs
 #several profiles in parallel processes and ranks them.
 #  Godot_console.exe --headless --fixed-fps 60 --path . -- --playtest --uncapped --mode=sprint --runs=5
-#Options: --level=level_grass_1[,...]  --mode=countdown|sprint|goonpocalypse|marathon|defense[,...]
+#Options: --level=prairie[,...] (a Levels id, its 0-based index or an old scene name)  --mode=countdown|sprint|goonpocalypse|marathon|defense[,...]
 #  --car=sedan[,...]  --profiles=default[,crusher,...] (AIProfiles specs)  --runs=N  --seed=N  --upgrades=N|save (every stat at level N; default 0, the
 #  stock car; "save" keeps the save's)  --sight=human|full  --max-seconds=N (level time before a run
 #  is cut short, default 900)  --ai-debug (draw the AI's plan; not headless)  --trace (state once a
 #  second)  --tag=name
 #Progress goes to a scratch save, as with the benchmark, so the real save is never touched.
 
-const LEVELS = "res://scene/level/levels/"
 const SCRATCH_SAVE = "user://playtest/playtest_save%s.tres" #per --tag, so parallel processes don't share one
 const MODE_ALIASES = {"countdown":"GOONCRUSHER"}
 #one CSV row per run, in this order (damage is health lost; see _physics_process for the split)
@@ -54,8 +53,9 @@ func _ready():
 	SaveManager.save_path = SCRATCH_SAVE % str(options.get("tag", ""))
 	maxSeconds = float(options.get("max-seconds", 900.0))
 	var firstSeed = int(options.get("seed", 1))
-	for level in listArg("level", "level_grass_1"):
-		if not ResourceLoader.exists(LEVELS + level + ".tscn"): return fail("Unknown level " + level)
+	for levelArg in listArg("level", "prairie"):
+		var level := String(Levels.resolve(levelArg)) #an id, an index in Levels.ORDER or an old scene name
+		if level == "": return fail("Unknown level " + levelArg)
 		for modeName in listArg("mode", "countdown"):
 			var key = MODE_ALIASES.get(modeName.to_lower(), modeName.to_upper())
 			if not Root.gameModes.has(key): return fail("Unknown mode " + modeName)
@@ -101,6 +101,7 @@ func startNext() -> void:
 	var data = SaveManager.playerData
 	data.selectedCar = carIndex(job.car)
 	data.gameMode = Root.gameModes[job.mode]
+	data.selectedLevel = Levels.indexOf(job.level) #Region reads the level's faction band and roster from it; gameSummary names and records it
 	var upgrades = str(options.get("upgrades", "0"))
 	if upgrades != "save":
 		var levels = {}
@@ -125,7 +126,7 @@ func startNext() -> void:
 	Region.resetRegions()
 	Root.isRunActive = false
 	get_tree().paused = false
-	get_tree().change_scene_to_node(RunView.wrap(load(LEVELS + job.level + ".tscn").instantiate()))
+	get_tree().change_scene_to_node(RunView.wrap(load(Levels.scenePath(job.level)).instantiate()))
 
 func onNodeAdded(node: Node) -> void:
 	if jobIndex < 0 || jobIndex >= jobs.size(): return
@@ -205,25 +206,25 @@ func trace() -> void:
 func wallName() -> String:
 	for i in car.get_slide_collision_count():
 		var collider = car.get_slide_collision(i).get_collider()
-		if collider is StaticBody2D || collider is TileMap: return "%s(%s) layer=%d at %s" % [collider.name, collider.get_parent().name, collider.collision_layer if collider is StaticBody2D else -1, str(car.get_slide_collision(i).get_position())]
+		if World.isWall(collider): return "%s(%s) layer=%d at %s" % [collider.name, collider.get_parent().name, collider.collision_layer if collider is StaticBody2D else -1, str(car.get_slide_collision(i).get_position())]
 	return "-"
 
-#--trace: the chunks around the start (and the station), one letter per chunk:
-#g grass, s sand, m mud, ~ water, ^ hills, o moss, d dirt, * snow; S start, X station
+#--trace: the chunks around the start (and the station), one letter per chunk from World.TERRAIN:
+#g grass, s sand, m mud, ~ water, ^ hills, o moss, d dirt, * snow (and the newer surfaces' letters);
+#S start, X station
 func printMap() -> void:
 	var tileManager = Root.levelRoot.get_node("TileManager")
 	var start: Vector2i = tileManager.chunkOf(Root.levelRoot.startPosition)
 	var station: Vector2i = tileManager.chunkOf(Root.station.global_position) if is_instance_valid(Root.station) else start
 	var low = Vector2i(mini(start.x, station.x), mini(start.y, station.y)) - Vector2i(4, 6)
 	var high = Vector2i(maxi(start.x, station.x), maxi(start.y, station.y)) + Vector2i(4, 6)
-	var letters = "gsm~^od*"
 	for y in range(low.y, high.y + 1):
 		var line = ""
 		for x in range(low.x, high.x + 1):
 			var chunk = Vector2i(x, y)
 			if chunk == start: line += "S"
 			elif chunk == station: line += "X"
-			else: line += letters[tileManager.tileAt(chunk).terrain]
+			else: line += World.letter(tileManager.tileAt(chunk).terrain)
 		print("PLAYTEST_MAP %4d %s" % [y, line])
 
 #Goons the car hit at crushing speed (over 200 px/s going in) that survived the hit. Should stay 0
@@ -245,7 +246,7 @@ func touchingGoon() -> bool:
 func touchingWall() -> bool:
 	for i in car.get_slide_collision_count():
 		var collider = car.get_slide_collision(i).get_collider()
-		if collider is StaticBody2D || collider is TileMap: return true
+		if World.isWall(collider): return true
 	return false
 
 #a slot machine pauses the run: tap Accelerate to stop each reel, then claim (never reroll)

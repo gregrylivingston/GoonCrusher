@@ -34,7 +34,7 @@ func test_objectives_land_on_land_inside_the_map():
 		for desired in desiredChunks:
 			var chunk = find(generator, desired, Vector2i.ZERO)
 			var terrain = terrainOf(generator, chunk)
-			if terrain == Root.terrain.WATER || terrain == Root.terrain.HILLS:
+			if not World.isSpawnable(terrain):
 				fail("seed %d: %s placed on terrain %d at %s" % [mapSeed, desired, terrain, chunk])
 			if absi(chunk.x) > 100 || absi(chunk.y) > 100: fail("seed %d: %s placed outside the map at %s" % [mapSeed, desired, chunk])
 			if chunk == Vector2i.ZERO: fail("seed %d: %s placed on the forbidden start chunk" % [mapSeed, desired])
@@ -89,7 +89,7 @@ func test_sprint_distance_and_clock():
 	#the stock sedan: top speed about 499 px/s on sand and mud, about 87 s of fuel at full throttle
 	const SEDAN_SLOWEST_TOP_SPEED = 499.0
 	const SEDAN_TANK_SECONDS = 87.0
-	for levelSeconds in [250, 330, 370, 420, 470, 540]:
+	for levelSeconds in [250, 300, 330, 340, 370, 380, 420, 460, 470, 500, 540]:
 		for yRoll in [-1.0, 0.0, 1.0]:
 			var distance = Level.sprintOffsetPx(levelSeconds, yRoll).length()
 			var clock = Level.sprintSeconds(distance, levelSeconds)

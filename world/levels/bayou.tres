@@ -1,0 +1,78 @@
+[gd_resource type="Resource" script_class="LevelDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/level_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"bayou"
+displayName = "Snapper Bayou"
+poster = "res://texture/background/background_level_2.png"
+act = 1
+order = 1
+blurb = "Basins fill into lakes and braided channels split the land. Boardwalk bridges cross the deep water; the shallows slow you down."
+startPosition = Vector2(2129, 1227)
+seconds = 300
+spawnTimer = 4.6
+giantOdds = -12
+escalationSpeed = 0.13
+sprintSlack = 1.45
+modes = []
+factionBand = Vector2(0.2, 1.7)
+roster = {
+0: [&"bandit", &"snapper", &"spitter", &"tusker", &"jackalope"],
+1: [&"splitter", &"rat", &"shellback", &"skink", &"slinger"],
+2: [&"karter", &"slick", &"shredder"]
+}
+grammar = &"bayou"
+features = {
+"lakeThreshold": 0.58,
+"channelFrequency": 0.00011,
+"channelWidth": 560.0,
+"channelGap": 0.08,
+"bridgeEvery": 1,
+"mudCap": 0.6,
+"reedDensity": 0.4
+}
+baseTerrain = [2, 5, 0, 5, 2]
+accents = [11, 5]
+dressing = {
+0: {
+&"cypress": 6,
+&"log": 4,
+&"reeds": 8,
+&"stump": 3,
+&"tufts": 4,
+&"carcass": 1
+},
+1: {
+&"cypress": 4,
+&"shack": 2,
+&"log": 3,
+&"reeds": 6,
+&"totem": 1,
+&"crate": 2
+},
+2: {
+&"cypress": 3,
+&"wreck": 2,
+&"barrel": 2,
+&"reeds": 5,
+&"tyres": 1
+}
+}
+pickupTable = {
+&"coinline": 4,
+&"fuel": 3,
+&"health": 2,
+&"purse": 1,
+&"slot": 1
+}
+pickupsPerChunk = 4
+palette = {
+&"ground": Color(0.33, 0.4, 0.26, 1),
+&"accent": Color(0.38, 0.33, 0.22, 1),
+&"water": Color(0.18, 0.3, 0.28, 1),
+&"shallows": Color(0.3, 0.4, 0.33, 1)
+}
+nightTint = Color(0.04, 0.08, 0.07, 1)
+ambience = &"bayou"

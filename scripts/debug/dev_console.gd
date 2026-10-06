@@ -168,12 +168,13 @@ func add(cmd: String, fn: Callable, usage: String, help: String, group: String) 
 func registerCommands() -> void:
 	add("help", cmdHelp, "help [command]", "list the commands, or explain one", "Console")
 	add("clear", cmdClear, "clear", "clear the console", "Console")
-	add("unlock", cmdUnlock, "unlock cars [name...] | levels | modes | goons | all", "cars: free every driver (or the named ones). levels: open every level. modes: mark Countdown and Sprint beaten on every level, which opens every mode. goons: reveal every goon in the Goonopedia", "Progress")
-	add("lock", cmdLock, "lock cars | levels | modes | goons | all", "undo unlock: cars back to their prices, levels, beaten modes and Goonopedia goons back to a new save's", "Progress")
+	add("unlock", cmdUnlock, "unlock cars [name...] | levels [id...] | modes | goons | all", "cars: free every driver (or the named ones). levels: open every level (or the named ones: ids or 0-based indices, Levels.ORDER). modes: mark Countdown and Sprint beaten on every level, which opens every mode. goons: reveal every goon in the Goonopedia", "Progress")
+	add("lock", cmdLock, "lock cars | levels [id...] | modes | goons | all", "undo unlock: cars back to their prices, levels, beaten modes and Goonopedia goons back to a new save's", "Progress")
 	add("coins", cmdCoins, "coins [amount | set amount]", "add coins to the bank (negative takes them away; 50k and 2m work)", "Progress")
 	add("gems", cmdGems, "gems [amount | set amount]", "add gems to the bank", "Progress")
 	add("upgrades", cmdUpgrades, "upgrades max | reset [all]", "the selected car's (or every car's) upgrades to the cap or to 0", "Progress")
 	add("unfinished", cmdUnfinished, "unfinished on | off", "let Coming Soon modes (any in Root.MODE_AVAILABLE set to false) be started; this session only", "Progress")
+	add("level", cmdLevel, "level [id | index]", "list the levels (Levels.ORDER), or select one for the menu and direct launches", "Progress")
 	add("save", cmdSave, "save [backup | open | reset]", "show the save; back it up; open its folder; reset it (backs up first)", "Progress")
 	add("heal", cmdHeal, "heal", "full health", "Run")
 	add("fuel", cmdFuel, "fuel", "full fuel", "Run")
@@ -221,7 +222,7 @@ func cmdLock(args: Array) -> String:
 func setUnlocks(what: String, unlock: bool, names: Array) -> String:
 	match what:
 		"car", "cars", "driver", "drivers": return setCars(unlock, names)
-		"level", "levels": return setLevels(unlock)
+		"level", "levels": return setLevels(unlock, names)
 		"mode", "modes": return setModes(unlock)
 		"goon", "goons", "goonopedia": return setGoons(unlock)
 		"all": return "\n".join([setCars(unlock, []), setLevels(unlock), setModes(unlock), setGoons(unlock)])
@@ -241,10 +242,17 @@ func setCars(unlock: bool, names: Array) -> String:
 		car.cost = cost
 	return "Cars %s: %s" % ["unlocked" if unlock else "locked", ", ".join(changed) if changed else "none changed"]
 
-func setLevels(unlock: bool) -> String:
+#every level, or the named ones (ids or indices, Levels.resolve); locking puts a new save's unlocks back
+func setLevels(unlock: bool, names: Array = []) -> String:
 	var defaults = PlayerData.new().levels
 	var levels = SaveManager.playerData.levels
+	var only := []
+	for levelName in names:
+		var id := Levels.resolve(levelName)
+		if id == &"": return "Error: unknown level '%s' (%s)" % [levelName, Levels.idsText()]
+		only.push_back(Levels.indexOf(id))
 	for i in levels.size():
+		if not only.is_empty() && i not in only: continue
 		levels[i].unlocked = unlock || (i < defaults.size() && defaults[i].unlocked)
 	var open = levels.filter(func(l): return l.unlocked).size()
 	return "Levels: %d of %d unlocked" % [open, levels.size()]
@@ -318,6 +326,22 @@ func cmdUnfinished(args: Array) -> String:
 	if not args.is_empty(): Root.devAllModesAvailable = args[0] in ["on", "1", "true"]
 	refreshMenu()
 	return "Coming Soon modes are %s" % ("playable" if Root.devAllModesAvailable else "hidden")
+
+func cmdLevel(args: Array) -> String:
+	var data = SaveManager.playerData
+	if args.is_empty():
+		var lines = []
+		for i in Levels.count():
+			var def := Levels.defAt(i)
+			lines.push_back("%s %d %-10s %-16s act %d  %s" % [">" if i == data.selectedLevel else " ", i, Levels.ORDER[i], def.displayName if def else "?",
+				def.act if def else 0, "open" if data.levels[i].unlocked else "locked"])
+		return "
+".join(lines)
+	var id := Levels.resolve(args[0])
+	if id == &"": return "Error: unknown level '%s' (%s)" % [args[0], Levels.idsText()]
+	data.selectedLevel = Levels.indexOf(id)
+	progressChanged()
+	return "Level %d selected: %s" % [data.selectedLevel, id]
 
 func cmdSave(args: Array) -> String:
 	var data = SaveManager.playerData

@@ -52,6 +52,20 @@ func test_unlock_levels_and_modes():
 		assert_eq(SaveManager.playerData.levels[i].unlocked, defaults[i].unlocked, "level %d back to the default" % i)
 		assert_false(Root.isModeUnlocked(SaveManager.playerData.levels[i], M.SPRINT), "level %d: Sprint locked again" % i)
 
+func test_levels_by_id():
+	var levels = SaveManager.playerData.levels
+	Console.execute("unlock levels city 3")
+	assert_true(levels[Levels.indexOf(&"city")].unlocked, "a named level unlocks")
+	assert_true(levels[3].unlocked, "an index works too")
+	assert_false(levels[Levels.indexOf(&"crusher")].unlocked, "the others stay locked")
+	assert_true(Console.execute("unlock levels nowhere").begins_with("Error"), "an unknown level is an error")
+	assert_true(Console.execute("level").contains("frostbite"), "level lists the registry")
+	Console.execute("level highway")
+	assert_eq(SaveManager.playerData.selectedLevel, Levels.indexOf(&"highway"), "level selects by id")
+	Console.execute("lock levels city")
+	assert_false(levels[Levels.indexOf(&"city")].unlocked, "a named level locks")
+	assert_true(levels[3].unlocked, "only the named one")
+
 func test_unlock_and_lock_goons():
 	SaveManager.playerData.goonsCrushed = {"grunt": 5}
 	Console.execute("unlock goons")

@@ -69,8 +69,10 @@ func setCondition(system: String, value: float) -> void:
 func conditionFactor(system: String) -> float:
 	return lerpf(CONDITION_FLOOR[system], 1.0, condition[system] / 100.0)
 
-@export var friction:float = 0.1 #.9
-#friction of 0.5 might be sand
+#Ground friction. integrate() reads the surface under each position from World (scripts/world/world.gd,
+#with the off-road rule); this is only the fallback before a map is loaded, and is kept equal to the
+#friction under the car each tick so the HUD and the AI's top-speed sums see the current ground.
+@export var friction:float = 0.1
 @export var drag:float = 0.0005   #.0015
 
 @export var slip_speed:int = 100  # Speed where traction is reduced
@@ -208,16 +210,10 @@ func makeHealthWarning():
 	resetHealthWarning()
 
 
+#the region tile's terrain, for show only: handling reads World.surfaceAt in integrate()
 var currentTerrain: Root.terrain
 func setTerrain(terrain: int): # Root.terrain
 	currentTerrain = terrain
-	match terrain:
-		Root.terrain.GRASS:friction = 0.13
-		Root.terrain.SAND:friction = 0.5
-		Root.terrain.MUD: friction = 0.5
-		Root.terrain.DIRT: friction = 0.03
-		Root.terrain.MOSS: friction = 0.08
-		Root.terrain.SNOW: friction = 0.3
 
 
 func pointIndicator():
@@ -245,6 +241,7 @@ func _physics_process(delta):
 	if not zoneCooldown.is_empty(): tickZoneCooldowns()
 	if isPlayer: tickPickups()
 	if fuel <= 0 && not isDestroyed: outOfFuel()
+	checkGround(global_position)
 	
 	if fuel <= 35 && not gasWarningGiven && not $"AudioStream-Voice".playing && isPlayer:makeGasWarning()
 	if health <= 50 && not healthWarningGiven && not $"AudioStream-Voice".playing && isPlayer:makeHealthWarning()
@@ -255,6 +252,7 @@ func _physics_process(delta):
 	var next = integrate(position, transform.x, velocity, _car_input, delta)
 	rotation = next[0].angle()
 	velocity = next[1]
+	var hitVelocity = velocity #before the slide, for a wall hit's impact angle and a breakable's speed
 	move_and_slide()
 	_do_update_output(_car_input.acceleration)
 	
@@ -264,9 +262,11 @@ func _physics_process(delta):
 		var collision = get_slide_collision( i )
 		var collider = collision.get_collider()
 		##colide with an unmovable static object like a rock
-		#note: walls are TileMap nodes; moving them to TileMapLayer needs this check updated
-		if velocity.length() > 0.01 && ( collider is StaticBody2D || collider is TileMap):
-			collideWithFixedObject( collision )
+		#a breakable (fence, hedge, crate...) hit fast enough is smashed, with no wall damage
+		if collider.has_method("smash") && hitVelocity.length() >= smashSpeedOf(collider):
+			collider.smash(self)
+		elif velocity.length() > 0.01 && World.isWall(collider):
+			collideWithFixedObject( collision, hitVelocity )
 		elif collider is CharacterBody2D:
 			if goonBumpReady(collider): damage(5)
 			#a crush never wears the car; a slow bump, or a goon that resists (shield, shell, heavy), scuffs it
@@ -298,16 +298,22 @@ func integrate(pos: Vector2, forward: Vector2, vel: Vector2, input: CarInput, de
 
 	var acceleration = input.acceleration * forward * ( engine_stat + 14 ) * 10 * ( 2.2 - abs(input.steering)) * thrust
 
+	#the ground under this position (World's terrain table): friction with the off-road rule, grip and
+	#brake multipliers, and a conveyor's push. UNKNOWN (no map loaded) keeps the car's own friction.
+	var surface := World.surfaceAt(pos)
+	var ground_friction := groundFriction(surface)
+
 	# Apply friction
 	if abs(vel.length()) < 5:
 		vel = Vector2.ZERO
-	var friction_force = vel * -friction
+	var friction_force = vel * -ground_friction
 	var drag_force = vel * vel.length() * -drag * dragScale
 	if vel.length() < 100:
 		friction_force *= 3
 	acceleration += drag_force + friction_force
 	if input.braking:
-		acceleration += - ( (5 + traction_stat) * 50 / ( vel.length() + 1)  ) * vel
+		acceleration += - ( (5 + traction_stat) * 50 / ( vel.length() + 1)  ) * vel * World.brake(surface)
+	acceleration += conveyorPull(vel, World.pushAt(pos, surface))
 
 	# Calculate steering
 	var rear_wheel = pos - forward * wheel_base / 2.0 + vel * delta
@@ -316,6 +322,7 @@ func integrate(pos: Vector2, forward: Vector2, vel: Vector2, input: CarInput, de
 	var grip = gripFor(traction_slow, traction_stat, grip_slow_max, grip_per_traction)
 	if vel.length() > slip_speed:
 		grip = gripFor(traction_fast, traction_stat, grip_fast_max, grip_per_traction)
+	grip *= World.grip(surface) #after the clamp, so ice and oil stay slippery whatever the traction
 	var d = new_heading.dot(vel.normalized())
 	if d >= 0:
 		vel = vel.lerp(new_heading * vel.length(), grip)
@@ -323,18 +330,67 @@ func integrate(pos: Vector2, forward: Vector2, vel: Vector2, input: CarInput, de
 		vel = -new_heading * min(vel.length(), ( engine_stat + 20 ) * 20)#10
 	return [new_heading, vel + acceleration * delta]
 
+#friction on a surface for this car: the table's value with the off-road rule (armor ploughs through
+#soft ground); the car's own `friction` when no map is loaded. Read only, so integrate() stays pure.
+func groundFriction(surface: int) -> float:
+	if surface == World.UNKNOWN: return friction
+	return World.effectiveFriction(World.friction(surface), armor)
+
+#a conveyor pulls the velocity along the belt toward the belt speed (CONVEYOR_PULL per second of the
+#shortfall); a car already going faster that way is left alone
+const CONVEYOR_PULL := 2.0
+static func conveyorPull(vel: Vector2, beltVelocity: Vector2) -> Vector2:
+	if beltVelocity == Vector2.ZERO: return Vector2.ZERO
+	var speed := beltVelocity.length()
+	var dir := beltVelocity / speed
+	var along := vel.dot(dir)
+	return dir * (speed - along) * CONVEYOR_PULL if along < speed else Vector2.ZERO
+
+#Once a tick, with the car's position: the car is wrecked once its centre has been over a lethal cell
+#(deep water) for LETHAL_TICKS ticks in a row, through destroy() like the old water Area2D (which now
+#drowns goons only). `friction` follows the ground under the car, for the HUD and the AI's sums.
+const LETHAL_TICKS := 2
+var lethalTicks := 0
+func checkGround(at: Vector2) -> void:
+	var surface := World.surfaceAt(at)
+	if surface != World.UNKNOWN: friction = groundFriction(surface)
+	if isWrecked:
+		lethalTicks = 0
+		return
+	lethalTicks = lethalTicks + 1 if World.lethalAt(at) else 0
+	if lethalTicks >= LETHAL_TICKS:
+		lethalTicks = 0
+		destroy()
+
+#how square a wall hit is: |normal . direction of travel|, from WALL_IMPACT_MIN (a glancing scrape)
+#to 1 (head-on). Wall damage and the speed lost scale with it.
+const WALL_IMPACT_MIN := 0.15
+const WALL_SPEED_KEEP := 0.85 #share of velocity kept after a head-on hit; a scrape keeps more
+static func wallImpact(normal: Vector2, vel: Vector2) -> float:
+	if vel.length_squared() < 0.0001: return WALL_IMPACT_MIN
+	return clampf(absf(normal.dot(vel.normalized())), WALL_IMPACT_MIN, 1.0)
+
+static func wallSpeedKeep(impact: float) -> float:
+	return lerpf(1.0, WALL_SPEED_KEEP, impact)
+
+#the speed a breakable needs to be smashed (its smashSpeed; 0 when it has none)
+static func smashSpeedOf(breakable: Object) -> float:
+	var need = breakable.get("smashSpeed")
+	return float(need) if need != null else 0.0
+
 var sparks = preload("res://scene/fx/spark/spark.tscn")
-func collideWithFixedObject( collision ):
+func collideWithFixedObject( collision, hitVelocity = null ):
 	if not $"AudioStream-Crash".playing: 
 		$"AudioStream-Crash".play()
 		if isPlayer: Settings.vibrate(0.3, 0.6, 0.15)
 		var spark = sparks.instantiate()
 		spark.global_position = collision.get_position()
 		Root.levelRoot.add_child(spark)
-	damage( WALL_DAMAGE_PER_SPEED * velocity.length() ) #armor is applied once, in damage()
+	var impact = wallImpact(collision.get_normal(), hitVelocity if hitVelocity != null else velocity)
+	damage( WALL_DAMAGE_PER_SPEED * velocity.length() * impact ) #armor is applied once, in damage()
 	if velocity.length() >= ZONE_WEAR_MIN_SPEED:
 		wearSystem(hitZone(collision), ZONE_WEAR_PER_SPEED * velocity.length() * 100.0 / (maxf(armor, 0.0) + 100.0))
-	velocity *= 0.85
+	velocity *= wallSpeedKeep(impact)
 
 #which system a hit wears, from the hit's normal and point in car space. The car faces +x and the
 #normal points from the obstacle to the car. Front centre: engine; front corners: lights; sides ahead
@@ -503,14 +559,15 @@ func connectCarArea(carArea):
 	carArea.car_body_exited.connect(_on_overhead_car_area_2d_car_body_exited)
 
 
-func _on_overhead_car_area_2d_car_body_entered(area: OverheadCarArea2D):
-	friction += area.friction
-	drag += area.drag
+#OverheadCarArea2D (the old sand-trap patches) no longer changes handling: ground friction comes from
+#World.surfaceAt in integrate(), and adding and subtracting here drifted whenever an enter and an exit
+#didn't pair up. Kept inert so the old scenes still load.
+func _on_overhead_car_area_2d_car_body_entered(_area: OverheadCarArea2D):
+	pass
 
 
-func _on_overhead_car_area_2d_car_body_exited(area: OverheadCarArea2D):
-	friction -= area.friction
-	drag -= area.drag
+func _on_overhead_car_area_2d_car_body_exited(_area: OverheadCarArea2D):
+	pass
 
 
 func follow_path(path_follow: OverheadCarPathFollow2D):

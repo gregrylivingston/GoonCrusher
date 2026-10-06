@@ -226,6 +226,7 @@ stretch_mode = 1
 
 [node name="LightOccluder2D" type="LightOccluder2D" parent="Polygon2D/house"]
 occluder = SubResource("OccluderPolygon2D_qrw17")
+metadata/gc_world = true
 
 [node name="Lights" type="Node2D" parent="Polygon2D"]
 

@@ -4,7 +4,8 @@ extends Node
 #The demo and the full game share this file, so demo progress carries over: load_data() merges
 #each save with the current defaults (migrate()) before anything reads it.
 
-const SAVE_VERSION := 4 #2: every level's gamemodeBeat has a GOONPOCALYPSE key. 3: goonsCrushed (older saves load it empty). 4: meta, and a score record per car
+const SAVE_VERSION := 5 #2: every level's gamemodeBeat has a GOONPOCALYPSE key. 3: goonsCrushed (older saves load it empty). 4: meta, and a score record per car
+#5: levels come from the Levels registry (the world revamp) and carry an id; older level entries keep their unlocks by index, but their beaten modes reset and their records move to the new level's id
 var save_path = "user://saveData_0.1.tres"
 var playerData: PlayerData
 var saveTimer: Timer
@@ -65,23 +66,57 @@ func migrate() -> bool:
 		for key in defaultCar.records:
 			if not car.records.has(key): car.records[key] = 0
 	#levels were not saved before version 1, so older saves get the defaults here
-	var mergedLevels = []
-	for i in defaults.levels.size():
-		var level = defaults.levels[i].duplicate(true)
-		if i < playerData.levels.size():
-			var saved = playerData.levels[i]
-			level.unlocked = saved.get("unlocked", level.unlocked)
-			#beaten modes are kept; modes the save has no key for (GOONPOCALYPSE before version 2) come from the defaults
-			var savedBeat = saved.get("gamemodeBeat", {})
-			if savedBeat is Dictionary:
-				for mode in savedBeat: level.gamemodeBeat[mode] = bool(savedBeat[mode])
-		mergedLevels.push_back(level)
-	playerData.levels = mergedLevels
+	playerData.levels = mergeLevels(playerData.levels)
+	rekeyLevelRecords()
 	playerData.selectedCar = clampi(playerData.selectedCar, 0, playerData.cars.size() - 1)
 	playerData.selectedLevel = clampi(playerData.selectedLevel, 0, playerData.levels.size() - 1)
 	playerData.gameMode = clampi(playerData.gameMode, 0, Root.gameModes.size() - 1)
 	playerData.saveVersion = SAVE_VERSION
 	return before != var_to_str([playerData.cars, playerData.levels, playerData.saveVersion, playerData.selectedCar, playerData.selectedLevel, playerData.gameMode, playerData.meta])
+
+#The save's levels rebuilt from the registry (Levels.ORDER). A saved entry with a known id keeps its unlock
+#and beaten modes. An entry from before the registry (no id, or an old scene name, Levels.LEGACY_KEYS) keeps
+#only its unlock, carried to the level now at its old index: it was a different level, so its beaten modes
+#reset. Entries for levels no longer in the registry are dropped.
+static func mergeLevels(savedLevels: Array) -> Array:
+	var byId := {}
+	var legacy := {} #new index -> the old entry that sat there
+	for j in savedLevels.size():
+		var saved = savedLevels[j]
+		if not saved is Dictionary: continue
+		var id := str(saved.get("id", ""))
+		if Levels.indexOf(StringName(id)) >= 0:
+			byId[id] = saved
+			continue
+		var old := Levels.LEGACY_KEYS.find(levelKey(saved))
+		legacy[old if old >= 0 else j] = saved
+	var merged := []
+	for i in Levels.count():
+		var level := Levels.defaultEntry(i)
+		var saved = byId.get(level.id)
+		if saved != null:
+			level.unlocked = bool(saved.get("unlocked", level.unlocked))
+			#beaten modes are kept; modes the save has no key for (GOONPOCALYPSE before version 2) come from the defaults
+			var savedBeat = saved.get("gamemodeBeat", {})
+			if savedBeat is Dictionary:
+				for mode in savedBeat: level.gamemodeBeat[mode] = bool(savedBeat[mode])
+		elif legacy.has(i):
+			level.unlocked = bool(legacy[i].get("unlocked", level.unlocked))
+		merged.push_back(level)
+	return merged
+
+#records keyed by an old level scene name (meta.records.<section>.level_grass_1) move to the id of the level
+#now at that index; a record already under the new id wins
+func rekeyLevelRecords() -> void:
+	for section in playerData.meta.records:
+		var byLevel = playerData.meta.records[section]
+		if not byLevel is Dictionary: continue
+		for old in Levels.LEGACY_KEYS.size():
+			var oldKey: String = Levels.LEGACY_KEYS[old]
+			if not byLevel.has(oldKey) || old >= Levels.count(): continue
+			var newKey := String(Levels.ORDER[old])
+			if not byLevel.has(newKey): byLevel[newKey] = byLevel[oldKey]
+			byLevel.erase(oldKey)
 
 #marks the save dirty; it is written one second after the last change, on scene change and on exit
 func save_character_data():
@@ -213,9 +248,11 @@ func selectPreviousGameMode():
 	return playerData.gameMode
 
 #--- per-level records (meta.records) -----------------------------------------------------------
-#Keyed by the level scene's file name (level_grass_1), so reordering levels keeps them, then by car.
+#Keyed by the level's id (Levels.ORDER), so reordering levels keeps them, then by car.
 
+## A level entry's stable key: its id; an entry from before the registry gives its scene's file name
 static func levelKey(level: Dictionary) -> String:
+	if str(level.get("id", "")) != "": return str(level.id)
 	return str(level.get("scene", level.get("name", ""))).get_file().get_basename()
 
 ## The best Goonpocalypse run on this level with this car: {"time": seconds, "score": points}, zeros if none.

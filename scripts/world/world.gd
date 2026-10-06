@@ -1,0 +1,176 @@
+class_name World extends RefCounted
+## The terrain table and the runtime map queries (docs/WORLD.md). Static only.
+##
+## TERRAIN is indexed by Root.terrain id (append-only; Goons.T mirrors the enum and test_goons and
+## test_world check all three agree). Fields:
+##   name, letter (playtest --trace map), friction (on the car's scale; see effectiveFriction),
+##   grip (multiplies the car's grip after gripFor's clamp), brake (multiplies the brake force),
+##   push (conveyor speed in px/s), passable, lethal, wall, routeWeight (AIRoute A* weight; 0 when
+##   blocked), spawnable (goons, pickups and objectives may go there).
+##
+## Runtime queries (terrainAt, surfaceAt, lethalAt, blockedAt, spawnableAt, pushAt) are called every
+## physics tick by the car and ~900 times per AI plan through integrate(), so they never allocate and
+## only touch cached references. They delegate to the live WorldMap (Root.worldMap) when there is one:
+## it must provide terrainAt(pos) -> int, surfaceAt(pos) -> int, lethalAt(pos) -> bool,
+## blockedAt(pos) -> bool and spawnableAt(pos) -> bool, and may provide beltDirAt(pos) -> Vector2.
+## Without one they read the chunk terrain map (TileManager/landscapeGenerator). UNKNOWN (-1) means no
+## map is loaded yet (the menu, tests, the first frames of a run): nothing is lethal or blocked there,
+## and the car keeps its own base friction.
+
+const UNKNOWN := -1
+const GRASS_FRICTION := 0.13 #the off-road rule's baseline
+const OFFROAD_ARMOR_SCALE := 200.0 #armor / this is the share of extra friction ignored...
+const OFFROAD_ARMOR_MAX := 0.35    #...up to this share
+const CHUNK_PX := Vector2(5120, 2560)
+
+const TERRAIN := [
+	{"name":"GRASS",    "letter":"g", "friction":0.13, "grip":1.0,  "brake":1.0, "push":0.0,   "passable":true,  "lethal":false, "wall":false, "routeWeight":1.0, "spawnable":true},
+	{"name":"SAND",     "letter":"s", "friction":0.5,  "grip":0.9,  "brake":1.0, "push":0.0,   "passable":true,  "lethal":false, "wall":false, "routeWeight":1.4, "spawnable":true},
+	{"name":"MUD",      "letter":"m", "friction":0.6,  "grip":0.8,  "brake":1.0, "push":0.0,   "passable":true,  "lethal":false, "wall":false, "routeWeight":1.4, "spawnable":true},
+	{"name":"WATER",    "letter":"~", "friction":0.13, "grip":1.0,  "brake":1.0, "push":0.0,   "passable":false, "lethal":true,  "wall":false, "routeWeight":0.0, "spawnable":false},
+	{"name":"HILLS",    "letter":"^", "friction":0.13, "grip":1.0,  "brake":1.0, "push":0.0,   "passable":false, "lethal":false, "wall":true,  "routeWeight":0.0, "spawnable":false},
+	{"name":"MOSS",     "letter":"o", "friction":0.08, "grip":1.0,  "brake":1.0, "push":0.0,   "passable":true,  "lethal":false, "wall":false, "routeWeight":1.0, "spawnable":true},
+	{"name":"DIRT",     "letter":"d", "friction":0.03, "grip":1.0,  "brake":1.0, "push":0.0,   "passable":true,  "lethal":false, "wall":false, "routeWeight":1.0, "spawnable":true},
+	{"name":"SNOW",     "letter":"*", "friction":0.3,  "grip":0.85, "brake":1.0, "push":0.0,   "passable":true,  "lethal":false, "wall":false, "routeWeight":1.2, "spawnable":true},
+	{"name":"ASPHALT",  "letter":"=", "friction":0.02, "grip":1.1,  "brake":1.0, "push":0.0,   "passable":true,  "lethal":false, "wall":false, "routeWeight":1.0, "spawnable":true},
+	{"name":"ICE",      "letter":"i", "friction":0.05, "grip":0.35, "brake":0.5, "push":0.0,   "passable":true,  "lethal":false, "wall":false, "routeWeight":1.3, "spawnable":true},
+	{"name":"OIL",      "letter":"%", "friction":0.03, "grip":0.25, "brake":0.4, "push":0.0,   "passable":true,  "lethal":false, "wall":false, "routeWeight":1.3, "spawnable":true},
+	{"name":"SHALLOWS", "letter":"-", "friction":0.45, "grip":0.7,  "brake":1.0, "push":0.0,   "passable":true,  "lethal":false, "wall":false, "routeWeight":1.4, "spawnable":false},
+	{"name":"WASH",     "letter":"w", "friction":0.02, "grip":0.9,  "brake":1.0, "push":0.0,   "passable":true,  "lethal":false, "wall":false, "routeWeight":1.0, "spawnable":true},
+	{"name":"CONVEYOR", "letter":">", "friction":0.03, "grip":1.0,  "brake":1.0, "push":250.0, "passable":true,  "lethal":false, "wall":false, "routeWeight":1.0, "spawnable":true},
+	{"name":"MUDPIT",   "letter":"@", "friction":1.0,  "grip":0.7,  "brake":1.0, "push":0.0,   "passable":true,  "lethal":false, "wall":false, "routeWeight":2.0, "spawnable":true},
+	{"name":"DEEPSNOW", "letter":"#", "friction":0.6,  "grip":0.8,  "brake":1.0, "push":0.0,   "passable":true,  "lethal":false, "wall":false, "routeWeight":1.4, "spawnable":true},
+	{"name":"LOT",      "letter":"l", "friction":0.03, "grip":1.0,  "brake":1.0, "push":0.0,   "passable":true,  "lethal":false, "wall":false, "routeWeight":1.0, "spawnable":true},
+	{"name":"BUILDING", "letter":"B", "friction":0.13, "grip":1.0,  "brake":1.0, "push":0.0,   "passable":false, "lethal":false, "wall":true,  "routeWeight":0.0, "spawnable":false},
+	{"name":"BRIDGE",   "letter":"b", "friction":0.03, "grip":1.0,  "brake":1.0, "push":0.0,   "passable":true,  "lethal":false, "wall":false, "routeWeight":1.0, "spawnable":true},
+]
+
+#flat copies of the hot columns, built once from TERRAIN
+static var _friction := PackedFloat32Array()
+static var _grip := PackedFloat32Array()
+static var _brake := PackedFloat32Array()
+static var _push := PackedFloat32Array()
+static var _flags := PackedByteArray() #FLAG_* bits
+const FLAG_PASSABLE := 1
+const FLAG_LETHAL := 2
+const FLAG_WALL := 4
+const FLAG_SPAWNABLE := 8
+
+static func _static_init() -> void:
+	for d in TERRAIN:
+		_friction.push_back(d.friction)
+		_grip.push_back(d.grip)
+		_brake.push_back(d.brake)
+		_push.push_back(d.push)
+		_flags.push_back((FLAG_PASSABLE if d.passable else 0) | (FLAG_LETHAL if d.lethal else 0) \
+			| (FLAG_WALL if d.wall else 0) | (FLAG_SPAWNABLE if d.spawnable else 0))
+
+#--- the table -----------------------------------------------------------------------------------
+
+static func count() -> int:
+	return TERRAIN.size()
+
+## The row for a terrain id (GRASS's for an unknown id).
+static func def(t: int) -> Dictionary:
+	return TERRAIN[t] if t >= 0 && t < TERRAIN.size() else TERRAIN[0]
+
+static func _flag(t: int, flag: int) -> bool:
+	return t >= 0 && t < _flags.size() && (_flags[t] & flag) != 0
+
+static func isPassable(t: int) -> bool: return _flag(t, FLAG_PASSABLE)
+static func isLethal(t: int) -> bool: return _flag(t, FLAG_LETHAL)
+static func isWallTerrain(t: int) -> bool: return _flag(t, FLAG_WALL)
+static func isSpawnable(t: int) -> bool: return _flag(t, FLAG_SPAWNABLE)
+## Water or wall: what the chunk map, A* and the AI treat as solid.
+static func isBlocked(t: int) -> bool: return t >= 0 && t < _flags.size() && (_flags[t] & FLAG_PASSABLE) == 0
+
+static func friction(t: int) -> float: return _friction[t] if t >= 0 && t < _friction.size() else GRASS_FRICTION
+static func grip(t: int) -> float: return _grip[t] if t >= 0 && t < _grip.size() else 1.0
+static func brake(t: int) -> float: return _brake[t] if t >= 0 && t < _brake.size() else 1.0
+static func push(t: int) -> float: return _push[t] if t >= 0 && t < _push.size() else 0.0
+static func routeWeight(t: int) -> float: return def(t).routeWeight
+static func letter(t: int) -> String: return def(t).letter if t >= 0 && t < TERRAIN.size() else "?"
+
+## The off-road rule: friction above grass is softened by armor (heavy cars plough through), at most
+## OFFROAD_ARMOR_MAX of the extra. f_eff = 0.13 + (f - 0.13) * (1 - clamp(armor / 200, 0, 0.35)).
+static func effectiveFriction(f: float, armor: float) -> float:
+	if f <= GRASS_FRICTION: return f
+	return GRASS_FRICTION + (f - GRASS_FRICTION) * (1.0 - clampf(armor / OFFROAD_ARMOR_SCALE, 0.0, OFFROAD_ARMOR_MAX))
+
+## Something the car and goons bounce off: rocks, walls, station buildings (StaticBody2D) and the
+## terrain TileMaps' collision. Moving terrain to TileMapLayer must update this one check.
+static func isWall(collider: Object) -> bool:
+	return collider is StaticBody2D || collider is TileMap
+
+#--- runtime queries -----------------------------------------------------------------------------
+
+#the fallback chunk map, cached per level
+static var _levelId := 0
+static var _gen: Object = null
+static var _map := PackedByteArray()
+static var _mapW := 0
+static var _mapH := 0
+static var _chunkPx := CHUNK_PX
+
+#true when the chunk terrain map of the current level is built and cached
+static func _fallbackReady() -> bool:
+	var level = Root.levelRoot
+	if not is_instance_valid(level):
+		_levelId = 0
+		return false
+	if level.get_instance_id() != _levelId || not is_instance_valid(_gen):
+		_levelId = level.get_instance_id()
+		_gen = level.get_node_or_null("TileManager/landscapeGenerator")
+		_map = PackedByteArray()
+		if _gen == null: return false
+	if _map.is_empty():
+		_map = _gen.terrainMap
+		if _map.is_empty(): return false
+		_mapW = _gen.inputSizeX
+		_mapH = _gen.inputSizeY
+		var tm = _gen.get_parent()
+		var size = tm.get("tilesize")
+		_chunkPx = size if size is Vector2 && size.x > 0.0 && size.y > 0.0 else CHUNK_PX
+	return true
+
+## Forget the cached level (a test that swaps maps, or a new run).
+static func resetCache() -> void:
+	_levelId = 0
+	_gen = null
+	_map = PackedByteArray()
+
+## The terrain id under a world position, UNKNOWN before a map is loaded. Outside the map is WATER.
+static func terrainAt(pos: Vector2) -> int:
+	if Root.worldMap != null: return Root.worldMap.terrainAt(pos)
+	if not _fallbackReady(): return UNKNOWN
+	var x := floori(pos.x / _chunkPx.x) + _mapW / 2
+	var y := floori(pos.y / _chunkPx.y) + _mapH / 2
+	if x < 0 || y < 0 || x >= _mapW || y >= _mapH: return Root.terrain.WATER
+	return _map[y * _mapW + x]
+
+## The ground the car drives on (friction, grip, brake, push); a bridge deck over water, say.
+static func surfaceAt(pos: Vector2) -> int:
+	if Root.worldMap != null: return Root.worldMap.surfaceAt(pos)
+	return terrainAt(pos)
+
+static func lethalAt(pos: Vector2) -> bool:
+	if Root.worldMap != null: return Root.worldMap.lethalAt(pos)
+	return isLethal(terrainAt(pos))
+
+## Water or wall under the point (goons slide or hold, projectiles stop).
+static func blockedAt(pos: Vector2) -> bool:
+	if Root.worldMap != null: return Root.worldMap.blockedAt(pos)
+	return isBlocked(terrainAt(pos))
+
+static func spawnableAt(pos: Vector2) -> bool:
+	if Root.worldMap != null: return Root.worldMap.spawnableAt(pos)
+	return isSpawnable(terrainAt(pos))
+
+## The conveyor push (px/s, as a vector) on surface `t` at `pos`. The belt direction is stored per
+## chunk by the WorldMap (beltDirAt); until it exists every belt runs along +x (Vector2.RIGHT).
+static func pushAt(pos: Vector2, t: int) -> Vector2:
+	var speed := push(t)
+	if speed <= 0.0: return Vector2.ZERO
+	var dir := Vector2.RIGHT
+	if Root.worldMap != null && Root.worldMap.has_method("beltDirAt"): dir = Root.worldMap.beltDirAt(pos)
+	return dir * speed

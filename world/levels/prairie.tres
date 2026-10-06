@@ -1,0 +1,82 @@
+[gd_resource type="Resource" script_class="LevelDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/level_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"prairie"
+displayName = "Prairie Run"
+poster = "res://texture/background/background_level_1.png"
+act = 1
+order = 0
+blurb = "A creek winds through open meadow, with fords every chunk and deep pools that drown. Smash through hedgerows and fences."
+startPosition = Vector2(2866, 1583)
+seconds = 250
+spawnTimer = 5.0
+giantOdds = -20
+escalationSpeed = 0.12
+sprintSlack = 1.5
+modes = []
+factionBand = Vector2(0.0, 1.4)
+roster = {
+0: [&"jackalope", &"bandit", &"tusker", &"thunderhoof"],
+1: [&"grunt", &"spiker", &"dasher", &"hubcap"],
+2: [&"spoke", &"karter", &"sawbot"]
+}
+grammar = &"meadow"
+features = {
+"creekFrequency": 9e-05,
+"creekWidth": 640.0,
+"fordEvery": 1,
+"poolThreshold": 0.62,
+"hedgeDensity": 0.25,
+"fenceDensity": 0.2,
+"trackWidth": 420.0
+}
+baseTerrain = [0, 0, 5, 0, 6]
+accents = [5, 6, 11]
+dressing = {
+0: {
+&"oak": 6,
+&"haybale": 4,
+&"hedge": 3,
+&"fence": 3,
+&"tufts": 8,
+&"rock": 2,
+&"stump": 2,
+&"carcass": 1
+},
+1: {
+&"oak": 4,
+&"hedge": 2,
+&"tent": 2,
+&"totem": 1,
+&"firepit": 1,
+&"tufts": 6,
+&"crate": 2
+},
+2: {
+&"oak": 3,
+&"tyres": 2,
+&"wreck": 1,
+&"barrel": 1,
+&"tufts": 5,
+&"scrapheap": 1
+}
+}
+pickupTable = {
+&"coinline": 5,
+&"fuel": 3,
+&"health": 2,
+&"purse": 1,
+&"slot": 1
+}
+pickupsPerChunk = 4
+palette = {
+&"ground": Color(0.42, 0.55, 0.3, 1),
+&"accent": Color(0.5, 0.6, 0.32, 1),
+&"track": Color(0.55, 0.47, 0.33, 1),
+&"water": Color(0.2, 0.38, 0.5, 1)
+}
+nightTint = Color(0.05, 0.07, 0.12, 1)
+ambience = &"meadow"

@@ -1,0 +1,79 @@
+[gd_resource type="Resource" script_class="LevelDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/level_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"canyon"
+displayName = "Red Canyon"
+poster = "res://texture/background/background_grass_3.png"
+act = 1
+order = 2
+blurb = "Ridged canyon walls and mesas box the roads in. A pass opens every chunk, and the dry washes are the fast lanes."
+startPosition = Vector2(2129, 1227)
+seconds = 340
+spawnTimer = 4.2
+giantOdds = -5
+escalationSpeed = 0.14
+sprintSlack = 1.4
+modes = []
+factionBand = Vector2(0.3, 1.8)
+roster = {
+0: [&"rattler", &"buzzard", &"stinger", &"quill", &"yipper"],
+1: [&"nightcrawler", &"torch", &"boulder", &"doomcart"],
+2: [&"spoke", &"torcher", &"chainer"]
+}
+grammar = &"canyon"
+features = {
+"ridgeFrequency": 7e-05,
+"wallBelow": 0.18,
+"mesaAbove": 0.82,
+"passEvery": 1,
+"passWidth": 1400.0,
+"washWidth": 700.0,
+"duneDensity": 0.3
+}
+baseTerrain = [6, 1, 6, 1, 6]
+accents = [12, 1]
+dressing = {
+0: {
+&"saguaro": 5,
+&"rock": 4,
+&"boulder": 2,
+&"deadtree": 2,
+&"bones": 3,
+&"carcass": 2,
+&"pebbles": 6
+},
+1: {
+&"rock": 3,
+&"totem": 2,
+&"tent": 2,
+&"firepit": 2,
+&"saguaro": 3,
+&"barrel": 1
+},
+2: {
+&"rock": 3,
+&"wreck": 2,
+&"tyres": 2,
+&"barrel": 2,
+&"saguaro": 2
+}
+}
+pickupTable = {
+&"coinline": 4,
+&"fuel": 4,
+&"health": 2,
+&"purse": 1,
+&"slot": 1
+}
+pickupsPerChunk = 3
+palette = {
+&"ground": Color(0.62, 0.42, 0.28, 1),
+&"accent": Color(0.7, 0.55, 0.38, 1),
+&"wall": Color(0.48, 0.28, 0.2, 1),
+&"wash": Color(0.72, 0.62, 0.46, 1)
+}
+nightTint = Color(0.1, 0.06, 0.08, 1)
+ambience = &"desert"

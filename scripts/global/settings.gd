@@ -634,8 +634,9 @@ func onFocusChanged(focused: bool) -> void:
 #  High (2):   as authored, shadow atlas 2048
 #  Medium (1): as authored except pickup-flyer lights off; atlas 1024. Night stealth is unchanged:
 #              every occluder stays, so goons behind rocks and goons stay hidden.
-#  Low (0):    no shadows, no occluders, tail/pickup/explosion/lamp-post lights off and the central
-#              station light enlarged to light the yard; atlas 256. Affects gameplay.
+#  Low (0):    no shadows, no goon occluders (world occluders, metadata gc_world, stay), tail/pickup/
+#              explosion/lamp-post lights off and the central station light enlarged to light the
+#              yard; atlas 256. Affects gameplay.
 #At every level the headlight cone (or the baked Simple Cone) still scales with the Headlights stat.
 const SHADOW_ATLAS = [256, 1024, 2048]
 #the baked cone (texture/fx/headlight_cone.png, scripts/debug/bake_headlight_cone.gd) matched the five
@@ -655,7 +656,12 @@ func onNodeAdded(node: Node) -> void:
 	elif node is LightOccluder2D:
 		if not node.has_meta("gc_vis"): node.set_meta("gc_vis", node.visible)
 		node.add_to_group("gc_occluder")
-		node.visible = node.get_meta("gc_vis") && get_value("gfx/lighting") >= 1
+		node.visible = occluderVisible(node, get_value("gfx/lighting"))
+
+#an occluder's state for a Lighting level: as authored, except that Low hides all but the world's
+#(rocks, walls, buildings: metadata gc_world)
+static func occluderVisible(occluder: Node, level: int) -> bool:
+	return occluder.get_meta("gc_vis", true) && (level >= 1 || occluder.get_meta("gc_world", false))
 
 static func lightRole(light: Node) -> String:
 	var parent = light.get_parent()
@@ -688,7 +694,7 @@ func applyLighting() -> void:
 	RenderingServer.canvas_set_shadow_texture_size(SHADOW_ATLAS[get_value("gfx/lighting")])
 	for light in get_tree().get_nodes_in_group("gc_light"): applyLight(light)
 	for occluder in get_tree().get_nodes_in_group("gc_occluder"):
-		occluder.visible = occluder.get_meta("gc_vis") && get_value("gfx/lighting") >= 1
+		occluder.visible = occluderVisible(occluder, get_value("gfx/lighting"))
 
 
 #--- key and button bindings ----------------------------------------------------------------

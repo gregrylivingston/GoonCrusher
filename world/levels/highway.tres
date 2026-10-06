@@ -1,0 +1,80 @@
+[gd_resource type="Resource" script_class="LevelDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/level_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"highway"
+displayName = "Route Nowhere"
+poster = "res://texture/background/mud_background3.png"
+act = 2
+order = 5
+blurb = "A highway runs east with branch roads off it. Asphalt is fast; oil slicks, jersey barriers and pile-ups are not."
+startPosition = Vector2(2129, 1227)
+seconds = 460
+spawnTimer = 3.2
+giantOdds = 15
+escalationSpeed = 0.17
+sprintSlack = 1.25
+modes = []
+factionBand = Vector2(1.6, 2.8)
+roster = {
+0: [&"buzzard", &"rattler"],
+1: [&"spiker", &"grunt", &"hubcap"],
+2: [&"spoke", &"chainer", &"torcher", &"slick", &"sidecar", &"karter"]
+}
+grammar = &"highway"
+features = {
+"warpFrequency": 4e-05,
+"warpAmplitude": 3000.0,
+"roadWidth": 1600.0,
+"branchEvery": 3,
+"branchWidth": 1000.0,
+"oilDensity": 0.15,
+"pileupDensity": 0.2,
+"gasStationEvery": 6
+}
+baseTerrain = [1, 6, 1, 6, 1]
+accents = [8, 10]
+dressing = {
+0: {
+&"saguaro": 3,
+&"rock": 3,
+&"carcass": 2,
+&"bones": 2,
+&"pebbles": 4
+},
+1: {
+&"barricade": 3,
+&"tyres": 3,
+&"cone": 3,
+&"sign": 2,
+&"barrel": 1
+},
+2: {
+&"jersey": 5,
+&"wreck": 4,
+&"cone": 4,
+&"gaspump": 1,
+&"sign": 2,
+&"billboard": 1,
+&"oilstain": 4,
+&"tyres": 2
+}
+}
+pickupTable = {
+&"coinline": 5,
+&"fuel": 3,
+&"health": 2,
+&"purse": 1,
+&"slot": 1
+}
+pickupsPerChunk = 3
+palette = {
+&"ground": Color(0.66, 0.56, 0.4, 1),
+&"accent": Color(0.56, 0.46, 0.34, 1),
+&"asphalt": Color(0.24, 0.24, 0.26, 1),
+&"paint": Color(0.9, 0.85, 0.6, 1)
+}
+nightTint = Color(0.08, 0.07, 0.1, 1)
+ambience = &"highway"

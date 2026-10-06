@@ -5,6 +5,10 @@ var explosionScene = preload("res://scene/fx/explosion.tscn") #loaded with the l
 var explosions: ExplosionPool
 var playerCar: OverheadCarBody2D
 var playerController
+## The level's LevelDef (Levels, res://world/levels/<id>.tres). Its clock, spawn tuning and start position
+## are copied in when the level enters the tree (applyDef). Old scenes without one keep their own values.
+@export var def: LevelDef
+var defApplied := false
 @export var seconds = 600 #the run clock. Every mode counts it down except Goonpocalypse, which counts up from 0
 var levelSeconds: float #the level's authored seconds, kept after the mode replaces `seconds`
 var elapsed := 0.0 #run-clock seconds that have passed, whichever way the clock counts (Timer.gd)
@@ -44,13 +48,32 @@ const DEFENSE_RING = 4000.0
 const DEFENSE_SPAWNERS = 4
 const DEFENSE_START = Vector2(1250, 290) #outside the lot's gap (its east side), from the station's origin
 
+#Before any child is ready, so SpawnManager._ready (Goonpocalypse escalation) builds on the def's numbers,
+#and before the bench's node_added overrides, which come after this.
+func _enter_tree():
+	applyDef()
+
+func applyDef() -> void:
+	if defApplied || def == null: return
+	defApplied = true
+	seconds = def.seconds
+	var spawnManager = get_node_or_null("SpawnManager")
+	if spawnManager:
+		spawnManager.spawnTimer = def.spawnTimer
+		spawnManager.giantOdds = def.giantOdds
+		spawnManager.escalationSpeed = def.escalationSpeed
+
+#Sprint and Marathon slack: the def's, else the old curve over the level's seconds
+func slack() -> float:
+	return def.sprintSlack if def else sprintSlack(levelSeconds)
+
 func _ready():
 	levelSeconds = seconds
 	explosions = ExplosionPool.new(explosionScene)
 	add_child(explosions)
 
 	#add my car
-	var newPosition = $Car.position
+	var newPosition = def.startPosition if def else $Car.position
 	startPosition = newPosition
 	$Car.queue_free()
 	if is_instance_valid(Root.playerCar): Root.playerCar.queue_free()
@@ -91,7 +114,7 @@ func onWorldReady() -> void:
 	match SaveManager.playerData.gameMode:
 		Root.gameModes.SPRINT, Root.gameModes.MARATHON:
 			if is_instance_valid(Root.station):
-				seconds = sprintSeconds(startPosition.distance_to(Root.station.global_position), levelSeconds)
+				seconds = sprintSeconds(startPosition.distance_to(Root.station.global_position), levelSeconds, slack())
 				legHeading = (Root.station.global_position - startPosition).angle()
 		Root.gameModes.DEFENSE:
 			if is_instance_valid(Root.station): setupDefense()
@@ -109,8 +132,9 @@ static func sprintSlack(levelSeconds: float) -> float:
 	return clampf(1.5 - (levelSeconds - 250.0) / 290.0 * 0.4, 1.1, 1.5)
 
 #the Sprint clock: the real straight-line distance at REFERENCE_SPEED, plus the level's slack
-static func sprintSeconds(distancePx: float, levelSeconds: float) -> float:
-	return distancePx / REFERENCE_SPEED * sprintSlack(levelSeconds)
+#(LevelDef.sprintSlack when given, else the curve over the level's seconds)
+static func sprintSeconds(distancePx: float, levelSeconds: float, slackOverride: float = -1.0) -> float:
+	return distancePx / REFERENCE_SPEED * (slackOverride if slackOverride > 0.0 else sprintSlack(levelSeconds))
 
 #how a run ends when a counting-down clock reaches 0 (Root.endCondition): Countdown and Defense are won,
 #the races are lost. A wrecked car (exploding, its NOHEALTH ending still pending) has not survived. A car
@@ -164,7 +188,7 @@ func stationReached(station: Node2D) -> void:
 	var from = station.global_position
 	var next = $TileManager.placeNextStation(from, legHeading + randf_range(-MARATHON_TURN, MARATHON_TURN), levelSeconds)
 	legHeading = (next.global_position - from).angle()
-	seconds += sprintSeconds(from.distance_to(next.global_position), levelSeconds)
+	seconds += sprintSeconds(from.distance_to(next.global_position), levelSeconds, slack())
 	call_deferred("openPitShop")
 
 #Marathon stations: the pit shop sells pickups for run coins, then the free slot machine opens

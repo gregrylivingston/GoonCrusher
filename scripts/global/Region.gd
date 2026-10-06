@@ -101,13 +101,16 @@ func _ready() -> void:
 				if Goons.DATA.has(StringName(id)): forcedGoons.push_back(StringName(id))
 				else: push_warning("--goons: unknown goon " + id)
 
-#A region belongs to one faction (Goons.gd): Wild Things near the start and on early levels, the Goon
-#Tribe further out, the Scrap Gang furthest out and on late levels. Its three goons come from that faction.
+#A region belongs to one faction (Goons.gd): Wild Things near the start, the Goon Tribe further out, the
+#Scrap Gang furthest out, with the score clamped to the level's LevelDef.factionBand (LevelRoster). Its three
+#goons come from the level's roster for that faction; a faction the level has no roster for uses the Tribe's.
 func createRegion(terrain: int) -> Dictionary:#terrain is Enum Root.terrain
 	var distance: float = Root.playerCar.global_position.length() if is_instance_valid(Root.playerCar) else 0.0
-	var faction := Goons.factionFor(distance, SaveManager.playerData.selectedLevel if SaveManager.playerData else 0, rng.randf_range(-Goons.FACTION_JITTER, Goons.FACTION_JITTER))
+	var def := Levels.current()
+	var faction := LevelRoster.factionAt(def, distance, rng.randf_range(-Goons.FACTION_JITTER, Goons.FACTION_JITTER))
 	if forcedFaction >= 0: faction = forcedFaction
-	var goons := Goons.regionGoons(faction, terrain, rng)
+	var goons := LevelRoster.pickGoons(def, faction, rng) if def else Goons.regionGoons(faction, terrain, rng)
+	if not goons.is_empty(): faction = Goons.DATA[goons[0]].faction
 	if not forcedGoons.is_empty():
 		goons = [forcedGoons[0], forcedGoons[1 % forcedGoons.size()], forcedGoons[2 % forcedGoons.size()]]
 		faction = Goons.DATA[goons[0]].faction

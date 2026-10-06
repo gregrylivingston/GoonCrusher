@@ -78,7 +78,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--profiles", default="default,v1", help="comma-separated AIProfiles specs")
     parser.add_argument("--modes", default="countdown,sprint,goonpocalypse")
-    parser.add_argument("--level", default="level_grass_1", help="comma-separated levels")
+    parser.add_argument("--level", default="prairie", help="comma-separated level ids (Levels.ORDER) or 0-based indices")
     parser.add_argument("--car", default="sedan", help="comma-separated cars")
     parser.add_argument("--runs", type=int, default=6, help="seeds per profile and mode")
     parser.add_argument("--seed", type=int, default=101)

@@ -1,0 +1,78 @@
+[gd_resource type="Resource" script_class="LevelDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/level_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"quarry"
+displayName = "Goon Quarry"
+poster = "res://texture/background/mud_background1.png"
+act = 2
+order = 3
+blurb = "Haul roads link a terraced pit, a junk fort with gates and tyre camps. The Tribe digs here, and the mud pits swallow speed."
+startPosition = Vector2(2129, 1227)
+seconds = 380
+spawnTimer = 3.8
+giantOdds = 0
+escalationSpeed = 0.15
+sprintSlack = 1.35
+modes = []
+factionBand = Vector2(1.0, 2.2)
+roster = {
+0: [&"bandit", &"tusker"],
+1: [&"grunt", &"foreman", &"wrecker", &"rammer", &"hubcap", &"slinger", &"doomcart", &"spiker"],
+2: [&"spoke", &"magnet"]
+}
+grammar = &"quarry"
+features = {
+"pitRamps": 2,
+"pitRadius": 3200.0,
+"fortRadius": 2200.0,
+"fortGates": 3,
+"tyreCamps": 0.25,
+"haulRoadWidth": 900.0,
+"mudPitMaxCells": 2
+}
+baseTerrain = [6, 2, 6, 16, 6]
+accents = [2, 14, 16]
+dressing = {
+0: {
+&"rock": 4,
+&"boulder": 2,
+&"stump": 2,
+&"tufts": 4
+},
+1: {
+&"tyres": 5,
+&"barricade": 3,
+&"fortwall": 2,
+&"crane": 1,
+&"shack": 2,
+&"barrel": 2,
+&"rock": 3,
+&"totem": 1
+},
+2: {
+&"tyres": 3,
+&"scrapheap": 2,
+&"wreck": 2,
+&"barrel": 2,
+&"crane": 1
+}
+}
+pickupTable = {
+&"coinline": 4,
+&"fuel": 3,
+&"health": 2,
+&"purse": 2,
+&"slot": 1
+}
+pickupsPerChunk = 3
+palette = {
+&"ground": Color(0.5, 0.44, 0.36, 1),
+&"accent": Color(0.42, 0.36, 0.28, 1),
+&"lot": Color(0.55, 0.54, 0.5, 1),
+&"mud": Color(0.36, 0.3, 0.22, 1)
+}
+nightTint = Color(0.07, 0.06, 0.06, 1)
+ambience = &"quarry"

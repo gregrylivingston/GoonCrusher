@@ -15,7 +15,7 @@ var noiseImage
 
 #the map, one entry per cell at index y * inputSizeX + x. Empty until createNewTerrain finishes.
 var terrainMap := PackedByteArray()   #Root.terrain
-var regionMap := PackedInt32Array()   #region id; -2 for water and hills (no region)
+var regionMap := PackedInt32Array()   #region id; -2 for impassable cells (water, hills: no region)
 var nextRegionToAdd: int = 2          #one past the highest region id
 
 const EDGE = 20 #cells from the map edge that slope down into the ocean
@@ -97,7 +97,7 @@ static func buildMap(job: Dictionary) -> void:
 	var regions := PackedInt32Array()
 	regions.resize(size.x * size.y)
 	for i: int in regions.size():
-		regions[i] = -2 if terrain[i] == Root.terrain.WATER || terrain[i] == Root.terrain.HILLS else -1
+		regions[i] = -2 if not World.isPassable(terrain[i]) else -1
 	floodRegion(regions, terrain, size.x, startTiles, 0, Root.terrain.GRASS)
 	#Regions are connected areas of one terrain type, numbered in scan order from 2
 	var nextRegion: int = 2

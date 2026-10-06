@@ -47,6 +47,7 @@ const STOPPED_SPEED = 60.0   #below this, reversing is always among the choices 
 
 #costs are in seconds of estimated arrival time; the tunable ones are profile parameters (AIProfiles)
 const LETHAL_COST = 1000.0    #driving into water
+const SHALLOWS_COST = 0.3     #per second of a plan with a wheel in shallows: slow and slippery, never deadly
 
 const GOAL_RADIUS = {"pickup":70.0, "goon":80.0, "station":300.0, "roam":600.0, "patrol":600.0, "escape":300.0}
 const PURSE_QUANTITY = 10.0   #purse.tscn is a "coin" powerup with this quantity
@@ -427,7 +428,7 @@ func rocksNear(point: Vector2, radius: float) -> bool:
 	around.collision_mask = 1
 	around.exclude = [car.get_rid()]
 	for hit in space.intersect_shape(around, 8):
-		if hit.collider is StaticBody2D || hit.collider is TileMap: return true
+		if World.isWall(hit.collider): return true
 	return false
 
 #Region stars: a region pays a star for each 60 s spent in it, up to 3 (Region.gd), so stay in a
@@ -762,10 +763,11 @@ func scoreRollout(rollout: Dictionary, target: Vector2) -> float:
 			cost += p.flankCost * segment * flankExposure(path[i], headings[i])
 			if speeds[i] < CRUSH_SPEED: cost += p.slowGoonCost * segment * goonsNear(path[i])
 		var ground = footprintTerrain(path[i], headings[i])
-		if ground == Root.terrain.WATER:
+		if World.isLethal(ground):
 			rollout.hitSeconds = i * segment
 			return LETHAL_COST * (2.0 - float(i) / last)
-		var fraction = 0.0 if ground == Root.terrain.HILLS else sweep(path[i - 1], headings[i - 1], path[i] - path[i - 1], i == 1)
+		if ground == Root.terrain.SHALLOWS: cost += SHALLOWS_COST * segment
+		var fraction = 0.0 if World.isWallTerrain(ground) else sweep(path[i - 1], headings[i - 1], path[i] - path[i - 1], i == 1)
 		if fraction < 1.0:
 			rollout.hit = true
 			rollout.hitSeconds = (i - 1 + fraction) * segment
@@ -846,15 +848,19 @@ func sweep(from: Vector2, heading: Vector2, motion: Vector2, first: bool) -> flo
 	var result = space.cast_motion(query)
 	return result[0] if result.size() > 0 else 1.0
 
-#water if any corner of the car (plus a margin) is over water, hills if over hills
+#the worst ground under the car's corners (plus a margin): a lethal terrain (water) if any corner is
+#over one, else a wall terrain (hills, buildings), else shallows, else GRASS. Read from World (the
+#fine map once there is one), falling back to the route's chunk map.
 func footprintTerrain(pos: Vector2, heading: Vector2) -> int:
 	var forward = heading.normalized() * (halfSize.x + 40.0)
 	var side = heading.normalized().orthogonal() * (halfSize.y + 40.0)
 	var worst = Root.terrain.GRASS
 	for corner in [pos, pos + forward + side, pos + forward - side, pos - forward + side, pos - forward - side]:
-		var type = route.terrainAt(corner)
-		if type == Root.terrain.WATER: return type
-		if type == Root.terrain.HILLS: worst = type
+		var type = World.terrainAt(corner)
+		if type == World.UNKNOWN: type = route.terrainAt(corner)
+		if World.isLethal(type): return type
+		if World.isWallTerrain(type): worst = type
+		elif type == Root.terrain.SHALLOWS && not World.isWallTerrain(worst): worst = type
 	return worst
 
 #--- recovery ---------------------------------------------------------------------------------

@@ -1,7 +1,8 @@
 
 class_name OverheadCarArea2D extends Area2D
 
-
+#Inert: the car no longer adds or subtracts these (ground friction comes from World.surfaceAt in the
+#car's integrate()). Kept so the old sand-trap scenes still load.
 @export var friction := 0.0
 @export var drag: float = 0.0
 
