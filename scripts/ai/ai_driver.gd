@@ -5,7 +5,7 @@ class_name AIDriver extends Node2D
 #only what a player could: the screen by day, the headlight beam at night.
 #Every physics tick the controller calls think(), then reads isPressed(). Layers:
 #  goal      what to go for: the mode's objective, a pickup, a goon, or a region worth stars
-#  route     A* over the terrain map (AIRoute), string-pulled to the farthest waypoint in sight;
+#  route     A* over the world's coarse map (AIRoute), string-pulled to the farthest waypoint in sight;
 #            near the station, a visibility graph that lines the car up with the lot's gap
 #  control   candidate key plans are simulated 0.75 s ahead with the car's own physics, then swept on
 #            straight out to lookaheadPx
@@ -207,9 +207,7 @@ func decide() -> void:
 	if debug && tick % p.scanTicks == 1: queue_redraw()
 
 func buildRoute() -> void:
-	var generator = Root.levelRoot.get_node("TileManager/landscapeGenerator")
-	var tileManager = Root.levelRoot.get_node("TileManager")
-	route = AIRoute.new(generator.terrainMap, Vector2i(generator.inputSizeX, generator.inputSizeY), tileManager.tilesize)
+	route = AIRoute.forWorld(Root.worldMap)
 
 func forwardSpeed() -> float:
 	return car.velocity.dot(car.global_transform.x.normalized())
@@ -431,42 +429,41 @@ func rocksNear(point: Vector2, radius: float) -> bool:
 		if World.isWall(hit.collider): return true
 	return false
 
-#Region stars: a region pays a star for each 60 s spent in it, up to 3 (Region.gd), so stay in a
-#region until it has paid out, then head for one that hasn't. Land only, preferably ahead.
+#Region stars: a region (a district of the world map) pays a star for each 60 s spent in it, up to 3
+#(Region.gd), so stay in a district until it has paid out, then head for one that hasn't. Passable,
+#reachable coarse cells only, preferably ahead.
+const ROAM_CELLS := Vector2i(16, 12) #how far the candidates reach, in coarse cells (20,480 x 15,360 px)
+const ROAM_STEP := 3
 func pickRoamPoint() -> Vector2:
-	var generator = Root.levelRoot.get_node("TileManager/landscapeGenerator")
-	var tileManager = Root.levelRoot.get_node("TileManager")
-	var carChunk: Vector2i = tileManager.chunkOf(car.global_position)
-	var here = regionOf(generator, carChunk)
+	var map: WorldMap = Root.worldMap
+	var carCell: Vector2i = map.coarseCell(car.global_position)
+	var here := map.districtOfCell(carCell)
 	var hereMaxed = isRegionMaxed(here)
 	var forward = car.global_transform.x.normalized()
 	var best = Vector2.INF
 	var bestScore = -INF
-	for dy in range(-4, 5):
-		for dx in range(-3, 4):
-			var chunk = carChunk + Vector2i(dx, dy)
-			if chunk == carChunk && not hereMaxed: continue
-			var cell = generator.cellAt(chunk.x + generator.inputSizeX / 2, chunk.y + generator.inputSizeY / 2)
-			if AIRoute.isBlocked(cell.terrain): continue
-			var centre = (Vector2(chunk) + Vector2(0.5, 0.5)) * tileManager.tilesize
+	for dy in range(-ROAM_CELLS.y, ROAM_CELLS.y + 1, ROAM_STEP):
+		for dx in range(-ROAM_CELLS.x, ROAM_CELLS.x + 1, ROAM_STEP):
+			var cell = carCell + Vector2i(dx, dy)
+			if (dx == 0 && dy == 0) || not map.cellReachable(cell): continue
+			var district := map.districtOfCell(cell)
+			if district == here && not hereMaxed && absi(dx) + absi(dy) <= ROAM_STEP: continue
+			var centre = WorldGen.cellCentre(cell)
 			var score = randf()
-			if cell.region == here: score += 0.0 if hereMaxed else 3.0
-			elif not isRegionMaxed(cell.region): score += 4.0 if hereMaxed else 0.5
+			if district == here: score += 0.0 if hereMaxed else 3.0
+			elif not isRegionMaxed(district): score += 4.0 if hereMaxed else 0.5
 			#long straight runs: fresh goons spawn ahead and meet the bumper, the horde stays behind
 			if centre.distance_to(car.global_position) < p.roamMinPx: score -= 2.0
 			score += 1.5 * forward.dot((centre - car.global_position).normalized())
 			if score > bestScore:
-				var spot = centre + Vector2(randf_range(-1500, 1500), randf_range(-700, 700))
+				var spot = centre + Vector2(randf_range(-400, 400), randf_range(-400, 400))
 				if not AIRoute.isBlocked(route.terrainAt(spot)) && route.plan(car.global_position, spot).reached:
 					bestScore = score
 					best = spot
 	return best if best != Vector2.INF else car.global_position + forward * 2000.0
 
-static func regionOf(generator, chunk: Vector2i) -> int:
-	return generator.cellAt(chunk.x + generator.inputSizeX / 2, chunk.y + generator.inputSizeY / 2).region
-
 static func isRegionMaxed(region: int) -> bool:
-	if region == -2: return true #water and hills pay nothing
+	if region < 0: return true #barriers pay nothing
 	return Region.regions.has(region) && Region.regions[region].get("wave", 1) >= 4
 
 #--- values -----------------------------------------------------------------------------------

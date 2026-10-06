@@ -10,12 +10,12 @@ class_name World extends RefCounted
 ##
 ## Runtime queries (terrainAt, surfaceAt, lethalAt, blockedAt, spawnableAt, pushAt) are called every
 ## physics tick by the car and ~900 times per AI plan through integrate(), so they never allocate and
-## only touch cached references. They delegate to the live WorldMap (Root.worldMap) when there is one:
-## it must provide terrainAt(pos) -> int, surfaceAt(pos) -> int, lethalAt(pos) -> bool,
-## blockedAt(pos) -> bool and spawnableAt(pos) -> bool, and may provide beltDirAt(pos) -> Vector2.
-## Without one they read the chunk terrain map (TileManager/landscapeGenerator). UNKNOWN (-1) means no
-## map is loaded yet (the menu, tests, the first frames of a run): nothing is lethal or blocked there,
-## and the car keeps its own base friction.
+## only touch cached references. They delegate to the live WorldMap (Root.worldMap: the fine raster of a
+## loaded chunk, the coarse map elsewhere); anything standing in for it (tests) must provide
+## terrainAt(pos) -> int, surfaceAt(pos) -> int, lethalAt(pos) -> bool, blockedAt(pos) -> bool and
+## spawnableAt(pos) -> bool, and may provide beltDirAt(pos) -> Vector2. Without one they answer UNKNOWN
+## (-1): no map is loaded yet (the menu, tests, the first frames of a run), nothing is lethal or blocked
+## there, and the car keeps its own base friction.
 
 const UNKNOWN := -1
 const GRASS_FRICTION := 0.13 #the off-road rule's baseline
@@ -104,70 +104,35 @@ static func isWall(collider: Object) -> bool:
 
 #--- runtime queries -----------------------------------------------------------------------------
 
-#the fallback chunk map, cached per level
-static var _levelId := 0
-static var _gen: Object = null
-static var _map := PackedByteArray()
-static var _mapW := 0
-static var _mapH := 0
-static var _chunkPx := CHUNK_PX
-
-#true when the chunk terrain map of the current level is built and cached
-static func _fallbackReady() -> bool:
-	var level = Root.levelRoot
-	if not is_instance_valid(level):
-		_levelId = 0
-		return false
-	if level.get_instance_id() != _levelId || not is_instance_valid(_gen):
-		_levelId = level.get_instance_id()
-		_gen = level.get_node_or_null("TileManager/landscapeGenerator")
-		_map = PackedByteArray()
-		if _gen == null: return false
-	if _map.is_empty():
-		_map = _gen.terrainMap
-		if _map.is_empty(): return false
-		_mapW = _gen.inputSizeX
-		_mapH = _gen.inputSizeY
-		var tm = _gen.get_parent()
-		var size = tm.get("tilesize")
-		_chunkPx = size if size is Vector2 && size.x > 0.0 && size.y > 0.0 else CHUNK_PX
-	return true
-
-## Forget the cached level (a test that swaps maps, or a new run).
+## Kept for callers that reset between maps (tests); the queries hold no cache of their own any more
 static func resetCache() -> void:
-	_levelId = 0
-	_gen = null
-	_map = PackedByteArray()
+	pass
 
 ## The terrain id under a world position, UNKNOWN before a map is loaded. Outside the map is WATER.
 static func terrainAt(pos: Vector2) -> int:
 	if Root.worldMap != null: return Root.worldMap.terrainAt(pos)
-	if not _fallbackReady(): return UNKNOWN
-	var x := floori(pos.x / _chunkPx.x) + _mapW / 2
-	var y := floori(pos.y / _chunkPx.y) + _mapH / 2
-	if x < 0 || y < 0 || x >= _mapW || y >= _mapH: return Root.terrain.WATER
-	return _map[y * _mapW + x]
+	return UNKNOWN
 
 ## The ground the car drives on (friction, grip, brake, push); a bridge deck over water, say.
 static func surfaceAt(pos: Vector2) -> int:
 	if Root.worldMap != null: return Root.worldMap.surfaceAt(pos)
-	return terrainAt(pos)
+	return UNKNOWN
 
 static func lethalAt(pos: Vector2) -> bool:
 	if Root.worldMap != null: return Root.worldMap.lethalAt(pos)
-	return isLethal(terrainAt(pos))
+	return false
 
 ## Water or wall under the point (goons slide or hold, projectiles stop).
 static func blockedAt(pos: Vector2) -> bool:
 	if Root.worldMap != null: return Root.worldMap.blockedAt(pos)
-	return isBlocked(terrainAt(pos))
+	return false
 
 static func spawnableAt(pos: Vector2) -> bool:
 	if Root.worldMap != null: return Root.worldMap.spawnableAt(pos)
-	return isSpawnable(terrainAt(pos))
+	return false
 
 ## The conveyor push (px/s, as a vector) on surface `t` at `pos`. The belt direction is stored per
-## chunk by the WorldMap (beltDirAt); until it exists every belt runs along +x (Vector2.RIGHT).
+## coarse cell by the WorldMap (beltDirAt); a stand-in without one runs every belt along +x.
 static func pushAt(pos: Vector2, t: int) -> Vector2:
 	var speed := push(t)
 	if speed <= 0.0: return Vector2.ZERO

@@ -1,4 +1,9 @@
 extends Node2D
+class_name TileManager
+
+#Streams the level's chunks round the car (docs/WORLD.md). The world itself is a WorldMap that WorldGen
+#builds on a worker thread when the level starts; until phase 3's ground, each chunk still shows one of the
+#old per-terrain TileMap scenes (WorldMap.chunkTile) and one of the old object prefabs.
 
 var tilesPerChunk: Vector2 = Vector2(40,40)
 var pixelsPerTile: Vector2 = Vector2(128,64)
@@ -72,14 +77,27 @@ var isWorldReady := false
 
 const KEEP_RADIUS = 2       #chunks further than this (Chebyshev) from the player are freed
 const PREFETCH_SECONDS = 1.0
+const RASTER_PREFETCH_SECONDS = 1.5 #fine rasters are queued this far ahead of the car
+
+## The run's world (scripts/world/world_map.gd), also Root.worldMap once built
+var worldMap: WorldMap
+## The map seed. -1 rolls one when the level starts; the playtest and bench harnesses set it first.
+var worldSeed := -1
+var buildTask := -1
+var buildJob := {}
+## Route length (px, A* on the coarse map) to the station last placed: Sprint's and every Marathon leg's clock
+var lastRouteLength := 0.0
+var legsPlaced := 0
 
 func _ready():
 	for i in requestedObjectTiles:
 		objectTiles.append_array(AllObjectTiles[i])
 	tilesize = tilesPerChunk * pixelsPerTile
-	
-	await $landscapeGenerator.createNewTerrain()
-	
+	Root.worldMap = null #never answer from an earlier run's map
+
+	await buildWorld()
+	if not is_inside_tree(): return
+
 	setupByGamemode()
 
 	await get_tree().process_frame
@@ -98,6 +116,43 @@ func _ready():
 	isWorldReady = true
 	world_ready.emit()
 
+## The level's def: the parent level's own, else the selected level's
+func levelDef() -> LevelDef:
+	var level = get_parent()
+	if level is Level && level.def != null: return level.def
+	return Levels.current()
+
+#Builds the coarse world map on a worker thread (WorldGen.buildCoarse) so the level's first frames don't
+#stall, then the start chunk's fine raster, and hands the districts to Region.
+func buildWorld() -> void:
+	if worldSeed < 0: worldSeed = randi()
+	var def := levelDef()
+	var objective := ""
+	var offset := Vector2.ZERO
+	match SaveManager.playerData.gameMode:
+		Root.gameModes.SPRINT, Root.gameModes.MARATHON:
+			objective = "sprint"
+			var parent = get_parent()
+			var seconds: float = parent.seconds if parent is Level else def.seconds
+			offset = Level.sprintOffsetPx(seconds, WorldGen.hashf(worldSeed, WorldGen.TAG_SPRINT, 0, 0) * 2.0 - 1.0)
+		Root.gameModes.DEFENSE: objective = "defense"
+	buildJob = WorldMap.jobFor(worldSeed, def, objective, offset)
+	var started := Time.get_ticks_msec()
+	buildTask = WorkerThreadPool.add_task(WorldGen.buildCoarse.bind(buildJob), false, "World map")
+	while not WorkerThreadPool.is_task_completed(buildTask):
+		await get_tree().process_frame
+	WorkerThreadPool.wait_for_task_completion(buildTask)
+	buildTask = -1
+	worldMap = WorldMap.fromJob(buildJob, def)
+	buildJob = {}
+	Root.worldMap = worldMap
+	Region.setDistricts(worldMap)
+	var startChunk := chunkOf(def.startPosition)
+	worldMap.buildNow(startChunk)
+	print("WORLD_BUILD level=%s seed=%d grammar=%s coarse_ms=%.0f (worker; %d ms wall) districts=%d crossings=%d start_raster_ms=%.1f" % [
+		def.id, worldSeed, def.grammar, worldMap.buildMs.total, Time.get_ticks_msec() - started, worldMap.districts.size(),
+		worldMap.crossings.size(), worldMap.fineStats.usec / 1000.0])
+
 func setupByGamemode() -> void:
 	Root.station = null #never point at a station left over from an earlier run
 	match SaveManager.playerData.gameMode:
@@ -109,103 +164,40 @@ func setupByGamemode() -> void:
 			loadChunk(Vector2i(0,0) , preload("res://scene/level/levelObjects/level_empty.tscn").instantiate())
 		#DEFENSE: its station is placed with the others in placeStations
 
-#Every station goes through placeObjective (on land, inside the map) and is pinned.
+#The generator placed the station (WorldGen: in the start's component, on clear cells) and measured the
+#route to it; every station is pinned.
 func placeStations() -> void:
-	var startChunk = startChunkOf()
-	var levelSeconds: float = Root.levelRoot.levelSeconds
 	match SaveManager.playerData.gameMode:
-		Root.gameModes.SPRINT, Root.gameModes.MARATHON:
-			#by distance: SPRINT_DRIVE_FRACTION of the level's seconds at REFERENCE_SPEED. Level.onWorldReady
-			#then sets the clock from the real distance to where the station landed. Marathon's first leg is
-			#a Sprint; placeNextStation places the rest.
-			var offset: Vector2 = Level.sprintOffsetPx(levelSeconds, randf_range(-1.0, 1.0))
-			placeStation(startChunk + Vector2i(roundi(offset.x / tilesize.x), roundi(offset.y / tilesize.y)))
-		Root.gameModes.DEFENSE:
-			placeStation(startChunk)
+		Root.gameModes.SPRINT, Root.gameModes.MARATHON, Root.gameModes.DEFENSE:
+			var chunk := worldMap.stationChunk
+			if chunk == WorldGen.NO_CHUNK: chunk = worldMap.findStationChunk(startChunkOf(), WorldGen.NO_CHUNK)
+			placeStation(chunk)
+			if worldMap.station != Vector2.INF: lastRouteLength = worldMap.routeLength
+			else: lastRouteLength = worldMap.routeBetween(Root.levelRoot.startPosition, Root.station.global_position).length
 
-func placeStation(desiredChunk: Vector2i, forbidden := NO_CHUNK) -> void:
+func placeStation(chunk: Vector2i) -> void:
 	var myStation = load("res://scene/level/station.tscn").instantiate()
 	Root.station = myStation
-	pinChunk(placeObjective(desiredChunk, forbidden), myStation)
+	pinChunk(chunk, myStation)
 
 #Marathon's next leg: the reached station is retired and unpinned (it unloads once the car leaves),
-#and a new one goes a Sprint's distance from it along `heading`. Returns the new station.
+#and a new one goes a Sprint's distance from it along `heading`, in a reachable chunk with a clear lot
+#(WorldGen.findStationChunk); lastRouteLength is the A* route to it. Returns the new station.
 func placeNextStation(from: Vector2, heading: float, levelSeconds: float) -> Node2D:
 	var fromChunk = chunkOf(from)
 	if is_instance_valid(Root.station) && Root.station.has_method("retire"): Root.station.retire()
 	unpinChunk(fromChunk)
-	var offset: Vector2 = Level.sprintOffsetPx(levelSeconds, randf_range(-1.0, 1.0)).rotated(heading)
-	placeStation(chunkOf(from + offset), fromChunk)
+	legsPlaced += 1
+	var roll := WorldGen.hashf(worldSeed, WorldGen.TAG_LEG, legsPlaced, 1) * 2.0 - 1.0
+	var offset: Vector2 = Level.sprintOffsetPx(levelSeconds, roll).rotated(heading)
+	placeStation(worldMap.findStationChunk(chunkOf(from + offset), fromChunk))
+	lastRouteLength = worldMap.routeBetween(from, Root.station.global_position).length
 	return Root.station
 
 func startChunkOf() -> Vector2i:
 	return chunkOf(Root.levelRoot.startPosition) if is_instance_valid(Root.levelRoot) else Vector2i.ZERO
 
-const OBJECTIVE_MAX_CHUNKS = 100 #objectives stay within this many chunks of the map centre, on each axis
-
-#The chunk an objective should go in: desiredChunk clamped to the map, then the nearest land chunk
-#(World.isSpawnable: not water, hills or shallows), preferring one whose neighbours are land too, and never `forbidden`. Sprint and
-#Marathon never get the start chunk unless another chunk is forbidden.
-const NO_CHUNK = Vector2i(-99999, -99999)
-func placeObjective(desiredChunk: Vector2i, forbidden := NO_CHUNK) -> Vector2i:
-	var generator = $landscapeGenerator
-	if forbidden == NO_CHUNK && SaveManager.playerData.gameMode in [Root.gameModes.SPRINT, Root.gameModes.MARATHON]: forbidden = startChunkOf()
-	return findObjectiveChunk(generator.terrainMap, Vector2i(generator.inputSizeX, generator.inputSizeY), desiredChunk, forbidden, OBJECTIVE_MAX_CHUNKS)
-
-const OBJECTIVE_NEIGHBOUR_SEARCH = 3 #rings searched past the first land chunk for one with land neighbours
-
-#Pure: deterministic for a given map. Chunk (0,0) is map cell (size / 2). Searches square rings
-#outward from the clamped chunk; in each ring the closest candidate wins (ties in scan order).
-static func findObjectiveChunk(terrain: PackedByteArray, mapSize: Vector2i, desiredChunk: Vector2i, forbidden: Vector2i, maxChunks: int) -> Vector2i:
-	var limit = Vector2i(mini(maxChunks, mapSize.x / 2 - 1), mini(maxChunks, mapSize.y / 2 - 1))
-	var centre = desiredChunk.clamp(-limit, limit)
-	var fallback = Vector2i(-99999, -99999) #the closest land chunk, used if none nearby has land neighbours
-	var fallbackRing = -1
-	for ring in range(0, 2 * maxi(limit.x, limit.y) + 1):
-		if fallbackRing >= 0 && ring > fallbackRing + OBJECTIVE_NEIGHBOUR_SEARCH: return fallback
-		var best = Vector2i(-99999, -99999)
-		var bestDistance = INF
-		var bestPlain = Vector2i(-99999, -99999)
-		var bestPlainDistance = INF
-		for chunk in ringChunks(centre, ring):
-			if chunk == forbidden || absi(chunk.x) > limit.x || absi(chunk.y) > limit.y: continue
-			if not isLandChunk(terrain, mapSize, chunk): continue
-			var distance = (chunk - centre).length_squared()
-			if distance < bestPlainDistance:
-				bestPlain = chunk
-				bestPlainDistance = distance
-			if distance < bestDistance && hasLandNeighbours(terrain, mapSize, chunk):
-				best = chunk
-				bestDistance = distance
-		if bestDistance < INF: return best
-		if bestPlainDistance < INF && fallbackRing < 0:
-			fallback = bestPlain
-			fallbackRing = ring
-	return fallback if fallbackRing >= 0 else centre
-
-#the chunks exactly `ring` steps (Chebyshev) from centre, in a fixed order
-static func ringChunks(centre: Vector2i, ring: int) -> Array[Vector2i]:
-	var chunks: Array[Vector2i] = []
-	if ring == 0:
-		chunks.push_back(centre)
-		return chunks
-	for x in range(-ring, ring + 1):
-		chunks.push_back(centre + Vector2i(x, -ring))
-		chunks.push_back(centre + Vector2i(x, ring))
-	for y in range(-ring + 1, ring):
-		chunks.push_back(centre + Vector2i(-ring, y))
-		chunks.push_back(centre + Vector2i(ring, y))
-	return chunks
-
-static func isLandChunk(terrain: PackedByteArray, mapSize: Vector2i, chunk: Vector2i) -> bool:
-	var cell = chunk + mapSize / 2
-	if cell.x < 0 || cell.y < 0 || cell.x >= mapSize.x || cell.y >= mapSize.y || terrain.is_empty(): return false
-	return World.isSpawnable(terrain[cell.y * mapSize.x + cell.x])
-
-static func hasLandNeighbours(terrain: PackedByteArray, mapSize: Vector2i, chunk: Vector2i) -> bool:
-	for step in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
-		if not isLandChunk(terrain, mapSize, chunk + step): return false
-	return true
+const NO_CHUNK = WorldGen.NO_CHUNK
 
 func setupNoStations():
 	Root.station = null
@@ -222,14 +214,16 @@ func unpinChunk(chunk: Vector2i) -> void:
 
 
 var playerChunk: Vector2i = Vector2i(-999,-999)
+var playerCell := Vector2i(-99999, -99999) #the car's coarse cell, for district changes
 
 func chunkOf(worldPosition: Vector2) -> Vector2i:
 	return Vector2i(floori(worldPosition.x / tilesize.x), floori(worldPosition.y / tilesize.y))
 
-#map cell for a chunk; chunk (0,0) is the centre of the map. Outside the map is water.
+#what the chunk shows until phase 3's ground: {"terrain": the landscape scene, "region": its district}
+#(WorldMap.chunkTile). Outside the map is water.
 func tileAt(chunk: Vector2i) -> Dictionary:
-	var generator = $landscapeGenerator
-	return generator.cellAt(chunk.x + generator.inputSizeX / 2, chunk.y + generator.inputSizeY / 2)
+	if worldMap == null: return {"terrain":Root.terrain.WATER, "region":-2}
+	return worldMap.chunkTile(chunk)
 
 func getTile(coordinates) -> Dictionary:
 	return tileAt(chunkOf(Vector2(coordinates)))
@@ -239,17 +233,30 @@ func _process(delta):
 	if mapReady: updateChunks(delta)
 
 func updateChunks(delta: float = 1.0) -> void:
+	if worldMap != null: worldMap.poll()
 	if not is_instance_valid(Root.playerCar): return
-	var chunk = chunkOf(Root.playerCar.global_position)
+	var carPosition: Vector2 = Root.playerCar.global_position
+	var chunk = chunkOf(carPosition)
 	queueTimer -= delta
 	if chunk != playerChunk:
 		playerChunk = chunk
-		var myTile = loadChunk(chunk) #the chunk under the car loads immediately
-		if is_instance_valid(Root.playerRoot):Region.updatePlayerRegion(myTile)
+		var around := []
+		for y in range(-1, 2):
+			for x in range(-1, 2): around.push_back(chunk + Vector2i(x, y))
+		worldMap.setKeep(around)
+		worldMap.ensure(chunk) #the car's chunk always has its fine raster
+		loadChunk(chunk) #the chunk under the car loads immediately
 		for loaded in loadedLandscapes.keys():
 			if not pinnedChunks.has(loaded) && maxi(absi(loaded.x - chunk.x), absi(loaded.y - chunk.y)) > KEEP_RADIUS:
 				unloadChunk(loaded)
 		queueTimer = 0.0
+	#districts: checked whenever the car enters another coarse cell; a barrier cell keeps the last one
+	var cell := worldMap.coarseCell(carPosition)
+	if cell != playerCell:
+		playerCell = cell
+		var id := worldMap.districtOfCell(cell)
+		if id >= 0 && id != Region.currentRegionNumber && is_instance_valid(Root.playerRoot):
+			Region.updatePlayerRegion({"terrain":worldMap.terrain[worldMap.cellIndex(cell)], "region":id})
 	if queueTimer <= 0.0:
 		queueTimer = 0.2
 		queueNeededChunks()
@@ -260,12 +267,14 @@ func updateChunks(delta: float = 1.0) -> void:
 			loadChunk(next)
 			break
 
-#every chunk the camera can see now, or will see after PREFETCH_SECONDS of travel
+#every chunk the camera can see now, or will see after PREFETCH_SECONDS of travel; the fine rasters of
+#the car's 3x3 and of what the camera will see RASTER_PREFETCH_SECONDS ahead are queued on the worker pool
 func queueNeededChunks() -> void:
 	var car = Root.playerCar
 	var zoom = car.get_node("Camera2D").zoom if car.has_node("Camera2D") else Vector2.ONE
 	var half = get_viewport().get_visible_rect().size / zoom / 2.0 + Vector2(256, 256)
 	var view = Rect2(car.global_position - half, half * 2.0)
+	var ahead = view.merge(Rect2(view.position + car.velocity * RASTER_PREFETCH_SECONDS, view.size))
 	view = view.merge(Rect2(view.position + car.velocity * PREFETCH_SECONDS, view.size))
 	var first = chunkOf(view.position)
 	var last = chunkOf(view.end)
@@ -276,6 +285,13 @@ func queueNeededChunks() -> void:
 			if not loadedLandscapes.has(c) && maxi(absi(c.x - playerChunk.x), absi(c.y - playerChunk.y)) <= KEEP_RADIUS + 1:
 				loadQueue.push_back(c)
 	loadQueue.sort_custom(func(a, b): return (a - playerChunk).length_squared() < (b - playerChunk).length_squared())
+	for c in worldMap.keep: worldMap.request(c)
+	var aheadFirst = chunkOf(ahead.position)
+	var aheadLast = chunkOf(ahead.end)
+	for y in range(aheadFirst.y, aheadLast.y + 1):
+		for x in range(aheadFirst.x, aheadLast.x + 1):
+			var c = Vector2i(x, y)
+			if maxi(absi(c.x - playerChunk.x), absi(c.y - playerChunk.y)) <= KEEP_RADIUS: worldMap.request(c)
 
 func unloadChunk(chunk: Vector2i, force := false):
 	if pinnedChunks.has(chunk) && not force: return
@@ -289,7 +305,7 @@ func unloadChunk(chunk: Vector2i, force := false):
 #each chunk rolls its objects from its own seed, so a chunk that is freed and reloaded looks the same
 func chunkRng(chunk: Vector2i) -> RandomNumberGenerator:
 	var rng = RandomNumberGenerator.new()
-	rng.seed = hash([$landscapeGenerator.inputSeed, chunk.x, chunk.y])
+	rng.seed = hash([worldSeed, chunk.x, chunk.y])
 	return rng
 
 func getRandomTileObject(rng: RandomNumberGenerator):
@@ -347,6 +363,11 @@ func poolLandscape(landscape: Node2D) -> void:
 	pool.push_back(landscape)
 
 func _exit_tree():
+	if buildTask != -1:
+		WorkerThreadPool.wait_for_task_completion(buildTask)
+		buildTask = -1
+	if worldMap != null: worldMap.shutdown()
+	if Root.worldMap == worldMap: Root.worldMap = null
 	for pool in landscapePool.values():
 		for landscape in pool: landscape.free()
 	landscapePool.clear()

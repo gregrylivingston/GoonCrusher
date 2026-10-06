@@ -28,10 +28,14 @@ features = {
 "plotSize": 3,
 "scrapMountainShare": 0.25,
 "containerRows": 0.3,
+"gapChance": 0.6,
 "tankFarmChance": 0.15,
 "conveyorEvery": 4,
-"conveyorPush": 250.0,
-"oilDensity": 0.15
+"conveyorWidth": 640.0,
+"oilAbove": 0.55,
+"scrapWidth": 860.0,
+"containerWidth": 600.0,
+"barrierCap": 0.35
 }
 baseTerrain = [6, 16, 6, 16, 6]
 accents = [10, 13, 16]

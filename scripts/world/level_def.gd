@@ -35,7 +35,9 @@ class_name LevelDef extends Resource
 @export_group("World")
 ## &"meadow", &"bayou", &"canyon", &"quarry", &"mountain", &"highway", &"city" or &"yard"
 @export var grammar: StringName = &"meadow"
-## Generator parameters for the grammar: frequencies, thresholds, widths, densities
+## Generator parameters for the grammar (WorldField.setup reads them, with defaults): frequencies (1/px),
+## widths (px), thresholds as raw noise values, chances, and "barrierCap" (the most of any 3x3-chunk window
+## hard barriers may cover: 0.2 by default, 0.35 on canyon, city and yard)
 @export var features: Dictionary = {}
 ## Root.terrain ids by noise band, low to high
 @export var baseTerrain: Array = []

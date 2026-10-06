@@ -375,11 +375,11 @@ func test_route_weights_come_from_the_table():
 	var t = Root.terrain
 	var cells = {Vector2i(1, 1): t.SAND, Vector2i(2, 1): t.SNOW, Vector2i(3, 1): t.BUILDING, Vector2i(4, 1): t.BRIDGE, Vector2i(5, 1): t.SHALLOWS, Vector2i(6, 1): t.WATER}
 	for c in cells: map[c.y * 16 + c.x] = cells[c]
-	var route = AIRoute.new(map, Vector2i(16, 16), Vector2(5120, 2560))
+	var route = AIRoute.new(map, Vector2i(16, 16), Vector2(1280, 1280))
 	for c in cells:
-		var cell = Vector2i(c.x * AIRoute.SPLIT, c.y)
+		var cell = c
 		var type = cells[c]
 		assert_eq(route.grid.is_point_solid(cell), not World.isPassable(type), "terrain %d solid" % type)
 		if World.isPassable(type): assert_almost_eq(route.grid.get_point_weight_scale(cell), World.routeWeight(type), 0.0001, "terrain %d weight" % type)
-	assert_almost_eq(route.grid.get_point_weight_scale(Vector2i(2, 1)), 1.4, 0.0001, "sand keeps its old 1.4")
-	assert_almost_eq(route.grid.get_point_weight_scale(Vector2i(4, 1)), 1.2, 0.0001, "snow keeps its old 1.2")
+	assert_almost_eq(route.grid.get_point_weight_scale(Vector2i(1, 1)), 1.4, 0.0001, "sand keeps its old 1.4")
+	assert_almost_eq(route.grid.get_point_weight_scale(Vector2i(2, 1)), 1.2, 0.0001, "snow keeps its old 1.2")

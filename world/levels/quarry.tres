@@ -25,13 +25,19 @@ roster = {
 }
 grammar = &"quarry"
 features = {
-"pitRamps": 2,
+"pieceCells": 10.0,
+"pitChance": 0.3,
 "pitRadius": 3200.0,
+"pitRamps": 2,
+"fortChance": 0.25,
 "fortRadius": 2200.0,
 "fortGates": 3,
 "tyreCamps": 0.25,
+"campRadius": 1500.0,
+"rampWidth": 1000.0,
+"haulFrequency": 4.5e-05,
 "haulRoadWidth": 900.0,
-"mudPitMaxCells": 2
+"mudPitRadius": 200.0
 }
 baseTerrain = [6, 2, 6, 16, 6]
 accents = [2, 14, 16]

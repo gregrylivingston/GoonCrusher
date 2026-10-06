@@ -199,6 +199,7 @@ var mySpawners
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
+	if is_instance_valid(Root.levelRoot) && not Root.levelRoot.get("clockReady"): return #escalation starts with the run clock (the world map builds first)
 	giantTimer += delta
 	if giantTimer > 10:
 		increaseGiantOdds()

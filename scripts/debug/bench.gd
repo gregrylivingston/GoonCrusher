@@ -173,8 +173,8 @@ func startLevel() -> void:
 func onNodeAdded(node: Node) -> void:
 	if stripText && node is CanvasItem && node.material is ShaderMaterial && node.material.shader && node.material.shader.code.contains("VERTEX_ID>>1"):
 		node.material = null
-	if node is landscapeGenerator:
-		node.inputSeed = 1337
+	if node is TileManager:
+		node.worldSeed = 1337
 	elif node is Level:
 		if levelSeconds >= 0.0: node.seconds = levelSeconds #before _ready, so every mode sees it
 	elif node is SpawnManager:

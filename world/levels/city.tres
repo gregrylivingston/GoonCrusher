@@ -25,13 +25,14 @@ roster = {
 }
 grammar = &"city"
 features = {
-"arterialEvery": [2, 3],
-"streetWidth": 1400.0,
-"sideStreetChance": 0.5,
 "buildingShare": 0.45,
 "parkShare": 0.2,
 "lotShare": 0.25,
-"canalShare": 0.1
+"canalShare": 0.1,
+"canalWidth": 1040.0,
+"sidewalk": 110.0,
+"sideStreetChance": 0.5,
+"barrierCap": 0.35
 }
 baseTerrain = [16, 8, 16, 0, 16]
 accents = [8, 16, 0]

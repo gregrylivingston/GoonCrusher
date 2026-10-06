@@ -46,6 +46,10 @@ func _ready():
 	if not options.has("playtest"):
 		queue_free()
 		return
+	if options.has("world-preview"): #print generated worlds and quit (scripts/debug/world_preview.gd)
+		WorldPreview.run(options)
+		get_tree().quit()
+		return
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	Settings.on_menu_ready() #runs leave the menu before main2 reports it, which would count as a crashed boot
 	Settings.set_value("display/pause_unfocused", false, false)
@@ -116,6 +120,7 @@ func startNext() -> void:
 	driver = null
 	recorded = false
 	clockSeen = false
+	waterDeath = {}
 	lastStuck = 0
 	levelTime = 0.0
 	row = {"run":jobIndex + 1, "level":job.level, "mode":job.mode.to_lower(), "car":job.car, "profile":job.profile, "seed":job.seed,
@@ -131,7 +136,7 @@ func startNext() -> void:
 func onNodeAdded(node: Node) -> void:
 	if jobIndex < 0 || jobIndex >= jobs.size(): return
 	if node is Level: seed(jobs[jobIndex].seed) #again, as late as possible: the menu frames between use the RNG too
-	elif node is landscapeGenerator: node.inputSeed = jobs[jobIndex].seed
+	elif node is TileManager: node.worldSeed = jobs[jobIndex].seed
 	elif node is OverheadCarBody2D && node.isPlayer: node.ready.connect(onCarReady.bind(node), CONNECT_ONE_SHOT)
 
 func onCarReady(newCar: OverheadCarBody2D) -> void:
@@ -166,7 +171,9 @@ func _physics_process(delta):
 		row.clock = snappedf(Root.levelRoot.seconds, 0.1)
 		row.station_px = int(Root.levelRoot.startPosition.distance_to(Root.station.global_position)) if is_instance_valid(Root.station) else 0
 		if options.has("trace"): printMap()
+	if not clockSeen: return #the world is still being built: the run hasn't started
 	levelTime += delta
+	if car.isWrecked && waterDeath.is_empty() && World.lethalAt(car.global_position): waterDeath = waterSnapshot()
 	#this runs before the car's tick, so health and collisions are both from the tick before
 	var drop = prevHealth - car.health
 	if drop > 0.0:
@@ -209,23 +216,43 @@ func wallName() -> String:
 		if World.isWall(collider): return "%s(%s) layer=%d at %s" % [collider.name, collider.get_parent().name, collider.collision_layer if collider is StaticBody2D else -1, str(car.get_slide_collision(i).get_position())]
 	return "-"
 
-#--trace: the chunks around the start (and the station), one letter per chunk from World.TERRAIN:
-#g grass, s sand, m mud, ~ water, ^ hills, o moss, d dirt, * snow (and the newer surfaces' letters);
-#S start, X station
+#--trace: the world's coarse map (1280 px cells) around the start and the station, one letter per cell
+#from World.TERRAIN: g grass, s sand, m mud, ~ water, ^ hills, o moss, d dirt, * snow, = asphalt, i ice,
+#% oil, - shallows, w wash, > conveyor, @ mud pit, # deep snow, l lot, B building, b bridge; + a pass;
+#S start, X station. Cropped to MAP_CROP cells.
+const MAP_CROP := Vector2i(120, 48)
 func printMap() -> void:
-	var tileManager = Root.levelRoot.get_node("TileManager")
-	var start: Vector2i = tileManager.chunkOf(Root.levelRoot.startPosition)
-	var station: Vector2i = tileManager.chunkOf(Root.station.global_position) if is_instance_valid(Root.station) else start
-	var low = Vector2i(mini(start.x, station.x), mini(start.y, station.y)) - Vector2i(4, 6)
-	var high = Vector2i(maxi(start.x, station.x), maxi(start.y, station.y)) + Vector2i(4, 6)
-	for y in range(low.y, high.y + 1):
-		var line = ""
-		for x in range(low.x, high.x + 1):
-			var chunk = Vector2i(x, y)
-			if chunk == start: line += "S"
-			elif chunk == station: line += "X"
-			else: line += World.letter(tileManager.tileAt(chunk).terrain)
-		print("PLAYTEST_MAP %4d %s" % [y, line])
+	var map: WorldMap = Root.worldMap
+	if map == null: return
+	var start := map.coarseCell(Root.levelRoot.startPosition)
+	var station := map.coarseCell(Root.station.global_position) if is_instance_valid(Root.station) else start
+	var low := Vector2i(mini(start.x, station.x), mini(start.y, station.y)) - Vector2i(8, 6)
+	var high := Vector2i(maxi(start.x, station.x), maxi(start.y, station.y)) + Vector2i(8, 6)
+	var size := (high - low + Vector2i.ONE).min(MAP_CROP)
+	var marks := {start: "S", station: "X"} if station != start else {start: "S"}
+	var lines := WorldGen.ascii({"terrain": map.terrain, "flags": map.flags}, (low + high) / 2, size.x, size.y, marks)
+	for i in lines.size(): print("PLAYTEST_MAP %4d %s" % [(low + high).y / 2 - size.y / 2 + i, lines[i]])
+
+#A drowning, as it was on the tick the car was wrecked (it coasts on until the run ends): where, how fast,
+#what the driver was doing, and the fine map round the car (9 x 9 cells of 128 px, World.TERRAIN letters,
+#C the car's cell)
+var waterDeath := {}
+func waterSnapshot() -> Dictionary:
+	var at := car.global_position
+	var lines := PackedStringArray()
+	for dy in range(-4, 5):
+		var line := ""
+		for dx in range(-4, 5):
+			line += "C" if dx == 0 && dy == 0 else World.letter(World.terrainAt(at + Vector2(dx, dy) * 128.0))
+		lines.push_back(line)
+	return {"text": "PLAYTEST_WATER t=%.1f pos=(%d,%d) v=(%d,%d) heading=%.0fdeg goal=%s plan=%s goons_near=%d airborne=%d buffs=%s" % [levelTime, at.x, at.y,
+		car.velocity.x, car.velocity.y, rad_to_deg(car.rotation), driver.goal.get("kind", "-"), str(driver.plan),
+		Root.spawnManager.goonsNear(at, 400.0).size() if is_instance_valid(Root.spawnManager) else 0, car.airborneTicks, str(car.buffs.keys())], "map": lines}
+
+func printWaterDeath() -> void:
+	if waterDeath.is_empty(): waterDeath = waterSnapshot()
+	print(waterDeath.text)
+	for line in waterDeath.map: print("PLAYTEST_WATER_MAP " + line)
 
 #Goons the car hit at crushing speed (over 200 px/s going in) that survived the hit. Should stay 0
 #while every hit at speed crushes; a goon that can resist a crush shows up here.
@@ -250,10 +277,20 @@ func touchingWall() -> bool:
 	return false
 
 #a slot machine pauses the run: tap Accelerate to stop each reel, then claim (never reroll)
+#paused this long (real ms) with no menu to answer once the run has started, the run would hang (a crush goal
+#that paused for a menu that never opened)
+const SOFTLOCK_MS := 10000
+var pausedEmptySince := -1
 func tapSlotMachine(delta: float) -> void:
 	if get_tree().get_nodes_in_group("slotMachine").is_empty():
 		if Input.is_action_pressed("Accelerate"): Input.action_release("Accelerate")
+		if pausedEmptySince < 0: pausedEmptySince = Time.get_ticks_msec()
+		elif clockSeen && Time.get_ticks_msec() - pausedEmptySince > SOFTLOCK_MS && get_tree().get_nodes_in_group("pauseMenu").is_empty():
+			print("PLAYTEST_SOFTLOCK t=%.1f: the tree was paused with no menu open; unpausing" % levelTime)
+			pausedEmptySince = -1
+			get_tree().paused = false
 		return
+	pausedEmptySince = -1
 	slotPressTimer -= delta
 	if Input.is_action_pressed("Accelerate"): Input.action_release("Accelerate")
 	elif slotPressTimer <= 0.0:
@@ -264,7 +301,9 @@ func recordRun() -> void:
 	recorded = true
 	var reason = str(Root.endCondition.find_key(Root.levelRoot.endReason))
 	if row.timeout: reason = "TIMEOUT"
-	elif reason == "NOHEALTH" && car.health > 0.0: reason = "WATER" #the water kills without damage
+	elif reason == "NOHEALTH" && car.health > 0.0:
+		reason = "WATER" #the water kills without damage
+		printWaterDeath()
 	row.erase("timeout")
 	row.reason = reason
 	row.won = Root.levelRoot.endReason == Root.endCondition.SUCCESS

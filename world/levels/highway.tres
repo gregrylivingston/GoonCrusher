@@ -28,9 +28,12 @@ features = {
 "warpFrequency": 4e-05,
 "warpAmplitude": 3000.0,
 "roadWidth": 1600.0,
+"highwaySpacing": 23040.0,
 "branchEvery": 3,
+"branchChance": 0.7,
 "branchWidth": 1000.0,
-"oilDensity": 0.15,
+"oilAbove": 0.6,
+"rockAbove": 0.4,
 "pileupDensity": 0.2,
 "gasStationEvery": 6
 }

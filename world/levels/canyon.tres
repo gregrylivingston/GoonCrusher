@@ -25,13 +25,15 @@ roster = {
 }
 grammar = &"canyon"
 features = {
-"ridgeFrequency": 7e-05,
-"wallBelow": 0.18,
-"mesaAbove": 0.82,
-"passEvery": 1,
+"ridgeFrequency": 4.5e-05,
+"wallWidth": 1400.0,
+"mesaFrequency": 8.3e-05,
+"mesaAbove": 0.42,
 "passWidth": 1400.0,
+"washFrequency": 4e-05,
 "washWidth": 700.0,
-"duneDensity": 0.3
+"duneAbove": 0.35,
+"barrierCap": 0.35
 }
 baseTerrain = [6, 1, 6, 1, 6]
 accents = [12, 1]

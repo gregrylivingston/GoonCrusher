@@ -25,12 +25,14 @@ roster = {
 }
 grammar = &"mountain"
 features = {
-"ridgeFrequency": 6e-05,
-"rangeAbove": 0.78,
-"passEvery": 1,
+"ridgeFrequency": 4e-05,
+"rangeWidth": 1700.0,
+"peakFrequency": 0.000125,
+"peakAbove": 0.5,
 "passWidth": 1500.0,
-"iceLakeThreshold": 0.64,
-"deepSnowDensity": 0.3,
+"iceFrequency": 0.000143,
+"iceLakeThreshold": 0.3,
+"deepSnowAbove": 0.3,
 "pineDensity": 0.45
 }
 baseTerrain = [7, 7, 15, 7, 9]

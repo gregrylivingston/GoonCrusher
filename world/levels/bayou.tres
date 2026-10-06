@@ -25,12 +25,12 @@ roster = {
 }
 grammar = &"bayou"
 features = {
-"lakeThreshold": 0.58,
-"channelFrequency": 0.00011,
-"channelWidth": 560.0,
-"channelGap": 0.08,
-"bridgeEvery": 1,
-"mudCap": 0.6,
+"lakeFrequency": 8.3e-05,
+"lakeThreshold": 0.42,
+"channelFrequency": 4.5e-05,
+"channelWidth": 1000.0,
+"channelGap": 0.25,
+"bridgeWidth": 900.0,
 "reedDensity": 0.4
 }
 baseTerrain = [2, 5, 0, 5, 2]

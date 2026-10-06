@@ -3,7 +3,7 @@ extends GameTest
 #The AI driver (scripts/ai/, docs/AI_DRIVER.md): its route planner, its prediction of the car, and
 #the rules it scores goals and plans with. Nothing here starts a run.
 
-const CHUNK = Vector2(5120, 2560)
+const CELL = Vector2(1280, 1280) #the world's coarse cells
 
 #a 16x16 grass map with a north-south wall of water at map column 10, open only at row 3
 func walledMap() -> PackedByteArray:
@@ -14,18 +14,18 @@ func walledMap() -> PackedByteArray:
 		if y != 3: map[y * 16 + 10] = Root.terrain.WATER
 	return map
 
-#world position of the middle of map cell (x, y); map cell (8, 8) is chunk (0, 0)
+#world position of the middle of map cell (x, y); world (0, 0) is the corner of map cell (8, 8)
 func cellMiddle(x: int, y: int) -> Vector2:
-	return (Vector2(x - 8, y - 8) + Vector2(0.5, 0.5)) * CHUNK
+	return (Vector2(x - 8, y - 8) + Vector2(0.5, 0.5)) * CELL
 
 func test_route_goes_round_water():
-	var route = AIRoute.new(walledMap(), Vector2i(16, 16), CHUNK)
+	var route = AIRoute.new(walledMap(), Vector2i(16, 16), CELL)
 	var result = route.plan(cellMiddle(4, 8), cellMiddle(13, 8))
 	assert_true(result.reached, "the far side is reachable through the gap")
 	var throughGap = false
 	for point in result.points:
 		assert_false(AIRoute.isBlocked(route.terrainAt(point)), "every waypoint is on land: %s" % str(point))
-		if route.terrainAt(point) == Root.terrain.GRASS && absf(point.y - cellMiddle(10, 3).y) < CHUNK.y: throughGap = true
+		if route.terrainAt(point) == Root.terrain.GRASS && absf(point.y - cellMiddle(10, 3).y) < CELL.y: throughGap = true
 	assert_true(throughGap, "the route uses the gap in row 3")
 	assert_false(route.lineIsClear(cellMiddle(4, 8), cellMiddle(13, 8)), "the straight line crosses water")
 	assert_true(route.lineIsClear(cellMiddle(4, 8), cellMiddle(8, 8)), "a line on grass is clear")
@@ -33,7 +33,7 @@ func test_route_goes_round_water():
 func test_route_to_an_island_is_partial():
 	var map = walledMap()
 	map[3 * 16 + 10] = Root.terrain.HILLS #close the gap: hills are walls too
-	var route = AIRoute.new(map, Vector2i(16, 16), CHUNK)
+	var route = AIRoute.new(map, Vector2i(16, 16), CELL)
 	var result = route.plan(cellMiddle(4, 8), cellMiddle(13, 8))
 	assert_false(result.reached, "nothing reaches the far side")
 	assert_eq(route.terrainAt(cellMiddle(40, 8)), Root.terrain.WATER, "outside the map is water")

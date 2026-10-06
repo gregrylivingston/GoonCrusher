@@ -42,8 +42,9 @@ var legHeading := 0.0
 const POCALYPSE_TARGET = 2.0
 var targetReached := false
 
-#Defense: hold the station until the clock runs out. Goons spawn on a ring around it and march on its
-#walls (Walker.siege); the station's barrier health is in station.gd.
+#Defense: hold the station until the clock runs out. Goons spawn at the mouths of the straight lanes the
+#world generator cleared out from it (WorldGen.placeDefense) and march on its walls (Walker.siege); the
+#station's barrier health is in station.gd. Without lanes (no world map) they ring it instead.
 const DEFENSE_RING = 4000.0
 const DEFENSE_SPAWNERS = 4
 const DEFENSE_START = Vector2(1250, 290) #outside the lot's gap (its east side), from the station's origin
@@ -117,7 +118,7 @@ func onWorldReady() -> void:
 	match SaveManager.playerData.gameMode:
 		Root.gameModes.SPRINT, Root.gameModes.MARATHON:
 			if is_instance_valid(Root.station):
-				seconds = sprintSeconds(startPosition.distance_to(Root.station.global_position), levelSeconds, slack())
+				seconds = sprintSeconds(routeLengthTo(Root.station.global_position), levelSeconds, slack())
 				legHeading = (Root.station.global_position - startPosition).angle()
 		Root.gameModes.DEFENSE:
 			if is_instance_valid(Root.station): setupDefense()
@@ -134,8 +135,16 @@ static func sprintOffsetPx(levelSeconds: float, yRoll: float) -> Vector2:
 static func sprintSlack(levelSeconds: float) -> float:
 	return clampf(1.5 - (levelSeconds - 250.0) / 290.0 * 0.4, 1.1, 1.5)
 
-#the Sprint clock: the real straight-line distance at REFERENCE_SPEED, plus the level's slack
-#(LevelDef.sprintSlack when given, else the curve over the level's seconds)
+#The length (px) of the drive to the station just placed: the A* route on the world's coarse map
+#(TileManager.lastRouteLength), never less than the straight line
+func routeLengthTo(target: Vector2) -> float:
+	var straight := startPosition.distance_to(target)
+	var tileManager = get_node_or_null("TileManager")
+	if tileManager == null || tileManager.lastRouteLength <= 0.0: return straight
+	return maxf(tileManager.lastRouteLength, straight)
+
+#the Sprint clock: the drive's length (the route on the coarse map) at REFERENCE_SPEED, plus the level's
+#slack (LevelDef.sprintSlack when given, else the curve over the level's seconds)
 static func sprintSeconds(distancePx: float, levelSeconds: float, slackOverride: float = -1.0) -> float:
 	return distancePx / REFERENCE_SPEED * (slackOverride if slackOverride > 0.0 else sprintSlack(levelSeconds))
 
@@ -189,9 +198,11 @@ func stationReached(station: Node2D) -> void:
 	car.resetGasWarning()
 	car.resetHealthWarning()
 	var from = station.global_position
-	var next = $TileManager.placeNextStation(from, legHeading + randf_range(-MARATHON_TURN, MARATHON_TURN), levelSeconds)
+	var tileManager = $TileManager
+	var turn := (WorldGen.hashf(tileManager.worldSeed, WorldGen.TAG_LEG, leg, 0) * 2.0 - 1.0) * MARATHON_TURN
+	var next = tileManager.placeNextStation(from, legHeading + turn, levelSeconds)
 	legHeading = (next.global_position - from).angle()
-	seconds += sprintSeconds(from.distance_to(next.global_position), levelSeconds, slack())
+	seconds += sprintSeconds(maxf(tileManager.lastRouteLength, from.distance_to(next.global_position)), levelSeconds, slack())
 	call_deferred("openPitShop")
 
 #Marathon stations: the pit shop sells pickups for run coins, then the free slot machine opens
@@ -215,9 +226,14 @@ func setupDefense() -> void:
 	car.velocity = Vector2.ZERO
 	startPosition = car.global_position
 	if car.has_node("Camera2D"): car.get_node("Camera2D").reset_smoothing()
-	var turn = randf() * TAU
-	for i in DEFENSE_SPAWNERS:
-		var spawner = newSpawner(Vector2.from_angle(turn + i * TAU / DEFENSE_SPAWNERS) * DEFENSE_RING, station)
+	var offsets: Array = []
+	var map = Root.worldMap
+	if map != null && not map.lanes.is_empty():
+		for mouth in map.lanes: offsets.push_back(mouth - station.global_position)
+	else:
+		for i in DEFENSE_SPAWNERS: offsets.push_back(Vector2.from_angle(i * TAU / DEFENSE_SPAWNERS) * DEFENSE_RING)
+	for offset in offsets:
+		var spawner = newSpawner(offset, station)
 		#SpawnManager lists the "spawner" group once, a frame after it starts; these may come later
 		if is_instance_valid(Root.spawnManager) && Root.spawnManager.spawners is Array && not spawner in Root.spawnManager.spawners:
 			Root.spawnManager.spawners.push_back(spawner)
