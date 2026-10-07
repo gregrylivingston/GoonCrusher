@@ -11,9 +11,6 @@
 [ext_resource type="AudioStream" uid="uid://r1f0ifs0q7br" path="res://sound/fx/explosion/explosion-6055.mp3" id="10_hc5pd"]
 [ext_resource type="Texture2D" uid="uid://d2weeqgpbqllf" path="res://texture/triangle.png" id="12_4vckk"]
 [ext_resource type="Script" path="res://scene/car/carBodyArea.gd" id="12_bs61w"]
-[ext_resource type="Material" uid="uid://d4nw1uchte7mv" path="res://scene/player/menu/main/3dText_Common.tres" id="15_8ryrj"]
-[ext_resource type="Theme" uid="uid://co40pijjc7hbw" path="res://style/roadRogue.tres" id="15_oqhda"]
-[ext_resource type="Texture2D" uid="uid://dwf10tykle8ow" path="res://texture/fx/circle_05.png" id="17_csael"]
 [ext_resource type="Texture2D" path="res://texture/fx/headlight_cone.png" id="gc_cone"]
 [ext_resource type="Shader" path="res://shader/car_damage.gdshader" id="cd_shader"]
 [ext_resource type="Script" path="res://scene/car/damage_fx.gd" id="cd_fx"]
@@ -335,63 +332,6 @@ script = ExtResource("12_bs61w")
 [node name="CollisionShape2D" type="CollisionShape2D" parent="carBodyArea"]
 position = Vector2(-5, -1)
 shape = SubResource("RectangleShape2D_vq4ld")
-
-[node name="indicator" type="Node2D" parent="."]
-visible = false
-
-[node name="Label" type="Label" parent="indicator"]
-z_index = 2
-z_as_relative = false
-material = ExtResource("15_8ryrj")
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = 990.0
-offset_top = -65.0
-offset_right = 1050.0
-offset_bottom = 65.0
-grow_horizontal = 2
-grow_vertical = 2
-theme = ExtResource("15_oqhda")
-theme_override_font_sizes/font_size = 100
-text = ">"
-vertical_alignment = 1
-
-[node name="indicatorLight" type="PointLight2D" parent="indicator/Label"]
-unique_name_in_owner = true
-visible = false
-z_index = 2
-z_as_relative = false
-position = Vector2(32, 126)
-range_z_min = 2
-texture = ExtResource("17_csael")
-
-[node name="indicatorRoot" type="Node2D" parent="indicator/Label"]
-unique_name_in_owner = true
-position = Vector2(32, 83)
-
-[node name="indicatorDistance" type="Label" parent="indicator/Label/indicatorRoot"]
-unique_name_in_owner = true
-z_index = 2
-z_as_relative = false
-material = ExtResource("15_8ryrj")
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -65.0
-offset_top = 38.0
-offset_right = 66.0
-offset_bottom = 90.0
-grow_horizontal = 2
-grow_vertical = 2
-theme = ExtResource("15_oqhda")
-theme_override_font_sizes/font_size = 40
-text = "4.7 km"
-horizontal_alignment = 1
 
 [node name="damageFx" type="Node2D" parent="."]
 script = ExtResource("cd_fx")

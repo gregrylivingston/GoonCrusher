@@ -216,20 +216,7 @@ func setTerrain(terrain: int): # Root.terrain
 	currentTerrain = terrain
 
 
-func pointIndicator():
-	if is_instance_valid(Root.station):
-		if global_position.distance_to(Root.station.global_position) > 4000:
-			$indicator.visible = true
-			$indicator.look_at(Root.station.global_position)
-			%indicatorRoot.look_at(Vector2( $indicator.global_position.x + 10000, $indicator.global_position.y  ))
-			var miles = global_position.distance_to(Root.station.global_position) / 10000.0
-			if Settings.distance_unit() == "km": miles *= 1.609
-			%indicatorDistance.text = str( int(miles) + 1) + " " + Settings.distance_unit()
-		else: $indicator.visible = false
-	else: $indicator.visible = false
-
 func _physics_process(delta):
-	pointIndicator()
 	if _path_follow:
 		_path_follow.provide_input(self)
 		pass
@@ -703,7 +690,9 @@ func destroy():
 	if not isDestroyed:
 		stopCarFX()
 		$"AudioStream-Explosion".play()
-		if isPlayer: Settings.vibrate(1.0, 1.0, 0.6)
+		if isPlayer:
+			Settings.vibrate(1.0, 1.0, 0.6)
+			wreckSmoke()
 		isDestroyed = true
 		for system in condition: setCondition(system, 0.0) #the art goes fully wrecked
 		for i in randi_range(1,2):
@@ -719,6 +708,19 @@ func destroy():
 			queue_free()
 
 	
+#the player's wreck (docs/UI.md, "Transitions"): tire smoke rolls off the car and the camera shakes, so
+#the explosions lead straight into the results' smoke wall as one beat
+func wreckSmoke() -> void:
+	Transition.sound("screech", -6.0, 0.8)
+	if Settings.reduce_motion() || not is_instance_valid(Root.levelRoot): return
+	var camera = get_viewport().get_camera_2d()
+	if camera: Juice.rumble(camera, "offset", Transition.SHAKE, 0.3)
+	var fx = TransitionFx.new()
+	fx.position = global_position
+	fx.z_index = 5
+	Root.levelRoot.add_child(fx)
+	for i in 4: fx.burst(Vector2.ZERO, 7, Vector2.RIGHT.rotated(randf() * TAU) * 160.0, 320.0, 280.0, 1.8, i * 0.12)
+
 func playRandomFxSound():
 	var randomizer = randi_range(0,1)
 	if randomizer == 0: 
@@ -737,7 +739,6 @@ func playRandomFxSound():
 @onready var myLights = $headlamps
 func turnOnHeadlights(status: bool):
 	myLights.visible = status
-	%indicatorLight.visible = status
 	
 func outOfFuel():
 	isDestroyed = true

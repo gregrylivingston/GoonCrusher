@@ -95,3 +95,50 @@ func test_upgrade_mode_opens_the_sheet_on_the_clicked_stat():
 	card.setUpgradeMode(false, false)
 	assert_true(card.compact.visible)
 	card.free()
+
+#a door someone is waiting on (the loading door) must never be freed by a second close
+func test_a_second_close_reuses_the_door():
+	var first = Transition.close("ONE", "LOADING", 0.2)
+	var second = Transition.close("TWO", "LOADING", 0.4)
+	assert_eq(second, first, "the same door")
+	assert_true(is_instance_valid(first))
+	assert_eq(first.door.label, "TWO", "relabelled")
+	assert_almost_eq(first.progress, 0.4, 0.001)
+	if not first.isShut: await first.shut
+	first.open()
+	await get_tree().process_frame
+	assert_false(Transition.busy())
+
+func test_a_stamp_sizes_itself_around_its_text():
+	var host = add_child_autofree(Control.new())
+	var s = Stamp.slam(host, "GOAL!", Vector2(400, 300), HudTheme.GOLD, 64, -1.0)
+	assert_gt(s.size.x, 64.0, "wide enough for the word")
+	assert_almost_eq((s.position + s.size / 2.0).distance_to(Vector2(400, 300)), 0.0, 0.5, "centred where it was slammed")
+
+#outside a run there is no banner layer: a banner is dropped, never queued forever
+func test_a_banner_outside_a_run_is_dropped():
+	TapeBanner.post("NIGHT FALLS")
+	TapeBanner.post("NEW GOON")
+	assert_true(TapeBanner.queue.is_empty())
+	assert_null(TapeBanner.showing)
+
+func test_the_start_lamps_scene_is_the_new_countdown():
+	var lamps = load("res://scene/player/countdown.tscn").instantiate()
+	assert_true("dropIn" in lamps, "run start drops the rack in")
+	assert_eq(lamps.layer, 128)
+	lamps.free()
+
+func test_reduce_flashing_holds_blinks_steady():
+	var before = Settings.values["access/reduce_flashing"]
+	Settings.values["access/reduce_flashing"] = true
+	var steady := true
+	for i in 5:
+		steady = steady && HudTheme.blinkOn()
+		await get_tree().create_timer(0.15).timeout
+	Settings.values["access/reduce_flashing"] = before
+	assert_true(steady, "a warning never blinks off")
+
+func test_the_payout_chute_is_skipped_by_the_harness():
+	var host = add_child_autofree(Node.new())
+	await PayoutChute.pour(host, Rect2(0, 0, 400, 300), [HudTheme.STAR_ICON])
+	assert_eq(host.get_child_count(), 0, "nothing drawn, nothing waited on")

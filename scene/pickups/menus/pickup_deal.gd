@@ -25,7 +25,7 @@ static func open(isCrushGoal: bool) -> void:
 	Root.levelRoot.add_child.call_deferred(deal) #a crush can come from a node leaving the level (a Bait popping), while the level can't take children
 
 func build() -> void:
-	if crushGoal && is_instance_valid(Root.playerRoot): Root.playerRoot.animateNewGoonCrushGoal(false)
+	if crushGoal && is_instance_valid(Root.playerRoot): Root.playerRoot.animateNewGoonCrushGoal(false, "THE DEAL")
 	title("THE DEAL", "Crush goal reached: +1 star. Pick a card." if crushGoal else "Pick a card.")
 	row.add_theme_constant_override("separation", 18)
 	row.alignment = BoxContainer.ALIGNMENT_CENTER

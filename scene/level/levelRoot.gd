@@ -137,7 +137,8 @@ func onWorldReady() -> void:
 #the world builds (the build waits on process frames, which run while paused, and the TileManager
 #keeps streaming), then the door rolls up on the car mid-burnout and the usual 3-2-1 starts the run.
 
-const REVEAL_SETTLE_FRAMES := 12 #chunks applied around the car before the door opens
+const REVEAL_SETTLE_FRAMES := 12 #at least this many frames of streaming behind the door
+const REVEAL_MAX_SECONDS := 3.0   #and at most this long waiting for the nearby chunks
 
 var heldUnderShutter := false
 
@@ -147,6 +148,7 @@ func holdUnderShutter() -> void:
 	get_tree().paused = true
 	$TileManager.process_mode = Node.PROCESS_MODE_ALWAYS
 	Transition.active.progress = maxf(Transition.active.progress, 0.6)
+	Transition.active.tree_exiting.connect(releaseShutterHold) #however the door goes, the run must start
 
 func revealRun() -> void:
 	if not Transition.busy(): return
@@ -155,16 +157,36 @@ func revealRun() -> void:
 		door.open()
 		return
 	door.progress = 0.85
-	for i in REVEAL_SETTLE_FRAMES: await get_tree().process_frame
-	if not is_inside_tree() || not is_instance_valid(door): return
+	#the chunks around the car stream in behind the door before it opens (at most REVEAL_MAX_SECONDS)
+	var tileManager = $TileManager
+	var waitStart := Time.get_ticks_msec()
+	var frames := 0
+	while frames < REVEAL_SETTLE_FRAMES || (Time.get_ticks_msec() - waitStart < REVEAL_MAX_SECONDS * 1000.0 && not (tileManager.loadQueue.is_empty() && tileManager.applyQueue.is_empty())):
+		frames += 1
+		door.progress = lerpf(0.85, 0.98, clampf((Time.get_ticks_msec() - waitStart) / (REVEAL_MAX_SECONDS * 1000.0), 0.0, 1.0))
+		await get_tree().process_frame
+		if not is_instance_valid(door): break
+	if not is_inside_tree(): return
+	if not is_instance_valid(door):
+		releaseShutterHold()
+		return
 	door.progress = 1.0
 	await get_tree().create_timer(0.15, true, false, true).timeout
+	if not is_instance_valid(door):
+		releaseShutterHold()
+		return
 	burnout(door.fx)
 	door.open(true)
 	await door.opened
-	$TileManager.process_mode = Node.PROCESS_MODE_INHERIT
+	releaseShutterHold()
+
+#ends the wait behind the door: streaming back to normal, and the 3-2-1, which unpauses the run on GO.
+#Also runs if the door leaves early for any reason, so a run can never stay frozen behind it.
+func releaseShutterHold() -> void:
+	if not heldUnderShutter || not is_inside_tree(): return
 	heldUnderShutter = false
-	if not hasEnded && is_instance_valid(Root.playerRoot): Root.playerRoot.addCountdown() #3-2-1 unpauses the run on GO
+	$TileManager.process_mode = Node.PROCESS_MODE_INHERIT
+	if not hasEnded && is_instance_valid(Root.playerRoot): Root.playerRoot.addCountdown()
 
 #the car spinning its wheels on the spot as the door rises: a rev, a squeal and smoke off its tail
 func burnout(fx: TransitionFx) -> void:
@@ -238,6 +260,8 @@ func onClockTick() -> void:
 		targetReached = true #the mode is beaten however the run ends (endLevel)
 		$AudioStreamPlayer.stream = load("res://sound/fx/slotmachine/winner_3.mp3")
 		$AudioStreamPlayer.play()
+		var host = TapeBanner.layer()
+		if host: Stamp.slam(host, "TARGET SMASHED", Vector2(get_viewport().get_visible_rect().size.x * 0.5, 320.0), HudTheme.GOLD, 72, 1.6)
 
 #--- Marathon -----------------------------------------------------------------------------------
 
@@ -247,6 +271,7 @@ func stationReached(station: Node2D) -> void:
 		endLevel(true, Root.endCondition.SUCCESS)
 		return
 	leg += 1
+	TapeBanner.post("STATION  -  LEG %d OF %d" % [leg, MARATHON_LEGS], 1.0)
 	var car = Root.playerCar
 	car.fuel = 100.0 #a car coasting in on an empty tank is saved: outOfFuel checks the tank again
 	car.health = minf(100.0, car.health + MARATHON_HEAL)
@@ -318,12 +343,14 @@ func createSprintSpawners():
 func setNighttime(isNighttime: bool):
 
 	if isNighttime:
+		TapeBanner.post("NIGHT FALLS", 1.0) #night is gameplay: only the headlights show the world
 		get_tree().create_tween().tween_property($CanvasModulate , "color" , Color(.0,.0,.0,1.0) , 5)
 			#if canvasmodulate this is set to .05 powerups and giants glow at night.  If set to 0 they don't
 		await get_tree().create_timer(2).timeout
 		if is_instance_valid(Root.station): Root.station.setNighttime(isNighttime)
 		$AudioStreamPlayer_wolf.play()
 		await get_tree().create_timer(1).timeout
+		Transition.sound("clank", -8.0, 0.7) #the headlights clunk on
 		Root.playerCar.turnOnHeadlights(true)
 	else: 
 		get_tree().create_tween().tween_property($CanvasModulate , "color" , Color(1.0,1.0,1.0,1.0) , 5)

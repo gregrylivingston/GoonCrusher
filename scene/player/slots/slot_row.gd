@@ -22,14 +22,32 @@ var spinFrameTracker = 0 #icons are 75px, 75px in between, every 150 frams is on
 var spins = 7
 
 
+var moving := false
+
 func _physics_process(_delta):
 	if isSpinning || spinFrameTracker != 6:
+		moving = true
 		$VBoxContainer.position.y -= 18
 		spinFrameTracker += 1
 		if spinFrameTracker == 10:
 			spinFrameTracker = 0
 			spins += 1
 			addNewIcon()
+	elif moving:
+		moving = false
+		settle()
+
+#a reel stopping like a machine (docs/UI.md, "Transitions"): it runs 8 px past its symbol, settles back
+#and clanks, and the row rumbles 2 px. The symbol it shows is unchanged.
+func settle() -> void:
+	Transition.sound("clank", -10.0, randf_range(0.9, 1.1))
+	if Settings.reduce_motion(): return
+	var reel = $VBoxContainer
+	var home = reel.position.y
+	var t = create_tween()
+	t.tween_property(reel, "position:y", home - 8.0, 0.07).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	t.tween_property(reel, "position:y", home, 0.17).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	Juice.rumble(self, "position", 2.0, 0.1)
 		#	
 var slotAwardIcon = preload("res://scene/player/slots/slot_award_icon.tscn")
 const MAX_ROW_CHILDREN = 12 #the separator plus 11 icons; the row shows about 3

@@ -79,15 +79,21 @@ func _draw() -> void:
 
 #spray-painted text: the letters, then flecks of overspray around them
 func stencil(text: String, centre: Vector2, fontSize: int) -> void:
-	drawCentred(text, centre, fontSize, STENCIL, STENCIL_FONT)
-	var span = STENCIL_FONT.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fontSize).x
-	var rng = RandomNumberGenerator.new()
-	rng.seed = hash(text)
-	for i in 120: draw_rect(Rect2(centre + Vector2(rng.randf_range(-0.5, 0.5) * span, rng.randf_range(-0.6, 0.6) * fontSize), Vector2(2, 2)), STENCIL)
+	drawStencil(self, text, centre, fontSize, STENCIL)
 
 func drawCentred(text: String, centre: Vector2, fontSize: int, color: Color, font: Font) -> void:
 	var textSize = font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fontSize)
 	draw_string(font, centre + Vector2(-textSize.x / 2.0, fontSize * 0.36), text, HORIZONTAL_ALIGNMENT_LEFT, -1, fontSize, color)
+
+#shared with Stamp and TapeBanner: stencilled letters (optionally outlined) with overspray flecks
+static func drawStencil(item: CanvasItem, text: String, centre: Vector2, fontSize: int, color: Color, outline := 0, outlineColor := HudTheme.OUTLINE) -> void:
+	var span = STENCIL_FONT.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fontSize).x
+	var at = centre + Vector2(-span / 2.0, fontSize * 0.36)
+	if outline > 0: item.draw_string_outline(STENCIL_FONT, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, fontSize, outline, outlineColor)
+	item.draw_string(STENCIL_FONT, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, fontSize, color)
+	var rng = RandomNumberGenerator.new()
+	rng.seed = hash(text)
+	for i in int(60 + fontSize): item.draw_rect(Rect2(centre + Vector2(rng.randf_range(-0.5, 0.5) * span, rng.randf_range(-0.6, 0.6) * fontSize), Vector2(2, 2)), Color(color, color.a * rng.randf_range(0.4, 1.0)))
 
 func drawLamps(centre: Vector2) -> void:
 	var lampW = 46.0
@@ -102,12 +108,15 @@ func drawLamps(centre: Vector2) -> void:
 
 #black and orange diagonal stripes
 func hazard(rect: Rect2) -> void:
-	draw_rect(rect, HudTheme.OUTLINE)
+	drawHazard(self, rect)
+
+static func drawHazard(item: CanvasItem, rect: Rect2) -> void:
+	item.draw_rect(rect, HudTheme.OUTLINE)
 	var step = 34.0
 	var x = rect.position.x - rect.size.y
 	var bounds = PackedVector2Array([rect.position, Vector2(rect.end.x, rect.position.y), rect.end, Vector2(rect.position.x, rect.end.y)])
 	while x < rect.end.x:
 		var stripe = PackedVector2Array([Vector2(x, rect.end.y), Vector2(x + 13, rect.end.y), Vector2(x + 13 + rect.size.y, rect.position.y), Vector2(x + rect.size.y, rect.position.y)])
 		for piece in Geometry2D.intersect_polygons(stripe, bounds):
-			if piece.size() >= 3: draw_colored_polygon(piece, HudTheme.RIM)
+			if piece.size() >= 3: item.draw_colored_polygon(piece, HudTheme.RIM)
 		x += step

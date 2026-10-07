@@ -141,8 +141,8 @@ func graphicsRows() -> Array:
 			"info":"Full blends the ground's surfaces into each other with natural borders and moves water and conveyor belts. Simple draws each patch of ground with one surface.",
 			"perf":"Small to medium: the ground covers the whole screen."},
 		{"type":"choice", "key":"gfx/celebration", "label":"Slot Celebration", "options":[[0, "Minimal"], [1, "Reduced"], [2, "Full"]],
-			"info":"The icon wall and icon burst around the slot machine. Reels, results and claiming are the same at every level.",
-			"perf":"Large spikes on Full: up to 1,200 icons in the wall and 600 in the burst."},
+			"info":"How many prizes pour out of the slot machine's chute after Collect: 4, 8 or 16. Reels, prizes and claiming are the same at every level.",
+			"perf":"Tiny: at most 16 icons."},
 		{"type":"choice", "key":"gfx/reward_fx", "label":"Reward Pop-ups", "options":[[0, "Minimal"], [1, "Reduced"], [2, "Full"]],
 			"info":"How many collected rewards fly to the HUD at once (3, 10 or 20). Every reward is counted the moment you collect it, whatever this is set to.",
 			"perf":"Small to medium during purses and crowds."},
@@ -185,9 +185,9 @@ func controlRows() -> Array:
 func accessibilityRows() -> Array:
 	return [
 		{"type":"choice", "key":"access/reduce_motion", "label":"Reduce Motion", "options":onOff(),
-			"info":"Stops the 3D text wobble, freezes rainbow fills, makes the giant marker steady, turns off car shake, fades screen transitions instead of slamming the shutter (no smoke or shake) and limits slot celebrations to Reduced. Camera zoom at speed is unchanged.", "perf":"Slightly faster"},
+			"info":"Stops the 3D text wobble, freezes rainbow fills, makes the giant marker steady, turns off car shake, fades screen transitions, banners, signs and stamps instead of sliding or slamming them (no smoke or shake) and limits slot celebrations to Reduced. Camera zoom at speed is unchanged.", "perf":"Slightly faster"},
 		{"type":"choice", "key":"access/reduce_flashing", "label":"Reduce Flashing", "options":onOff(),
-			"info":"Minimal slot celebrations, a slower giant pulse and no over-bright giant glow.", "perf":"Slightly faster"},
+			"info":"Minimal slot celebrations, HUD warnings that hold steady instead of blinking, no toast rim flash, a slower giant pulse and no over-bright giant glow.", "perf":"Slightly faster"},
 		{"type":"choice", "key":"access/giant_style", "label":"Giant Marker Style", "options":[[0, "Pulse"], [1, "Steady"], [2, "Tint + ground ring"]],
 			"info":"How giants are marked. Giants are always bigger than other goons. New giants use the new style.", "perf":"None"},
 		{"type":"choice", "key":"access/giant_color", "label":"Giant Marker Colour", "options":[[0, "Red"], [1, "Yellow"], [2, "Cyan"], [3, "Magenta"], [4, "White"]],

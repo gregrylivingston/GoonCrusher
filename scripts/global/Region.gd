@@ -20,7 +20,7 @@ func _process(delta):
 		if currentRegion.wave * waveLength < currentRegion.time && currentRegion.wave < waveCap():
 			currentRegion.wave += 1
 			Root.playerCar.star += 1
-			Root.playerRoot.animateNewRegion(true)
+			if is_instance_valid(Root.playerRoot): Root.playerRoot.waveSurvived()
 			PickupWorld.waveChest() #an Uncommon-or-better pickup for surviving the wave
 
 
@@ -139,8 +139,10 @@ func updatePlayerRegion(tile):
 	if previous.has("time") && previous.get("faction", -1) == next.get("faction", -2):
 		next.time = maxf(next.time, previous.time)
 		next.wave = maxi(next.wave, previous.wave)
+	var firstVisit: bool = not next.get("visited", false)
 	next.visited = true
-	if is_instance_valid(Root.playerRoot): Root.playerRoot.animateNewRegion(true)
+	#a sign for each district met after the first (the run starts in one)
+	if is_instance_valid(Root.playerRoot) && previous.has("time") && firstVisit: Root.playerRoot.districtEntered(next)
 	if is_instance_valid(Root.spawnManager) && next.has("goon"): Root.spawnManager.basicGoons = next.goon
 	await get_tree().process_frame
 	if is_instance_valid(Root.playerRoot) && currentRegionNumber == id: Root.playerRoot.updatePlayerRegion(tile)

@@ -37,6 +37,7 @@ func test_every_goon_has_baked_art_and_a_known_verb():
 		assert_true(goon.decal != null, "%s: crush decal" % id)
 		var frames: SpriteFrames = goon.get_node("Sprite").sprite_frames
 		for anim in ANIMS: assert_eq(frames.get_frame_count(anim), ANIMS[anim], "%s: %s frames" % [id, anim])
+		assert_almost_eq(goon.get_node("Sprite").scale.x, 1.0 / Goons.ART_RES, 0.001, "%s: baked at Goons.ART_RES" % id)
 		goon.free()
 
 func test_every_faction_fills_a_region_on_every_terrain():

@@ -39,7 +39,7 @@ Reset Progress never touches the settings files.
 | Tire Marks | Off / Short / Full | Off | Short | Full | Full | Short: rear tyres, 6 s. Full: all tyres, 20 s |
 | Damage Effects | Low / Full | Low | Full | Full | Full | Low: engine smoke only (docs/CAR_ART.md) |
 | Pickup Glow | Simple / Full | Simple | Simple | Full | Full | Simple drops the moving shine |
-| Slot Celebration | Minimal / Reduced / Full | Minimal | Reduced | Full | Full | Splash burst node counts; reels and results unchanged (the slot icon wall is gone: transitions follow Exhaust Smoke, docs/UI.md) |
+| Slot Celebration | Minimal / Reduced / Full | Minimal | Reduced | Full | Full | Prizes poured from the slot machine's chute (4 / 8 / 16 icons); reels and results unchanged (docs/UI.md, "Transitions") |
 | Reward Pop-ups | Minimal / Reduced / Full | Minimal | Reduced | Full | Full | Caps flying reward icons at 3/10/20; rewards are credited on collection |
 | Ground Detail | Simple / Full | Simple | Full | Full | Full | `gc_ground_quality`: Simple draws the nearest cell's material with no macro noise or water/belt animation (docs/WORLD.md, "The ground shader") |
 | Max Sound Effects | 8 / 12 / 24 | 8 | 12 | 24 | 24 | `Audio` FX pool size |

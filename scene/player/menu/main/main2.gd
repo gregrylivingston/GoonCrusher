@@ -61,6 +61,9 @@ func _ready():
 	buildUi()
 	shownCoins = SaveManager.playerData.coin
 	selectCar(SaveManager.playerData.selectedCar, false)
+	#a door carried over from the run's results (Transition.carry), taken now: a loading door made after
+	#this point (startLevel during the frame awaited below) must never be mistaken for it
+	var returningDoor: Transition = Transition.active if Transition.busy() else null
 	var payout = 0
 	if Root.isRunActive:
 		Root.isRunActive = false
@@ -71,10 +74,9 @@ func _ready():
 		Root.earnedGems = 0
 	await get_tree().process_frame
 	#back from a run behind the results' shutter: roll it up on the garage, then count the payout in
-	if Transition.busy():
-		var door = Transition.active
-		door.open()
-		await door.opened
+	if is_instance_valid(returningDoor) && not loadingLevel:
+		returningDoor.open()
+		await returningDoor.opened
 	if payout > 0: animateCoins(SaveManager.playerData.coin - payout, SaveManager.playerData.coin)
 	Settings.on_menu_ready() #the menu is drawn: this boot did not crash
 	if Settings.safe_mode_prompt: add_child(SettingsDialog.safeModePrompt())
@@ -798,12 +800,13 @@ func startLevel(path: String) -> void:
 	if not ResourceLoader.has_cached(carScene): ResourceLoader.load_threaded_request(carScene)
 	var progress = []
 	while ResourceLoader.load_threaded_get_status(path, progress) == ResourceLoader.THREAD_LOAD_IN_PROGRESS 			|| ResourceLoader.load_threaded_get_status(carScene) == ResourceLoader.THREAD_LOAD_IN_PROGRESS:
-		if not progress.is_empty(): door.progress = maxf(door.progress, progress[0] * 0.5)
+		if not progress.is_empty() && is_instance_valid(door): door.progress = maxf(door.progress, progress[0] * 0.5)
 		await get_tree().process_frame
 	if ResourceLoader.load_threaded_get_status(carScene) == ResourceLoader.THREAD_LOAD_LOADED:
 		Root.selectedCarScene = ResourceLoader.load_threaded_get(carScene) #held so the cache keeps it
-	door.progress = 0.5
-	if not door.isShut: await door.shut #change scenes only once the slam has landed
+	if is_instance_valid(door):
+		door.progress = 0.5
+		if not door.isShut: await door.shut #change scenes only once the slam has landed
 	var scene = ResourceLoader.load_threaded_get(path)
 	if scene: get_tree().change_scene_to_node(RunView.wrap(scene.instantiate()))
 	else: get_tree().change_scene_to_file(path)

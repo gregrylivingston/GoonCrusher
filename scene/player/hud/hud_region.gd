@@ -8,6 +8,10 @@ const MUTATION_ICON := preload("res://texture/icon/mutation.svg")
 var regionName := ""
 var giantism := 0
 var shownKey := []
+var flash := 0.0: #a gold wash over the panel, tweened down from 1 when its moment comes (GameUI)
+	set(value):
+		flash = value
+		queue_redraw()
 
 func _ready() -> void:
 	mouse_filter = MOUSE_FILTER_IGNORE
@@ -46,3 +50,4 @@ func _draw() -> void:
 	if regionName != "":
 		HudTheme.icon(self, MUTATION_ICON, Vector2(307, 18), 18)
 		HudTheme.text(self, Vector2(348, 24), "%d%%" % giantism, 15, HudTheme.TEXT, HORIZONTAL_ALIGNMENT_RIGHT, 5)
+	if flash > 0.0: HudTheme.panel(self, Rect2(Vector2.ZERO, size), Color(HudTheme.GOLD, flash), 10)

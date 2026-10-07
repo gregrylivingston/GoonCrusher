@@ -35,8 +35,10 @@ static func conditionColor(value: float) -> Color:
 	if value >= 40.0: return WARN
 	return BAD
 
-#on/off phase shared by everything that blinks, so blinking lamps stay in step
+#on/off phase shared by everything that blinks, so blinking lamps stay in step. With Reduce Flashing
+#nothing blinks: every warning holds steady (on), which still reads as a warning in its colour.
 static func blinkOn() -> bool:
+	if Settings.get_value("access/reduce_flashing"): return true
 	return Time.get_ticks_msec() % 700 < 430
 
 static func polar(center: Vector2, radius: float, degrees: float) -> Vector2:

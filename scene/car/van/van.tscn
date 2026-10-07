@@ -85,9 +85,3 @@ position = Vector2(-20, 0)
 [node name="CollisionShape2D" parent="carBodyArea" index="0"]
 position = Vector2(0, 0)
 shape = SubResource("RectangleShape2D_mgbn7")
-
-[node name="Label" parent="indicator" index="0"]
-material = SubResource("ShaderMaterial_d7p1d")
-
-[node name="indicatorDistance" parent="indicator/Label/indicatorRoot" index="0"]
-material = SubResource("ShaderMaterial_d7p1d")

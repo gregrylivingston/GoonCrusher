@@ -2,14 +2,12 @@
 
 [ext_resource type="StyleBox" uid="uid://cgcjmjg4qdbt2" path="res://style/style_box_semitransparent.tres" id="1_83yg1"]
 [ext_resource type="Script" path="res://scene/player/slots/slotMachine.gd" id="1_lo6kv"]
-[ext_resource type="Theme" uid="uid://co40pijjc7hbw" path="res://style/roadRogue.tres" id="2_sqmqf"]
 [ext_resource type="StyleBox" uid="uid://dp4qdn22d3ua6" path="res://style/style_box_thick.tres" id="3_ns1em"]
 [ext_resource type="PackedScene" uid="uid://dkwmaqrde7ne5" path="res://scene/player/slots/slot_row.tscn" id="4_e175g"]
 [ext_resource type="Shader" path="res://shader/3dtext.gdshader" id="5_iv5oe"]
 [ext_resource type="AudioStream" uid="uid://dj5d70cqn1f2t" path="res://sound/fx/slotmachine/slotmachine.mp3" id="6_bvdc6"]
 [ext_resource type="Texture2D" uid="uid://dlgpwix6wtodc" path="res://shader/emtpywhitegradient.tres" id="6_falni"]
 [ext_resource type="AudioStream" uid="uid://cv82k8fnavddt" path="res://sound/fx/slotmachine/slotlever.mp3" id="6_pqh6i"]
-[ext_resource type="PackedScene" uid="uid://bepxjqhida0n8" path="res://scene/player/ui/roadButton.tscn" id="6_vjuwu"]
 [ext_resource type="Texture2D" uid="uid://c4jtoaca8fpkl" path="res://texture/icon/gem_flat.svg" id="7_wnnpu"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wfh4x"]
@@ -80,7 +78,6 @@ offset_right = -110.0
 offset_bottom = -83.0
 grow_horizontal = 2
 grow_vertical = 2
-theme = ExtResource("2_sqmqf")
 theme_override_styles/panel = ExtResource("3_ns1em")
 
 [node name="Panel" type="Panel" parent="Panel/Panel"]
@@ -156,31 +153,28 @@ offset_right = 216.0
 offset_bottom = -166.0
 grow_vertical = 2
 
-[node name="play_button" parent="Panel/Panel/VBoxContainer" instance=ExtResource("6_vjuwu")]
+[node name="play_button" type="Button" parent="Panel/Panel/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_font_sizes/font_size = 20
 text = "Play"
 alignment = 1
-script = null
 
-[node name="reroll_button" parent="Panel/Panel/VBoxContainer" instance=ExtResource("6_vjuwu")]
+[node name="reroll_button" type="Button" parent="Panel/Panel/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_font_sizes/font_size = 20
 disabled = true
 text = "Reroll"
 icon = ExtResource("7_wnnpu")
-script = null
 
-[node name="claim_button" parent="Panel/Panel/VBoxContainer" instance=ExtResource("6_vjuwu")]
+[node name="claim_button" type="Button" parent="Panel/Panel/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_font_sizes/font_size = 20
 disabled = true
 text = "Claim"
 alignment = 1
-script = null
 
 [node name="slotMahineSound" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("6_bvdc6")

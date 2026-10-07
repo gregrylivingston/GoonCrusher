@@ -7,6 +7,10 @@ const SLOT_ICON := preload("res://texture/icon/slotMachine.svg")
 const STAR_ICON := preload("res://texture/icon/star.svg")
 
 var shownKey := []
+var flash := 0.0: #a gold wash over the panel, tweened down from 1 when its moment comes (GameUI)
+	set(value):
+		flash = value
+		queue_redraw()
 
 func _ready() -> void:
 	mouse_filter = MOUSE_FILTER_IGNORE
@@ -33,3 +37,4 @@ func _draw() -> void:
 	var progress = 1.0 if span <= 0.0 else (car.currentGoonsCrushed - ui.crushGoalStart) / span
 	HudTheme.bar(self, Rect2(66, 43, 234, 7), progress, HudTheme.RIM)
 	HudTheme.icon(self, STAR_ICON, Vector2(331, 31), 38)
+	if flash > 0.0: HudTheme.panel(self, Rect2(Vector2.ZERO, size), Color(HudTheme.GOLD, flash), 10)

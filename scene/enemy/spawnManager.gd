@@ -216,9 +216,17 @@ func goonsNear(pos: Vector2, radius: float) -> Array:
 ## Pass the goon so it also counts for the Goonopedia (crushedById), as a bumper crush does.
 func creditCrush(pos: Vector2, goon: Object = null) -> void:
 	if not is_instance_valid(Root.playerCar): return
-	if goon != null && Root.playerCar.has_method("creditGoon"): Root.playerCar.creditGoon(goon)
+	if goon != null && Root.playerCar.has_method("creditGoon"):
+		Root.playerCar.creditGoon(goon)
+		announceNewGoon(goon)
 	Root.playerCar.reward("currentGoonsCrushed", 1)
 	RewardFlyers.flyUpgrade(Root.upgrade.CURRENTGOONSCRUSHED, pos)
+
+#the first crush ever of a kind of goon unlocks its Goonopedia page: say so with a tape banner
+func announceNewGoon(goon: Object) -> void:
+	var id = goon.get("goonId")
+	if not id || Root.playerCar.crushedById.get(id, 0) != 1 || SaveManager.playerData.goonsCrushed.has(String(id)): return
+	TapeBanner.post("NEW GOON  -  " + str(Goons.DATA.get(id, {}).get("name", id)).to_upper(), 1.0)
 
 ## The first goon of the current region, for the level's shader warmup.
 func warmupScene() -> PackedScene:

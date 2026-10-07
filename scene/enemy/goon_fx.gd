@@ -435,8 +435,10 @@ func drawTop() -> void:
 					var a := tt * 5.0 + i * TAU / 3.0
 					var c: Vector2 = o.global_position + Vector2(cos(a) * o.bodyRadius * 0.9, -o.bodyRadius * 0.6 + sin(a) * o.bodyRadius * 0.35)
 					g.draw_circle(c, 3.5, Color(0.95, 0.83, 0.37))
-	var font := ThemeDB.fallback_font
+	#the HUD's bold face with an outline; each label pops a little bigger for its first 0.12 s
+	var font: Font = HudTheme.BOLD
 	for l in labels:
 		var a: float = 1.0 - l.age / 1.1
-		g.draw_string(font, l.pos + Vector2(-60, 1.5), l.text, HORIZONTAL_ALIGNMENT_CENTER, 120, 15, Color(0.04, 0.03, 0.03, 0.75 * a))
-		g.draw_string(font, l.pos + Vector2(-61.5, 0), l.text, HORIZONTAL_ALIGNMENT_CENTER, 120, 15, Color(0.94, 0.9, 0.84, a))
+		var fontSize := int(18.0 + 7.0 * maxf(0.0, 1.0 - l.age / 0.12))
+		g.draw_string_outline(font, l.pos + Vector2(-90, 0), l.text, HORIZONTAL_ALIGNMENT_CENTER, 180, fontSize, 6, Color(HudTheme.OUTLINE, 0.85 * a))
+		g.draw_string(font, l.pos + Vector2(-90, 0), l.text, HORIZONTAL_ALIGNMENT_CENTER, 180, fontSize, Color(HudTheme.TEXT, a))

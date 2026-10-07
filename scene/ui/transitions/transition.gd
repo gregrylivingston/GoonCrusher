@@ -74,7 +74,11 @@ static func play(swap: Callable, label := "GOONCRUSHER", sub := "") -> void:
 
 #slam down and stay down until open()
 static func close(label := "GOONCRUSHER", sub := "", lamps := -1.0) -> Transition:
-	if busy(): active.queue_free()
+	if busy() && not active.opening: #a door is already coming down or down: reuse it, never free one someone awaits
+		active.door.label = label
+		active.door.sub = sub
+		active.progress = lamps
+		return active
 	var t = Transition.new()
 	t.door.label = label
 	t.door.sub = sub
@@ -86,7 +90,10 @@ static func close(label := "GOONCRUSHER", sub := "", lamps := -1.0) -> Transitio
 
 #a door that is already down, for a scene that ends behind another door (the results ticket)
 static func carry(label := "GOONCRUSHER", sub := "") -> Transition:
-	if busy(): active.queue_free()
+	if busy() && not active.opening:
+		active.door.label = label
+		active.door.sub = sub
+		return active
 	var t = Transition.new()
 	t.door.label = label
 	t.door.sub = sub

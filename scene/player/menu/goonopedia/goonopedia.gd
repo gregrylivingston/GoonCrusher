@@ -121,6 +121,7 @@ var tabButtons: Array[Button] = []
 var list := VBoxContainer.new()
 var listScroll := ScrollContainer.new()
 var detail := VBoxContainer.new()
+var into: VBoxContainer = detail #where the card helpers add rows: the detail card, or a showcase's side column
 var progressLabel := Label.new()
 var tiles: Array[Button] = []
 var shown = null #the entry in the detail card
@@ -333,10 +334,38 @@ func _exit_tree() -> void:
 static func setTileArt(texture: Texture2D, b) -> void:
 	if is_instance_valid(b) && texture: b.get_node("art").texture = texture
 
+#a goon's frame cropped to a square around the goon, so it fills its tile
+static func setGoonTileArt(texture: Texture2D, b) -> void:
+	if texture == null: return
+	var focus := artBounds(texture)
+	var side := maxf(focus.size.x, focus.size.y) * 1.08
+	var crop := Rect2(focus.get_center() - Vector2(side, side) * 0.5, Vector2(side, side)).intersection(Rect2(Vector2.ZERO, texture.get_size()))
+	var atlas = AtlasTexture.new()
+	atlas.atlas = texture
+	atlas.region = crop
+	setTileArt(atlas, b)
+
+static var boundsCache := {} #texture path -> Rect2 of its visible pixels
+
+## The part of `texture` that isn't transparent (a goon and its soft shadow), in texture pixels; the
+## whole texture when its pixels can't be read (headless).
+static func artBounds(texture: Texture2D) -> Rect2:
+	var whole := Rect2(Vector2.ZERO, texture.get_size())
+	var key := texture.resource_path
+	if key != "" && boundsCache.has(key): return boundsCache[key]
+	var image := texture.get_image()
+	if image == null || image.is_empty(): return whole
+	if image.is_compressed(): image.decompress()
+	var used := Rect2(image.get_used_rect())
+	if used.size.x < 1.0 || used.size.y < 1.0: used = whole
+	if key != "": boundsCache[key] = used
+	return used
+
 #---------- detail card helpers ----------
 
 func clearDetail() -> void:
 	preview = null
+	into = detail
 	for child in detail.get_children():
 		detail.remove_child(child)
 		child.queue_free()
@@ -346,7 +375,7 @@ func hero(height := 250.0) -> Panel:
 	panel.custom_minimum_size.y = height
 	panel.clip_children = CanvasItem.CLIP_CHILDREN_AND_DRAW
 	panel.add_theme_stylebox_override("panel", MenuTheme.box(Color(0.1, 0.085, 0.075), Color(0, 0, 0, 0), 12, 0))
-	detail.add_child(panel)
+	into.add_child(panel)
 	return panel
 
 func heroPicture(panel: Control, texture: Texture2D, stretch := TextureRect.STRETCH_KEEP_ASPECT_CENTERED, inset := 0.0) -> TextureRect:
@@ -363,17 +392,47 @@ func heroPicture(panel: Control, texture: Texture2D, stretch := TextureRect.STRE
 	panel.add_child(picture)
 	return picture
 
+#a square art panel with a column beside it: the card helpers fill the column until endShowcase(), then
+#continue full width below. For art that is an object (goons, pickups, icons); wide pictures use hero().
+func showcase(side: float, glow: Color) -> Panel:
+	var row = HBoxContainer.new()
+	row.add_theme_constant_override("separation", 22)
+	detail.add_child(row)
+	var panel = Panel.new()
+	panel.custom_minimum_size = Vector2(side, side)
+	panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	panel.clip_children = CanvasItem.CLIP_CHILDREN_AND_DRAW
+	panel.add_theme_stylebox_override("panel", MenuTheme.box(Color(0.1, 0.085, 0.075), Color(glow, 0.35), 14, 2))
+	row.add_child(panel)
+	var halo = Glow.new()
+	halo.color = glow
+	halo.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	halo.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	panel.add_child(halo)
+	var column = VBoxContainer.new()
+	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	column.alignment = BoxContainer.ALIGNMENT_CENTER
+	column.custom_minimum_size.y = side
+	column.add_theme_constant_override("separation", 10)
+	row.add_child(column)
+	into = column
+	return panel
+
+func endShowcase() -> void:
+	into = detail
+
 #the entry's name, with chips after it: [text, color]
 func titleRow(title: String, chips := []) -> void:
-	var row = HBoxContainer.new()
-	row.add_theme_constant_override("separation", 12)
+	var row = HFlowContainer.new() #chips wrap under the name in a showcase's narrow column
+	row.add_theme_constant_override("h_separation", 12)
+	row.add_theme_constant_override("v_separation", 6)
 	var label = Label.new()
 	label.text = title
 	label.theme_type_variation = "GoldLabel"
 	label.add_theme_font_size_override("font_size", 36)
 	row.add_child(label)
 	for c in chips: row.add_child(chip(c[0], c[1]))
-	detail.add_child(row)
+	into.add_child(row)
 
 static func chip(text: String, color: Color) -> PanelContainer:
 	var panel = PanelContainer.new()
@@ -392,7 +451,7 @@ func paragraph(text: String, type := "BodyLabel") -> Label:
 	label.theme_type_variation = type
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.custom_minimum_size.x = 200
-	detail.add_child(label)
+	into.add_child(label)
 	return label
 
 #a gold TIP chip and a line of advice
@@ -410,7 +469,7 @@ func tipRow(text: String) -> void:
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(label)
-	detail.add_child(row)
+	into.add_child(row)
 
 #a chip naming a fact and its text (a level's barrier, its surfaces); nothing for empty text
 func factRow(tag: String, text: String, color: Color) -> void:
@@ -427,7 +486,7 @@ func factRow(tag: String, text: String, color: Color) -> void:
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(label)
-	detail.add_child(row)
+	into.add_child(row)
 
 #rows of [label, value text] or [label, value text, bar 0-100, bonus 0-100, icon]
 func statTable(rows: Array) -> void:
@@ -466,7 +525,7 @@ func statTable(rows: Array) -> void:
 		value.custom_minimum_size.x = 120
 		value.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		table.add_child(value)
-	detail.add_child(table)
+	into.add_child(table)
 
 func showDetail(entry: Dictionary) -> void:
 	shown = entry
@@ -516,14 +575,15 @@ func buildGoons() -> void:
 		for id in ids:
 			var known = isDiscovered(id)
 			var b = tile(g, {"kind": "goon", "key": id}, null, Goons.DATA[id].name if known else "???", Vector2(124, 124), not known)
-			loadThen(goonArt(id), setTileArt.bind(b))
+			loadThen(goonArt(id), setGoonTileArt.bind(b))
 	progressLabel.text = "GOONS FOUND  %d / %d" % [found, Goons.DATA.size()]
 
 func goonDetail(entry: Dictionary) -> void:
 	var id: StringName = entry.key
 	var d: Dictionary = Goons.DATA[id]
 	var known = isDiscovered(id)
-	var panel = hero(250)
+	var faction: int = d.faction
+	var panel = showcase(390.0, FACTION_COLORS[faction])
 	preview = GoonPreview.new()
 	preview.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	preview.silhouette = not known
@@ -531,7 +591,6 @@ func goonDetail(entry: Dictionary) -> void:
 	if ResourceLoader.exists(goonArt(id)): preview.still = load(goonArt(id))
 	var shownPreview = preview
 	loadThen(goonFrames(id), func(frames): if is_instance_valid(shownPreview): shownPreview.setFrames(frames))
-	var faction: int = d.faction
 	titleRow(d.name.to_upper() if known else "???", [[Goons.factionName(faction).to_upper(), FACTION_COLORS[faction]], [RANK_NAMES.get(d.rank, "GOON"), HudTheme.RIM]])
 	paragraph(habitat(id), "MutedLabel")
 	if not known:
@@ -540,6 +599,7 @@ func goonDetail(entry: Dictionary) -> void:
 		return
 	paragraph(behaviour(d))
 	tipRow(tip(d))
+	endShowcase()
 	var rows = [["Speed", "%d" % d.get("speed", 110), d.get("speed", 110) / 3.2]]
 	if d.has("dmg"): rows.push_back(["Hits for", str(d.dmg), d.dmg * 100.0 / 12.0])
 	var crush: float = d.get("crush", 100.0)
@@ -780,10 +840,10 @@ func pickupDetail(entry: Dictionary) -> void:
 	var id: String = entry.key
 	var d := Pickups.def(id)
 	var known := pickupKnown(id)
-	var panel = hero(200)
-	var picture = heroPicture(panel, Pickups.texture(id), TextureRect.STRETCH_KEEP_ASPECT_CENTERED, 40.0)
-	if not known: picture.modulate = SHADOW
 	var r := Pickups.rarity(id)
+	var panel = showcase(260.0, Pickups.rarityColor(r) if known else HudTheme.MUTED)
+	var picture = heroPicture(panel, Pickups.texture(id), TextureRect.STRETCH_KEEP_ASPECT_CENTERED, 64.0)
+	if not known: picture.modulate = SHADOW
 	titleRow(Pickups.displayName(id).to_upper() if known else "???", [[Pickups.RARITY_NAMES[r].to_upper(), Pickups.rarityColor(r)], [Pickups.KIND_NAMES[d.kind].to_upper(), HudTheme.SKY]])
 	if not known:
 		paragraph("Not found yet. " + ("Look for it out in the world." if d.get("w", 0) <= 0 else "Crushed goons drop it."), "MutedLabel")
@@ -791,6 +851,7 @@ func pickupDetail(entry: Dictionary) -> void:
 	paragraph(d.get("text", ""))
 	if d.get("stat", false):
 		paragraph("Run pickups stack up to %d per stat. Upgrades bought in the garage stay for good." % OverheadCarBody2D.STAT_CAP, "MutedLabel")
+	endShowcase()
 	var rows = []
 	var share = dropShare(id)
 	if share > 0.0: rows.push_back(["Share of drops", "%.1f%%" % share if share >= 0.1 else "%.2f%%" % share, minf(share * 4.0, 100.0)])
@@ -821,11 +882,13 @@ func buildModes() -> void:
 
 func modeDetail(entry: Dictionary) -> void:
 	var mode: int = entry.key
-	var panel = hero(170)
-	heroPicture(panel, HudTheme.STAR_ICON if Root.isModeAvailable(mode) else HudTheme.LOCK_ICON, TextureRect.STRETCH_KEEP_ASPECT_CENTERED, 30.0)
-	var reason = Root.modeLockReason({"unlocked": true}, mode) if not Root.isModeAvailable(mode) else ""
+	var open = Root.isModeAvailable(mode)
+	var panel = showcase(220.0, HudTheme.GOLD if open else HudTheme.MUTED)
+	heroPicture(panel, HudTheme.STAR_ICON if open else HudTheme.LOCK_ICON, TextureRect.STRETCH_KEEP_ASPECT_CENTERED, 50.0)
+	var reason = Root.modeLockReason({"unlocked": true}, mode) if not open else ""
 	titleRow(Root.gameModeDescription[mode].name, [[reason.to_upper(), HudTheme.MUTED]] if reason != "" else [])
 	paragraph(Root.gameModeDescription[mode].description)
+	endShowcase()
 	paragraph(MODE_RULES.get(mode, ""))
 	if Root.isModeAvailable(mode):
 		tipRow("Stars from crush goals and region waves multiply the coins a run pays.")
@@ -850,10 +913,11 @@ static func attacks(d: Dictionary, system: String) -> bool:
 func systemDetail(entry: Dictionary) -> void:
 	var system: String = entry.key
 	var s = SYSTEMS.filter(func(x): return x[0] == system)[0]
-	var panel = hero(170)
-	heroPicture(panel, s[1], TextureRect.STRETCH_KEEP_ASPECT_CENTERED, 30.0)
+	var panel = showcase(220.0, HudTheme.RIM)
+	heroPicture(panel, s[1], TextureRect.STRETCH_KEEP_ASPECT_CENTERED, 50.0)
 	titleRow(SYSTEM_NAMES[system].to_upper())
 	paragraph(s[2])
+	endShowcase()
 	if OverheadCarBody2D.CONDITION_FLOOR.has(system):
 		paragraph("At 0%% it still keeps %d%% of your %s." % [roundi(OverheadCarBody2D.CONDITION_FLOOR[system] * 100.0), SYSTEM_STAT_NAMES.get(system, system)], "MutedLabel")
 		tipRow("Wall hits wear the side that hit. A Wrench, a Toolbox or the system's own part repairs it on the road; the gas station repairs everything in modes where it isn't the finish.")
@@ -882,10 +946,11 @@ func closePage() -> void:
 
 #---------- drawing ----------
 
-#a goon's baked flipbook at a fixed zoom, so goons keep their sizes relative to each other: it walks,
-#winds up, attacks, does its special and idles, then repeats. Silhouetted until discovered.
+#a goon's baked flipbook, zoomed to the goon itself (its idle frame's visible pixels) rather than the padded
+#frame: it walks, winds up, attacks, does its special and idles, then repeats. Silhouetted until discovered.
 class GoonPreview extends Control:
-	const ZOOM := 2.4 #big goons shrink to fit the panel
+	const FILL := 0.74 #of the panel the idle goon fills; attacks and specials reach past it
+	const MAX_ZOOM := 4.0 #screen px per game px, so small goons aren't blown up past their baked detail
 	const SEQUENCE := [[&"walk", 2.4], [&"windup", 0.0], [&"attack", 0.0], [&"special", 1.6], [&"idle", 1.4]] #0 = play once
 	var frames: SpriteFrames
 	var still: Texture2D
@@ -928,14 +993,36 @@ class GoonPreview extends Control:
 			var anim: StringName = SEQUENCE[step][0]
 			if frames.has_animation(anim) && frames.get_frame_count(anim) > 0: texture = frames.get_frame_texture(anim, mini(frame, frames.get_frame_count(anim) - 1))
 		var center = size * 0.5
-		draw_set_transform(center + Vector2(0, 30), 0.0, Vector2(1.0, 0.32))
-		draw_circle(Vector2.ZERO, 70.0, Color(0, 0, 0, 0.35))
-		draw_set_transform(Vector2.ZERO)
 		if texture == null:
 			HudTheme.text(self, center + Vector2(0, 16), "?", 64, HudTheme.MUTED, HORIZONTAL_ALIGNMENT_CENTER)
 			return
-		var drawn = texture.get_size() * minf(ZOOM, (size.y - 24.0) / maxf(texture.get_size().y, 1.0))
-		draw_texture_rect(texture, Rect2(center - drawn * 0.5, drawn), false, SHADOW if silhouette else Color.WHITE)
+		#every frame of a goon has the same size and origin, so one zoom and offset from the still holds them all
+		var focus := Goonopedia.artBounds(still if still else texture)
+		var zoom := minf(MAX_ZOOM / Goons.ART_RES, minf(size.x * FILL / focus.size.x, size.y * FILL / focus.size.y))
+		var origin: Vector2 = center - focus.get_center() * zoom
+		draw_set_transform(Vector2(center.x, center.y + focus.size.y * zoom * 0.42), 0.0, Vector2(1.0, 0.3))
+		draw_circle(Vector2.ZERO, focus.size.x * zoom * 0.48, Color(0, 0, 0, 0.22))
+		draw_set_transform(Vector2.ZERO)
+		draw_texture_rect(texture, Rect2(origin, texture.get_size() * zoom), false, SHADOW if silhouette else Color.WHITE)
+
+#a soft round glow in `color` behind a showcase's art
+class Glow extends Control:
+	static var falloff: GradientTexture2D #white fading out from the centre, tinted per glow
+	var color := Color.WHITE
+
+	func _draw() -> void:
+		if falloff == null:
+			var gradient = Gradient.new()
+			gradient.set_color(0, Color(1, 1, 1, 0.24))
+			gradient.set_color(1, Color(1, 1, 1, 0))
+			falloff = GradientTexture2D.new()
+			falloff.gradient = gradient
+			falloff.fill = GradientTexture2D.FILL_RADIAL
+			falloff.fill_from = Vector2(0.5, 0.5)
+			falloff.fill_to = Vector2(1.0, 0.5)
+			falloff.width = 256
+			falloff.height = 256
+		draw_texture_rect(falloff, Rect2(Vector2.ZERO, size), false, color)
 
 #who holds the land along the road out from the start on one level (LevelRoster.factionScore, clamped to
 #the level's faction band): each slice is coloured by the chance of each faction there, jitter included

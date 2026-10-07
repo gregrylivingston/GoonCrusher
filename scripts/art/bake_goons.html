@@ -7,7 +7,7 @@
 <script src="goon_gen.js"></script>
 <script>
 (function(){
-	const RES = 0.75; //frames are baked at 0.75x game size; the goon scene shows them at scale 1/0.75
+	const RES = 2.0; //frames are baked at 2x game size (sharp up to 4K and in the Goonopedia); the goon scene shows them at scale 1/2 (Goons.ART_RES)
 	const A = window.GoonArt, G = window.GOONS, out = {res: RES, goons: {}, error: null};
 	const ANIMS = ["walk", "idle", "windup", "attack", "special", "stun"];
 	const png = cv => cv.toDataURL("image/png");

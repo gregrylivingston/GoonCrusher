@@ -34,13 +34,39 @@ func _exit_tree() -> void:
 func toast(text: String, color := HudTheme.GOLD, icon: Texture2D = null) -> void:
 	if toasts.size() >= 4: toasts.pop_front()
 	toasts.push_back([text, color, icon])
-	if toasts.size() == 1: toastT = 0.0
+	if toasts.size() == 1: startToast()
+
+#the head toast arrives: a soft tick, and a legendary pickup gets a small stamp beside its pill
+func startToast() -> void:
+	toastT = 0.0
+	var t: Array = toasts[0]
+	Transition.sound("pop", -18.0, 1.6)
+	if t[1] == Pickups.rarityColor(Pickups.R.LEGENDARY):
+		var tw := HudTheme.textWidth(t[0].to_upper(), 24)
+		Stamp.slam(self, "LEGENDARY", Vector2(size.x * 0.5 + tw * 0.5 + 110.0, 166.0), HudTheme.GOLD, 20, TOAST_SECONDS - 0.7, -0.12)
 
 func showCombo(count: int, coins: int) -> void:
 	combo = {"text": "COMBO %d   +%d" % [count, coins], "t": 1.2}
 
+#the Goon Nuke: an orange shockwave rings out from the car with a dust kick and a camera rumble (no
+#white-out, so it is safe with Reduce Flashing; Reduce Motion drops the rumble and the dust)
+const SHOCK_SECONDS := 0.5
+var shockAt := Vector2.ZERO
+
 func flash() -> void:
-	flashT = 0.6
+	flashT = SHOCK_SECONDS
+	shockAt = size * 0.5
+	if is_instance_valid(Root.playerCar): shockAt = Root.playerCar.get_global_transform_with_canvas().origin
+	Transition.sound("thud")
+	Transition.sound("hiss", -6.0, 0.7)
+	if Settings.reduce_motion(): return
+	var camera = get_viewport().get_camera_2d()
+	if camera: Juice.rumble(camera, "offset", Transition.SHAKE, 0.25)
+	var dust = TransitionFx.new()
+	add_child(dust)
+	for i in 10:
+		var dir = Vector2.RIGHT.rotated(i * TAU / 10.0)
+		dust.puff(shockAt + dir * 40.0, dir * 520.0, TransitionFx.DUST, 0.9, 20, 110, 0.5, 0.0, 2.6)
 
 ## A Scratch Card: three cells revealed one by one, then paid.
 func startScratch() -> void:
@@ -100,7 +126,7 @@ func _process(delta: float) -> void:
 		toastT += delta
 		if toastT >= TOAST_SECONDS:
 			toasts.pop_front()
-			toastT = 0.0
+			if not toasts.is_empty(): startToast()
 	if not scratch.is_empty():
 		busy = true
 		scratch.t += delta
@@ -119,7 +145,9 @@ func _process(delta: float) -> void:
 		busy = true
 		flashT -= delta
 	PickupWorld.beacons = PickupWorld.beacons.filter(func(b): return is_instance_valid(b[0]) && not b[0].is_queued_for_deletion())
-	if busy || not PickupWorld.beacons.is_empty(): queue_redraw()
+	var stationFar := is_instance_valid(Root.station) && is_instance_valid(Root.playerCar) && Root.playerCar.global_position.distance_to(Root.station.global_position) > STATION_FAR
+	if busy || not PickupWorld.beacons.is_empty() || stationFar || stationShown: queue_redraw()
+	stationShown = stationFar
 
 func _draw() -> void:
 	var w := size.x
@@ -130,15 +158,24 @@ func _draw() -> void:
 		var a := clampf(combo.t / 0.3, 0.0, 1.0)
 		HudTheme.text(self, Vector2(34.0, 190.0), combo.text, 26, Color(HudTheme.GOLD, a), HORIZONTAL_ALIGNMENT_LEFT, 7, Color(HudTheme.DEEP, a))
 	drawBeacons()
-	if flashT > 0.0: draw_rect(Rect2(Vector2.ZERO, size), Color(1, 1, 1, flashT / 0.6 * 0.85))
+	if stationShown: drawStation()
+	if flashT > 0.0: drawShockwave(1.0 - flashT / SHOCK_SECONDS)
 
+#the pill drops 12 px with an overshoot as it arrives and its rim flashes white (Reduce Motion: fades only)
 func drawToast(t: Array, w: float) -> void:
 	var fade := clampf(minf(toastT / 0.15, (TOAST_SECONDS - toastT) / 0.3), 0.0, 1.0)
 	var text: String = t[0].to_upper()
 	var tw := HudTheme.textWidth(text, 24)
-	var rect := Rect2(Vector2(w * 0.5 - tw * 0.5 - 50.0, 142.0), Vector2(tw + 100.0, 46.0))
+	var drop := 0.0
+	var rimFlash := 0.0
+	if not Settings.reduce_motion():
+		var k := clampf(toastT / 0.22, 0.0, 1.0)
+		drop = -12.0 * (1.0 - (1.0 + 2.7 * pow(k - 1.0, 3.0) + 1.7 * pow(k - 1.0, 2.0)))
+		if not Settings.get_value("access/reduce_flashing"): rimFlash = snappedf(clampf(1.0 - toastT / 0.36, 0.0, 1.0), 0.1)
+	var rect := Rect2(Vector2(w * 0.5 - tw * 0.5 - 50.0, 142.0 + drop), Vector2(tw + 100.0, 46.0))
 	var col: Color = t[1]
 	HudTheme.panel(self, rect, Color(col, 0.9 * fade), 10)
+	if rimFlash > 0.0: HudTheme.panel(self, rect, Color(1, 1, 1, rimFlash), 10)
 	if t[2]: HudTheme.icon(self, t[2], rect.position + Vector2(26.0, 23.0), 34.0, Color(1, 1, 1, fade))
 	HudTheme.text(self, rect.position + Vector2(52.0, 32.0), text, 24, Color(col, fade), HORIZONTAL_ALIGNMENT_LEFT, 6, Color(HudTheme.OUTLINE, fade))
 
@@ -185,3 +222,33 @@ func drawBeacons() -> void:
 		draw_colored_polygon(PackedVector2Array([tip, at + dir * 32.0 + dir.orthogonal() * 10.0, at + dir * 32.0 - dir.orthogonal() * 10.0]), col)
 		var metres: float = Root.playerCar.global_position.distance_to(b[0].global_position) / 100.0
 		HudTheme.text(self, at + Vector2(0, 48.0), "%dm" % int(metres), 14, HudTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER, 4)
+
+func drawShockwave(k: float) -> void:
+	var e := 1.0 - pow(1.0 - k, 3.0)
+	var radius := lerpf(30.0, size.length() * 0.6, e)
+	draw_arc(shockAt, radius, 0.0, TAU, 96, Color(HudTheme.RIM, 0.9 * (1.0 - k)), lerpf(26.0, 3.0, k), true)
+	draw_arc(shockAt, radius * 0.82, 0.0, TAU, 96, Color(HudTheme.GOLD, 0.5 * (1.0 - k)), lerpf(10.0, 1.0, k), true)
+
+#the station (Sprint, Marathon, Defense): a pill on the screen edge pointing at it, with its distance,
+#once it is more than STATION_FAR away. It replaced the car's old 3D-text arrow.
+const STATION_FAR := 4000.0
+var stationShown := false
+
+func drawStation() -> void:
+	if not is_instance_valid(Root.station) || not is_instance_valid(Root.playerCar): return
+	var canvas := get_viewport().get_canvas_transform()
+	var inner := Rect2(Vector2(EDGE + 40.0, 175.0), size - Vector2((EDGE + 40.0) * 2.0, 175.0 + 185.0))
+	var centre := inner.get_center()
+	var dir: Vector2 = ((canvas * Root.station.global_position) - centre).normalized()
+	var t := INF
+	if absf(dir.x) > 0.001: t = minf(t, (inner.size.x * 0.5) / absf(dir.x))
+	if absf(dir.y) > 0.001: t = minf(t, (inner.size.y * 0.5) / absf(dir.y))
+	var at := centre + dir * t
+	var miles: float = Root.playerCar.global_position.distance_to(Root.station.global_position) / 10000.0
+	if Settings.distance_unit() == "km": miles *= 1.609
+	var rect := Rect2(at - Vector2(70.0, 24.0), Vector2(140.0, 48.0))
+	var tip := at + dir * 46.0
+	draw_colored_polygon(PackedVector2Array([tip, at + dir * 26.0 + dir.orthogonal() * 16.0, at + dir * 26.0 - dir.orthogonal() * 16.0]), HudTheme.GOLD)
+	HudTheme.panel(self, rect, Color(HudTheme.GOLD, 0.9), 24)
+	HudTheme.text(self, rect.position + Vector2(70.0, 18.0), "STATION", 12, HudTheme.MUTED, HORIZONTAL_ALIGNMENT_CENTER, 0, HudTheme.OUTLINE, HudTheme.BODY)
+	HudTheme.text(self, rect.position + Vector2(70.0, 40.0), "%d %s" % [int(miles) + 1, Settings.distance_unit()], 20, HudTheme.GOLD, HORIZONTAL_ALIGNMENT_CENTER, 4)

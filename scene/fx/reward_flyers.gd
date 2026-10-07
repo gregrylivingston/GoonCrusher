@@ -58,7 +58,7 @@ func launch(texture: Texture2D, screenTransform: Transform2D, uiGroup: String) -
 	active += 1
 	var end = target.get_global_transform_with_canvas().origin
 	var tween = flyer.create_tween()
-	tween.tween_property(flyer, "position", end, FLIGHT_SECONDS)
+	tween.tween_property(flyer, "position", end, FLIGHT_SECONDS).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT) #fast off the mark, settling onto the counter
 	tween.tween_callback(func():
 		flyer.visible = false
 		active -= 1

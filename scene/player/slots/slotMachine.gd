@@ -28,8 +28,8 @@ func _ready():
 	$Panel.visible = false
 
 	if isGoonCrushBonus:
-		Root.playerRoot.animateNewGoonCrushGoal(false)
-		await get_tree().create_timer(1.5).timeout
+		Root.playerRoot.animateNewGoonCrushGoal(false, "FREE SPIN")
+		await get_tree().create_timer(0.9).timeout #the goal's tape banner lands first
 
 	create_tween().tween_property(dim, "color:a", 0.55, 0.25)
 	$Panel.visible = true
@@ -198,30 +198,27 @@ func _on_claim_button_pressed():
 	claimButtonPressed = true
 	$Panel/Panel/VBoxContainer/claim_button.disabled = true
 	$Panel/Panel/VBoxContainer/reroll_button.disabled = true
-	var myIconArray: Array[Texture2D] = []   #used to pass icons to splash
 	var rows = [$Panel/Panel/Panel2/HBoxContainer/slotRow, $Panel/Panel/Panel2/HBoxContainer/slotRow2, $Panel/Panel/Panel2/HBoxContainer/slotRow3]
 	var reels = rows.map(func(row): return row.getActiveType())
 	#Dice: a luck / 500 chance that reel 3 lands on reel 2's symbol
 	if randf() < Root.playerCar.luck / 500.0: reels[2] = reels[1]
-	for reel in reels: myIconArray.push_back(SlotSymbols.texture(reel))
-	payReels(reels) #credited now: the outro below is only the look
-	if is_instance_valid(hatch): await hatch.leave()
+	var pays := payReels(reels) #credited now: the chute below is only the look
+	var prizes: Array = []
+	for id in pays:
+		for i in maxi(1, pays[id]): prizes.push_back(SlotSymbols.texture(id))
+	if is_instance_valid(hatch):
+		var card: Rect2 = $Panel/Panel.get_global_rect()
+		await hatch.leave(func(): await PayoutChute.pour(self, card, prizes))
 	visible = false
-	var splashScreen = load("res://scene/player/menu/splash/splashscreen_1.tscn").instantiate()
-	splashScreen.myIcons = myIconArray
-	Root.levelRoot.add_child(splashScreen)
 	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
 	if isGoonCrushBonus: Root.playerRoot.animateNewGoonCrushGoal()
-	splashScreen.startExplosion()
-	
-
 	Root.playerCar.add_child(countdownScreen.instantiate())
 	queue_free()
 		
 
 #Paylines (SlotSymbols.payouts): a pair pays its symbol twice, a triple five times; one or two stars are
-#Star Fragments, three are the jackpot (+1 star and a purse rain). Credited now, before the splash.
-func payReels(reels: Array) -> void:
+#Star Fragments, three are the jackpot (+1 star and a purse rain). Credited now, before the chute pours.
+func payReels(reels: Array) -> Dictionary:
 	var car = Root.playerCar
 	var pays := SlotSymbols.payouts(reels)
 	SlotSymbols.bet = 0
@@ -236,3 +233,4 @@ func payReels(reels: Array) -> void:
 			continue
 		if pays[id] > 1: PickupEffects.toast("%s  -  %s x%d" % ["TRIPLE" if reels.count(id) == 3 else "PAIR", Pickups.displayName(id).to_upper(), pays[id]], Pickups.rarityColor(Pickups.rarity(id)), Pickups.texture(id))
 		for i in pays[id]: PickupEffects.collect(car, id, car.global_position)
+	return pays

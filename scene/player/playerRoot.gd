@@ -20,8 +20,11 @@ func _ready():
 	#behind the menu's loading shutter the level adds it once the door is up (Level.revealRun)
 	if not Transition.holdsRunStart(): addCountdown()
 
+#the run-start lamps: the rack drops in on its rail (resumes use a plain countdown.tscn, already down)
 func addCountdown() -> void:
-	add_child(load("res://scene/player/countdown.tscn").instantiate())
+	var lamps = load("res://scene/player/countdown.tscn").instantiate()
+	lamps.dropIn = true
+	add_child(lamps)
 
 func _process(_delta):
 	if Input.is_action_just_pressed("ui_menu"): openPause()
@@ -105,16 +108,29 @@ func updateGoonsCrushed():
 func updatePlayerRegion(tile) ->void:
 	%RegionChip.updatePlayerRegion(tile)
 
-#the crush goal flies to mid-screen while its slot machine opens, then back with the next goal
-func animateNewGoonCrushGoal(animatebackwards: bool = true) -> void:
+#a crush goal reached: a tape banner names the prize and the pill flashes gold in its corner while the
+#slot machine or The Deal arrives; called again (backwards) when it closes, to set the next goal
+func animateNewGoonCrushGoal(animatebackwards: bool = true, prize := "FREE SPIN") -> void:
 	if animatebackwards:
-		$AnimationPlayer.play_backwards("NewGoonCrushBonus")
 		nextCrushingAward = pow(( crushingAwardLevel + 1 ), 1.7) * awardBase
-	else:
-		$AnimationPlayer.play("NewGoonCrushBonus")
+		return
+	TapeBanner.post("CRUSH GOAL  -  " + prize, 0.6)
+	flashWidget($TopLeft/CrushPill)
 
-func animateNewRegion(animatebackwards: bool = true) -> void:
-	if animatebackwards:
-		$AnimationPlayer2.play_backwards("NewWave")
-	else:
-		$AnimationPlayer2.play("NewWave")
+#a wave survived in this region: the chip flashes and the star it paid flies to the star counter
+func waveSurvived() -> void:
+	flashWidget(%RegionChip)
+	Transition.sound("pop", -10.0)
+	var flyers = RewardFlyers.instance()
+	if flyers: flyers.launch(HudTheme.STAR_ICON, Transform2D(0.0, Vector2(0.5, 0.5), 0.0, %RegionChip.get_global_transform_with_canvas() * Vector2(30, 27)), "starui")
+
+#a new district: a road sign swings in with its name and the faction that holds it
+func districtEntered(region: Dictionary) -> void:
+	flashWidget(%RegionChip)
+	RoadSign.post(str(region.get("name", "")), Goons.factionName(region.get("faction", 0)) + " turf")
+
+func flashWidget(widget: Control) -> void:
+	if not is_instance_valid(widget): return
+	widget.flash = 0.0 if Settings.get_value("access/reduce_flashing") else 0.55
+	var t = widget.create_tween()
+	t.tween_property(widget, "flash", 0.0, 0.6)

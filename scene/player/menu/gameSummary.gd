@@ -81,6 +81,7 @@ func advanceSummary():
 		if not is_instance_valid(next): continue
 		next.visible = true
 		if next == stamp: slam(stamp)
+		elif next != continueButton: arrive(next)
 		if next == continueButton: continueButton.grab_focus()
 		return true
 	return false
@@ -176,7 +177,9 @@ func buildGameSummary():
 	addRow("Powerups", str(powerups), powerups > records.powerups)
 	addRow("Gems", str(car.gem), car.gem > records.gem)
 	addRow("Slot machines", str(car.slotMachines), car.slotMachines > records.slotMachines)
-	if not car.lotteryTickets.is_empty(): addRow("Lottery", "+%d  (%d matched)" % lottery, false)
+	if not car.lotteryTickets.is_empty():
+		addRow("Lottery", "+%d  (%d matched)" % lottery, false)
+		if lottery[1] > 0: rows.get_child(rows.get_child_count() - 1).set_meta("stamp", "MATCH!")
 	if car.bestCombo >= 3: addRow("Best combo", str(car.bestCombo), false)
 	addPayout(body, car.coin, car.star, paid, paid > records.coin)
 	records.goonsCrushed = maxi(records.goonsCrushed, crushed)
@@ -288,6 +291,7 @@ func addRow(name: String, value: String, isBest: bool) -> void:
 		badge.add_theme_stylebox_override("panel", MenuTheme.box(HudTheme.GAIN, Color(0, 0, 0, 0), 6, 0, Vector4(7, 0, 7, 0)))
 		badge.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		badge.add_child(ink("NEW BEST", 13, INK, HudTheme.BOLD))
+		badge.name = "badge"
 		row.add_child(badge)
 	var dots = Dots.new()
 	dots.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -315,6 +319,7 @@ func addPayout(body: VBoxContainer, coin: int, star: int, paid: int, isBest: boo
 		badge.add_theme_stylebox_override("panel", MenuTheme.box(HudTheme.GAIN, Color(0, 0, 0, 0), 6, 0, Vector4(7, 0, 7, 0)))
 		badge.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		badge.add_child(ink("NEW BEST", 13, INK, HudTheme.BOLD))
+		badge.name = "badge"
 		total.add_child(badge)
 	var gap2 = Control.new()
 	gap2.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -336,11 +341,37 @@ func makeStamp(text: String, color: Color) -> Control:
 	get_node("ticketRoot").add_child(holder)
 	return holder
 
+#the stamp lands like the shared Stamp (Stamp.gd): 140% to 100% in 110 ms, a clank and a 4 px rumble
 func slam(target: Control) -> void:
 	$AudioStreamPlayer_highImpact.play()
 	target.pivot_offset = target.size * 0.5
-	target.scale = Vector2(1.8, 1.8)
-	target.create_tween().tween_property(target, "scale", Vector2.ONE, 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	if Settings.reduce_motion():
+		target.modulate.a = 0.0
+		target.create_tween().tween_property(target, "modulate:a", 0.86, Transition.FADE_SECONDS)
+		return
+	target.scale = Vector2(1.4, 1.4)
+	var t = target.create_tween()
+	t.tween_property(target, "scale", Vector2.ONE, Stamp.SLAM_SECONDS).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	t.tween_callback(func():
+		Transition.sound("clank", -4.0)
+		Juice.rumble(get_node("ticketRoot"), "position", 4.0, 0.14))
+
+#a row printing onto the ticket: it fades in sliding 6 px from the left, and a NEW BEST badge pops
+func arrive(row: Control) -> void:
+	row.modulate.a = 0.0
+	var fade = row.create_tween()
+	fade.tween_property(row, "modulate:a", 1.0, 0.18)
+	var badge = row.find_child("badge", true, false)
+	if Settings.reduce_motion(): return
+	await get_tree().process_frame #the container has placed it by now
+	if not is_instance_valid(row): return
+	var home = row.position.x
+	row.position.x = home - 6.0
+	row.create_tween().tween_property(row, "position:x", home, 0.18).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	if badge: Juice.pop(badge, 1.2, 0.25)
+	if row.has_meta("stamp"): #a lottery match
+		var at = row.get_global_rect()
+		Stamp.slam(get_node("ticketRoot"), row.get_meta("stamp"), Vector2(at.end.x + 70.0, at.get_center().y), Color(0.17, 0.55, 0.26), 30, -1.0, -0.15)
 
 func addContinue(text: String, note: String) -> void:
 	var root = get_node("ticketRoot")

@@ -155,13 +155,7 @@ static func priceChip(amount: String, icon: Texture2D = HudTheme.COIN_ICON, affo
 	var row = HBoxContainer.new()
 	row.add_theme_constant_override("separation", 4)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var picture = TextureRect.new()
-	picture.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	picture.texture = icon
-	picture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	picture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	picture.custom_minimum_size = Vector2(18, 18)
-	row.add_child(picture)
+	row.add_child(iconRect(icon, 18))
 	var label = Label.new()
 	label.text = amount
 	label.add_theme_font_size_override("font_size", 15)
@@ -170,20 +164,14 @@ static func priceChip(amount: String, icon: Texture2D = HudTheme.COIN_ICON, affo
 	if not affordable: chipPanel.modulate = Color(1, 1, 1, 0.5)
 	return chipPanel
 
-#a plain icon TextureRect at a fixed size
+#a plain icon at a fixed size, resampled to its exact screen pixels so it stays sharp (CrispIcon)
 static func iconRect(texture: Texture2D, size: float) -> TextureRect:
-	var picture = TextureRect.new()
-	picture.texture = texture
-	picture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	picture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	picture.custom_minimum_size = Vector2(size, size)
-	picture.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	return picture
+	return CrispIcon.new(texture, size)
 
 const HOVER_SOUND := preload("res://sound/ui/click_2.wav")
 const PRESS_SOUND := preload("res://sound/ui/click.wav")
 
-#the menu clicks the old roadButton played, on the UI bus: one on focus, one on press
+#the menu clicks, on the UI bus: one on focus, one on press
 static func addSounds(b: BaseButton) -> void:
 	var player = AudioStreamPlayer.new()
 	player.bus = &"UI"

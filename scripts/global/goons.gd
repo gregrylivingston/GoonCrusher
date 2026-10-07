@@ -13,6 +13,9 @@ const FACTION_JITTER := 0.4
 const WILD_BELOW := 1.0
 const TRIBE_BELOW := 2.2
 const CHUNK_PX := 5120.0
+## The bake's resolution (RES in scripts/art/bake_goons.html): frames hold ART_RES texture px per game px,
+## and each goon's sprite is scaled 1 / ART_RES. test_goons.gd checks the baked scenes agree.
+const ART_RES := 2.0
 
 ## Wave mix: chance (in %) that a spawn uses the region's goon 1, 2 or 3, by the region's wave (1-4).
 ## Matches the HUD, which reveals goons 2 and 3 as the waves come.
