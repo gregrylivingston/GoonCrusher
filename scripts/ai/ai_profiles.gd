@@ -55,6 +55,9 @@ const DEFAULTS = {
 	"waterGoonPx": 350.0,      #goons this close to deep water aren't hunted (they drown on their own)
 }
 
+#the profile the game and the harnesses use when none is named (tournament winner, docs/AI_DRIVER.md)
+const BEST := "cautious"
+
 const PROFILES = {
 	"default": {},
 	#the driver as first tuned (2026-10-05), before notes on going forward, looking further and crushing

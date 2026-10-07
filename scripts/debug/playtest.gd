@@ -66,7 +66,7 @@ func _ready():
 			if not Root.gameModes.has(key): return fail("Unknown mode " + modeName)
 			for carName in listArg("car", "sedan"):
 				if carIndex(carName) < 0: return fail("Unknown car " + carName)
-				for profile in listArg("profiles", "cautious"):
+				for profile in listArg("profiles", AIProfiles.BEST):
 					if not AIProfiles.PROFILES.has(profile.split("+")[0]): return fail("Unknown AI profile " + profile)
 					for i in int(options.get("runs", 1)):
 						jobs.push_back({"level":level, "mode":key, "car":carName, "profile":profile, "seed":firstSeed + i})
