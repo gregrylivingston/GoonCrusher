@@ -53,6 +53,9 @@ const DEFAULTS = {
 	"waterSpeed": 340.0,       #the throttle lifts above this speed while deep water is ahead within 1.5x waterLookSeconds
 	"waterTargetPx": 400.0,    #pickups and roam points this close to deep water are skipped (unless on a bridge)
 	"waterGoonPx": 350.0,      #goons this close to deep water aren't hunted (they drown on their own)
+	#human imperfection (the rookie persona, scripts/ai/personas.gd); 0 drives as well as the driver can
+	"reactionTicks": 0,        #the keys reach the car this many ticks after the driver chooses them
+	"planSlop": 0.0,           #up to this many seconds of noise on each plan's cost: close calls go either way, some wrong
 }
 
 #the profile the game and the harnesses use when none is named (tournament winner, docs/AI_DRIVER.md)
@@ -74,6 +77,9 @@ const PROFILES = {
 		"reservePerSecond": 0.08},
 	#pickups first: fuel, health and prizes are worth twice as much
 	"collector": {"pickupScale": 2.0, "goonValue": 10.0, "crushReward": 0.5},
+	#a new player: reacts 0.2 s late, misjudges close calls, looks less far ahead and chases goons
+	"rookie": {"reactionTicks": 12, "planSlop": 0.8, "lookaheadPx": 1000.0, "probeSeconds": 1.0, "goonValue": 18.0,
+		"reserveBase": 5.0, "reservePerSecond": 0.02},
 }
 
 #the full parameter set for a spec ("name" or "name+key=value+..."); unknown names and keys are errors

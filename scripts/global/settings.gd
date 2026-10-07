@@ -32,6 +32,7 @@ const PRESET := {
 	"gfx/pickup_fx":       [0, 0, 1, 1],
 	"gfx/celebration":     [0, 1, 2, 2],
 	"gfx/reward_fx":       [0, 1, 2, 2],
+	"gfx/crush_fx":        [0, 1, 2, 2],        #crush effects (CrushFeel, GoonFx): minimal, reduced, full
 	"gfx/ground":          [0, 1, 1, 1],        #ground detail (gc_ground_quality): simple, full
 	"audio_perf/max_sfx":  [8, 12, 24, 24],
 }
@@ -67,6 +68,7 @@ const DEFAULTS := {
 	"gfx/pickup_fx": 1,
 	"gfx/celebration": 2,
 	"gfx/reward_fx": 2,
+	"gfx/crush_fx": 2,
 	"gfx/ground": 1,
 	"audio_perf/max_sfx": 24,
 
@@ -97,6 +99,8 @@ const DEFAULTS := {
 	"access/giant_color": 0,
 	"access/plain_text": false,
 	"access/car_shake": true,
+	"access/screen_shake": 2,
+	"access/hit_stop": true,
 	"access/hud_scale": 1.0,
 }
 
@@ -117,6 +121,7 @@ const OPTIONS := {
 	"gfx/pickup_fx": [0, 1],
 	"gfx/celebration": [0, 1, 2],
 	"gfx/reward_fx": [0, 1, 2],
+	"gfx/crush_fx": [0, 1, 2],
 	"gfx/ground": [0, 1],
 	"audio_perf/max_sfx": [8, 12, 24],
 	"gameplay/speed_units": ["mph", "kmh"],
@@ -124,6 +129,7 @@ const OPTIONS := {
 	"controls/vibration": [0, 1, 2],
 	"access/giant_style": [0, 1, 2],
 	"access/giant_color": [0, 1, 2, 3, 4],
+	"access/screen_shake": [0, 1, 2],
 }
 const RANGES := {
 	"audio/master": [0.0, 1.0], "audio/music": [0.0, 1.0], "audio/voice": [0.0, 1.0],

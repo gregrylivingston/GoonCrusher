@@ -41,6 +41,12 @@ One language for every screen change: a corrugated **garage shutter** for screen
 | Results | WRECKED: a wall of tire smoke, the ticket skids in from the left. Every other ending: the shutter slams over the run and the ticket prints up out of its rail in six pushes. | `gameSummary.intro` |
 | Back to the menu | The ticket pulls back into the rail, a door carries across the scene change (`Transition.carry`), and the garage rolls it up before counting the payout in. | `gameSummary.outro`, `main2._ready` |
 | Overlays | Goonopedia, Settings and the records ticket drop in a little and settle with a clank. | `Juice.dropIn`, `gameSummary.intro` |
+| Countdown (start lamps) | A drag-strip lamp rack: three ambers a second apart with a relay clunk, green on GO with a tire chirp and a puff off the car. At run start it drops in on its rail (`dropIn`); on resumes it is simply there. Same 3 s pause as before. | `countdown.gd/.tscn`, `playerRoot.addCountdown` |
+| Slot prizes (payout chute) | After Collect the hatch slams, the won symbols drop out of a chute under its rail (4 / 8 / 16 by Slot Celebration), bounce once and fly to the payout, then the panel peels out. Paid before it starts. | `PayoutChute`, `GameHatch.leave(whileShut)` |
+| Crush goal | A tape banner ("CRUSH GOAL - FREE SPIN" / "THE DEAL") and a gold flash on the pill; the slot machine arrives 0.9 s later. | `playerRoot.animateNewGoonCrushGoal` |
+| Wave survived / district | Waves: the region chip flashes and its star flies to the counter. New districts: a road sign swings in with the name and faction. | `playerRoot.waveSurvived/districtEntered`, `RoadSign` |
+| Milestones | Goonpocalypse target: a TARGET SMASHED stamp. Marathon station: a LEG n OF 3 banner. First crush of a goon: a NEW GOON banner. Lottery match: a MATCH! stamp on the ticket. Nightfall: a NIGHT FALLS banner and a headlight clunk. | `Stamp`, `TapeBanner` |
+| HUD | Toasts drop in with an overshoot and a rim flash, legendary ones get a stamp; the Nuke is an orange shockwave (no white-out); the station is an edge pill; blinks hold steady under Reduce Flashing; world labels use the HUD font; results rows slide in and the stamp lands like `Stamp`; reels settle with a clank; the wreck rolls smoke and shakes the camera. | `HudChance`, `HudTheme.blinkOn`, `GoonFx`, `gameSummary`, `slot_row.gd` |
 
 **Rules.**
 
@@ -134,4 +140,4 @@ None of these tests write the save.
 - **Per-car skins:** a `HudSkin` on `CarInfo` could tint a driver's card and the HUD.
 - **Car Paint** (`gameplay/car_paint`) could also be a toggle on the driver card.
 - **Region faction:** the HUD region chip doesn't show the district's faction yet.
-- **Leftover style resources:** `style/roadRogue.tres` is still referenced by `car.tscn`, `countdown.tscn` and `slotMachine.tscn` (whose hidden original buttons are `roadButton`s).
+- **Unused HUD animations:** `playerRoot.tscn`'s AnimationPlayer and AnimationPlayer2 (the old crush-pill and region-chip pops) are no longer played and can be deleted in the editor.

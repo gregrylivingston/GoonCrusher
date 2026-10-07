@@ -11,6 +11,7 @@ static func collect(car, id: String, pos: Vector2) -> void:
 		dropAndCollect(car, id, car.global_position)
 		return
 	Pickups.discover(id)
+	Pickups.countCollected(car, id)
 	car.powerupsCollected += 1
 	car.rewarded.emit(id, 1)
 	announce(id)

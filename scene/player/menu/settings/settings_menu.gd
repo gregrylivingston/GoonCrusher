@@ -146,6 +146,9 @@ func graphicsRows() -> Array:
 		{"type":"choice", "key":"gfx/reward_fx", "label":"Reward Pop-ups", "options":[[0, "Minimal"], [1, "Reduced"], [2, "Full"]],
 			"info":"How many collected rewards fly to the HUD at once (3, 10 or 20). Every reward is counted the moment you collect it, whatever this is set to.",
 			"perf":"Small to medium during purses and crowds."},
+		{"type":"choice", "key":"gfx/crush_fx", "label":"Crush Effects", "options":[[0, "Minimal"], [1, "Reduced"], [2, "Full"]],
+			"info":"What a crush leaves: Minimal is a flattened goon and a few bits; Reduced adds the squash, goo spatter and a few goons flung by fast hits; Full flings more goons and adds impact bursts. Crushes, combos and rewards count the same at every level.",
+			"perf":"Small, more in big crowds."},
 		{"type":"choice", "key":"audio_perf/max_sfx", "label":"Max Sound Effects", "options":[[8, "8"], [12, "12"], [24, "24"]],
 			"info":"How many goon, pickup and crush sounds can play at once. Engine, crash and voice sounds are separate and always play.",
 			"perf":"Small CPU saving on older processors."},
@@ -185,7 +188,7 @@ func controlRows() -> Array:
 func accessibilityRows() -> Array:
 	return [
 		{"type":"choice", "key":"access/reduce_motion", "label":"Reduce Motion", "options":onOff(),
-			"info":"Stops the 3D text wobble, freezes rainbow fills, makes the giant marker steady, turns off car shake, fades screen transitions, banners, signs and stamps instead of sliding or slamming them (no smoke or shake) and limits slot celebrations to Reduced. Camera zoom at speed is unchanged.", "perf":"Slightly faster"},
+			"info":"Stops the 3D text wobble, freezes rainbow fills, makes the giant marker steady, turns off car shake and crush screen shake, fades screen transitions, banners, signs and stamps instead of sliding or slamming them (no smoke or shake) and limits slot celebrations to Reduced. Camera zoom at speed is unchanged.", "perf":"Slightly faster"},
 		{"type":"choice", "key":"access/reduce_flashing", "label":"Reduce Flashing", "options":onOff(),
 			"info":"Minimal slot celebrations, HUD warnings that hold steady instead of blinking, no toast rim flash, a slower giant pulse and no over-bright giant glow.", "perf":"Slightly faster"},
 		{"type":"choice", "key":"access/giant_style", "label":"Giant Marker Style", "options":[[0, "Pulse"], [1, "Steady"], [2, "Tint + ground ring"]],
@@ -196,6 +199,10 @@ func accessibilityRows() -> Array:
 			"info":"Draws all 3D text flat, whatever Text Effects is set to.", "perf":"Faster in menus"},
 		{"type":"choice", "key":"access/car_shake", "label":"Car Shake", "options":onOff(),
 			"info":"The car body's shake at speed.", "perf":"None"},
+		{"type":"choice", "key":"access/screen_shake", "label":"Screen Shake", "options":[[0, "Off"], [1, "Low"], [2, "Full"]],
+			"info":"The camera's kick and shake when you crush goons, most of all giants and crowds. Reduce Motion turns it off.", "perf":"None"},
+		{"type":"choice", "key":"access/hit_stop", "label":"Hit-Stop", "options":onOff(),
+			"info":"A split-second freeze (about 1/20 s) when you crush a giant, a boss or a crowd at once.", "perf":"None"},
 		{"type":"slider", "key":"access/hud_scale", "label":"HUD Scale", "min":0.8, "max":1.3, "step":0.05, "format":percent,
 			"info":"Size of the in-run HUD: counters, region panel, crush goal and the car's bars. The view of the world is unchanged.", "perf":"None"},
 	]

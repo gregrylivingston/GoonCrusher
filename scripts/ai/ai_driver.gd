@@ -137,6 +137,8 @@ var nearGoonsNeed := PackedFloat32Array() #the speed each one takes to crush (IN
 
 #what the run looked like to the driver; the playtest harness reports these
 var stats := {"stuck":0, "escapes":0, "eco_seconds":0.0, "route_reached":true, "goals":{}, "think_usec":0}
+var delayed := PackedInt32Array() #keys chosen but not yet reaching the car (p.reactionTicks)
+var rng := RandomNumberGenerator.new() #plan noise (p.planSlop)
 
 #attaches a driver to a car whose _ready has run; options: sight ("human"/"full"), debug (bool),
 #profile (an AIProfiles spec, such as "crusher" or "default+horizonTicks=120")
@@ -146,6 +148,7 @@ static func attach(target: OverheadCarBody2D, options: Dictionary = {}) -> AIDri
 	driver.sight = options.get("sight", "human")
 	driver.debug = options.get("debug", false)
 	driver.p = AIProfiles.resolve(options.get("profile", AIProfiles.BEST))
+	if driver.p.planSlop > 0.0: driver.rng.seed = randi() #from the run's seed, so a seeded run replays
 	driver.name = "AIDriver"
 	driver.top_level = true #draws in world coordinates
 	driver.z_index = 100
@@ -177,6 +180,10 @@ func think() -> void:
 	var started = Time.get_ticks_usec()
 	decide()
 	stats.think_usec += Time.get_ticks_usec() - started
+	if p.reactionTicks > 0: #a human's reaction time: the car gets the keys chosen reactionTicks ago
+		delayed.push_back(keys)
+		keys = delayed[0] if delayed.size() > p.reactionTicks else 0
+		if delayed.size() > p.reactionTicks: delayed.remove_at(0)
 
 func decide() -> void:
 	tick += 1
@@ -746,6 +753,7 @@ func cheaper(best: Dictionary, candidate: Dictionary, ticks: int) -> Dictionary:
 	stats.usec_sim = stats.get("usec_sim", 0) + t1 - t0
 	stats.usec_score = stats.get("usec_score", 0) + Time.get_ticks_usec() - t1
 	if candidate == plan: cost -= p.samePlanBonus
+	if p.planSlop > 0.0: cost += rng.randf() * p.planSlop
 	lastCosts.push_back("%d/%d/%d=%.1f%s" % [candidate.steer, mini(candidate.steerTicks, 99), candidate.throttle, cost, "!" if rollout.get("hit", false) else ""])
 	return {"cost":cost, "plan":candidate, "rollout":rollout} if cost < best.cost else best
 

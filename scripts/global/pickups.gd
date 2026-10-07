@@ -392,3 +392,16 @@ static func isDiscovered(id: String) -> bool:
 static func discover(id: String) -> void:
 	if not DATA.has(id) || SaveManager.playerData == null: return
 	SaveManager.playerData.meta.get_or_add("pickups", {})[id] = true
+
+## Counts a collected pickup on the car (pickedById), for the run log's pickups by kind.
+static func countCollected(car, id: String) -> void:
+	if DATA.has(id) && is_instance_valid(car) && "pickedById" in car: car.pickedById[id] = car.pickedById.get(id, 0) + 1
+
+## A run's collected pickups (id -> count) as counts per kind, keyed by KIND_KEYS.
+const KIND_KEYS := ["supply", "tune", "boost", "gadget", "loot", "casino", "skill", "mode"]
+static func countByKind(byId: Dictionary) -> Dictionary:
+	var counts := {}
+	for key in KIND_KEYS: counts[key] = 0
+	for id in byId:
+		if DATA.has(id): counts[KIND_KEYS[DATA[id].kind]] += int(byId[id])
+	return counts

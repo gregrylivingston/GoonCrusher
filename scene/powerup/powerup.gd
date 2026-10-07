@@ -24,7 +24,9 @@ func _on_area_2d_body_entered(body):
 func sendReward(body, forShowOnly: bool = false):
 	if has_node("Area2D"): $Area2D.queue_free() #can't be collected twice
 	Audio.queueRequest(awardSound)
-	if not forShowOnly: Pickups.discover(Pickups.idForScene(scene_file_path)) #the Goonopedia shows it from now on
+	if not forShowOnly:
+		Pickups.discover(Pickups.idForScene(scene_file_path)) #the Goonopedia shows it from now on
+		Pickups.countCollected(body, Pickups.idForScene(scene_file_path))
 	body.reward(powerup , quantity, forShowOnly)
 	RewardFlyers.flyPowerup(self)
 	queue_free()

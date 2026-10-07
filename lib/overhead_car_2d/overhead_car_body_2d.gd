@@ -92,6 +92,7 @@ var currentGoonsCrushed:int = 0
 var crushedById := {} #goon id -> crushes this run, credited to the save's goonsCrushed by gameSummary
 var giantsCrushed: int = 0 #by the car itself; Goonpocalypse's score and the run log read it
 var slotMachines:int = 0
+var pickedById := {} #pickup id -> times collected this run (Pickups.countCollected); the run log counts them by kind
 
 @export var isPlayer = true
 var isDestroyed: bool = false #wrecked or out of fuel; the run is about to end
