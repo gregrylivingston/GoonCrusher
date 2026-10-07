@@ -1,6 +1,6 @@
 # Goons
 
-The goons are original art drawn by a code generator, in the same top-down Dust & Rust style as the cars. They replaced a third-party fantasy sprite set in October 2026. There are 43 goons in three factions, plus the Goonling that a Splitter bursts into. Each goon has one rule of its own (its verb), a tell before it acts, and a window when it can be punished. The concept page that chose the look is the claude.ai artifact "GoonCrusher Goon Art".
+43 generated goons in three factions, plus the Goonling a Splitter bursts into. Each has one rule of its own (its verb), a tell before it acts, and a window when it can be punished.
 
 ## Files
 
@@ -29,12 +29,11 @@ After a bake that adds new PNGs, run `Godot_console.exe --headless --path . --im
 | Goon Tribe | 2 | One mutant species with tools and tricks | Violet skin, pointed ears, an orange rag, car-junk kit |
 | Scrap Gang | 3 | Anything with an engine or wheels: human raiders, goon drivers, junk machines | Gang teal on every vehicle |
 
-- **Regions are districts.** The world generator splits each map into districts of about 40,000 px, bounded by the level's barriers (docs/WORLD.md). `WorldMap.setupDistricts` decides each one's faction, goons, name, tint, giantism and landmark once, seeded per district, and `Region.setDistricts` turns them into the run's regions. Each district has a faction landmark near its middle (`landmark_wild`, `_tribe`, `_scrap`, with a glowing top that reads at night; docs/WORLD_ART.md).
-- **Which faction holds a district** (`LevelRoster.factionAt`): the score is the district centroid's distance from the start in chunks × `Goons.DISTANCE_WEIGHT` (0.35), ± `Goons.FACTION_JITTER` (0.4) seeded per district, clamped to the level's `factionBand` (`world/levels/<id>.tres`). The start's own district scores as distance 0. Below `Goons.WILD_BELOW` (1.0) it is Wild, below `TRIBE_BELOW` (2.2) Tribe, else Scrap. So Prairie Run (band 0.0-1.4) is wild with tribal edges, and The Crusher (2.4-3.6) is all Scrap Gang. `Goons.factionFor` (with its level-index weight) is only the fallback when there is no level def.
-- **A district's three goons** (`LevelRoster.pickGoons`) come from the level's roster for that faction (`LevelDef.roster`, validated against `Goons.DATA` and padded from the faction's pool when short; a faction a level lists no goons for falls back to the Tribe's). Goon 1 is the lowest rank present (fodder); goons 2 and 3 are specials or heavies.
-- **Wave mix** (`WAVE_MIX`): in wave 1 a region spawns its goon 1 95% of the time, and goons 2 and 3 grow more common over waves 2 to 4. The HUD reveals goons 2 and 3 on the same schedule. Global time adds a wave every 2 minutes.
-- **Region data:** `Region.currentRegion.faction` (a `Goons.faction` value) and `Region.factionName()`. The keys `name`, `giantism`, `time`, `wave` and `goon` are unchanged; `goon` holds goon ids. The player's region changes when the car's coarse cell (1,280 px) enters another district; the wave counter carries over between districts of the same faction.
-- **Goonopedia:** a goon shows once it has been crushed. The dev console's `unlock goons` (also part of `unlock all`) reveals all of them, and `lock goons` hides them again.
+- **Regions are the world map's districts** (docs/WORLD.md, "Districts"): each district's faction, three goons, name and landmark are decided once, seeded per district. The faction comes from the distance to the start, clamped to the level's `factionBand` (`LevelRoster.factionAt`; below `Goons.WILD_BELOW` 1.0 Wild, below `TRIBE_BELOW` 2.2 Tribe, else Scrap). `Goons.factionFor` is only the fallback with no level def.
+- **A district's three goons** (`LevelRoster.pickGoons`) come from the level's roster for that faction: goon 1 the lowest rank (fodder), goons 2 and 3 specials or heavies.
+- **Wave mix** (`WAVE_MIX`): in wave 1 a region spawns goon 1 95% of the time; goons 2 and 3 grow more common over waves 2 to 4, and the HUD reveals them on the same schedule. Global time adds a wave every 2 minutes.
+- **Region data:** `Region.currentRegion` (`faction`, `name`, `giantism`, `time`, `wave`, `goon` = goon ids) and `Region.factionName()`.
+- **Goonopedia:** a goon shows once crushed; the console's `unlock goons` / `lock goons` override that.
 - **Testing:** `-- --faction=wild|tribe|scrap` forces every district's faction, and `-- --goons=a,b,c` forces its three goons. Both work with `--playtest` and `--bench`.
 
 ## The roster
@@ -111,16 +110,16 @@ A goon resists when any of these holds:
 A resisted hit calls the verb's `onResist`. That usually means `bounceCar`: the car keeps 35% of its speed and is pushed back, takes damage, and a label shows why ("BLOCKED", "TOO HEAVY", "HEAD-ON", "ROCK", "SHELL").
 
 **Death** (`destroy(cause)`):
-- **Causes:** `crush`, `boom` (killed by a blast), `self` (blew itself up) and `drown`. There is no water `Area2D`: `Walker.checkWater` reads `World.lethalAt` (the fine grid, deep water that isn't a bridge deck) every 4 ticks and calls `Walker.drown`, which leaves no decal, a splash ring instead (see "The world" below).
+- **Causes:** `crush`, `boom` (killed by a blast), `self` (blew itself up) and `drown` (a splash ring, no decal).
 - **What it leaves:** a pooled crush decal with a tyre print along the car's heading, bits in the faction's colours, death sounds, and the old Clover-based pickup chance. The node frees at once.
 - **Credit:** goons killed by blasts or a kicked shell count as crushes (`SpawnManager.creditCrush`). So does a goon that drowns within 3 s of the car touching it (a crush try, a bump, a lunge that hit, or the car alongside it), with a "SPLASH" label.
 
 ## The world
 
-Goons read the world through `WorldHooks` (`scripts/world/world_hooks.gd`): grid reads on the run's `WorldMap`, O(1) each, never physics queries, so all 250 can use them.
+Goons read the world through `WorldHooks` (`scripts/world/world_hooks.gd`): O(1) grid reads on the run's `WorldMap`, never physics queries (the function table is in docs/WORLD.md, "Goon and FX hooks").
 
-- **Water:** every 4 physics ticks (staggered by instance id) a solid goon over a lethal cell drowns (`Walker.checkWater`). Not-solid goons (buried, hopping, flying, riding the car) are immune until they land. A drowned Bandit's loot washes up on the nearest dry cell (`WorldHooks.bankNear`).
-- **Off screen** (outside the physics view) goons move without collision, so `advance` steps them with `WorldHooks.slideStep`: the whole step if open, else along one axis, else they hold. Water counts as blocked there, so no goon drowns unseen. On screen, walls are real `StaticBody2D`s and `move_and_slide` handles them.
+- **Water:** a solid goon over deep water drowns (`Walker.checkWater`, every 4 ticks); buried, hopping, flying and riding goons are immune until they land. Rules and credit: docs/WORLD.md, "Water".
+- **Off screen** goons move without collision through `WorldHooks.slideStep`, which treats water as blocked, so none drowns unseen. On screen, `move_and_slide` handles walls.
 - **Stuck:** a goon pressing a wall on screen and getting nowhere for 4 s (`Walker.isStuck`) is freed by the despawn sweep once it is off screen, whatever its distance. Defense keeps every goon near the station.
 - **Spawns:** spawn points must be `World.spawnableAt` (3 tries in `spawner.gd`); pack members that would land on water start at the pack's spot. Snappers spawn by a log prop and the Rat Pack out of a manhole when one is within 1,500 px of the spot and at least 1,600 px from the car (`SpawnManager.preferredSpot`).
 - **Props:** `SpawnManager.onNodeAdded` tags props as they stream in (`BreakableProp.tag`): `prop_log`, `prop_manhole`, `prop_crate` (Bandit bait: the Bandit breaks a crate open and steals what spills), `prop_carcass` (Buzzard perches, like crush decals) and `prop_explosive`.
@@ -150,5 +149,5 @@ Everything is delta-based. Telegraphs, projectiles, blasts and fire are unshaded
 ## Known gaps
 
 - Every goon still uses the old snarl, bash and death sounds. Vehicles need engine sounds, and critters need their own.
-- The tuning (speeds, crush thresholds, timings) comes from a headless playtest or two and has not been played by hand.
-- Giants are now 1.6× size and 1.5× speed; they were 4× speed in the demo.
+- The tuning (speeds, crush thresholds, timings) has not been played by hand.
+- Giants are 1.6× size (set, not multiplied, in `Walker._ready`) and 1.5× speed.

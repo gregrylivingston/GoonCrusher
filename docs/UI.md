@@ -1,6 +1,6 @@
 # Menus
 
-The menus were rebuilt in October 2026 from the "Marquee Cards" direction (concept report: the "GoonCrusher Menu Redesign" artifact). They use the same colors, fonts and pickup icons as the in-run HUD (`docs/HUD.md`), and every on-screen prompt shows the keyboard key or controller button the player is using.
+The menus use the same colors, fonts and pickup icons as the in-run HUD (`docs/HUD.md`), and every prompt shows the key or button for the device the player is using.
 
 ## Shared parts (`scene/ui/`)
 
@@ -75,7 +75,7 @@ Only the plain-language text lives in the script: `VERB_TEXT` (behaviour and tip
 
 ## In-run menus
 
-- **Pause** (`pauseMenu.gd`). A center card: Continue (Esc / Menu), Settings, Abandon run (it says how many coins the run keeps), and Quit game. These are separate buttons, and with Confirm Abandon / Quit on, each asks for a second press. Under them are the mode, clock and crush count, and the car's stats with a gold +N for what pickups added. It replaces the old paused stat list (`car_panel`, removed).
+- **Pause** (`pauseMenu.gd`). A center card: Continue (Esc / Menu), Settings, Abandon run (it says how many coins the run keeps), and Quit game. These are separate buttons, and with Confirm Abandon / Quit on, each asks for a second press. Under them are the mode, clock and crush count, and the car's stats with a gold +N for what pickups added.
 - **Results** (`gameSummary.gd`). A torn paper ticket.
   - **Reveal:** rows appear one at a time (time, then the mode's own row: Goonpocalypse score, Marathon stations reached or Defense barrier, then top speed, crushes, coins, powerups, gems, slot machines). The first fresh press speeds the reveal up and the next one continues; `isFreshPress` is covered by `test_progression.gd`.
   - **Payout:** coins × stars = paid, from `Root.computePayout`.
@@ -105,6 +105,6 @@ None of these tests write the save.
 ## Not done yet
 
 - **Per-car skins:** a `HudSkin` on `CarInfo` could tint a driver's card and the HUD.
-- **Car Paint:** the car-art session suggested putting the toggle (`gameplay/car_paint`) on the driver card.
-- **Region faction:** every region (a world district) has a faction now (`Region.currentRegion.faction`, `Region.factionName()`); the HUD region chip doesn't show it yet.
+- **Car Paint** (`gameplay/car_paint`) could also be a toggle on the driver card.
+- **Region faction:** the HUD region chip doesn't show the district's faction yet.
 - **Leftover style resources:** `style/roadRogue.tres` is still referenced by `car.tscn`, `countdown.tscn` and `slotMachine.tscn` (whose hidden original buttons are `roadButton`s).

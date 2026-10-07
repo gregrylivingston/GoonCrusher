@@ -1,6 +1,6 @@
 # Pickups
 
-There are 78 pickups in nine kinds and five rarities. Everything you tune lives in `scripts/global/pickups.gd` (`Pickups.DATA`), in the same way as goons in `Goons.DATA`. The design came from the "GoonCrusher Powerup Plan" artifact (October 2026). Curses from that plan are on hold (see "Maybe" in `docs/GAMEPLAY_SUGGESTIONS.md`).
+78 pickups in nine kinds and five rarities. Everything you tune lives in `scripts/global/pickups.gd` (`Pickups.DATA`). Curses are on hold (`docs/GAMEPLAY_SUGGESTIONS.md`, "Maybe").
 
 ## Files
 
@@ -47,11 +47,11 @@ The Goonopedia, the HUD flyers and the tests pick the new pickup up from the reg
 
 ## Drops
 
-- **How often:** unchanged. A crushed goon drops about 5% of the time, plus about 0.5% per Clover point (`walker.gd`).
+- **How often:** a crushed goon drops about 5% of the time, plus about 0.5% per Clover point (`walker.gd`).
 - **What drops:** `Walker.dropTable()` hands GoonFx a table holding `Pickups.ROLL`. When the drop lands, `Root.getPowerupFromWeights` sees that key and calls `Pickups.rollForCar(faction, bump)`.
   1. **Tier:** `TIER_WEIGHTS` = 64 / 26 / 8 / 1.6 / 0.4 for Common to Legendary. Each tier above Common is scaled by `1 + Dice / DICE_DIVISOR[tier]` (40, 25, 18, 12). Giants and bosses (Foreman) drop one tier up. After `PITY` (25) drops without a Rare or better, the next drop is a Rare.
   2. **Item:** a weighted pick inside the tier, filtered by mode and night and scaled by the goon's faction (`fac`). Scrap Gang drops more Nitro, Jerry Cans, Spark Plugs and EMPs; Wild Things drop more Repair Kits, Bait and Spare Tyres; the Goon Tribe drops more Wrenches, Toolboxes, Mines and Air Horns.
-- **The old table:** `Walker.powerupDropDict` and `Root.LUCK_WEIGHT_BONUS` remain for reference and for `getPowerupFromWeights` with a plain table. Goons no longer use them.
+- **The old table:** `Walker.powerupDropDict` and `Root.LUCK_WEIGHT_BONUS` serve only `getPowerupFromWeights` with a plain table; goons don't use them.
 - **Goonopedia shares:** `Goonopedia.dropShare(id, mode)` is a pickup's share of drops in a mode, before Dice and faction. The shares sum to 100 in every mode (tested).
 
 ## The kinds
@@ -102,7 +102,7 @@ The Goonopedia, the HUD flyers and the tests pick the new pickup up from the reg
 
 - **Supply drops:** first after 60 to 90 s, then every 90 to 120 s, 1500 px ahead of the car. A crate parachutes in for 2.5 s and becomes a Rare-or-better pickup.
 - **Events:** the Golden Goon, the Loot Truck, Goon Bowling and a Ring Run, one at a time. The first comes after 70 to 100 s, then one every 80 to 120 s. Each gets a toast and an edge-of-screen beacon.
-- **Chunk props:** `TileManager.loadChunk` calls `PickupWorld.decorateChunk` with the chunk's own seed. Never in a station or start chunk. Chances per chunk: crates 10%, Speed Trap 3%, Donut Zone 2.5%, Bullseye 2.5%, Prize Wheel 2%, Ring Run start 2%, bowling lane 1%. Props are children of the chunk's object node, so they unload with it and come back the same.
+- **Chunk props:** `ChunkView`'s last stage calls `PickupWorld.decorateChunk` with the chunk's own seed and moves each group onto one of the recipe's open `spots` (docs/WORLD.md). Never in a station or start chunk. Chances per chunk: crates 10%, Speed Trap 3%, Donut Zone 2.5%, Bullseye 2.5%, Prize Wheel 2%, Ring Run start 2%, bowling lane 1%. Props are children of the chunk's object node, so they unload with it and come back the same.
 - **The region-wave chest:** surviving a region wave (`Region._process`) also drops an Uncommon-or-better pickup ahead of the car.
 - **Records:** the Speed Trap keeps a record per level in `meta.records.speedtrap`.
 
@@ -126,7 +126,7 @@ These lines are all that pickups add to files other systems own. They are marked
 | `scene/enemy/walker/walker.gd` | `_physics_process`: Time Warp skip and lures. `tryCrush`: `crushOverride`. `destroy`: `dropTable()`. |
 | `scripts/global/root.gd` | `getPowerupFromWeights`: the `Pickups.ROLL` branch. |
 | `scene/level/levelRoot.gd` | `_ready`: `Pickups.resetRun()` and `PickupWorld`. `stationReached` opens the Pit Shop (`openPitShop`). |
-| `scene/level/tileManager.gd` | `loadChunk`: `PickupWorld.decorateChunk`. |
+| `scripts/world/chunk_view.gd` | The EXTRAS stage: `PickupWorld.decorateChunk`. |
 | `scene/level/station.gd` | `_on_driveway_body_entered`: `PickupEffects.onStationReached`. `repairBarrier`. |
 | `scripts/global/Region.gd` | `_process` wave: `PickupWorld.waveChest()`. |
 | `scene/enemy/spawnManager.gd` | `increaseGiantOdds`: the Panic Button. |
@@ -141,11 +141,10 @@ These lines are all that pickups add to files other systems own. They are marked
 
 ## Known gaps and tuning
 
-- Nothing is tuned by hand yet. The tier odds, weights, prices and event timers are first guesses for package 1's playtests. The run log doesn't count the new pickups by kind yet (the playtest's `goals` column shows what the AI chased).
+- Nothing is tuned by hand yet (package 1). The run log doesn't count pickups by kind yet.
 - The AI driver values pickups by `ai` but has no plan for events (it ignores the Golden Goon, the Loot Truck, rings, the wheel), and its gadget use is a few simple rules (`Gadgets.aiWantsUse`).
 - Monster Tires only scale the car's art; its collision stays the same size.
 - The Bandit can steal new pickups like any other.
-- The demo has every pickup. Decide whether `Root.IS_DEMO` should hold some back.
 
 ## Testing
 

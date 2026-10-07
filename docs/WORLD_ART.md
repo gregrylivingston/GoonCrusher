@@ -1,12 +1,12 @@
 # World art
 
-The world's ground, edges, props, station textures and level posters are original top-down art drawn by a code generator, in the same "Dust & Rust" style as the cars (docs/CAR_ART.md) and goons (docs/GOONS.md). They replace the third-party isometric tile packs, the pre-rendered rocks, the station's photo textures and the old painted posters. The bake writes everything into `res://world/art/`. The world system (docs/WORLD.md) decides where things go; this page covers what they look like and how they are made.
+The ground, edges, props, station textures and level posters are generated top-down art in the same "Dust & Rust" style as the cars and goons. The bake writes everything into `res://world/art/`. Where things go is docs/WORLD.md.
 
 ## Files
 
 | Path | What |
 |---|---|
-| `scripts/art/art_core.js` | Shared helpers: seeded `rng`, `hash2`, value noise and `fbm` (with an optional period, so tiles are seamless), periodic `worley`, colour maths, the overhead-lit `vol`/`polyVol`, `facetRock` and `tire` from the goon rigs, the grime pattern (plus a seamless twin), and the alpha-mask convex `hull`. Copied from `car_gen.js` and `goon_gen.js`, which keep their own copies so their output never changes. |
+| `scripts/art/art_core.js` | Shared helpers: seeded `rng`, noise and periodic `fbm`/`worley`, colour maths, the overhead-lit `vol`/`polyVol`, `facetRock`, `tire`, grime, and the alpha-mask convex `hull`. (`car_gen.js` and `goon_gen.js` keep their own copies so their output never changes.) |
 | `scripts/art/world_gen.js` | The generator (`window.WorldArt`): `GROUND` (materials), `EDGE` (strips), `PROPS` (the catalog: class, size and a draw function per prop), `STATION`, `POSTER` (one vignette per level) and the bake functions. **Change world art here.** |
 | `scripts/art/bake_world.html`, `scripts/art/bake_world.py` | The bake. `python scripts/art/bake_world.py [job ...] [--only id,id]` opens `bake_world.html#<job>:<ids>` in headless Edge (3 in parallel) and writes the files, `props.json`, the prop scenes and every `.import` file. |
 | `world/art/ground/` | 20 seamless materials (`<name>.png`, 512²) and `macro_noise.png` (256², greyscale). |
@@ -73,7 +73,7 @@ Godot_console.exe --headless --path . --import
 | `scrapwall` | symmetric: AO, junk panels, tyres and teal daubs in the middle, AO | |
 | `roof_edge` | the roof: AO cast by the parapet, its inner face, the lit coping (joints every 40 texels), its outer face on the contour | the building's AO on the pavement |
 
-`roof_edge` is the city's wall strip (`WorldSkin.WALL_STRIP`): city blocks used to get `kerb`, whose stones then lay on the roof. One-sided strips put the barrier (water, cliff top, canyon, kerb, roof) at the top (v = 0). Which side of a `Line2D` that lands on depends on the direction of its points, so build contours with a consistent winding and reverse the points if the lip faces the wrong way. `ChunkRecipe` does this: its lines run with the barrier on the left (docs/WORLD.md).
+`roof_edge` is the city's wall strip (`WorldSkin.WALL_STRIP`). One-sided strips put the barrier (water, cliff top, canyon, kerb, roof) at the top (v = 0). Which side of a `Line2D` that lands on depends on the direction of its points, so build contours with a consistent winding and reverse the points if the lip faces the wrong way. `ChunkRecipe` does this: its lines run with the barrier on the left (docs/WORLD.md).
 
 ## Props
 
@@ -91,55 +91,13 @@ Godot_console.exe --headless --path . --import
 
 ### Catalog
 
-Sizes are the solid sprite (alpha > 140) in world px; the hull may be smaller (`core`).
+The full list, with sizes, hulls and tags, is `props.json`. By class:
 
-| Id | Class | Size | Variants | Occluder | Notes |
-|---|---|---|---|---|---|
-| `rock` | TALL | 141×119 | 3 | yes | the Boulder goon's facet rig, so it hides among real rocks |
-| `boulder` | TALL | 280×235 | 2 | yes | three fused rocks |
-| `rock_white` | TALL | 145×125 | 2 | yes | pale limestone (quarry, frostbite) |
-| `rock_ice` | TALL | 144×120 | 2 | yes | ice block |
-| `rock_red` | TALL | about 141×119 | 3 | yes | red and ochre sandstone with strata, for Red Canyon (the grey `rock` looked out of place on the red ground) |
-| `boulder_red` | TALL | about 280×235 | 2 | yes | three fused sandstone rocks (canyon) |
-| `oak` | TALL | 271×237 | 3 | yes | hull is the canopy core (r 58) |
-| `pine` | TALL | 180×172 | 3 | yes | variant 2 is snowy; core r 36 |
-| `cypress` | TALL | 213×213 | 2 | yes | Spanish moss; core r 48 |
-| `log` | LOW | 243×56 | 2 | | the Snapper's disguise |
-| `stump` | LOW | 115×117 | 2 | | |
-| `saguaro` | TALL | 140×95 | 2 | yes | core r 34 |
-| `deadtree` | TALL | 245×229 | 2 | yes | core is the trunk |
-| `carcass` | LOW | 207×95 | 2 | | Buzzard perch |
-| `haybale` | STATEFUL | 124×123 | 2 | | breakable at 250 px/s |
-| `fence` | STATEFUL | 317×21 | 2 | | breakable at 180; rails or wire |
-| `hedge` | STATEFUL | 388×96 | 2 | yes | breakable at 300 |
-| `crate` | STATEFUL | 88×88 | 3 | | breakable at 150; Bandit bait (`tags.bait`) |
-| `shack` | TALL | 373×299 | 2 | yes | metal or plank roof |
-| `tent` | TALL | 192×195 | 2 | yes | hide tent, orange rag |
-| `totem` | TALL | 107×111 | 2 | yes | orange rags and a skull |
-| `firepit` | LOW | 136×129 | 1 | | |
-| `tyres` | LOW | 99×99 | 3 | | |
-| `barricade` | STATEFUL | 255×93 | 2 | | breakable at 350 |
-| `barrel` | STATEFUL | 53×53 | 3 | | breakable at 120, explosive |
-| `crane` | TALL | 541×216 | 1 | yes | hull is the tracks and deck, not the boom |
-| `fortwall` | WALL | 405×111 | 2 | yes | junk fort segment |
-| `cabin` | TALL | 341×280 | 2 | yes | snowy or patchy roof |
-| `snowcat` | TALL | 260×160 | 1 | yes | |
-| `wreck` | LOW | 92×193 | 5 | | rusted stage-2 renders of sedan, van, taxi, pickup and police |
-| `jersey` | WALL | 320×51 | 2 | yes | |
-| `cone` | LOW | 43×43 | 2 | | |
-| `gaspump` | LOW | 179×65 | 2 | | |
-| `sign` | LOW | 73×51 | 3 | | knocked-down stop sign, standing plate, arrow post |
-| `billboard` | TALL | 381×48 | 2 | yes | |
-| `hydrant` | LOW | 43×36 | 1 | | |
-| `dumpster` | LOW | 168×96 | 2 | | |
-| `busstop` | LOW | 256×88 | 1 | | |
-| `manhole` | STATEFUL | 61×61 | 1 | | not solid (collision disabled); Rat Pack spawn point |
-| `scrapheap` | TALL | 264×237 | 3 | yes | |
-| `container` | TALL | 484×189 | 3 | yes | rust, slate, olive |
-| `tank` | STATEFUL | 299×299 | 1 | yes | explosive; blast only |
-| `landmark_wild` / `_tribe` / `_scrap` | TALL | about 430 | 1 | yes | district landmarks; hull is the centre piece; a beacon glow each (amber embers, the Tribe's glowing eyes and rag-orange torches, a teal antenna light) |
-| `tufts`, `pebbles`, `cracks`, `bones`, `paint`, `oilstain`, `reeds`, `streetglow` | DECOR | 64-384 cells | 4 cells | | |
-| `rooftop` | DECOR | 160 cells | 4 cells | | city roofs: AC unit, vent cluster, water tank, skylight. Not in any dressing table: `ChunkRecipe.placeRoofs` lays it on BUILDING cells (`WorldSkin.ROOF_DECOR`) |
+- **TALL:** `rock`, `boulder`, `rock_white`, `rock_ice`, `rock_red`, `boulder_red`, `oak`, `pine`, `cypress`, `saguaro`, `deadtree`, `shack`, `tent`, `totem`, `crane`, `cabin`, `snowcat`, `billboard`, `scrapheap`, `container`, and the landmarks `landmark_wild`/`_tribe`/`_scrap` (each with a beacon glow).
+- **LOW:** `log` (the Snapper's disguise), `stump`, `carcass` (Buzzard perch), `firepit`, `tyres`, `wreck` (rusted renders of the player's cars), `cone`, `gaspump`, `sign`, `hydrant`, `dumpster`, `busstop`.
+- **STATEFUL:** `haybale`, `fence`, `hedge`, `crate` (Bandit bait), `barricade`, `barrel` (explosive), `tank` (explosive, blast only), `manhole` (not solid; Rat Pack spawn). Smash speeds: docs/WORLD.md, "Breakables".
+- **WALL:** `fortwall`, `jersey`.
+- **DECOR:** `tufts`, `pebbles`, `cracks`, `bones`, `paint`, `oilstain`, `reeds`, `streetglow`, and `rooftop` (laid on BUILDING cells by `ChunkRecipe.placeRoofs`, not by dressing).
 
 ### How a prop is baked
 
@@ -201,40 +159,18 @@ The root is a `StaticBody2D`, so the car's wall-hit checks (`World.isWall`) trea
 
 ## Posters
 
-`world/art/posters/<id>.png`, 1792×1024, one per level in `Levels.ORDER`: a top-down vignette at 0.75 poster px per world px (a 2389×1365 px window of the world), built from the same ground materials, props, cars (`CarArt`) and goons (`GoonArt`):
-
-| Poster | Signature |
-|---|---|
-| `prairie` | a creek with a ford where the dirt track crosses, hedgerows, a rail fence, oaks, a hay field |
-| `bayou` | lakes and channels, a plank boardwalk, cypresses, reeds, lily pads, floating logs, a shack |
-| `canyon` | a stratified red canyon, a mesa, a dry wash with the racer, saguaros, a tribal camp, a carcass with a buzzard |
-| `quarry` | a terraced pit with a ramp, a haul road, a junk fort ring with orange-rag totems, a crane |
-| `frostbite` | snowy terraced ridges around a pass, a frozen lake, pine stands, a cabin, a snowcat |
-| `highway` | a desert highway with lane paint, jersey barriers, a wreck pile-up, a gas station, a billboard |
-| `city` | a street grid at dusk with lamps, a canal under two bridges, rooftops, a park, a parking lot, a police car |
-| `crusher` | scrap mountains, container rows, two conveyor lanes, a tank farm, a crane |
-
-Each `POSTER` entry is a `ground(X, Y, o)` function (per pixel: materials, blend, tint, AO, lip, foam, paint) and a `dress(p)` function that queues props, decor, tyre tracks, the car and goons; the queue draws by layer and y. `city` gets a dusk multiply before its lights. Every poster gets a soft vignette and no text. Every `LevelDef.poster` (`world/levels/<id>.tres`) points at its poster here; the old paintings are deleted.
+`world/art/posters/<id>.png`, 1792×1024, one per level in `Levels.ORDER`: a top-down vignette of the level's signature barrier and surfaces at 0.75 poster px per world px, built from the same ground materials, props, cars (`CarArt`) and goons (`GoonArt`). Each `POSTER` entry is a `ground(X, Y, o)` per-pixel function and a `dress(p)` function that queues props, decor, tracks, the car and goons. No text. `LevelDef.poster` points here.
 
 ## Budget
 
-| Group | Files | Disk | VRAM (estimated, with mipmaps) |
-|---|---|---|---|
-| ground (BC7, macro lossless) | 21 | 10.4 MB | 7.3 MB |
-| edges | 9 | 0.4 MB | 2.4 MB |
-| props (lossless) | 110 | 4.6 MB | 23.5 MB |
-| decor | 9 | 0.4 MB | 3.4 MB |
-| station | 5 | 1.2 MB | 1.1 MB |
-| posters (BC7) | 8 | 27.4 MB | 19.6 MB |
-
-A level loads only its own materials (4-6, about 2 MB), the props its dressing names (a third to a half of the props) and the three landmarks with their beacons (about 2.2 MB), so world textures per level stay around 17 MB, well inside the 48 MB budget. If props ever need trimming, switch `props/*` to VRAM compression in `VRAM` in `bake_world.py` (BC7 keeps the alpha clean).
+About 44 MB on disk (posters 27 MB, ground 10 MB, props 5 MB). A level loads only its own materials (4–6), the props its dressing names and the three landmarks, about 17 MB of VRAM, inside the 48 MB budget. If props ever need trimming, switch `props/*` to VRAM compression in `VRAM` in `bake_world.py`.
 
 ## Adding a prop
 
 1. Add a design entry to `PROPS` in `world_gen.js`: `cls`, `box`, `n`, `shadow`, `grime`, `draw(c, R, v)` (overhead light: `vol`, `polyVol`, `crown` for the crown highlight and rim darkening), and `core` if the hull should be smaller than the drawing. Breakables get `breakable: {smashSpeed, box, broken(c, R), cell, debris(c, R, k)}`.
 2. `python scripts/art/bake_world.py prop --only <id>`, then `--import`.
 3. Add it to a level's `dressing` in `world/levels/<id>.tres` and re-bake props so its tags update.
-4. Add the id to `CATALOG` in `tests/game/test_world_art.gd` if it is part of the spec's catalog.
+4. Add the id to `CATALOG` in `tests/game/test_world_art.gd`.
 
 ## Adding a ground material or strip
 

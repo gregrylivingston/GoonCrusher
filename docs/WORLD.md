@@ -1,8 +1,6 @@
 # The world
 
-The world revamp (October 2026, branch `world-revamp`) replaced the old maps, terrain and level objects. Each of the 8 levels has its own generator grammar, signature barrier and surfaces. The map is built once per run on a worker thread, chunks are turned into "recipes" on worker threads, and the main thread only applies recipes a few nodes at a time. There are no TileMaps: the ground is drawn by one shader, walls are convex collision pieces traced from a field, and props are generated scenes.
-
-This page covers how the world is built and streamed, and how gameplay reads it. The art (materials, strips, props, posters, the bake) is in `docs/WORLD_ART.md`. Goons' use of the world is summarised in `docs/GOONS.md` ("The world"), and the AI driver's in `docs/AI_DRIVER.md`.
+Each of the 8 levels has its own generator grammar, signature barrier and surfaces. The map is built once per run on a worker thread, chunks are turned into "recipes" on worker threads, and the main thread only applies recipes a few nodes at a time. There are no TileMaps: the ground is drawn by one shader, walls are convex collision pieces traced from a field, and props are generated scenes. The art is in `docs/WORLD_ART.md`; the AI driver's view of the world is in `docs/AI_DRIVER.md`.
 
 ## Files
 
@@ -113,20 +111,7 @@ Each level is a `LevelDef` in `world/levels/<id>.tres`, listed in order by `Leve
 | 7 | `city` | Rust City | 3 | city | 500 s | building blocks and canals, bridged at every street | asphalt, lots, park grass and moss | 2.0–3.5 (Tribe, Scrap) | |
 | 8 | `crusher` | The Crusher | 3 | yard | 540 s | scrap mountains and container rows round yard plots | dirt, lots, oil, conveyors | 2.4–3.6 (Scrap) | |
 
-Roster highlights (the full lists are in each `.tres`; `LevelRoster` validates and pads them):
-
-| Level | Wild | Tribe | Scrap |
-|---|---|---|---|
-| prairie | jackalope, bandit, tusker, thunderhoof | grunt, spiker, dasher, hubcap | spoke, karter, sawbot |
-| bayou | bandit, snapper, spitter, tusker, jackalope | splitter, rat, shellback, skink, slinger | karter, slick, shredder |
-| canyon | rattler, buzzard, stinger, quill, yipper | nightcrawler, torch, boulder, doomcart | spoke, torcher, chainer |
-| quarry | bandit, tusker | grunt, foreman, wrecker, rammer, hubcap, slinger, doomcart, spiker | spoke, magnet |
-| frostbite | jackalope, yipper, bullmoose | skink, yeti, boulder, nightcrawler | sawbot, plowboss, harpooner, boostjack |
-| highway | buzzard, rattler | spiker, grunt, hubcap | spoke, chainer, torcher, slick, sidecar, karter |
-| city | bandit | rat, gremlin, grunt, slinger | turret, magnet, boostjack, karter, sawbot, spoke |
-| crusher | none (falls back to the Tribe's) | wrecker, rammer | plowboss, magnet, shredder, harpooner, boostjack, turret, chainer |
-
-A roster for a faction outside the level's band is never used by districts (the Scrap lists of the three act-1 levels, Goon Quarry's Wild and Scrap lists, the Wild lists of Route Nowhere and Rust City, The Crusher's Tribe list); only `-- --faction=` reaches it.
+Rosters are in each `.tres` (`LevelRoster` validates and pads them; a faction with no list falls back to the Tribe's). A roster for a faction outside the level's band is only reached by `-- --faction=`.
 
 Every level has `pickupsPerChunk = 2` and a `none` weight that grows with the order, so fuel, health, purses and slot machines keep their per-chunk rates while coins thin out from about 3 a chunk on prairie to about 1.5 on crusher (`test_world_recipe.gd` checks this). Every level also has sprint slack from 1.5 (prairie) down to 1.15 (crusher), and the clock, spawn timer and giant odds escalate with the order (`test_levels.gd` checks this). `LevelDef.blurb`, `barrier` and `surfaces` are the Goonopedia's level card text, and `Levels.GRAMMAR_TEXT` adds one line per grammar.
 
@@ -136,7 +121,7 @@ Every level has `pickupsPerChunk = 2` and a `none` weight that grows with the or
 - **Run:** `startPosition`, `seconds`, `spawnTimer`, `giantOdds`, `escalationSpeed`, `sprintSlack`, `modes` (a whitelist; empty offers every mode).
 - **Goons:** `factionBand` (Vector2 min/max score), `roster` (`{faction: [goon ids]}`).
 - **World:** `grammar`, `features` (the grammar's parameters, below), `baseTerrain` (terrain ids by noise band, low to high; the commonest is the level's main ground, the faster one on a tie: `WorldField.mainTerrain`), `accents` (surfaces sprinkled as patches; only "plain" surfaces count: grass, sand, mud, moss, dirt, snow, wash, deep snow, lot), `dressing` (`{faction: {prop id: weight}}`), `pickupTable` (`{kind: weight}`), `pickupsPerChunk`.
-- **Look:** `palette` (the shader's fallback colour when material images are missing), `nightTint`, `ambience` (both unused so far).
+- **Look:** `palette` (the shader's fallback colour when material images are missing), `nightTint`, `ambience` (both unused).
 
 `snapshot()` deep-copies every field into a plain Dictionary for worker jobs, because Resources aren't safe to share across threads.
 
@@ -158,8 +143,6 @@ Thresholds in `features` are raw noise values: plain simplex noise spans about �
 | highway | highways along +x every `highwaySpacing` px of y (highway 0 through the start), warped by up to `warpAmplitude`; branch roads along y every `branchEvery` chunks (each with `branchChance`); oil on the asphalt where a noise is above `oilAbove`; a dirt verge; gas station lots beside the highways every `gasStationEvery` chunks; rock outcrops (the only walls) where an fbm is above `rockAbove`, at least 1600 px off any road | `warpFrequency` 4e-5, `roadWidth` 1600, `branchWidth` 1000, `warpAmplitude` 3000, `highwaySpacing` 23040, `branchEvery` 3, `branchChance` 0.7, `gasStationEvery` 6, `oilAbove` 0.6, `rockAbove` 0.4 | HILLS; passes |
 | city | a street lattice on the coarse grid: in every group of 5 columns (and rows) a street at offset 0 and at 2 or 3 (hashed); street cells are asphalt; blocks between streets are buildings (inset by a `sidewalk`, lot underneath), parks (grass, moss) or lots, by share; some street rows are canals (never within 6000 px of the start's row), bridged at every street column | `buildingShare` 0.45, `parkShare` 0.2, `lotShare` 0.25, `canalShare` 0.1, `canalWidth` 1040, `sidewalk` 110 | BUILDING; bridges at the full street width; no shallows |
 | yard | plots of `plotSize` + 1 coarse cells, the last row and column of each being its fence line; each fence segment is a scrap mountain, a container row or open, and a walled one has a gap cell with `gapChance`; corners are always open; some plots are tank farms (lot, reserved for props); every `conveyorEvery`-th plot row has a conveyor along its middle, running +x or −x (hashed per plot row); oil spills where a noise is above `oilAbove` | `plotSize` 3, `scrapMountainShare` 0.25 (+0.35), `containerRows` 0.3 (×0.5), `tankFarmChance` 0.15, `gapChance` 0.6, `conveyorEvery` 4, `conveyorWidth` 640, `oilAbove` 0.55, `scrapWidth` 860, `containerWidth` 600 | HILLS; the gaps and corners |
-
-The `.tres` files also carry a few keys no code reads yet (`reedDensity`, `pineDensity`, `hedgeDensity`, `fenceDensity`, `pileupDensity`, `sideStreetChance`); the props they describe come from `dressing`.
 
 `WorldGen.grammarPost` adds what the fields alone don't say: city bridges (crossings at every street column of a canal row, reserved), yard belt directions (the coarse `aux` byte: 1 +x, 2 −x, 3 +y, 4 −y) and reserved tank farms, quarry set pieces (reserved, with their ramps and gates opened as crossings), and reserved gas station lots near the middle of the highway map.
 
@@ -330,7 +313,7 @@ Baked STATEFUL props carry their state as metadata on the root (`smashSpeed`, `b
 - **Smash** (`smashNode`): the broken sprite in place, collision and occluder off, a pooled 5-piece debris burst on tweens, coins spilled ahead of the car (collected the usual way, never credited from an animation), a dust puff, and the taken bit set.
 - **Explosives** (`detonate`, `explode`): deferred, once per prop, through `GoonFx.blast` (car damage, goons flattened with crush credit, the pooled explosion). Every blast calls `blastAt`, which sets off other explosives in its radius with a clear line (`WorldHooks.lineClear`) 0.12 s later, so a chain spreads a hop at a time and each prop goes off once. Doomcart blasts and the Sidecar's bombs set barrels off too.
 - **Goons:** `SpawnManager.onNodeAdded` tags props (`BreakableProp.tag`): `prop_log` (Snapper spawns), `prop_manhole` (Rat Pack spawns), `prop_crate` (the Bandit smashes one open and steals what spills), `prop_carcass` (Buzzard perches), `prop_explosive`.
-- **The AI** sweeps through a breakable when its predicted speed there is at least 1.15 × the smash speed, paying 0.25 s per prop; explosives are always walls (docs/AI_DRIVER.md).
+- **The AI** plans through breakables it is fast enough to smash; explosives are always walls (docs/AI_DRIVER.md).
 
 ## Water
 
@@ -340,7 +323,7 @@ Baked STATEFUL props carry their state as metadata on the root (`smashSpeed`, `b
 - **The ocean** fills the map's outer 2 coarse cells.
 - **Goons:** a solid goon over a lethal cell drowns (checked every 4 ticks, staggered by instance id; buried, hopping, flying and riding goons are immune until they land). A drowning within 3 s of the car touching the goon counts as a crush with a "SPLASH" label (`WorldHooks.drownCredited`, `SpawnManager.creditCrush`, also counted per goon for the Goonopedia). A drowned Bandit's loot washes up on the nearest dry cell (`WorldHooks.bankNear`). Off-screen goons treat water as blocked (`slideStep`), so none drowns unseen.
 - **Tethers:** harpoon and magnet tethers snap when the car is within 400 px of deep water (`WorldHooks.tetherMustBreak`). Oil and slime are never laid on shallows or within a fine cell of deep water (`hazardAllowed`).
-- **AI costs:** a plan whose centre crosses deep water ends with a death cost (1000 s); a footprint corner over it costs 30% of that per second; shallows cost 0.3 s per second; deep water ahead within 0.9 s of travel costs up to 8 s per second; above 340 px/s the throttle lifts while deep water lies ahead. Pickups and roam points within 400 px of deep water (not on a bridge) are skipped, and goons within 350 px of it aren't hunted (docs/AI_DRIVER.md).
+- **The AI** treats deep water as death in its plans and keeps goals away from it (docs/AI_DRIVER.md).
 
 ## The wall contact model
 
@@ -367,7 +350,7 @@ In `overhead_car_body_2d.gd` (`wallTick`, `wallContact`, `wallDamage`):
 | `bounce(pos, vel, delta)` | the kicked shell | reflects the blocked axis |
 | `nearestInGroup(tree, group, pos, maxDist)` | spawns, Bandit, Buzzard | the nearest tagged prop |
 
-Also: spawn points must be `World.spawnableAt` (3 tries in `spawner.gd`; pack members that would land on water start at the pack's spot); Snappers spawn by a log and the Rat Pack from a manhole within 1500 px of the spot and at least 1600 px from the car (`SpawnManager.preferredSpot`); a goon pressing a wall on screen for 4 s is swept once off screen (`Walker.isStuck`); chargers that hit a wall mid-charge are stunned twice as long.
+Spawning, props and FX rules for goons are in docs/GOONS.md ("The world").
 
 ## Determinism
 
@@ -432,14 +415,14 @@ Also: spawn points must be `World.spawnableAt` (3 tries in `spawner.gd`; pack me
 | `test_world_art.gd` | the baked art and manifest (docs/WORLD_ART.md) |
 | `test_save_migration.gd` | `SAVE_VERSION` 5: levels rebuilt from the registry, old unlocks carried by index, records rekeyed to ids |
 
-## Known issues and open items
+## Known issues
 
-- **Performance on the worker:** the map build takes 1.3–2.9 s and a chunk recipe about 4–13 ms on average (more on the busiest chunks), all GDScript. A C++ `WorldCore` (GDExtension) port of the field sampling, rasters and contours was considered, but the dev box has no compiler. The apply side stays inside its budget (2–3 over-budget frames in a long drive).
-- **Highway band edges** look blobby: the asphalt band's edge comes from the 128 px raster through organic blending, which is too soft for a road.
-- **The Tribe's landmark glows by day:** beacons are additive and unlit, so they read in daylight as well as at night.
+- **Worker speed:** the map build takes 1.3–2.9 s and a recipe about 4–13 ms on average, all GDScript. The apply side stays inside its budget.
+- **Highway edges** look blobby: the asphalt edge comes from the 128 px raster through organic blending.
+- **Landmark beacons glow by day** (additive and unlit); the Tribe's reads oddly in daylight.
 - **Frostbite's passes** can be sticky for heavy cars (deep snow and ice in narrow passes).
-- **Unused def fields:** `nightTint`, `ambience`, `modes` (no menu reads `offersMode`), and the density keys in some `features`. Rosters outside a level's band are dead data.
-- **Giantism** is per district but only shown on the HUD (gameplay suggestion T1-7).
-- **Marathon's later stations** are found on the finished map, so their lot's terrain isn't cleared the way the first station's is (props and pickups are); a chunk with a naturally clear lot is preferred within three rings. Clearing the terrain would mean editing the coarse flags, the A* grid and the cached rasters after the build.
-- **No first-run hints** explain deep water or breakables (see `docs/GAMEPLAY_SUGGESTIONS.md`).
-- **Merge:** the branch has to be merged with the main tree's parallel work; teammates own `goons.gd`, `scene/enemy/**`, `scene/pickups/` and `pickups.gd`, and the world's hooks there were kept small for that reason.
+- **Bumper-only car collision:** the car's shape is a front and a rear polygon, so its middle can wedge on prop and wall corners (`overlap=` in `PLAYTEST_STUCK`).
+- **Unused def fields:** `nightTint`, `ambience`, `modes` (nothing reads `offersMode`), and density keys in some `features` (`reedDensity`, `pineDensity`, `hedgeDensity`, `fenceDensity`, `pileupDensity`, `sideStreetChance`).
+- **Giantism** is per district but only shown on the HUD.
+- **Marathon's later stations** are found on the finished map, so their lot's terrain isn't cleared (props and pickups are kept out); a chunk with a naturally clear lot is preferred.
+- **No first-run hints** explain deep water or breakables.
