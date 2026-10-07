@@ -60,6 +60,7 @@ Everything the driver weighs is a parameter in `AIProfiles.DEFAULTS` (`scripts/a
 | `crusher` | plays for crushes: goons worth twice as much, flanks matter less, hunts until lower health |
 | `farsight` | simulates 2–3 s ahead tick by tick (several times the CPU) |
 | `collector` | pickups first: every pickup worth twice as much, goons less |
+| `rookie` | a new player (the Rookie persona): keys reach the car 0.2 s late (`reactionTicks`), up to 0.8 s of noise on each plan's cost (`planSlop`) so close calls sometimes go wrong, a shorter look ahead, chases goons |
 
 A spec can change values on the fly without editing the file: `crusher+horizonTicks=120+flankCost=2`. Use one in `--profiles` (separated by commas), in the tournament or in code (`AIDriver.attach(car, {"profile": ...})`).
 
@@ -92,6 +93,91 @@ To iterate: copy the winner into a new profile, change one or two values, and pl
   - `crush_misses`: goons the car hit at over 200 px/s that survived.
 - **Resources:** `min_fuel`, `min_health`, `end_fuel`, `end_health`.
 - **Driving:** `distance_px`, `avg_speed`, `top_speed`, `eco_seconds` (time spent saving fuel), `stuck`, `escapes`, `ai_ms` (the driver's own CPU per second of game time, wall clock, so inflated on a busy machine), and `goals` (how often it chose each kind of goal). `--trace` also splits `ai_ms` by layer at the end of each run.
+
+## Career playtests
+
+A career playtest has one of three **personas** play the whole game the way a player does. It starts from a chosen point in progress and goes through the real menus. It shops in the garage, picks a car, level, mode and starting gadget in run setup, and drives the run with the AI driver. It answers every screen that pauses the run, reads the results ticket and goes back to the garage, then starts again. Use it for deep checks: blocks, softlocks, menus that don't take input, economy and unlock mistakes, script errors, and how fast each kind of player progresses.
+
+```
+Godot_console.exe --headless --fixed-fps 60 --path . -- --career --persona=rookie --start=fresh --sessions=40 --uncapped > career.txt
+```
+
+- `scripts/debug/career.gd` (`CareerPilot`) is the harness. The `Playtest` autoload starts it with `--career` and records each run as it does for plain playtests (same CSV columns, plus `persona` and `session`).
+- `scripts/ai/personas.gd` (`Personas`) holds the personas and every decision they make. The functions are pure (save, run history and a seeded RNG in, choice out), so `tests/game/test_career.gd` covers them.
+- `scripts/ai/career_start.gd` (`CareerStart`) builds the starting saves.
+- `scripts/ai/career.py` runs several careers in parallel processes (`--personas rookie,grinder,explorer --starts fresh,mid,maxed --sessions 30`), then prints one table: runs, wins, minutes, modes beaten, cars and upgrades from start to end, the longest stall, issues and errors. After the table come coins per minute by mode, and every issue and script error with the careers that met it. `--report` prints the summaries already written.
+
+### The personas
+
+| | Rookie | Grinder | Explorer |
+|---|---|---|---|
+| Drives with | `rookie` (late keys, noisy plans) | `cautious` (`BEST`) | `crusher` |
+| Menus with | the mouse | keys | both, plus pad glyphs |
+| Runs | the obvious next one: the furthest open level's first unbeaten mode; after 3 losses in a row there, Countdown on the level before to farm coins | the path while it's winning, else the run that pays most per minute in its own history (20% sampling the others) | the level and mode it has played least, with the car it has driven least |
+| Garage | a new car the moment it is affordable, then the cheapest upgrade going | saves once the next car is within 3 average payouts; upgrades Engine, Armor, Oil, Traction first (no stat more than 2 levels ahead of the lowest) | buys every car to try it, then the stat it has least of |
+| Gems | never | a starting gadget only with 6+ gems, Nitro in the boost slot with 8+ left; slot rerolls when a spin paid nothing | gadgets, boosts, rerolls, new hands, raises at random |
+| In-run screens | slot bet 0; the rarest Deal card; the nearest claw prize; the first Pit Shop offer it can afford | bets 25 with 400+ run coins; the Deal card with the highest `ai` worth; the rarest claw prize; supplies in the Pit Shop | random bets; the card it hasn't discovered; extra claw grabs; buys the whole Pit Shop |
+| Side trips | Goonopedia or records sometimes (15%) | none | Goonopedia (every tab), records and Settings (every tab, changing nothing) every visit; pauses half its runs, opens Settings from pause; abandons 6% of runs |
+
+### Starting points
+
+`--start=` picks a `CareerStart.TIERS` entry. Every tier is a state play can reach: levels open in order, beaten modes follow the unlock chain, and only owned cars carry upgrades.
+
+| Tier | Levels and modes | Cars | Upgrades | Bank |
+|---|---|---|---|---|
+| `fresh` | a new save | sedan | none | 0 |
+| `early` | Countdown and Sprint beaten on level 1 | 2 | 3 per stat | 1,500 coins, 2 gems |
+| `mid` | levels 1-4 beaten through Goonpocalypse | 4 | 8 | 8,000, 5 |
+| `late` | levels 1-7 fully beaten, all open | 7 | 14 | 40,000, 12 |
+| `maxed` | everything beaten | all 9 | 20 (max) | 1,000,000, 99 |
+
+`--coins=`, `--gems=`, `--cars=`, `--upgrades=` and `--levels=` override a tier. `--save=<path>` starts from a copy of any save file instead (the file is only read). Progress always goes to a scratch save, `user://playtest/<tag>_save.tres`.
+
+| Option | Default | |
+|---|---|---|
+| `--persona=` | `rookie` | `rookie`, `grinder` or `explorer` |
+| `--start=` | `fresh` | a tier above |
+| `--sessions=N` | 30 | runs to play (one garage visit and one run each) |
+| `--minutes=N` | none | stop after this much level time |
+| `--seed=N` | 1 | run *k* uses map seed N + *k*; the persona's own choices use a generator seeded from it |
+| `--tag=` | `career_<persona>_<start>` | names the output files |
+| `--sight`, `--max-seconds` | | as for playtests |
+
+### How it plays the menus
+
+Menus get only what a player sends:
+- **Keys and pads:** an input action (`KeyHint.fire`), which `_input` handlers, the GUI and polling all see.
+- **Mouse:** a move, then a button down and up, pushed into the viewport at the control's centre.
+
+It never calls menu functions. A menu a player can't work blocks the persona too, and each block is reported as an issue. Before every click it checks which control the mouse is actually over. A click that would land on something else is a `mouse` issue: the "everything works with the mouse alone" rule, tested.
+
+Waits run on game time and real time together. A wait gives up only when both have passed: 5–20 s for menus and 120 s for a run to start. Three sessions in a row that end in a block stop the career. After a single block it changes scene to the main menu and carries on, as restarting the game would.
+
+### What it checks
+
+After every run:
+- The bank grew by exactly the run's payout.
+- Gems changed by the run's gems, less the starting gadget.
+- A win marked the mode beaten and opened the next level.
+- Nothing in the bank went negative.
+- The save on disk loads back equal to the one in memory.
+
+Every purchase must move the bank by its price and the stat by one level. Every pausing screen must close. A run paused with no menu open for 10 s is a `softlock`, and the harness unpauses it. Script and engine errors are caught by an `OS` logger, counted by message.
+
+### Output (`user://playtest/`)
+
+- `results<tag>.csv`: one row per run, the playtest columns plus `persona` and `session`.
+- `<tag>_events.log`: every press, click, purchase, screen and issue, by frame.
+- `<tag>_summary.json`, also printed as `CAREER_SUMMARY`:
+  - progress at the start and end (`CareerStart.progress`)
+  - **milestones** (each car bought, level opened and mode beaten, with the session and minutes of level time it took)
+  - `longest_runs_without_progress`, where this player stalls
+  - per mode: runs, wins and coins per minute
+  - shopping totals
+  - issues by kind (`block`, `ui`, `mouse`, `economy`, `progress`, `save`, `softlock`, `no_run`)
+  - script errors
+
+Lines to grep: `CAREER_RUN`, `CAREER_SHOP`, `CAREER_SCREEN`, `CAREER_ISSUE`, `CAREER_MILESTONE`, `CAREER_SUMMARY`.
 
 ## How it drives
 
@@ -195,7 +281,8 @@ Every candidate is scored **value ÷ (seconds to get there + 1)**. The current g
 
 ## Limits
 
-- **New pickups:** the driver values pickups by their registry `ai` worth but has no plan for events, and its gadget use is a few rules (`Gadgets.aiWantsUse`).
+- **New pickups:** the driver values pickups by their registry `ai` worth but has no plan for events, and its gadget and boost use is a few rules (`Gadgets.aiWantsUse`, `aiWantsMove`).
+- **Handbrake:** the driver never pulls it (`isPressed("Handbrake")` is false). `simulate()` leaves `CarInput.handbrake` off, so its predictions stay exact; teaching it to powerslide would mean a new key bit and candidates that hold it.
 - **Goon changes** need the goon rules re-checked (lunge range, crush rules, what is safe to touch); handling changes are followed automatically through `integrate()` and `carBodyArea`.
 - **Horizon:** the planner simulates 0.75 s and sweeps on to 1,600 px; long walls are left to the route, the station graph and the breadcrumb escape.
 - **CPU:** simulating plans is most of the cost (several hundred ms per game second on a busy dev box), so `ai` in the console can lower the frame rate. Plans that share a beginning could share its simulation.

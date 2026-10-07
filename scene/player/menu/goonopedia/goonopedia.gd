@@ -334,6 +334,14 @@ func _exit_tree() -> void:
 static func setTileArt(texture: Texture2D, b) -> void:
 	if is_instance_valid(b) && texture: b.get_node("art").texture = texture
 
+#a goon card's animation, if the card is still showing
+static func setPreviewFrames(frames, shown) -> void:
+	if is_instance_valid(shown): shown.setFrames(frames)
+
+#the same for a TextureRect itself (a level card's banner)
+static func setTexture(texture: Texture2D, rect) -> void:
+	if is_instance_valid(rect) && texture: rect.texture = texture
+
 #a goon's frame cropped to a square around the goon, so it fills its tile
 static func setGoonTileArt(texture: Texture2D, b) -> void:
 	if texture == null: return
@@ -589,8 +597,7 @@ func goonDetail(entry: Dictionary) -> void:
 	preview.silhouette = not known
 	panel.add_child(preview)
 	if ResourceLoader.exists(goonArt(id)): preview.still = load(goonArt(id))
-	var shownPreview = preview
-	loadThen(goonFrames(id), func(frames): if is_instance_valid(shownPreview): shownPreview.setFrames(frames))
+	loadThen(goonFrames(id), setPreviewFrames.bind(preview)) #bound, not captured: browsing on frees the preview first
 	titleRow(d.name.to_upper() if known else "???", [[Goons.factionName(faction).to_upper(), FACTION_COLORS[faction]], [RANK_NAMES.get(d.rank, "GOON"), HudTheme.RIM]])
 	paragraph(habitat(id), "MutedLabel")
 	if not known:
@@ -742,7 +749,7 @@ func levelDetail(entry: Dictionary) -> void:
 	var def := Levels.defAt(index)
 	var panel = hero(230)
 	var art = heroPicture(panel, null, TextureRect.STRETCH_KEEP_ASPECT_COVERED)
-	loadThen(def.poster if def else str(level.get("image", "")), func(t): if is_instance_valid(art): art.texture = t)
+	loadThen(def.poster if def else str(level.get("image", "")), setTexture.bind(art)) #bound, not captured: the card may be gone by then
 	var status = ["OPEN", HudTheme.OK] if isLevelOpen(index) else (["NOT IN DEMO", HudTheme.MUTED] if level.unlocked else ["LOCKED", HudTheme.BAD])
 	var chips = [status]
 	if def: chips.push_front(["ACT %d" % def.act, HudTheme.RIM])
@@ -855,7 +862,7 @@ func pickupDetail(entry: Dictionary) -> void:
 	var rows = []
 	var share = dropShare(id)
 	if share > 0.0: rows.push_back(["Share of drops", "%.1f%%" % share if share >= 0.1 else "%.2f%%" % share, minf(share * 4.0, 100.0)])
-	if d.has("secs") && d.kind == Pickups.K.BOOST: rows.push_back(["Lasts", "%d s" % d.secs])
+	if d.has("secs") && (d.kind == Pickups.K.BOOST || id == "nitro"): rows.push_back(["Lasts", "%d s" % d.secs])
 	if d.has("charges"): rows.push_back(["Uses", str(d.charges)])
 	if d.has("modes"): rows.push_back(["Modes", ", ".join(d.modes.map(func(m): return Root.gameModeDescription[m].name))])
 	if d.get("night", false): rows.push_back(["When", "Night only"])
@@ -863,7 +870,8 @@ func pickupDetail(entry: Dictionary) -> void:
 	if not factions.is_empty(): rows.push_back(["More from", ", ".join(factions.keys().map(func(f): return Goons.factionName(f)))])
 	if not rows.is_empty(): statTable(rows)
 	match d.kind:
-		Pickups.K.GADGET: tipRow("Gadgets wait in the slot above the systems strip. Press %s to use one. A rarer gadget replaces the one you hold; a commoner one is sold for coins." % InputGlyphs.label("UseItem"))
+		Pickups.K.GADGET: tipRow("Gadgets wait in the slot above the systems strip. Press %s to fire one. A rarer gadget replaces the one you hold; a commoner one is sold for coins." % InputGlyphs.label("UseItem"))
+		Pickups.K.MOVE: tipRow("Boosts wait in their own slot, beside the gadget. Press %s to fire one. A rarer boost replaces the one you hold; a commoner one is sold for coins." % InputGlyphs.label("UseMove"))
 		Pickups.K.BOOST: tipRow("Up to four power-ups run at once; their rings drain above the systems strip.")
 		_: tipRow("A crushed goon drops a pickup about %d%% of the time, plus about half a percent per point of Clover. Dice makes the drop rarer." % roundi(10.0 / 201.0 * 100.0))
 

@@ -9,7 +9,7 @@ extends Node
 
 signal changed(key: String, value)
 
-const VERSION := 1
+const VERSION := 2 #2: Handbrake and Boost / Hop bindings, Space off Use Gadget (migrate)
 const SETTINGS_PATH := "user://settings.cfg"
 const GRAPHICS_PATH := "user://graphics.cfg"
 const OVERRIDE_PATH := "user://override.cfg"
@@ -333,8 +333,24 @@ func load_all() -> void:
 	migrate(int(graphicsFile.get_value("meta", "version", VERSION)))
 	values["meta/version"] = VERSION
 
-func migrate(_fromVersion: int) -> void:
-	pass #add `if fromVersion < N:` blocks here when the format changes
+func migrate(fromVersion: int) -> void:
+	#add `if fromVersion < N:` blocks here when the format changes
+	if fromVersion < 2:
+		migrateDrivingKeys(values["controls/bindings"])
+		markDirty("controls/bindings")
+		markDirty("meta/version")
+
+#Version 2 split the Use button in three: Space became the Handbrake (it was Use Gadget's second key)
+#and Shift / LB / RB were new. A rebound Use Gadget drops Space, and any input the player already
+#gave another action stays theirs: the new action is saved without it.
+const NEW_IN_V2 := ["Handbrake", "UseMove"]
+static func migrateDrivingKeys(bindings: Dictionary) -> void:
+	if bindings.has("UseItem"): bindings["UseItem"] = bindings["UseItem"].filter(func(e): return e != {"key": KEY_SPACE})
+	for action in NEW_IN_V2:
+		if bindings.has(action) || not InputMap.has_action(action): continue
+		var defaults = InputMap.action_get_events(action).map(serialize)
+		var kept = defaults.filter(func(e): return not bindings.values().any(func(list): return list.has(e)))
+		if kept.size() != defaults.size(): bindings[action] = kept
 
 #writes only keys this version knows; unknown keys already in the files are left untouched
 func save_now() -> void:
@@ -710,7 +726,7 @@ func applyLighting() -> void:
 #--- key and button bindings ----------------------------------------------------------------
 #Each rebindable action has two keyboard slots and one controller slot. Only actions the player
 #changed are stored in controls/bindings; the rest keep the project defaults.
-const REBINDABLE := {"Accelerate":"Accelerate", "Brake":"Brake", "TurnLeft":"Steer Left", "TurnRight":"Steer Right", "UseItem":"Use Gadget", "ui_menu":"Pause"}
+const REBINDABLE := {"Accelerate":"Accelerate", "Brake":"Brake", "TurnLeft":"Steer Left", "TurnRight":"Steer Right", "Handbrake":"Handbrake", "UseItem":"Fire Gadget", "UseMove":"Boost / Hop", "ui_menu":"Pause"}
 const JOY_BUTTON_NAMES := ["A", "B", "X", "Y", "Back", "Guide", "Start", "L3", "R3", "LB", "RB", "D-Up", "D-Down", "D-Left", "D-Right"]
 const JOY_AXIS_NAMES := ["LS", "LS", "RS", "RS", "LT", "RT"]
 var defaultBindings := {}

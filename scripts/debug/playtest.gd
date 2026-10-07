@@ -14,6 +14,8 @@ extends Node
 #  is cut short, default 900)  --ai-debug (draw the AI's plan; not headless)  --trace (state once a
 #  second)  --tag=name
 #Progress goes to a scratch save, as with the benchmark, so the real save is never touched.
+#--career instead plays a whole career through the real menus as one of the Personas (CareerPilot,
+#scripts/debug/career.gd); its runs are recorded here the same way.
 
 const SCRATCH_SAVE = "user://playtest/playtest_save%s.tres" #per --tag, so parallel processes don't share one
 const MODE_ALIASES = {"countdown":"GOONCRUSHER"}
@@ -22,7 +24,8 @@ const COLUMNS = ["run", "level", "mode", "car", "profile", "seed", "upgrades", "
 	"clock", "time_left", "station_px", "station_left_px", "route_reached", "legs", "crushed", "coin", "star", "payout", "gem",
 	"slot_machines", "fuel_pickups", "health_pickups", "purses", "coins_picked", "gems_picked", "stat_pickups",
 	"damage_rocks", "damage_goon_contact", "damage_goon_attacks", "crush_misses", "min_fuel", "min_health",
-	"end_fuel", "end_health", "distance_px", "avg_speed", "top_speed", "eco_seconds", "stuck", "escapes", "ai_ms", "goals"]
+	"end_fuel", "end_health", "distance_px", "avg_speed", "top_speed", "eco_seconds", "stuck", "escapes", "ai_ms", "goals",
+	"pk_supply", "pk_tune", "pk_boost", "pk_gadget", "pk_loot", "pk_casino", "pk_skill", "pk_mode", "pk_move", "persona", "session"]
 
 var options := {}
 var jobs: Array = []
@@ -41,10 +44,11 @@ var clockSeen := false
 var slotPressTimer := 0.0
 var lastStuck := 0
 var speedBefore := 0.0 #the car's speed going into its last tick
+var career: CareerPilot #--career: the persona playing through the menus starts the runs
 
 func _ready():
 	options = parseArgs()
-	if not options.has("playtest"):
+	if not options.has("playtest") && not options.has("career"):
 		queue_free()
 		return
 	if options.has("world-preview"): #print generated worlds and quit (scripts/debug/world_preview.gd)
@@ -55,8 +59,16 @@ func _ready():
 	Settings.on_menu_ready() #runs leave the menu before main2 reports it, which would count as a crashed boot
 	Settings.set_value("display/pause_unfocused", false, false)
 	DirAccess.make_dir_recursive_absolute("user://playtest")
-	SaveManager.save_path = SCRATCH_SAVE % str(options.get("tag", ""))
 	maxSeconds = float(options.get("max-seconds", 900.0))
+	if options.has("career"):
+		career = CareerPilot.new()
+		career.playtest = self
+		var problem := career.setup(options) #writes the starting save before the menu loads it
+		if problem != "": return fail(problem)
+		add_child(career)
+		get_tree().node_added.connect(onNodeAdded)
+		return
+	SaveManager.save_path = SCRATCH_SAVE % str(options.get("tag", ""))
 	var firstSeed = int(options.get("seed", 1))
 	for levelArg in listArg("level", "prairie"):
 		var level := String(Levels.resolve(levelArg)) #an id, an index in Levels.ORDER or an old scene name
@@ -117,6 +129,15 @@ func startNext() -> void:
 		data.cars[data.selectedCar].upgrades = levels
 	Root.selectedCar = data.cars[data.selectedCar]
 	seed(job.seed)
+	beginRow(job, upgrades)
+	print("PLAYTEST_RUN %d/%d %s %s %s %s seed=%d" % [jobIndex + 1, jobs.size(), job.level, job.mode.to_lower(), job.car, job.profile, job.seed])
+	Region.resetRegions()
+	Root.isRunActive = false
+	get_tree().paused = false
+	get_tree().change_scene_to_node(RunView.wrap(load(Levels.scenePath(job.level)).instantiate()))
+
+#the run's state and its row, before the level loads
+func beginRow(job: Dictionary, upgrades: String) -> void:
 	car = null
 	driver = null
 	recorded = false
@@ -128,13 +149,18 @@ func startNext() -> void:
 		"upgrades":upgrades, "sight":str(options.get("sight", "human")),
 		"fuel_pickups":0, "health_pickups":0, "purses":0, "coins_picked":0, "gems_picked":0, "stat_pickups":0,
 		"crush_misses":0, "damage_rocks":0.0, "damage_goon_contact":0.0, "damage_goon_attacks":0.0, "min_fuel":100.0, "min_health":100.0, "distance_px":0.0, "timeout":false}
-	print("PLAYTEST_RUN %d/%d %s %s %s %s seed=%d" % [jobIndex + 1, jobs.size(), job.level, job.mode.to_lower(), job.car, job.profile, job.seed])
-	Region.resetRegions()
-	Root.isRunActive = false
-	get_tree().paused = false
-	get_tree().change_scene_to_node(RunView.wrap(load(Levels.scenePath(job.level)).instantiate()))
+
+#--career: the menu started a run (the save holds what the persona chose); record it like a job
+func beginCareerRun() -> void:
+	var data = SaveManager.playerData
+	var job = {"level":String(Levels.ORDER[data.selectedLevel]), "mode":str(Root.gameModes.find_key(data.gameMode)),
+		"car":data.cars[data.selectedCar].name, "profile":career.persona.profile, "seed":int(options.get("seed", 1)) + jobs.size()}
+	jobs.push_back(job)
+	jobIndex = jobs.size() - 1
+	beginRow(job, "save")
 
 func onNodeAdded(node: Node) -> void:
+	if career && node is Level: beginCareerRun()
 	if jobIndex < 0 || jobIndex >= jobs.size(): return
 	if node is Level: seed(jobs[jobIndex].seed) #again, as late as possible: the menu frames between use the RNG too
 	elif node is TileManager: node.worldSeed = jobs[jobIndex].seed
@@ -166,7 +192,7 @@ func _physics_process(delta):
 		if not recorded: recordRun()
 		return
 	if get_tree().paused:
-		tapSlotMachine(delta)
+		if not career: tapSlotMachine(delta) #a persona answers pausing screens itself
 		return
 	if Root.levelRoot.clockReady && not clockSeen:
 		clockSeen = true
@@ -400,10 +426,14 @@ func recordRun() -> void:
 			var parts = []
 			for key in ["usec_goal", "usec_aim", "usec_plan", "usec_sim", "usec_score", "usec_recover"]: parts.push_back("%s=%.0f" % [key.trim_prefix("usec_"), driver.stats.get(key, 0) / 1000.0 / maxf(levelTime, 0.1)])
 			print("PLAYTEST_AI_MS per game second: " + " ".join(parts))
+	var kinds = Pickups.countByKind(car.pickedById)
+	for kind in kinds: row["pk_" + kind] = kinds[kind]
 	row.score = snappedf(runScore(row), 0.1)
+	if career: career.onRunRecorded(row) #adds persona and session
 	results.push_back(row.duplicate())
 	print("PLAYTEST_RESULT " + JSON.stringify(row))
 	appendCsv(row)
+	if career: return #the persona reads the results ticket and goes back to the garage
 	await get_tree().create_timer(0.5).timeout
 	startNext()
 

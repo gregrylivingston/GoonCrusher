@@ -36,7 +36,7 @@ func test_every_pickup_is_complete():
 		for key in ["name", "kind", "rarity", "w", "icon", "text", "ui"]: assert_true(d.has(key), "%s has %s" % [id, key])
 		assert_true(ResourceLoader.exists("res://texture/icon/%s.svg" % d.icon), "%s: icon %s.svg" % [id, d.icon])
 		if d.kind == Pickups.K.BOOST: assert_gt(Pickups.ticks(id), 0, "%s lasts" % id)
-		if d.kind == Pickups.K.GADGET: assert_true(d.has("charges"), "%s has charges" % id)
+		if d.kind == Pickups.K.GADGET || d.kind == Pickups.K.MOVE: assert_true(d.has("charges"), "%s has charges" % id)
 		if d.has("scene"): assert_true(ResourceLoader.exists(d.scene), "%s scene" % id)
 
 func test_every_pickup_flies_to_a_hud_widget():
@@ -153,6 +153,31 @@ func test_gadget_slot_keeps_the_rarer_one():
 	assert_eq(c.heldItem, "mine")
 	assert_false(c.giveItem("oilslick"), "commoner is refused (sold)")
 	assert_eq(c.heldItem, "mine")
+
+func test_boosts_take_their_own_slot():
+	var c = car()
+	assert_true(c.giveItem("mine"))
+	assert_true(c.giveItem("hop"), "a boost doesn't compete with the gadget")
+	assert_eq(c.heldItem, "mine")
+	assert_eq(c.moveItem, "hop")
+	assert_eq(c.moveCharges, 3)
+	assert_true(c.giveItem("jets"), "rarer replaces")
+	assert_eq(c.moveItem, "jets")
+	assert_false(c.giveItem("nitro"), "commoner is sold")
+	assert_eq(c.moveItem, "jets")
+	for id in ["nitro", "hop", "jets"]: assert_eq(Pickups.def(id).ui, "moveui", id + " flies to the boost box")
+
+func test_a_nitro_charge_starts_the_burn():
+	var c = car()
+	c.giveItem("nitro")
+	assert_eq(c.moveCharges, 2, "nitro is held, not burnt on pickup")
+	assert_false(c.hasBuff("nitro"))
+	c.useMove()
+	assert_true(c.hasBuff("nitro"), "Boost burns one")
+	assert_eq(c.moveCharges, 1)
+	c.useMove()
+	assert_eq(c.moveItem, "", "the slot empties with the last charge")
+	assert_eq(c.buffs["nitro"], Pickups.ticks("nitro") * 2, "a second charge adds its time")
 
 func test_supplies_and_tune_ups():
 	var c = car()

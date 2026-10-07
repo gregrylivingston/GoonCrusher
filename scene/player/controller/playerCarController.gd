@@ -13,8 +13,10 @@ func _provide_input(_input):
 	elif Settings.menu_open: #the dev console is open over the running game: keys are typing, not driving
 		_input.acceleration = 0.0
 		_input.braking = false
+		_input.handbrake = false
 		_input.steering *= 0.9
 		return _input
+	_input.handbrake = pressed("Handbrake") #a powerslide (OverheadCarBody2D.HANDBRAKE_*)
 	if pressed("Accelerate"):
 		if car.gear < 1:car.setForwardCollisionMode(true)
 		_input.acceleration = 1.0

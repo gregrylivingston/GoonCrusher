@@ -365,7 +365,9 @@ func applySheet(amount: float) -> void:
 	compact.visible = compact.modulate.a > 0.0
 	sheet.modulate.a = clampf(amount * 2.0 - 1.0, 0.0, 1.0)
 	sheet.position.y = SHEET_ART_HEIGHT + BAND_HEIGHT + 8 + (1.0 - amount) * 40.0
-	sheet.visible = sheet.modulate.a > 0.0
+	#shown (if still clear) for all of upgrade mode: hiding it early in the fade-in dropped the focus the
+	#sheet's first row had just taken, leaving keys and pads with nothing to move
+	sheet.visible = sheet.modulate.a > 0.0 || upgrading
 
 func onMainPressed() -> void:
 	if isLocked(): unlockPressed.emit()

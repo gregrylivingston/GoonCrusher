@@ -221,6 +221,8 @@ func creditCrush(pos: Vector2, goon: Object = null) -> void:
 		announceNewGoon(goon)
 	Root.playerCar.reward("currentGoonsCrushed", 1)
 	RewardFlyers.flyUpgrade(Root.upgrade.CURRENTGOONSCRUSHED, pos)
+	var feel = Root.playerCar.get("crushFeel")
+	if is_instance_valid(feel): feel.onIndirect(pos) #a blast through a crowd is a multi-crush too
 
 #the first crush ever of a kind of goon unlocks its Goonopedia page: say so with a tape banner
 func announceNewGoon(goon: Object) -> void:

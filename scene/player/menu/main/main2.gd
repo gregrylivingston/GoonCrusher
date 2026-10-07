@@ -271,39 +271,90 @@ func buildSetup() -> void:
 	startButton.add_theme_font_size_override("font_size", 30)
 	startButton.pressed.connect(onStartPressed)
 	setup.add_child(startButton)
-	loadoutButton = MenuTheme.button("", PackedStringArray(["ui_upgrade"]), false)
-	loadoutButton.position = Vector2(200, 744)
-	loadoutButton.size = Vector2(390, 68)
-	loadoutButton.pressed.connect(cycleLoadout)
-	setup.add_child(loadoutButton)
+	loadoutButton = loadoutSlotButton("ui_upgrade", Vector2(200, 744), cycleLoadout)
+	boostButton = loadoutSlotButton("ui_boost", Vector2(1010, 744), cycleBoost)
 	refreshLoadout()
 
-#---------- the gadget loadout ----------
-#Banked gems buy one gadget to start a run with (Pickups.LOADOUT). The choice is kept in
-#meta.records.loadout; the gems are spent when the run starts.
-var loadoutButton: Button
+#U / Y (B / RS for the boost) and clicks drive it; focus stays on START so Accept always starts
+func loadoutSlotButton(action: String, at: Vector2, onPress: Callable) -> Button:
+	var b := MenuTheme.button("", PackedStringArray([action]), false)
+	b.position = at
+	b.size = Vector2(390, 68)
+	b.add_theme_font_size_override("font_size", 17)
+	b.pressed.connect(onPress)
+	b.focus_mode = Control.FOCUS_NONE
+	setup.add_child(b)
+	return b
+
+#---------- the loadout ----------
+#Banked gems buy a consumable for each of the car's two slots to start a run with: a gadget for the
+#Fire slot (Pickups.LOADOUT, kept in meta.records.loadout) and a boost for the Boost slot
+#(Pickups.BOOST_LOADOUT, meta.records.boostLoadout). Each button says which key fires it in the run.
+#The gems are spent when the run starts, the gadget's first.
+const SLOTS := ["loadout", "boostLoadout"]
+var loadoutButton: Button #the gadget's (the career harness presses it)
+var boostButton: Button
+
+static func slotPrices(slot: String) -> Dictionary:
+	return Pickups.LOADOUT if slot == "loadout" else Pickups.BOOST_LOADOUT
+
+static func slotChoice(slot: String) -> String:
+	var id: String = SaveManager.playerData.meta.get("records", {}).get(slot, "")
+	return id if slotPrices(slot).has(id) else ""
+
+## What the slot will really buy at Start: its choice, or "" when the gems left after the slots before
+## it don't cover it
+static func slotPurchase(slot: String) -> String:
+	var gems: int = SaveManager.playerData.gem
+	for s in SLOTS:
+		var id := slotChoice(s)
+		var cost: int = slotPrices(s).get(id, 0)
+		var buys := id != "" && gems >= cost
+		if buys: gems -= cost
+		if s == slot: return id if buys else ""
+	return ""
 
 func loadoutChoice() -> String:
-	var id: String = SaveManager.playerData.meta.get("records", {}).get("loadout", "")
-	return id if Pickups.LOADOUT.has(id) else ""
+	return slotChoice("loadout")
 
 func cycleLoadout() -> void:
-	var options := [""] + Pickups.LOADOUT.keys()
-	var at := options.find(loadoutChoice())
+	cycleSlot("loadout")
+
+func cycleBoost() -> void:
+	cycleSlot("boostLoadout")
+
+## The next choice the gems cover alongside the other slot's, or none
+func cycleSlot(slot: String) -> void:
+	var prices := slotPrices(slot)
+	var other: String = SLOTS[1 - SLOTS.find(slot)]
+	var budget: int = SaveManager.playerData.gem - slotPrices(other).get(slotPurchase(other), 0)
+	var options := [""] + prices.keys()
+	var at := options.find(slotChoice(slot))
 	for i in options.size():
 		at = wrapi(at + 1, 0, options.size())
-		if options[at] == "" || SaveManager.playerData.gem >= Pickups.LOADOUT[options[at]]: break
-	SaveManager.playerData.meta.records["loadout"] = options[at]
+		if options[at] == "" || budget >= prices[options[at]]: break
+	SaveManager.playerData.meta.records[slot] = options[at]
 	SaveManager.save_character_data()
 	refreshLoadout()
 
 func refreshLoadout() -> void:
-	if not is_instance_valid(loadoutButton): return
-	var id := loadoutChoice()
-	if id != "" && SaveManager.playerData.gem < Pickups.LOADOUT[id]: id = ""
-	loadoutButton.text = "GADGET:  NONE" if id == "" else "%s  -  %d GEM%s" % [Pickups.displayName(id).to_upper(), Pickups.LOADOUT[id], "" if Pickups.LOADOUT[id] == 1 else "S"]
-	loadoutButton.icon = Pickups.texture(id) if id != "" else null
-	loadoutButton.add_theme_constant_override("icon_max_width", 34)
+	for pair in [[loadoutButton, "loadout", "UseItem", "GADGET"], [boostButton, "boostLoadout", "UseMove", "BOOST"]]:
+		var button: Button = pair[0]
+		if not is_instance_valid(button): continue
+		var id := slotPurchase(pair[1])
+		var key := InputGlyphs.label(pair[2])
+		if id == "":
+			button.text = "%s:  NONE
+Start with one, fired with %s" % [pair[3], key]
+			button.tooltip_text = ""
+		else:
+			var cost: int = slotPrices(pair[1])[id]
+			var uses: int = Pickups.DATA[id].get("charges", 1)
+			button.text = "%s%s  -  %d GEM%s
+In the run: press %s" % [Pickups.displayName(id).to_upper(), "  x%d" % uses if uses > 1 else "", cost, "" if cost == 1 else "S", key]
+			button.tooltip_text = Pickups.DATA[id].get("text", "")
+		button.icon = Pickups.texture(id) if id != "" else null
+		button.add_theme_constant_override("icon_max_width", 34)
 
 #the level at a save index as the registry describes it (Levels): poster art, name and scene
 static func levelDef(index: int) -> LevelDef:
@@ -663,10 +714,14 @@ func refreshMedallion(column: Control, mode: int, selected: bool, level: Diction
 func onStartPressed() -> void:
 	var index = SaveManager.playerData.selectedLevel
 	if screen == Screen.SETUP && isLevelSelectable(index) && Root.isModePlayable(selectedLevelForModes(), SaveManager.getGameMode()):
-		var gadget := loadoutChoice()
-		if gadget != "" && SaveManager.playerData.gem >= Pickups.LOADOUT[gadget]:
+		var gadget := slotPurchase("loadout")
+		var boost := slotPurchase("boostLoadout") #worked out before either is paid for
+		if gadget != "":
 			SaveManager.playerData.gem -= Pickups.LOADOUT[gadget]
-			Pickups.loadout = gadget #the car takes it in its first tick (OverheadCarBody2D.tickPickups)
+			Pickups.loadout = gadget #the car takes both in _ready
+		if boost != "":
+			SaveManager.playerData.gem -= Pickups.BOOST_LOADOUT[boost]
+			Pickups.boostLoadout = boost
 		startLevel(levelScene(index))
 
 #the mode shown when run setup opens: the saved one if it can be started here, else Countdown
@@ -731,6 +786,7 @@ func _input(event: InputEvent) -> void:
 		elif event.is_action_pressed("ui_codex"): openGoonopedia()
 		elif event.is_action_pressed("ui_menu"): openSettings()
 		elif event.is_action_pressed("ui_upgrade"): cycleLoadout()
+		elif event.is_action_pressed("ui_boost"): cycleBoost()
 		elif event.is_action_pressed("ui_accept") && get_viewport().gui_get_focus_owner() == null: onStartPressed()
 		else: handled = false
 	if handled: get_viewport().set_input_as_handled()
@@ -758,7 +814,7 @@ func updateHints() -> void:
 		child.queue_free()
 	var hints: Array
 	if screen == Screen.SETUP:
-		hints = [[["ui_tab_prev", "ui_tab_next"], "Level"], [["ui_left", "ui_right"], "Mode"], [["ui_accept"], "Start"], [["ui_upgrade"], "Gadget"], [["ui_records"], "Records"], [["ui_codex"], "Goonopedia"], [["ui_cancel"], "Back"]]
+		hints = [[["ui_tab_prev", "ui_tab_next"], "Level"], [["ui_left", "ui_right"], "Mode"], [["ui_accept"], "Start"], [["ui_upgrade"], "Gadget"], [["ui_boost"], "Boost"], [["ui_records"], "Records"], [["ui_codex"], "Goonopedia"], [["ui_cancel"], "Back"]]
 	elif upgrading:
 		hints = [[["ui_up", "ui_down"], "Choose"], [["ui_accept"], "Buy"], [["ui_cancel"], "Done"]]
 	else:
@@ -779,12 +835,14 @@ func openGoonopedia() -> void:
 
 #focus back to the screen under an overlay
 func onOverlayClosed() -> void:
+	if not is_inside_tree(): return
 	if screen == Screen.SETUP: startButton.grab_focus()
 	else: cards[SaveManager.playerData.selectedCar].mainButton.grab_focus()
 
 func openRecords() -> void:
 	var scene = load("res://scene/player/menu/gameSummary.tscn").instantiate()
 	scene.isGameSummary = false
+	scene.tree_exited.connect(onOverlayClosed) #the ticket had focus on its Continue button
 	add_child(scene)
 
 #loads the level on a worker thread behind the shutter, which shows the level's name and lights its

@@ -8,7 +8,7 @@ class_name RunLog extends RefCounted
 const PATH := "user://runlog.csv"
 const COLUMNS := ["date", "version", "driver", "car", "upgrades", "level", "mode", "seconds", "coins", "stars", "payout",
 	"crushes", "giants", "regions", "reason", "gems", "slot_machines", "top_speed_px", "end_fuel", "end_health",
-	"score", "leg", "barrier", "pk_supply", "pk_tune", "pk_boost", "pk_gadget", "pk_loot", "pk_casino", "pk_skill", "pk_mode"]
+	"score", "leg", "barrier", "pk_supply", "pk_tune", "pk_boost", "pk_gadget", "pk_loot", "pk_casino", "pk_skill", "pk_mode", "pk_move"]
 
 static func append(car: OverheadCarBody2D, level: Level, reason: int, payout: int, path := PATH) -> void:
 	write(row(car, level, reason, payout), path)

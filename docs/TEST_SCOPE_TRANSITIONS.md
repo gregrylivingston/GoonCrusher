@@ -4,7 +4,7 @@ Things to cover when the comprehensive test pass runs. They come from the mouse 
 
 ## What has been checked already
 
-- The 249 unit tests pass.
+- The unit tests pass (299 as of the handbrake and crush-feel work).
 - A 3-run AI playtest (Countdown, Sprint, Marathon) finished with no script errors or softlocks.
 - Screenshots in the real build: garage, run setup, loading, start lamps, pause, slot machine, The Deal, results, wreck, nightfall, toasts, Nuke, station pill.
 
@@ -37,12 +37,18 @@ Most effect timings are first-pass values. None has been tuned by hand.
    - TARGET SMASHED (Goonpocalypse), LEG n OF 3 (Marathon), NEW GOON (first crush of a kind; it must not repeat for goons already in the save).
    - The district road sign (not at run start), wave star flyers and NIGHT FALLS.
    - Banners queue and never overlap.
+8. **Driving and crush feel** (added with the handbrake and crush-feel work).
+   - Handbrake slides on each of the 9 cars; the drift boost charges (blue, then orange sparks) and fires on release; side and tail slams crush.
+   - Fire (E / X) and Boost (Shift / LB): Nitro's 2 burns, Hop, Jump Jets; the run-setup loadout toast names each key.
+   - Death styles, hood rides, hit-stop on giants and bosses: a pause or a slot machine during a hit-stop must never run slowed.
+   - Old saved bindings move Space from Fire to the Handbrake (settings v2).
 
 ## Settings matrix
 
 Run flows 1 to 6 under each of these:
 
 - **Reduce Motion:** fades only, with no shake, smoke, skids or swing.
+- **Crush Effects Minimal / Reduced / Full, Screen Shake Off / Low / Full, Hit-Stop off.**
 - **Reduce Flashing:** HUD warnings hold steady, no toast rim flash, the Nuke shockwave isn't a flash.
 - **Exhaust Smoke Off / Low / Full and Tire Marks off:** smoke and marks scale or vanish, and cuts still hide behind the shutter.
 - **Slot Celebration Minimal / Reduced / Full:** 4, 8 or 16 chute icons.

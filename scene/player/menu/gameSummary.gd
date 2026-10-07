@@ -180,7 +180,7 @@ func buildGameSummary():
 	if not car.lotteryTickets.is_empty():
 		addRow("Lottery", "+%d  (%d matched)" % lottery, false)
 		if lottery[1] > 0: rows.get_child(rows.get_child_count() - 1).set_meta("stamp", "MATCH!")
-	if car.bestCombo >= 3: addRow("Best combo", str(car.bestCombo), false)
+	if car.bestCombo >= 3: addRow("Best combo", str(car.bestCombo), car.bestCombo > records.get("combo", 0))
 	addPayout(body, car.coin, car.star, paid, paid > records.coin)
 	records.goonsCrushed = maxi(records.goonsCrushed, crushed)
 	records.speed = maxi(records.speed, topSpeed)
@@ -188,6 +188,7 @@ func buildGameSummary():
 	records.powerups = maxi(records.powerups, powerups)
 	records.gem = maxi(records.gem, car.gem)
 	records.slotMachines = maxi(records.slotMachines, car.slotMachines)
+	records.combo = maxi(records.get("combo", 0), car.bestCombo)
 	var discovered = Goonopedia.creditCrushes(car.crushedById)
 	if OS.is_debug_build(): RunLog.append(car, level, reason, paid)
 
@@ -225,6 +226,7 @@ func buildAchievementSummary():
 	addRow("Powerups", str(records.powerups), false)
 	addRow("Gems", str(records.gem), false)
 	addRow("Slot machines", str(records.slotMachines), false)
+	if records.get("combo", 0) >= 3: addRow("Best combo", str(records.combo), false)
 	if records.get("time", 0) > 0: addRow("Longest Goonpocalypse", "%d:%02d" % [records.time / 60, records.time % 60], false)
 	if records.get("score", 0) > 0: addRow("Goonpocalypse score", str(records.score), false)
 	addContinue("CLOSE", "")

@@ -41,6 +41,7 @@ Reset Progress never touches the settings files.
 | Pickup Glow | Simple / Full | Simple | Simple | Full | Full | Simple drops the moving shine |
 | Slot Celebration | Minimal / Reduced / Full | Minimal | Reduced | Full | Full | Prizes poured from the slot machine's chute (4 / 8 / 16 icons); reels and results unchanged (docs/UI.md, "Transitions") |
 | Reward Pop-ups | Minimal / Reduced / Full | Minimal | Reduced | Full | Full | Caps flying reward icons at 3/10/20; rewards are credited on collection |
+| Crush Effects | Minimal / Reduced / Full | Minimal | Reduced | Full | Full | Minimal: decal and bits; Reduced adds the death styles (splat, shove, hood ride, fling; up to 6 bodies at once) and goo spatter; Full up to 16 bodies, more bits and impact bursts (docs/GOONS.md, "Crush feel"). Not yet benchmarked in S3/S4 |
 | Ground Detail | Simple / Full | Simple | Full | Full | Full | `gc_ground_quality`: Simple draws the nearest cell's material with no macro noise or water/belt animation (docs/WORLD.md, "The ground shader") |
 | Max Sound Effects | 8 / 12 / 24 | 8 | 12 | 24 | 24 | `Audio` FX pool size |
 
@@ -62,8 +63,8 @@ Reset Progress never touches the settings files.
 ### Audio, Controls, Accessibility, Gameplay
 
 - **Audio:** Master, Music, Voice, Effects and Menu Sounds (0–100% perceptual, 0 dB max, each with a mute); Mute When Unfocused.
-- **Controls:** rebind Accelerate, Brake, Steer Left/Right, Pause and Use Gadget (two keys plus one pad input each); stick deadzone; vibration Off/Low/High.
-- **Accessibility** (overrides presets without making them Custom): Reduce Motion, Reduce Flashing, giant marker style and colour, Plain Text, Car Shake, HUD Scale (80–130%).
+- **Controls:** rebind Accelerate, Brake, Steer Left/Right, Handbrake, Fire Gadget, Boost / Hop and Pause (two keys plus one pad input each); stick deadzone; vibration Off/Low/High.
+- **Accessibility** (overrides presets without making them Custom): Reduce Motion, Reduce Flashing, giant marker style and colour, Plain Text, Car Shake, Screen Shake (Off / Low / Full), Hit-Stop, HUD Scale (80–130%).
 - **Gameplay:** speed units, Show Run Timer, Confirm Abandon / Quit, Car Paint, Reset Progress (keeps settings).
 
 There are deliberately no MSAA, FXAA, HDR-2D or glow options, and **the physics tick rate is never exposed**.

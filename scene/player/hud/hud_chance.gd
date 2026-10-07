@@ -18,7 +18,7 @@ var scratch := {}             #{cells, shown, t}
 var doubleActive := false
 var doubleT := 0.0
 var doubleStake := 0
-var combo := {}               #{text, t}
+var combo := {}               #{text, t, count, pop}
 var flashT := 0.0
 
 func _ready() -> void:
@@ -46,7 +46,14 @@ func startToast() -> void:
 		Stamp.slam(self, "LEGENDARY", Vector2(size.x * 0.5 + tw * 0.5 + 110.0, 166.0), HudTheme.GOLD, 20, TOAST_SECONDS - 0.7, -0.12)
 
 func showCombo(count: int, coins: int) -> void:
-	combo = {"text": "COMBO %d   +%d" % [count, coins], "t": 1.2}
+	combo = {"text": "COMBO %d   +%d" % [count, coins], "t": 1.2, "count": count, "pop": COMBO_POP}
+
+#the combo readout pops on every crush and heats from gold through orange to red as the chain grows
+const COMBO_POP := 0.16
+static func comboColor(count: int) -> Color:
+	if count >= 20: return HudTheme.BAD
+	if count >= 10: return HudTheme.GOLD.lerp(HudTheme.WARN, 0.5).lerp(HudTheme.BAD, (count - 10) / 10.0)
+	return HudTheme.GOLD
 
 #the Goon Nuke: an orange shockwave rings out from the car with a dust kick and a camera rumble (no
 #white-out, so it is safe with Reduce Flashing; Reduce Motion drops the rumble and the dust)
@@ -140,6 +147,7 @@ func _process(delta: float) -> void:
 	if not combo.is_empty():
 		busy = true
 		combo.t -= delta
+		combo.pop = maxf(0.0, combo.pop - delta)
 		if combo.t <= 0.0: combo = {}
 	if flashT > 0.0:
 		busy = true
@@ -156,7 +164,9 @@ func _draw() -> void:
 	if doubleActive: drawDouble(Vector2(w - 360.0, 150.0 if scratch.is_empty() else 275.0))
 	if not combo.is_empty():
 		var a := clampf(combo.t / 0.3, 0.0, 1.0)
-		HudTheme.text(self, Vector2(34.0, 190.0), combo.text, 26, Color(HudTheme.GOLD, a), HORIZONTAL_ALIGNMENT_LEFT, 7, Color(HudTheme.DEEP, a))
+		var grow: float = 0.0 if Settings.reduce_motion() else combo.pop / COMBO_POP
+		var fontSize := int(26.0 + mini(combo.count, 30) * 0.3 + 10.0 * grow * grow)
+		HudTheme.text(self, Vector2(34.0, 190.0 + (fontSize - 26) * 0.5), combo.text, fontSize, Color(comboColor(combo.count), a), HORIZONTAL_ALIGNMENT_LEFT, 7, Color(HudTheme.DEEP, a))
 	drawBeacons()
 	if stationShown: drawStation()
 	if flashT > 0.0: drawShockwave(1.0 - flashT / SHOCK_SECONDS)

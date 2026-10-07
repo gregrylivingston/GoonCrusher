@@ -117,6 +117,7 @@ class CarInput:
 	var steering := 0.0      # -1.0 (left) to 1.0 (right)
 	var acceleration := 0.0  # -1.0 (reverse) to 1.0 (accelerate)
 	var braking := false     # True if brakes are engaged
+	var handbrake := false   # the parking brake: locks the rear for a powerslide (handbrakeGrip)
 
 var gear: int = 0
 var maxGears: int = 3
@@ -150,11 +151,17 @@ func _ready():
 	if isPlayer:
 		buffFx = CarBuffFx.new()
 		add_child(buffFx)
-		if Pickups.loadout != "": #a gadget bought with gems in run setup
-			giveItem(Pickups.loadout)
-			Pickups.loadout = ""
+		crushFeel = CrushFeel.new()
+		add_child(crushFeel)
+		for id in [Pickups.loadout, Pickups.boostLoadout]: #bought with gems in run setup
+			if id != "": giveItem(id)
+		Pickups.loadout = ""
+		Pickups.boostLoadout = ""
+		if heldItem != "" || moveItem != "": announceLoadout()
 
 	halfWidth = $carBodyArea/CollisionShape2D.shape.size.y / 2.0
+	var footprint: Vector2 = $carBodyArea/CollisionShape2D.shape.size
+	bodyRect = Rect2($carBodyArea/CollisionShape2D.position - footprint / 2.0, footprint)
 	applyArt()
 	Settings.changed.connect(onSettingChanged)
 	setHeadlightStrength()
@@ -238,8 +245,11 @@ func _physics_process(delta):
 
 	
 	var next = integrate(position, transform.x, velocity, _car_input, delta)
+	var lastRotation := rotation
 	rotation = next[0].angle()
+	spinRate = angle_difference(lastRotation, rotation) / delta if delta > 0.0 else 0.0
 	velocity = next[1]
+	if isPlayer: tickDriftCharge()
 	var hitVelocity = velocity #before the slide, for a wall hit's impact angle and a breakable's speed
 	move_and_slide()
 	_do_update_output(_car_input.acceleration)
@@ -259,11 +269,12 @@ func _physics_process(delta):
 		elif velocity.length() > 0.01 && World.isWall(collider):
 			collideWithFixedObject( collision, hitVelocity )
 		elif collider is CharacterBody2D:
-			if goonBumpReady(collider): damage(5)
+			if goonBumpReady(collider): damage(GOON_CONTACT_DAMAGE)
 			#a crush never wears the car; a slow bump, or a goon that resists (shield, shell, heavy), scuffs it
 			#a plow, spikes, monster tires or a golden ride crush at any speed (crushOverride)
 			if not (velocity.length() > (0.0 if crushBuffActive() else 100.0) && crushGoon(collider)): wearSystem(hitZone(collision), GOON_SCUFF)
 		#else: print(collider.get_class())
+	if isPlayer && (velocity.length() > SLAM_MIN_SPEED || absf(spinRate) > 1.5): slamGoons()
 
 	if velocity.length() == 0:
 		stopCarFX()
@@ -280,6 +291,9 @@ func integrate(pos: Vector2, forward: Vector2, vel: Vector2, input: CarInput, de
 	var engine_stat = engine * conditionFactor("engine")
 	var traction_stat = traction * conditionFactor("tires")
 	var steer_angle = input.steering * deg_to_rad( 8 + ( steer_stat / 4.0 ) )
+	#the handbrake at speed: the wheel bites harder and the rear lets go (handbrakeGrip, below)
+	var sliding := input.handbrake && vel.length() > HANDBRAKE_MIN_SPEED
+	if sliding: steer_angle *= HANDBRAKE_STEER
 	#Nitro (a timed pickup): more thrust, and less drag so the top speed rises by `top`
 	var thrust := 1.0
 	var dragScale := 1.0
@@ -288,6 +302,7 @@ func integrate(pos: Vector2, forward: Vector2, vel: Vector2, input: CarInput, de
 		dragScale = thrust / pow(Pickups.DATA["nitro"]["top"], 2.0)
 
 	var acceleration = input.acceleration * forward * ( engine_stat + 14 ) * 10 * ( 2.2 - abs(input.steering)) * thrust
+	if input.handbrake: acceleration *= HANDBRAKE_THROTTLE #the locked rear eats part of the throttle
 
 	#the ground under this position (World's terrain table): friction with the off-road rule, grip and
 	#brake multipliers, and a conveyor's push. UNKNOWN (no map loaded) keeps the car's own friction.
@@ -304,22 +319,45 @@ func integrate(pos: Vector2, forward: Vector2, vel: Vector2, input: CarInput, de
 	acceleration += drag_force + friction_force
 	if input.braking:
 		acceleration += - ( (5 + traction_stat) * 50 / ( vel.length() + 1)  ) * vel * World.brake(surface)
+	if input.handbrake && vel.length() > 0.0:
+		acceleration -= vel.normalized() * HANDBRAKE_DECEL * World.brake(surface)
 	acceleration += conveyorPull(vel, World.pushAt(pos, surface))
 
 	# Calculate steering
-	var rear_wheel = pos - forward * wheel_base / 2.0 + vel * delta
-	var front_wheel = pos + forward * wheel_base / 2.0 + vel.rotated(steer_angle) * delta
+	#sliding, the nose swings at the car's speed as if the wheels still bit, rather than slowing as the
+	#slide angle grows (the bicycle model's turn rate falls with the cosine of the slip)
+	var steer_vel = forward * vel.length() if sliding else vel
+	var rear_wheel = pos - forward * wheel_base / 2.0 + steer_vel * delta
+	var front_wheel = pos + forward * wheel_base / 2.0 + steer_vel.rotated(steer_angle) * delta
 	var new_heading = (front_wheel - rear_wheel).normalized()
 	var grip = gripFor(traction_slow, traction_stat, grip_slow_max, grip_per_traction)
 	if vel.length() > slip_speed:
 		grip = gripFor(traction_fast, traction_stat, grip_fast_max, grip_per_traction)
 	grip *= World.grip(surface) #after the clamp, so ice and oil stay slippery whatever the traction
 	var d = new_heading.dot(vel.normalized())
-	if d >= 0:
-		vel = vel.lerp(new_heading * vel.length(), grip)
+	if sliding && d > HANDBRAKE_CATCH_DOT: grip *= handbrakeGrip() #past the catch angle the tires bite again, so a held slide doesn't spin
+	if d >= 0: #sliding swings the velocity round without the shortening a lerp across a wide angle brings
+		vel = vel.slerp(new_heading * vel.length(), grip) if sliding else vel.lerp(new_heading * vel.length(), grip)
 	if d < 0:
-		vel = -new_heading * min(vel.length(), ( engine_stat + 20 ) * 20)#10
+		var back = -new_heading * min(vel.length(), ( engine_stat + 20 ) * 20)#10
+		vel = vel.lerp(back, grip) if sliding else back #a spin past 90 degrees keeps sliding instead of snapping round
 	return [new_heading, vel + acceleration * delta]
+
+#The handbrake (Space / RB): above HANDBRAKE_MIN_SPEED the rear lets go and the car powerslides; let
+#go and the normal grip pulls it straight, keeping its speed. Every car has it, and its stats shape it:
+#steering sets how fast the nose swings, engine how hard it powers through, traction how quickly the
+#grip comes back, and armor (weight) how long it slides. Slower, it is a weak brake (and donuts).
+const HANDBRAKE_MIN_SPEED := 150.0
+const HANDBRAKE_STEER := 1.6        #the wheel turns further while sliding
+const HANDBRAKE_THROTTLE := 0.85    #share of the engine's push left with the rear locked
+const HANDBRAKE_DECEL := 60.0       #px/s² of drag from the locked wheels (times the ground's brake)
+const HANDBRAKE_GRIP_LIGHT := 0.16  #share of the usual grip kept while sliding, at armor 0...
+const HANDBRAKE_GRIP_HEAVY := 0.07  #...and at HANDBRAKE_HEAVY_ARMOR or more: heavy cars slide longer
+const HANDBRAKE_HEAVY_ARMOR := 80.0
+const HANDBRAKE_CATCH_DOT := 0.34   #cos(70 degrees): the widest slide angle before the tires catch
+
+func handbrakeGrip() -> float:
+	return lerpf(HANDBRAKE_GRIP_LIGHT, HANDBRAKE_GRIP_HEAVY, clampf(armor / HANDBRAKE_HEAVY_ARMOR, 0.0, 1.0))
 
 #friction on a surface for this car: the table's value with the off-road rule (armor ploughs through
 #soft ground); the car's own `friction` when no map is loaded. Read only, so integrate() stays pure.
@@ -469,6 +507,9 @@ func stopCarFX():
 #contact damage counts once per goon per GOON_BUMP_TICKS, not every tick the two touch, so a big goon
 #(a Scrap Gang van, a Thunderhoof) pressed against the car doesn't drain health per frame
 const GOON_BUMP_TICKS := 30
+#every goon contact chips the hull, crush or not (about 0.35 health at armour 1): crushing is cheap, never
+#free. Keep it at most 5, or a Bubble Shield would spend a charge on every crush (blockedByPickup).
+const GOON_CONTACT_DAMAGE := 5.0
 var goonBumps := {}
 func goonBumpReady(goon: Object) -> bool:
 	var now := Engine.get_physics_frames()
@@ -480,18 +521,99 @@ func goonBumpReady(goon: Object) -> bool:
 
 #false when the goon resisted: some need more speed, a hit from the side, or can't be hit right now
 #(Walker.tryCrush, docs/GOONS.md). The goon handles the bounce and any damage itself.
-func crushGoon(collider) -> bool:
+func crushGoon(collider, speed := -1.0) -> bool:
 	if not is_instance_valid(collider) || collider.isDying(): return true
+	if speed < 0.0: speed = velocity.length()
 	if collider.has_method("tryCrush"):
-		if not collider.tryCrush(self, velocity.length()): return false
+		if not collider.tryCrush(self, speed): return false
 	else: collider.destroy()
 	if isPlayer: Settings.vibrate(0.4, 0.0, 0.08)
 	creditGoon(collider)
 	if collider.get("isGiant"): giantsCrushed += 1
 	reward("currentGoonsCrushed", 1) #credited now; the flying icon is only for show
 	RewardFlyers.flyUpgrade(Root.upgrade.CURRENTGOONSCRUSHED, collider.global_position)
-	if isPlayer: PickupEffects.onCrush(self, collider.global_position)
+	if isPlayer:
+		PickupEffects.onCrush(self, collider.global_position)
+		if is_instance_valid(crushFeel): crushFeel.onCrush(collider, speed)
 	return true
+
+#Slams: the physics shapes are only the bumpers (CollisionShape2D, or the rear one in reverse), so the
+#car's flanks and tail crush here. A goon touching the car's footprint (carBodyArea) on a side or the
+#tail that the car is moving into at SLAM_MIN_SPEED or more, counting the swing of a slide (spinRate:
+#a tail-out drift swats goons with the back of the car), is crushed at that point's speed.
+const SLAM_MIN_SPEED := 150.0
+var spinRate := 0.0          #rad/s the car turned this tick
+var crushHitVel := Vector2.ZERO #during a slam: the velocity of the car where it hit (GoonFx, CrushFeel read it)
+var bodyRect := Rect2(-85, -41, 170, 82) #the footprint in car space, from carBodyArea in _ready
+
+func slamGoons() -> void:
+	if not is_instance_valid(Root.spawnManager): return
+	var centre := bodyRect.get_center()
+	var half := bodyRect.size / 2.0
+	for goon in Root.spawnManager.goonsNear(global_position, half.x + 80.0):
+		if goon.dead || goon.collision_layer == 0: continue #buried, flying or riding: out of reach
+		var r: float = goon.bodyRadius * goon.scale.x
+		var local := to_local(goon.global_position) - centre
+		var inX := half.x + r - absf(local.x)
+		var inY := half.y + r - absf(local.y)
+		if inX <= 0.0 || inY <= 0.0: continue
+		var normal := Vector2(0.0, signf(local.y)) if inY < inX else Vector2(signf(local.x), 0.0)
+		if normal.x > 0.0 && not $CollisionShape2D.disabled: continue #the front bumper's own collision
+		if normal.x < 0.0 && not $CollisionShape2D_rear.disabled: continue #reversing: the rear bumper's
+		var arm: Vector2 = goon.global_position - global_position
+		var pointVel := velocity + Vector2(-arm.y, arm.x) * spinRate
+		var into := pointVel.dot(normal.rotated(rotation))
+		if into < SLAM_MIN_SPEED: continue
+		if goonBumpReady(goon): damage(GOON_CONTACT_DAMAGE)
+		crushHitVel = pointVel
+		if not crushGoon(goon, pointVel.length()): wearSystem(zoneForHit(-normal, local + centre, halfWidth), GOON_SCUFF)
+		crushHitVel = Vector2.ZERO
+
+#--- drift charge -------------------------------------------------------------------------------
+#Holding a powerslide (the handbrake, slipping past DRIFT_CHARGE_SLIP) charges; letting go of the
+#handbrake fires a speed boost along the nose, bigger after a longer slide. Sparks at the rear tyres show
+#the tier (blue, then orange). Counted in physics ticks; the AI never pulls the handbrake.
+const DRIFT_CHARGE_SLIP := 0.3   #rad between the nose and the travel
+const DRIFT_TIERS := [[40, 120.0, Color(0.45, 0.75, 1.0)], [100, 240.0, Color(1.0, 0.55, 0.15)]] #[ticks, boost px/s, spark colour]
+var driftCharge := 0             #ticks of the current slide
+
+## The boost a slide of `ticks` earns when released (0 below the first tier) and its tier (-1 for none)
+static func driftTier(ticks: int) -> int:
+	var tier := -1
+	for i in DRIFT_TIERS.size():
+		if ticks >= DRIFT_TIERS[i][0]: tier = i
+	return tier
+
+func tickDriftCharge() -> void:
+	var speed := velocity.length()
+	var slip := absf(angle_difference(velocity.angle(), rotation)) if speed > 1.0 else 0.0
+	if _car_input.handbrake:
+		if speed < HANDBRAKE_MIN_SPEED: driftCharge = 0 #slowed to a stop: the charge is lost
+		elif slip > DRIFT_CHARGE_SLIP && slip < PI - 0.6:
+			driftCharge += 1
+			var tier := driftTier(driftCharge)
+			if tier >= 0 && driftCharge % 5 == 0: driftSpark(DRIFT_TIERS[tier][2])
+		return
+	if driftCharge == 0: return
+	var tier := driftTier(driftCharge)
+	driftCharge = 0
+	if tier < 0 || isDestroyed: return
+	var boost: float = DRIFT_TIERS[tier][1]
+	velocity += transform.x * boost
+	Transition.sound("rev", -6.0, 1.15 + 0.15 * tier)
+	Settings.vibrate(0.3, 0.5, 0.15)
+	if is_instance_valid(crushFeel): crushFeel.kick -= transform.x * 10.0 * (tier + 1)
+	if is_instance_valid(Root.spawnManager) && Root.spawnManager.fx:
+		Root.spawnManager.fx.label(global_position, "DRIFT BOOST" if tier == 0 else "SUPER BOOST", 20 + 6 * tier, DRIFT_TIERS[tier][2])
+
+func driftSpark(color: Color) -> void:
+	if not is_instance_valid(Root.levelRoot): return
+	var tire: Node2D = tires[driftCharge / 5 % 2] #the rear pair, in turn
+	var spark = sparks.instantiate()
+	spark.global_position = tire.global_position
+	spark.modulate = color
+	spark.scale = Vector2.ONE * 0.6
+	Root.levelRoot.add_child(spark)
 
 #a goon this car killed, by its bumper or anything it set off (SpawnManager.creditCrush: blasts, shells,
 #drownings): the Goonopedia's per-goon count (gameSummary)
@@ -537,7 +659,7 @@ func activeCarEffects(delta):
 
 
 	##FX and Audio
-	if ( _car_input.braking && velocity.length() > 200.0) || ( velocity.length() > 500.0 && abs(_car_input.steering) > 0.2):
+	if ( (_car_input.braking || _car_input.handbrake) && velocity.length() > 200.0) || ( velocity.length() > 500.0 && abs(_car_input.steering) > 0.2):
 		match Settings.get_value("gfx/tire_marks"):
 			1: for i in [tires[0], tires[1]]: createTiremarks(i, 6.0) #Short: rear tyres only
 			2: for i in tires: createTiremarks(i, 20.0)
@@ -546,7 +668,7 @@ func activeCarEffects(delta):
 		tiresAudio.stop()
 		tiremark = {}
 
-	var bright = _car_input.braking || gear == -1
+	var bright = _car_input.braking || _car_input.handbrake || gear == -1
 	if bright != tailLampsBright:
 		tailLampsBright = bright
 		for i in tailLamps: i.energy = 0.3 if bright else 0.1
@@ -756,26 +878,32 @@ func setForwardCollisionMode(setting: bool):#activate or deactive bumper collisi
 
 #--- pickups (scripts/global/pickups.gd, docs/PICKUPS.md) ---------------------------------------
 #Timed power-ups count down in physics ticks. integrate() only reads `buffs`, so the AI driver's
-#prediction of boosted handling stays pure. Gadgets wait in one slot for the Use button.
+#prediction of boosted handling stays pure. Gadgets wait in one slot for the Fire button (UseItem),
+#boosts (Nitro, Hop, Jump Jets: Pickups.K.MOVE) in a second for the Boost button (UseMove).
 const MAX_BUFFS := 4      #a fifth timed power-up replaces the one with the least time left
 var buffs := {}           #pickup id -> physics ticks left
 var buffTicks := {}       #pickup id -> ticks it started with (the HUD ring drains from this)
-var heldItem := ""        #a gadget waiting for Use
+var heldItem := ""        #a gadget waiting for Fire
 var heldCharges := 0
+var moveItem := ""        #a boost waiting for Boost
+var moveCharges := 0
 var shieldHits := 0
 var starFragments := 0    #three make a star
 var blueprints := 0       #free garage upgrades, credited by gameSummary however the run ends
 var lotteryTickets: Array = [] #each [crushes, speed, coins] digit guesses, checked by gameSummary
 var hasParcel := false    #Delivery
 var barricades := 0       #Defense: Barricade Kits being carried to the lot
-var airborneTicks := 0    #Jump Jets
+var airborneTicks := 0    #Jump Jets and Hop
+var landingBlast := false #Jump Jets come down with a blast; a Hop doesn't
 var comboCount := 0       #Crush Combo: crushes in the current chain
 var comboTick := -100000  #physics frame of the chain's last crush
 var bestCombo := 0
 var coinsSinceBet := 0    #Double or Nothing's stake
 var turboKit := false     #Turbo Kit: exhaust flames at full throttle
 var buffFx: CarBuffFx
+var crushFeel: CrushFeel  #the player's: camera, hit-stop and crush bonuses (scene/fx/crush_feel.gd)
 var useWasDown := false
+var moveWasDown := false
 
 func hasBuff(id: String) -> bool:
 	return buffs.has(id)
@@ -816,35 +944,55 @@ func tickPickups() -> void:
 	if airborneTicks > 0:
 		airborneTicks -= 1
 		if airborneTicks == 0: Gadgets.land(self)
-	if heldItem == "" || isDestroyed:
-		useWasDown = false
-		return
-	var down: bool
-	if myController.driver: down = Gadgets.aiWantsUse(self)
-	else: down = not Settings.menu_open && InputMap.has_action("UseItem") && Input.is_action_pressed("UseItem")
+	var ai = myController.driver
+	var down := heldItem != "" && not isDestroyed && (Gadgets.aiWantsUse(self) if ai else actionDown("UseItem"))
 	if down && not useWasDown && not PickupEffects.useTakenByPrompt(): useItem()
 	useWasDown = down
+	down = moveItem != "" && not isDestroyed && (Gadgets.aiWantsMove(self) if ai else actionDown("UseMove"))
+	if down && not moveWasDown: useMove()
+	moveWasDown = down
 
-## Takes a gadget into the slot. The same gadget adds its charges; a different one replaces the held
-## one only when it is at least as rare, else it is sold for coins. Returns false when it was sold.
+func actionDown(action: String) -> bool:
+	return not Settings.menu_open && InputMap.has_action(action) && Input.is_action_pressed(action)
+
+## Takes a gadget into the Fire slot, or a boost (Pickups.K.MOVE) into the Boost slot. The same item adds
+## its charges; a different one replaces the held one only when it is at least as rare, else it is sold
+## for coins. Returns false when it was sold.
 func giveItem(id: String) -> bool:
 	var charges: int = Pickups.DATA[id].get("charges", 1)
-	if heldItem == id:
-		heldCharges += charges
+	var slot := "moveItem" if Pickups.DATA[id].kind == Pickups.K.MOVE else "heldItem"
+	var count := "moveCharges" if slot == "moveItem" else "heldCharges"
+	if self[slot] == id:
+		self[count] += charges
 		return true
-	if heldItem == "" || Pickups.rarity(id) >= Pickups.rarity(heldItem):
-		heldItem = id
-		heldCharges = charges
+	if self[slot] == "" || Pickups.rarity(id) >= Pickups.rarity(self[slot]):
+		self[slot] = id
+		self[count] = charges
 		return true
 	return false
 
+## Once the run is under way (the timer waits out the start countdown's pause): what the car starts with
+## and the key that fires it, so a gadget bought in run setup is never a mystery
+func announceLoadout() -> void:
+	await get_tree().create_timer(1.0, false).timeout
+	for slot in [[heldItem, heldCharges, "UseItem"], [moveItem, moveCharges, "UseMove"]]:
+		if slot[0] == "": continue
+		var times := "  x%d" % slot[1] if slot[1] > 1 else ""
+		PickupEffects.toast("%s%s  -  PRESS %s" % [Pickups.displayName(slot[0]).to_upper(), times, InputGlyphs.label(slot[2])], HudTheme.GOLD, Pickups.texture(slot[0]))
+
 func useItem() -> void:
-	var id := heldItem
-	if not Gadgets.use(self, id): return
+	if not Gadgets.use(self, heldItem): return
 	heldCharges -= 1
 	if heldCharges <= 0:
 		heldItem = ""
 		heldCharges = 0
+
+func useMove() -> void:
+	if not Gadgets.use(self, moveItem): return
+	moveCharges -= 1
+	if moveCharges <= 0:
+		moveItem = ""
+		moveCharges = 0
 
 func crushBuffActive() -> bool:
 	return buffs.has("golden") || buffs.has("monster") || buffs.has("plow") || buffs.has("spikes")

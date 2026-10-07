@@ -192,7 +192,7 @@ static func losingStreak(history: Array, run: Dictionary, count: int) -> bool:
 
 static func bestPaying(playable: Array, history: Array, rng: RandomNumberGenerator) -> Dictionary:
 	if rng.randf() < 0.2: return playable[rng.randi() % playable.size()] #keep sampling the others
-	var best := playable[0]
+	var best: Dictionary = playable[0]
 	var bestRate := -1.0
 	for run in playable:
 		var same := history.filter(func(r): return r.level_index == run.level && r.mode_id == run.mode)
@@ -226,6 +226,14 @@ static func chooseLoadout(persona: Dictionary, gems: int, rng: RandomNumberGener
 	if options.is_empty(): return ""
 	if persona.runs == "coverage": return options[rng.randi() % options.size()] if rng.randf() < 0.5 else ""
 	return options[0] if gems >= 6 else "" #the grinder keeps a reserve for slot rerolls
+
+## The boost to buy with the gems left after the gadget (Pickups.BOOST_LOADOUT), or "".
+static func chooseBoost(persona: Dictionary, gems: int, rng: RandomNumberGenerator) -> String:
+	if not persona.gems: return ""
+	var options := Pickups.BOOST_LOADOUT.keys().filter(func(id): return Pickups.BOOST_LOADOUT[id] <= gems)
+	if options.is_empty(): return ""
+	if persona.runs == "coverage": return options[rng.randi() % options.size()] if rng.randf() < 0.5 else ""
+	return "nitro" if "nitro" in options && gems >= 8 else "" #the grinder keeps a reserve for slot rerolls
 
 #---------- in a run ----------
 

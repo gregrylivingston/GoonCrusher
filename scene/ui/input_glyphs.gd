@@ -51,6 +51,7 @@ static func ensureMenuActions() -> void:
 	addIfMissing("ui_upgrade", key(KEY_U), pad(JOY_BUTTON_Y))
 	addIfMissing("ui_records", key(KEY_R), pad(JOY_BUTTON_X))
 	addIfMissing("ui_codex", key(KEY_G), pad(JOY_BUTTON_BACK)) #the Goonopedia
+	addIfMissing("ui_boost", key(KEY_B), pad(JOY_BUTTON_RIGHT_STICK)) #run setup's Boost slot
 
 static func addIfMissing(action: String, keyEvent: InputEvent, padEvent: InputEvent) -> void:
 	if InputMap.has_action(action): return

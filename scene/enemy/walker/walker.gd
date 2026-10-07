@@ -35,9 +35,11 @@ enum mode { MOVE, ATTACK, IDLE, DEAD, PREPAREATTACK } #read by the AI driver (my
 
 const RESIST_COOLDOWN := 0.4   #a resisted crush can't bounce the car again this soon
 const GIANT_SPEED := 1.5       #giants were 4x in the demo, too much once goons have specials
+const GIANT_SCALE := 1.6       #multiplies the scene's own scale
 
 var isGiant: bool = false
 var def: Dictionary
+var killedFrom := Vector2.INF #a blast's centre, set just before it kills the goon, which is flung away from it
 var verb #GoonVerbs.Verb
 
 #tuning, from Goons.DATA (speed and turnRate live on GoonBody)
@@ -87,7 +89,7 @@ func _ready():
 	motion_mode = MOTION_MODE_FLOATING #top-down, like the car: no floor, wall or ceiling sorting in move_and_slide
 	bindSprite(sprite)
 	if isGiant:
-		scale = Vector2(1.6, 1.6)
+		scale *= GIANT_SCALE
 		speed *= GIANT_SPEED
 		attackDamage *= 2
 		if Settings.get_value("access/giant_style") == 2: addGroundRing()
@@ -286,7 +288,8 @@ func bounceCar(car: Node2D, dmg: float, system: String, label := "BLOCKED") -> v
 func isDying() -> bool:
 	return dead
 
-## Every death: crushed (decal, bits, maybe a pickup), blown up, or drowned (no decal).
+## Every death: crushed or blown up (squashed or flung, decal, bits, spatter: GoonFx.crushed; maybe a
+## pickup), or drowned (no decal).
 func destroy(cause: StringName = &"crush"):
 	if dead: return
 	dead = true
@@ -294,13 +297,12 @@ func destroy(cause: StringName = &"crush"):
 	verb.onDeath(cause)
 	var f = fx()
 	if f && cause != &"drown":
-		var heading: float = Root.playerCar.rotation if is_instance_valid(Root.playerCar) else rotation
-		f.addDecal(decal, global_position, sprite.global_rotation, sprite.global_scale.x, heading, cause == &"crush")
-		f.bits(global_position, def.get("faction", 1))
+		f.crushed(self, cause, killedFrom)
 	#death sounds go through the shared, limited pool (Max Sound Effects); their own players
-	#are only used as data. Authored level is +10 dB over the pool's +3 dB.
-	Audio.play($AudioStreamPlayer2D2.stream, 7.0 + randf_range(0.0,5.0), randf_range(0.95,1.05))
-	Audio.play($AudioStreamPlayer2D.stream, 7.0 + randf_range(0.0,8.0), randf_range(0.95,1.05))
+	#are only used as data. Authored level is +10 dB over the pool's +3 dB; a giant's are an octave-ish lower.
+	var pitch := 0.72 if isGiant else 1.0
+	Audio.play($AudioStreamPlayer2D2.stream, 7.0 + randf_range(0.0,5.0), pitch * randf_range(0.95,1.05))
+	Audio.play($AudioStreamPlayer2D.stream, 7.0 + randf_range(0.0,8.0), pitch * randf_range(0.95,1.05))
 	if f && cause != &"drown" && is_instance_valid(Root.playerCar) && randi_range(0,200) + Root.playerCar.clover > 190:
 		f.dropLater(global_position, dropTable())
 	queue_free()

@@ -100,7 +100,7 @@ After a bake that adds new PNGs, run `Godot_console.exe --headless --path . --im
 
 ## Crushing
 
-`OverheadCarBody2D.crushGoon` calls `goon.tryCrush(car, speed)` and returns false when the goon resists. On false the car keeps its usual scuff (`wearSystem(hitZone, GOON_SCUFF)`). A successful crush never wears the car.
+`OverheadCarBody2D.crushGoon` calls `goon.tryCrush(car, speed)` and returns false when the goon resists. On false the car keeps its usual scuff (`wearSystem(hitZone, GOON_SCUFF)`). A successful crush never wears the car's systems, but every goon contact, crush or not, chips the hull by `GOON_CONTACT_DAMAGE` (5 before armour, about 0.35 health on a stock car; once per goon per 30 ticks). Keep it at 5 or less, or a Bubble Shield would spend a charge on every crush.
 
 A goon resists when any of these holds:
 - it is invulnerable: a hidden shell, a rolling boulder, buried, airborne, riding the car, or a flying bird
@@ -111,8 +111,39 @@ A resisted hit calls the verb's `onResist`. That usually means `bounceCar`: the 
 
 **Death** (`destroy(cause)`):
 - **Causes:** `crush`, `boom` (killed by a blast), `self` (blew itself up) and `drown` (a splash ring, no decal).
-- **What it leaves:** a pooled crush decal with a tyre print along the car's heading, bits in the faction's colours, death sounds, and the old Clover-based pickup chance. The node frees at once.
+- **What it leaves** (`GoonFx.crushed`): a pooled crush decal with a tyre print along the car's heading, bits sprayed along the hit, goo spatter, death sounds (a giant's are pitched down), and the old Clover-based pickup chance. The node frees at once. See "Crush feel" below for the squash and fling.
 - **Credit:** goons killed by blasts or a kicked shell count as crushes (`SpawnManager.creditCrush`). So does a goon that drowns within 3 s of the car touching it (a crush try, a bump, a lunge that hit, or the car alongside it), with a "SPLASH" label.
+
+## Crush feel
+
+A crush should feel heavy (package 2, T1-12 and T2-6). Two halves:
+
+**What is drawn** (`GoonFx.crushed`, Settings **Crush Effects** `gfx/crush_fx`: Minimal / Reduced / Full; presets Potato Minimal, Low Reduced, else Full):
+- **Death styles** (`GoonFx.deathStyle`): a crush by the car picks one of four, weighted by speed and where the car hit the goon (`STYLE_WEIGHTS`):
+
+  | Speed | splat | shove | hood | fling |
+  |---|---|---|---|---|
+  | under 350 px/s (35 mph) | 9 | 1 | 0 | 0 |
+  | 350–430 | 5 | 2 | 3 | 1 |
+  | 430 and up | 3 | 2 | 3 | 4 |
+
+  A hit on a corner or the side (not the nose) doubles the shove weight and cuts the hood weight to a fifth. No hood ride under 350 px/s, and at most 2 riders at once (extra ones are shoved). Giants always splat. A blast (`Walker.killedFrom`, set by `GoonFx.blast`) always flings, away from its centre.
+  - **Splat:** the goon's last frame flattens over 0.13 s into its decal, with goo droplets thrown ahead along the car's heading (`GOO`, per faction).
+  - **Shove:** pushed along the line of the hit (the car's direction of travel, turned at most about 20° toward the side of the bumper that hit it), tumbling flat with a goo smear until it stops, then laid down. Distance grows with speed: a nudge of about 30–40 px at 300 px/s, about 200 px at 700. A wall cell stops it with a "SPLAT"; deep water swallows it.
+  - **Hood ride:** stuck to the car's nose where it was hit, wobbling, for 0.45–1 s. Braking below 140 px/s throws it forward over the nose (a fling); a hard turn (2.4 rad/s) throws it to the outside of the turn (a shove); otherwise it slides off the side it sat on, or goes under the wheels and is flattened with a tyre print ("SQUISH").
+  - **Fling:** launched spinning in an arc, its shadow on the ground, landing as a decal with a puff, bits and spatter. A wall cell in the way stops it short; deep water swallows it with a splash ring.
+- **Impact burst** (Full only): spokes out of the point of impact for 0.16 s; the white flash is skipped with Reduce Flashing.
+- **Giants:** twice the bits, a ground ring and a dust puff.
+- Minimal is the old look: decal and bits only.
+
+**How it feels** (`CrushFeel`, `scene/fx/crush_feel.gd`, a child of the player's car; `crushGoon` calls `onCrush`, `SpawnManager.creditCrush` calls `onIndirect`):
+- **Camera trauma:** each crush adds trauma (0.13 a goon, scaled by speed; 0.55 a giant; 0.75 a boss); the shake is trauma² × 46 world px, so single crushes barely move it and crowds and giants hit hard. Each crush also kicks the view along the heading. Screen Shake (`access/screen_shake`: Off, Low = half, Full) scales it; Reduce Motion and the harnesses turn it off. It shares `Camera2D.offset` with `Juice.rumble` and stands aside while a rumble runs.
+- **Hit-stop:** `Engine.time_scale` dips to 0.1 for 45 ms on a giant and 60 ms on a boss, and to 0.3 for 25 ms on the third goon of a multi-crush (once per crowd, and not within 0.6 s of the last stop). It never stacks: a stop already running wins. A pause or a menu (`get_tree().paused`, `Settings.menu_open`: the slot machine, pickup events) ends it at once, so nothing that pops up runs slowed; `CrushFeel` runs while paused only for that. The Hit-Stop setting, `access/hit_stop`; never under `Transition.instant()`. The restore timer ignores the time scale and `_exit_tree` resets it.
+- **Slams** (`OverheadCarBody2D.slamGoons`): the car's physics shapes are only its bumpers, so goons touching its flanks or tail were driven past or under. Now a goon touching the footprint (`carBodyArea`) on a side or the tail, where that part of the car is moving into it at 150 px/s or more (the body's speed plus the swing of a slide, `spinRate`), is crushed at that point's speed. It is swatted the way that point moved (a fling at 344+ px/s, else a shove), and pays a SIDE SLAM or TAIL SLAM bonus (2 coins, instead of the drift-crush coin). The front stays the bumper's own collision; in reverse the tail does. Buried, flying and riding goons (no collision layer) are out of reach. A shoved body is drawn darker and under the car, so it never reads as a live goon being driven over.
+- **Giants:** a zoom punch (+3.5%, eased back by `updateCameraZoom`), a low thud, strong rumble, and the car keeps 90% of its speed through the giant.
+- **Sound:** a crush tick whose pitch rises with the Crush Combo.
+- **Bonuses** (credited at once, never from an effect): multi-crush (crushes within 9 ticks; blast kills count) pays 2 coins per goon past the first, labelled DOUBLE / TRIPLE / QUAD / MEGA CRUSH ×n; drift crush (sliding over 0.4 rad at 260+ px/s) 1 coin; giant slayer 5 coins; boss crush 10.
+- **Combo:** the HUD combo readout pops on each crush and heats from gold to red past 10 and 20. The car's best combo is a car record (`records.combo`, shown on the summary and the records ticket); beating a best of 5 or more toasts NEW BEST COMBO once a run.
 
 ## The world
 
@@ -136,7 +167,9 @@ Goons read the world through `WorldHooks` (`scripts/world/world_hooks.gd`): O(1)
 | Hazards | 24 | fire (tyres), slime (slows), oil (skids), spikes (tyres). The oldest is dropped when full. |
 | Blasts | none | Hurt the car within r+40 and kill goons within r, unless a wall cell is in between. Each plays an explosion from the level's pool (`Root.levelRoot.explode`, at most 16 live) and sets off explosive props in reach. |
 | Tethers | one per goon | Harpoon (drag; a hard swerve breaks it) and magnet (pull). Both break past 650 px, and near deep water. |
-| Bits, labels | 90, 12 | Visual only |
+| Bits, labels | 140, 12 | Visual only. Labels take a size and colour (crush bonuses are gold). |
+| Corpses | 16 (6 at Reduced) | Bodies being splatted, shoved, riding the hood or flung; pooled Sprite2Ds, lit like goons. At most 2 on the hood. |
+| Spatter, impact bursts | 48, 12 | Goo droplets fade with the decals; bursts last 0.16 s. |
 
 Everything is delta-based. Telegraphs, projectiles, blasts and fire are unshaded, so night never hides a threat. Goons light their eyes (two additive unshaded sprites) when the level's CanvasModulate drops below 0.4.
 

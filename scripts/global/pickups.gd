@@ -8,17 +8,18 @@ class_name Pickups extends RefCounted
 ## pickups keep their own scenes (`scene`); every other id is the generic scene/pickups/pickup.tscn,
 ## and PickupEffects does what it does.
 
-enum K { SUPPLY, TUNE, BOOST, GADGET, LOOT, CASINO, SKILL, MODE }
-const KIND_NAMES := ["Supplies", "Tune-ups", "Power-ups", "Gadgets", "Loot", "Casino & Chance", "Skill Challenges", "Mode Specials"]
+enum K { SUPPLY, TUNE, BOOST, GADGET, LOOT, CASINO, SKILL, MODE, MOVE }
+const KIND_NAMES := ["Supplies", "Tune-ups", "Power-ups", "Gadgets", "Loot", "Casino & Chance", "Skill Challenges", "Mode Specials", "Boosts"]
 const KIND_NOTES := [
 	"Instant refills and repairs: fuel, hull and the five car systems.",
 	"Stat gains for the rest of the run.",
 	"Timed effects. Their rings drain above the systems strip.",
-	"Held in one slot and fired with the Use button.",
+	"Held in one slot and fired with the Fire button (E).",
 	"Coins, gems and stars.",
 	"Prizes of chance. Most play out in the HUD corner; a few pause.",
 	"Driving tests in the world. Clear one for its prize.",
 	"Only drop in the mode they help.",
+	"Held in a second slot and fired with the Boost button (Shift): bursts of speed and jumps.",
 ]
 
 enum R { COMMON, UNCOMMON, RARE, EPIC, LEGENDARY, SYSTEM }
@@ -44,7 +45,7 @@ const TICKS := 60 #physics ticks per second (never changes; see CLAUDE.md)
 ## text (the Goonopedia line), ui (the HUD group its flyer lands on), ai (worth to the AI driver, a crush is
 ## about 12), modes (M values it drops in; missing = all), night (only drops at night), fac (faction ->
 ## weight multiplier), scene (an original pickup's own scene), secs (a timed effect's length), charges
-## (a gadget's uses), plus each item's own numbers.
+## (a gadget's or boost's uses), plus each item's own numbers.
 const DATA := {
 	#---------------------------------------------------------------- the original 14
 	"fuel": {"name":"Fuel Can", "kind":K.SUPPLY, "rarity":R.COMMON, "w":32, "icon":"fuel", "scene":"res://scene/powerup/fuel.tscn", "ui":"fuelui", "fac":{F.SCRAP:1.4},
@@ -107,8 +108,6 @@ const DATA := {
 		"text":"Kept after the run: a free garage upgrade for this car's lowest stat, credited on the results ticket however the run ends."},
 
 	#---------------------------------------------------------------- power-ups (timed)
-	"nitro": {"name":"Nitro", "kind":K.BOOST, "rarity":R.COMMON, "w":3, "icon":"nitro", "ui":"buffui", "secs":3.0, "thrust":1.8, "top":1.4, "fac":{F.SCRAP:3.0}, "ai":20,
-		"text":"For 3 s: thrust x1.8 and top speed +40%. Heavy goons' crush speeds come within reach."},
 	"magnet": {"name":"Magnet", "kind":K.BOOST, "rarity":R.COMMON, "w":3, "icon":"magnet", "ui":"buffui", "secs":15.0, "radius":700.0, "ai":18,
 		"text":"For 15 s: pickups within 700 px fly to the car."},
 	"frenzy": {"name":"Coin Frenzy", "kind":K.BOOST, "rarity":R.UNCOMMON, "w":6, "icon":"frenzy", "ui":"buffui", "secs":20.0, "ai":22,
@@ -134,7 +133,7 @@ const DATA := {
 	"golden": {"name":"Golden Ride", "kind":K.BOOST, "rarity":R.LEGENDARY, "w":10, "icon":"golden", "ui":"buffui", "secs":15.0, "coins":5, "ai":90,
 		"text":"For 15 s: invulnerable, crushes at any speed, and every crush pays 5 coins."},
 
-	#---------------------------------------------------------------- gadgets (held, Use)
+	#---------------------------------------------------------------- gadgets (held, Fire)
 	"horn": {"name":"Air Horn", "kind":K.GADGET, "rarity":R.COMMON, "w":2, "icon":"horn", "ui":"itemui", "charges":3, "radius":350.0, "stun":1.5, "fac":{F.TRIBE:2.0}, "ai":14,
 		"text":"3 uses. Stuns goons within 350 px for 1.5 s and throws off anything riding the car."},
 	"oilslick": {"name":"Oil Slick", "kind":K.GADGET, "rarity":R.COMMON, "w":2, "icon":"oilslick", "ui":"itemui", "charges":3, "radius":110.0, "ai":12,
@@ -147,8 +146,6 @@ const DATA := {
 		"text":"Scrap Gang vehicles within 900 px stall for 5 s, harpoons and tow magnets let go, and riders fall off."},
 	"bait": {"name":"Goon Bait", "kind":K.GADGET, "rarity":R.UNCOMMON, "w":4, "icon":"bait", "ui":"itemui", "charges":1, "radius":1200.0, "secs":8.0, "fac":{F.WILD:2.0}, "ai":16,
 		"text":"Drops a steak. Goons within 1200 px go for it for 8 s. In Defense it pulls a siege off the walls."},
-	"jets": {"name":"Jump Jets", "kind":K.GADGET, "rarity":R.RARE, "w":6, "icon":"jets", "ui":"itemui", "charges":2, "secs":0.8, "radius":160.0, "ai":28,
-		"text":"2 uses. A short hop over goons, slime and spikes. Landing crushes everything around the car."},
 	"hubcap": {"name":"Homing Hubcap", "kind":K.GADGET, "rarity":R.RARE, "w":8, "icon":"hubcap", "ui":"itemui", "charges":1, "bounces":6, "ai":28,
 		"text":"Throws a spinning hubcap that bounces between up to 6 goons, crushing each."},
 	"airstrike": {"name":"Airstrike", "kind":K.GADGET, "rarity":R.RARE, "w":8, "icon":"mortar", "ui":"itemui", "charges":1, "radius":230.0, "ai":30,
@@ -157,6 +154,14 @@ const DATA := {
 		"text":"A pit stop when you choose: fuel, hull and every system to full."},
 	"nuke": {"name":"Goon Nuke", "kind":K.GADGET, "rarity":R.LEGENDARY, "w":10, "icon":"nuke", "ui":"itemui", "charges":1, "ai":80,
 		"text":"Every goon on screen dies, and every one counts as a crush."},
+
+	#---------------------------------------------------------------- boosts (held in the second slot, Boost)
+	"nitro": {"name":"Nitro", "kind":K.MOVE, "rarity":R.COMMON, "w":3, "icon":"nitro", "ui":"moveui", "charges":2, "secs":3.0, "thrust":1.8, "top":1.4, "fac":{F.SCRAP:3.0}, "ai":20,
+		"text":"2 uses. Each fires 3 s of harder acceleration and a higher top speed."},
+	"jets": {"name":"Jump Jets", "kind":K.MOVE, "rarity":R.RARE, "w":6, "icon":"jets", "ui":"moveui", "charges":2, "secs":0.8, "radius":160.0, "ai":28,
+		"text":"2 uses. A short hop over goons, slime and spikes. Landing crushes everything around the car."},
+	"hop": {"name":"Hop", "kind":K.MOVE, "rarity":R.COMMON, "w":3, "icon":"hop", "ui":"moveui", "charges":3, "secs":0.45, "lift":1.15, "ai":12,
+		"text":"3 uses. A quick hop over goons, slime and spikes. No landing blast: that takes Jump Jets."},
 
 	#---------------------------------------------------------------- loot
 	"coinstack": {"name":"Coin Stack", "kind":K.LOOT, "rarity":R.COMMON, "w":6, "icon":"coinstack", "ui":"coinui", "coins":5, "ai":12,
@@ -221,15 +226,18 @@ const DATA := {
 		"text":"For 30 s: the horde stops getting worse. The clock keeps counting. Goonpocalypse."},
 }
 
-## Gadgets the run setup sells for banked gems (main2 loadout), with their price in gems.
-const LOADOUT := {"horn": 1, "oilslick": 1, "mine": 2, "emp": 2, "bait": 2, "hubcap": 4, "airstrike": 4, "jets": 4}
+## The run setup's loadout, bought with banked gems (main2): a gadget for the Fire slot (LOADOUT) and a
+## boost for the Boost slot (BOOST_LOADOUT), each with its price in gems.
+const LOADOUT := {"horn": 1, "oilslick": 1, "mine": 2, "emp": 2, "bait": 2, "hubcap": 4, "airstrike": 4}
+const BOOST_LOADOUT := {"hop": 1, "nitro": 2, "jets": 4}
 
 ## Kinds in the order the Goonopedia lists them.
-const KIND_ORDER := [K.SUPPLY, K.TUNE, K.BOOST, K.GADGET, K.LOOT, K.CASINO, K.SKILL, K.MODE]
+const KIND_ORDER := [K.SUPPLY, K.TUNE, K.BOOST, K.GADGET, K.MOVE, K.LOOT, K.CASINO, K.SKILL, K.MODE]
 
 #--- run state ----------------------------------------------------------------------------------
 static var dropsSinceRare := 0
 static var loadout := "" #a gadget bought in run setup; the player's car takes it in _ready
+static var boostLoadout := "" #...and a boost
 static var textures := {}
 static var timeWarp := false #Time Warp: goons skip most physics ticks (Walker._physics_process)
 ## A lure goons walk to instead of the car (Goon Bait, Flare): {pos, until (msec), radius, only (verb or &"")}.
@@ -398,7 +406,7 @@ static func countCollected(car, id: String) -> void:
 	if DATA.has(id) && is_instance_valid(car) && "pickedById" in car: car.pickedById[id] = car.pickedById.get(id, 0) + 1
 
 ## A run's collected pickups (id -> count) as counts per kind, keyed by KIND_KEYS.
-const KIND_KEYS := ["supply", "tune", "boost", "gadget", "loot", "casino", "skill", "mode"]
+const KIND_KEYS := ["supply", "tune", "boost", "gadget", "loot", "casino", "skill", "mode", "move"]
 static func countByKind(byId: Dictionary) -> Dictionary:
 	var counts := {}
 	for key in KIND_KEYS: counts[key] = 0

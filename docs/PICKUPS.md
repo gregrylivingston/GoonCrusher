@@ -1,6 +1,6 @@
 # Pickups
 
-78 pickups in nine kinds and five rarities. Everything you tune lives in `scripts/global/pickups.gd` (`Pickups.DATA`). Curses are on hold (`docs/GAMEPLAY_SUGGESTIONS.md`, "Maybe").
+79 pickups in ten kinds and five rarities. Everything you tune lives in `scripts/global/pickups.gd` (`Pickups.DATA`). Curses are on hold (`docs/GAMEPLAY_SUGGESTIONS.md`, "Maybe").
 
 ## Files
 
@@ -10,7 +10,7 @@
 | `scene/pickups/pickup.gd` + `pickup.tscn` (`GenericPickup`) | One scene for every pickup without its own. It inherits `scene/powerup/powerup.tscn`, takes its icon from the registry, and colours its outline by rarity (one shared material per tier). Rare and better pickups glow at night. |
 | `scene/pickups/pickup_effects.gd` (`PickupEffects`) | `collect(car, id, pos)`: what every pickup does. Also the crush hooks (Crush Combo, Coin Frenzy, Golden Ride), the station hooks (Delivery, Barricade Kit), the Lottery and Blueprint payouts, and toasts. |
 | `scene/pickups/car_buff_fx.gd` (`CarBuffFx`) | A child of the player's car. It draws the timed power-ups (plow blade, bubble, flames, spikes, the bomb on the roof) and runs the ones that act every tick: Magnet, Fire Trail, Wrecking Ball, Hot Potato and the Shortcut Map's arrows. |
-| `scene/pickups/gadgets.gd` (`Gadgets`) | What the Use button does with each gadget, Jump Jets landing, and when the AI driver uses one. |
+| `scene/pickups/gadgets.gd` (`Gadgets`) | What the Fire and Boost buttons do with each gadget and boost, Jump Jets and Hop landing, and when the AI driver fires one (`aiWantsUse`, `aiWantsMove`). |
 | `scene/pickups/pickup_nodes.gd` (`PickupNodes`) | Things gadgets leave in the world: Mine, OilSlick, Flare, Bait, Hubcap. |
 | `scene/pickups/world_props.gd` (`WorldProps`) | Skill challenges, events and crates: Strongbox, Golden Goon, Loot Truck, bowling lane and pins, Ring Run, Speed Trap, Donut Zone, Bullseye, Prize Wheel, Crate, Supply Drop, Turret. |
 | `scene/pickups/pickup_world.gd` (`PickupWorld`) | The level's director: supply drops and events on timers, chunk props, the region-wave chest, beacons and Speed Trap records. |
@@ -18,7 +18,7 @@
 | `scene/player/hud/hud_items.gd`, `hud_chance.gd` | The HUD: gadget slot and buff rings; toasts, Scratch Card, Double or Nothing, combo, beacons, the Nuke's flash (`docs/HUD.md`). |
 | `scene/player/slots/slot_symbols.gd` (`SlotSymbols`) | What the slot reels show, the bets, and paylines. |
 | `scripts/art/pickup_icons.js` | Generates the new icons in `texture/icon/`. Change art there and re-run `node scripts/art/pickup_icons.js`; never edit the SVGs by hand. It writes a `.svg.import` with `svg/scale=1.5` for new files. There are no `_flat` twins, because nothing draws these icons through the 3D text shader. |
-| `tests/game/test_pickups.gd` | Registry completeness, HUD targets, drop odds, pity, buffs on ticks, nitro in `integrate()`, crush overrides, the shield, the gadget slot, supplies, star fragments, combo, paylines, lottery. |
+| `tests/game/test_pickups.gd` | Registry completeness, HUD targets, drop odds, pity, buffs on ticks, nitro in `integrate()`, crush overrides, the shield, the gadget and boost slots, Nitro charges, supplies, star fragments, combo, paylines, lottery. |
 
 ## The registry
 
@@ -61,7 +61,8 @@ The Goonopedia, the HUD flyers and the tests pick the new pickup up from the reg
 | Supplies | Instant: fuel, hull, systems. The Wrench fixes the worst system by 35, a part (Spare Tyre, Bulb, Spark Plug, Tie Rod, Tank Patch) sets its system to 100, the Toolbox gives +40 to all, and Full Service fills everything. | Fuel/hull dials, system lamps |
 | Tune-ups | The original +1 stat pickups. The Tune-up Crate gives +3 to one of the car's three weakest stats, the Overhaul +2 to all, and the Turbo Kit +12 Engine (plus flames). The Blueprint gives a free garage upgrade, credited at the results ticket. | Systems strip |
 | Power-ups | `car.addBuff(id)`: physics ticks from `secs`, at most `MAX_BUFFS` (4); a fifth replaces the one with the least time left. The same one again adds its time. | Rings above the strip |
-| Gadgets | `car.giveItem(id)`: one slot. The same gadget adds charges; a different one replaces it if it is as rare or rarer, otherwise it is sold for 10 × (rarity + 1) coins. **Use** (E or Space; X on a controller; rebindable as "Use Gadget") fires one charge (`Gadgets.use`). | Slot left of the rings |
+| Gadgets | `car.giveItem(id)`: the Fire slot (`heldItem`). The same gadget adds charges; a different one replaces it if it is as rare or rarer, otherwise it is sold for 10 × (rarity + 1) coins. **Fire** (E; X on a controller; rebindable as "Fire Gadget", action `UseItem`) fires one charge (`Gadgets.use`). | Slot left of the rings |
+| Boosts | Nitro (2 burns of 3 s), Hop (3 short hops, no landing blast) and Jump Jets (2 hops that crush on landing). `car.giveItem(id)` puts them in the Boost slot (`moveItem`), with the Fire slot's rules. **Boost** (Shift; LB on a controller; rebindable as "Boost / Hop", action `UseMove`) fires one charge (`car.useMove`, `Gadgets.use`). Nitro's burn is the timed buff `integrate()` reads. | Slot beside the gadget |
 | Loot | Coins, gems, Star Fragments (three make a star, `PickupEffects.addStarFragment`), the Strongbox (ram it three times above 300 px/s), the Golden Goon event. | Payout |
 | Casino & Chance | The slot machine (paylines and bets, below); the Scratch Card and Double or Nothing in the HUD corner (no pause); the Mystery Box (any pickup, rarity re-rolled); the Lottery Ticket (paid on the results ticket); the Prize Wheel (a world prop); The Deal and the Claw Crane (pausing menus). | Corner card |
 | Skill Challenges | World props and events (below), Hot Potato (blow up 5+ goons within 10 s or lose 25 hull), Delivery (reach the station above 30 hull for a star), Crush Combo. | Labels, toasts |
@@ -111,7 +112,7 @@ The Goonopedia, the HUD flyers and the tests pick the new pickup up from the reg
 ## Save data
 
 - `meta.pickups` holds the pickups the player has found (`Pickups.discover`). It is only written in memory; the run's save at the results ticket writes it. The original 14 always show in the Goonopedia.
-- `meta.records.loadout` holds the gadget chosen in run setup. The **Gadget** button (U / Y) cycles `Pickups.LOADOUT`, priced 1, 2 or 4 gems. The gems are spent at Start, and the car takes the gadget in `_ready` (`Pickups.loadout`).
+- Run setup sells a starting consumable for each slot (docs/UI.md, "Run setup"): `meta.records.loadout` holds the gadget (the **Gadget** button, U / Y, cycles `Pickups.LOADOUT`, 1 to 4 gems) and `meta.records.boostLoadout` the boost (**Boost**, B / RS, `Pickups.BOOST_LOADOUT`). The gems are spent at Start, the car takes both in `_ready` (`Pickups.loadout`, `Pickups.boostLoadout`), and `announceLoadout` toasts each with its key once the run is under way.
 - Blueprints add to the car's `upgrades` in `gameSummary` (`PickupEffects.creditBlueprints`), on the lowest stat that isn't maxed.
 
 None of this needed a `SAVE_VERSION` bump: `meta` sections are created on use (`get_or_add`).
@@ -122,7 +123,7 @@ These lines are all that pickups add to files other systems own. They are marked
 
 | File | Hook |
 |---|---|
-| `lib/overhead_car_2d/overhead_car_body_2d.gd` | The pickup section at the end (`buffs`, `heldItem`, `addBuff`, `giveItem`, `useItem`, `crushOverride`, `blockedByPickup`, `loseHealth`, `tickPickups`). `_ready` adds `CarBuffFx` and the loadout. `_physics_process` calls `tickPickups` and uses `crushBuffActive` for the crush speed. `integrate()` reads Nitro. Also: the fuel burn (Free Tank), `reward` (Coin Frenzy, `coinsSinceBet`), `damage` (`blockedByPickup`), `wearSystem`, `setHeadlightStrength` (Floodlights), and `crushGoon` (`PickupEffects.onCrush`). |
+| `lib/overhead_car_2d/overhead_car_body_2d.gd` | The pickup section at the end (`buffs`, `heldItem`, `moveItem`, `addBuff`, `giveItem`, `useItem`, `useMove`, `crushOverride`, `blockedByPickup`, `loseHealth`, `tickPickups`). `_ready` adds `CarBuffFx` and the loadout. `_physics_process` calls `tickPickups` and uses `crushBuffActive` for the crush speed. `integrate()` reads Nitro. Also: the fuel burn (Free Tank), `reward` (Coin Frenzy, `coinsSinceBet`), `damage` (`blockedByPickup`), `wearSystem`, `setHeadlightStrength` (Floodlights), and `crushGoon` (`PickupEffects.onCrush`). |
 | `scene/enemy/walker/walker.gd` | `_physics_process`: Time Warp skip and lures. `tryCrush`: `crushOverride`. `destroy`: `dropTable()`. |
 | `scripts/global/root.gd` | `getPowerupFromWeights`: the `Pickups.ROLL` branch. |
 | `scene/level/levelRoot.gd` | `_ready`: `Pickups.resetRun()` and `PickupWorld`. `stationReached` opens the Pit Shop (`openPitShop`). |
@@ -133,16 +134,16 @@ These lines are all that pickups add to files other systems own. They are marked
 | `scene/player/playerRoot.gd` | `addPickupWidgets`, `HudChance`, and The Deal on every other crush goal. |
 | `scene/player/slots/*` | Reels from `SlotSymbols`; `slotMachine.payReels`, the bet. |
 | `scene/player/menu/gameSummary.gd` | The Lottery row, best combo, Blueprints. |
-| `scene/player/menu/main/main2.gd` | The gadget loadout in run setup. |
+| `scene/player/menu/main/main2.gd` | The loadout in run setup (a gadget and a boost). |
 | `scene/player/menu/goonopedia/goonopedia.gd` | The Pickups tab from the registry, `dropShare(id, mode)`. |
 | `scripts/ai/ai_driver.gd` | `pickupValue` reads `ai` from the registry. |
-| `scripts/global/settings.gd`, `project.godot` | The `UseItem` action, rebindable as "Use Gadget". |
+| `scripts/global/settings.gd`, `project.godot` | The `UseItem` and `UseMove` actions, rebindable as "Fire Gadget" and "Boost / Hop" (settings v2 moved Space from Fire to the Handbrake: `migrateDrivingKeys`). |
 | `scene/powerup/powerup.gd`, `purse.gd`, `slotMachine.gd` | Discovery for the original pickups. |
 
 ## Known gaps and tuning
 
-- Nothing is tuned by hand yet (package 1). The run log doesn't count pickups by kind yet.
-- The AI driver values pickups by `ai` but has no plan for events (it ignores the Golden Goon, the Loot Truck, rings, the wheel), and its gadget use is a few simple rules (`Gadgets.aiWantsUse`).
+- Nothing is tuned by hand yet (package 1); the run log counts pickups by kind (`pk_<kind>`).
+- The AI driver values pickups by `ai` but has no plan for events (it ignores the Golden Goon, the Loot Truck, rings, the wheel), and its gadget and boost use is a few simple rules (`Gadgets.aiWantsUse`, `aiWantsMove`).
 - Monster Tires only scale the car's art; its collision stays the same size.
 - The Bandit can steal new pickups like any other.
 

@@ -19,7 +19,7 @@ static func collect(car, id: String, pos: Vector2) -> void:
 		Pickups.K.SUPPLY: supply(car, id, d)
 		Pickups.K.TUNE: tune(car, id, d)
 		Pickups.K.BOOST: car.addBuff(id)
-		Pickups.K.GADGET:
+		Pickups.K.GADGET, Pickups.K.MOVE: #held in the Fire or the Boost slot
 			if not car.giveItem(id):
 				var price := 10 * (Pickups.rarity(id) + 1)
 				car.reward("coin", price)
