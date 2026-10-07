@@ -146,4 +146,14 @@ These lines are all that pickups add to files other systems own. They are marked
 - Monster Tires only scale the car's art; its collision stays the same size.
 - The Bandit can steal new pickups like any other.
 - The demo has every pickup. Decide whether `Root.IS_DEMO` should hold some back.
-- The dev console's `give` command only knows the original pickups.
+
+## Testing
+
+- **Dev console:** `pickup <id> [count]` collects any pickup in a run (`help` lists them).
+- **Launch options** (`PickupWorld.giveFromCommandLine`):
+  - `-- --pickups=nitro,plow,mine` collects these when the run starts.
+  - `-- --event=goldgoon|truck|bowling|rings|supply` starts an event at once.
+  - `-- --pickup-shots=deal,claw,pitshop,scratch,double,wheel,bowling,...` (with a bench run, for example `--bench=S2`) opens or places each one in turn and saves `user://bench/pickup_<id>.png`.
+- **Rare glow:** a Rare-or-better pickup's light only shows at night (`GenericPickup._process`).
+- **Deferred spawns:** pickups, props and gadget nodes are added deferred (`PickupWorld.addToLevel`, `PickupEffects.spawnPickup`, `dropAndCollect`, `Gadgets.addNode`), because most spawns start in a physics callback.
+- **Beacons:** they keep clear of the top panels and the dials.

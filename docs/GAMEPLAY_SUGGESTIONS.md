@@ -2,7 +2,7 @@
 
 This is a list of suggestions to discuss, not a spec. The author has their own gameplay ideas and runs gameplay as a separate project. Codebase context is in `../CLAUDE.md`, and settings and performance are in `PERFORMANCE.md`.
 
-**Done:** Tier 0, the shared prerequisites, and T1-1 to T1-4 (all five modes are playable). The world revamp (branch `world-revamp`, docs/WORLD.md) absorbed package 4 (T1-5, T1-6, T1-8, T2-9), drowning credit, most of T2-10, the region side of T1-7 and Tier 3's shallows and bridges. **Open:** the rest, regrouped below into **work packages**: small sets of related items, listed in the order to do them, plus the items the revamp surfaced ("Open items from the world revamp").
+**Done:** Tier 0, the shared prerequisites, T1-1 to T1-4 (all five modes are playable), and the pickup expansion (T1-9, T2-7, part of T1-10 and T2-6; `docs/PICKUPS.md`; further pickup work is on hold). The world revamp (branch `world-revamp`, docs/WORLD.md) absorbed package 4 (T1-5, T1-6, T1-8, T2-9), drowning credit, most of T2-10, the region side of T1-7 and Tier 3's shallows and bridges. **Open:** the rest, regrouped below into **work packages**: small sets of related items, listed in the order to do them, plus the items the revamp surfaced ("Open items from the world revamp").
 
 References use file and function names rather than line numbers, because the goon overhaul (commit `e52c30b`) moved most of the code. Effort: **S** is under a day, **M** is 1–3 days, **L** is a week or more.
 
@@ -40,7 +40,7 @@ All ten items are in commit `b60aba9`, together with the perf/settings commits o
 |---|---|---|
 | T1-1 Run log | Debug builds append a row per run to `user://runlog.csv` (`scripts/debug/run_log.gd`, `RunLog`, called from `gameSummary.buildGameSummary`). Columns: date, version, driver (player or ai), car, upgrade total, level, mode, seconds, coins, stars, payout, crushes, giants, regions visited, end reason, gems, slot machines, top speed, end fuel and health, plus score, leg (the Marathon leg being driven) and barrier for the new modes. A file with other columns is moved aside. The car counts `giantsCrushed`. | — |
 | T1-2 Goonpocalypse | Spawning escalates 2× faster (`SpawnManager.POCALYPSE_ESCALATION`) down to a 0.6 s floor (`POCALYPSE_SPAWN_FLOOR`; other modes keep 1.0 s). Region waves keep paying stars with no cap (`Region.waveCap()`). Score = crushes + 5 × giants + seconds / 2 (`Level.pocalypseScore`). Surviving 2× the level's seconds (`POCALYPSE_TARGET`) beats the mode (its star), even if the run then ends in a wreck or Abandon. The ticket stamps it SURVIVED. Best time and best score are kept per level and car in `meta.records.goonpocalypse` and per car in `records.time`/`records.score` (`SaveManager.recordGoonpocalypse`), shown on the ticket (NEW BEST), the driver's records and the mode card. The HUD shows the score and the time to the star. | Escalation 2×, floor 0.6 s, target 2×. Crowds reach the 250 cap much sooner, so re-run S4. |
-| T1-3 Marathon | A relay of `MARATHON_LEGS` = 5 Sprint-length legs. The first is placed as in Sprint. Each station but the last adds that leg's Sprint clock, fills the tank, restores 35 health, repairs every system and opens a free slot machine (`Level.stationReached`). The next station is placed (now with `WorldGen.findStationChunk`) a Sprint distance away, within 60° of the last leg's heading (`tileManager.placeNextStation`). The reached station is retired and unpinned (`unpinChunk`), so it unloads once the car leaves. A car coasting in on an empty tank is saved: `outOfFuel` checks the tank again before ending the run. The last station gives SUCCESS. The HUD shows "STATION 2 OF 5". The AI driver rebuilds its station graph when the station changes. | Legs 5, heal 35, the 60° turn. |
+| T1-3 Marathon | A relay of `MARATHON_LEGS` = 5 Sprint-length legs. The first is placed as in Sprint. Each station but the last adds that leg's Sprint clock, fills the tank, restores 35 health, repairs every system, and opens the Pit Shop and then a free slot machine (`Level.stationReached`, called deferred from the driveway so the next station isn't placed inside a physics callback). The next station is placed (now with `WorldGen.findStationChunk`) a Sprint distance away, within 60° of the last leg's heading (`tileManager.placeNextStation`). The reached station is retired and unpinned (`unpinChunk`), so it unloads once the car leaves. A car coasting in on an empty tank is saved: `outOfFuel` checks the tank again before ending the run. The last station gives SUCCESS. The HUD shows "STATION 2 OF 5". The AI driver rebuilds its station graph when the station changes. | Legs 5, heal 35, the 60° turn. |
 | T1-4 Defense | The clock counts down from the level's seconds and is won at 0 (`Level.timeUpCondition`). The station's walls are a barrier with 1000 health (`station.gd`: `startBarrier`, `damage`, `nearestWallPoint`); the walls redden as it drops, and at 0 the run ends with the new `BASEDESTROYED` ("OVERRUN"). Four spawners ring the station at 4000 px. Goons march on the nearest wall point and hit it once per windup + attack + at least 2 s of rest (`Walker.siege`), unless the car comes within 650 px, when their verb hunts the car as usual. Burrowers, flyers and Scrap Gang vehicles always hunt the car. Goons near the station are kept by the despawn sweep. The car starts outside the lot's gap; parked in the driveway it refuels at 4 per second, and entering repairs it. The HUD shows a barrier bar. | Barrier 1000, rest 2 s, ring 4000, 4 spawners, aggro 650, refuel 4/s. The first AI run with a 300 barrier and 0.6 s rest lost it in 45 s. |
 
 `Root.MODE_AVAILABLE` is true for every mode. The demo still offers only Countdown and Sprint.
@@ -72,11 +72,11 @@ Each package groups items that touch the same code or need each other, so they c
 | 2 | Crush feel | T1-12, T2-6 (drowning credit: done in the world revamp) | M | — |
 | 3 | Regions, waves and giants | T1-7 (giantism), T2-4, T2-8, T2-11 | M–L | 1 |
 | 4 | Terrain with identity | **Done** in the world revamp (docs/WORLD.md) | — | — |
-| 5 | Slot machine and gems | T1-9, T1-10 | M | — |
+| 5 | Slot machine and gems | ~~T1-9~~, T1-10 (partly done) | S | — |
 | 6 | Economy | T1-11, T2-13 | M | 1 |
 | 7 | Goals and teaching | T1-15, T2-12, T1-16, T2-14, T2-15 | M–L | 6 for T2-15 |
 | 8 | Sound | T1-13, T1-14 | S + assets | — |
-| 9 | Goon depth | T2-1, T2-2, T2-3, T2-5, T2-7 | M | 2 |
+| 9 | Goon depth | T2-1, T2-3, T2-5 (T2-2 and T2-7 done) | M | 2 |
 | 10 | Post-launch | Tier 3 | — | 7 |
 
 Re-run the crowd and night benchmarks (S3, S4 in `PERFORMANCE.md`) after packages 1, 3 and 9. They add load, and S4's 1% low is the tightest target.
@@ -88,6 +88,10 @@ Everything after this assumes numbers that have been played.
 - **AI playtests:** `--playtest --mode=marathon,defense,goonpocalypse` gives fast first numbers (CLAUDE.md, `docs/AI_DRIVER.md`). The AI has no Defense strategy beyond patrolling near the station.
 - **Tier 0 numbers:** the Sprint distances and clocks; the drop mix; fuel pressure (the stock sedan gets about 87 s of full throttle per tank); the handling and wall damage of all 9 cars (armored cars now take up to 1.7× more wall damage, because armor used to count twice).
 - **New mode numbers:** the right-hand column of the T1-1 to T1-4 table.
+- **Pickups** (docs/PICKUPS.md): the tier odds and Dice divisors, the item weights, Pit Shop prices, slot bets, event and supply-drop timers, and every power-up's length.
+  - Fuel and hull keep about their old share of drops: the Fuel Can weight is 32 and the Repair Kit 15 in the common tier.
+  - The run log doesn't count pickups by kind yet; add that before tuning them.
+- **Harness bug:** a multi-level playtest's second run hits a goon-list type error (`playtest.gd` `startNext` sets `basicGoons` from ints).
 - **Then:** re-run S3 and S4.
 
 ### Package 2: Crush feel
@@ -102,7 +106,7 @@ All three items change what happens at the moment of a crush, in the car's colli
 - **Proposal:** damage only on non-crush contact; multiply the giant scale; trauma-based camera shake (respecting Reduce Motion) and 30–50 ms hit-stop on giant crushes. GoonFx already has decals and bits; a "Splats" option under Graphics could cap them.
 - **Effort:** S–M. **Files:** `overhead_car_body_2d.gd`, `walker.gd`.
 
-**T2-6. Combos and style bonuses:** drift crush, splash (several goons in one pass), giant slayer, plus a `bestCombo` record (a new car record key; `migrate()` adds it). The skid check is in the car's tire-mark code. **Effort:** S–M.
+**T2-6. Combos and style bonuses.** **Partly done:** the Crush Combo pays coins for crushes less than 1.5 s apart (`PickupEffects.onCrush`), and the results ticket shows the run's best combo (`car.bestCombo`). Open: drift crush, splash (several goons in one pass), giant slayer, and keeping `bestCombo` as a car record (a new record key; `migrate()` adds it). The skid check is in the car's tire-mark code. **Effort:** S.
 
 **Drowning credit (from T2-3):** **Done** in the world revamp: a goon that drowns within 3 s of the car touching it is credited through `SpawnManager.creditCrush` with a "SPLASH" label (`WorldHooks.drownCredited`).
 
@@ -149,7 +153,7 @@ Needs package 1's data.
 ### Package 7: Goals and teaching
 All of these store state in `PlayerData.meta`, which now exists.
 
-**T1-15. First-run hints.** No hint system exists yet. Nothing teaches that crushing needs more than 100 px/s (about 10 MPH; some goons need more), how the slot controls work (Accelerate stops a reel, releasing Brake rerolls), or that stars come from crush goals and 60 s region waves. Since the world revamp, two more are wanted: deep water wrecks the car in two ticks (the shallows ring is the only warning), and fences, hedges, hay bales, crates and barricades smash at speed while rocks and walls don't. One-time toasts for the first nearby goon, the first slow contact, the first slot machine, the first star, the first night, the first goon that resists, the first deep water and the first breakable. Flags in `meta.hints`. **Effort:** S–M.
+**T1-15. First-run hints.** No hint system exists yet. Nothing teaches that crushing needs more than 100 px/s (about 10 MPH; some goons need more), how the slot controls work (Accelerate stops a reel, releasing Brake rerolls, Steer sets the bet), that stars come from crush goals, 60 s region waves and Star Fragments, or that gadgets fire with Use (E / Space). Since the world revamp, two more are wanted: deep water wrecks the car in two ticks (the shallows ring is the only warning), and fences, hedges, hay bales, crates and barricades smash at speed while rocks and walls don't. One-time toasts for the first nearby goon, the first slow contact, the first slot machine, the first gadget, the first star, the first night, the first goon that resists, the first deep water and the first breakable. `HudChance.toast` can show them; flags go in `meta.hints`. **Effort:** S–M.
 
 **T2-12. Medals, per-level records and a "Next up" panel.** Per-level records now exist for Goonpocalypse (`meta.records`); extend the same shape to other modes. Medals in `meta.medals`. The Goonopedia already covers the codex. **Effort:** M.
 
@@ -184,7 +188,7 @@ The goon overhaul (docs/GOONS.md) did most of what Tier 2 asked for. What's left
 | Steam leaderboards (Goonpocalypse score, Sprint time) | The score and best times now exist (T1-2). Needs T1-16. |
 | Daily seeded run | Mostly enabled by the world revamp: the map, districts (names, goons, tints), stations, Sprint and Marathon offsets, chunk contents and spawner offsets all come from the world seed (`WorldGen.ihash`, docs/WORLD.md). Still on the global RNG: which goon spawns, giants and drops. |
 | "Heat" modifiers after level 8 | Crowds are capped at 250 |
-| Ramps and airtime crushes | Collision-mask work around `setForwardCollisionMode` |
+| Ramps and airtime crushes | Collision-mask work around `setForwardCollisionMode`; the Jump Jets gadget already turns off the goon mask while airborne (`Gadgets.use`, `Gadgets.land`) |
 | Water shallows and bridges | **Done** in the world revamp (fords, boardwalks, canal bridges, a 256 px shallows band) |
 | Interactive music layers; new voice lines (about 7 × 9 drivers) | Mostly asset cost |
 | Training Grounds; custom seed entry | `TileManager.worldSeed` takes a seed (the harnesses set it), but there's no UI |
@@ -234,6 +238,7 @@ Ideas the author is on the fence about. Not planned; listed so they aren't lost.
 3. **The slot machine:** answered. Pauses are fine as long as they're fun, so the slot stays as the signature moment, with paylines and bets (T1-9). Crush goals alternate between it and The Deal, and Marathon stations open the Pit Shop first.
 4. **Fuel pressure:** about 87 s of throttle per tank in the stock sedan. Should fuel be the main way runs end, or health?
 5. **Price and length target:** this sets every economy number in T1-11 and T2-15.
-6. **Gems:** confirm gems are never sold. Is a gem-paid continue (Second Wind) acceptable?
+6. **Gems:** confirm gems are never sold. Is a gem-paid continue (Second Wind) acceptable? Gems now also buy a starting gadget and a new hand in The Deal.
 7. **Steam scope for 1.0:** achievements versus leaderboards and dailies. Steam Deck support needs analog steering; input is still digital (`playerCarController.gd`).
 8. **Audio budget:** new music and new voice recordings.
+9. **Pickups in the demo:** the demo currently has every pickup. Should `Root.IS_DEMO` hold some back?

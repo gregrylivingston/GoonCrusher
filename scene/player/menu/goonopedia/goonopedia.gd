@@ -333,7 +333,8 @@ func _exit_tree() -> void:
 		if ResourceLoader.load_threaded_get_status(path) == ResourceLoader.THREAD_LOAD_LOADED: ResourceLoader.load_threaded_get(path)
 
 #sets a tile's picture once it loads, if the tile is still there
-static func setTileArt(texture: Texture2D, b: Button) -> void:
+#(`b` is untyped: a typed Button argument errors before the body runs when the tile was freed)
+static func setTileArt(texture: Texture2D, b) -> void:
 	if is_instance_valid(b) && texture: b.get_node("art").texture = texture
 
 #---------- detail card helpers ----------
@@ -600,7 +601,7 @@ func buildCars() -> void:
 static func isCarLocked(index: int) -> bool:
 	return SaveManager.playerData.cars[index].cost != 0 || (Root.IS_DEMO && index >= Root.DEMO_CAR_COUNT)
 
-func onCarInfo(info: CarInfo, index: int, b: Button) -> void:
+func onCarInfo(info: CarInfo, index: int, b) -> void:
 	carInfos[index] = info
 	if is_instance_valid(b):
 		setTileArt(info.profilePic, b)

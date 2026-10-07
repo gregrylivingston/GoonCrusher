@@ -193,30 +193,44 @@ Every candidate is scored **value ÷ (seconds to get there + 1)**. The current g
 
 ## What the playtests show
 
+**Status (2026-10-06):** driver changes are on hold. The defaults in `ai_profiles.gd` include the latest notes (a mild reverse cost, reversing weighed whenever nearly stopped, 0.75 s plans plus a 1,600 px sweep). They pass the tests, but no tournament has measured them: round 3, new against old `cautious`, was interrupted. Rounds 1 and 2 ran before the pickup overhaul, and round 1 also before the goon-aware crush rules. Treat every number below as a guide to the next tournament, not as a result.
+
 Snapshot from 2026-10-05, **before the world revamp**: `level_grass_1` (the old generator's map; its slot is now Prairie Run, a different map), stock sedan, human sight, 8 runs per mode (seeds 101–108). The rock rings and rock clusters it mentions are gone; walls are terrain and props now. The revamp's own playtests are summarised in docs/GAMEPLAY_SUGGESTIONS.md ("Open items from the world revamp"). It ran on that day's working tree, which already had the car-art session's zone damage and not yet the goon overhaul, and before the last fix to fuel saving. Damage is health lost, averaged per run.
 
-| Mode | Result | Avg time | Crushed | Payout | Rocks | Goon contact | Goon attacks |
-|---|---|---|---|---|---|---|---|
-| Countdown (250 s) | 0 of 8 survived | 84 s | 18.5 | 55 | 14.6 | 11.9 | 110.0 |
-| Sprint (~86 s clock) | 5 of 8 won (2 wrecked, 1 out of time) | 67 s | 7.0 | 21 | 6.6 | 3.5 | 52.6 |
-| Goonpocalypse | survived 90 s on average (best 136 s) | 90 s | 19.3 | 108 | 0.6 | 22.0 | 133.4 |
+### Tournaments, 2026-10-05 (`level_grass_1`, stock sedan)
 
-1. **Goon attacks do most of the damage**: about 80% of the health lost in Countdown and Goonpocalypse. Only the car's front bumper crushes. Goons lunge into its body area, a box bigger than the bumper, and a goon in its attack deals its attack damage on every slide collision on every tick. A crowd on a stalled car therefore takes health off very fast; one trace went from 84 to 19 in one second. The goon overhaul may want per-attack damage or a per-goon cooldown.
-2. **Countdown on the easiest level isn't survivable for this driver in a stock sedan.** Its best run lasted 172 s of 250. The comparison that matters is your own play. If you survive it comfortably, the driver has more to learn. If you don't, Countdown on Easy is too hard for a stock car.
-3. **Crushing costs health:** 0.35 per crush for the sedan (`damage(5)` on contact, before armor). A run that crushes 200 goons pays 70 health for it.
-4. **Rocks are mostly handled.** Wall damage is 0–15 per run, except for pickups inside rock rings, which remain the main trap. The worst run hit rocks for 113 damage in 22 s chasing one.
-5. **The station is hard to drive into.** It is a walled lot with a single gap on its east side, while the indicator points at its centre. The AI needed a dedicated approach rule, and players arriving from the west have to find their way round. An arrow to the gap, or a second gap, would help.
-6. **Sprint is lost to goons, not to the clock.** Winners arrived with 6–33 s to spare, and two of the three losses were wrecks.
-7. **`crush_misses` was 0 in every run**: every hit over 200 px/s crushed.
-8. **Fuel** never ended a snapshot run. A later replay ran dry because fuel saving switched off for a far-off fuel can. That is now fixed: only a nearby one counts.
+Scores use the coin score (coins + mode result), re-ranked with `--rerank`. 6 seeds per row in round 1 and 8 in round 2; scores spread 10–30 points per profile, so treat gaps under about 10 as ties.
+
+| Round | Mode | Ranking (score) | Notes |
+|---|---|---|---|
+| 1 | Countdown | crusher 124, cautious 123, v1 121, default 120, farsight 116, collector 113 | a tie; crusher paid 1,276 a run against cautious's 548, cautious survived longest (238 s of 250) |
+| 1 | Sprint | cautious 90 (6 of 6 won), collector 89, v1 85, farsight 77, default 67, crusher 59 | |
+| 1 | Goonpocalypse | default 117, v1 105, cautious 99, farsight 95, collector 93, crusher 84 | |
+| 2 | Countdown | cautious 123 (5 of 8 survived), cautious + crush reward 118, v1 114 (3 runs), cautious + 2 s look-ahead 102, cautious without reverse cost 101 (5 runs) | partial: stopped at 7 of 10 groups |
+| 2 | Sprint | cautious without reverse cost 83 (7 of 8 won), cautious + crush reward 77, cautious 71, cautious + 2 s look-ahead 61, v1 37 (0 of 8) | `v1` loses to the new goons |
+
+What they suggest:
+1. **`cautious`** (walls, flanks and slowness among goons cost more; stops hunting sooner) was the best all-round profile.
+2. **Backing up should not be penalised much:** removing the reverse cost won Sprint in round 2. The defaults now use a small cost.
+3. **Simulating further ahead tick by tick made it worse,** and it is expensive, so far looking is now a cheap sweep past each plan. That design is the untested part.
+4. **Crushing pays.** Payout is coins × stars, and stars come from crush milestones and region time. `crusher` earned 2.3× `cautious`'s coins in Countdown while surviving less. A hybrid that crushes more without the extra damage is the next thing to try.
+
+### Earlier findings (before the goon and pickup overhauls)
+
+Some of these no longer hold: goon contact damage is now once per goon per 30 ticks, and goons can resist a crush.
+- **Only the front bumper crushes;** goons that reach the body area hurt instead.
+- **The station is hard to drive into.** It is a walled lot with a single gap on its east side, while the indicator points at its centre. The AI needed a dedicated approach rule, and players arriving from the west have to find their way round. An arrow to the gap, or a second gap, would help.
+- **Rocks:** after the sweep fixes, wall damage was 0–20 a run. Pickups inside rock rings were the main trap, hence the among-rocks rules.
+- **Sprint was lost to goons, not the clock:** winners arrived with 6–33 s to spare.
 
 ## Limits and next steps
 
-- **Moving target.** The car's zone damage model and the goon overhaul were both in progress when these rules were tuned. The driver follows handling changes automatically, because it predicts with `integrate()` and reads its footprint from `carBodyArea`. Goon behaviour changes need the goon rules re-checked: lunge range, crush rules, and what is safe to touch.
+- **Moving target.** The car's zone damage model, the goon overhaul and the pickup overhaul all landed while these rules were being tuned. The driver knows nothing of the new pickups' effects (timed buffs, gadgets held for `UseItem`, The Deal), only their `powerup` names, so they score as "another stat" (7 points) unless they use one of the old names. The driver follows handling changes automatically, because it predicts with `integrate()` and reads its footprint from `carBodyArea`. Goon behaviour changes need the goon rules re-checked: lunge range, crush rules, and what is safe to touch.
 - **Prediction horizon.** The local planner simulates 0.75 s and sweeps on to 1,600 px. Long walls and rock fields are handled by the route, the station graph and the breadcrumb escape, not by the planner.
 - **CPU.** Simulating the plans is most of the driver's cost: each is a run of `integrate()` calls. On a busy dev box the driver used several hundred ms per second of game time, so the `ai` console command can lower the frame rate. The tick-by-tick horizon and `scanTicks` are the levers. Plans that share a beginning (left for 0.1, 0.3, 0.6 s or held) could share its simulation; that isn't done yet.
 - **Pockets.** The breadcrumb escape gets out of most pockets among walls and props, but it can still lose 10–20 s in one, and that is often what lets the horde catch up.
 - **Defense and Marathon** have only basic rules: patrol, and the station relay.
+- **The score's Defense line** still uses survival out of 300 s, though Defense now counts down and is won at 0 (`Level.timeUpCondition`).
 - **Water margins** cost it pickups: anything within 400 px of deep water is skipped, which on Snapper Bayou leaves fuel behind.
 - **AI rivals.** The driver can steer any `OverheadCarBody2D` whose controller has a `driver`. A rival car would also need:
   - `isPlayer = false` and its own camera not current.
