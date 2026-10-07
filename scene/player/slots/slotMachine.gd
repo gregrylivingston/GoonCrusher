@@ -10,8 +10,8 @@ var inactiveSlots = []
 var slotDelayTime = 1.8
 var isGoonCrushBonus: bool = false
 
-var myBackground 
-var slotTransition = preload("res://scene/fx/lotto/lottoTransition.tscn")
+var hatch: GameHatch #the skid in, the hatch over the reels and the peel out (docs/UI.md, "Transitions")
+var dim := ColorRect.new()
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	add_to_group("slotMachine")
@@ -20,21 +20,23 @@ func _ready():
 	Root.playerCar.slotMachines += 1
 	$slotMachineBonusSound.stream = load(winSound[ randi_range( 0 , winSound.size() -1 ) ] )
 	$slotMachineBonusSound.play()
-	$Panel.position.y = get_viewport().get_visible_rect().size.y
-	
+	dim.color = Color(0, 0, 0, 0)
+	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(dim)
+	move_child(dim, 0)
+	$Panel.visible = false
+
 	if isGoonCrushBonus:
 		Root.playerRoot.animateNewGoonCrushGoal(false)
 		await get_tree().create_timer(1.5).timeout
-	
-	myBackground = slotTransition.instantiate()
-	Root.levelRoot.add_child( myBackground )
+
+	create_tween().tween_property(dim, "color:a", 0.55, 0.25)
+	$Panel.visible = true
+	hatch = GameHatch.attach(self, $Panel, $Panel/Panel, "FREE SPIN" if isGoonCrushBonus else "BONUS")
+	hatch.enter(0.5) #the spin unlocks at slotDelayTime, just after the hatch is up
 
 
-	var tween = get_tree().create_tween()
-	tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS) 
-	tween.tween_property($Panel , "position" , Vector2(0.0,0.0) , 1.1)
-
-	
 	$Panel/Panel/VBoxContainer/play_button.disabled = true
 	if is_instance_valid(Root.playerCar):
 		Root.playerCar.playPurseRewardAudio()
@@ -192,17 +194,19 @@ func _on_reroll_button_pressed():
 var countdownScreen = load("res://scene/player/countdown.tscn")
 var claimButtonPressed = false
 func _on_claim_button_pressed():
+	if claimButtonPressed: return
 	claimButtonPressed = true
-
-	myBackground.destory()
-	visible = false
+	$Panel/Panel/VBoxContainer/claim_button.disabled = true
+	$Panel/Panel/VBoxContainer/reroll_button.disabled = true
 	var myIconArray: Array[Texture2D] = []   #used to pass icons to splash
 	var rows = [$Panel/Panel/Panel2/HBoxContainer/slotRow, $Panel/Panel/Panel2/HBoxContainer/slotRow2, $Panel/Panel/Panel2/HBoxContainer/slotRow3]
 	var reels = rows.map(func(row): return row.getActiveType())
 	#Dice: a luck / 500 chance that reel 3 lands on reel 2's symbol
 	if randf() < Root.playerCar.luck / 500.0: reels[2] = reels[1]
 	for reel in reels: myIconArray.push_back(SlotSymbols.texture(reel))
-	payReels(reels)
+	payReels(reels) #credited now: the outro below is only the look
+	if is_instance_valid(hatch): await hatch.leave()
+	visible = false
 	var splashScreen = load("res://scene/player/menu/splash/splashscreen_1.tscn").instantiate()
 	splashScreen.myIcons = myIconArray
 	Root.levelRoot.add_child(splashScreen)

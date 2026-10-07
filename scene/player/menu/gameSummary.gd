@@ -41,6 +41,7 @@ func _ready():
 	if not isGameSummary: add_to_group("menuOverlay")
 	if isGameSummary: buildGameSummary()
 	else: buildAchievementSummary()
+	intro()
 
 func _process(delta):
 	if isGameSummary && not summaryComplete:
@@ -364,10 +365,111 @@ func addFooterNote(text: String) -> void:
 func _on_continue_pressed():
 	if continued: return
 	continued = true
+	await outro()
 	queue_free()
 	if isGameSummary:
 		get_tree().paused = false
 		get_tree().change_scene_to_file("res://scene/player/menu/main/main2.tscn")
+
+#---------- in and out (Transition, docs/UI.md) ----------
+#Results: a wreck ends in tire smoke and the ticket skids in from the left; every other ending
+#slams the garage shutter over the run and the ticket feeds up out of its rail. Leaving pulls the
+#ticket back in and carries the door (or slams one) across to the menu, which rolls it up.
+#Records (from the menu) just drop in and lift out.
+
+var door: ShutterDoor
+var fx: TransitionFx
+
+func paper() -> Control:
+	return get_node("ticketRoot/ticket")
+
+func intro() -> void:
+	if Transition.instant(): return
+	var root: Control = get_node("ticketRoot")
+	var sheet = paper()
+	var home = sheet.position
+	var dim: ColorRect = root.get_child(0)
+	if Settings.reduce_motion():
+		root.modulate.a = 0.0
+		create_tween().tween_property(root, "modulate:a", 1.0, Transition.FADE_SECONDS)
+		return
+	if not isGameSummary: #records: a short drop with a bounce
+		sheet.position.y = home.y - 120
+		sheet.modulate.a = 0.0
+		var t = create_tween().set_parallel()
+		t.tween_property(sheet, "position:y", home.y, 0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		t.tween_property(sheet, "modulate:a", 1.0, 0.12)
+		Transition.sound("clank", -10.0)
+		return
+	var screen = get_viewport().get_visible_rect().size
+	fx = TransitionFx.new()
+	fx.autoFree = false
+	root.add_child(fx)
+	root.move_child(fx, 1)
+	if reason == Root.endCondition.NOHEALTH:
+		#a spin-out: a wall of tire smoke, then the ticket skids in and brakes
+		Transition.sound("screech", -2.0)
+		dim.color.a = 0.0
+		create_tween().tween_property(dim, "color:a", 0.62, 0.5)
+		fx.smokeWall(screen, 0.3)
+		sheet.position = Vector2(-sheet.size.x - 40, home.y)
+		sheet.pivot_offset = sheet.size / 2.0
+		sheet.rotation = -0.25
+		var t = create_tween()
+		t.tween_interval(0.3)
+		t.tween_property(sheet, "position:x", home.x, 0.45).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		t.parallel().tween_property(sheet, "rotation", -0.02, 0.45).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		t.tween_callback(func():
+			Transition.sound("skid", -4.0)
+			Juice.rumble(root, "position", 2.0, 0.12)
+			for y in [home.y + 60, home.y + sheet.size.y - 60]: fx.mark(Vector2(0, y), Vector2(home.x + 20, y), 9.0, 0.6, 1.3))
+		return
+	#the shutter slams over the run, then the ticket prints up out of its rail
+	door = ShutterDoor.new()
+	door.size = screen
+	door.labelSize = 150
+	door.label = "GOONCRUSHER"
+	door.sub = "RUN OVER"
+	door.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(door)
+	root.move_child(door, 1)
+	door.position.y = -screen.y - 12
+	sheet.position.y = screen.y + 20
+	Transition.sound("whoosh", -6.0)
+	var t = create_tween()
+	t.tween_property(door, "position:y", 0.0, 0.26).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	t.tween_callback(func():
+		Transition.sound("thud")
+		Transition.sound("clank", -4.0)
+		Juice.rumble(root, "position", Transition.SHAKE, 0.22)
+		fx.dustLine(0, screen.x, screen.y - 4, 32, 14))
+	t.tween_property(door, "position:y", -12.0, 0.045)
+	t.tween_property(door, "position:y", 0.0, 0.045)
+	t.tween_interval(0.15)
+	for step in 6: #a receipt printer: six short pushes
+		t.tween_property(sheet, "position:y", lerpf(screen.y + 20, home.y, (step + 1) / 6.0), 0.09).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		t.tween_interval(0.02)
+
+func outro() -> void:
+	if Transition.instant():
+		if isGameSummary: Transition.carry()
+		return
+	var sheet = paper()
+	if not isGameSummary:
+		var t = create_tween().set_parallel()
+		t.tween_property(sheet, "position:y", sheet.position.y - 80, 0.14).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		t.tween_property(get_node("ticketRoot"), "modulate:a", 0.0, 0.14)
+		await t.finished
+		return
+	if is_instance_valid(door) && not Settings.reduce_motion():
+		var screen = get_viewport().get_visible_rect().size
+		var t = create_tween()
+		for step in 4: t.tween_property(sheet, "position:y", lerpf(sheet.position.y, screen.y + 20, (step + 1) / 4.0), 0.07)
+		await t.finished
+		Transition.carry("GOONCRUSHER", "RUN OVER")
+		return
+	var shutter = Transition.close("GOONCRUSHER", "RUN OVER")
+	if not shutter.isShut: await shutter.shut
 
 #cream paper with a zigzag torn edge top and bottom, and a soft shadow
 class TicketPaper extends Control:

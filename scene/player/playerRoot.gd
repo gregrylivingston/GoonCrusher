@@ -17,6 +17,10 @@ func _ready():
 	updateGoonsCrushed()
 	updateStats()
 	Root.playerRoot = self
+	#behind the menu's loading shutter the level adds it once the door is up (Level.revealRun)
+	if not Transition.holdsRunStart(): addCountdown()
+
+func addCountdown() -> void:
 	add_child(load("res://scene/player/countdown.tscn").instantiate())
 
 func _process(_delta):

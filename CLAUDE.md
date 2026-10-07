@@ -53,9 +53,10 @@ This file is a map. The detail lives in `docs/`:
 - **Input:** `scene/player/controller/playerCarController.gd`; all input is digital. When `driver` is set (an `AIDriver`), the AI holds the keys.
 - **Goons** (docs/GOONS.md): tune in `scripts/global/goons.gd`; base `Walker` (`scene/enemy/walker/walker.gd`, on the native `GoonBody`, which holds the per-tick fields and movement helpers), verbs in `goon_verbs.gd`, effects in `goon_fx.gd`. The car calls `goon.tryCrush(car, speed)`. The AI reads `Walker.mode` and `myMode`; keep those names. Capped at 250 (`SpawnManager.GOON_CAP`), swept every 0.5 s when off screen and either over 8000 px away or stuck (`Walker.isStuck`).
 - **Pickups** (docs/PICKUPS.md): tune in `scripts/global/pickups.gd`. Collecting credits at once; the flying icon is visual only. **Never credit rewards from an animation.**
-- **Slot machine:** `scene/player/slots/*`, `scene/fx/lotto/*`. Crush goals (`playerRoot.gd`, milestones at `(n+1)^1.7*12`) alternate between it and The Deal. Pausing pickup menus join group `slotMachine` so the harnesses tap through them.
+- **Slot machine:** `scene/player/slots/*`; it skids in under a hatch shutter (`GameHatch`). Crush goals (`playerRoot.gd`, milestones at `(n+1)^1.7*12`) alternate between it and The Deal. Pausing pickup menus join group `slotMachine` so the harnesses tap through them.
 - **HUD:** `scene/player/playerRoot.tscn` (docs/HUD.md). Pickups fly to the node in group `"<powerup>ui"`.
-- **Menus:** give a new menu `theme = MenuTheme.theme()`, one `PrimaryButton`, and `KeyHint`s; never hard-code "A" or "Enter" (docs/UI.md).
+- **Menus:** give a new menu `theme = MenuTheme.theme()`, one `PrimaryButton`, and `KeyHint`s; never hard-code "A" or "Enter" (docs/UI.md). Everything must work with the mouse alone (clickable `KeyHint.bar`s; children of a clickable row ignore the mouse).
+- **Transitions:** screen changes go behind the garage shutter (`Transition.play(swap)`, `scene/ui/transitions/`); in-run games use `GameHatch`, overlays `Juice.dropIn`. Headless and the harnesses skip them (`Transition.instant()`); Reduce Motion fades. Never credit rewards from a transition (docs/UI.md, "Transitions").
 - **Settings:** to add one, add the key to `Settings.DEFAULTS` (plus `OPTIONS`/`RANGES`, and `PRESET` if presets drive it), apply it in `Settings.applyKey` or where it is read, then add a row in `settings_menu.gd`'s `buildSchema()`.
 
 ### Save data (`scene/player/save/playerData.gd`)

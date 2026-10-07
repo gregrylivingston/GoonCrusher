@@ -44,6 +44,15 @@ static func theme() -> Theme:
 	t.set_constant("h_separation", "Button", 12)
 	t.set_font_size("font_size", "Button", 24)
 
+	#stat rows on the driver card: the highlight is the row's own rect, inset content sits inside it
+	t.set_type_variation("StatRow", "Button")
+	var rowMargins = Vector4(8, 2, 8, 2)
+	t.set_stylebox("normal", "StatRow", box(Color(1, 1, 1, 0.035), Color(0, 0, 0, 0), 7, 0, rowMargins))
+	t.set_stylebox("hover", "StatRow", box(Color(HudTheme.RIM, 0.14), Color(HudTheme.RIM, 0.75), 7, 2, rowMargins))
+	t.set_stylebox("pressed", "StatRow", box(Color(HudTheme.RIM, 0.3), HudTheme.RIM, 7, 2, rowMargins))
+	t.set_stylebox("focus", "StatRow", box(Color(HudTheme.RIM, 0.2), HudTheme.RIM, 7, 2, rowMargins))
+	t.set_stylebox("disabled", "StatRow", box(Color(1, 1, 1, 0.02), Color(0, 0, 0, 0), 7, 0, rowMargins))
+
 	#the primary action
 	t.set_type_variation("PrimaryButton", "Button")
 	t.set_stylebox("normal", "PrimaryButton", primaryBox(HudTheme.RIM))
@@ -86,6 +95,7 @@ static func theme() -> Theme:
 	panel(t, "CardPanel", box(Color(0.082, 0.067, 0.059, 0.97), HudTheme.RIM, 18, 5))
 	panel(t, "SideCardPanel", box(Color(0.082, 0.067, 0.059, 0.97), Color(1, 1, 1, 0.22), 18, 3))
 	panel(t, "KeyChip", box(Color(0.165, 0.145, 0.133), Color(0.478, 0.431, 0.384), 7, 2, Vector4(8, 1, 8, 1)))
+	panel(t, "KeyChipHot", box(Color(HudTheme.RIM, 0.35), HudTheme.RIM, 7, 2, Vector4(8, 1, 8, 1)))
 	panel(t, "PriceChip", box(Color(HudTheme.RIM, 0.2), Color(HudTheme.RIM, 0.7), 7, 2, Vector4(5, 1, 8, 1)))
 	panel(t, "BandPanel", box(HudTheme.RIM, Color(0, 0, 0, 0), 0, 0, Vector4(12, 4, 12, 4)))
 	cached = t
@@ -144,7 +154,9 @@ static func priceChip(amount: String, icon: Texture2D = HudTheme.COIN_ICON, affo
 	chipPanel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var row = HBoxContainer.new()
 	row.add_theme_constant_override("separation", 4)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var picture = TextureRect.new()
+	picture.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	picture.texture = icon
 	picture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	picture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -179,6 +191,18 @@ static func addSounds(b: BaseButton) -> void:
 	b.focus_entered.connect(func(): player.stream = HOVER_SOUND; player.play())
 	b.pressed.connect(func(): player.stream = PRESS_SOUND; player.play())
 
+static var clickPlayer: AudioStreamPlayer
+
+#the press click for things that aren't Buttons (clickable key hints), from one shared player
+static func click() -> void:
+	if not is_instance_valid(clickPlayer):
+		clickPlayer = AudioStreamPlayer.new()
+		clickPlayer.bus = &"UI"
+		clickPlayer.stream = PRESS_SOUND
+		clickPlayer.process_mode = Node.PROCESS_MODE_ALWAYS
+		(Engine.get_main_loop() as SceneTree).root.add_child(clickPlayer)
+	clickPlayer.play()
+
 #a button with an icon, text and a key hint at its right end
 static func button(text: String, actions := PackedStringArray(), primary := false, icon: Texture2D = null) -> Button:
 	var b = Button.new()
@@ -197,4 +221,11 @@ static func button(text: String, actions := PackedStringArray(), primary := fals
 		hint.offset_right = -12
 		hint.alignment = BoxContainer.ALIGNMENT_END
 		b.add_child(hint)
+		#keep the text clear of the chip: the right margin grows by the chip's width
+		var variation = "PrimaryButton" if primary else "Button"
+		for state in ["normal", "hover", "pressed", "disabled"]:
+			var style: StyleBox = theme().get_stylebox(state, variation).duplicate()
+			style.content_margin_right += 52
+			if primary: style.content_margin_left += 26
+			b.add_theme_stylebox_override(state, style)
 	return b

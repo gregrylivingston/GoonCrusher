@@ -61,14 +61,21 @@ func _ready():
 	buildUi()
 	shownCoins = SaveManager.playerData.coin
 	selectCar(SaveManager.playerData.selectedCar, false)
+	var payout = 0
 	if Root.isRunActive:
 		Root.isRunActive = false
 		#gameSummary already credited and saved the payout; the menu only counts the display up
-		var coin = SaveManager.playerData.coin
-		if Root.earnedCoins > 0: animateCoins(coin - Root.earnedCoins, coin)
+		payout = Root.earnedCoins
+		if payout > 0: coinsLabel.text = DriverCard.formatCoins(SaveManager.playerData.coin - payout)
 		Root.earnedCoins = 0
 		Root.earnedGems = 0
 	await get_tree().process_frame
+	#back from a run behind the results' shutter: roll it up on the garage, then count the payout in
+	if Transition.busy():
+		var door = Transition.active
+		door.open()
+		await door.opened
+	if payout > 0: animateCoins(SaveManager.playerData.coin - payout, SaveManager.playerData.coin)
 	Settings.on_menu_ready() #the menu is drawn: this boot did not crash
 	if Settings.safe_mode_prompt: add_child(SettingsDialog.safeModePrompt())
 	elif Settings.detect_toast_pending || Settings.calibrate_pending:
@@ -210,6 +217,7 @@ func buildGarage() -> void:
 		card.drivePressed.connect(goToSetup)
 		card.unlockPressed.connect(onUnlockPressed)
 		card.upgradePressed.connect(onUpgradePressed)
+		card.sheetRequested.connect(func(stat): setUpgrading(true, stat))
 		card.selectRequested.connect(selectCar.bind(i))
 		cards.push_back(card)
 		card.car = cars[i]
@@ -369,6 +377,15 @@ func makePoster(index: int) -> Control:
 	frame.size = POSTER_SIZE
 	frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	poster.add_child(frame)
+	var catcher = Button.new() #a click on a side poster selects it
+	catcher.name = "catcher"
+	catcher.flat = true
+	catcher.focus_mode = Control.FOCUS_NONE
+	catcher.size = POSTER_SIZE
+	catcher.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	for state in ["normal", "hover", "pressed", "focus"]: catcher.add_theme_stylebox_override(state, StyleBoxEmpty.new())
+	catcher.pressed.connect(stepLevelTo.bind(index))
+	poster.add_child(catcher)
 	return poster
 
 func makeMedallion(mode: int) -> Control:
@@ -383,6 +400,7 @@ func makeMedallion(mode: int) -> Control:
 	disc.icon = HudTheme.STAR_ICON
 	disc.expand_icon = true
 	disc.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	disc.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	disc.pressed.connect(func(): SaveManager.setGameMode(mode); refreshSetup())
 	MenuTheme.addSounds(disc)
 	column.add_child(disc)
@@ -483,10 +501,11 @@ func showBackground(texture: Texture2D, animate := true) -> void:
 	tween.tween_property(next, "modulate:a", 1.0, SLIDE_SECONDS if animate else 0.0)
 	tween.tween_property(front, "modulate:a", 0.0, SLIDE_SECONDS if animate else 0.0)
 
-func setUpgrading(on: bool) -> void:
+func setUpgrading(on: bool, stat := -1) -> void:
 	if on && (screen != Screen.GARAGE || cards[SaveManager.playerData.selectedCar].isLocked()): return
+	if on == upgrading && stat < 0: return
 	upgrading = on
-	cards[SaveManager.playerData.selectedCar].setUpgradeMode(on)
+	cards[SaveManager.playerData.selectedCar].setUpgradeMode(on, true, stat)
 	updateHints()
 
 #a stat row (or the Upgrade button, stat -1) was pressed on the focused card
@@ -494,19 +513,32 @@ func onUpgradePressed(stat: int) -> void:
 	if stat < 0:
 		setUpgrading(not upgrading)
 		return
-	if SaveManager.requestStatUpgrade(stat): buyPlayer.play() #requestStatUpgrade calls statUpdatesUiUpdate
+	var before = SaveManager.playerData.coin
+	if SaveManager.requestStatUpgrade(stat): #requestStatUpgrade calls statUpdatesUiUpdate
+		buyPlayer.play()
+		cards[SaveManager.playerData.selectedCar].celebrate(stat)
+		animateCoins(before, SaveManager.playerData.coin)
 
 func onUnlockPressed() -> void:
+	var before = SaveManager.playerData.coin
+	var card = cards[SaveManager.playerData.selectedCar]
 	if SaveManager.unlockCar():
 		buyPlayer.play()
-		statUpdatesUiUpdate()
-		cards[SaveManager.playerData.selectedCar].mainButton.grab_focus()
+		animateCoins(before, SaveManager.playerData.coin)
+		Juice.flash(card, HudTheme.GOLD, 0.6, 18)
+		Juice.pop(card.portrait, 1.08, 0.4)
+		card.mainButton.grab_focus()
+	else: Juice.shake(card.mainButton)
 
 #---------- run setup ----------
 
+#the garage and run setup swap behind the shutter (Transition)
 func goToSetup() -> void:
-	if cards[SaveManager.playerData.selectedCar].isLocked(): return
+	if cards[SaveManager.playerData.selectedCar].isLocked() || screen == Screen.SETUP: return
 	setUpgrading(false)
+	Transition.play(showSetup, "GOONCRUSHER", "RUN SETUP")
+
+func showSetup() -> void:
 	screen = Screen.SETUP
 	SaveManager.setGameMode(defaultGameMode())
 	switchLayer(setup, garage)
@@ -514,6 +546,10 @@ func goToSetup() -> void:
 	startButton.grab_focus()
 
 func goToGarage() -> void:
+	if screen == Screen.GARAGE: return
+	Transition.play(showGarage, "GOONCRUSHER", "GARAGE 07")
+
+func showGarage() -> void:
 	screen = Screen.GARAGE
 	switchLayer(garage, setup)
 	showBackground(Root.carInfo.backgroundPic)
@@ -523,8 +559,6 @@ func goToGarage() -> void:
 func switchLayer(show: Control, hide: Control) -> void:
 	hide.visible = false
 	show.visible = true
-	show.modulate.a = 0.0
-	create_tween().tween_property(show, "modulate:a", 1.0, SLIDE_SECONDS)
 	logo.visible = show == garage
 
 func refreshSetup(animate := true) -> void:
@@ -555,6 +589,7 @@ func refreshSetup(animate := true) -> void:
 			poster.scale = scale
 			poster.modulate = tint
 		refreshPoster(i, offset == 0)
+		poster.get_node("catcher").visible = offset != 0
 	stackByDistance(setup, posters, selected)
 	var level = levels[selected]
 	if posters[selected].get_node("art").texture == null: finishPosterLoad(selected, true)
@@ -613,7 +648,11 @@ func refreshMedallion(column: Control, mode: int, selected: bool, level: Diction
 	if selected:
 		style.shadow_color = Color(HudTheme.GOLD, 0.45)
 		style.shadow_size = 14
-	for state in ["normal", "hover", "pressed", "focus"]: disc.add_theme_stylebox_override(state, style)
+	for state in ["normal", "pressed", "focus"]: disc.add_theme_stylebox_override(state, style)
+	var hover = style.duplicate()
+	hover.border_color = HudTheme.GOLD if selected else Color(HudTheme.RIM, 0.8)
+	hover.bg_color = HudTheme.PANEL.lerp(HudTheme.RIM, 0.12)
+	disc.add_theme_stylebox_override("hover", hover)
 	var label: Label = column.get_node("name")
 	label.theme_type_variation = "GoldLabel" if selected else ""
 	label.add_theme_font_size_override("font_size", 19 if selected else 16)
@@ -655,7 +694,14 @@ func _process(_delta):
 #menu navigation runs before the GUI so Left/Right switch cards instead of moving focus;
 #in upgrade mode the arrows go to the GUI, which moves between the stat rows
 func _input(event: InputEvent) -> void:
-	if Settings.menu_open || loadingLevel || overlayOpen() || not event.is_pressed() || event.is_echo(): return
+	if Settings.menu_open || loadingLevel || overlayOpen() || Transition.busy() || not event.is_pressed() || event.is_echo(): return
+	if event is InputEventMouseButton:
+		if not upgrading && (event.button_index == MOUSE_BUTTON_WHEEL_UP || event.button_index == MOUSE_BUTTON_WHEEL_DOWN):
+			var step = -1 if event.button_index == MOUSE_BUTTON_WHEEL_UP else 1
+			if screen == Screen.GARAGE: selectCar(SaveManager.playerData.selectedCar + step)
+			else: stepLevelTo(SaveManager.playerData.selectedLevel + step)
+			get_viewport().set_input_as_handled()
+		return
 	var handled := true
 	if screen == Screen.GARAGE && upgrading:
 		if event.is_action_pressed("ui_cancel") || event.is_action_pressed("ui_upgrade"): setUpgrading(false)
@@ -687,6 +733,15 @@ func _input(event: InputEvent) -> void:
 		else: handled = false
 	if handled: get_viewport().set_input_as_handled()
 
+#a clicked side poster (or the mouse wheel): step the carousel toward it
+func stepLevelTo(index: int) -> void:
+	var count = SaveManager.playerData.levels.size()
+	var offset = wrapi(index - SaveManager.playerData.selectedLevel + count / 2, 0, count) - count / 2
+	for i in absi(offset):
+		if offset < 0: SaveManager.selectPreviousLevel()
+		else: SaveManager.selectNextLevel()
+	refreshSetup()
+
 func stepMode(direction: int) -> void:
 	var at = MODE_ORDER.find(SaveManager.getGameMode())
 	SaveManager.setGameMode(MODE_ORDER[wrapi(at + direction, 0, MODE_ORDER.size())])
@@ -709,7 +764,7 @@ func updateHints() -> void:
 		hints = [[["ui_tab_prev", "ui_tab_next"], "Driver"], [["ui_accept"], "Unlock" if locked else "Drive"]]
 		if not locked: hints.push_back([["ui_upgrade"], "Upgrade"])
 		hints.append_array([[["ui_records"], "Records"], [["ui_codex"], "Goonopedia"], [["ui_menu"], "Settings"]])
-	for hint in hints: hintBar.add_child(KeyHint.make(PackedStringArray(hint[0]), hint[1], 16))
+	for hint in hints: hintBar.add_child(KeyHint.make(PackedStringArray(hint[0]), hint[1], 16, true))
 
 #---------- overlays and runs ----------
 
@@ -730,33 +785,25 @@ func openRecords() -> void:
 	scene.isGameSummary = false
 	add_child(scene)
 
-var loadingPanel: PanelContainer
-#loads the level on a worker thread behind a "Loading" panel instead of freezing the menu
+#loads the level on a worker thread behind the shutter, which shows the level's name and lights its
+#lamps with load progress; the level rolls it up once its world is built (Level.revealRun)
 func startLevel(path: String) -> void:
 	if loadingLevel: return
 	loadingLevel = true
 	Region.resetRegions()
 	SaveManager.flush()
-	loadingPanel = PanelContainer.new()
-	loadingPanel.theme = MenuTheme.theme()
-	loadingPanel.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	loadingPanel.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	loadingPanel.grow_vertical = Control.GROW_DIRECTION_BOTH
-	var label = Label.new()
-	label.text = "LOADING..."
-	label.theme_type_variation = "GoldLabel"
-	label.add_theme_font_size_override("font_size", 44)
-	loadingPanel.add_child(label)
-	add_child(loadingPanel)
+	var door = Transition.close(levelName(SaveManager.playerData.selectedLevel).to_upper(), "LOADING", 0.0)
 	ResourceLoader.load_threaded_request(path)
 	var carScene = Root.selectedCar.scene #the menu only loaded the car's CarInfo; levelRoot instantiates the scene
 	if not ResourceLoader.has_cached(carScene): ResourceLoader.load_threaded_request(carScene)
-	while ResourceLoader.load_threaded_get_status(path) == ResourceLoader.THREAD_LOAD_IN_PROGRESS \
-			|| ResourceLoader.load_threaded_get_status(carScene) == ResourceLoader.THREAD_LOAD_IN_PROGRESS:
+	var progress = []
+	while ResourceLoader.load_threaded_get_status(path, progress) == ResourceLoader.THREAD_LOAD_IN_PROGRESS 			|| ResourceLoader.load_threaded_get_status(carScene) == ResourceLoader.THREAD_LOAD_IN_PROGRESS:
+		if not progress.is_empty(): door.progress = maxf(door.progress, progress[0] * 0.5)
 		await get_tree().process_frame
 	if ResourceLoader.load_threaded_get_status(carScene) == ResourceLoader.THREAD_LOAD_LOADED:
 		Root.selectedCarScene = ResourceLoader.load_threaded_get(carScene) #held so the cache keeps it
-	await get_tree().process_frame #let the panel draw before the level is built
+	door.progress = 0.5
+	if not door.isShut: await door.shut #change scenes only once the slam has landed
 	var scene = ResourceLoader.load_threaded_get(path)
 	if scene: get_tree().change_scene_to_node(RunView.wrap(scene.instantiate()))
 	else: get_tree().change_scene_to_file(path)
@@ -773,5 +820,9 @@ func statUpdatesUiUpdate() -> void:
 #run payout: the coins are already credited and saved; this only counts the display up
 func animateCoins(from: int, to: int) -> void:
 	statUpdatesUiUpdate()
-	var tween = create_tween()
-	tween.tween_method(func(v): coinsLabel.text = DriverCard.formatCoins(int(v)), float(from), float(to), clampf((to - from) / 300.0, 0.3, 1.5))
+	if coinTween: coinTween.kill()
+	coinTween = create_tween()
+	coinTween.tween_method(func(v): coinsLabel.text = DriverCard.formatCoins(int(v)), float(from), float(to), clampf(absf(to - from) / 300.0, 0.3, 1.5))
+	Juice.pop(coinsLabel, 1.2 if to > from else 1.12)
+
+var coinTween: Tween

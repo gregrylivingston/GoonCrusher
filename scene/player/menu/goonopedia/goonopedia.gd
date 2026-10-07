@@ -175,13 +175,9 @@ func _ready() -> void:
 	detailScroll.add_child(detail)
 	right.add_child(detailScroll)
 	body.add_child(right)
-	var hints = HBoxContainer.new()
-	hints.alignment = BoxContainer.ALIGNMENT_CENTER
-	hints.add_theme_constant_override("separation", 26)
-	for hint in [[["ui_tab_prev", "ui_tab_next"], "Tab"], [["ui_up", "ui_down"], "Browse"], [["ui_cancel"], "Back"]]:
-		hints.add_child(KeyHint.make(PackedStringArray(hint[0]), hint[1], 16))
-	root.add_child(hints)
+	root.add_child(KeyHint.bar([[["ui_tab_prev", "ui_tab_next"], "Tab"], [["ui_up", "ui_down"], "Browse"], [["ui_cancel"], "Back"]]))
 	setTab(Tab.GOONS)
+	Juice.dropIn(self, 30.0)
 
 func buildHeader() -> Control:
 	var row = HBoxContainer.new()
@@ -209,7 +205,7 @@ func buildTabs() -> Control:
 	var row = HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 10)
-	row.add_child(KeyHint.make(PackedStringArray(["ui_tab_prev"]), "", 15))
+	row.add_child(KeyHint.make(PackedStringArray(["ui_tab_prev"]), "", 15, true))
 	for i in TAB_NAMES.size():
 		var b = Button.new()
 		b.text = TAB_NAMES[i]
@@ -220,7 +216,7 @@ func buildTabs() -> Control:
 		MenuTheme.addSounds(b)
 		row.add_child(b)
 		tabButtons.push_back(b)
-	row.add_child(KeyHint.make(PackedStringArray(["ui_tab_next"]), "", 15))
+	row.add_child(KeyHint.make(PackedStringArray(["ui_tab_next"]), "", 15, true))
 	return row
 
 #---------- tabs and tiles ----------

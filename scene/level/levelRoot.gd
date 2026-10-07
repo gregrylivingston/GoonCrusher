@@ -115,6 +115,7 @@ func _ready():
 
 	#the TileManager waits at least one frame before placing stations, so this is never too late
 	var tileManager = $TileManager
+	holdUnderShutter()
 	if tileManager.isWorldReady: onWorldReady()
 	else: tileManager.world_ready.connect(onWorldReady)
 
@@ -129,6 +130,50 @@ func onWorldReady() -> void:
 			if is_instance_valid(Root.station): setupDefense()
 	clockReady = true
 	get_tree().call_group("runTimer", "onClockReady")
+	revealRun()
+
+#---------- the start: behind the loading shutter (Transition, docs/UI.md) ----------
+#The menu's loading door is still down when the level enters. The run waits paused behind it while
+#the world builds (the build waits on process frames, which run while paused, and the TileManager
+#keeps streaming), then the door rolls up on the car mid-burnout and the usual 3-2-1 starts the run.
+
+const REVEAL_SETTLE_FRAMES := 12 #chunks applied around the car before the door opens
+
+var heldUnderShutter := false
+
+func holdUnderShutter() -> void:
+	if not Transition.holdsRunStart(): return
+	heldUnderShutter = true
+	get_tree().paused = true
+	$TileManager.process_mode = Node.PROCESS_MODE_ALWAYS
+	Transition.active.progress = maxf(Transition.active.progress, 0.6)
+
+func revealRun() -> void:
+	if not Transition.busy(): return
+	var door = Transition.active
+	if not heldUnderShutter: #instant (harnesses): just clear the door
+		door.open()
+		return
+	door.progress = 0.85
+	for i in REVEAL_SETTLE_FRAMES: await get_tree().process_frame
+	if not is_inside_tree() || not is_instance_valid(door): return
+	door.progress = 1.0
+	await get_tree().create_timer(0.15, true, false, true).timeout
+	burnout(door.fx)
+	door.open(true)
+	await door.opened
+	$TileManager.process_mode = Node.PROCESS_MODE_INHERIT
+	heldUnderShutter = false
+	if not hasEnded && is_instance_valid(Root.playerRoot): Root.playerRoot.addCountdown() #3-2-1 unpauses the run on GO
+
+#the car spinning its wheels on the spot as the door rises: a rev, a squeal and smoke off its tail
+func burnout(fx: TransitionFx) -> void:
+	if not is_instance_valid(Root.playerCar): return
+	var canvas = Root.playerCar.get_global_transform_with_canvas()
+	var tail = canvas.origin - canvas.x * 26.0 #forward is the car's +x (integrate); the canvas transform carries the camera zoom
+	Transition.sound("rev", -2.0)
+	Transition.sound("screech", -8.0)
+	for i in 6: fx.burst(tail, 4, -canvas.x.normalized() * 160.0, 200.0, 110.0, 1.2, i * 0.08)
 
 #Sprint station offset from the car start, in px: straight ahead (+x), with a y offset of up
 #to SPRINT_Y_SPREAD of the distance. yRoll is -1..1.

@@ -8,10 +8,13 @@ class_name PickupMenu extends CanvasLayer
 const ARM_SECONDS := 0.6
 
 var root := Control.new()
+var centre: CenterContainer
 var card := PanelContainer.new()
 var body := VBoxContainer.new()
 var armed := 0.0
 var closed := false
+var hatch: GameHatch #the skid in, the hatch and the peel out (docs/UI.md, "Transitions")
+var hatchLabel := ""
 
 func _init() -> void:
 	layer = 20
@@ -28,7 +31,7 @@ func _ready() -> void:
 	dim.color = Color(0, 0, 0, 0.6)
 	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	root.add_child(dim)
-	var centre = CenterContainer.new()
+	centre = CenterContainer.new()
 	centre.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	root.add_child(centre)
 	card.theme_type_variation = "CardPanel"
@@ -38,6 +41,8 @@ func _ready() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	get_tree().paused = true
 	build()
+	hatch = GameHatch.attach(self, centre, card, hatchLabel)
+	hatch.enter(0.0)
 
 func build() -> void: pass
 
@@ -53,6 +58,7 @@ func onAction(_action: String) -> void: pass
 func tick(_delta: float) -> void: pass
 
 func title(text: String, sub := "") -> void:
+	if hatchLabel == "": hatchLabel = text.to_upper()
 	var t = Label.new()
 	t.text = text
 	t.theme_type_variation = "TitleLabel"
@@ -66,10 +72,7 @@ func title(text: String, sub := "") -> void:
 		body.add_child(s)
 
 func hints(list: Array) -> HBoxContainer:
-	var row = HBoxContainer.new()
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 26)
-	for h in list: row.add_child(KeyHint.make(PackedStringArray(h[0]), h[1], 16))
+	var row = KeyHint.bar(list)
 	body.add_child(row)
 	return row
 
@@ -80,6 +83,8 @@ static func runCoins() -> int:
 func close(countdown := true) -> void:
 	if closed: return
 	closed = true
+	#another pausing screen follows at once (countdown false) only when this closes synchronously
+	if countdown && is_instance_valid(hatch): await hatch.leave()
 	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
 	if countdown && is_instance_valid(Root.playerCar): Root.playerCar.add_child(load("res://scene/player/countdown.tscn").instantiate())
 	elif not countdown: get_tree().paused = false

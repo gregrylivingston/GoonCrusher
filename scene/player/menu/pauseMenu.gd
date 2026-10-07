@@ -19,18 +19,23 @@ func _ready():
 	InputGlyphs.ensureMenuActions()
 	build()
 	continueButton.grab_focus()
+	intro()
+
+var root: Control
+var dim: ColorRect
+var card: PanelContainer
 
 func build() -> void:
-	var root = Control.new()
+	root = Control.new()
 	root.theme = MenuTheme.theme()
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(root)
-	var dim = ColorRect.new()
+	dim = ColorRect.new()
 	dim.color = Color(0, 0, 0, 0.55)
 	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	root.add_child(dim)
 
-	var card = PanelContainer.new()
+	card = PanelContainer.new()
 	card.theme_type_variation = "CardPanel"
 	card.add_theme_stylebox_override("panel", MenuTheme.box(Color(0.055, 0.047, 0.043, 0.94), HudTheme.RIM, 18, 5, Vector4(0, 0, 0, 0)))
 	card.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
@@ -86,13 +91,7 @@ func build() -> void:
 	runLine.text = runSummary()
 	body.add_child(runLine)
 	if is_instance_valid(Root.playerCar): body.add_child(statRow(Root.playerCar))
-	var hints = HBoxContainer.new()
-	hints.alignment = BoxContainer.ALIGNMENT_CENTER
-	hints.add_theme_constant_override("separation", 22)
-	hints.add_child(KeyHint.make(PackedStringArray(["ui_up", "ui_down"]), "Choose"))
-	hints.add_child(KeyHint.make(PackedStringArray(["ui_accept"]), "Select"))
-	hints.add_child(KeyHint.make(PackedStringArray(["ui_menu"]), "Continue"))
-	body.add_child(hints)
+	body.add_child(KeyHint.bar([[["ui_up", "ui_down"], "Choose"], [["ui_accept"], "Select"], [["ui_menu"], "Continue"]], 15, 22))
 
 static func bandBox() -> StyleBoxFlat:
 	var style = MenuTheme.box(HudTheme.RIM, Color(0, 0, 0, 0), 0, 0, Vector4(12, 10, 12, 10))
@@ -144,10 +143,100 @@ func _process(_delta):
 		_on_continue_pressed()
 
 func _on_continue_pressed():
+	if closing: return
+	closing = true
+	await outro()
 	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
 	Settings.set_menu_context(false)
 	queue_free()
 	get_tree().paused = false
+
+#---------- in and out (docs/UI.md, "Transitions") ----------
+#A half garage shutter drops from the top with the card hanging from its rail on two straps; the
+#card swings once and settles. Continue rolls the door up and takes the card with it.
+
+const STRAP := 30.0
+const DROP_SECONDS := 0.26
+const LIFT_SECONDS := 0.32
+
+var door: ShutterDoor
+var introTween: Tween
+var cardHome: Vector2
+var closing := false
+
+func intro() -> void:
+	if Transition.instant(): return
+	card.modulate.a = 0.0
+	await get_tree().process_frame #the card's size is known after one layout pass
+	if not is_inside_tree(): return
+	card.modulate.a = 1.0
+	cardHome = card.position
+	var screen = get_viewport().get_visible_rect().size
+	var railY = maxf(60.0, cardHome.y - STRAP)
+	door = ShutterDoor.new()
+	door.small = true
+	door.label = "GOONCRUSHER"
+	door.labelSize = 44
+	door.labelAt = 0.5
+	door.size = Vector2(screen.x, railY)
+	door.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(door)
+	root.move_child(door, 1)
+	var straps = Node2D.new() #not a Control, so the card's container leaves it alone
+	for x in [card.size.x * 0.22, card.size.x * 0.78]:
+		var strap = Line2D.new()
+		strap.points = PackedVector2Array([Vector2(x, -STRAP - 4), Vector2(x, 6)])
+		strap.width = 6
+		strap.default_color = Color("2a2522")
+		straps.add_child(strap)
+		var grip = Line2D.new()
+		grip.points = PackedVector2Array([Vector2(x - 8, 2), Vector2(x + 8, 2)])
+		grip.width = 8
+		grip.default_color = Color("8a827a")
+		straps.add_child(grip)
+	card.add_child(straps)
+	if Settings.reduce_motion():
+		door.modulate.a = 0.0
+		card.modulate.a = 0.0
+		var fade = create_tween().set_parallel()
+		fade.tween_property(door, "modulate:a", 1.0, Transition.FADE_SECONDS)
+		fade.tween_property(card, "modulate:a", 1.0, Transition.FADE_SECONDS)
+		return
+	var lift = railY + 12
+	door.position.y = -lift
+	card.position.y = cardHome.y - lift
+	card.pivot_offset = Vector2(card.size.x / 2.0, -STRAP)
+	Transition.sound("whoosh", -8.0)
+	var t = create_tween()
+	introTween = t
+	t.tween_property(door, "position:y", 0.0, DROP_SECONDS).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	t.parallel().tween_property(card, "position:y", cardHome.y, DROP_SECONDS).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	t.tween_callback(func():
+		Transition.sound("clank", -3.0)
+		Transition.sound("thud", -8.0)
+		Juice.rumble(root, "position", 4.0, 0.14)
+		var fx = TransitionFx.new()
+		root.add_child(fx)
+		root.move_child(fx, 2)
+		fx.dustLine(0, screen.x, railY, 12, 0, 220.0))
+	#the swing on its straps: a damped sine, 4 degrees to rest
+	t.tween_method(func(k: float): card.rotation = 0.07 * exp(-k * 2.6) * sin(k * 10.0), 0.0, 1.0, 1.0)
+
+func outro() -> void:
+	if not is_instance_valid(door) || Transition.instant(): return
+	if Settings.reduce_motion():
+		var fade = create_tween().set_parallel()
+		fade.tween_property(root, "modulate:a", 0.0, Transition.FADE_SECONDS)
+		await fade.finished
+		return
+	Transition.sound("rattle", -6.0)
+	if introTween: introTween.kill()
+	card.rotation = 0.0
+	var t = create_tween().set_parallel().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
+	t.tween_property(door, "position:y", -door.size.y - 12, LIFT_SECONDS)
+	t.tween_property(card, "position:y", -card.size.y - 40, LIFT_SECONDS)
+	t.tween_property(dim, "color:a", 0.0, LIFT_SECONDS)
+	await t.finished
 
 func _on_quit_pressed():
 	if confirmed(quitButton, "Quit game", "Press again to quit to the desktop"):

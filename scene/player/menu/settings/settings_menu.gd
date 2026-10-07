@@ -38,6 +38,7 @@ func _ready():
 	tabs = buildSchema().filter(func(t): return not t.rows.is_empty())
 	buildShell()
 	showTab(0)
+	Juice.dropIn(self, 30.0)
 
 func _exit_tree():
 	Settings.save_now()
@@ -184,7 +185,7 @@ func controlRows() -> Array:
 func accessibilityRows() -> Array:
 	return [
 		{"type":"choice", "key":"access/reduce_motion", "label":"Reduce Motion", "options":onOff(),
-			"info":"Stops the 3D text wobble, freezes rainbow fills, makes the giant marker steady, turns off car shake and limits slot celebrations to Reduced. Camera zoom at speed is unchanged.", "perf":"Slightly faster"},
+			"info":"Stops the 3D text wobble, freezes rainbow fills, makes the giant marker steady, turns off car shake, fades screen transitions instead of slamming the shutter (no smoke or shake) and limits slot celebrations to Reduced. Camera zoom at speed is unchanged.", "perf":"Slightly faster"},
 		{"type":"choice", "key":"access/reduce_flashing", "label":"Reduce Flashing", "options":onOff(),
 			"info":"Minimal slot celebrations, a slower giant pulse and no over-bright giant glow.", "perf":"Slightly faster"},
 		{"type":"choice", "key":"access/giant_style", "label":"Giant Marker Style", "options":[[0, "Pulse"], [1, "Steady"], [2, "Tint + ground ring"]],
@@ -249,7 +250,7 @@ func buildShell() -> void:
 	tabRow.alignment = BoxContainer.ALIGNMENT_CENTER
 	tabRow.add_theme_constant_override("separation", 10)
 	layout.add_child(tabRow)
-	tabRow.add_child(KeyHint.make(PackedStringArray(["ui_tab_prev"])))
+	tabRow.add_child(KeyHint.make(PackedStringArray(["ui_tab_prev"]), "", 15, true))
 	for i in tabs.size():
 		var button = makeButton(tabs[i].name)
 		button.focus_mode = Control.FOCUS_NONE
@@ -259,7 +260,7 @@ func buildShell() -> void:
 		button.pressed.connect(showTab.bind(i))
 		tabRow.add_child(button)
 		tabButtons.push_back(button)
-	tabRow.add_child(KeyHint.make(PackedStringArray(["ui_tab_next"])))
+	tabRow.add_child(KeyHint.make(PackedStringArray(["ui_tab_next"]), "", 15, true))
 
 	var body = HBoxContainer.new()
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
