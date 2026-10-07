@@ -64,14 +64,14 @@ A reference to the game's content, opened from the main menu with G / View or th
 |---|---|---|
 | Goons | `Goons.DATA`, grouped by faction | speed, damage, crush speed, head-on armour, the system it wears, pack size, biomes, and the player's crush count |
 | Cars | the save's `cars` and their `CarInfo` | base stats plus upgrades bought (the driver card's bar), price, best run; one line of "strong / weak" against the other cars' averages |
-| Levels | the save's `levels` | clock, starting spawn rate and giant odds read from the level scene's `SceneState` (one level at a time on a worker thread, never instantiated), modes beaten, and a strip showing which faction holds the land along the road out (`Goons.factionFor`, jitter included) |
+| Levels | the save's `levels`, named and described by the registry (`Levels`, `LevelDef`; docs/WORLD.md) | the act, the def's blurb, its grammar's line (`Levels.GRAMMAR_TEXT`), BARRIER and SURFACES chips (`LevelDef.barrier`, `surfaces`), modes beaten, the clock, starting spawn rate and giant odds from the def (`levelStats`), a strip showing which faction holds the land along the road out (the level's `factionBand`), and each faction's roster (`LevelRoster.rosterFor`, undiscovered goons as "???") |
 | Pickups | `Pickups.DATA`, grouped by kind (docs/PICKUPS.md) | rarity and kind chips, the registry's text, share of goon drops in the selected mode (`dropShare(id, mode)`), duration, uses, modes, night-only, factions that drop more of it |
 | Modes | `Root.gameModeDescription` | availability, unlock rule, levels beaten |
 | Systems | the car's systems | `CONDITION_FLOOR` and the goons whose attack wears each one |
 
 Only the plain-language text lives in the script: `VERB_TEXT` (behaviour and tip per verb), `ACT_TEXT` (Scrap Gang acts), `TRAIT_TEXT` (DATA flags), `PICKUP_TEXT` (stat names for the Cars tab; pickup text lives in `Pickups.DATA`), `MODE_RULES`, `SYSTEMS`. A goon's DATA can carry `"blurb"` and `"tip"` strings to override its verb's text. `test_goonopedia.gd` fails if a goon uses a verb or act with no text.
 
-**Discovery.** Goons show as silhouettes named "???" until the player crushes one; the card then shows their faction, rank and habitat. Every crush the car makes is counted per goon id (`crushedById`), and `gameSummary` adds the run's counts to `PlayerData.goonsCrushed` (save version 3) and names first-time goons on the ticket ("New in the Goonopedia: ..."). Goons killed by blasts or water don't count. Set `REVEAL_ALL` to show everything. Pickups work the same way: the original 14 always show, and the rest stay "???" until collected or played (`Pickups.discover`, `meta.pickups`).
+**Discovery.** Goons show as silhouettes named "???" until the player crushes one; the card then shows their faction, rank and habitat. Every crush the car makes is counted per goon id (`crushedById`), and `gameSummary` adds the run's counts to `PlayerData.goonsCrushed` (save version 3) and names first-time goons on the ticket ("New in the Goonopedia: ..."). Goons the car kills another way count too: blasts, a kicked shell, and a drowning within 3 s of the car touching the goon (`SpawnManager.creditCrush`). Set `REVEAL_ALL` to show everything. Pickups work the same way: the original 14 always show, and the rest stay "???" until collected or played (`Pickups.discover`, `meta.pickups`).
 
 ## In-run menus
 
@@ -98,7 +98,7 @@ Only the plain-language text lives in the script: `VERB_TEXT` (behaviour and tip
 - pause having separate Abandon and Quit buttons
 - the records ticket
 
-`tests/game/test_goonopedia.gd` covers the Goonopedia: one tile per goon, silhouettes until crushed, every tab and card building, crush crediting, level numbers read from the scene, and drop shares adding up to 100%.
+`tests/game/test_goonopedia.gd` covers the Goonopedia: one tile per goon, silhouettes until crushed, every tab and card building, crush crediting, level numbers and names read from the def, the factions a level's band reaches, every level card's act, barrier and surfaces, and drop shares adding up to 100%.
 
 None of these tests write the save.
 
@@ -106,5 +106,5 @@ None of these tests write the save.
 
 - **Per-car skins:** a `HudSkin` on `CarInfo` could tint a driver's card and the HUD.
 - **Car Paint:** the car-art session suggested putting the toggle (`gameplay/car_paint`) on the driver card.
-- **Region faction:** the goon session is adding a faction per region; the HUD region chip can show it once `Region.currentRegion.faction` exists.
+- **Region faction:** every region (a world district) has a faction now (`Region.currentRegion.faction`, `Region.factionName()`); the HUD region chip doesn't show it yet.
 - **Leftover style resources:** `style/roadRogue.tres` is still referenced by `car.tscn`, `countdown.tscn` and `slotMachine.tscn` (whose hidden original buttons are `roadButton`s).

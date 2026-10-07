@@ -159,3 +159,26 @@ func test_station_last_legs_need_the_car_lined_up():
 	car.velocity = Vector2(0, 200)
 	assert_true(driver.linedUpFor(1), "slow enough to turn in")
 	driver.free()
+
+#Marathon moves the station on: the approach graph built for the old one is dropped, not reused
+func test_a_new_station_drops_the_old_approach_graph():
+	var driver = AIDriver.new()
+	var saved = Root.station
+	var first = Node2D.new()
+	var second = Node2D.new()
+	Root.station = first
+	driver.graphStation = first
+	driver.stationGap = Vector2.UP
+	driver.stationPoints = [Vector2.ZERO, Vector2(0, -1100), Vector2(0, -2000)]
+	driver.stationEdges = [PackedFloat32Array([0.0])]
+	driver.approachHop = 1
+	driver.forgetStaleStation()
+	assert_eq(driver.stationPoints.size(), 3, "the same station keeps its graph")
+	Root.station = second
+	driver.forgetStaleStation()
+	assert_true(driver.stationPoints.is_empty(), "a new station: the old points are gone")
+	assert_true(driver.stationEdges.is_empty(), "and the old edges")
+	assert_eq(driver.approachHop, -1, "and the old hop")
+	assert_eq(driver.stationGap, Vector2.RIGHT, "and the old gap")
+	Root.station = saved
+	for node in [driver, first, second]: node.free()

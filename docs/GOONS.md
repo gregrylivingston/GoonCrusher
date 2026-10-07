@@ -111,7 +111,7 @@ A goon resists when any of these holds:
 A resisted hit calls the verb's `onResist`. That usually means `bounceCar`: the car keeps 35% of its speed and is pushed back, takes damage, and a label shows why ("BLOCKED", "TOO HEAVY", "HEAD-ON", "ROCK", "SHELL").
 
 **Death** (`destroy(cause)`):
-- **Causes:** `crush`, `boom` (killed by a blast), `self` (blew itself up) and `drown`. Drowning no longer comes from water areas (the old `Water.gd` `Area2D` on the water tiles is gone with the TileMaps): `Walker.checkWater` reads `World.lethalAt` (the fine grid, deep water that isn't a bridge deck) every 4 ticks and calls `Walker.drown`, which leaves no decal, a splash ring instead (see "The world" below).
+- **Causes:** `crush`, `boom` (killed by a blast), `self` (blew itself up) and `drown`. There is no water `Area2D`: `Walker.checkWater` reads `World.lethalAt` (the fine grid, deep water that isn't a bridge deck) every 4 ticks and calls `Walker.drown`, which leaves no decal, a splash ring instead (see "The world" below).
 - **What it leaves:** a pooled crush decal with a tyre print along the car's heading, bits in the faction's colours, death sounds, and the old Clover-based pickup chance. The node frees at once.
 - **Credit:** goons killed by blasts or a kicked shell count as crushes (`SpawnManager.creditCrush`). So does a goon that drowns within 3 s of the car touching it (a crush try, a bump, a lunge that hit, or the car alongside it), with a "SPLASH" label.
 

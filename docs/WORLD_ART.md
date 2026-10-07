@@ -73,7 +73,7 @@ Godot_console.exe --headless --path . --import
 | `scrapwall` | symmetric: AO, junk panels, tyres and teal daubs in the middle, AO | |
 | `roof_edge` | the roof: AO cast by the parapet, its inner face, the lit coping (joints every 40 texels), its outer face on the contour | the building's AO on the pavement |
 
-`roof_edge` is the city's wall strip (`WorldSkin.WALL_STRIP`): city blocks used to get `kerb`, whose stones then lay on the roof. One-sided strips put the barrier (water, cliff top, canyon, kerb, roof) at the top (v = 0). Which side of a `Line2D` that lands on depends on the direction of its points, so build contours with a consistent winding and reverse the points if the lip faces the wrong way.
+`roof_edge` is the city's wall strip (`WorldSkin.WALL_STRIP`): city blocks used to get `kerb`, whose stones then lay on the roof. One-sided strips put the barrier (water, cliff top, canyon, kerb, roof) at the top (v = 0). Which side of a `Line2D` that lands on depends on the direction of its points, so build contours with a consistent winding and reverse the points if the lip faces the wrong way. `ChunkRecipe` does this: its lines run with the barrier on the left (docs/WORLD.md).
 
 ## Props
 
@@ -149,7 +149,7 @@ Sizes are the solid sprite (alpha > 140) in world px; the hull may be smaller (`
 4. **Wrecks** load `car_gen.js` and call `CarArt.render(car, {style: 'A', stage: 2})` at 0.75, then desaturate them and add rust and moss, so the wrecks are the player's own car models.
 5. **Beacons:** a design with `beacon(c)` also bakes `<id>_beacon.png`: glows drawn at final brightness in the prop's own frame (same canvas size and centre as the sprite), no rim or shadow. The manifest gets `beacon` and the scene a `Beacon` node.
 6. **Breakables** also bake `<id>_broken.png` (what stays on the ground, no collision) and `<id>_debris.png` (a row of 4 square cells of flying pieces, for particles or flyers). Explosives bake a scorched `_broken` and a shard `_debris` strip. The tank's `smashSpeed` is 100000 with `blastOnly`: only explosions break it.
-7. **Decor** atlases are a row of 4 square cells (`atlas.cellTexels` wide each), with no rim and at most a faint shadow. Use one `MultiMeshInstance2D` per decor id and pick the cell per instance, for example with the instance's custom data in a small canvas shader's `vertex()`: `UV.x = (UV.x + floor(INSTANCE_CUSTOM.x * 4.0)) / 4.0;` (enable `use_custom_data` on the MultiMesh). `streetglow` is a warm light pool baked at final brightness, meant for additive blending (`atlas.blend = "add"`).
+7. **Decor** atlases are a row of 4 square cells (`atlas.cellTexels` wide each), with no rim and at most a faint shadow. The game draws one `MultiMeshInstance2D` per decor id per chunk (`WorldSkin.newMultiMesh`, `use_custom_data` on) and picks the cell per instance from its custom data in `shader/world_decor.gdshader`: `UV.x = (UV.x + floor(INSTANCE_CUSTOM.x * cells)) / cells;`. `streetglow` is a warm light pool baked at final brightness for additive blending (`atlas.blend = "add"`), drawn with `shader/world_decor_glow.gdshader`.
 
 ### Scenes
 
@@ -158,10 +158,10 @@ Sizes are the solid sprite (alpha > 140) in world px; the hull may be smaller (`
 - Root `StaticBody2D` named after the id, `collision_layer = 1`, `collision_mask = 0`, no script. Metadata: `propId`, `propClass`; breakables add `smashSpeed`, `broken` and `debris` (texture paths); explosives add `explosive = true`.
 - `Sprite2D` at scale 1.3333 with variant 0. Swap `texture` for another variant from the manifest.
 - `CollisionShape2D` with a `ConvexPolygonShape2D` from the hull (disabled when the manifest says `solid: false`).
-- `LightOccluder2D` with the same polygon, `cull_mode = 2` (one-sided, wound like `scene/scenery/rocks1.tscn`), and metadata `gc_world = true`, so it stays on at Lighting Low. Only when the manifest says `occluder: true`.
+- `LightOccluder2D` with the same polygon, `cull_mode = 2` (one-sided), and metadata `gc_world = true`, so it stays on at Lighting Low. Only when the manifest says `occluder: true`.
 - `Beacon` (landmarks): a `Sprite2D` at scale 1.3333 with the `_beacon.png` glow and the shared `res://shader/world_beacon.tres` material (`blend_add, unshaded`), so the landmark's top reads at night with no real light (world lights stay at 0 per chunk). It counts as one more node in `ChunkRecipe`'s budget.
 
-The root is a `StaticBody2D`, so the car's wall-hit checks (`World.isWall`) treat props as walls with no extra code. A later phase adds the breakable script.
+The root is a `StaticBody2D`, so the car's wall-hit checks (`World.isWall`) treat props as walls with no extra code. `ChunkView` instances STATEFUL props (and any prop with a taken-set bit) instead of pooling them and attaches `scripts/world/breakable.gd` (`BreakableProp`), which reads the metadata above (docs/WORLD.md, "Breakables and explosives").
 
 ## The manifest
 

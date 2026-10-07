@@ -180,8 +180,13 @@ func test_an_applied_chunk_keeps_the_node_budget_and_the_taken_set():
 	var tm := FakeManager.new()
 	tm.map = map
 	add_child_autofree(tm)
+	#the first chunk east of the start that has pickups ("none" leaves some chunks empty)
 	var chunk := WorldGen.chunkOf(map.startPosition) + Vector2i(1, 0)
 	var recipe := recipeFor(map, chunk)
+	for k in 8:
+		if recipe.is_empty() || not recipe.pickups.is_empty(): break
+		chunk += Vector2i(1, 0)
+		recipe = recipeFor(map, chunk)
 	assert_false(recipe.is_empty(), "a recipe")
 	if recipe.is_empty(): return
 	var view := ChunkView.new(chunk, recipe)
@@ -207,6 +212,81 @@ func test_an_applied_chunk_keeps_the_node_budget_and_the_taken_set():
 	for node in back: assert_true(node.get_meta(&"worldSlot").z != slot.z, "and it is the collected one")
 	while not again.release(skin, Time.get_ticks_usec() + 100000): pass
 	map.taken.clear()
+
+#--- pickups -------------------------------------------------------------------------------------
+
+## coins per chunk the level's table gives on average: pickupsPerChunk rolls, a coin line is COINS_PER_LINE
+static func expectedPer(def: LevelDef, kind: String) -> float:
+	var total := 0.0
+	for k in def.pickupTable: total += float(def.pickupTable[k])
+	var w := 0.0
+	for k in def.pickupTable:
+		if String(k) == kind: w = float(def.pickupTable[k])
+	return def.pickupsPerChunk * w / maxf(total, 0.001)
+
+func test_coins_get_leaner_by_level():
+	var last := INF
+	for id in Levels.ORDER:
+		var def := Levels.get_def(id)
+		var coins := expectedPer(def, "coinline") * ChunkRecipe.COINS_PER_LINE
+		assert_true(coins <= last + 0.001, "%s: no more coins per chunk (%.2f) than the level before (%.2f)" % [id, coins, last])
+		last = coins
+		assert_gt(expectedPer(def, "fuel"), 0.3, "%s: fuel stays common" % id)
+	assert_almost_eq(expectedPer(Levels.get_def(&"prairie"), "coinline") * ChunkRecipe.COINS_PER_LINE, 3.0, 0.25, "about 3 coins per chunk on the prairie")
+	assert_almost_eq(expectedPer(Levels.get_def(&"crusher"), "coinline") * ChunkRecipe.COINS_PER_LINE, 1.5, 0.25, "about 1.5 on the crusher")
+
+func test_a_none_pickup_leaves_the_chunk_empty():
+	var w := world(&"prairie", 2)
+	var map: WorldMap = w[0]
+	var saved: Dictionary = map.recipeContext
+	var ctx := saved.duplicate()
+	ctx.pickupTable = {"none": 1.0}
+	map.recipeContext = ctx
+	var chunks := sampleChunks(map)
+	for chunk in chunks:
+		map.forget(chunk)
+		var recipe := recipeFor(map, chunk)
+		assert_false(recipe.is_empty(), "a recipe")
+		if not recipe.is_empty(): assert_eq(recipe.pickups.size(), 0, "%s: a none-only table places nothing" % chunk)
+	map.recipeContext = saved
+	for chunk in chunks: map.forget(chunk)
+
+#Marathon's later stations: a lot reserved during the run drops the recipes built before it, and the
+#rebuilt ones keep their props and pickups out of it, as the first station's chunks do
+func test_a_lot_reserved_later_is_cleared_like_the_first():
+	var w := world(&"prairie", 3)
+	var map: WorldMap = w[0]
+	var skin: WorldSkin = w[2]
+	var savedCtx: Dictionary = map.recipeContext
+	var start := WorldGen.chunkOf(map.startPosition)
+	var chunk := WorldGen.NO_CHUNK
+	for d in [Vector2i(3, 1), Vector2i(-3, 2), Vector2i(4, -2), Vector2i(-4, -1), Vector2i(2, 3), Vector2i(5, 0)]:
+		var c: Vector2i = start + d
+		if c == map.stationChunk: continue
+		var r := recipeFor(map, c)
+		if not r.is_empty() && r.props.size() + r.pickups.size() > 0:
+			chunk = c
+			break
+	assert_true(chunk != WorldGen.NO_CHUNK, "a chunk with props or pickups to clear")
+	if chunk == WorldGen.NO_CHUNK: return
+	var tm := TileManager.new()
+	tm.worldMap = map
+	tm.skin = skin
+	tm.objectLayer = Node2D.new()
+	tm.lots = savedCtx.get("lots", []).duplicate()
+	tm.pinChunk(chunk, null)
+	assert_true(map.recipeOf(chunk).is_empty(), "the old recipe is dropped")
+	var lot := TileManager.lotRect(chunk)
+	var recipe := recipeFor(map, chunk)
+	assert_false(recipe.is_empty(), "and built again")
+	var origin := Vector2(chunk) * ChunkRecipe.CHUNK
+	for p in recipe.props: assert_false(lot.has_point(origin + p[1]), "prop %s kept out of the new lot" % p[0])
+	for p in recipe.pickups: assert_false(lot.has_point(origin + p[1]), "pickup %s kept out of the new lot" % p[0])
+	map.recipeContext = savedCtx
+	for y in range(-1, 2):
+		for x in range(-1, 2): map.forget(chunk + Vector2i(x, y))
+	tm.objectLayer.free()
+	tm.free()
 
 func test_time_sliced_apply_takes_several_frames_and_pools_nodes():
 	var w := world(&"canyon", 1)

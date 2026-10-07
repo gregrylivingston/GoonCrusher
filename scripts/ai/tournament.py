@@ -76,7 +76,7 @@ def leaderboard(rows, profiles):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--profiles", default="default,v1", help="comma-separated AIProfiles specs")
+    parser.add_argument("--profiles", default="cautious,default", help="comma-separated AIProfiles specs")
     parser.add_argument("--modes", default="countdown,sprint,goonpocalypse")
     parser.add_argument("--level", default="prairie", help="comma-separated level ids (Levels.ORDER) or 0-based indices")
     parser.add_argument("--car", default="sedan", help="comma-separated cars")

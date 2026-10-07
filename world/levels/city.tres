@@ -64,13 +64,14 @@ dressing = {
 }
 }
 pickupTable = {
-&"coinline": 48,
+&"coinline": 24,
 &"fuel": 38,
 &"health": 7,
 &"purse": 4,
-&"slot": 3
+&"slot": 3,
+&"none": 124
 }
-pickupsPerChunk = 1
+pickupsPerChunk = 2
 palette = {
 &"ground": Color(0.46, 0.45, 0.43, 1),
 &"accent": Color(0.38, 0.36, 0.34, 1),

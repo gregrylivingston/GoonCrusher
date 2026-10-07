@@ -9,7 +9,7 @@ extends Node
 #several profiles in parallel processes and ranks them.
 #  Godot_console.exe --headless --fixed-fps 60 --path . -- --playtest --uncapped --mode=sprint --runs=5
 #Options: --level=prairie[,...] (a Levels id, its 0-based index or an old scene name)  --mode=countdown|sprint|goonpocalypse|marathon|defense[,...]
-#  --car=sedan[,...]  --profiles=default[,crusher,...] (AIProfiles specs)  --runs=N  --seed=N  --upgrades=N|save (every stat at level N; default 0, the
+#  --car=sedan[,...]  --profiles=cautious[,default,...] (AIProfiles specs; cautious, the best all-round in the tournaments, by default)  --runs=N  --seed=N  --upgrades=N|save (every stat at level N; default 0, the
 #  stock car; "save" keeps the save's)  --sight=human|full  --max-seconds=N (level time before a run
 #  is cut short, default 900)  --ai-debug (draw the AI's plan; not headless)  --trace (state once a
 #  second)  --tag=name
@@ -19,7 +19,7 @@ const SCRATCH_SAVE = "user://playtest/playtest_save%s.tres" #per --tag, so paral
 const MODE_ALIASES = {"countdown":"GOONCRUSHER"}
 #one CSV row per run, in this order (damage is health lost; see _physics_process for the split)
 const COLUMNS = ["run", "level", "mode", "car", "profile", "seed", "upgrades", "sight", "score", "reason", "won", "level_time",
-	"clock", "time_left", "station_px", "station_left_px", "route_reached", "crushed", "coin", "star", "payout", "gem",
+	"clock", "time_left", "station_px", "station_left_px", "route_reached", "legs", "crushed", "coin", "star", "payout", "gem",
 	"slot_machines", "fuel_pickups", "health_pickups", "purses", "coins_picked", "gems_picked", "stat_pickups",
 	"damage_rocks", "damage_goon_contact", "damage_goon_attacks", "crush_misses", "min_fuel", "min_health",
 	"end_fuel", "end_health", "distance_px", "avg_speed", "top_speed", "eco_seconds", "stuck", "escapes", "ai_ms", "goals"]
@@ -66,7 +66,7 @@ func _ready():
 			if not Root.gameModes.has(key): return fail("Unknown mode " + modeName)
 			for carName in listArg("car", "sedan"):
 				if carIndex(carName) < 0: return fail("Unknown car " + carName)
-				for profile in listArg("profiles", "default"):
+				for profile in listArg("profiles", "cautious"):
 					if not AIProfiles.PROFILES.has(profile.split("+")[0]): return fail("Unknown AI profile " + profile)
 					for i in int(options.get("runs", 1)):
 						jobs.push_back({"level":level, "mode":key, "car":carName, "profile":profile, "seed":firstSeed + i})
@@ -374,6 +374,9 @@ func recordRun() -> void:
 	row.level_time = snappedf(levelTime, 0.1)
 	row.time_left = snappedf(Root.levelRoot.seconds, 0.1) if row.mode != "goonpocalypse" else 0.0
 	row.station_left_px = int(car.global_position.distance_to(Root.station.global_position)) if is_instance_valid(Root.station) else 0
+	#stations reached (Sprint 0 or 1; Marathon counts each leg's station, TileManager.legsPlaced moves on at each)
+	var tm = Root.levelRoot.get_node_or_null("TileManager")
+	row.legs = (int(tm.legsPlaced) if tm != null else 0) + (1 if row.won && row.mode in ["sprint", "marathon"] else 0)
 	row.crushed = car.currentGoonsCrushed
 	row.coin = car.coin
 	row.star = car.star
@@ -448,7 +451,7 @@ func finish() -> void:
 		var endings = {}
 		for result in runs: endings[result.reason] = endings.get(result.reason, 0) + 1
 		var summary = {"combo":key, "runs":runs.size(), "wins":runs.filter(func(r): return r.won).size(), "endings":endings}
-		for field in ["score", "level_time", "crushed", "payout", "star", "damage_rocks", "damage_goon_contact", "damage_goon_attacks", "min_fuel", "stuck", "escapes", "avg_speed"]:
+		for field in ["score", "level_time", "legs", "crushed", "payout", "star", "damage_rocks", "damage_goon_contact", "damage_goon_attacks", "min_fuel", "stuck", "escapes", "avg_speed"]:
 			var total = 0.0
 			for result in runs: total += float(result.get(field, 0))
 			summary["avg_" + field] = snappedf(total / runs.size(), 0.1)

@@ -176,13 +176,24 @@ func startChunkOf() -> Vector2i:
 const NO_CHUNK = WorldGen.NO_CHUNK
 
 #A station: placed at the chunk's centre and pinned, its lot reserved (no props or pickups; a chunk already
-#applied there is applied again without them)
+#applied there is applied again without them). A lot reserved during the run (Marathon's later stations)
+#also drops the recipes already built round it, so they are built again with the lot kept clear, as the
+#first station's are (props kept their margin from it, decorateChunk's spots stay out of it).
 func pinChunk(chunk: Vector2i, myScene) -> void:
 	pinnedChunks[chunk] = true
 	var lot := lotRect(chunk)
 	if not lot in lots:
 		lots.push_back(lot)
-		if worldMap != null && skin != null: worldMap.recipeContext = skin.recipeContext(lots, lanes)
+		if worldMap != null && skin != null:
+			worldMap.recipeContext = skin.recipeContext(lots, lanes)
+			var around := lot.grow(ChunkRecipe.PROP_GAP * 2.0)
+			var lo := WorldGen.chunkOf(around.position)
+			var hi := WorldGen.chunkOf(around.end)
+			for y in range(lo.y, hi.y + 1):
+				for x in range(lo.x, hi.x + 1):
+					var c := Vector2i(x, y)
+					#a neighbour on screen keeps its recipe (its props and pickups in the lot are skipped as it applies)
+					if c == chunk || not views.has(c): worldMap.forget(c)
 	if views.has(chunk):
 		unloadChunk(chunk, true)
 		loadChunk(chunk, chunk == playerChunk)

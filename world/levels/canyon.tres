@@ -70,9 +70,10 @@ pickupTable = {
 &"fuel": 46,
 &"health": 8,
 &"purse": 5,
-&"slot": 4
+&"slot": 4,
+&"none": 100
 }
-pickupsPerChunk = 1
+pickupsPerChunk = 2
 palette = {
 &"ground": Color(0.62, 0.42, 0.28, 1),
 &"accent": Color(0.7, 0.55, 0.38, 1),

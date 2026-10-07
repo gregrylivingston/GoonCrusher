@@ -203,7 +203,7 @@ func decide() -> void:
 		if trail.size() > TRAIL_SAMPLES: trail.remove_at(0)
 	throttleCap = speedCap
 	if goalCareful && car.global_position.distance_to(goalPosition()) < CAREFUL_FROM_PX: throttleCap = minf(throttleCap, p.carefulSpeed)
-	if goal.get("kind") == "station" && not stationPoints.is_empty() && car.global_position.distance_to(stationPoints[0]) < STATION_SLOW_PX:
+	if goal.get("kind") == "station" && not stationPoints.is_empty() && graphStation == Root.station && car.global_position.distance_to(stationPoints[0]) < STATION_SLOW_PX:
 		throttleCap = minf(throttleCap, p.stationSpeed)
 	#going for a goon: fast enough to crush it, whatever fuel saving says
 	if goal.get("kind") == "goon" && goalValid(): throttleCap = maxf(throttleCap, crushNeed(goal.node) * CRUSH_MARGIN * 1.05)
@@ -308,8 +308,19 @@ func updateGoal() -> void:
 		blacklist[goal.key] = tick + 10 * Engine.physics_ticks_per_second
 		goal = {}
 
+#Marathon moves the station on (TileManager.placeNextStation): everything worked out for the old one
+#(the approach graph, its gap, the hop) is dropped, so the next leg never steers to the old lot's points
+func forgetStaleStation() -> void:
+	if graphStation == Root.station || stationPoints.is_empty(): return
+	stationPoints = []
+	stationEdges = []
+	stationGap = Vector2.RIGHT
+	approachHop = -1
+	graphStation = null
+
 #the mode's own goal: the station in a race, a region worth stars in survival, the base in Defense
 func objectiveGoal() -> Dictionary:
+	forgetStaleStation()
 	match mode:
 		Root.gameModes.SPRINT, Root.gameModes.MARATHON:
 			if is_instance_valid(Root.station):
@@ -345,7 +356,8 @@ func stationTarget() -> Vector2:
 	var driveway = Root.station.get_node("driveway/CollisionShape2D").global_position
 	var carPos = car.global_position
 	if carPos.distance_to(driveway) > STATION_GRAPH_PX: return driveway #far off: the route handles it
-	if stationPoints.is_empty() || graphStation != Root.station:
+	forgetStaleStation()
+	if stationPoints.is_empty():
 		graphStation = Root.station
 		buildStationGraph(driveway)
 	var carEdges = PackedFloat32Array()

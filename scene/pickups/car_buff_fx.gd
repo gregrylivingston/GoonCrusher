@@ -138,7 +138,7 @@ func planRoute() -> void:
 static func kill(goon) -> void:
 	if not is_instance_valid(goon) || goon.dead: return
 	goon.destroy(&"boom")
-	Root.spawnManager.creditCrush(goon.global_position)
+	Root.spawnManager.creditCrush(goon.global_position, goon)
 
 #--- drawing --------------------------------------------------------------------------------------
 

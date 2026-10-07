@@ -19,9 +19,10 @@ extends Node
 #copy, so a benchmark never changes player progress. Columns include chunk_ms (main-thread chunk
 #build/apply time that frame, read from TileManager.chunkMs when the world code provides it; 0
 #otherwise) and occluders (visible LightOccluder2Ds, sampled every 0.5 s like lights).
-#--pattern=none|sine|circle|route replaces the scenario's driving. --at=water|wall|x,y moves the car, once the
-#world is ready, next to the nearest deep water or wall (a coarse barrier cell beside open ground) or to a
-#world point, to look at the world's edges (with --shot). --zoom=0.4 holds the camera's zoom. --seed=N plays another map than 1337 (a playtest's seed, say).
+#--pattern=none|sine|circle|route replaces the scenario's driving. --at=water|wall|station|x,y moves the car, once
+#the world is ready, next to the nearest deep water or wall (a coarse barrier cell beside open ground), onto the
+#station's approach (a mode with a station: --mode=sprint|marathon|defense) or to a world point, to look at the
+#world's edges (with --shot). --zoom=0.4 holds the camera's zoom. --seed=N plays another map than 1337 (a playtest's seed, say).
 
 const LEVELS = "res://scene/level/levels/"
 const SCENARIOS = {
@@ -200,6 +201,7 @@ func _physics_process(_delta):
 		return
 	var car = Root.playerCar
 	car.health = 100.0 #god mode
+	car.lethalTicks = 0 #...over deep water too: the car drowns after LETHAL_TICKS ticks in a row, and a drowned car ends the benchmark
 	car.fuel = 100.0
 	drive(car)
 
@@ -321,7 +323,7 @@ func levelEvents() -> void:
 		purse.global_position = Root.playerCar.global_position
 		Root.levelRoot.add_child(purse)
 
-#--at: the car beside the nearest barrier of a kind (water or wall), facing it from 900 px, or at x,y
+#--at: the car beside the nearest barrier of a kind (water or wall), facing it from 900 px, east of the station, or at x,y
 func moveCar() -> void:
 	var map: WorldMap = Root.worldMap
 	var car = Root.playerCar
@@ -329,6 +331,10 @@ func moveCar() -> void:
 	var target := Vector2.INF
 	if at.contains(","):
 		target = Vector2(float(at.get_slice(",", 0)), float(at.get_slice(",", 1)))
+	elif at == "station":
+		if not is_instance_valid(Root.station): return
+		target = Root.station.global_position + Vector2(1500, 0) #on the approach east of the lot, facing the house
+		car.rotation = PI
 	else:
 		var start := map.coarseCell(car.global_position)
 		for ring in range(2, 60):

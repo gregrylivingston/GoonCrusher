@@ -885,8 +885,9 @@ func placeRoofs() -> Dictionary:
 func spawnable(t: int) -> bool:
 	return t >= 0 && t < spawnTable.size() && spawnTable[t] != 0
 
-## The level's pickups: pickupsPerChunk kinds from pickupTable, each on open spawnable ground. Bits number
-## them for the taken set (coins one each); past bit 31 a pickup has none and comes back on a reload.
+## The level's pickups: pickupsPerChunk kinds from pickupTable, each on open spawnable ground ("none" places
+## nothing, so a table can leave chunks empty). Bits number them for the taken set (coins one each); past
+## bit 31 a pickup has none and comes back on a reload.
 func placePickups() -> Array:
 	var out: Array = []
 	var table: Dictionary = ctx.get("pickupTable", {})
@@ -905,6 +906,7 @@ func placePickups() -> Array:
 				kind = String(k)
 				break
 		if kind == "": kind = String(table.keys().back())
+		if kind == "none": continue
 		if kind == "coinline":
 			for attempt in 30:
 				var p := Vector2(r.randf_range(300.0, CHUNK.x - 300.0), r.randf_range(300.0, CHUNK.y - 300.0))

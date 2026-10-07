@@ -297,6 +297,7 @@ func prewarm() -> void:
 		if manifest[String(id)].get("class", "") == "STATEFUL": continue
 		for k in 2: give("prop:" + id, newProp(id), POOL_CAP.prop)
 	for kind in def.pickupTable:
+		if String(kind) == "none": continue
 		var id: String = PICKUP_IDS.get(String(kind), "coin")
 		var scene: String = Pickups.def(id).get("scene", Pickups.GENERIC_SCENE)
 		keepLoaded.push_back(load(scene))

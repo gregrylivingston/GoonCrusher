@@ -187,6 +187,83 @@ Render Resolution on Low:
 
 ---
 
+## World revamp (branch `world-revamp`)
+
+The world revamp (`docs/WORLD.md`) replaced the TileMap terrain with generated chunks. A coarse map is built on a worker at level start. Each chunk then gets a fine raster and a recipe, both built on workers, and the main thread applies the recipe a step at a time. These are the branch's final numbers, measured on 2026-10-06 at `99fe3b0` plus the final cleanups.
+
+**Per-chunk budgets** (spec section 7, the `ChunkRecipe` constants; details in `docs/WORLD.md`, "Budgets and how they are enforced")
+
+| Budget | Value | How it is enforced |
+|---|---|---|
+| World nodes | 100 (`MAX_NODES`; pickups not counted) | the fixed cost comes first (8 ground quads, the wall body, occluders, lines, one MultiMesh per decor id), then props in placement order; a prop that would go over the budget is dropped |
+| Occluders | 16 (`MAX_OCCLUDERS`), each within 1,280 px (`SPAN`) | wall occluders are split at the span and the shortest are dropped; props past the remaining room are placed without their occluder |
+| Static pieces | 48 (`MAX_PIECES`) | Douglas-Peucker simplification steps through 16, 32, 64 and 128 px until the convex pieces fit |
+| Lines (shore foam, wall lips) | 24 (`MAX_LINES`) | split at the span, the shortest dropped |
+| Area2D | none except pickups | |
+| World lights | none | landmarks glow with an unlit additive sprite instead |
+| Main-thread apply | 1.5 ms a frame (`APPLY_BUDGET_USEC`; a step may run past it, about 2 ms in all); 10 ms for the first 120 frames, behind the countdown | `ChunkView` applies one piece per step, and at most 2 new chunks open a frame. The only exception is the car's own chunk: its ground and collision go in at once |
+| World textures per level | 48 MB | a level loads only its own materials and dressing, about 17 MB (`docs/WORLD_ART.md`) |
+
+`test_world_recipe.gd` checks the recipe budgets for every level over 3 seeds, and it checks the node budget of an applied chunk.
+
+**Measured chunk timings** (from the `WORLD_CHUNKS` line each run prints at exit). The workers share the dev box's 4 threads with the game.
+
+| | Typical | Worst seen |
+|---|---|---|
+| Fine raster (worker) | 14–23 ms average | 39 ms |
+| Recipe (worker) | 7–12 ms average | 21 ms |
+| Apply (main thread), in a frame that applies anything | 1.2–2.3 ms average | 6–11 ms |
+| Longest single apply step (prop, pickup, decor, extras) | 0.3–2.5 ms | 3.1 ms (an instanced breakable prop) |
+| Frames with over 2 ms of apply in S6 (10 minutes, 161 chunks applied and released) | 52 of 709 apply frames | |
+
+The `chunk_ms` column reaches 17–30 ms only in the first seconds of a run, while the start budget and the car's urgent chunk load run behind the countdown. In S6, only 4 of the 44 frames over 50 ms had more than 2 ms of chunk work.
+
+**Benchmarks on the HD 620** (Vulkan Mobile, 1920x1080 borderless, uncapped, one run per cell unless noted). The first two columns are avg fps / 1% low fps. "Old" is the Low or Potato column of the table above, measured on the old world: S2 and S6 on `level_grass_1`, S3 and S4 on `level_mud_3`.
+
+| Scenario | Old | World revamp | p99 frame | Under 17.5 ms | Frames > 50 ms | Max goons | Max visible occluders |
+|---|---|---|---|---|---|---|---|
+| S2 day drive, prairie, Low | 128.1 / 84.3 | 126.0 / 78.3 | 11.1 ms | 100% | 1 | 47 | 120 |
+| S3 night, quarry, Low | 56.9 / 40.1 | 65.8 / 20.3 | 35.7 ms | 86.5% | 24 | 95 | 164 |
+| S3 night, city, Low | | 78.3 / 49.5 | 18.1 ms | 98.7% | 2 | 85 | 96 |
+| S3 night, prairie, Low | | 72.7 / 23.0 | 33.5 ms | 94.4% | 12 | 114 | 195 |
+| S4 night crowd, quarry, Low (2 runs) | 55.0 / 37.9 | 45.5 / 18.2 and 49.2 / 17.5 | 50–52 ms | 59% | 42 and 111 | 208–237 | 276–305 |
+| S4 night crowd, city, Low | | 62.3 / 30.7 | 28.1 ms | 73.7% | 3 | 209 | 219 |
+| S4 night crowd, prairie, Low | | 49.4 / 13.6 | 66.9 ms | 68.7% | 303 | 250 | 350 |
+| S4 night crowd, quarry, Potato | 111.9 / 61.2 | 76.1 / 15.1 | 58.3 ms | 80.1% | 236 | 250 | 69 |
+| S6 10-minute drive, prairie, Low | 121.6 / 57.4; 16 frames > 50 ms | 93.9 / 30.6 | 25.0 ms | 94.3% | 44 | 159 | 248 |
+| S2 day drive, prairie, Low, Compatibility | | 57.8 / 32.9 | 25.3 ms | 58.5% | 3 | 62 | 165 |
+
+**What the numbers mean**
+- **Streaming stays inside its budget.** S2 stresses terrain and streaming by day, and it matches the old world within noise: 126 fps against 128, with a p99 of 11 ms. A frame that applies anything spends about 1.3 ms on chunk work, and chunk work is almost never behind a long frame.
+- **Night and crowds miss the targets.**
+  - Low S3 keeps 86–99% of frames under 17.5 ms, against a target of 99%.
+  - Low S4 is 45–49 / 18, against 55 / 45.
+  - Potato S4 is 76 / 15, against 58 / 45.
+- **The cost is the physics tick, not the GPU or the world.**
+  - GPU time stays at 9–11 ms on Low (3–5 ms on Potato), whatever the number of goons.
+  - `physics_ms` climbs with the crowd: about 2 ms with no goons, 10–14 ms with 120–200.
+  - Once a frame passes 16.7 ms, the next one runs two physics ticks, so a crowd tips the game into a run of 30–40 ms frames.
+  - S6 shows the same thing over time: its slow minutes (7 and 8) are the ones with 120–130 goons.
+  - Potato is just as spiky, even though it drops goon occluders (69 visible, against 305 on Low), so shadows are not the cause either.
+- **The old S3 and S4 numbers predate the goon overhaul** (43 goons with verbs, `docs/GOONS.md`) and the goon physics layer. This branch was never benchmarked against its base commit, so it is not yet known how the crowd cost splits between the goon overhaul and the world. The world's share would come from goons sliding on chunk collision on screen, and from `WorldHooks.slideStep` and the water check off screen.
+- **Prairie's S4 is the worst:** 303 frames over 50 ms, with fewer goons on screen than quarry. The bench car now survives deep water, so it circles over prairie's lakes, and the goons following it keep drowning and being replaced. That much churn doesn't happen in normal play, because the car can't stay on the water.
+- **Compatibility** ran at a steady 16.67 ms median despite `--uncapped`. That looks like V-Sync forced through ANGLE, so the cell shows the cap, not the renderer's speed. Compatibility remains a troubleshooting option.
+
+**Noise and caveats**
+- The author's Godot editor was open on the main tree throughout, which adds a little CPU load.
+- All runs were one per cell, on AC power. The two S4 quarry runs differ by 8% in average fps.
+- Two runs had to be redone:
+  - A broken lock let the first S2 and S3 runs overlap a headless playtest.
+  - S2's sine drive drowned the car at 49 s. The bench's god mode now resets `lethalTicks` as well as health, so a benchmark car never drowns.
+- The phase-4 S6 runs in the branch history drowned after 30–46 s, so they mostly measured the results screen.
+- The playtest harness now plays the `cautious` AI profile by default, because it was the best all-round profile in the tournaments (`docs/AI_DRIVER.md`). Playtest numbers from before this change used `default` and can't be compared with later ones.
+
+**Next steps for performance**
+- Benchmark S3 and S4 on the branch's base commit (a clean worktree of the parent of `40332c3`), so the crowd cost can be split between the goon overhaul and the world.
+- Profile the goon physics tick at 150–250 goons: `move_and_slide` against chunk collision on screen, `slideStep` and `lethalAt` off screen, and the verbs. Cheaper off-screen goons, or a lower goon cap on Low and Potato, would bring the 1% lows back up.
+
+---
+
 ## Decisions
 
 - **Lighting Medium** (the Low preset) keeps all shadows and occluders, so night stealth plays the same. Only Lighting Low (Potato) drops shadows. 2D shadows block light fully whatever `shadow_color` alpha is set to, so without them goons behind rocks become visible.
@@ -204,6 +281,7 @@ Render Resolution on Low:
 
 ## Still open
 
+- **Night crowds on the new world** miss the Low and Potato targets (see "World revamp"): split the cost between the goon overhaul and the world by benchmarking the branch's base commit, then profile the goon physics tick.
 - **Unmeasured:** 4K (scenario S8; no 4K panel available), vsync-on runs, and 3 runs per cell with the median reported.
 - **Should Low or Potato default to 720p?**
 - **Check at 4K:**
@@ -219,13 +297,18 @@ Render Resolution on Low:
 **The harness** is `scripts/debug/bench.gd`, the `Bench` autoload.
 - **Inert unless launched with `--bench`.** Its header lists every option.
 - **Real settings and progress are safe:** it boots through the menu and saves to a scratch copy.
-- **Repeatable:** it fixes the seed and drives the car with an autopilot.
+- **Repeatable:** it fixes the seed and drives the car with an autopilot. The car can't die: health, fuel and the deep-water counter are reset every tick.
 - **Output:** a per-frame CSV and a `summary.csv` row in `user://bench/`.
 
 ```
 Godot_console.exe --path . -- --bench=S3 --uncapped --preset=low --seconds=90
 Godot_console.exe --path . -- --bench=S2 --mode=sprint --level-seconds=8 --seconds=25
+Godot_console.exe --path . -- --bench=S3 --level=city --uncapped --preset=low --tag=_city
+Godot_console.exe --path . -- --bench=S2 --mode=sprint --at=station --pattern=none --shot=8 --seconds=10
 ```
+
+- **World options:** `--level=<id>` plays another level, `--seed=N` another map, and `--at=water|wall|station|x,y` moves the car once the world is ready (`station` needs a mode with one). The CSV adds `chunk_ms` (main-thread chunk work that frame) and `occluders` (visible `LightOccluder2D`s); `WORLD_CHUNKS` at exit gives the worker and apply timings.
+- **Compatibility spot check:** put Godot's own `--rendering-method gl_compatibility` before the `--`. It changes no saved setting, unlike `--safe-mode`.
 
 | ID | Scenario | Stresses |
 |---|---|---|
