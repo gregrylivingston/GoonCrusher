@@ -12,20 +12,29 @@ extends Node
 #seconds (Sprint derives its clock from them). Without --level-seconds the bench keeps a
 #counting-down clock from running out, so long benchmarks are not cut short by the Countdown win;
 #with it the run can end, and BENCH_RUN_ENDED is printed (the bench then stops driving).
+#--level=<id|index|path> plays another level than the scenario's: a level id or scene basename
+#(prairie, level_grass_1; resolved under scene/level/levels/ as <arg>.tscn or level_<arg>.tscn), an
+#index into the save's level list, or a res:// path.
 #Writes a per-frame CSV and a summary row to user://bench/. Saves are redirected to a scratch
-#copy, so a benchmark never changes player progress.
+#copy, so a benchmark never changes player progress. Columns include chunk_ms (main-thread chunk
+#build/apply time that frame, read from TileManager.chunkMs when the world code provides it; 0
+#otherwise) and occluders (visible LightOccluder2Ds, sampled every 0.5 s like lights).
+#--pattern=none|sine|circle|route replaces the scenario's driving. --at=water|wall|station|x,y moves the car, once
+#the world is ready, next to the nearest deep water or wall (a coarse barrier cell beside open ground), onto the
+#station's approach (a mode with a station: --mode=sprint|marathon|defense) or to a world point, to look at the
+#world's edges (with --shot). --zoom=0.4 holds the camera's zoom. --seed=N plays another map than 1337 (a playtest's seed, say).
 
 const LEVELS = "res://scene/level/levels/"
 const SCENARIOS = {
 	"S1": {"level":"", "seconds":60},
-	"S2": {"level":"level_grass_1", "car":"sedan", "pattern":"sine", "seconds":90},
-	"S3": {"level":"level_mud_3", "car":"police", "night":true, "pattern":"circle", "spawnTimer":2.0, "escalation":0.0, "seconds":90},
-	"S4": {"level":"level_mud_3", "car":"police", "night":true, "pattern":"circle", "spawnTimer":1.0, "progress":200, "giantOdds":50, "seconds":150},
-	"S5": {"level":"level_grass_1", "car":"sedan", "pattern":"none", "slots":5, "seconds":90},
-	"S6": {"level":"level_grass_1", "car":"sedan", "pattern":"route", "seconds":600},
-	"S7": {"level":"level_grass_1", "car":"sedan", "night":true, "pattern":"none", "purses":10, "seconds":30},
+	"S2": {"level":"prairie", "car":"sedan", "pattern":"sine", "seconds":90},
+	"S3": {"level":"quarry", "car":"police", "night":true, "pattern":"circle", "spawnTimer":2.0, "escalation":0.0, "seconds":90},
+	"S4": {"level":"quarry", "car":"police", "night":true, "pattern":"circle", "spawnTimer":1.0, "progress":200, "giantOdds":50, "seconds":150},
+	"S5": {"level":"prairie", "car":"sedan", "pattern":"none", "slots":5, "seconds":90},
+	"S6": {"level":"prairie", "car":"sedan", "pattern":"route", "seconds":600},
+	"S7": {"level":"prairie", "car":"sedan", "night":true, "pattern":"none", "purses":10, "seconds":30},
 	#lighting parity: parked at night with no goons; use --headlights=N and --shot
-	"SL": {"level":"level_grass_1", "car":"sedan", "night":true, "pattern":"none", "spawnTimer":9999.0, "escalation":0.0, "seconds":10},
+	"SL": {"level":"prairie", "car":"sedan", "night":true, "pattern":"none", "spawnTimer":9999.0, "escalation":0.0, "seconds":10},
 }
 const WARMUP = 5.0
 const SCRATCH_SAVE = "user://bench/bench_save.tres"
@@ -38,6 +47,8 @@ var levelTime: float = 0.0
 var rows: PackedStringArray = []
 var frameMs: PackedFloat32Array = []
 var lightCount: int = 0
+var occluderCount: int = 0
+var levelPath: String = "" #the level scene this run plays ("" for the menu, S1)
 var lightTimer: float = 0.0
 var started: bool = false
 var nightSet: bool = false
@@ -58,6 +69,8 @@ var gameMode: int = Root.gameModes.GOONCRUSHER #--mode
 var levelSeconds: float = -1.0 #--level-seconds; -1 keeps the level's own
 var runEndReported := false
 var worldReported := false
+var at := "" #--at
+var zoom := 0.0 #--zoom
 
 func _ready():
 	var args = parseArgs()
@@ -73,6 +86,17 @@ func _ready():
 		return
 	cfg = SCENARIOS[id].duplicate()
 	if args.has("car"): cfg.car = str(args.car)
+	if args.has("pattern"): cfg.pattern = str(args.pattern)
+	at = str(args.get("at", ""))
+	zoom = float(args.get("zoom", 0.0))
+	if cfg.level != "": levelPath = resolveLevel(cfg.level)
+	if args.has("level"):
+		levelPath = resolveLevel(str(args.level))
+		if levelPath == "":
+			push_error("Unknown bench level " + str(args.level))
+			get_tree().quit(1)
+			return
+		cfg.level = levelPath.get_file().get_basename()
 	seconds = float(args.get("seconds", cfg.seconds))
 	if args.has("mode"):
 		var modeName = str(args.mode).to_upper()
@@ -115,6 +139,20 @@ func _ready():
 	if cfg.level != "": startLevel()
 	started = true
 
+#a level id (Levels.ORDER), its 0-based index or an old scene name (Levels.resolve), another scene
+#basename under scene/level/levels/, or a res:// path; "" when unknown
+static func resolveLevel(arg: String) -> String:
+	if arg.begins_with("res://"): return arg if ResourceLoader.exists(arg) else ""
+	var id := Levels.resolve(arg)
+	if id != &"": return Levels.scenePath(id)
+	if arg.is_valid_int():
+		var levels: Array = SaveManager.playerData.levels
+		var i := int(arg)
+		return str(levels[i].scene) if i >= 0 && i < levels.size() else ""
+	for path in [LEVELS + arg + ".tscn", LEVELS + "level_" + arg + ".tscn"]:
+		if ResourceLoader.exists(path): return path
+	return ""
+
 static func parseArgs() -> Dictionary:
 	var result = {}
 	for arg in OS.get_cmdline_user_args() + OS.get_cmdline_args():
@@ -130,20 +168,22 @@ func startLevel() -> void:
 	for i in data.cars.size():
 		if data.cars[i].name == cfg.get("car", "sedan"): data.selectedCar = i
 	data.gameMode = gameMode
+	var levelIndex := Levels.indexOf(Levels.resolve(levelPath))
+	if levelIndex >= 0: data.selectedLevel = levelIndex #Region reads the level's faction band and roster from it
 	Root.selectedCar = data.cars[data.selectedCar]
 	seed(1337)
 	loadStart = Time.get_ticks_msec()
 	if parseArgs().has("via-menu") && is_instance_valid(Root.mainMenu):
-		Root.mainMenu.startLevel(LEVELS + cfg.level + ".tscn") #the real menu path: threaded load
+		Root.mainMenu.startLevel(levelPath) #the real menu path: threaded load
 		return
 	Region.resetRegions()
-	get_tree().change_scene_to_node(RunView.wrap(load(LEVELS + cfg.level + ".tscn").instantiate()))
+	get_tree().change_scene_to_node(RunView.wrap(load(levelPath).instantiate()))
 
 func onNodeAdded(node: Node) -> void:
 	if stripText && node is CanvasItem && node.material is ShaderMaterial && node.material.shader && node.material.shader.code.contains("VERTEX_ID>>1"):
 		node.material = null
-	if node is landscapeGenerator:
-		node.inputSeed = 1337
+	if node is TileManager:
+		node.worldSeed = int(parseArgs().get("seed", 1337)) #--seed=N: another map
 	elif node is Level:
 		if levelSeconds >= 0.0: node.seconds = levelSeconds #before _ready, so every mode sees it
 	elif node is SpawnManager:
@@ -161,6 +201,7 @@ func _physics_process(_delta):
 		return
 	var car = Root.playerCar
 	car.health = 100.0 #god mode
+	car.lethalTicks = 0 #...over deep water too: the car drowns after LETHAL_TICKS ticks in a row, and a drowned car ends the benchmark
 	car.fuel = 100.0
 	drive(car)
 
@@ -240,6 +281,9 @@ func _process(delta):
 	if lightTimer <= 0.0:
 		lightTimer = 0.5
 		lightCount = GameStats.lights(get_tree())
+		occluderCount = 0
+		for occluder in get_tree().get_nodes_in_group("gc_occluder"):
+			if occluder.is_visible_in_tree(): occluderCount += 1
 	var t = levelTime if cfg.level != "" else elapsed
 	if not shots.is_empty() && t >= shots[0]: screenshot(shots.pop_front())
 	if t >= WARMUP: record(t, delta)
@@ -252,12 +296,14 @@ func levelEvents() -> void:
 		Root.levelRoot.seconds = maxf(Root.levelRoot.seconds, 30.0) #a benchmark run never ends on time
 	if Root.levelRoot.clockReady && not worldReported:
 		worldReported = true
+		if at != "": moveCar()
 		print("BENCH_WORLD mode=%s clock=%.1f station=%s start=%s" % [Root.gameModes.find_key(gameMode), Root.levelRoot.seconds,
 			str(Root.station.global_position) if is_instance_valid(Root.station) else "none", str(Root.levelRoot.startPosition)])
 	if Root.levelRoot.hasEnded && not runEndReported:
 		runEndReported = true
 		print("BENCH_RUN_ENDED mode=%s reason=%s level_time=%.1f station=%s" % [Root.gameModes.find_key(gameMode),
 			Root.endCondition.find_key(Root.levelRoot.endReason), levelTime, str(Root.station.global_position) if is_instance_valid(Root.station) else "none"])
+	if zoom > 0.0 && Root.playerCar.has_node("Camera2D"): Root.playerCar.get_node("Camera2D").zoom = Vector2(zoom, zoom)
 	for system in damage:
 		if Root.playerCar.condition.get(system, -1.0) != damage[system]: Root.playerCar.setCondition(system, damage[system])
 	if headlights >= 0 && Root.playerCar.headlights != headlights:
@@ -277,6 +323,38 @@ func levelEvents() -> void:
 		purse.global_position = Root.playerCar.global_position
 		Root.levelRoot.add_child(purse)
 
+#--at: the car beside the nearest barrier of a kind (water or wall), facing it from 900 px, east of the station, or at x,y
+func moveCar() -> void:
+	var map: WorldMap = Root.worldMap
+	var car = Root.playerCar
+	if map == null || not is_instance_valid(car): return
+	var target := Vector2.INF
+	if at.contains(","):
+		target = Vector2(float(at.get_slice(",", 0)), float(at.get_slice(",", 1)))
+	elif at == "station":
+		if not is_instance_valid(Root.station): return
+		target = Root.station.global_position + Vector2(1500, 0) #on the approach east of the lot, facing the house
+		car.rotation = PI
+	else:
+		var start := map.coarseCell(car.global_position)
+		for ring in range(2, 60):
+			for dy in range(-ring, ring + 1):
+				for dx in range(-ring, ring + 1):
+					if maxi(absi(dx), absi(dy)) != ring || target != Vector2.INF: continue
+					var cell := start + Vector2i(dx, dy)
+					var i := map.cellIndex(cell)
+					if i < 0 || map.flags[i] & WorldGen.BLOCKED == 0: continue
+					var water := map.terrain[i] == Root.terrain.WATER
+					if water != (at == "water"): continue
+					for d in WorldGen.DIRS4:
+						if target == Vector2.INF && map.cellReachable(cell + d * 2) && map.cellPassable(cell + d):
+							target = WorldGen.cellCentre(cell + d)
+							car.rotation = Vector2(-d).angle()
+	if target == Vector2.INF: return
+	car.global_position = target
+	car.velocity = Vector2.ZERO
+	print("BENCH_AT %s %s" % [at, target])
+
 func screenshot(t: float) -> void:
 	await RenderingServer.frame_post_draw
 	var image = get_viewport().get_texture().get_image()
@@ -288,7 +366,7 @@ func record(t: float, delta: float) -> void:
 	var vp = get_viewport().get_viewport_rid()
 	var ms = delta * 1000.0
 	frameMs.push_back(ms)
-	rows.push_back("%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%d,%d,%d,%d,%d" % [
+	rows.push_back("%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%d,%d,%d,%d,%d,%.3f,%d" % [
 		t - WARMUP, ms,
 		Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0,
 		Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS) * 1000.0,
@@ -296,8 +374,18 @@ func record(t: float, delta: float) -> void:
 		RenderingServer.viewport_get_measured_render_time_cpu(vp) + RenderingServer.get_frame_setup_time_cpu(),
 		Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME),
 		Performance.get_monitor(Performance.OBJECT_NODE_COUNT),
-		GameStats.goons(), GameStats.chunks(), lightCount,
+		GameStats.goons(), GameStats.chunks(), lightCount, takeChunkMs(), occluderCount,
 	])
+
+#main-thread ms the world spent building or applying chunks since the last frame, if the TileManager
+#keeps the count (chunkMs); reset after reading
+func takeChunkMs() -> float:
+	if not is_instance_valid(Root.levelRoot): return 0.0
+	var tm = Root.levelRoot.get_node_or_null("TileManager")
+	if tm == null || tm.get("chunkMs") == null: return 0.0
+	var ms = float(tm.chunkMs)
+	tm.chunkMs = 0.0
+	return ms
 
 func finish() -> void:
 	started = false
@@ -307,7 +395,7 @@ func finish() -> void:
 	var size = DisplayServer.window_get_size()
 	var tag = "%s_%s_%s_%dx%d" % [id + ("-notext" if stripText else "") + label, preset, RenderingServer.get_current_rendering_method(), size.x, size.y]
 	var file = FileAccess.open("user://bench/" + tag + ".csv", FileAccess.WRITE)
-	file.store_line("t,frame_ms,process_ms,physics_ms,gpu_ms,render_cpu_ms,draw_calls,nodes,goons,chunks,lights")
+	file.store_line("t,frame_ms,process_ms,physics_ms,gpu_ms,render_cpu_ms,draw_calls,nodes,goons,chunks,lights,chunk_ms,occluders")
 	for row in rows: file.store_line(row)
 	file.close()
 
@@ -335,6 +423,7 @@ func finish() -> void:
 		"frames_over_50ms": over50,
 		"pct_under_17_5ms": snappedf(100.0 * under175 / n, 0.1),
 		"max_goons": maxColumn(8), "max_chunks": maxColumn(9), "end_nodes": int(rows[rows.size() - 1].split(",")[7]),
+		"max_chunk_ms": snappedf(maxColumnF(11), 0.01), "max_occluders": maxColumn(12),
 	}
 	print("BENCH_SUMMARY " + JSON.stringify(summary))
 	if is_instance_valid(Root.playerCar): print("BENCH_CAR health=%.0f condition=%s" % [Root.playerCar.health, str(Root.playerCar.condition)])
@@ -351,4 +440,9 @@ func finish() -> void:
 func maxColumn(column: int) -> int:
 	var best = 0
 	for row in rows: best = max(best, int(row.split(",")[column]))
+	return best
+
+func maxColumnF(column: int) -> float:
+	var best = 0.0
+	for row in rows: best = maxf(best, float(row.split(",")[column]))
 	return best

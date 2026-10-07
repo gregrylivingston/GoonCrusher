@@ -128,11 +128,8 @@ func checkPotato() -> void:
 	PickupEffects.label(car.global_position, "HOT POTATO!")
 
 func planRoute() -> void:
-	if not is_instance_valid(Root.station) || not is_instance_valid(Root.levelRoot): return
-	var tm = Root.levelRoot.get_node_or_null("TileManager")
-	if tm == null: return
-	var gen = tm.get_node("landscapeGenerator")
-	var planner := AIRoute.new(gen.terrainMap, Vector2i(gen.inputSizeX, gen.inputSizeY), tm.tilesize)
+	if not is_instance_valid(Root.station) || not is_instance_valid(Root.levelRoot) || Root.worldMap == null: return
+	var planner := AIRoute.forWorld(Root.worldMap)
 	var plan := planner.plan(car.global_position, Root.station.global_position)
 	route = plan.points
 	if route.size() > 0: route[0] = car.global_position
@@ -141,7 +138,7 @@ func planRoute() -> void:
 static func kill(goon) -> void:
 	if not is_instance_valid(goon) || goon.dead: return
 	goon.destroy(&"boom")
-	Root.spawnManager.creditCrush(goon.global_position)
+	Root.spawnManager.creditCrush(goon.global_position, goon)
 
 #--- drawing --------------------------------------------------------------------------------------
 

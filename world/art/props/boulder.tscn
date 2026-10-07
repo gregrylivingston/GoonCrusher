@@ -1,0 +1,27 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://world/art/props/boulder.png" id="tex"]
+
+[sub_resource type="ConvexPolygonShape2D" id="shape"]
+points = PackedVector2Array(-142.7, -32, -81.3, -93.3, 29.3, -106.7, 70.7, -96, 137.3, -28, 81.3, 101.3, 48, 117.3, -30.7, 128, -90.7, 108, -128, 28)
+
+[sub_resource type="OccluderPolygon2D" id="occluder"]
+cull_mode = 2
+polygon = PackedVector2Array(-142.7, -32, -81.3, -93.3, 29.3, -106.7, 70.7, -96, 137.3, -28, 81.3, 101.3, 48, 117.3, -30.7, 128, -90.7, 108, -128, 28)
+
+[node name="boulder" type="StaticBody2D"]
+collision_layer = 1
+collision_mask = 0
+metadata/propId = &"boulder"
+metadata/propClass = &"TALL"
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(1.3333, 1.3333)
+texture = ExtResource("tex")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("shape")
+
+[node name="LightOccluder2D" type="LightOccluder2D" parent="."]
+occluder = SubResource("occluder")
+metadata/gc_world = true

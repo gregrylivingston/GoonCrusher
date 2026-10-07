@@ -24,7 +24,7 @@ scons                           # debug DLL: editor, debug exports, tests
 scons target=template_release   # release DLL: release exports
 ```
 
-Or run `scripts\windows\build_native.bat` from the project root to do both. The first build compiles all of godot-cpp (several minutes on the dev box); later builds only recompile `src/`. Add `-j4` to use all 4 threads.
+Or run `scripts\windows\build_native.bat` from the project root to do both. The first build compiles all of godot-cpp once per target (over 10 minutes each on the dev box with `-j4`); later builds only recompile `src/`. Add `-j4` to use all 4 threads; the batch file does.
 
 The extension is `reloadable`, so the editor picks up a rebuilt debug DLL without restarting. A DLL the editor or a running game holds can still block the install step; close it and rebuild if SCons reports the file is in use.
 
@@ -41,6 +41,16 @@ Registered classes are global, like built-ins: `GoonNative.version()`. Code that
 3. Rebuild both targets.
 
 Keep the game's rules intact when moving code: physics stays per tick, and the car's `integrate()` must stay pure because the AI driver predicts with it (CLAUDE.md).
+
+## What to port (performance pass)
+
+Port only what a profile points at, and keep a GDScript version until the native one matches it (same seed, same output; the world tests check determinism). Candidates, cheapest win first:
+
+1. **World workers** (`scripts/world/`: `WorldGen`, `WorldField`, `ChunkRecipe`). The map build takes 1.3–2.9 s and a chunk recipe 4–13 ms, all GDScript (docs/WORLD.md, "Known issues"). They already touch only their job Dictionary and use `WorldGen.ihash` instead of the global RNG, so they port as pure functions: Dictionary in, Dictionary or packed arrays out, still run on the `WorkerThreadPool`.
+2. **Goon physics at night crowds** (docs/PERFORMANCE.md, "Still open"). `physics_ms` reaches 10–14 ms at 120–200 goons. Profile first: if the cost is `move_and_slide` itself, native code won't help much; if it is the off-screen `slideStep`/`lethalAt` path or the verbs' per-tick math, a native batch step over all goons can.
+3. **`World` runtime queries** (`surfaceAt`, `lethalAt`, `isWall`). These are called from `integrate()` and must stay pure and allocation-free; a native version must keep both rules, because the AI driver predicts with `integrate()`.
+
+Calls across the GDScript/C++ boundary cost about as much as a GDScript call, so batch the work (one call per job or per tick, not one per cell or per goon).
 
 ## Exporting
 

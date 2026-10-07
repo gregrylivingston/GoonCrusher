@@ -1,0 +1,23 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://world/art/props/barrel.png" id="tex"]
+
+[sub_resource type="ConvexPolygonShape2D" id="shape"]
+points = PackedVector2Array(-26.7, -6.7, -16, -22.7, 6.7, -26.7, 22.7, -16, 26.7, 6.7, 17.3, 21.3, 6.7, 26.7, -6.7, 26.7, -22.7, 16, -26.7, 6.7)
+
+[node name="barrel" type="StaticBody2D"]
+collision_layer = 1
+collision_mask = 0
+metadata/propId = &"barrel"
+metadata/propClass = &"STATEFUL"
+metadata/smashSpeed = 120.0
+metadata/broken = "res://world/art/props/barrel_broken.png"
+metadata/debris = "res://world/art/props/barrel_debris.png"
+metadata/explosive = true
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(1.3333, 1.3333)
+texture = ExtResource("tex")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("shape")

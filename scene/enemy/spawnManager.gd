@@ -65,8 +65,10 @@ func despawnSweep() -> void:
 	#Defense: goons marching on the station are kept however far the car has driven
 	var base = Root.station.global_position if SaveManager.playerData.gameMode == Root.gameModes.DEFENSE && is_instance_valid(Root.station) else Vector2.INF
 	for goon in goons.duplicate():
-		if is_instance_valid(goon) && not goon.is_queued_for_deletion() && goon.global_position.distance_to(carPosition) > DESPAWN_DISTANCE && not view.has_point(goon.global_position):
-			if base != Vector2.INF && goon.global_position.distance_to(base) < DESPAWN_DISTANCE: continue
+		if not is_instance_valid(goon) || goon.is_queued_for_deletion() || view.has_point(goon.global_position): continue
+		#far behind, or wedged against a barrier it will never get through (Walker.isStuck), once off screen
+		if goon.global_position.distance_to(carPosition) > DESPAWN_DISTANCE || goon.isStuck():
+			if base != Vector2.INF && goon.global_position.distance_to(base) < DESPAWN_DISTANCE: continue #Defense keeps its siege
 			goon.queue_free()
 
 #night is the level's CanvasModulate going dark; goons light their eyes and night goons wake
@@ -83,6 +85,7 @@ func nightSweep() -> void:
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	Root.spawnManager = self
+	get_tree().node_added.connect(onNodeAdded)
 	if SaveManager.playerData.gameMode == Root.gameModes.GOONPOCALYPSE:
 		escalationSpeed *= POCALYPSE_ESCALATION
 		spawnFloor = POCALYPSE_SPAWN_FLOOR
@@ -91,6 +94,10 @@ func _ready():
 	add_child(fx)
 	await get_tree().process_frame
 	spawners = get_tree().get_nodes_in_group("spawner")
+
+#props goons look for (logs, manholes, crates, carcasses, explosives) join groups as they stream in
+func onNodeAdded(node: Node) -> void:
+	if node is StaticBody2D && node.has_meta(&"propId"): BreakableProp.tag(node)
 
 func increaseGiantOdds():
 	if is_instance_valid(Root.playerCar) && Root.playerCar.hasBuff("panic"): return #Panic Button: escalation holds
@@ -141,6 +148,7 @@ func getGoon() -> Walker:
 func spawnAt(coordinates: Vector2) -> void:
 	var id := pickGoonId()
 	var count: int = Goons.DATA.get(id, {}).get("pack", 1)
+	coordinates = preferredSpot(id, coordinates)
 	var pack := 0
 	if count > 1:
 		pack = nextPack
@@ -152,8 +160,22 @@ func spawnAt(coordinates: Vector2) -> void:
 		goon.isGiant = giant
 		goon.packId = pack
 		goon.position = coordinates + (Vector2.from_angle(i * 2.4) * 40.0 * sqrt(i) if count > 1 else Vector2.ZERO)
+		if not World.spawnableAt(goon.position): goon.position = coordinates #a pack never starts in the water
 		registerGoon(goon)
 		Root.levelRoot.add_child(goon)
+
+## Some goons spawn by a prop when one is near the spot and out of sight: Snappers by logs, the Rat Pack
+## from manholes (BreakableProp.tag groups them). Anything else, or no such prop, keeps the spot.
+const SPAWN_PROPS := {&"snapper": &"prop_log", &"rat": &"prop_manhole"}
+const PROP_SEARCH_PX := 1500.0
+const PROP_HIDDEN_PX := 1600.0 #the prop must be at least this far from the car
+func preferredSpot(id: StringName, coordinates: Vector2) -> Vector2:
+	var group: StringName = SPAWN_PROPS.get(id, &"")
+	if group == &"" || not is_instance_valid(Root.playerCar): return coordinates
+	var prop := WorldHooks.nearestInGroup(get_tree(), group, coordinates, PROP_SEARCH_PX)
+	if prop == null || prop.global_position.distance_to(Root.playerCar.global_position) < PROP_HIDDEN_PX: return coordinates
+	var spot := prop.global_position + Vector2.from_angle(prop.global_rotation + PI / 2.0) * (70.0 if id == &"snapper" else 0.0)
+	return spot if World.spawnableAt(spot) || World.terrainAt(spot) == World.UNKNOWN else coordinates
 
 ## Goons that burst out of another (Splitter): thrown outward, briefly dazed.
 func spawnBurst(id: StringName, pos: Vector2, count: int) -> void:
@@ -184,9 +206,11 @@ func goonsNear(pos: Vector2, radius: float) -> Array:
 		if is_instance_valid(goon) && goon.global_position.distance_squared_to(pos) < r2: out.push_back(goon)
 	return out
 
-## A goon killed by something the player set off (a blast, a kicked shell) counts as a crush.
-func creditCrush(pos: Vector2) -> void:
+## A goon killed by something the player set off (a blast, a kicked shell, a drowning) counts as a crush.
+## Pass the goon so it also counts for the Goonopedia (crushedById), as a bumper crush does.
+func creditCrush(pos: Vector2, goon: Object = null) -> void:
 	if not is_instance_valid(Root.playerCar): return
+	if goon != null && Root.playerCar.has_method("creditGoon"): Root.playerCar.creditGoon(goon)
 	Root.playerCar.reward("currentGoonsCrushed", 1)
 	RewardFlyers.flyUpgrade(Root.upgrade.CURRENTGOONSCRUSHED, pos)
 
@@ -199,6 +223,7 @@ var mySpawners
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
+	if is_instance_valid(Root.levelRoot) && not Root.levelRoot.get("clockReady"): return #escalation starts with the run clock (the world map builds first)
 	giantTimer += delta
 	if giantTimer > 10:
 		increaseGiantOdds()

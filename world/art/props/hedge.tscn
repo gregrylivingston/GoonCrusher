@@ -1,0 +1,30 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://world/art/props/hedge.png" id="tex"]
+
+[sub_resource type="ConvexPolygonShape2D" id="shape"]
+points = PackedVector2Array(-186.7, -22.7, -160, -49.3, 100, -44, 172, -26.7, 198.7, 6.7, 201.3, 25.3, 182.7, 46.7, -108, 44, -172, 30.7, -184, 20)
+
+[sub_resource type="OccluderPolygon2D" id="occluder"]
+cull_mode = 2
+polygon = PackedVector2Array(-186.7, -22.7, -160, -49.3, 100, -44, 172, -26.7, 198.7, 6.7, 201.3, 25.3, 182.7, 46.7, -108, 44, -172, 30.7, -184, 20)
+
+[node name="hedge" type="StaticBody2D"]
+collision_layer = 1
+collision_mask = 0
+metadata/propId = &"hedge"
+metadata/propClass = &"STATEFUL"
+metadata/smashSpeed = 300.0
+metadata/broken = "res://world/art/props/hedge_broken.png"
+metadata/debris = "res://world/art/props/hedge_debris.png"
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(1.3333, 1.3333)
+texture = ExtResource("tex")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("shape")
+
+[node name="LightOccluder2D" type="LightOccluder2D" parent="."]
+occluder = SubResource("occluder")
+metadata/gc_world = true

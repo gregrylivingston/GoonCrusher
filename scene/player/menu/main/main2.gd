@@ -295,9 +295,25 @@ func refreshLoadout() -> void:
 	loadoutButton.icon = Pickups.texture(id) if id != "" else null
 	loadoutButton.add_theme_constant_override("icon_max_width", 34)
 
-#a level as a poster: its art, "1  EASY" with a star per mode beaten, and a lock when locked
+#the level at a save index as the registry describes it (Levels): poster art, name and scene
+static func levelDef(index: int) -> LevelDef:
+	return Levels.defAt(index)
+
+static func posterPath(index: int) -> String:
+	var def := levelDef(index)
+	return def.poster if def else str(SaveManager.playerData.levels[index].get("image", ""))
+
+static func levelName(index: int) -> String:
+	var def := levelDef(index)
+	return def.displayName if def else str(SaveManager.playerData.levels[index].get("name", ""))
+
+static func levelScene(index: int) -> String:
+	var def := levelDef(index)
+	return def.scenePath() if def else str(SaveManager.playerData.levels[index].get("scene", ""))
+
+#a level as a poster: its art, "1  PRAIRIE RUN" with a star per mode beaten, and a lock when locked
 func makePoster(index: int) -> Control:
-	var level = SaveManager.playerData.levels[index]
+	var image := posterPath(index)
 	var poster = Panel.new()
 	poster.size = POSTER_SIZE
 	poster.clip_children = CanvasItem.CLIP_CHILDREN_AND_DRAW
@@ -310,10 +326,10 @@ func makePoster(index: int) -> Control:
 	art.size = POSTER_SIZE
 	art.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	poster.add_child(art)
-	if ResourceLoader.has_cached(level.image) || index == SaveManager.playerData.selectedLevel: art.texture = load(level.image)
+	if ResourceLoader.has_cached(image) || index == SaveManager.playerData.selectedLevel: art.texture = load(image)
 	else:
-		ResourceLoader.load_threaded_request(level.image)
-		pendingPosters[index] = level.image
+		ResourceLoader.load_threaded_request(image)
+		pendingPosters[index] = image
 	var band = PanelContainer.new()
 	band.name = "band"
 	band.theme_type_variation = "BandPanel"
@@ -326,7 +342,7 @@ func makePoster(index: int) -> Control:
 	var label = Label.new()
 	label.name = "name"
 	label.theme_type_variation = "DarkLabel"
-	label.text = "%d   %s" % [index + 1, level.name.to_upper()]
+	label.text = "%d   %s" % [index + 1, levelName(index).to_upper()]
 	bandRow.add_child(label)
 	var stars = HBoxContainer.new()
 	stars.name = "stars"
@@ -610,7 +626,7 @@ func onStartPressed() -> void:
 		if gadget != "" && SaveManager.playerData.gem >= Pickups.LOADOUT[gadget]:
 			SaveManager.playerData.gem -= Pickups.LOADOUT[gadget]
 			Pickups.loadout = gadget #the car takes it in its first tick (OverheadCarBody2D.tickPickups)
-		startLevel(SaveManager.playerData.levels[index].scene)
+		startLevel(levelScene(index))
 
 #the mode shown when run setup opens: the saved one if it can be started here, else Countdown
 func defaultGameMode() -> int:

@@ -1,0 +1,19 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://world/art/props/log.png" id="tex"]
+
+[sub_resource type="ConvexPolygonShape2D" id="shape"]
+points = PackedVector2Array(-118.7, -20, -101.3, -28, 101.3, -28, 118.7, -20, 121.3, 4, 116, 24, 101.3, 28, -101.3, 28, -116, 24, -121.3, 5.3)
+
+[node name="log" type="StaticBody2D"]
+collision_layer = 1
+collision_mask = 0
+metadata/propId = &"log"
+metadata/propClass = &"LOW"
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(1.3333, 1.3333)
+texture = ExtResource("tex")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("shape")

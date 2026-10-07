@@ -1,0 +1,19 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://world/art/props/dumpster.png" id="tex"]
+
+[sub_resource type="ConvexPolygonShape2D" id="shape"]
+points = PackedVector2Array(-84, -44, -81.3, -48, 81.3, -48, 84, -44, 84, 44, 82.7, 46.7, 81.3, 48, -81.3, 48, -82.7, 46.7, -84, 44)
+
+[node name="dumpster" type="StaticBody2D"]
+collision_layer = 1
+collision_mask = 0
+metadata/propId = &"dumpster"
+metadata/propClass = &"LOW"
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(1.3333, 1.3333)
+texture = ExtResource("tex")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("shape")

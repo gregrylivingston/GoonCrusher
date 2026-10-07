@@ -1,0 +1,35 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>world bake</title></head>
+<body>
+<!-- Opened by bake_world.py in headless Edge as bake_world.html#<job>:<id>,<id>,... Jobs: ground, macro, edge, prop,
+     decor, station, poster. Writes every file (paths relative to world/art/) and the prop metadata as JSON into #out;
+     the script reads it back with --dump-dom. car_gen.js and goon_gen.js are loaded for the wrecks and the posters. -->
+<pre id="out"></pre>
+<script src="art_core.js"></script>
+<script src="car_gen.js"></script>
+<script src="goon_gen.js"></script>
+<script src="world_gen.js"></script>
+<script>
+(function(){
+	const W = window.WorldArt, out = {files: {}, meta: {props: {}}, error: null};
+	const png = cv => cv.toDataURL("image/png");
+	try {
+		const hash = decodeURIComponent(location.hash.slice(1)), cut = hash.indexOf(":");
+		const job = cut < 0 ? hash : hash.slice(0, cut), ids = cut < 0 ? [] : hash.slice(cut + 1).split(",").filter(Boolean);
+		if(job === "ground") for(const id of ids) out.files["ground/" + id + ".png"] = png(W.renderGround(id));
+		else if(job === "macro") out.files["ground/macro_noise.png"] = png(W.renderMacro());
+		else if(job === "edge") for(const id of ids) out.files["edges/" + id + ".png"] = png(W.renderEdge(id));
+		else if(job === "prop" || job === "decor") for(const id of ids){
+			const r = W.bakeProp(id);
+			for(const name in r.files) out.files[(job === "decor" ? "decor/" : "props/") + name] = png(r.files[name]);
+			out.meta.props[id] = r.meta;
+		}
+		else if(job === "station") for(const id of ids) out.files["station/" + id + ".png"] = png(W.renderStation(id));
+		else if(job === "poster") for(const id of ids) out.files["posters/" + id + ".png"] = png(W.renderPoster(id));
+		else if(job === "list") out.meta.list = {grounds: W.GROUNDS, edges: W.EDGES, props: W.PROPS, decor: W.DECOR, station: W.STATION, posters: W.POSTERS};
+		else throw new Error("unknown job " + job);
+	} catch(e) { out.error = String(e && e.stack || e); }
+	document.getElementById("out").textContent = JSON.stringify(out);
+})();
+</script>
+</body></html>

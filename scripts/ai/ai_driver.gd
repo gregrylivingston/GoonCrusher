@@ -5,7 +5,7 @@ class_name AIDriver extends Node2D
 #only what a player could: the screen by day, the headlight beam at night.
 #Every physics tick the controller calls think(), then reads isPressed(). Layers:
 #  goal      what to go for: the mode's objective, a pickup, a goon, or a region worth stars
-#  route     A* over the terrain map (AIRoute), string-pulled to the farthest waypoint in sight;
+#  route     A* over the world's coarse map (AIRoute), string-pulled to the farthest waypoint in sight;
 #            near the station, a visibility graph that lines the car up with the lot's gap
 #  control   candidate key plans are simulated 0.75 s ahead with the car's own physics, then swept on
 #            straight out to lookaheadPx
@@ -47,6 +47,8 @@ const STOPPED_SPEED = 60.0   #below this, reversing is always among the choices 
 
 #costs are in seconds of estimated arrival time; the tunable ones are profile parameters (AIProfiles)
 const LETHAL_COST = 1000.0    #driving into water
+const SHALLOWS_COST = 0.3     #per second of a plan with a wheel in shallows: slow and slippery, never deadly
+const WET_CORNER_SHARE = 0.3  #per second of a plan with a corner (not the centre) over deep water, this share of LETHAL_COST
 
 const GOAL_RADIUS = {"pickup":70.0, "goon":80.0, "station":300.0, "roam":600.0, "patrol":600.0, "escape":300.0}
 const PURSE_QUANTITY = 10.0   #purse.tscn is a "coin" powerup with this quantity
@@ -93,6 +95,7 @@ var planHit := false
 var speedCap := INF           #fuel saving (updateSpeedCap)
 var throttleCap := INF        #what the throttle actually holds to: speedCap, or slower near rocks
 var rockyPickups := {}        #pickup instance id -> amongRocks
+var wetPickups := {}          #pickup instance id -> too close to deep water to go for (nearWater)
 var goalCareful := false      #the goal sits among rocks (fuel in a rock ring): go in slowly
 
 var goal: Dictionary = {}
@@ -142,7 +145,7 @@ static func attach(target: OverheadCarBody2D, options: Dictionary = {}) -> AIDri
 	driver.car = target
 	driver.sight = options.get("sight", "human")
 	driver.debug = options.get("debug", false)
-	driver.p = AIProfiles.resolve(options.get("profile", ""))
+	driver.p = AIProfiles.resolve(options.get("profile", AIProfiles.BEST))
 	driver.name = "AIDriver"
 	driver.top_level = true #draws in world coordinates
 	driver.z_index = 100
@@ -184,6 +187,9 @@ func decide() -> void:
 	var t1 = Time.get_ticks_usec()
 	aim = aimPoint(goalPosition())
 	var t2 = Time.get_ticks_usec()
+	#a recovery plan runs blind for a second; deep water coming up ends it, so the planner takes over
+	if tick < recoverUntil && car.velocity.length() > 50.0 && WorldHooks.lethalAhead(car.global_position, car.velocity.normalized(), car.velocity.length() * 0.8 + 200.0) < INF:
+		recoverUntil = tick
 	if tick % p.scanTicks == 1 && tick >= recoverUntil: choosePlan()
 	var t3 = Time.get_ticks_usec()
 	checkProgress()
@@ -197,18 +203,20 @@ func decide() -> void:
 		if trail.size() > TRAIL_SAMPLES: trail.remove_at(0)
 	throttleCap = speedCap
 	if goalCareful && car.global_position.distance_to(goalPosition()) < CAREFUL_FROM_PX: throttleCap = minf(throttleCap, p.carefulSpeed)
-	if goal.get("kind") == "station" && not stationPoints.is_empty() && car.global_position.distance_to(stationPoints[0]) < STATION_SLOW_PX:
+	if goal.get("kind") == "station" && not stationPoints.is_empty() && graphStation == Root.station && car.global_position.distance_to(stationPoints[0]) < STATION_SLOW_PX:
 		throttleCap = minf(throttleCap, p.stationSpeed)
 	#going for a goon: fast enough to crush it, whatever fuel saving says
 	if goal.get("kind") == "goon" && goalValid(): throttleCap = maxf(throttleCap, crushNeed(goal.node) * CRUSH_MARGIN * 1.05)
+	#deep water ahead: lift off early (the plans brake or turn; shallows give little grip to do it with)
+	var speed := car.velocity.length()
+	if speed > p.waterSpeed && WorldHooks.lethalAhead(car.global_position, car.velocity / speed, speed * p.waterLookSeconds * 1.5) < INF:
+		throttleCap = minf(throttleCap, p.waterSpeed)
 	keys = keysFor(plan, tick - planTick, forwardSpeed(), throttleCap)
 	if speedCap < INF: stats.eco_seconds += 1.0 / Engine.physics_ticks_per_second
 	if debug && tick % p.scanTicks == 1: queue_redraw()
 
 func buildRoute() -> void:
-	var generator = Root.levelRoot.get_node("TileManager/landscapeGenerator")
-	var tileManager = Root.levelRoot.get_node("TileManager")
-	route = AIRoute.new(generator.terrainMap, Vector2i(generator.inputSizeX, generator.inputSizeY), tileManager.tilesize)
+	route = AIRoute.forWorld(Root.worldMap)
 
 func forwardSpeed() -> float:
 	return car.velocity.dot(car.global_transform.x.normalized())
@@ -246,7 +254,7 @@ func updateGoal() -> void:
 		if not is_instance_valid(pickup) || pickup.is_queued_for_deletion() || not pickup.visible || not pickup.has_node("Area2D"):
 			known.erase(id)
 			continue
-		if AIRoute.isBlocked(route.terrainAt(pickup.global_position)): continue
+		if AIRoute.isBlocked(route.terrainAt(pickup.global_position)) || wetPickup(pickup): continue
 		var value = pickupValue(pickup.powerup, pickup.quantity, car.fuel, car.health, need) * p.pickupScale
 		options.push_back({"kind":"pickup", "node":pickup, "value":value, "key":str(id), "type":pickup.powerup})
 	#goons only die by being crushed, so crushing is also the defence: every goon left alive joins
@@ -255,6 +263,7 @@ func updateGoal() -> void:
 		var near: Array = []
 		for g in Root.spawnManager.goons:
 			if is_instance_valid(g) && not g.isDying() && g.global_position.distance_squared_to(carPos) < p.goonTargetPx * p.goonTargetPx && canSee(g.global_position):
+				if p.waterGoonPx > 0.0 && WorldHooks.nearLethal(g.global_position, p.waterGoonPx): continue #lured to the bank: let it swim
 				near.push_back(g)
 		for g in near:
 			var neighbours = 0
@@ -299,8 +308,19 @@ func updateGoal() -> void:
 		blacklist[goal.key] = tick + 10 * Engine.physics_ticks_per_second
 		goal = {}
 
+#Marathon moves the station on (TileManager.placeNextStation): everything worked out for the old one
+#(the approach graph, its gap, the hop) is dropped, so the next leg never steers to the old lot's points
+func forgetStaleStation() -> void:
+	if graphStation == Root.station || stationPoints.is_empty(): return
+	stationPoints = []
+	stationEdges = []
+	stationGap = Vector2.RIGHT
+	approachHop = -1
+	graphStation = null
+
 #the mode's own goal: the station in a race, a region worth stars in survival, the base in Defense
 func objectiveGoal() -> Dictionary:
+	forgetStaleStation()
 	match mode:
 		Root.gameModes.SPRINT, Root.gameModes.MARATHON:
 			if is_instance_valid(Root.station):
@@ -315,7 +335,9 @@ func objectiveGoal() -> Dictionary:
 		Root.gameModes.DEFENSE:
 			if is_instance_valid(Root.station):
 				if roamPoint == Vector2.INF || tick > roamUntil || car.global_position.distance_to(roamPoint) < GOAL_RADIUS.patrol:
-					roamPoint = Root.station.global_position + Vector2.from_angle(randf() * TAU) * randf_range(600.0, 1800.0)
+					for attempt in 8: #a patrol point on dry land, clear of the water's edge
+						roamPoint = Root.station.global_position + Vector2.from_angle(randf() * TAU) * randf_range(600.0, 1800.0)
+						if not nearWater(roamPoint): break
 					roamUntil = tick + 15 * Engine.physics_ticks_per_second
 				return {"kind":"patrol", "pos":roamPoint, "value":4.0, "key":"patrol"}
 	if roamPoint == Vector2.INF || tick > roamUntil || car.global_position.distance_to(roamPoint) < GOAL_RADIUS.roam:
@@ -334,12 +356,13 @@ func stationTarget() -> Vector2:
 	var driveway = Root.station.get_node("driveway/CollisionShape2D").global_position
 	var carPos = car.global_position
 	if carPos.distance_to(driveway) > STATION_GRAPH_PX: return driveway #far off: the route handles it
-	if stationPoints.is_empty() || graphStation != Root.station:
+	forgetStaleStation()
+	if stationPoints.is_empty():
 		graphStation = Root.station
 		buildStationGraph(driveway)
 	var carEdges = PackedFloat32Array()
 	for i in stationPoints.size():
-		carEdges.push_back(carPos.distance_to(stationPoints[i]) if stationEdgeAllowed(carPos, i) && clearOfWalls(carPos, stationPoints[i]) else INF)
+		carEdges.push_back(carPos.distance_to(stationPoints[i]) if stationEdgeAllowed(carPos, i) && linedUpFor(i) && clearOfWalls(carPos, stationPoints[i]) else INF)
 	var hop = firstHop(stationPoints, stationEdges, carEdges)
 	approachHop = hop
 	return stationPoints[hop] if hop >= 0 else stationPoints[2]
@@ -367,6 +390,16 @@ func buildStationGraph(driveway: Vector2) -> void:
 			var open = i != j && stationEdgeAllowed(stationPoints[i], j) && clearOfWalls(stationPoints[i], stationPoints[j])
 			row.push_back(stationPoints[i].distance_to(stationPoints[j]) if open else INF)
 		stationEdges.push_back(row)
+
+#The last legs (to the inner marker and the driveway) also need the car heading in along the gap's line,
+#or slow enough to turn in: a car crossing the line side-on at 450 px/s overshoots the gap by a turning
+#circle and loops round the lot again (phase-3 sprints lost 30-40 s that way). Otherwise it goes on to the
+#outer marker (or a corner), turns there and comes in lined up.
+const STATION_ALIGN = 1.0        #radians between the heading and the way in (-stationGap) for a last leg at speed
+const STATION_TURN_SPEED = 300.0 #below this any heading will do
+func linedUpFor(point: int) -> bool:
+	if point > 1 || car.velocity.length() < STATION_TURN_SPEED: return true
+	return absf(car.global_transform.x.angle_to(-stationGap)) < STATION_ALIGN
 
 #the driveway (0) and the inner marker (1) are entered only from the gap's line
 func stationEdgeAllowed(from: Vector2, to: int) -> bool:
@@ -427,45 +460,55 @@ func rocksNear(point: Vector2, radius: float) -> bool:
 	around.collision_mask = 1
 	around.exclude = [car.get_rid()]
 	for hit in space.intersect_shape(around, 8):
-		if hit.collider is StaticBody2D || hit.collider is TileMap: return true
+		#a fence or hedge is smashed on the way in (carefulSpeed is too slow for some: then the planner treats it as a wall)
+		if World.isWall(hit.collider) && not (BreakableProp.isBreakable(hit.collider) && not hit.collider.get_meta(&"explosive", false)): return true
 	return false
 
-#Region stars: a region pays a star for each 60 s spent in it, up to 3 (Region.gd), so stay in a
-#region until it has paid out, then head for one that hasn't. Land only, preferably ahead.
+#Region stars: a region (a district of the world map) pays a star for each 60 s spent in it, up to 3
+#(Region.gd), so stay in a district until it has paid out, then head for one that hasn't. Passable,
+#reachable coarse cells only, preferably ahead.
+const ROAM_CELLS := Vector2i(16, 12) #how far the candidates reach, in coarse cells (20,480 x 15,360 px)
+const ROAM_STEP := 3
 func pickRoamPoint() -> Vector2:
-	var generator = Root.levelRoot.get_node("TileManager/landscapeGenerator")
-	var tileManager = Root.levelRoot.get_node("TileManager")
-	var carChunk: Vector2i = tileManager.chunkOf(car.global_position)
-	var here = regionOf(generator, carChunk)
+	var map: WorldMap = Root.worldMap
+	var carCell: Vector2i = map.coarseCell(car.global_position)
+	var here := map.districtOfCell(carCell)
 	var hereMaxed = isRegionMaxed(here)
 	var forward = car.global_transform.x.normalized()
 	var best = Vector2.INF
 	var bestScore = -INF
-	for dy in range(-4, 5):
-		for dx in range(-3, 4):
-			var chunk = carChunk + Vector2i(dx, dy)
-			if chunk == carChunk && not hereMaxed: continue
-			var cell = generator.cellAt(chunk.x + generator.inputSizeX / 2, chunk.y + generator.inputSizeY / 2)
-			if AIRoute.isBlocked(cell.terrain): continue
-			var centre = (Vector2(chunk) + Vector2(0.5, 0.5)) * tileManager.tilesize
+	for dy in range(-ROAM_CELLS.y, ROAM_CELLS.y + 1, ROAM_STEP):
+		for dx in range(-ROAM_CELLS.x, ROAM_CELLS.x + 1, ROAM_STEP):
+			var cell = carCell + Vector2i(dx, dy)
+			if (dx == 0 && dy == 0) || not map.cellReachable(cell): continue
+			var district := map.districtOfCell(cell)
+			if district == here && not hereMaxed && absi(dx) + absi(dy) <= ROAM_STEP: continue
+			var centre = WorldGen.cellCentre(cell)
 			var score = randf()
-			if cell.region == here: score += 0.0 if hereMaxed else 3.0
-			elif not isRegionMaxed(cell.region): score += 4.0 if hereMaxed else 0.5
+			if district == here: score += 0.0 if hereMaxed else 3.0
+			elif not isRegionMaxed(district): score += 4.0 if hereMaxed else 0.5
 			#long straight runs: fresh goons spawn ahead and meet the bumper, the horde stays behind
 			if centre.distance_to(car.global_position) < p.roamMinPx: score -= 2.0
 			score += 1.5 * forward.dot((centre - car.global_position).normalized())
 			if score > bestScore:
-				var spot = centre + Vector2(randf_range(-1500, 1500), randf_range(-700, 700))
-				if not AIRoute.isBlocked(route.terrainAt(spot)) && route.plan(car.global_position, spot).reached:
+				var spot = centre + Vector2(randf_range(-400, 400), randf_range(-400, 400))
+				if not AIRoute.isBlocked(route.terrainAt(spot)) && not nearWater(spot) && route.plan(car.global_position, spot).reached:
 					bestScore = score
 					best = spot
 	return best if best != Vector2.INF else car.global_position + forward * 2000.0
 
-static func regionOf(generator, chunk: Vector2i) -> int:
-	return generator.cellAt(chunk.x + generator.inputSizeX / 2, chunk.y + generator.inputSizeY / 2).region
+#too close to deep water to drive to at speed: within waterTargetPx of a lethal cell, unless on a bridge deck
+func nearWater(point: Vector2) -> bool:
+	return route.terrainAt(point) != Root.terrain.BRIDGE && WorldHooks.nearLethal(point, p.waterTargetPx)
+
+#pickups don't move, so the answer is kept per pickup
+func wetPickup(pickup: Node) -> bool:
+	var id = pickup.get_instance_id()
+	if not wetPickups.has(id): wetPickups[id] = nearWater(pickup.global_position)
+	return wetPickups[id]
 
 static func isRegionMaxed(region: int) -> bool:
-	if region == -2: return true #water and hills pay nothing
+	if region < 0: return true #barriers pay nothing
 	return Region.regions.has(region) && Region.regions[region].get("wave", 1) >= 4
 
 #--- values -----------------------------------------------------------------------------------
@@ -548,9 +591,15 @@ func sustainableSpeed(duty: float) -> float:
 func engineForce() -> float:
 	return (car.engine + 14) * 10 * 2.2
 
-#seconds of clock left over if the car drove the rest of the route now
+#seconds of clock left over if the car drove the rest of the route now. The route (coarse A*) is shorter
+#than the drive, so it is stretched the way the clock was (Level.driveLengthFor: the grammar's factor, plus
+#the lot approach while the car is still out of the station graph's reach)
 func raceSlack() -> float:
-	return Root.levelRoot.seconds - raceDistance / cruiseSpeed() * 1.1
+	var level = Root.levelRoot
+	var drive = raceDistance
+	if level.has_method("driveLength"):
+		drive = level.driveLength(raceDistance) if raceDistance > STATION_GRAPH_PX else raceDistance * Level.ROUTE_FACTOR_DEFAULT
+	return level.seconds - drive / cruiseSpeed() * 1.1
 
 #how many seconds a race can spend on a detour
 func detourBudget() -> float:
@@ -762,10 +811,19 @@ func scoreRollout(rollout: Dictionary, target: Vector2) -> float:
 			cost += p.flankCost * segment * flankExposure(path[i], headings[i])
 			if speeds[i] < CRUSH_SPEED: cost += p.slowGoonCost * segment * goonsNear(path[i])
 		var ground = footprintTerrain(path[i], headings[i])
-		if ground == Root.terrain.WATER:
-			rollout.hitSeconds = i * segment
-			return LETHAL_COST * (2.0 - float(i) / last)
-		var fraction = 0.0 if ground == Root.terrain.HILLS else sweep(path[i - 1], headings[i - 1], path[i] - path[i - 1], i == 1)
+		if World.isLethal(ground):
+			#the car dies once its centre is over deep water: that ends the plan. A corner over it (the
+			#footprint has a margin) is a near miss: very dear, but a plan that keeps the centre out still
+			#beats one that doesn't when every choice is wet (a car already on the edge)
+			if World.lethalAt(path[i]) || World.lethalAt(path[i].lerp(path[i - 1], 0.5)):
+				rollout.hitSeconds = i * segment
+				return LETHAL_COST * (2.0 - float(i) / last)
+			cost += LETHAL_COST * WET_CORNER_SHARE * segment
+		if ground == Root.terrain.SHALLOWS: cost += SHALLOWS_COST * segment
+		cost += waterAheadCost(path[i - 1], path[i], speeds[i]) * segment
+		sweepSmashes = 0
+		var fraction = 0.0 if World.isWallTerrain(ground) else sweep(path[i - 1], headings[i - 1], path[i] - path[i - 1], i == 1, minf(speeds[i - 1], speeds[i]))
+		cost += p.smashCost * sweepSmashes #through a fence or hedge at speed: a little slower, never a wall hit
 		if fraction < 1.0:
 			rollout.hit = true
 			rollout.hitSeconds = (i - 1 + fraction) * segment
@@ -792,9 +850,23 @@ func scoreRollout(rollout: Dictionary, target: Vector2) -> float:
 		var travelled = path[0].distance_to(end)
 		var reach = maxf(400.0, maxf(p.lookaheadPx - travelled, endSpeed * p.probeSeconds))
 		var heading = headings[last].normalized()
-		var clear = sweep(end, heading, heading * reach, false)
+		var clear = sweep(end, heading, heading * reach, false, endSpeed)
 		if clear < 1.0: cost += p.probeCost * (1.0 - clear)
+		var wet = WorldHooks.lethalAhead(end, heading, reach) #deep water counts like a wall there, only more so
+		if wet < INF: cost += p.probeCost * 2.0 * (1.0 - wet / (reach + WorldHooks.FINE))
 	return cost + metCost(met)
+
+#Deep water along the direction of travel within waterLookSeconds of a point of a plan: the closer and the
+#faster, the more it costs per second of the plan, so plans that turn away or brake early win long before
+#the footprint would touch it (by then, at 700 px/s on shallows, it is too late to stop)
+func waterAheadCost(from: Vector2, to: Vector2, speed: float) -> float:
+	if speed < 100.0 || p.waterNearCost <= 0.0: return 0.0
+	var motion = to - from
+	if motion.length_squared() < 1.0: return 0.0
+	var reach = speed * p.waterLookSeconds
+	var wet = WorldHooks.lethalAhead(to, motion.normalized(), reach)
+	if wet == INF: return 0.0
+	return p.waterNearCost * (1.0 - wet / (reach + WorldHooks.FINE)) * speed / 400.0
 
 #a crush takes crushReward off a plan; bouncing off a goon too tough to crush costs like a light wall hit
 func metCost(met: Dictionary) -> float:
@@ -832,29 +904,77 @@ static func countMet(met: Dictionary) -> Vector2i:
 #how far along `motion` the car's footprint gets before touching a rock or wall (1 = clear)
 #The first segment uses a smaller shape and skips the overlap test, so a car already touching a
 #rock can still choose to back or steer away from it.
-func sweep(from: Vector2, heading: Vector2, motion: Vector2, first: bool) -> float:
-	query.transform = Transform2D(heading.angle(), from)
+#`speed` is the car's predicted speed there: a breakable prop (fence, hedge, hay bale, crate,
+#barricade) it would meet at smashMargin x its smash speed or more is driven through, as the car
+#does (it smashes it with no wall damage); sweepSmashes counts them for smashCost. Slower, or an
+#explosive (barrel, tank: never free), it is a wall. Speed 0 (the default) treats every prop as a wall.
+var sweepSmashes := 0
+const SWEEP_PASSES = 4 #at most this many breakables are driven through in one sweep
+func sweep(from: Vector2, heading: Vector2, motion: Vector2, first: bool, speed := 0.0) -> float:
+	sweepSmashes = 0
+	var pose = Transform2D(heading.angle(), from)
+	query.transform = pose
 	query.exclude = excludes
-	#cast_motion ignores anything the shape already overlaps, so test that first, with the real
-	#footprint: the margin would make every plan in a tight pocket look like a crash
-	query.motion = Vector2.ZERO
-	if not first:
-		query.shape = exactShape
-		if not space.intersect_shape(query, 1).is_empty(): return 0.0
-	query.shape = startShape if first else bodyShape
-	query.motion = motion
-	var result = space.cast_motion(query)
-	return result[0] if result.size() > 0 else 1.0
+	var passed: Array[RID] = []
+	for attempt in SWEEP_PASSES:
+		#cast_motion ignores anything the shape already overlaps, so test that first, with the real
+		#footprint: the margin would make every plan in a tight pocket look like a crash
+		query.motion = Vector2.ZERO
+		if not first:
+			query.shape = exactShape
+			var overlaps = space.intersect_shape(query, 4)
+			if not overlaps.is_empty():
+				if not passThrough(overlaps, speed, passed): return 0.0
+				continue
+		query.shape = startShape if first else bodyShape
+		query.motion = motion
+		var result = space.cast_motion(query)
+		if result.size() == 0 || result[0] >= 1.0: return 1.0
+		if speed <= 0.0: return result[0]
+		#what it would touch: through it if it is a breakable this speed smashes
+		query.transform = Transform2D(pose.get_rotation(), from + motion * result[1])
+		query.motion = Vector2.ZERO
+		var touched = space.get_rest_info(query)
+		query.transform = pose
+		if touched.is_empty() || not passThrough([touched], speed, passed): return result[0]
+	return 0.0
 
-#water if any corner of the car (plus a margin) is over water, hills if over hills
+#true when every hit (intersect_shape or get_rest_info results) is a breakable the car smashes at
+#`speed`; they are then left out of the query (`passed`) and counted in sweepSmashes
+func passThrough(hits: Array, speed: float, passed: Array[RID]) -> bool:
+	if speed <= 0.0: return false
+	for hit in hits:
+		var collider = hit.get("collider") if hit.has("collider") else instance_from_id(hit.get("collider_id", 0))
+		if not smashableAt(collider, speed, p.smashMargin): return false
+	for hit in hits:
+		passed.push_back(hit.rid)
+		sweepSmashes += 1
+	var skip: Array[RID] = excludes.duplicate()
+	skip.append_array(passed)
+	query.exclude = skip
+	return true
+
+#would the car smash this prop at `speed` (with a margin over its smash speed)? Explosives never count:
+#driving into a barrel is a blast, not a shortcut.
+static func smashableAt(collider: Object, speed: float, margin := 1.15) -> bool:
+	if collider == null || not is_instance_valid(collider): return false
+	if not (collider.has_method("smash") || BreakableProp.isBreakable(collider)): return false
+	if collider.get_meta(&"explosive", false) || collider.get_meta(&"smashed", false): return false
+	return speed >= OverheadCarBody2D.smashSpeedOf(collider) * margin
+
+#the worst ground under the car's corners (plus a margin): a lethal terrain (water) if any corner is
+#over one, else a wall terrain (hills, buildings), else shallows, else GRASS. Read from World (the
+#fine map once there is one), falling back to the route's chunk map.
 func footprintTerrain(pos: Vector2, heading: Vector2) -> int:
 	var forward = heading.normalized() * (halfSize.x + 40.0)
 	var side = heading.normalized().orthogonal() * (halfSize.y + 40.0)
 	var worst = Root.terrain.GRASS
 	for corner in [pos, pos + forward + side, pos + forward - side, pos - forward + side, pos - forward - side]:
-		var type = route.terrainAt(corner)
-		if type == Root.terrain.WATER: return type
-		if type == Root.terrain.HILLS: worst = type
+		var type = World.terrainAt(corner)
+		if type == World.UNKNOWN: type = route.terrainAt(corner)
+		if World.isLethal(type): return type
+		if World.isWallTerrain(type): worst = type
+		elif type == Root.terrain.SHALLOWS && not World.isWallTerrain(worst): worst = type
 	return worst
 
 #--- recovery ---------------------------------------------------------------------------------
@@ -883,7 +1003,7 @@ func checkProgress() -> void:
 		stats.escapes += 1
 		escapePoint = car.global_position - car.global_transform.x * 1500.0
 		for i in range(trail.size() - 1 - ESCAPE_BACK_SAMPLES, -1, -1):
-			if trail[i].distance_to(car.global_position) > ESCAPE_MIN_PX:
+			if trail[i].distance_to(car.global_position) > ESCAPE_MIN_PX && not World.lethalAt(trail[i]):
 				escapePoint = trail[i]
 				break
 		escapeUntil = tick + 8 * Engine.physics_ticks_per_second
@@ -901,10 +1021,11 @@ func checkProgress() -> void:
 func roomiest(candidates: Array) -> Dictionary:
 	var best = {"room":-INF}
 	for candidate in candidates:
-		var rollout = simulate(candidate, horizonTicks())
+		var rollout = simulate(candidate, maxi(horizonTicks(), Engine.physics_ticks_per_second + 30)) #at least the blind second and then some
 		var room = 0.0
 		for i in range(1, rollout.path.size()):
-			var fraction = sweep(rollout.path[i - 1], rollout.headings[i - 1], rollout.path[i] - rollout.path[i - 1], i == 1)
+			if World.isLethal(footprintTerrain(rollout.path[i], rollout.headings[i])): break #no room in the water
+			var fraction = sweep(rollout.path[i - 1], rollout.headings[i - 1], rollout.path[i] - rollout.path[i - 1], i == 1, minf(rollout.speeds[i - 1], rollout.speeds[i]))
 			room += fraction
 			if fraction < 1.0: break
 		if room > best.room: best = {"room":room, "plan":candidate, "path":rollout.path}

@@ -127,8 +127,6 @@ var shown = null #the entry in the detail card
 var preview: GoonPreview
 var pending := {}        #resource path -> Callable(resource) to run once it has loaded on a worker thread
 var carInfos := {}       #car index -> CarInfo
-var levelStats := {}     #level scene path -> {seconds, spawn, giants}
-var levelLoading := ""   #at most one level scene loads at a time
 
 static func open(parent: Node) -> Goonopedia:
 	var page = Goonopedia.new()
@@ -335,7 +333,8 @@ func _exit_tree() -> void:
 		if ResourceLoader.load_threaded_get_status(path) == ResourceLoader.THREAD_LOAD_LOADED: ResourceLoader.load_threaded_get(path)
 
 #sets a tile's picture once it loads, if the tile is still there
-static func setTileArt(texture: Texture2D, b: Button) -> void:
+#(`b` is untyped: a typed Button argument errors before the body runs when the tile was freed)
+static func setTileArt(texture: Texture2D, b) -> void:
 	if is_instance_valid(b) && texture: b.get_node("art").texture = texture
 
 #---------- detail card helpers ----------
@@ -412,6 +411,23 @@ func tipRow(text: String) -> void:
 	label.text = text
 	label.theme_type_variation = "BodyLabel"
 	label.add_theme_color_override("font_color", HudTheme.GOLD)
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(label)
+	detail.add_child(row)
+
+#a chip naming a fact and its text (a level's barrier, its surfaces); nothing for empty text
+func factRow(tag: String, text: String, color: Color) -> void:
+	if text == "": return
+	var row = HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	var c = chip(tag, color)
+	c.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	c.custom_minimum_size.x = 112
+	row.add_child(c)
+	var label = Label.new()
+	label.text = text
+	label.theme_type_variation = "BodyLabel"
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(label)
@@ -585,7 +601,7 @@ func buildCars() -> void:
 static func isCarLocked(index: int) -> bool:
 	return SaveManager.playerData.cars[index].cost != 0 || (Root.IS_DEMO && index >= Root.DEMO_CAR_COUNT)
 
-func onCarInfo(info: CarInfo, index: int, b: Button) -> void:
+func onCarInfo(info: CarInfo, index: int, b) -> void:
 	carInfos[index] = info
 	if is_instance_valid(b):
 		setTileArt(info.profilePic, b)
@@ -643,6 +659,7 @@ func carTraits(info: CarInfo) -> String:
 
 #---------- levels ----------
 
+#Every level in the registry (Levels, LevelDef); unlocks and beaten modes come from the save's entry at the same index
 func buildLevels() -> void:
 	var levels = SaveManager.playerData.levels
 	var open = range(levels.size()).filter(func(i): return isLevelOpen(i)).size()
@@ -650,23 +667,37 @@ func buildLevels() -> void:
 	section("LEVELS", "%d / %d open" % [open, levels.size()])
 	var g = grid(2)
 	for i in levels.size():
+		var def := Levels.defAt(i)
 		var b = tile(g, {"kind": "level", "key": i, "stretch": TextureRect.STRETCH_KEEP_ASPECT_COVERED, "inset": 4.0},
-			null, "%d   %s" % [i + 1, levels[i].name.to_upper()], Vector2(334, 200))
+			null, "%d   %s" % [i + 1, levelName(i).to_upper()], Vector2(334, 200))
 		if not isLevelOpen(i): b.get_node("art").modulate = Color(0.35, 0.35, 0.35)
-		loadThen(levels[i].image, setTileArt.bind(b))
+		loadThen(def.poster if def else str(levels[i].get("image", "")), setTileArt.bind(b))
 
 static func isLevelOpen(index: int) -> bool:
 	return SaveManager.playerData.levels[index].unlocked && not (Root.IS_DEMO && index >= Root.DEMO_LEVEL_COUNT)
 
+static func levelName(index: int) -> String:
+	var def := Levels.defAt(index)
+	return def.displayName if def else str(SaveManager.playerData.levels[index].get("name", ""))
+
 func levelDetail(entry: Dictionary) -> void:
 	var index: int = entry.key
 	var level: Dictionary = SaveManager.playerData.levels[index]
+	var def := Levels.defAt(index)
 	var panel = hero(230)
 	var art = heroPicture(panel, null, TextureRect.STRETCH_KEEP_ASPECT_COVERED)
-	loadThen(level.image, func(t): if is_instance_valid(art): art.texture = t)
+	loadThen(def.poster if def else str(level.get("image", "")), func(t): if is_instance_valid(art): art.texture = t)
 	var status = ["OPEN", HudTheme.OK] if isLevelOpen(index) else (["NOT IN DEMO", HudTheme.MUTED] if level.unlocked else ["LOCKED", HudTheme.BAD])
-	titleRow("%d  %s" % [index + 1, level.name.to_upper()], [status])
-	if not isLevelOpen(index) && level.unlocked == false: paragraph("Beat Countdown on the level before it to unlock.", "MutedLabel")
+	var chips = [status]
+	if def: chips.push_front(["ACT %d" % def.act, HudTheme.RIM])
+	titleRow("%d  %s" % [index + 1, levelName(index).to_upper()], chips)
+	if not isLevelOpen(index) && level.unlocked == false: paragraph("Beat any mode on the level before it to unlock.", "MutedLabel")
+	if def:
+		if def.blurb != "": paragraph(def.blurb)
+		var grammar: String = Levels.GRAMMAR_TEXT.get(def.grammar, "")
+		if grammar != "": paragraph(grammar, "MutedLabel")
+		factRow("BARRIER", def.barrier, HudTheme.RIM)
+		factRow("SURFACES", def.surfaces, HudTheme.RIM)
 	var beatRow = HBoxContainer.new()
 	beatRow.add_theme_constant_override("separation", 8)
 	var beatLabel = Label.new()
@@ -680,68 +711,41 @@ func levelDetail(entry: Dictionary) -> void:
 		if not beaten: c.modulate.a = 0.55
 		beatRow.add_child(c)
 	detail.add_child(beatRow)
-	var stats = levelStats.get(level.scene)
-	if stats == null:
-		requestLevelStats.call_deferred(level.scene) #deferred: a cached scene answers at once and redraws this card
-		paragraph("Reading the level...", "MutedLabel")
-	elif not stats.is_empty():
-		statTable([
-			["Clock", "%d:%02d" % [floori(stats.seconds / 60.0), int(stats.seconds) % 60]],
-			["Goons", "one every %.1f s at first" % stats.spawn, clampf(6.0 / maxf(stats.spawn, 0.5) * 16.0, 0.0, 100.0)],
-			["Giants", "%d%% at first, rising" % clampi(stats.giants, 0, 100), clampf(stats.giants, 0.0, 100.0)],
-		])
+	if def == null: return
+	var stats := levelStats(def)
+	statTable([
+		["Clock", "%d:%02d" % [floori(stats.seconds / 60.0), int(stats.seconds) % 60]],
+		["Goons", "one every %.1f s at first" % stats.spawn, clampf(6.0 / maxf(stats.spawn, 0.5) * 16.0, 0.0, 100.0)],
+		["Giants", "%d%% at first, rising" % clampi(stats.giants, 0, 100), clampf(stats.giants, 0.0, 100.0)],
+	])
 	var label = Label.new()
 	label.text = "WHO HOLDS THE LAND"
 	label.theme_type_variation = "MutedLabel"
 	detail.add_child(label)
 	var road = FactionRoad.new()
-	road.levelIndex = index
+	road.band = def.factionBand
 	road.custom_minimum_size = Vector2(0, 58)
 	detail.add_child(road)
+	var rows = []
+	for f in factionsOn(def):
+		var names = LevelRoster.rosterFor(def, f).map(func(id): return Goons.DATA[id].name if isDiscovered(id) else "???")
+		rows.push_back([Goons.factionName(f), ", ".join(names)])
+	statTable(rows)
 
-#reads the level's clock and spawn tuning from its scene file without building the level; one at a time
-func requestLevelStats(path: String) -> void:
-	if levelLoading != "" || levelStats.has(path) || not is_inside_tree(): return
-	if not ResourceLoader.exists(path):
-		levelStats[path] = {}
-		return
-	levelLoading = path
-	loadThen(path, onLevelLoaded.bind(path))
+## The level's clock and starting spawn tuning, as levelRoot copies them from the def
+static func levelStats(def: LevelDef) -> Dictionary:
+	return {"seconds": float(def.seconds), "spawn": def.spawnTimer, "giants": def.giantOdds}
 
-#also picks up a level the player moved to while another was loading
-func onLevelLoaded(packed: PackedScene, path: String) -> void:
-	levelLoading = ""
-	levelStats[path] = readLevelStats(packed.get_state()) if packed else {}
-	if shown != null && shown.kind == "level": showDetail(shown)
-
-static func readLevelStats(state: SceneState) -> Dictionary:
-	return {
-		"seconds": float(sceneProperty(state, "", &"seconds", 600)),
-		"spawn": float(sceneProperty(state, "SpawnManager", &"spawnTimer", 6.0)),
-		"giants": int(sceneProperty(state, "SpawnManager", &"giantOdds", -10)),
-	}
-
-#a property as a scene sets it: the scene's own value, else the scene it inherits, else an instanced
-#child scene's, else the node script's default. `nodePath` is relative to the root ("" for the root).
-static func sceneProperty(state: SceneState, nodePath: String, property: StringName, fallback):
-	var script: Script = null
-	var instance: PackedScene = null
-	while state:
-		for i in state.get_node_count():
-			var path = str(state.get_node_path(i)).trim_prefix("./")
-			if path == ".": path = ""
-			if path != nodePath: continue
-			if instance == null && state.get_node_instance(i): instance = state.get_node_instance(i)
-			for p in state.get_node_property_count(i):
-				var name = state.get_node_property_name(i, p)
-				if name == property: return state.get_node_property_value(i, p)
-				if name == &"script" && script == null: script = state.get_node_property_value(i, p)
-		state = state.get_base_scene_state()
-	if instance: return sceneProperty(instance.get_state(), "", property, fallback)
-	if script:
-		var value = script.get_property_default_value(property)
-		if value != null: return value
-	return fallback
+## The factions that can hold land on the level: those its faction band reaches (the band clamps the jittered score)
+static func factionsOn(def: LevelDef) -> Array:
+	var out := []
+	var low := LevelRoster.factionForScore(minf(def.factionBand.x, def.factionBand.y))
+	var high := LevelRoster.factionForScore(LevelRoster.bandTop(def.factionBand))
+	for f in range(low, high + 1):
+		var source := LevelRoster.rosterFaction(def, f)
+		if source == f: out.push_back(f)
+		elif not source in out: out.push_back(source)
+	return out
 
 #---------- pickups ----------
 
@@ -937,21 +941,21 @@ class GoonPreview extends Control:
 		var drawn = texture.get_size() * minf(ZOOM, (size.y - 24.0) / maxf(texture.get_size().y, 1.0))
 		draw_texture_rect(texture, Rect2(center - drawn * 0.5, drawn), false, SHADOW if silhouette else Color.WHITE)
 
-#who holds the land along the road out from the start on one level (Goons.factionFor): each slice is
-#coloured by the chance of each faction there, jitter included
+#who holds the land along the road out from the start on one level (LevelRoster.factionScore, clamped to
+#the level's faction band): each slice is coloured by the chance of each faction there, jitter included
 class FactionRoad extends Control:
 	const CHUNKS := 9.0
-	var levelIndex := 0
+	var band := Vector2(0.0, 3.6)
 
 	func _draw() -> void:
 		var bar = Rect2(0, 4, size.x, 22)
 		var slices := 90
 		for i in slices:
 			var chunks = (i + 0.5) / slices * CHUNKS
-			var score = chunks * Goons.DISTANCE_WEIGHT + levelIndex * Goons.LEVEL_WEIGHT
+			var score = chunks * Goons.DISTANCE_WEIGHT #the band clamps the jittered score
 			var j = Goons.FACTION_JITTER
-			var wild = clampf((Goons.WILD_BELOW - score + j) / (2.0 * j), 0.0, 1.0)
-			var scrap = clampf((score - Goons.TRIBE_BELOW + j) / (2.0 * j), 0.0, 1.0)
+			var wild = 1.0 if band.y <= Goons.WILD_BELOW else (0.0 if band.x >= Goons.WILD_BELOW else clampf((Goons.WILD_BELOW - score + j) / (2.0 * j), 0.0, 1.0))
+			var scrap = 1.0 if band.x >= Goons.TRIBE_BELOW else (0.0 if band.y <= Goons.TRIBE_BELOW else clampf((score - Goons.TRIBE_BELOW + j) / (2.0 * j), 0.0, 1.0))
 			var tribe = maxf(0.0, 1.0 - wild - scrap)
 			var color = FACTION_COLORS[0] * wild + FACTION_COLORS[1] * tribe + FACTION_COLORS[2] * scrap
 			color.a = 1.0

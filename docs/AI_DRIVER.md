@@ -1,9 +1,11 @@
 # AI driver and playtest harness
 
-The AI driver plays GoonCrusher like a player does: it holds the same four digital keys, sees only what a player could see, and has to live with the same physics, rocks, water, goons, fuel and clock. Its first job is automated playtesting, where it plays real runs headless and reports what happened. It is also built so it could drive a rival car later (see the end).
+The AI driver plays like a player: it holds the same digital keys, sees only what a player could see, and lives with the same physics, walls, water, goons, fuel and clock. Its job is automated playtesting.
+
+**Profile:** the game (console `ai`), the playtest harness and `tournament.py` all play `AIProfiles.BEST` = `"cautious"` unless `--profiles` names others.
 
 - `scripts/ai/ai_driver.gd` (`AIDriver`): the driver. One node, attached to a car.
-- `scripts/ai/ai_route.gd` (`AIRoute`): the long-range route planner (A* over the terrain map).
+- `scripts/ai/ai_route.gd` (`AIRoute`): the long-range route planner (A* over the world's coarse map; docs/WORLD.md).
 - `scripts/ai/ai_profiles.gd` (`AIProfiles`): the driver's tuning, as named profiles.
 - `scripts/debug/playtest.gd` (autoload `Playtest`): the harness that plays and records runs.
 - `scripts/ai/tournament.py`: plays several profiles on the same seeds and ranks them.
@@ -29,10 +31,10 @@ Godot_console.exe --headless --fixed-fps 60 --path . -- --playtest --uncapped --
 
 | Option | Default | |
 |---|---|---|
-| `--level=a,b` | `level_grass_1` | level scene names in `scene/level/levels/` |
+| `--level=a,b` | `prairie` | level ids (`Levels.ORDER`), 0-based indices or old scene names |
 | `--mode=a,b` | `countdown` | `countdown`, `sprint`, `goonpocalypse`, `marathon`, `defense` |
 | `--car=a,b` | `sedan` | car names from the save (`sedan`, `van`, `police`, ...) |
-| `--profiles=a,b` | `default` | AI profiles to play (below); each is another dimension like car or mode |
+| `--profiles=a,b` | `cautious` (`AIProfiles.BEST`) | AI profiles to play (below); each is another dimension like car or mode |
 | `--runs=N` | 1 | runs per level × mode × car × profile |
 | `--seed=N` | 1 | first map seed; run *k* uses seed + *k* |
 | `--upgrades=N` or `save` | 0 | every stat upgraded to level N (0 = stock car), or the save's own upgrades |
@@ -52,11 +54,11 @@ Everything the driver weighs is a parameter in `AIProfiles.DEFAULTS` (`scripts/a
 
 | Profile | Idea |
 |---|---|
-| `default` | the current driver |
-| `v1` | the driver as first tuned: 1 s plans, a 400 px sweep past them, no reverse cost or crush reward, recovers by reversing |
-| `crusher` | plays for crushes: goons worth twice as much, meeting them pays more, flanks matter less, hunts until lower health |
-| `farsight` | simulates plans 2–3 s ahead tick by tick and sweeps 2 s past them (several times the CPU) |
-| `cautious` | keeps health: walls, flanks and slowness among goons cost more; stops hunting sooner |
+| `cautious` | **`BEST`.** Keeps health: walls, flanks and slowness among goons cost more; stops hunting sooner. The best all-round profile in the tournaments |
+| `default` | the plain `DEFAULTS` (not yet measured in a tournament) |
+| `v1` | the driver as first tuned: 1 s plans, a 400 px sweep, no reverse cost or crush reward |
+| `crusher` | plays for crushes: goons worth twice as much, flanks matter less, hunts until lower health |
+| `farsight` | simulates 2–3 s ahead tick by tick (several times the CPU) |
 | `collector` | pickups first: every pickup worth twice as much, goons less |
 
 A spec can change values on the fly without editing the file: `crusher+horizonTicks=120+flankCost=2`. Use one in `--profiles` (separated by commas), in the tournament or in code (`AIDriver.attach(car, {"profile": ...})`).
@@ -64,7 +66,7 @@ A spec can change values on the fly without editing the file: `crusher+horizonTi
 A tournament plays every profile in every mode on the same seeds, so all of them meet the same maps, and ranks them by score:
 
 ```
-python scripts/ai/tournament.py --profiles default,v1,crusher,farsight --runs 6
+python scripts/ai/tournament.py --profiles cautious,default,crusher --runs 6
 python scripts/ai/tournament.py --profiles "default,default+reverseCost=6" --modes sprint --runs 10 --name reverse
 ```
 
@@ -81,10 +83,10 @@ To iterate: copy the winner into a new profile, change one or two values, and pl
 ### What a row records
 
 - **Run:** `level`, `mode`, `car`, `profile`, `seed`, `upgrades`, `sight` and `score`.
-- **Ending:** `reason` is `SUCCESS`, `NOHEALTH`, `NOGAS`, `NOTIME`, `ABANDONED`, `WATER` (drowned: a `NOHEALTH` with health left) or `TIMEOUT`. Also `won`, `level_time`, the starting `clock`, `time_left`, and for races `station_px`, `station_left_px` (how far from the station it ended) and `route_reached` (false when the station is cut off by water).
+- **Ending:** `reason` is `SUCCESS`, `NOHEALTH`, `NOGAS`, `NOTIME`, `ABANDONED`, `WATER` (drowned: a `NOHEALTH` with health left) or `TIMEOUT`. Also `won`, `level_time`, the starting `clock`, `time_left`, and for races `station_px`, `station_left_px` (how far from the station it ended) `route_reached` (false when the station is cut off by water) and `legs` (stations reached: 0 or 1 in Sprint, one per leg in Marathon).
 - **Score:** `crushed`, `coin`, `star`, `payout`, `gem`, `slot_machines`, and pickups by kind (`fuel_pickups`, `health_pickups`, `purses`, `coins_picked`, `gems_picked`, `stat_pickups`). Slot machine prizes count as pickups.
 - **Damage**, as health lost, split by what the car was touching at the time:
-  - `damage_rocks`: rocks, walls and hills.
+  - `damage_rocks`: rocks, walls, hills and props, exactly what the car's wall hits and scrapes took (`wallHealthLost`); a car pinned to a wall by goons counts their attacks as goon damage.
   - `damage_goon_contact`: the car ran into a goon. Every crush costs the car health too.
   - `damage_goon_attacks`: a goon lunged into the car's body.
   - `crush_misses`: goons the car hit at over 200 px/s that survived.
@@ -96,7 +98,7 @@ To iterate: copy the winner into a new profile, change one or two values, and pl
 The car's controller calls `AIDriver.think()` every physics tick, then reads the keys from `isPressed()` instead of the keyboard. The driver works in four layers.
 
 1. **Goal**, 4 times a second: what to go for.
-2. **Route**: how to get there across the map without water.
+2. **Route**: how to get there across the map, round water and walls.
 3. **Control**, 7.5 times a second (`scanTicks`): which keys to hold for the next moment.
 4. **Recovery**: getting unstuck.
 
@@ -110,6 +112,15 @@ The car's controller calls `AIDriver.think()` every physics tick, then reads the
 
 `--sight=full` sees everything within 4000 px, day or night. It is useful for separating "the AI can't see it" from "the AI can't do it".
 
+### How it reads the world
+
+- **Route:** `AIRoute.forWorld` shares the `WorldMap`'s own `AStarGrid2D` (1280 px coarse cells, built with the map on a worker): water and walls are solid, the rest weighted by the terrain table's `routeWeight` (sand and mud 1.4, mud pits 2), and the map's fords, bridges and passes are open cells, so routes use them. Diagonals never cut a blocked corner.
+- **Ground:** `World.terrainAt` reads the 128 px fine raster where the chunk is loaded, else the coarse cell. `footprintTerrain` takes the worst ground under the car's centre and four corners (plus 40 px): deep water first, then a wall, then shallows.
+- **Handling:** the prediction runs `integrate()`, which reads the surface under each predicted position, so ice, oil, conveyors and the off-road rule are in every plan without extra rules.
+- **Water:** see "Deep water" in the goal rules and the sweeps below; the lookups are `WorldHooks.nearLethal` and `lethalAhead`, plain grid reads.
+- **Breakables:** fences, hedges, hay bales, crates and barricades are walls to the physics but passable to the planner at speed (below).
+- **Regions:** roam points come from the map's districts (`WorldMap.districtOfCell`).
+
 ### Goal rules
 
 Every candidate is scored **value ÷ (seconds to get there + 1)**. The current goal keeps a 30% bonus, so the driver doesn't flip between goals.
@@ -118,23 +129,24 @@ Every candidate is scored **value ÷ (seconds to get there + 1)**. The current g
 - **Pickup values** (a goon crush is about 12 points):
   - Fuel is worth 4 points, plus 2–8 points per unit of fuel the tank can actually hold. The rate rises the more fuel the rest of the run needs.
   - Health works the same way, with more value below 60 health.
-  - A purse is worth 60, a slot machine 50, a gem 25, an Engine pickup 10, any other stat 7 and a coin 5.
-- **Pickups among rocks** (a rock within 450 px, such as fuel inside a rock ring):
+  - A purse is worth 60, a slot machine 50, a gem 25, an Engine pickup 10 and a coin 5; any other pickup its `ai` worth in `Pickups.DATA`, else 7.
+- **Pickups among obstacles** (a wall or a solid prop within 450 px; a breakable that isn't explosive doesn't count):
   - They are slow and risky, so their time estimate gets 4 s longer.
-  - Under 20 points they are skipped altogether. A coin isn't worth a pocket of rocks.
+  - Under 20 points they are skipped altogether. A coin isn't worth a pocket of walls.
   - The car approaches them at 260 px/s.
 - **Goons:** 14 points, plus 4 for each other goon within 350 px (up to 6), for goons within 3000 px.
   - Each goon has its own crush speed (`Walker.crushSpeed`, 100–400 px/s), or a higher one head-on while its front armor is up, and some are invulnerable for a while (`AIDriver.crushNeed`). A goon this car can't reach the speed to crush is never a goal. It stays in the obstacle sweeps, since hitting it bounces the car and hurts.
   - While the goal is a goon, the throttle may go 15% past its crush speed, whatever fuel saving says.
   - Goons only die by being crushed, so every goon left alive joins the horde. Crushing is also the defence.
   - Below a health reserve the car stops hunting and steers around goons like rocks (protect mode). The reserve is 10 + 0.04 × the seconds left in Countdown, 20 in races and 25 otherwise.
+- **Deep water:** pickups and roam or patrol points within 400 px of deep water are skipped (`waterTargetPx`; a bridge deck is fine), and goons within 350 px of it aren't hunted (`waterGoonPx`): they drown on their own. Above 340 px/s the throttle lifts while deep water lies ahead within 1.35 s of travel (`waterSpeed`).
 - **Unreachable goals:** a goal chased for 2.5× its estimated time (at least 3 s) is dropped for 10 s. One the car gets stuck on twice is dropped for the rest of the run.
 
 ### Mode rules
 
 - **Countdown and Goonpocalypse: region stars.**
   - A region pays a star for each 60 s spent in it, up to 3, and payout is coins × stars.
-  - With nothing better in sight, the car roams to a land point it can reach in the same region until that region has paid out. Then it heads for a region that hasn't.
+  - With nothing better in sight, the car roams to a reachable point in the same region (a district of the world map) until that region has paid out. Then it heads for a district that hasn't.
   - Roam points are at least 6000 px away and preferably ahead. Long straight runs meet fresh goons with the bumper, since 4 of the 5 spawners are 4000 px ahead of the car, and they leave the horde behind.
 - **Sprint and Marathon: the station.**
   - The station is the objective. The time needed is the A* route length at cruise speed. In Marathon the station moves on after each stop; the station graph is rebuilt when `Root.station` changes.
@@ -159,9 +171,11 @@ Every candidate is scored **value ÷ (seconds to get there + 1)**. The current g
   - Straight, left or right while braking.
   - Three reverse plans, weighed whenever the car is nearly stopped (under 60 px/s: three-point turns), when it is slow and every forward plan hits something within 1 s, or during an escape.
 - **Prediction:** each plan is simulated 0.75 s ahead (`horizonTicks`), tick by tick, with the car's own physics, `OverheadCarBody2D.integrate()`, and the controller's key rules (`playerCarController.nextSteering`). The prediction therefore includes the steering ramp, tyre slip, drag and terrain friction, and any handling change made inside `integrate()`.
-- **Sweeps:** the predicted path is swept in 0.1 s segments with the car's footprint against rocks, walls and hills.
+- **Sweeps:** the predicted path is swept in 0.1 s segments with the car's footprint against everything solid on layer 1: the chunks' wall pieces, props and the station.
   - Godot's `cast_motion` ignores anything the shape already overlaps, so each segment first tests for overlap with the exact footprint.
-  - Water anywhere under the car is treated as death.
+  - **Breakable props** (fence, hedge, hay bale, crate, barricade) are passable when the predicted speed at that point is at least `smashMargin` (1.15) × the prop's smash speed: the sweep looks up what it touched (`get_rest_info`), leaves the prop out and sweeps on, and the plan pays `smashCost` (0.25 s) per prop. Slower, it is a wall. Explosives (barrel, tank) are always walls. Pickups among breakables don't count as "among rocks".
+  - Deep water under the car's centre (the car dies two ticks after its centre is over it) ends the plan with a death cost; under a corner of its footprint (with a 40 px margin) it costs 300 s per second, so when every plan is wet the one that keeps the centre dry wins.
+  - **Deep water ahead** (`waterAheadCost`): at each 0.1 s point of a plan, deep water along the direction of travel within 0.9 s of travel (`waterLookSeconds`) costs up to 8 s per second (`waterNearCost`), more the closer and the faster. The end-of-plan probe charges for deep water like a wall, twice over. At 700 px/s on shallows the car can't stop in the 256 px band, so this is what makes it brake or turn while it still can.
 - **A plan's cost** is its estimated seconds to the goal:
   - Time used, plus the rest of the way at cruise speed, plus the time lost getting back up to cruise speed, (c − v)² / (2ac).
   - Plus 0.6 s per radian still to turn.
@@ -176,49 +190,16 @@ Every candidate is scored **value ÷ (seconds to get there + 1)**. The current g
 ### Recovery rules
 
 - **Stuck:** moving less than 150 px in 2.5 s. The car drops its current pickup or goon goal and, for 1 s, takes the forward plan with the most room if one has at least 0.5 s clear (`recoverForward`); only otherwise does it reverse on the reverse plan with the most room.
+- **Water:** neither the recovery plan (the one with the most room stops counting at deep water) nor an escape point (never a lethal trail point) leads into deep water.
 - **Escape:** three stuck events in 20 s. The car drives back to where its breadcrumb trail was at least 6 s and 600 px ago, the way it came in, which is known to be drivable. Reversing is allowed until it gets there.
 
-## What the playtests show
+## Limits
 
-**Status (2026-10-06):** driver changes are on hold. The defaults in `ai_profiles.gd` include the latest notes (a mild reverse cost, reversing weighed whenever nearly stopped, 0.75 s plans plus a 1,600 px sweep). They pass the tests, but no tournament has measured them: round 3, new against old `cautious`, was interrupted. Rounds 1 and 2 ran before the pickup overhaul, and round 1 also before the goon-aware crush rules. Treat every number below as a guide to the next tournament, not as a result.
-
-### Tournaments, 2026-10-05 (`level_grass_1`, stock sedan)
-
-Scores use the coin score (coins + mode result), re-ranked with `--rerank`. 6 seeds per row in round 1 and 8 in round 2; scores spread 10–30 points per profile, so treat gaps under about 10 as ties.
-
-| Round | Mode | Ranking (score) | Notes |
-|---|---|---|---|
-| 1 | Countdown | crusher 124, cautious 123, v1 121, default 120, farsight 116, collector 113 | a tie; crusher paid 1,276 a run against cautious's 548, cautious survived longest (238 s of 250) |
-| 1 | Sprint | cautious 90 (6 of 6 won), collector 89, v1 85, farsight 77, default 67, crusher 59 | |
-| 1 | Goonpocalypse | default 117, v1 105, cautious 99, farsight 95, collector 93, crusher 84 | |
-| 2 | Countdown | cautious 123 (5 of 8 survived), cautious + crush reward 118, v1 114 (3 runs), cautious + 2 s look-ahead 102, cautious without reverse cost 101 (5 runs) | partial: stopped at 7 of 10 groups |
-| 2 | Sprint | cautious without reverse cost 83 (7 of 8 won), cautious + crush reward 77, cautious 71, cautious + 2 s look-ahead 61, v1 37 (0 of 8) | `v1` loses to the new goons |
-
-What they suggest:
-1. **`cautious`** (walls, flanks and slowness among goons cost more; stops hunting sooner) was the best all-round profile.
-2. **Backing up should not be penalised much:** removing the reverse cost won Sprint in round 2. The defaults now use a small cost.
-3. **Simulating further ahead tick by tick made it worse,** and it is expensive, so far looking is now a cheap sweep past each plan. That design is the untested part.
-4. **Crushing pays.** Payout is coins × stars, and stars come from crush milestones and region time. `crusher` earned 2.3× `cautious`'s coins in Countdown while surviving less. A hybrid that crushes more without the extra damage is the next thing to try.
-
-### Earlier findings (before the goon and pickup overhauls)
-
-Some of these no longer hold: goon contact damage is now once per goon per 30 ticks, and goons can resist a crush.
-- **Only the front bumper crushes;** goons that reach the body area hurt instead.
-- **The station is hard to drive into.** It is a walled lot with a single gap on its east side, while the indicator points at its centre. The AI needed a dedicated approach rule, and players arriving from the west have to find their way round. An arrow to the gap, or a second gap, would help.
-- **Rocks:** after the sweep fixes, wall damage was 0–20 a run. Pickups inside rock rings were the main trap, hence the among-rocks rules.
-- **Sprint was lost to goons, not the clock:** winners arrived with 6–33 s to spare.
-
-## Limits and next steps
-
-- **Moving target.** The car's zone damage model, the goon overhaul and the pickup overhaul all landed while these rules were being tuned. The driver knows nothing of the new pickups' effects (timed buffs, gadgets held for `UseItem`, The Deal), only their `powerup` names, so they score as "another stat" (7 points) unless they use one of the old names. The world revamp in `.worktrees/world` rewrites the terrain reads in `ai_driver.gd` and `ai_route.gd`. The driver follows handling changes automatically, because it predicts with `integrate()` and reads its footprint from `carBodyArea`. Goon behaviour changes need the goon rules re-checked: lunge range, crush rules, and what is safe to touch.
-- **Prediction horizon.** The local planner simulates 0.75 s and sweeps on to 1,600 px. Long walls and rock fields are handled by the route, the station graph and the breadcrumb escape, not by the planner.
-- **CPU.** Simulating the plans is most of the driver's cost: each is a run of `integrate()` calls. On a busy dev box the driver used several hundred ms per second of game time, so the `ai` console command can lower the frame rate. The tick-by-tick horizon and `scanTicks` are the levers. Plans that share a beginning (left for 0.1, 0.3, 0.6 s or held) could share its simulation; that isn't done yet.
-- **Pockets.** The breadcrumb escape gets out of most rock pockets, but it can still lose 10–20 s in one, and that is often what lets the horde catch up.
-- **Defense and Marathon** have only basic rules: patrol, and the station relay. In Marathon the station-approach graph is built once, for the first station, and is not rebuilt when `placeNextStation` moves it, so later legs steer to stale points near the old lot. Resetting `stationPoints` when `Root.station` changes fixes it.
-- **The score's Defense line** still uses survival out of 300 s, though Defense now counts down and is won at 0 (`Level.timeUpCondition`).
-- **AI rivals.** The driver can steer any `OverheadCarBody2D` whose controller has a `driver`. A rival car would also need:
-  - `isPlayer = false` and its own camera not current.
-  - Its controller not touching the player HUD.
-  - The goons, the spawners and the despawn sweep no longer assuming one `Root.playerCar`.
-  - Damage, reward and crush code that doesn't assume the player.
-  - A difficulty knob: reaction time (plan every *N* ticks), sight, and noise on the chosen plan.
+- **New pickups:** the driver values pickups by their registry `ai` worth but has no plan for events, and its gadget use is a few rules (`Gadgets.aiWantsUse`).
+- **Goon changes** need the goon rules re-checked (lunge range, crush rules, what is safe to touch); handling changes are followed automatically through `integrate()` and `carBodyArea`.
+- **Horizon:** the planner simulates 0.75 s and sweeps on to 1,600 px; long walls are left to the route, the station graph and the breadcrumb escape.
+- **CPU:** simulating plans is most of the cost (several hundred ms per game second on a busy dev box), so `ai` in the console can lower the frame rate. Plans that share a beginning could share its simulation.
+- **Pockets:** the escape gets out of most, but can lose 10–20 s in one.
+- **Defense:** it only patrols 600–1800 px from the station; it doesn't weigh goons at the walls or park to refuel. The score's Defense line still uses survival out of 300 s, though Defense counts down and is won at 0.
+- **Water margins:** pickups within 400 px of deep water are skipped, which on Snapper Bayou leaves fuel behind.
+- **Rivals:** a rival car would also need `isPlayer = false`, its own camera off, no player HUD, goons, spawners and the sweep not assuming one `Root.playerCar`, and a difficulty knob (reaction time, sight, plan noise).

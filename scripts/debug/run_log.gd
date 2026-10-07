@@ -16,7 +16,7 @@ static func row(car: OverheadCarBody2D, level: Level, reason: int, payout: int) 
 	var data := SaveManager.playerData
 	var upgrades := 0
 	for value in SaveManager.getCarByName(car.carId).upgrades.values(): upgrades += int(value)
-	var regions: int = Region.regions.keys().filter(func(id): return id >= 0).size() #-2 is the wasteland outside the map
+	var regions: int = Region.visitedCount() #districts the car has been in
 	var mode: int = data.gameMode
 	return {
 		"date": Time.get_datetime_string_from_system(),

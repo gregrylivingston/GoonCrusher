@@ -354,12 +354,15 @@ class Turtle extends Verb:
 					g.setState(&"move")
 			&"slide":
 				g.rotation += delta * 9.0
-				g.global_position += g.drift * delta
+				g.drift = WorldHooks.bounce(g.global_position, g.drift, delta) #off wall cells like a pinball...
+				var hit := g.move_and_collide(g.drift * delta) #...and off rocks, props and walls
+				if hit && World.isWall(hit.get_collider()): g.drift = g.drift.bounce(hit.get_normal()) * 0.85
+				elif hit: g.global_position += hit.get_remainder() #the car or a goon: slide on through
 				g.drift *= pow(0.25, delta)
 				for o in Root.spawnManager.goonsNear(g.global_position, g.bodyRadius * 2.2):
 					if o != g && not o.dead:
 						o.destroy(&"crush")
-						Root.spawnManager.creditCrush(o.global_position)
+						Root.spawnManager.creditCrush(o.global_position, o)
 				if g.drift.length() < 40.0:
 					g.invulnerable = false
 					stunFor(1.4)
@@ -499,7 +502,7 @@ class Roller extends Verb:
 			if c == car:
 				g.bounceCar(car, g.attackDamage, "hull", "ROCK")
 				hit = true
-			elif c is StaticBody2D || c is TileMap: hit = true
+			elif World.isWall(c): hit = true
 		if hit || g.stateTime > ROLL_TIME:
 			g.invulnerable = false
 			stunFor(1.6)
@@ -540,14 +543,21 @@ class Charger extends Verb:
 	func startWindup(car: Node2D, lead := 0.15) -> void:
 		super.startWindup(car, lead)
 	func telegraphRadius() -> float: return g.speed * g.lunge * g.atkT
+	const WALL_STUN := 2.0 #a charge that ends on a wall stuns it this many times longer: lure it into a rock
 	func attack(delta: float, car: Node2D) -> void:
 		g.velocity = g.lockDir * g.speedNow() * g.lunge
 		g.move_and_slide()
 		g.walkAnim(g.speedNow() * g.lunge)
 		for i in g.get_slide_collision_count():
-			if g.get_slide_collision(i).get_collider() == car && not g.hitDone:
+			var c = g.get_slide_collision(i).get_collider()
+			if c == car && not g.hitDone:
 				g.hitDone = true
 				g.hitCar(car, g.attackDamage, g.sys)
+			elif World.isWall(c) && g.stateTime > 0.05:
+				g.fx().label(g.global_position, "BONK")
+				g.fx().dust(g.global_position)
+				stunFor(g.recT * WALL_STUN)
+				return
 		if g.stateTime >= g.atkT: stunFor(g.recT)
 	func onResist(car: Node2D, speed: float) -> void:
 		if g.state == &"attack":
@@ -597,8 +607,15 @@ class Thief extends Verb:
 				if d < best && not p.is_queued_for_deletion():
 					best = d
 					target = p
+			if target == null: target = WorldHooks.nearestInGroup(g.get_tree(), BreakableProp.GROUPS[&"crate"], g.global_position, 600.0, &"smashed") #bait
 		if is_instance_valid(target):
 			g.chase(target.global_position, g.speedNow(), delta)
+			if target.has_meta(&"propId"): #a supply crate: break it open, then steal what spills
+				if g.global_position.distance_to(target.global_position) < g.bodyRadius + 60.0:
+					BreakableProp.smashNode(target)
+					target = null
+					lookT = 0.3
+				return
 			if g.global_position.distance_to(target.global_position) < 24.0:
 				stolen.push_back({"scene": target.scene_file_path})
 				target.queue_free()
@@ -616,10 +633,12 @@ class Thief extends Verb:
 			g.chase(g.global_position + away * 60.0, g.speedNow() * 1.25, delta, 8.0)
 			if g.stateTime > 6.0: g.setState(&"move")
 	func onDeath(cause: StringName) -> void:
-		if cause == &"drown" || stolen.is_empty(): return
+		if stolen.is_empty(): return
+		var at := WorldHooks.bankNear(g.global_position) if cause == &"drown" else g.global_position #washed up on the bank
 		for i in stolen.size():
 			var s: String = stolen[i].scene
-			if s != "": g.fx().dropAt(g.global_position + Vector2.from_angle(i * 2.1) * 30.0, s)
+			if s != "": g.fx().dropAt(at + Vector2.from_angle(i * 2.1) * 30.0, s)
+		if cause == &"drown": return
 		g.fx().dropLater(g.global_position, g.powerupDropDict) #interest
 		g.fx().label(g.global_position, "RECOVERED")
 
@@ -674,6 +693,9 @@ class Flyer extends Verb:
 		if is_instance_valid(shadow): shadow.global_position = g.global_position + (Vector2(16, 24) if flying() else Vector2(3, 4))
 	func move(delta: float, car: Node2D) -> void:
 		var decal = g.fx().nearestDecal(g.global_position, 500.0) if g.cooldown <= 0.0 else null
+		if decal == null && g.cooldown <= 0.0: #a carcass prop is a perch too
+			var carcass := WorldHooks.nearestInGroup(g.get_tree(), BreakableProp.GROUPS[&"carcass"], g.global_position, 500.0)
+			if carcass: decal = carcass.global_position
 		if decal != null && g.distTo(car) > 260.0:
 			g.chase(decal, g.speedNow(), delta, 4.0)
 			if g.global_position.distance_to(decal) < 12.0:
@@ -858,7 +880,7 @@ class Rider extends Verb:
 				g.move_and_slide()
 				for i in g.get_slide_collision_count():
 					var c = g.get_slide_collision(i).get_collider()
-					if act == "boost" && (c == car || c is StaticBody2D || c is TileMap):
+					if act == "boost" && (c == car || World.isWall(c)):
 						boom()
 						return
 					if c == car && not g.hitDone:

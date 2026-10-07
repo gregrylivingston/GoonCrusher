@@ -3,7 +3,7 @@ extends SceneTree
 #Runs every test_*.gd in tests/game and exits with the number of failed tests.
 #  Godot_console.exe --headless --path . -s res://tests/game/run_tests.gd
 #Autoloads (Settings, Root, SaveManager...) are loaded as usual. Tests must not write the save
-#or the settings files.
+#or the settings files. `-- --only=world_recipe` runs only the files whose names contain that text.
 
 const DIR = "res://tests/game/"
 
@@ -14,8 +14,12 @@ func run() -> void:
 	await process_frame #let the autoloads finish _ready
 	var failed := 0
 	var passed := 0
+	var only := ""
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--only="): only = arg.trim_prefix("--only=")
 	for file in DirAccess.get_files_at(DIR):
 		if not file.begins_with("test_") || not file.ends_with(".gd"): continue
+		if only != "" && not file.contains(only): continue
 		var script = load(DIR + file)
 		for method in script.get_script_method_list():
 			if not method.name.begins_with("test_"): continue

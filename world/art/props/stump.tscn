@@ -1,0 +1,19 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://world/art/props/stump.png" id="tex"]
+
+[sub_resource type="ConvexPolygonShape2D" id="shape"]
+points = PackedVector2Array(-49.3, 26.7, -30.7, -52, -22.7, -54.7, 34.7, -50.7, 38.7, -46.7, 65.3, 4, 64, 12, 4, 62.7, -2.7, 62.7, -48, 33.3)
+
+[node name="stump" type="StaticBody2D"]
+collision_layer = 1
+collision_mask = 0
+metadata/propId = &"stump"
+metadata/propClass = &"LOW"
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(1.3333, 1.3333)
+texture = ExtResource("tex")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("shape")

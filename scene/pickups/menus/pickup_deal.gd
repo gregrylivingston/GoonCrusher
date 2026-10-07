@@ -22,7 +22,7 @@ static func open(isCrushGoal: bool) -> void:
 	if not is_instance_valid(Root.levelRoot): return
 	var deal = PickupDeal.new()
 	deal.crushGoal = isCrushGoal
-	Root.levelRoot.add_child(deal)
+	Root.levelRoot.add_child.call_deferred(deal) #a crush can come from a node leaving the level (a Bait popping), while the level can't take children
 
 func build() -> void:
 	if crushGoal && is_instance_valid(Root.playerRoot): Root.playerRoot.animateNewGoonCrushGoal(false)

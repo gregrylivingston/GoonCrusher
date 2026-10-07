@@ -1,6 +1,6 @@
 # Car art and system damage
 
-The 9 cars use original top-down art drawn by a code generator, and they show damage per system. The art replaced a free sprite pack in October 2026. Each car's look follows its driver's menu painting (paint, era, livery). The concept page that picked the look is the claude.ai artifact "GoonCrusher Car Art".
+The 9 cars use generated top-down art that follows each driver's menu painting, and they show damage per system.
 
 ## Files
 

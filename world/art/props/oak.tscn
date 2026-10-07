@@ -1,0 +1,27 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://world/art/props/oak.png" id="tex"]
+
+[sub_resource type="ConvexPolygonShape2D" id="shape"]
+points = PackedVector2Array(-57.3, -12, -37.3, -45.3, 12, -57.3, 44, -38.7, 57.3, -12, 57.3, 12, 38.7, 44, 12, 57.3, -29.3, 50.7, -49.3, 32)
+
+[sub_resource type="OccluderPolygon2D" id="occluder"]
+cull_mode = 2
+polygon = PackedVector2Array(-57.3, -12, -37.3, -45.3, 12, -57.3, 44, -38.7, 57.3, -12, 57.3, 12, 38.7, 44, 12, 57.3, -29.3, 50.7, -49.3, 32)
+
+[node name="oak" type="StaticBody2D"]
+collision_layer = 1
+collision_mask = 0
+metadata/propId = &"oak"
+metadata/propClass = &"TALL"
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(1.3333, 1.3333)
+texture = ExtResource("tex")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("shape")
+
+[node name="LightOccluder2D" type="LightOccluder2D" parent="."]
+occluder = SubResource("occluder")
+metadata/gc_world = true

@@ -142,6 +142,7 @@ func harpoon(owner: Walker, dir: Vector2) -> void:
 	projectiles.push_back({"kind": "harpoon", "pos": owner.global_position + dir * owner.bodyRadius * 1.5, "vel": dir * 700.0, "t": 0.0, "life": 0.6, "owner": weakref(owner)})
 
 func addHazard(kind: String, pos: Vector2, r: float, life: float, rot := 0.0) -> void:
+	if (kind == "oil" || kind == "slime") && not WorldHooks.hazardAllowed(pos): return #never on shallows or at the water's edge
 	if hazards.size() >= MAX_HAZARDS: hazards.pop_front()
 	hazards.push_back({"kind": kind, "pos": pos, "r": r, "life": life, "age": 0.0, "rot": rot, "cd": 0.0, "side": 1.0 if randf() < 0.5 else -1.0})
 
@@ -152,19 +153,21 @@ func tether(owner: Walker, T: float, kind: String) -> void:
 	tethers.push_back({"owner": weakref(owner), "t": 0.0, "T": T, "kind": kind})
 	label(owner.global_position, "HOOKED" if kind == "harpoon" else "MAGNET")
 
-## Hurts the car and flattens goons inside `r`. Goons it kills count as crushes.
+## Hurts the car and flattens goons inside `r`; walls (wall cells: WorldHooks.lineClear) shelter what's
+## behind them. Goons it kills count as crushes. Explosive props in reach go off in turn (BreakableProp).
 func blast(pos: Vector2, r: float, dmg: float) -> void:
 	blasts.push_back({"pos": pos, "r": r, "age": 0.0})
 	label(pos, "BOOM")
 	var car = Root.playerCar
-	if is_instance_valid(car) && car.global_position.distance_to(pos) < r + 40.0:
+	if is_instance_valid(car) && car.global_position.distance_to(pos) < r + 40.0 && WorldHooks.lineClear(pos, car.global_position):
 		car.damage(dmg)
 		if car.has_method("wearSystem"): car.wearSystem("engine", dmg * 2.0)
 	for o in Root.spawnManager.goonsNear(pos, r):
-		if not o.dead:
+		if not o.dead && WorldHooks.lineClear(pos, o.global_position):
 			o.destroy(&"boom")
-			Root.spawnManager.creditCrush(o.global_position)
+			Root.spawnManager.creditCrush(o.global_position, o)
 	if is_instance_valid(Root.levelRoot) && Root.levelRoot.has_method("explode"): Root.levelRoot.explode(pos) #pooled, at most 16 live
+	if is_inside_tree(): BreakableProp.blastAt(get_tree(), pos, r) #barrels and tanks: a hop per CHAIN_DELAY, each once
 
 func blastLater(pos: Vector2, delay: float, r: float, dmg: float) -> void:
 	pendingBlasts.push_back({"pos": pos, "t": delay, "r": r, "dmg": dmg})
@@ -192,12 +195,17 @@ func _physics_process(delta: float) -> void:
 			p.pos = p.from.lerp(p.to, u)
 			if u >= 1.0:
 				projectiles.erase(p)
+				if p.payload != "bomb" && WorldHooks.wallAt(p.to): continue #splashed on a cliff or a roof
 				match p.payload:
 					"fire": addHazard("fire", p.to, 58.0, 3.0)
 					"slime": addHazard("slime", p.to, 64.0, 6.0)
 					"bomb": blast(p.to, 90.0, 6.0)
 			continue
 		p.pos += p.vel * delta
+		if WorldHooks.wallAt(p.pos): #shots, quills and harpoons stop at walls: cover is cover
+			projectiles.erase(p)
+			dust(p.pos)
+			continue
 		if hasCar && insideCar(car, p.pos):
 			projectiles.erase(p)
 			if p.kind == "harpoon":
@@ -241,6 +249,10 @@ func _physics_process(delta: float) -> void:
 		var o = t.owner.get_ref()
 		if not hasCar || o == null || o.dead || t.t > t.T || o.global_position.distance_to(car.global_position) > 650.0 || (t.kind == "harpoon" && absf(carSpin) > 2.0):
 			tethers.erase(t)
+			continue
+		if WorldHooks.tetherMustBreak(car.global_position): #a tether never drags the car into deep water
+			tethers.erase(t)
+			label(car.global_position, "SNAPPED")
 			continue
 		var dir: Vector2 = (o.global_position - car.global_position).normalized()
 		if t.kind == "harpoon":

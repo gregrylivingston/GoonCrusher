@@ -18,6 +18,8 @@ const DEFAULTS = {
 	                           #sedan at 744 px/s needs about 800 px to brake or swerve round a rock)
 	"probeCost": 4.0,          #cost of that sweep finding a wall, scaled by how close it is
 	"hitCost": 6.0,            #cost of hitting a rock or wall at 400 px/s within the plan (grows with speed)
+	"smashCost": 0.25,         #cost of driving through a breakable prop (fence, hedge...) fast enough to smash it
+	"smashMargin": 1.15,       #a breakable counts as passable only at this multiple of its smash speed or more
 	"turnCost": 0.6,           #seconds per radian the car still has to turn at the end of a plan
 	"samePlanBonus": 0.08,     #keeps the choice from flickering between near-equal plans
 	#forward over backward
@@ -45,7 +47,16 @@ const DEFAULTS = {
 	"fuelHope": 1.15,          #fuel saving assumes this much more fuel turns up on the way
 	"carefulSpeed": 260.0,     #speed when going in for a pickup among rocks
 	"stationSpeed": 450.0,     #speed within 2500 px of the station's driveway
+	#deep water (WorldHooks): the car dies two ticks after its centre is over it, and shallows are slippery
+	"waterLookSeconds": 0.9,   #deep water this many seconds ahead along a plan's path costs...
+	"waterNearCost": 8.0,      #...this much per second of the plan, more the closer and faster
+	"waterSpeed": 340.0,       #the throttle lifts above this speed while deep water is ahead within 1.5x waterLookSeconds
+	"waterTargetPx": 400.0,    #pickups and roam points this close to deep water are skipped (unless on a bridge)
+	"waterGoonPx": 350.0,      #goons this close to deep water aren't hunted (they drown on their own)
 }
+
+#the profile the game and the harnesses use when none is named (tournament winner, docs/AI_DRIVER.md)
+const BEST := "cautious"
 
 const PROFILES = {
 	"default": {},

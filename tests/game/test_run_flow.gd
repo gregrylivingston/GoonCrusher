@@ -3,74 +3,48 @@ extends GameTest
 #Run flow (GAMEPLAY_SUGGESTIONS T0-2..T0-5): objectives are placed on land inside the map, the
 #Sprint clock comes from the station distance, a run ends once, and the clock ends the run.
 
-var tileManagerScript = load("res://scene/level/tileManager.gd")
 var timerScript = load("res://scene/player/Timer.gd")
-const NO_CHUNK = Vector2i(-99999, -99999)
+const NO_CHUNK = WorldGen.NO_CHUNK
 
-func makeMap(mapSeed: int) -> landscapeGenerator:
-	var generator = landscapeGenerator.new()
-	generator.inputSizeX = 256
-	generator.inputSizeY = 256
-	generator.inputNoiseType = 4
-	generator.inputSeed = mapSeed
-	add_child_autofree(generator)
-	seed(mapSeed)
-	await generator.createNewTerrain()
-	return generator
+#a coarse flag map: all open and reachable (START) unless `blocked` says otherwise
+func openFlags() -> PackedByteArray:
+	var flags := PackedByteArray()
+	flags.resize(WorldGen.W * WorldGen.H)
+	flags.fill(WorldGen.START)
+	return flags
 
-func find(generator: landscapeGenerator, desired: Vector2i, forbidden := NO_CHUNK) -> Vector2i:
-	return tileManagerScript.findObjectiveChunk(generator.terrainMap, Vector2i(256, 256), desired, forbidden, 100)
+func test_objectives_land_on_reachable_ground_inside_the_map():
+	for levelId in [&"prairie", &"bayou", &"canyon", &"city"]:
+		var map := WorldMap.build(42, Levels.get_def(levelId))
+		for desired in [Vector2i(9, 0), Vector2i(19, -4), Vector2i(875, 250), Vector2i(-500, -500), Vector2i(0, 0), Vector2i(30, 30), Vector2i(-40, 20)]:
+			var chunk := map.findStationChunk(desired, Vector2i.ZERO)
+			assert_true(WorldGen.stationCoreOk(map.flags, chunk, true), "%s %s: the station's cells are open and reachable (%s)" % [levelId, desired, chunk])
+			assert_true(absi(chunk.x) <= WorldGen.CHUNK_LIMIT && absi(chunk.y) <= WorldGen.CHUNK_LIMIT, "%s %s: inside the map (%s)" % [levelId, desired, chunk])
+			assert_true(chunk != Vector2i.ZERO, "%s %s: never the forbidden chunk" % [levelId, desired])
 
-func terrainOf(generator: landscapeGenerator, chunk: Vector2i) -> int:
-	return generator.cellAt(chunk.x + 128, chunk.y + 128).terrain
-
-func test_objectives_land_on_land_inside_the_map():
-	var desiredChunks = [Vector2i(9, 0), Vector2i(19, -4), Vector2i(875, 250), Vector2i(-500, -500),
-		Vector2i(100, 100), Vector2i(-128, 127), Vector2i(0, 0), Vector2i(60, -90)]
-	for x in range(-120, 121, 15):
-		for y in range(-120, 121, 20): desiredChunks.push_back(Vector2i(x, y))
-	for mapSeed in [1337, 42, 7]:
-		var generator = await makeMap(mapSeed)
-		for desired in desiredChunks:
-			var chunk = find(generator, desired, Vector2i.ZERO)
-			var terrain = terrainOf(generator, chunk)
-			if terrain == Root.terrain.WATER || terrain == Root.terrain.HILLS:
-				fail("seed %d: %s placed on terrain %d at %s" % [mapSeed, desired, terrain, chunk])
-			if absi(chunk.x) > 100 || absi(chunk.y) > 100: fail("seed %d: %s placed outside the map at %s" % [mapSeed, desired, chunk])
-			if chunk == Vector2i.ZERO: fail("seed %d: %s placed on the forbidden start chunk" % [mapSeed, desired])
-
-func test_objective_placement_is_deterministic_and_keeps_good_chunks():
-	var a = await makeMap(1337)
-	var b = await makeMap(1337)
-	assert_eq(a.terrainMap, b.terrainMap, "same seed, same map")
+func test_objective_placement_is_deterministic():
+	var a := WorldMap.build(1337, Levels.get_def(&"canyon"))
+	var b := WorldMap.build(1337, Levels.get_def(&"canyon"))
 	for desired in [Vector2i(9, 2), Vector2i(875, -250), Vector2i(-40, 33)]:
-		assert_eq(find(a, desired), find(b, desired), "same map, same chunk for %s" % desired)
-		assert_eq(find(a, desired), find(a, desired), "repeatable for %s" % desired)
-	#the start chunk is grass with grass all round, so it is kept when it is not forbidden (Defense)
-	assert_eq(find(a, Vector2i.ZERO), Vector2i.ZERO, "Defense keeps the start chunk")
-	assert_true(find(a, Vector2i.ZERO, Vector2i.ZERO) != Vector2i.ZERO, "Sprint never gets the start chunk")
+		assert_eq(a.findStationChunk(desired, NO_CHUNK), b.findStationChunk(desired, NO_CHUNK), "same map, same chunk for %s" % desired)
 
-func test_objective_search_prefers_land_neighbours():
-	#an 8x8 map of water with a lone sand cell next to the desired chunk and a 3x3 grass block further out
-	var size = Vector2i(8, 8)
-	var terrain := PackedByteArray()
-	terrain.resize(size.x * size.y)
-	terrain.fill(Root.terrain.WATER)
-	var setCell = func(chunk: Vector2i, type: int): terrain[(chunk.y + 4) * size.x + chunk.x + 4] = type
-	setCell.call(Vector2i(-2, 0), Root.terrain.SAND)
-	for y in range(-1, 2):
-		for x in range(1, 4): setCell.call(Vector2i(x, y), Root.terrain.GRASS)
-	setCell.call(Vector2i(-3, -3), Root.terrain.HILLS)
-	assert_eq(tileManagerScript.findObjectiveChunk(terrain, size, Vector2i(-1, 0), NO_CHUNK, 100), Vector2i(2, 0),
-		"the grass block's centre (land all round) beats the closer lone sand cell")
-	assert_eq(tileManagerScript.findObjectiveChunk(terrain, size, Vector2i(50, 0), NO_CHUNK, 100), Vector2i(2, 0),
-		"far-off chunks are clamped into the map first")
-	assert_eq(tileManagerScript.findObjectiveChunk(terrain, size, Vector2i(2, 0), Vector2i(2, 0), 100), Vector2i(2, -1),
-		"the forbidden chunk is skipped")
-	for y in range(-1, 2):
-		for x in range(1, 4): setCell.call(Vector2i(x, y), Root.terrain.WATER)
-	assert_eq(tileManagerScript.findObjectiveChunk(terrain, size, Vector2i(-3, -3), NO_CHUNK, 100), Vector2i(-2, 0),
-		"hills are never chosen; with no well-surrounded chunk the closest land wins")
+func test_station_search_prefers_a_clear_lot():
+	var flags := openFlags()
+	assert_eq(WorldGen.findStationChunk(flags, Vector2i(3, 2), NO_CHUNK).chunk, Vector2i(3, 2), "open ground: the desired chunk")
+	assert_true(WorldGen.findStationChunk(flags, Vector2i(3, 2), NO_CHUNK).clear)
+	assert_eq(WorldGen.findStationChunk(flags, Vector2i(3, 2), Vector2i(3, 2)).chunk.distance_to(Vector2i(3, 2)), 1.0, "the forbidden chunk is skipped for a neighbour")
+	assert_eq(WorldGen.findStationChunk(flags, Vector2i(900, 0), NO_CHUNK).chunk, Vector2i(WorldGen.CHUNK_LIMIT, 0), "far-off chunks are clamped into the map first")
+	#a barrier through the lot's approach: the desired chunk's centre is open but its lot is not
+	var c := WorldGen.chunkCell(Vector2i(3, 2))
+	flags[(c.y + 1) * WorldGen.W + c.x + 4] = WorldGen.BLOCKED
+	var found := WorldGen.findStationChunk(flags, Vector2i(3, 2), NO_CHUNK)
+	assert_true(found.clear, "a chunk with a clear lot is found nearby")
+	assert_true(found.chunk != Vector2i(3, 2), "and preferred over the blocked lot")
+	#unreachable ground (no START) is never used
+	var island := openFlags()
+	for i in island.size(): island[i] = 0
+	var picked := WorldGen.findStationChunk(island, Vector2i(3, 2), NO_CHUNK)
+	assert_false(picked.clear, "nothing reachable: no clear lot")
 
 func test_sprint_distance_and_clock():
 	assert_almost_eq(Level.sprintSlack(250), 1.5, 0.0001, "Easy")
@@ -89,7 +63,7 @@ func test_sprint_distance_and_clock():
 	#the stock sedan: top speed about 499 px/s on sand and mud, about 87 s of fuel at full throttle
 	const SEDAN_SLOWEST_TOP_SPEED = 499.0
 	const SEDAN_TANK_SECONDS = 87.0
-	for levelSeconds in [250, 330, 370, 420, 470, 540]:
+	for levelSeconds in [250, 300, 330, 340, 370, 380, 420, 460, 470, 500, 540]:
 		for yRoll in [-1.0, 0.0, 1.0]:
 			var distance = Level.sprintOffsetPx(levelSeconds, yRoll).length()
 			var clock = Level.sprintSeconds(distance, levelSeconds)

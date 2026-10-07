@@ -5,6 +5,10 @@ var explosionScene = preload("res://scene/fx/explosion.tscn") #loaded with the l
 var explosions: ExplosionPool
 var playerCar: OverheadCarBody2D
 var playerController
+## The level's LevelDef (Levels, res://world/levels/<id>.tres). Its clock, spawn tuning and start position
+## are copied in when the level enters the tree (applyDef). Old scenes without one keep their own values.
+@export var def: LevelDef
+var defApplied := false
 @export var seconds = 600 #the run clock. Every mode counts it down except Goonpocalypse, which counts up from 0
 var levelSeconds: float #the level's authored seconds, kept after the mode replaces `seconds`
 var elapsed := 0.0 #run-clock seconds that have passed, whichever way the clock counts (Timer.gd)
@@ -24,6 +28,14 @@ const REFERENCE_SPEED = 450.0
 #at its sand and mud top speed, so a run is possible without fuel pickups
 const SPRINT_MAX_DISTANCE = 32000.0
 const SPRINT_Y_SPREAD = 0.25 #the station's y offset is up to this share of the distance, either way
+#The clock is set from the A* route on the coarse map (1280 px cells), which is shorter than the drive: the
+#fine walls, pools, props and fords inside passable cells, the corners, and the lot's single gap (east
+#side) that a car arriving from anywhere else has to drive round to. So the route gets a share on top per
+#grammar (more where walls are dense) plus a fixed approach allowance (driveLengthFor).
+const ROUTE_FACTOR = {&"meadow": 1.08, &"bayou": 1.12, &"canyon": 1.15, &"quarry": 1.12, &"mountain": 1.15,
+	&"highway": 1.05, &"city": 1.12, &"yard": 1.15}
+const ROUTE_FACTOR_DEFAULT = 1.1
+const STATION_APPROACH_PX = 1500.0
 
 #Marathon: a relay of Sprint-length legs. Each station but the last adds that leg's clock, refuels,
 #patches the car up and opens a free slot machine; the last one wins.
@@ -38,11 +50,31 @@ var legHeading := 0.0
 const POCALYPSE_TARGET = 2.0
 var targetReached := false
 
-#Defense: hold the station until the clock runs out. Goons spawn on a ring around it and march on its
-#walls (Walker.siege); the station's barrier health is in station.gd.
+#Defense: hold the station until the clock runs out. Goons spawn at the mouths of the straight lanes the
+#world generator cleared out from it (WorldGen.placeDefense) and march on its walls (Walker.siege); the
+#station's barrier health is in station.gd. Without lanes (no world map) they ring it instead.
 const DEFENSE_RING = 4000.0
 const DEFENSE_SPAWNERS = 4
 const DEFENSE_START = Vector2(1250, 290) #outside the lot's gap (its east side), from the station's origin
+
+#Before any child is ready, so SpawnManager._ready (Goonpocalypse escalation) builds on the def's numbers,
+#and before the bench's node_added overrides, which come after this.
+func _enter_tree():
+	applyDef()
+
+func applyDef() -> void:
+	if defApplied || def == null: return
+	defApplied = true
+	seconds = def.seconds
+	var spawnManager = get_node_or_null("SpawnManager")
+	if spawnManager:
+		spawnManager.spawnTimer = def.spawnTimer
+		spawnManager.giantOdds = def.giantOdds
+		spawnManager.escalationSpeed = def.escalationSpeed
+
+#Sprint and Marathon slack: the def's, else the old curve over the level's seconds
+func slack() -> float:
+	return def.sprintSlack if def else sprintSlack(levelSeconds)
 
 func _ready():
 	levelSeconds = seconds
@@ -50,7 +82,7 @@ func _ready():
 	add_child(explosions)
 
 	#add my car
-	var newPosition = $Car.position
+	var newPosition = def.startPosition if def else $Car.position
 	startPosition = newPosition
 	$Car.queue_free()
 	if is_instance_valid(Root.playerCar): Root.playerCar.queue_free()
@@ -91,7 +123,7 @@ func onWorldReady() -> void:
 	match SaveManager.playerData.gameMode:
 		Root.gameModes.SPRINT, Root.gameModes.MARATHON:
 			if is_instance_valid(Root.station):
-				seconds = sprintSeconds(startPosition.distance_to(Root.station.global_position), levelSeconds)
+				seconds = sprintSeconds(driveLength(routeLengthTo(Root.station.global_position)), levelSeconds, slack())
 				legHeading = (Root.station.global_position - startPosition).angle()
 		Root.gameModes.DEFENSE:
 			if is_instance_valid(Root.station): setupDefense()
@@ -108,9 +140,25 @@ static func sprintOffsetPx(levelSeconds: float, yRoll: float) -> Vector2:
 static func sprintSlack(levelSeconds: float) -> float:
 	return clampf(1.5 - (levelSeconds - 250.0) / 290.0 * 0.4, 1.1, 1.5)
 
-#the Sprint clock: the real straight-line distance at REFERENCE_SPEED, plus the level's slack
-static func sprintSeconds(distancePx: float, levelSeconds: float) -> float:
-	return distancePx / REFERENCE_SPEED * sprintSlack(levelSeconds)
+#The length (px) of the drive to the station just placed: the A* route on the world's coarse map
+#(TileManager.lastRouteLength), never less than the straight line
+func routeLengthTo(target: Vector2) -> float:
+	var straight := startPosition.distance_to(target)
+	var tileManager = get_node_or_null("TileManager")
+	if tileManager == null || tileManager.lastRouteLength <= 0.0: return straight
+	return maxf(tileManager.lastRouteLength, straight)
+
+#the drive the clock allows for, from the coarse route's length (px): ROUTE_FACTOR and STATION_APPROACH_PX
+static func driveLengthFor(routePx: float, grammar: StringName) -> float:
+	return routePx * ROUTE_FACTOR.get(grammar, ROUTE_FACTOR_DEFAULT) + STATION_APPROACH_PX
+
+func driveLength(routePx: float) -> float:
+	return driveLengthFor(routePx, def.grammar if def else &"")
+
+#the Sprint clock: the drive's length (the route on the coarse map) at REFERENCE_SPEED, plus the level's
+#slack (LevelDef.sprintSlack when given, else the curve over the level's seconds)
+static func sprintSeconds(distancePx: float, levelSeconds: float, slackOverride: float = -1.0) -> float:
+	return distancePx / REFERENCE_SPEED * (slackOverride if slackOverride > 0.0 else sprintSlack(levelSeconds))
 
 #how a run ends when a counting-down clock reaches 0 (Root.endCondition): Countdown and Defense are won,
 #the races are lost. A wrecked car (exploding, its NOHEALTH ending still pending) has not survived. A car
@@ -162,9 +210,11 @@ func stationReached(station: Node2D) -> void:
 	car.resetGasWarning()
 	car.resetHealthWarning()
 	var from = station.global_position
-	var next = $TileManager.placeNextStation(from, legHeading + randf_range(-MARATHON_TURN, MARATHON_TURN), levelSeconds)
+	var tileManager = $TileManager
+	var turn := (WorldGen.hashf(tileManager.worldSeed, WorldGen.TAG_LEG, leg, 0) * 2.0 - 1.0) * MARATHON_TURN
+	var next = tileManager.placeNextStation(from, legHeading + turn, levelSeconds)
 	legHeading = (next.global_position - from).angle()
-	seconds += sprintSeconds(from.distance_to(next.global_position), levelSeconds)
+	seconds += sprintSeconds(driveLength(maxf(tileManager.lastRouteLength, from.distance_to(next.global_position))), levelSeconds, slack())
 	call_deferred("openPitShop")
 
 #Marathon stations: the pit shop sells pickups for run coins, then the free slot machine opens
@@ -188,9 +238,14 @@ func setupDefense() -> void:
 	car.velocity = Vector2.ZERO
 	startPosition = car.global_position
 	if car.has_node("Camera2D"): car.get_node("Camera2D").reset_smoothing()
-	var turn = randf() * TAU
-	for i in DEFENSE_SPAWNERS:
-		var spawner = newSpawner(Vector2.from_angle(turn + i * TAU / DEFENSE_SPAWNERS) * DEFENSE_RING, station)
+	var offsets: Array = []
+	var map = Root.worldMap
+	if map != null && not map.lanes.is_empty():
+		for mouth in map.lanes: offsets.push_back(mouth - station.global_position)
+	else:
+		for i in DEFENSE_SPAWNERS: offsets.push_back(Vector2.from_angle(i * TAU / DEFENSE_SPAWNERS) * DEFENSE_RING)
+	for offset in offsets:
+		var spawner = newSpawner(offset, station)
 		#SpawnManager lists the "spawner" group once, a frame after it starts; these may come later
 		if is_instance_valid(Root.spawnManager) && Root.spawnManager.spawners is Array && not spawner in Root.spawnManager.spawners:
 			Root.spawnManager.spawners.push_back(spawner)

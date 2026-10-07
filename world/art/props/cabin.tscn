@@ -1,0 +1,27 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://world/art/props/cabin.png" id="tex"]
+
+[sub_resource type="ConvexPolygonShape2D" id="shape"]
+points = PackedVector2Array(-170.7, -6.7, -169.3, -138.7, -168, -140, 169.3, -140, 170.7, -137.3, 170.7, 137.3, 169.3, 140, -169.3, 140, -170.7, 6.7)
+
+[sub_resource type="OccluderPolygon2D" id="occluder"]
+cull_mode = 2
+polygon = PackedVector2Array(-170.7, -6.7, -169.3, -138.7, -168, -140, 169.3, -140, 170.7, -137.3, 170.7, 137.3, 169.3, 140, -169.3, 140, -170.7, 6.7)
+
+[node name="cabin" type="StaticBody2D"]
+collision_layer = 1
+collision_mask = 0
+metadata/propId = &"cabin"
+metadata/propClass = &"TALL"
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(1.3333, 1.3333)
+texture = ExtResource("tex")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("shape")
+
+[node name="LightOccluder2D" type="LightOccluder2D" parent="."]
+occluder = SubResource("occluder")
+metadata/gc_world = true

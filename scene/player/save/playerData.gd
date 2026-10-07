@@ -83,62 +83,6 @@ class_name PlayerData extends Resource
 }
 
 
-@export var levels = [
-	{
-		"name":"Easy",
-		"image":"res://texture/background/background_level_1.png",
-		"unlocked":true,
-		"scene":"res://scene/level/levels/level_grass_1.tscn",
-		"gamemodeBeat":{ Root.gameModes.GOONCRUSHER: false ,  Root.gameModes.SPRINT: false ,  Root.gameModes.MARATHON: false ,  Root.gameModes.DEFENSE: false ,  Root.gameModes.GOONPOCALYPSE: false  },
-		"time":"1",
-	},
-	{
-		"name":"Medium",
-		"image":"res://texture/background/background_level_2.png",
-		"unlocked":true,
-		"scene":"res://scene/level/levels/level_grass_2.tscn",
-		"gamemodeBeat":{ Root.gameModes.GOONCRUSHER: false ,  Root.gameModes.SPRINT: false ,  Root.gameModes.MARATHON: false ,  Root.gameModes.DEFENSE: false ,  Root.gameModes.GOONPOCALYPSE: false  },
-	},
-	{
-		"name":"Hard",
-		"image":"res://texture/background/background_grass_3.png",
-		"unlocked":true,
-		"scene":"res://scene/level/levels/level_grass_3.tscn",
-		"gamemodeBeat":{ Root.gameModes.GOONCRUSHER: false ,  Root.gameModes.SPRINT: false ,  Root.gameModes.MARATHON: false ,  Root.gameModes.DEFENSE: false ,  Root.gameModes.GOONPOCALYPSE: false  },
-	},
-	{
-		"name":"Muddy Barrens",
-		"image":"res://texture/background/mud_background1.png",
-		"unlocked":false,
-		"scene":"res://scene/level/levels/level_mud_1.tscn",
-		"gamemodeBeat":{ Root.gameModes.GOONCRUSHER: false ,  Root.gameModes.SPRINT: false ,  Root.gameModes.MARATHON: false ,  Root.gameModes.DEFENSE: false ,  Root.gameModes.GOONPOCALYPSE: false  },
-	},
-	{
-		"name":"Pikes of Mud",
-		"image":"res://texture/background/mud_background2.png",
-		"unlocked":false,
-		"scene":"res://scene/level/levels/level_mud_2.tscn",
-		"gamemodeBeat":{ Root.gameModes.GOONCRUSHER: false ,  Root.gameModes.SPRINT: false ,  Root.gameModes.MARATHON: false ,  Root.gameModes.DEFENSE: false ,  Root.gameModes.GOONPOCALYPSE: false  },
-	},
-	{
-		"name":"Pools of Agony",
-		"image":"res://texture/background/mud_background3.png",
-		"unlocked":false,
-		"scene":"res://scene/level/levels/level_mud_3.tscn",
-		"gamemodeBeat":{ Root.gameModes.GOONCRUSHER: false ,  Root.gameModes.SPRINT: false ,  Root.gameModes.MARATHON: false ,  Root.gameModes.DEFENSE: false ,  Root.gameModes.GOONPOCALYPSE: false  },
-	},
-	{
-		"name":"The Dunes",
-		"image":"res://texture/background/desertBackground.png",
-		"unlocked":false,
-		"scene":"res://scene/level/levels/level_sand_1.tscn",
-		"gamemodeBeat":{ Root.gameModes.GOONCRUSHER: false ,  Root.gameModes.SPRINT: false ,  Root.gameModes.MARATHON: false ,  Root.gameModes.DEFENSE: false ,  Root.gameModes.GOONPOCALYPSE: false  },
-	},
-	{
-		"name":"Northern Wastes",
-		"image":"res://texture/background/iceBackground.png",
-		"unlocked":false,
-		"scene":"res://scene/level/levels/level_snow_1.tscn",
-		"gamemodeBeat":{ Root.gameModes.GOONCRUSHER: false ,  Root.gameModes.SPRINT: false ,  Root.gameModes.MARATHON: false ,  Root.gameModes.DEFENSE: false ,  Root.gameModes.GOONPOCALYPSE: false  },
-	},
-]
+#One entry per level in Levels.ORDER: {id, name, image, unlocked, scene, gamemodeBeat}. The level's content
+#lives in its LevelDef (Levels.get_def(id)); name, image and scene are copies migrate() refreshes on load.
+@export var levels: Array = Levels.defaultEntries()

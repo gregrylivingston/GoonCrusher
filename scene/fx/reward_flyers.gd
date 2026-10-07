@@ -42,7 +42,7 @@ static func flyUpgrade(upgrade: Root.upgrade, worldPosition: Vector2, playSound 
 	var info = infoFor(upgrade)
 	if playSound: Audio.queueRequest(info.sounds)
 	var flyers = instance()
-	if not flyers: return
+	if not flyers || not is_instance_valid(Root.levelRoot) || not Root.levelRoot.is_inside_tree(): return #a run that is ending
 	var canvas = Root.levelRoot.get_viewport().get_canvas_transform()
 	flyers.launch(info.texture, canvas * Transform2D(0.0, info.scale, 0.0, worldPosition), info.ui)
 

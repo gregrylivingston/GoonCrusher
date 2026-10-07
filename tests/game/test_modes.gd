@@ -23,12 +23,9 @@ func test_goons_have_their_own_layer_and_never_collide_with_each_other():
 	assert_eq(Vector2i(goon.collision_layer, goon.collision_mask), goon.savedLayers, "setSolid restores the scene's layers")
 	var car = load("res://scene/car/car.tscn").instantiate()
 	assert_true(car.collision_mask & goon.collision_layer != 0, "the car still meets goons, so it can crush them")
-	var water = load("res://scene/level/terrain/landscapeMap_water.tscn").instantiate()
-	assert_true(water.get_node("Area2D").collision_mask & goon.collision_layer != 0, "water still drowns goons")
-	assert_true(water.get_node("Area2D").collision_mask & car.collision_layer != 0, "and the car")
 	var pickup = Root.getSpecificPowerup(Root.upgrade.COIN)
 	assert_eq(pickup.get_node("Area2D").collision_mask & goon.collision_layer, 0, "pickups no longer test goons")
-	for node in [goon, car, water, pickup]: node.free()
+	for node in [goon, car, pickup]: node.free()
 
 #--- meta ---------------------------------------------------------------------------------------
 
@@ -57,7 +54,7 @@ func test_goonpocalypse_records_keep_the_best_time_and_score_separately():
 	assert_eq(SaveManager.bestGoonpocalypse(2, "van"), {"time": 0, "score": 0}, "per level")
 	assert_eq(SaveManager.getCarByName("van").records.time, 100, "the car's own records follow")
 	assert_eq(SaveManager.getCarByName("van").records.score, 70)
-	assert_true(SaveManager.playerData.meta.records.goonpocalypse.has("level_grass_2"), "keyed by the level's scene name")
+	assert_true(SaveManager.playerData.meta.records.goonpocalypse.has(String(Levels.ORDER[1])), "keyed by the level's id")
 
 func test_goonpocalypse_score_and_waves():
 	assert_eq(Level.pocalypseScore(10, 2, 61.0), 10 + 10 + 30)
@@ -76,12 +73,32 @@ func test_station_barrier_and_wall_points():
 	station.startBarrier()
 	station.damage(50)
 	assert_eq(station.barrier, station.BARRIER_MAX - 50)
+	assert_gt(1.0, station.get_node("walls").self_modulate.g, "the walls redden as the barrier wears down")
 	var inside = station.global_position + Vector2(10, 10)
 	assert_eq(station.nearestWallPoint(inside), inside, "a goon inside the lot is already at the walls")
 	var far = station.global_position + Vector2(5000, 0)
 	assert_almost_eq(station.nearestWallPoint(far).x, station.global_position.x + station.LOT.end.x, 0.01, "east of the lot: its east edge")
 	station.retire()
 	assert_false(station.active, "a retired Marathon station's driveway does nothing")
+
+#the wall bodies trace the lot (LOT) with its one gap on the east side, where the driveway is
+func test_station_walls_leave_the_east_gap():
+	var station = load("res://scene/level/station.tscn").instantiate()
+	var walls: Array[Rect2] = []
+	for body in station.get_children():
+		if body is StaticBody2D && body.name.begins_with("wall"):
+			var shape: CollisionShape2D = body.get_node("CollisionShape2D")
+			var size: Vector2 = shape.shape.size
+			walls.push_back(Rect2(body.position + shape.position - size / 2, size))
+	assert_eq(walls.size(), 4)
+	var lot: Rect2 = station.LOT
+	for wall in walls: assert_true(lot.grow(3).encloses(wall), "every wall lies on the lot's edge")
+	var blocked = func(p: Vector2) -> bool: return walls.any(func(w: Rect2): return w.has_point(p))
+	var drivewayY: float = station.get_node("driveway").position.y + station.get_node("driveway/CollisionShape2D").position.y
+	assert_false(blocked.call(Vector2(lot.end.x - 26, drivewayY)), "the east side is open level with the driveway")
+	assert_true(blocked.call(Vector2(lot.position.x + 26, drivewayY)), "the west side is walled")
+	assert_true(blocked.call(Vector2(0, lot.position.y + 26)) && blocked.call(Vector2(0, lot.end.y - 26)), "north and south are walled")
+	station.free()
 
 #--- explosion pooling --------------------------------------------------------------------------
 

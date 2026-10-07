@@ -96,7 +96,7 @@ func updateGoonsCrushed():
 			return
 		var newMachine = preload("res://scene/player/slots/slotMachine.tscn").instantiate()
 		newMachine.isGoonCrushBonus = true
-		Root.levelRoot.add_child(newMachine)
+		Root.levelRoot.add_child.call_deferred(newMachine) #deferred: the crush may come from a node leaving the level
 
 func updatePlayerRegion(tile) ->void:
 	%RegionChip.updatePlayerRegion(tile)

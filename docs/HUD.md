@@ -1,6 +1,6 @@
 # In-run HUD
 
-The HUD is `scene/player/playerRoot.tscn` (class `GameUI`). It was rebuilt in October 2026 from the "A6" concept: twin gauges in the bottom corners, a slim systems strip at bottom center, and slim panels along the top. The concept rounds are claude.ai artifacts; the last one is "GoonCrusher HUD A6". The car damage diagram from that concept was left out on purpose. Showing damage on the car itself comes later.
+The HUD is `scene/player/playerRoot.tscn` (class `GameUI`): twin gauges in the bottom corners, a slim systems strip at bottom center, and slim panels along the top. Damage shows on the car itself (docs/CAR_ART.md).
 
 ## Layout (1600 x 900 canvas)
 
@@ -43,7 +43,7 @@ The widgets draw with `_draw()`, and each one redraws only when its numbers chan
 | luck, clover | The payout (they change what goons drop) |
 | currentGoonsCrushed, slotmachine | The crush pill |
 
-`tests/game/test_hud.gd` checks that every powerup scene has a target inside the HUD. (The old pause-screen stat list, `car_panel`, owned these groups and is gone; the pause card shows the stats now.)
+`tests/game/test_hud.gd` checks that every powerup scene has a target inside the HUD.
 
 ## The systems strip
 
@@ -58,28 +58,7 @@ There are five systems, each paired with the stat it scales (`OverheadCarBody2D.
 
   A gold "+N" by the lamp counts the pickups for that stat. A stat over 100 gets a "+" at the end of its line.
 
-## Next step: the damage model
-
-The car already has the hooks; nothing calls them yet. In `overhead_car_body_2d.gd`:
-
-- `condition`: a dictionary from system name to 0–100, starting at 100.
-- `CONDITION_FLOOR`: how much of a stat still works at 0% (lights 0.35, engine 0.6, steering 0.7, tires 0.5, tank 0.4).
-- `setCondition(system, value)` clamps to 0–100. `conditionFactor(system)` returns `lerp(floor, 1, condition / 100)`.
-
-The HUD reads `condition` every frame, so lamps and red underline segments appear as soon as condition drops. The fuel dial already shows LEAK when `condition.tank` is under 50. To finish the job:
-
-1. **Find the hit side.** In `collideWithFixedObject(collision)`, rotate the normal into car space with `var n = collision.get_normal().rotated(-rotation)`. The normal points from the obstacle to the car, so `n.x < -0.6` is a front hit, `n.x > 0.6` a rear hit, and otherwise it's a side hit (`n.y > 0` is the car's left).
-2. **Damage the system.** Front hits wear lights and engine; front corners wear steering; sides wear tires; the rear wears the tank. Scale the wear by speed, as `WALL_DAMAGE_PER_SPEED` does for hull, and reduce it by armor.
-3. **Add a cooldown per zone.** `collideWithFixedObject` runs for every slide collision on every physics tick, so a wall scrape would empty a system in under a second.
-4. **Apply the factor in physics.** Multiply each stat by `conditionFactor(system)` where it's used: `engine` in the acceleration line, `steering` in `steer_angle`, `traction` in `gripFor()`, and the headlight scale in `setHeadlightStrength()`. For the tank, apply `oil` in `fuelBurn()` plus an extra burn under 50%.
-5. **Repair at the station.** Set every condition back to 100 when the car reaches the station.
-6. **Decide on goon contacts.** Every goon contact calls `damage(5)` before the crush check. Decide whether a crush also scuffs the front, or the lights will fade during normal play.
-7. **Show damage on the car.** The diagram was dropped from the HUD in favor of showing damage on the car the player drives, for example `carDamagedTexture` by zone, smoke or a flickering headlight.
-8. **Test it.** Add tests for the hit-side mapping, the cooldown and the factor in physics.
-
-Condition is per run, so the save format doesn't change.
-
 ## Later
 
-- **Per-car skins:** colors, dial faces and speedometer scale, via a `HudSkin` resource on `CarInfo`. Concept round 1 lists ideas for each car.
-- **Timed powerups:** done as rings above the strip (`hud_items.gd`, docs/PICKUPS.md).
+- **Per-car skins:** colors, dial faces and speedometer scale via a `HudSkin` resource on `CarInfo`.
+- **Region faction:** the region chip doesn't show the district's faction yet (`Region.factionName()`).
