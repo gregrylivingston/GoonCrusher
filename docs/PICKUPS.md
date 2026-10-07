@@ -1,6 +1,6 @@
 # Pickups
 
-79 pickups in ten kinds and five rarities. Everything you tune lives in `scripts/global/pickups.gd` (`Pickups.DATA`). Curses are on hold (`docs/GAMEPLAY_SUGGESTIONS.md`, "Maybe").
+79 pickups in nine kinds and five rarities. Everything you tune lives in `scripts/global/pickups.gd` (`Pickups.DATA`). Curses are on hold (`docs/GAMEPLAY_SUGGESTIONS.md`, "Maybe").
 
 ## Files
 

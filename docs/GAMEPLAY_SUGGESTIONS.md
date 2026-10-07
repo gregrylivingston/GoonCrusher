@@ -22,7 +22,7 @@ Suggestions to discuss, not a spec; the author runs gameplay as a separate proje
 - **T1-5, T1-6, T1-8, T2-9** Per-level terrain, walls, surfaces and hazards (the world revamp, docs/WORLD.md).
 - **T1-7 (regions)** Regions are the map's districts, with faction, goons, name and tint.
 - **T1-9** Slot machine paylines, bets, jackpot and Dice (docs/PICKUPS.md).
-- **T2-2, T2-7** Goon movement archetypes; 79 pickups in ten kinds (docs/GOONS.md, docs/PICKUPS.md).
+- **T2-2, T2-7** Goon movement archetypes; 79 pickups in nine kinds (docs/GOONS.md, docs/PICKUPS.md).
 - **T2-3 (drowning credit)** A drowning within 3 s of the car's touch counts as a crush ("SPLASH").
 - **T2-10 (most)** Breakables, explosives, faction landmarks, log and manhole spawns.
 - **Package 2 (T1-12, T2-6)** Crush feel: four death styles (splat, shove, hood ride, fling) picked by speed and hit point, goo spatter, impact bursts, camera trauma and kick, hit-stop and zoom punch on giants, bosses and crowds, a rising combo tick and hot combo readout; multi, drift, giant and boss crush bonuses; best combo as a car record; Crush Effects, Screen Shake and Hit-Stop settings (docs/GOONS.md, "Crush feel"). Crushes still chip 5 before armour, by choice.
@@ -39,14 +39,14 @@ Package numbers are IDs (other docs link to them); the table is in the suggested
 |---|---|---|---|---|
 | 1 | Playtest and tune | the numbers below, world follow-ups | S + play time | — |
 | 11 | Left-hand menu controls | M-1 | S | — |
-| 12 | Unlocks and progression | U-1 to U-5 | M–L | questions 2, 4, 10 |
+| 12 | Unlocks and progression | U-1 to U-5 | M–L | questions 2, 4 |
 | 6 | Economy | T1-11, T2-13, late-level payouts | M | 1, 12 |
 | 13 | Driving juice | D-1 to D-4 | M | — |
 | 14 | Prop layers and reactions | P-1, P-2 | M | — |
 | 3 | Regions, waves and giants | T1-7 (giantism), T2-4, T2-8, T2-11 | M–L | 1 |
 | 5 | Slot machine and gems | T1-10 | S | 12 |
 | 7 | Goals and teaching | T1-15, T2-12, T1-16, T2-14, T2-15 | M–L | 6 for T2-15 |
-| 8 | Sound and radio | T1-13, T1-14, R-1 | M + assets | question 7 |
+| 8 | Sound and radio | T1-13, T1-14, R-1 | M + in-house tracks | — |
 | 15 | Cosmetics | C-1 | M | 12 |
 | 9 | Goon depth | T2-1, T2-3, T2-5 | M | — |
 | 10 | Post-launch | Tier 3 | — | 7 |
@@ -90,7 +90,7 @@ Re-run the crowd benchmarks (S3, S4 in `PERFORMANCE.md`) after packages 1, 3, 9,
 ### Package 11: Left-hand menu controls
 - **M-1.** Menu keys are hard to discover. WASD already moves focus and Space already accepts (Godot's default `ui_accept`), but the hints show Enter, so buying an upgrade reads as "press Enter". The secondary actions are scattered across the keyboard: U Upgrade or Gadget, R Records, G Goonopedia, B Boost (`InputGlyphs.addIfMissing`). Goal: every menu works from the left hand on WASD (and with the mouse alone, as now). Proposal:
   - Hints show Space for Accept (Buy, Drive, Start), with Enter still working; Esc is Back, Q/E switch the carousel or tab.
-  - Move the secondary actions next to WASD: 1 Upgrade, 2 Records, 3 Goonopedia in the garage; 1 Gadget, 2 Boost in run setup (or F/R/T/G; question 9).
+  - Letters next to WASD for the secondary actions (the author prefers letters): F Upgrade (garage) or Gadget (run setup), V Boost (run setup), R Records, G Goonopedia. Numbers only where they index a list: 1–8 pick a level poster in run setup, 1–6 a Goonopedia tab.
   - Upgrade sheet: W/S pick a stat, with a visible BUY button on the focused row (not just a flash) so the action is obvious; holding Space buys repeatedly.
   - Key hints read their glyphs from the bindings (`KeyHint`, `InputGlyphs`), so the work is the default keys in `InputGlyphs`, which glyph the hints show first, and `main2.gd`'s `_input`.
 - Check with the career playtests (they press input actions) and a hand pass with each input type. S.
@@ -104,11 +104,11 @@ The author wants one designed unlock system across levels, modes, pickups, drive
 | Modes | Per level: Countdown → Sprint → Goonpocalypse; Marathon and Defense after Sprint (`Root.isModeUnlocked`) | Keep the chain; show what opens what |
 | Drivers | Bought with coins from the garage | Coins, some gated by a medal or level (T2-15) |
 | Upgrades | Coins, cap 20, same curve for every car | Package 6 (T1-11) |
-| Pickups | All 79 drop from the start; `meta.pickups` only records discovery for the Goonopedia | **Most start locked**: a small starter set drops, the rest are unlocked |
+| Pickups | All 79 drop from the start; `meta.pickups` only records discovery for the Goonopedia | **Most start locked**, in a tree per kind (U-2) |
 | Cosmetics | Car Paint setting only | Package 15 |
 
 - **U-1. One unlock registry.** An `Unlocks` table: id, kind, cost (coins, gems, or none) and trigger (a flag such as `beat:prairie:sprint`, `crushes:500`, `discovered:<goon>`), with `Unlocks.isOpen(id)` and `Unlocks.progress(id)`. Store opened ids in `meta.unlocks`; `migrate()` grants existing saves whatever they already have. Level and mode gates read it instead of their own rules. M.
-- **U-2. Unlock pickups.** The drop roll (`Pickups.roll`, `rollForCar`, `rollAtLeast`, `dropShare`) skips locked pickups; a starter set (about 15 commons and a few gadgets) is open on a new save. The rest open by gems, coins or triggers (crush a faction's goons, reach a level, play a mode). Decide whether a locked pickup can still drop once as a "???" teaser (question 10). M.
+- **U-2. Unlock pickups in a tree per kind.** Each of the nine kinds (`Pickups.K`) is its own small tree, handled separately: a new save opens one starter pickup per kind (Loot starts with the Coin), and each unlocked pickup opens better ones of its kind (the Coin leads to the Purse). Locked pickups never drop: the drop roll (`Pickups.roll`, `rollForCar`, `rollAtLeast`, `dropShare`) and every menu that offers pickups (slot reels, The Deal, the Claw, the Pit Shop) skip them. In the Goonopedia a pickup whose parent is still locked is a "???" tile; one whose parent is unlocked shows its preview and its price or trigger (coins, gems or play: crush a faction's goons, reach a level, play a mode). The tree is data in `Pickups.DATA` (a `parent` and a `cost` per pickup). M.
 - **U-3. Buy in the Goonopedia.** The Goonopedia becomes the place to see and buy unlocks: a locked tile shows its price or trigger and progress, and Accept buys it (the same flash and shake as the garage). Upgrades can be bought from the Cars tab (the driver card's upgrade sheet, reused). S–M after U-1.
 - **U-4. Level gates.** Only `prairie` starts open (the demo keeps its 3 levels available but still unlocks them in order). Pick the next-level trigger from career-playtest pace: the target is a Rookie who sees every mode before the last level. S.
 - **U-5. Show what's next.** An unlock toast on the results ticket ("BAYOU UNLOCKED", "NEW PICKUP: Magnet"), and a "Next unlock" line in run setup. Overlaps T2-12's "Next up" panel; build them together. S.
@@ -116,13 +116,13 @@ The author wants one designed unlock system across levels, modes, pickups, drive
 
 ### Package 13: Driving juice
 Driving should be the most fun part. The handbrake, drift boost, slams and crush feel are done; these add feel to the car itself. All of it is visual or sound, outside `integrate()`, scaled by Reduce Motion and Car Shake, and benchmarked on the HD 620.
-- **D-1. Two-wheel tilt and body roll.** In a hard turn (high `spinRate` at speed, or a powerslide catch) skew and offset the car sprite so it reads as up on two wheels: a perspective skew on the outside edge, the shadow shifting the other way, sparks or squeal from the inner tyres, and a little bounce when it lands back. Smaller turns get a slight roll. Decide whether it stays visual or can tip the car (question 13). S–M.
+- **D-1. Two-wheel tilt and body roll.** In a hard turn (high `spinRate` at speed, or a powerslide catch) skew and offset the car sprite so it reads as up on two wheels: a perspective skew on the outside edge, the shadow shifting the other way, sparks or squeal from the inner tyres, and a little bounce when it lands back. Smaller turns get a slight roll. Style only: the car never tips over, and handling is unchanged. S–M.
 - **D-2. Weight and suspension.** Nose dip on hard braking, squat on launch and boost, a bounce off kerbs, bumps and landings (Hop, Jump Jets), screen kick on wall hits scaled by speed. S.
 - **D-3. Speed and surface.** Speed lines or a slight zoom-out pull above top speed, dust or spray trails per surface (`World.surfaceAt`: dirt, snow, water shallows, oil), wall-scrape sparks, a boost flame and bloom on drift-boost release. S–M.
 - **D-4. Engine and tyres.** Engine pitch with RPM and gear shifts (`car.gear`), tyre squeal tied to slip, a backfire pop on lift-off; these feed the sound package. S.
 
 ### Package 14: Prop layers and reactions
-- **P-1. Trees in two layers.** Bake each tree (`oak`, `pine`, `cypress`, `deadtree`, `saguaro` stays one piece) as a **trunk** (the collision hull, drawn under the car) and a **canopy** (drawn above the car and goons, no collision). The canopy fades to about 40% while the car is under it so the player can still see. Hitting the trunk shakes the canopy (a short spring wobble) and drops a few leaves (pine needles, snow on Frostbite) as pooled particles; a hard hit drops more. Generator work: a `canopy` drawing in `world_gen.js` `PROPS`, a second texture in `props.json`, a canopy `Sprite2D` on a higher `z_index` in the prop scene; occluders stay on the trunk so night shadows don't change. M.
+- **P-1. Trees in two layers.** Bake each tree (`oak`, `pine`, `cypress`, `deadtree`, `saguaro` stays one piece) as a **trunk** (the collision hull, drawn under the car) and a **canopy** (drawn above the car and goons, no collision). The canopy fades to about 40% while the car is under it so the player can still see; it does not fade for goons, so a canopy can hide goons beneath it (by choice). Hitting the trunk shakes the canopy (a short spring wobble) and drops a few leaves (pine needles, snow on Frostbite) as pooled particles; a hard hit drops more. Generator work: a `canopy` drawing in `world_gen.js` `PROPS`, a second texture in `props.json`, a canopy `Sprite2D` on a higher `z_index` in the prop scene; occluders stay on the trunk so night shadows don't change. M.
 - **P-2. Review every prop.** Give each class a reaction to a hit: bushes and reeds squash and spring back; signs, cones and bins wobble or fly; hydrants spray; tents and shacks shake; tall rocks only thud and dust. Decide which tall props also get an over-the-car layer (billboards, cranes, bus stops). S–M per batch.
 - Keep reactions pooled and per chunk (inside `TileManager.APPLY_BUDGET_USEC`), and check S2/S3 frame times on the HD 620.
 
@@ -150,10 +150,14 @@ Driving should be the most fun part. The handbrake, drift boost, slams and crush
 ### Package 8: Sound and radio
 - **T1-13.** A `VoiceDirector`: priorities (warning > win > record > jackpot > giant > award > region), a ~5 s cooldown, no repeats in the last 3 lines, subtitles. S.
 - **T1-14.** Menu music, ducking under voice, stingers. S plus licensing.
-- **R-1. Radio stations** (replaces the in-run day and night sets; `Audio.gd` `loadNextNightSong` is commented out). Three stations, each its own style (for example surf rock, synthwave, and a heavy or hip-hop station; the author picks). Each is a shuffled playlist of 5–8 tracks with a short station ident between songs and, later, DJ lines through the `VoiceDirector`. Change station with a key in the run (and in pause), shown as a small "now playing" card in the HUD; Radio Off is a station. The choice is saved in `settings.cfg` (`audio/station`); stations could be unlocks (package 12). Night can push the DJ to night lines instead of changing the music. M plus 15–24 tracks.
+- **R-1. Radio stations** (replaces the in-run day and night sets; `Audio.gd` `loadNextNightSong` is commented out). Three stations of in-house tracks (the author makes the audio; the work here is the integration):
+  - **GoonCrusher Radio:** funny vocal tracks with radio talk and DJ segments between songs.
+  - **Classical Lofi** and **Lofi:** pure music, easy to listen to.
+
+  A data-driven station list (name, logo, folder of tracks, idents, talk segments), so adding tracks needs no code. Each station plays a shuffled playlist with no repeats until it cycles, an ident or talk segment between some songs, and crossfades. Talk ducks under the `VoiceDirector`'s lines (T1-13) and the music ducks under both. Streams load lazily on a worker so a station switch never hitches the HD 620. Change station with a key in the run (and in pause), shown as a small "now playing" card in the HUD; Radio Off is a station. The choice is saved in `settings.cfg` (`audio/station`); stations could be unlocks (package 12). Night can push the DJ to night lines instead of changing the music. M.
 
 ### Package 15: Cosmetics
-- **C-1.** Unlockable looks that never change stats: paint jobs and liveries per car (look C "Showroom" is already a whole-car paint, docs/CAR_ART.md), decals and numbers, tyre-smoke and drift-spark colours, horns, a boost-flame colour, and driver outfits on the card portrait. Generated with `car_gen.js` (never painted by hand), chosen on the driver card, bought with gems or earned from medals and achievements through the unlock registry (package 12). Saved per car in `meta.cosmetics`. M.
+- **C-1.** Unlockable looks that never change stats: paint jobs and liveries per car (look C "Showroom" is already a whole-car paint, docs/CAR_ART.md), decals and numbers, tyre-smoke and drift-spark colours, horns, a boost-flame colour, and driver outfits on the card portrait. Generated with `car_gen.js` (never painted by hand), chosen on the driver card, bought with coins or gems, or earned from medals and achievements through the unlock registry (package 12). Saved per car in `meta.cosmetics`. M.
 
 ### Package 9: Goon depth
 - **T2-1.** Add `hp` (for T2-4) and a speed-label tint when the car is too slow for a nearby heavy goon.
@@ -181,6 +185,12 @@ Driving should be the most fun part. The handbrake, drift boost, slams and crush
 - Payout is coins × max(1, stars).
 - The demo and the full game share the save; one codebase (`Root.IS_DEMO`).
 - The slot machine stays as the signature pause, alternating with The Deal.
+- Menu shortcuts are letters near WASD; numbers only for lists such as levels and tabs.
+- Pickups unlock in a separate tree per kind; locked ones never drop and show as "???" until their parent is unlocked, then with a preview and price.
+- Cosmetics cost coins or gems.
+- Tree canopies may hide goons beneath them.
+- The two-wheel tilt is style only; cars never tip over.
+- Radio: three stations of in-house tracks: GoonCrusher Radio (funny vocal tracks and radio talk), Classical Lofi and Lofi.
 
 ## Open questions for the author
 
@@ -190,10 +200,4 @@ Driving should be the most fun part. The handbrake, drift boost, slams and crush
 4. Price and length target (sets the economy numbers).
 5. Gems: never sold? Is a gem-paid continue acceptable?
 6. Steam scope for 1.0 (achievements vs. leaderboards and dailies); Steam Deck needs analog steering.
-7. Audio budget for music and voice: licensed, commissioned or made in-house tracks for three radio stations (15–24 tracks), and which three styles?
-8. Should the demo hold some pickups back? (Package 12's starter set may answer this.)
-9. Menu keys (package 11): number keys 1–3 or letters by WASD (F/R/T/G) for the secondary actions?
-10. Locked pickups: unlocked by gems, coins, play triggers, or a mix? Can a locked one drop once as a "???" teaser?
-11. Cosmetics: gems only, or also coins and medal or achievement rewards?
-12. Should tree canopies hide goons under them (fair at night?), or fade whenever any actor is beneath?
-13. Two-wheel tilt: visual only, or can a too-hard turn tip a heavy car (a gameplay risk, like the handbrake's per-car shaping)?
+7. Should the demo hold some pickups back? (Package 12's starter set may answer this.)
