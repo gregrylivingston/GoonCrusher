@@ -20,3 +20,8 @@ addons/godotsteam/**/~*.dll
 
 # Export output
 build/
+
+# GDExtension libraries (built from native/, see docs/NATIVE.md)
+bin/windows/
+bin/linux/
+bin/macos/

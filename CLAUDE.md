@@ -9,6 +9,7 @@ A free demo is live on Steam (app 1941650). The current work is to finish the ga
 - `docs/UI.md`: the card menus (garage, run setup, pause, results ticket, Goonopedia), the shared menu theme and the input-aware key hints.
 - `docs/CAR_ART.md`: the generated car art (bake pipeline, sheets, zone mask, shader) and the system damage model.
 - `docs/GOONS.md`: the 43 generated goons (factions and territory, the registry, verbs, crush rules, GoonFx, bake pipeline).
+- `docs/NATIVE.md`: the C++ GDExtension (godot-cpp submodule, building, adding classes, exporting).
 - `docs/PICKUPS.md`: the 78 pickups in nine kinds and five rarities (the `Pickups` registry, the drop roll, buffs, gadgets, the slot machine's paylines, the pausing menus, world props and events, and the hooks pickups add to shared files).
 
 ## Running and tooling
@@ -30,6 +31,7 @@ A free demo is live on Steam (app 1941650). The current work is to finish the ga
   - `gut`: tests only, and it needs upgrading for 4.7. The menu fonts it used to supply now live in `style/font/`.
   - `rmsmartshape`: an editor plugin that no game scene uses, so it can be removed.
   - `godotsteam`: the binaries load on 4.7, and the `Steam` singleton registers and can call `steamInitEx` (checked 2026-10-05). **No game code calls Steam yet.**
+- **Native code:** a GDExtension in `native/` (godot-cpp 10.0.0 submodule, 4.7 API), built with `scons` there (or `scripts/windows/build_native.bat` for debug and release) into `bin/windows/`, which is gitignored; `bin/gooncrusher.gdextension` loads it. It needs MSVC Build Tools 2022. Build it after cloning or making a worktree, and build `template_release` before a release export. `tests/game/test_native.gd` fails if the DLL is missing or stale. See `docs/NATIVE.md`.
 - **Exports:** `export_presets.cfg` is tracked; Godot 4 keeps credentials in `.godot/export_credentials.cfg`, so the preset holds no secrets. Its single preset is Windows Desktop: separate `.pck`, console wrapper on debug exports, output in `build/` (gitignored). It already excludes `addons/gut/*`, `addons/rmsmartshape/*`, `tests/*`, `scripts/debug/bake_headlight_cone.gd`, `scripts/art/*`, the cars' `art/geometry.json`, `*.psd` and `texture/backgroundTexture.png`. **Install the 4.7.2 export templates before shipping**; the dev box only has 4.7.0 templates, which were used once, through `custom_template`, for the export test. The `override.cfg` renderer switch works in an exported build. Compatibility uses Godot's built-in ANGLE, so no ANGLE DLLs need exporting.
 
 ## Architecture

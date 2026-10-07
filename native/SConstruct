@@ -1,0 +1,35 @@
+#!/usr/bin/env python
+#Builds the GoonCrusher GDExtension (docs/NATIVE.md). Run from this folder:
+#  scons                          debug library (editor, debug exports, tests)
+#  scons target=template_release  release library (release exports)
+#The library is installed into ../bin/<platform>/, where bin/gooncrusher.gdextension finds it.
+import os
+import sys
+
+libname = "gooncrusher"
+projectdir = ".."
+
+if not (os.path.isdir("godot-cpp") and os.listdir("godot-cpp")):
+	print("ERROR: godot-cpp is missing. Run: git submodule update --init --recursive", file=sys.stderr)
+	sys.exit(1)
+
+localEnv = Environment(tools=["default"], PLATFORM="")
+customs = [os.path.abspath("custom.py")]
+opts = Variables(customs, ARGUMENTS)
+opts.Update(localEnv)
+Help(opts.GenerateHelpText(localEnv))
+
+env = SConscript("godot-cpp/SConstruct", {"api_version": "4.7", "env": localEnv.Clone(), "customs": customs})
+
+env.Append(CPPPATH=["src/"])
+sources = Glob("src/*.cpp")
+
+#.dev and .universal don't change compatibility, so the .gdextension file doesn't key on them.
+suffix = env["suffix"].replace(".dev", "").replace(".universal", "")
+libFile = "{}{}{}{}".format(env.subst("$SHLIBPREFIX"), libname, suffix, env.subst("$SHLIBSUFFIX"))
+
+library = env.SharedLibrary("build/{}/{}".format(env["platform"], libFile), source=sources)
+#MSVC also emits an import .lib and .exp; only the shared library goes to the project.
+shared = [f for f in library if str(f).endswith(env.subst("$SHLIBSUFFIX"))]
+copy = env.Install("{}/bin/{}/".format(projectdir, env["platform"]), shared)
+Default(library, copy)

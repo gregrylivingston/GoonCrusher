@@ -1,0 +1,12 @@
+#SCons output; the installed libraries in ../bin are ignored by the root .gitignore.
+build/
+.sconsign*.dblite
+custom.py
+compile_commands.json
+*.obj
+*.os
+*.o
+*.pdb
+*.lib
+*.exp
+*.ilk
