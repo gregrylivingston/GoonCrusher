@@ -409,7 +409,16 @@ func startBubble() -> void:
 #the previous column's, diagonally included, continue its count) and cuts crossings travelled along y; the
 #other pass does the same for barriers along y. A crossing goes through a run at most MAX_CUT cells thick
 #with open ground on both sides; a thicker stretch keeps counting until a thin one comes.
+#The build runs it natively (WorldGenNative.cutCrossings, docs/NATIVE.md: it was the build's slowest step);
+#cutCrossingsGDScript is the same rule, kept for the parity test.
 func cutCrossings(alongX: bool) -> void:
+	var out := WorldGenNative.cutCrossings(flags, terrain, cover, surf, shortBarrier, crossings, seedValue, alongX, field.waterCrossing)
+	flags = out[0]
+	terrain = out[1]
+	cover = out[2]
+	crossings = out[3]
+
+func cutCrossingsGDScript(alongX: bool) -> void:
 	var outer := W if alongX else H
 	var inner := H if alongX else W
 	var prev: Array = []
@@ -469,8 +478,11 @@ func markShortBarriers() -> void:
 	shortBarrier = barrierExtents(flags)
 
 ## 1 for every cell of an 8-connected component of blocked, unreserved cells whose bounding box is at most
-## SHORT_BARRIER cells on its longer side, else 0
+## SHORT_BARRIER cells on its longer side, else 0. Native (WorldGenNative); the GDScript below is the parity copy.
 static func barrierExtents(flagArray: PackedByteArray) -> PackedByteArray:
+	return WorldGenNative.barrierExtents(flagArray)
+
+static func barrierExtentsGDScript(flagArray: PackedByteArray) -> PackedByteArray:
 	var n := W * H
 	var out := PackedByteArray()
 	out.resize(n)

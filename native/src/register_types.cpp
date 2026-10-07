@@ -4,7 +4,10 @@
 #include <godot_cpp/core/defs.hpp>
 #include <godot_cpp/godot.hpp>
 
+#include "goon_body.h"
 #include "goon_native.h"
+#include "world_gen_native.h"
+#include "world_grid.h"
 
 using namespace godot;
 
@@ -12,10 +15,19 @@ void initialize_gooncrusher_module(ModuleInitializationLevel p_level) {
 	if (p_level != MODULE_INITIALIZATION_LEVEL_SCENE) {
 		return;
 	}
+	GoonBody::init_names();
 	GDREGISTER_CLASS(GoonNative);
+	GDREGISTER_CLASS(WorldGrid);
+	GDREGISTER_CLASS(WorldGenNative);
+	GDREGISTER_CLASS(GoonBody);
 }
 
 void uninitialize_gooncrusher_module(ModuleInitializationLevel p_level) {
+	if (p_level != MODULE_INITIALIZATION_LEVEL_SCENE) {
+		return;
+	}
+	WorldGrid::cleanup();
+	GoonBody::free_names();
 }
 
 extern "C" {

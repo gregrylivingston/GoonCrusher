@@ -5,7 +5,7 @@
 using namespace godot;
 
 // Bump when GDScript starts depending on something new, so a stale DLL is caught by the test.
-static const char *NATIVE_VERSION = "1";
+static const char *NATIVE_VERSION = "2";
 
 void GoonNative::_bind_methods() {
 	ClassDB::bind_static_method("GoonNative", D_METHOD("version"), &GoonNative::version);

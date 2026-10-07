@@ -2,14 +2,18 @@ class_name Walker extends Enemy
 ## Every goon. Its baked scene (scripts/art/bake_goons.py) brings the art, collision, occluder and eye
 ## positions; Goons.DATA brings the faction, tuning and verb; the verb (goon_verbs.gd) drives it.
 ## The car calls tryCrush() on contact. docs/GOONS.md describes the whole system.
+##
+## The native base GoonBody (native/src/goon_body.cpp, docs/NATIVE.md) holds the per-tick fields (speed,
+## turnRate, bodyRadius, state, stateTime, cooldown, resistTimer, stuckTime, carSpin, lockPos, lockDir,
+## buffUntil, lastCarTouch, myMode) and the helpers the verbs call every tick (chase, advance, faceTo, play,
+## walkAnim, setState, speedNow, distTo, lockOn, predict, touchedByCar). It calls back _onCarContact, and
+## _worldLethalAt / _worldSlideStep when no native WorldGrid is current.
 
-enum mode { MOVE, ATTACK, IDLE, DEAD, PREPAREATTACK } #read by the AI driver, so keep the names
-var myMode: mode = mode.MOVE
+enum mode { MOVE, ATTACK, IDLE, DEAD, PREPAREATTACK } #read by the AI driver (myMode), so keep the names
 
 @export var goonId: StringName
 @export var decal: Texture2D
 @export var eyes: PackedVector2Array #art space, game px (bake)
-@export var bodyRadius: float = 18.0
 #relative drop weights. Before the luck fix the coin weight was effectively the luck stat (about 1), so fuel
 #was about 28% of drops; COIN 30 keeps fuel near 20% and health near 10% while coins still drop often.
 @export var powerupDropDict: Dictionary = {
@@ -29,7 +33,6 @@ var myMode: mode = mode.MOVE
 	Root.upgrade.LUCK:4
 }
 
-const WALK_CYCLE_PER_R := 3.4  #ground covered by one 8-frame walk cycle, in body radii
 const RESIST_COOLDOWN := 0.4   #a resisted crush can't bounce the car again this soon
 const GIANT_SPEED := 1.5       #giants were 4x in the demo, too much once goons have specials
 
@@ -37,8 +40,7 @@ var isGiant: bool = false
 var def: Dictionary
 var verb #GoonVerbs.Verb
 
-#tuning, from Goons.DATA
-var speed := 110.0
+#tuning, from Goons.DATA (speed and turnRate live on GoonBody)
 var windDist := 150.0
 var windT := 0.55
 var atkT := 0.38
@@ -49,33 +51,19 @@ var sys := "hull"
 var crushSpeed := 100.0
 var frontArmor := 0.0
 var frontArc := 1.05
-var turnRate := 9.0
 var tele := "arrow"
 var stunT := 1.4
 
-#state
-var state: StringName = &"move"
-var stateTime := 0.0
-var cooldown := 0.0
-var lockPos := Vector2.ZERO
-var lockDir := Vector2.RIGHT
+#state (the rest is on GoonBody; carSpin is the car's turn rate in rad/s, for goons that can be shaken off)
 var hitDone := false
 var invulnerable := false
-var buffUntil := 0.0
 var packId := 0
 var drift := Vector2.ZERO
-var resistTimer := 0.0
 var dead := false
-var lastCarRotation := 0.0
-var carSpin := 0.0 #the car's turn rate (rad/s), for goons that can be shaken off
 var savedLayers := Vector2i(4, 3) #layer 3 (Goon) only, so goons never collide with each other; mask: world and car
-#the world (WorldHooks): water drowns a solid goon (checked every WATER_TICKS ticks, staggered), a drowning
-#within DROWN_CREDIT_SECONDS of the car's touch counts as a crush; a goon pressing a barrier on screen for
-#STUCK_SECONDS may be swept away
-const WATER_TICKS := 4
-var waterPhase := 0
-var lastCarTouch := -INF #seconds (GoonVerbs.now)
-var stuckTime := 0.0
+#the world (WorldHooks): water drowns a solid goon (checked every 4 ticks, staggered: GoonBody.beginTick), a
+#drowning within DROWN_CREDIT_SECONDS of the car's touch (lastCarTouch, GoonVerbs.now seconds) counts as a
+#crush; a goon pressing a barrier on screen for STUCK_SECONDS (stuckTime) may be swept away
 
 @onready var sprite: AnimatedSprite2D = $Sprite
 
@@ -94,8 +82,10 @@ func _ready():
 	frontArc = def.get("arc", frontArc)
 	turnRate = def.get("turn", turnRate)
 	tele = def.get("tele", tele)
+	buffScale = Goons.DATA[&"foreman"]["buff"]
 	savedLayers = Vector2i(collision_layer, collision_mask)
-	waterPhase = get_instance_id() % WATER_TICKS
+	motion_mode = MOTION_MODE_FLOATING #top-down, like the car: no floor, wall or ceiling sorting in move_and_slide
+	bindSprite(sprite)
 	if isGiant:
 		scale = Vector2(1.6, 1.6)
 		speed *= GIANT_SPEED
@@ -130,9 +120,10 @@ func _physics_process(delta):
 	var car = Root.playerCar
 	if not is_instance_valid(car): return
 	if Pickups.goonTickSkipped(): return #Time Warp
-	stateTime += delta
-	if (Engine.get_physics_frames() + waterPhase) % WATER_TICKS == 0 && checkWater(car): return
-	if state == &"move" || state == &"siege" || state == &"lured":
+	if beginTick(delta, car): #the state clock; true when it stands in deep water
+		drown()
+		return
+	if (state == &"move" || state == &"siege" || state == &"lured") && not Pickups.lures.is_empty():
 		var lure := Pickups.lureFor(global_position, def.get("verb", &"lunge")) #Goon Bait, Flare
 		if lure != Vector2.INF:
 			if state != &"lured": setState(&"lured")
@@ -141,10 +132,8 @@ func _physics_process(delta):
 			else: play(&"idle")
 			return
 		if state == &"lured": setState(&"move")
-	cooldown = maxf(0.0, cooldown - delta)
-	resistTimer = maxf(0.0, resistTimer - delta)
-	carSpin = angle_difference(lastCarRotation, car.rotation) / delta
-	lastCarRotation = car.rotation
+	elif state == &"lured": setState(&"move")
+	tickTimers(delta, car) #cooldown, resistTimer, carSpin
 	if siegeTarget:
 		if sieging(car):
 			siege(delta)
@@ -196,74 +185,16 @@ func siege(delta: float) -> void:
 func fx() -> GoonFx:
 	return Root.spawnManager.fx if is_instance_valid(Root.spawnManager) else null
 
-func speedNow() -> float:
-	return speed * (Goons.DATA[&"foreman"]["buff"] if buffUntil > Time.get_ticks_msec() / 1000.0 else 1.0)
+## GoonBody.advance: the car bumped into on screen. touchedByCar and stuckTime are already done.
+func _onCarContact(car: Node2D) -> void:
+	verb.onTouch(car)
 
-func isBuffed() -> bool:
-	return buffUntil > Time.get_ticks_msec() / 1000.0
+## GoonBody's world queries when no native WorldGrid is current (a test's stand-in map, or none)
+func _worldLethalAt(pos: Vector2) -> bool:
+	return World.lethalAt(pos)
 
-func distTo(car: Node2D) -> float:
-	return global_position.distance_to(car.global_position)
-
-## State changes keep myMode in step for the AI driver.
-func setState(s: StringName) -> void:
-	state = s
-	stateTime = 0.0
-	match s:
-		&"windup": myMode = mode.PREPAREATTACK
-		&"attack", &"charge", &"roll", &"slam", &"dive": myMode = mode.ATTACK
-		&"move", &"flee", &"dodge": myMode = mode.MOVE
-		_: myMode = mode.IDLE
-
-## Plays an animation; a duration stretches it so its frames span that time.
-func play(anim: StringName, duration := 0.0) -> void:
-	if sprite.animation != anim || not sprite.is_playing(): sprite.play(anim)
-	if duration > 0.0:
-		var frames := sprite.sprite_frames
-		sprite.speed_scale = frames.get_frame_count(anim) / frames.get_animation_speed(anim) / duration
-	else: sprite.speed_scale = 1.0
-
-## The walk plays at the rate the goon covers ground, so feet never skate.
-func walkAnim(moveSpeed: float) -> void:
-	if sprite.animation != &"walk": sprite.play(&"walk")
-	sprite.speed_scale = clampf(moveSpeed / (bodyRadius * WALK_CYCLE_PER_R * 10.0 / 8.0 * scale.x), 0.2, 3.0)
-
-func faceTo(angle: float, delta: float, rate := -1.0) -> void:
-	var r := (turnRate if rate < 0.0 else rate) * delta
-	rotation += clampf(angle_difference(rotation, angle), -r, r)
-
-## Walks toward a point. Off screen it skips collision queries (the spawn manager's LOD).
-func chase(target: Vector2, moveSpeed: float, delta: float, rate := -1.0) -> void:
-	faceTo((target - global_position).angle(), delta, rate)
-	advance(Vector2.from_angle(rotation) * moveSpeed, delta)
-	walkAnim(moveSpeed)
-
-func advance(v: Vector2, delta: float) -> void:
-	velocity = v
-	if Root.spawnManager.needsFullPhysics(global_position):
-		move_and_slide()
-		#the car takes contact damage every tick it touches a goon, so goons that bump it back off
-		var pressing := false
-		for i in get_slide_collision_count():
-			var c = get_slide_collision(i).get_collider()
-			if c == Root.playerCar:
-				touchedByCar()
-				stuckTime = 0.0
-				verb.onTouch(Root.playerCar)
-				return
-			if World.isWall(c): pressing = true
-		#walking into a barrier and getting nowhere: after STUCK_SECONDS the despawn sweep may take it
-		if pressing && get_real_velocity().length() < v.length() * 0.3: stuckTime += delta
-		else: stuckTime = maxf(0.0, stuckTime - delta * 2.0)
-	else: global_position = WorldHooks.slideStep(global_position, v * delta) #off screen: no physics, the grid's walls and water
-
-## Where the car will be in `lead` seconds.
-func predict(car: Node2D, lead: float) -> Vector2:
-	return car.global_position + car.velocity * lead
-
-func lockOn(car: Node2D, lead: float) -> void:
-	lockPos = predict(car, lead)
-	lockDir = (lockPos - global_position).normalized()
+func _worldSlideStep(pos: Vector2, step: Vector2) -> Vector2:
+	return WorldHooks.slideStep(pos, step)
 
 ## Moves along lockDir at attack speed and hits the car once if it touches it.
 func lungeStep(car: Node2D, moveSpeed: float, delta: float) -> void:
@@ -295,16 +226,11 @@ func setSolid(solid: bool) -> void:
 
 #--- water -------------------------------------------------------------------------------------
 
-## The car touched or shoved this goon: a drowning soon after is the player's doing
-func touchedByCar() -> void:
-	lastCarTouch = GoonVerbs.now()
-
-## Every WATER_TICKS ticks: a solid goon over deep water drowns (buried, hopping, flying and riding goons
-## aren't solid, so they're immune until they land). True when it drowned.
+## A solid goon over deep water drowns (buried, hopping, flying and riding goons aren't solid, so they're
+## immune until they land); a car alongside counts as a touch (GoonBody.overDeepWater). True when it drowned.
+## The tick runs the same check every 4 ticks through beginTick.
 func checkWater(car: Node2D) -> bool:
-	if collision_layer == 0: return false
-	if distTo(car) < bodyRadius * scale.x + 110.0: touchedByCar() #shoved along by the bumper
-	if not World.lethalAt(global_position): return false
+	if not overDeepWater(car): return false
 	drown()
 	return true
 

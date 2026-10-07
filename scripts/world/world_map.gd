@@ -13,8 +13,10 @@ class_name WorldMap extends RefCounted
 ##   - `taken`, the per-chunk bitmask of collected pickups and smashed breakables (chunk -> int): pickups
 ##     bits 0-31, breakables 32-62. markTaken / isTaken; a re-applied chunk skips what is taken.
 ## The queries (terrainAt, surfaceAt, lethalAt, blockedAt, spawnableAt) read the fine raster where it is
-## loaded and the coarse map elsewhere. They run every physics tick for the car and ~900 times per AI plan,
-## so they don't allocate: the last chunk's raster is cached.
+## loaded and the coarse map elsewhere. They run every physics tick for the car and every goon and ~900 times
+## per AI plan, so `grid`, a native WorldGrid, mirrors the coarse map and every cached raster and answers them
+## (World.grid while this is Root.worldMap). The GDScript queries below are the same rule, kept for tools and
+## the parity tests; the last chunk's raster is cached so they don't allocate.
 
 const LRU := 24
 const W := WorldGen.W
@@ -71,6 +73,7 @@ var recipeContext := {}
 var lru: Array[Vector2i] = []
 var pending := {} #chunk -> [task id, job]
 var keep := {}    #chunks never evicted now (round the car)
+var grid := WorldGrid.new() #native mirror of terrain and `fine` (set up by fromJob, kept in step by store)
 var fineStats := {"count": 0, "usec": 0, "maxUsec": 0, "waits": 0}
 var recipeStats := {"count": 0, "usec": 0, "maxUsec": 0}
 var spawnCounter := 0
@@ -127,8 +130,15 @@ static func fromJob(job: Dictionary, levelDef: LevelDef) -> WorldMap:
 	map.route = r.route
 	map.routeLength = r.routeLength
 	map.buildMs = r.ms
+	map.setupGrid()
 	map.setupDistricts(r.districts)
 	return map
+
+## The native grid's table and coarse map (fine rasters are added as they are stored)
+func setupGrid() -> void:
+	grid.setTable(World._flags)
+	grid.setFineLayout(Vector2(CHUNK_X, CHUNK_Y), WorldGen.FINE, Vector2i(WorldGen.FINE_W, WorldGen.FINE_H))
+	grid.setCoarse(terrain, Vector2i(W, H), WorldGen.ORIGIN, WorldGen.CELL, WATER)
 
 ## Faction, goons, name, tint and giantism for every district, seeded per district
 func setupDistricts(table: Array) -> void:
@@ -265,6 +275,7 @@ func recipeOf(chunk: Vector2i) -> Dictionary:
 func forget(chunk: Vector2i) -> void:
 	if pending.has(chunk): finish(chunk)
 	fine.erase(chunk)
+	grid.eraseChunk(chunk)
 	rasters.erase(chunk)
 	recipes.erase(chunk)
 	lru.erase(chunk)
@@ -273,6 +284,7 @@ func forget(chunk: Vector2i) -> void:
 func store(chunk: Vector2i, job: Dictionary) -> void:
 	var result: Dictionary = job.result
 	fine[chunk] = result.terrain
+	grid.setChunk(chunk, result.terrain)
 	rasters[chunk] = result
 	if job.has("recipe"):
 		recipes[chunk] = job.recipe
@@ -293,6 +305,7 @@ func store(chunk: Vector2i, job: Dictionary) -> void:
 			continue
 		lru.remove_at(i)
 		fine.erase(old)
+		grid.eraseChunk(old)
 		rasters.erase(old)
 		recipes.erase(old)
 		if old == Vector2i(_cx, _cy): _cx = 1 << 30

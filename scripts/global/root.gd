@@ -6,7 +6,13 @@ enum upgrade { HEALTH , FUEL , ARMOR , ENGINE , TRACTION , STEERING , CLOVER , L
 enum terrain { GRASS , SAND , MUD , WATER , HILLS , MOSS , DIRT , SNOW, ASPHALT, ICE, OIL, SHALLOWS, WASH, CONVEYOR, MUDPIT, DEEPSNOW, LOT, BUILDING, BRIDGE } #append only: World.TERRAIN and Goons.T mirror it
 
 var playerCar: OverheadCarBody2D #the car in a run; null in the main menu
-var worldMap = null #the run's WorldMap (scripts/world/world_map.gd); null until it exists. World's queries use it
+#the run's WorldMap (scripts/world/world_map.gd); null until it exists. World's queries use it. A real WorldMap's
+#native grid becomes World.grid (and the goons' WorldGrid.current); a test's stand-in clears it
+var worldMap = null:
+	set(value):
+		worldMap = value
+		World.grid = value.grid if value is WorldMap else null
+		WorldGrid.setCurrent(World.grid)
 var station  #this is the gas-station / house thing
 var selectedCar: Dictionary
 var carInfo: CarInfo #the car shown in the main menu

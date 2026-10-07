@@ -20,7 +20,8 @@ var basicGoons: Array = []:
 		basicGoons = value
 		for id in value: requestScene(id)
 
-#world rect where goons run full physics; refreshed every physics tick
+#world rect where goons run full physics; refreshed every physics tick and handed to GoonBody, whose
+#advance() reads it natively
 var physicsView := Rect2()
 
 var giantTimer:float = 0
@@ -49,6 +50,10 @@ func onGoonExiting(goon: Node) -> void:
 
 func _physics_process(_delta):
 	physicsView = (get_viewport().get_canvas_transform().affine_inverse() * get_viewport().get_visible_rect()).grow(LOD_MARGIN)
+	if Root.spawnManager == self: GoonBody.setPhysicsView(physicsView)
+
+func _exit_tree() -> void:
+	if Root.spawnManager == self: GoonBody.setPhysicsView(Rect2())
 
 #off-screen LOD: goons outside the view skip collision queries while they walk
 func needsFullPhysics(point: Vector2) -> bool:
@@ -85,6 +90,7 @@ func nightSweep() -> void:
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	Root.spawnManager = self
+	GoonBody.setPhysicsView(physicsView)
 	get_tree().node_added.connect(onNodeAdded)
 	if SaveManager.playerData.gameMode == Root.gameModes.GOONPOCALYPSE:
 		escalationSpeed *= POCALYPSE_ESCALATION

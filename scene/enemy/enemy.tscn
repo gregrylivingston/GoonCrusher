@@ -6,7 +6,7 @@
 [ext_resource type="AudioStream" uid="uid://bvlrukk8fgu8j" path="res://sound/fx/walker/metal_bash2-100028.mp3" id="3_5niu2"]
 [ext_resource type="AudioStream" uid="uid://bssg6681ejb2i" path="res://sound/fx/walker/metal_bash3-46584.mp3" id="4_hrnth"]
 
-[node name="Enemy" type="CharacterBody2D"]
+[node name="Enemy" type="GoonBody"]
 script = ExtResource("1_nf4sv")
 audio_charge = Array[AudioStreamMP3]([ExtResource("2_pqgc8")])
 audio_hit = Array[AudioStreamMP3]([ExtResource("2_dd84a"), ExtResource("3_5niu2"), ExtResource("4_hrnth")])

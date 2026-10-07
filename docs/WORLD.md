@@ -90,7 +90,7 @@ Table lookups: `count()`, `def(t)`, `isPassable(t)`, `isLethal(t)`, `isWallTerra
 
 Runtime queries, delegated to `Root.worldMap`: `terrainAt(pos)`, `surfaceAt(pos)` (the ground the car drives on; the same as `terrainAt` today), `lethalAt(pos)`, `blockedAt(pos)`, `spawnableAt(pos)`, `pushAt(pos, t)` (the conveyor push as a vector, `WorldMap.beltDirAt`).
 
-- **Hot path, allocation-free:** the runtime queries and the flag/friction/grip/brake/push lookups. The car calls them every physics tick and the AI ~900 times per plan through `integrate()`. The flag and number columns are flat packed arrays built once in `_static_init`. `WorldMap.terrainAt` keeps the last chunk's raster in `_cx/_cy/_fine`, so a query is a couple of `floori`s and an array read; outside a loaded raster it reads the coarse cell.
+- **Hot path, allocation-free:** the runtime queries and the flag/friction/grip/brake/push lookups. The car calls them every physics tick and the AI ~900 times per plan through `integrate()`. The flag and number columns are flat packed arrays built once in `_static_init`. A real map answers them natively: `WorldMap.grid` (a `WorldGrid`, docs/NATIVE.md) mirrors the coarse map and every stored raster (`store`, eviction and `forget` keep it in step), and Root's `worldMap` setter makes it `World.grid`, so `World.terrainAt` is one native call. The GDScript `WorldMap.terrainAt` is the same rule (the last chunk's raster cached in `_cx/_cy/_fine`, else the coarse cell), kept for tools and the parity test; stand-in maps in tests go through it.
 - **Not hot:** `def(t)`, `routeWeight(t)` and `letter(t)` return or read a Dictionary row. Use them in setup code and tools only.
 - **No map** (`Root.worldMap == null`: the menu, most tests, the first frames of a run): the queries answer `UNKNOWN` (−1); nothing is lethal or blocked, nothing is spawnable, and the car keeps its own `friction`. Tests can put a stand-in object in `Root.worldMap` that provides `terrainAt`, `surfaceAt`, `lethalAt`, `blockedAt`, `spawnableAt` and optionally `beltDirAt`.
 
@@ -340,7 +340,7 @@ In `overhead_car_body_2d.gd` (`wallTick`, `wallContact`, `wallDamage`):
 
 | Function | Used by | Rule |
 |---|---|---|
-| `slideStep(pos, step)` | `Walker.advance` off screen | the whole step if open, else along the open axis, else hold; a goon already on blocked ground may step anywhere |
+| `slideStep(pos, step)` | `GoonBody.advance` off screen | the whole step if open, else along the open axis, else hold; a goon already on blocked ground may step anywhere |
 | `drownCredited(now, lastTouch)` | `Walker.drown` | within 3 s of the car's touch |
 | `bankNear(pos)` | the Bandit's loot | the nearest dry, open point within 6 fine cells |
 | `nearLethal(pos, r)`, `lethalAhead(pos, dir, dist)` | tethers, the AI | 17 samples round a point; samples every 128 px along a heading |
@@ -417,7 +417,7 @@ Spawning, props and FX rules for goons are in docs/GOONS.md ("The world").
 
 ## Known issues
 
-- **Worker speed:** the map build takes 1.3–2.9 s and a recipe about 4–13 ms on average, all GDScript. The apply side stays inside its budget. The workers are the first candidate for the C++ GDExtension (docs/NATIVE.md).
+- **Worker speed:** the map build takes 0.8–1.3 s on the HD 620 box (seed 1337; crossings run natively since 2026-10-07, which saved 0.5–0.7 s) and a recipe about 7–12 ms, the rest GDScript. The apply side stays inside its budget. `WorldField.sample` (280–620 ms of the build) is the next port (docs/NATIVE.md, "What to port next").
 - **Highway edges** look blobby: the asphalt edge comes from the 128 px raster through organic blending.
 - **Landmark beacons glow by day** (additive and unlit); the Tribe's reads oddly in daylight.
 - **Frostbite's passes** can be sticky for heavy cars (deep snow and ice in narrow passes).

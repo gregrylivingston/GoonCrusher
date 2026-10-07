@@ -3,6 +3,8 @@ class_name WorldHooks extends RefCounted
 ## and pure: every query is a grid read through World (World.terrainAt and friends, O(1) array reads on the
 ## live WorldMap), never a physics query, so 250 goons and a planner can call them every tick. Without a map
 ## (the menu, tests without a stand-in) nothing is a wall or lethal, so every rule here is a no-op.
+## With a real WorldMap the grid walks (slideStep, nearLethal, lethalAhead, lineClear, bounce) run in its
+## native WorldGrid (World.grid); the GDScript below is the same rule, for stand-ins and the parity tests.
 
 const FINE := 128.0               #a fine cell (WorldGen.FINE)
 const DROWN_CREDIT_SECONDS := 3.0 #a goon that drowns this soon after the car touched it counts as a crush
@@ -17,6 +19,7 @@ const DIRS := [Vector2(1, 0), Vector2(0.7071, 0.7071), Vector2(0, 1), Vector2(-0
 
 ## A wall cell (rock, cliff, building): what stops shots, shells and blasts. Water doesn't: things fly over it.
 static func wallAt(pos: Vector2) -> bool:
+	if World.grid != null: return World.grid.wallAt(pos)
 	return World.isWallTerrain(World.terrainAt(pos))
 
 ## One step of an off-screen goon, which moves without collision: the whole step if its cell is open, else
@@ -25,6 +28,7 @@ static func wallAt(pos: Vector2) -> bool:
 ## foot, shoved in) may step anywhere, so it can get out. Steps are a few px per tick, far below a 128 px
 ## cell, so nothing tunnels.
 static func slideStep(pos: Vector2, step: Vector2) -> Vector2:
+	if World.grid != null: return World.grid.slideStep(pos, step)
 	var to := pos + step
 	if not World.blockedAt(to) || World.blockedAt(pos): return to
 	var alongX := pos + Vector2(step.x, 0.0)
@@ -52,6 +56,7 @@ static func bankNear(pos: Vector2) -> Vector2:
 ## Is there deep water within `radius` of `pos`: the point, then eight directions at the radius and at half of
 ## it (17 reads). Coarser than a disc, but water bodies are hundreds of px across.
 static func nearLethal(pos: Vector2, radius: float) -> bool:
+	if World.grid != null: return World.grid.nearLethal(pos, radius)
 	if World.lethalAt(pos): return true
 	for dir in DIRS:
 		if World.lethalAt(pos + dir * radius) || World.lethalAt(pos + dir * radius * 0.5): return true
@@ -59,6 +64,7 @@ static func nearLethal(pos: Vector2, radius: float) -> bool:
 
 ## Deep water along a heading within `dist` px of `pos`, sampled every fine cell: the distance to it, or INF
 static func lethalAhead(pos: Vector2, dir: Vector2, dist: float) -> float:
+	if World.grid != null: return World.grid.lethalAhead(pos, dir, dist)
 	var d := FINE
 	while d <= dist:
 		if World.lethalAt(pos + dir * d): return d
@@ -80,6 +86,7 @@ static func hazardAllowed(pos: Vector2) -> bool:
 
 ## Is the straight line from a to b free of wall cells (a blast's reach, a shot's path)
 static func lineClear(a: Vector2, b: Vector2) -> bool:
+	if World.grid != null: return World.grid.lineClear(a, b)
 	var length := a.distance_to(b)
 	var steps := ceili(length / LINE_STEP)
 	for i in range(1, steps + 1):
@@ -89,6 +96,7 @@ static func lineClear(a: Vector2, b: Vector2) -> bool:
 ## A sliding body's velocity after this tick's step meets a wall cell: the blocked axis is reflected (both
 ## in a corner), so a kicked shell rebounds like a pinball. Unchanged when the step is clear.
 static func bounce(pos: Vector2, vel: Vector2, delta: float) -> Vector2:
+	if World.grid != null: return World.grid.bounce(pos, vel, delta)
 	var step := vel * delta
 	if not wallAt(pos + step): return vel
 	var out := vel

@@ -29,7 +29,7 @@ shader_parameter/span = 0.231
 cull_mode = 1
 polygon = PackedVector2Array(-12, -12, 12, -12, 12, 12, -12, 12)
 
-[node name="CharacterBody2D" type="CharacterBody2D"]
+[node name="CharacterBody2D" type="GoonBody"]
 collision_layer = 4
 collision_mask = 3
 script = ExtResource("2_ogk1f")

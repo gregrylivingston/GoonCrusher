@@ -16,6 +16,9 @@ class_name World extends RefCounted
 ## spawnableAt(pos) -> bool, and may provide beltDirAt(pos) -> Vector2. Without one they answer UNKNOWN
 ## (-1): no map is loaded yet (the menu, tests, the first frames of a run), nothing is lethal or blocked
 ## there, and the car keeps its own base friction.
+##
+## A real WorldMap mirrors its terrain into a native WorldGrid (native/src/world_grid.cpp), which Root's
+## worldMap setter puts in `grid`; the queries then answer from it in one native call.
 
 const UNKNOWN := -1
 const GRASS_FRICTION := 0.13 #the off-road rule's baseline
@@ -55,6 +58,9 @@ const FLAG_PASSABLE := 1
 const FLAG_LETHAL := 2
 const FLAG_WALL := 4
 const FLAG_SPAWNABLE := 8
+
+## The live WorldMap's native grid (set with Root.worldMap), or null for a stand-in or no map
+static var grid: WorldGrid = null
 
 static func _static_init() -> void:
 	for d in TERRAIN:
@@ -98,7 +104,8 @@ static func effectiveFriction(f: float, armor: float) -> float:
 	return GRASS_FRICTION + (f - GRASS_FRICTION) * (1.0 - clampf(armor / OFFROAD_ARMOR_SCALE, 0.0, OFFROAD_ARMOR_MAX))
 
 ## Something the car and goons bounce off: rocks, walls, station buildings (StaticBody2D) and the
-## terrain TileMaps' collision. Moving terrain to TileMapLayer must update this one check.
+## terrain TileMaps' collision. GoonBody::advance (native/src/goon_body.cpp) makes the same check for goons;
+## moving terrain to TileMapLayer must update both.
 static func isWall(collider: Object) -> bool:
 	return collider is StaticBody2D || collider is TileMap
 
@@ -110,24 +117,29 @@ static func resetCache() -> void:
 
 ## The terrain id under a world position, UNKNOWN before a map is loaded. Outside the map is WATER.
 static func terrainAt(pos: Vector2) -> int:
+	if grid != null: return grid.terrainAt(pos)
 	if Root.worldMap != null: return Root.worldMap.terrainAt(pos)
 	return UNKNOWN
 
 ## The ground the car drives on (friction, grip, brake, push); a bridge deck over water, say.
 static func surfaceAt(pos: Vector2) -> int:
+	if grid != null: return grid.terrainAt(pos)
 	if Root.worldMap != null: return Root.worldMap.surfaceAt(pos)
 	return UNKNOWN
 
 static func lethalAt(pos: Vector2) -> bool:
+	if grid != null: return grid.lethalAt(pos)
 	if Root.worldMap != null: return Root.worldMap.lethalAt(pos)
 	return false
 
 ## Water or wall under the point (goons slide or hold, projectiles stop).
 static func blockedAt(pos: Vector2) -> bool:
+	if grid != null: return grid.blockedAt(pos)
 	if Root.worldMap != null: return Root.worldMap.blockedAt(pos)
 	return false
 
 static func spawnableAt(pos: Vector2) -> bool:
+	if grid != null: return grid.spawnableAt(pos)
 	if Root.worldMap != null: return Root.worldMap.spawnableAt(pos)
 	return false
 

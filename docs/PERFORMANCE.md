@@ -71,7 +71,8 @@ There are deliberately no MSAA, FXAA, HDR-2D or glow options, and **the physics 
 ## Always on
 
 - **World streaming** (docs/WORLD.md): map built on a worker; rasters and recipes built on workers; the main thread applies chunks within `APPLY_BUDGET_USEC`; nodes are pooled; chunks more than 2 away unload. Per-chunk budgets: docs/WORLD.md, "Budgets".
-- **Goons:** capped at 250 for everyone; off-screen goons skip collision; spawns are staggered; the despawn sweep runs every 0.5 s.
+- **Goons:** capped at 250 for everyone; off-screen goons skip collision; spawns are staggered; the despawn sweep runs every 0.5 s. They move in floating mode (top-down), not CharacterBody2D's grounded default.
+- **Native code** (docs/NATIVE.md): the goon tick's fields and movement helpers (`GoonBody`), the terrain queries and WorldHooks' grid walks (`WorldGrid`), and the map build's crossings pass (`WorldGenNative`) are C++. Goon script went from 62 to 30 µs per goon per tick; the map build from 1.36–2.02 s to 0.82–1.29 s.
 - **Rewards** are credited at once; flyers are pooled visuals.
 - **Batching and textures:** one text shader, shared pickup materials, mipmaps on world textures, BC7 for large backgrounds, portraits, ground materials and posters. A level loads only its own world art (about 17 MB of 48 MB budget).
 - **Lights:** 2D shadow atlas 1024; no world lights (landmarks use unlit beacon sprites).
@@ -80,25 +81,20 @@ There are deliberately no MSAA, FXAA, HDR-2D or glow options, and **the physics 
 
 ## Latest results on the HD 620
 
-Measured 2026-10-06 on the current world. Vulkan Mobile, 1920x1080 borderless, uncapped, one run per cell. Avg / 1% low fps.
+Measured 2026-10-07 with the native goon tick, grid and crossings. Vulkan Mobile, 1920x1080 borderless, uncapped, 90 s, one run per cell. Avg / 1% low fps; in brackets the 2026-10-06 GDScript numbers from the same box.
 
 | Scenario | fps | p99 frame | Under 17.5 ms | Frames > 50 ms | Max goons |
 |---|---|---|---|---|---|
-| S2 day drive, prairie, Low | 126.0 / 78.3 | 11.1 ms | 100% | 1 | 47 |
-| S3 night, quarry, Low | 65.8 / 20.3 | 35.7 ms | 86.5% | 24 | 95 |
-| S3 night, city, Low | 78.3 / 49.5 | 18.1 ms | 98.7% | 2 | 85 |
-| S3 night, prairie, Low | 72.7 / 23.0 | 33.5 ms | 94.4% | 12 | 114 |
-| S4 night crowd, quarry, Low (2 runs) | 45.5 / 18.2, 49.2 / 17.5 | 50–52 ms | 59% | 42, 111 | 208–237 |
-| S4 night crowd, city, Low | 62.3 / 30.7 | 28.1 ms | 73.7% | 3 | 209 |
-| S4 night crowd, prairie, Low | 49.4 / 13.6 | 66.9 ms | 68.7% | 303 | 250 |
-| S4 night crowd, quarry, Potato | 76.1 / 15.1 | 58.3 ms | 80.1% | 236 | 250 |
-| S6 10-minute drive, prairie, Low | 93.9 / 30.6 | 25.0 ms | 94.3% | 44 | 159 |
+| S2 day drive, prairie, Low | 125.8 / 81.4 (126.0 / 78.3) | 10.8 ms | 100% | 0 | 36 |
+| S3 night, quarry, Low | 74.1 / 41.9 (65.8 / 20.3) | 19.3 ms | 97.5% (86.5%) | 2 (24) | 99 |
+| S4 night crowd, quarry, Low (2 runs) | 54.4 / 21.1, 56.3 / 25.4 (45.5 / 18.2, 49.2 / 17.5) | 35–44 ms | 65–68% (59%) | 7, 2 (42, 111) | 190–201 |
+| S4 night crowd, prairie, Low | 54.4 / 19.1 (49.4 / 13.6) | 44.6 ms | 62.7% (68.7%) | 21 (303) | 250 |
+| S4 night crowd, quarry, Potato | 94.7 / 28.0 (76.1 / 15.1) | 29.2 ms | 84.4% (80.1%) | 12 (236) | 202 |
 
-Chunk work (`WORLD_CHUNKS`): fine raster 14–23 ms and recipe 7–12 ms average on workers; main-thread apply 1.2–2.3 ms average in frames that apply anything, longest single step about 3 ms.
+The S3 night, city and S6 rows of 2026-10-06 weren't re-run. Chunk work (`WORLD_CHUNKS`): fine raster about 16–25 ms and recipe 7–8 ms average on workers; main-thread apply 1.6–1.9 ms average, longest step under 5 ms.
 
-- **Streaming stays inside its budget;** chunk work is almost never behind a long frame.
-- **Night crowds miss the targets, and the cost is the physics tick:** GPU time stays at 9–11 ms on Low (3–5 on Potato) whatever the crowd, while `physics_ms` climbs from about 2 ms with no goons to 10–14 ms with 120–200; past 16.7 ms a frame runs two ticks and the game tips into 30–40 ms frames. Potato is just as spiky with far fewer occluders, so shadows aren't the cause.
-- The older S3/S4 baselines (Low S4 55.0 / 37.9 on the previous world) predate the goon overhaul, so the crowd cost hasn't been split between the goons and the world; both builds miss the S4 target because of physics with crowds.
+- **The goon tick halved; crowds still miss the S4 targets.** In a profile of S4 (counters in `Walker`), goon script cost 62 µs per goon per tick before and 30 after (docs/NATIVE.md has the breakdown). Physics by crowd size on Low: 80–120 goons 13 → 4.5–5 ms per frame, 120–160 goons 16.6 → 8–10 ms; above 160 goons it is still 10–12 ms, now mostly the physics server and other nodes (goon script is under a quarter of it). Long frames are rare now (2–21 per run instead of 42–303), but the 1% low stays at 19–28 fps.
+- GPU time stays at 9–12 ms on Low (4 on Potato) whatever the crowd, so Potato's S4 average clears its 58 fps target; its 1% low doesn't.
 - Prairie's S4 is inflated by churn: the bench car can't drown and circles over lakes, where following goons keep drowning and respawning.
 - Compatibility ran pinned at 16.67 ms despite `--uncapped` (V-Sync forced through ANGLE). It stays a troubleshooting option.
 
@@ -111,8 +107,8 @@ Chunk work (`WORLD_CHUNKS`): fine raster 14–23 ms and recipe 7–12 ms average
 
 ## Still open
 
-- Night crowds: profile the goon physics tick at 150–250 goons (`move_and_slide` on screen, `slideStep`/`lethalAt` off screen, the verbs); consider cheaper off-screen goons or a lower cap on Low and Potato.
-- Native code is available for hot paths the profile finds: a C++ GDExtension in `native/` (docs/NATIVE.md, which lists the candidates: world workers, a batched goon step, the `World` queries).
+- Night crowds above 160 goons: physics is still 10–12 ms per frame on Low, now mostly outside goon script. Next steps: no collision for off-screen goons (they never use it, but they still sit in the broadphase and move every tick), then a lower cap on Low and Potato, then native verbs (docs/NATIVE.md, "What to port next").
+- Load time: the map build is 0.8–1.3 s; `WorldField.sample` is the next native port.
 - Should Low or Potato default to 720p?
 - Unmeasured: 4K (stepped text slices on the titles, ground seams), vsync-on runs, medians of 3 runs.
 - Per-canvas-item 2D light limits are unconfirmed; watch for lights popping near a station at night.

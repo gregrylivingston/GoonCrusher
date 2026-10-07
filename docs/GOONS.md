@@ -10,7 +10,7 @@
 | `scripts/art/goon_gen.js` | The generator: eleven rigs (biped, quad, beast, shell, blob, boulder, cart, scorpion, bird, snake, vehicle) and one design entry of about 15 numbers per goon at the bottom. **Change a goon's look here.** |
 | `scripts/art/bake_goons.html`, `bake_goons.py` | The bake. `python scripts/art/bake_goons.py [id ...]` opens the page in headless Edge and writes each goon's folder. All 44 take about 40 s. |
 | `scene/enemy/goons/<id>/` | Baked output: `art/<id>_<anim><n>.png` (35 frames), `art/<id>_decal.png`, `<id>_frames.tres` and `<id>.tscn`. Don't edit these by hand; re-bake. |
-| `scene/enemy/walker/walker.gd`, `walker.tscn` | `Walker`, the base every goon scene inherits: state, helpers, `tryCrush`, death, night eyes. |
+| `scene/enemy/walker/walker.gd`, `walker.tscn` | `Walker`, the base every goon scene inherits: state, helpers, `tryCrush`, death, night eyes. It extends `Enemy`, which extends the native `GoonBody` (`native/src/goon_body.cpp`): the per-tick fields (`speed`, `turnRate`, `bodyRadius`, `state`, `stateTime`, `cooldown`, `lockPos`, `lockDir`, `myMode`...) and the movement helpers the verbs call (`chase`, `advance`, `faceTo`, `play`, `setState`...) live there (docs/NATIVE.md). |
 | `scene/enemy/goon_verbs.gd` | `GoonVerbs`, the 21 behaviours as small state machines. |
 | `scene/enemy/goon_fx.gd` | `GoonFx`: telegraphs, projectiles, hazards, blasts, tethers, crush decals, bits, labels and delayed drops. |
 | `scene/enemy/spawnManager.gd` | Spawning (single goons, packs, bursts), scene loading, the night flag, crush credit. |
@@ -119,7 +119,7 @@ A resisted hit calls the verb's `onResist`. That usually means `bounceCar`: the 
 Goons read the world through `WorldHooks` (`scripts/world/world_hooks.gd`): O(1) grid reads on the run's `WorldMap`, never physics queries (the function table is in docs/WORLD.md, "Goon and FX hooks").
 
 - **Water:** a solid goon over deep water drowns (`Walker.checkWater`, every 4 ticks); buried, hopping, flying and riding goons are immune until they land. Rules and credit: docs/WORLD.md, "Water".
-- **Off screen** goons move without collision through `WorldHooks.slideStep`, which treats water as blocked, so none drowns unseen. On screen, `move_and_slide` handles walls.
+- **Off screen** goons move without collision through `WorldHooks.slideStep` (natively, in `GoonBody.advance`), which treats water as blocked, so none drowns unseen. On screen, `move_and_slide` handles walls, in floating mode (top-down, like the car).
 - **Stuck:** a goon pressing a wall on screen and getting nowhere for 4 s (`Walker.isStuck`) is freed by the despawn sweep once it is off screen, whatever its distance. Defense keeps every goon near the station.
 - **Spawns:** spawn points must be `World.spawnableAt` (3 tries in `spawner.gd`); pack members that would land on water start at the pack's spot. Snappers spawn by a log prop and the Rat Pack out of a manhole when one is within 1,500 px of the spot and at least 1,600 px from the car (`SpawnManager.preferredSpot`).
 - **Props:** `SpawnManager.onNodeAdded` tags props as they stream in (`BreakableProp.tag`): `prop_log`, `prop_manhole`, `prop_crate` (Bandit bait: the Bandit breaks a crate open and steals what spills), `prop_carcass` (Buzzard perches, like crush decals) and `prop_explosive`.

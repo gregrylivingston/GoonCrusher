@@ -53,7 +53,7 @@ Re-run the crowd benchmarks (S3, S4 in `PERFORMANCE.md`) after packages 1, 3 and
   - AI skips pickups near deep water (`waterTargetPx`): allow them at low approach speed. S.
   - Highway edges look blobby: a crisper border for road surfaces, or a kerb line. S.
   - Landmark beacons glow by day: fade them with the level's CanvasModulate. S.
-  - World build speed (1.3–2.9 s map, 4–13 ms recipes, all GDScript): port the hot loops to a GDExtension, keeping the GDScript as the reference the tests compare against. M–L.
+  - World build speed (0.8–1.3 s map after the native crossings, 7–12 ms recipes): port `WorldField.sample` and the remaining coarse passes (docs/NATIVE.md, "What to port next"), keeping the GDScript as the reference the tests compare against. M–L.
 
 ### Package 2: Crush feel
 - **T1-12.** A goon contact calls `damage(5)` before the speed check, so a crush costs health; giants set `scale = Vector2(1.6, 1.6)` instead of multiplying; no camera shake, hit-stop or corpse fling. Proposal: damage only on non-crush contact, multiply the giant scale, trauma camera shake (respecting Reduce Motion) and 30–50 ms hit-stop on giant crushes. S–M.
