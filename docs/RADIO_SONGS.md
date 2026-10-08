@@ -7,7 +7,7 @@ The song book for GoonCrusher Radio: the house style, every song's lyrics and th
 Fast, loud, funny songs about driving and crushing goons, sung completely straight. The joke is the commitment: a real band with real chops singing about goon goo on the windshield.
 
 - **Default sound:** 2000s punk rock, 160–180 BPM, distorted guitars, punchy live drums, shout-along gang vocals, a short guitar solo, polished video-game-soundtrack production. Every song should feel good at full throttle.
-- **Vary within it:** not every song should be the same punk song. Good neighbours: pop-punk, skate punk, garage rock, Southern garage punk (My Baby Loves My Truck), surf rock, rockabilly, ska-punk, metal parody, trucker country, 80s arena rock. Vary the subject too: a love song, a road song, an anthem. Keep the energy high; no ballads unless the joke is that it's a ballad.
+- **Vary within it:** not every song should be the same punk song. Good neighbours: pop-punk, skate punk, garage rock, Southern garage punk (My Baby Loves My Truck), surf rock, rockabilly, ska-punk, metal parody, trucker country, 80s arena rock. Vary the subject too: a love song, a road song, an anthem, a small-town song. Keep the energy high: one mid-tempo breather in the set (Welcome to Nowhere, 135 BPM) is plenty, and no ballads unless the joke is that it's a ballad.
 - **Subject matter:** the car (full tank, dents, busted lights, bald tyres), the road and its goons, splatter and wipers, never braking, the world's places and goons (see the writing brief in `docs/RADIO.md`). First person, the driver as the hero.
 - **Shape:** short verses, a chorus with a shoutable hook that names the song, a bridge that builds to a chant. 2:30–3:30.
 - **Keep it clean:** cartoon violence only (crush, splat, goo), no swearing, no real brands, people or songs.
@@ -33,6 +33,7 @@ Fast, chaotic 2000s-style punk rock, aggressive distorted electric guitars, punc
 | My Baby Loves My Truck | `sound/radio/gooncrusher/songs/My Baby Loves My Truck.ogg` | 3:15 | Southern pop-punk / garage punk love song, 160 BPM |
 | Cheap Beer, Premium Gas | `sound/radio/gooncrusher/songs/Cheap Beer, Premium Gas.ogg` | 2:59 | blue-collar weekend punk (prompt not recorded) |
 | Trailer Park Superstar | `sound/radio/gooncrusher/songs/Trailer Park Superstar.ogg` | 3:21 | brag song, demolition-derby rock (prompt not recorded) |
+| Welcome to Nowhere | `sound/radio/gooncrusher/songs/Welcome to Nowhere.ogg` | 3:23 | heartland punk, 135 BPM: the slower song |
 
 ### Crush Hour
 
@@ -560,11 +561,88 @@ I got six trophies painted onto the hood
 
 **Note:** "Hell, the whole damn county" and the drinking in verse 3 (parked, not driving) add to the language and alcohol tally for the content survey. "West Tennessee" is the station's first real-world place; the game's own places (Rust City, Snapper Bayou...) could stand in if the radio should stay inside the game's world.
 
+### Welcome to Nowhere
+
+The station's breather: a mid-tempo small-town song where having nowhere to go turns out to feel like freedom. Its "where we drive real slow" is a deliberate counterpoint to the rest of the set.
+
+**Style:**
+
+```
+Melodic early-2000s Southern punk / heartland punk rock, around 135 BPM. Warm crunchy electric guitars with jangly melodic leads, steady driving bass, live drums with a relaxed groove, slightly raspy male vocals, and a big emotional sing-along chorus. Starts understated and gradually builds. Nostalgic small-town Americana atmosphere: empty main streets, old diners, gas stations, Friday night football, pickup trucks, neon signs and endless quiet roads. Sincere without becoming sentimental or country-ballad-like. Include a short melodic guitar instrumental and a stripped-down breakdown before an uplifting final chorus. The narrator discovers that having nowhere to go can actually feel like freedom. Gritty garage-punk character, natural live-band feel, polished video-game soundtrack production. No metal, no emo, no modern pop, no glossy arena rock, no country ballad.
+```
+
+**Lyrics:**
+
+```
+[Verse 1]
+Population eight hundred and two
+One gas station and a barbecue
+Main Street closes at half past nine
+There's nothing happening and that's just fine
+
+One old diner, one flashing sign
+Same three trucks parked there every night
+Everybody knows everybody's name
+Nothing ever happens and nobody complains
+
+[Verse 2]
+I came here running from the city lights
+Thought I'd stay a week, maybe just one night
+But the road got quiet and the sky got wide
+And nobody cared where I'd been or asked why
+
+There's an old man sitting outside the country store
+He's been sitting there since nineteen eighty-four
+He waved at me like we'd been friends for years
+I pulled up beside him and bought him a beer
+
+[Chorus]
+Welcome to Nowhere
+We got nowhere to go, nowhere to be
+Come for a slow drive and you'll see
+Welcome to Nowhere
+
+There's nowhere to go
+Welcome to Nowhere
+Where we drive real slow
+
+[Instrumental Break Slow jangly guitar riff]
+
+[Verse 3]
+There's a Friday night game at the high school field
+Everybody's there, keeping it real
+Kids in the bleachers, trucks in a line
+Everybody's watching the game tonight
+
+The diner stays open late till a quarter past ten
+Then everybody heads home again
+Tomorrow morning it'll all be the same
+Thats just great, theres no one to complain
+
+[Chorus]
+Welcome to Nowhere
+We got nowhere to go, nowhere to be
+Come for a slow drive and you'll see
+Welcome to Nowhere
+
+There's nowhere to go
+Welcome to Nowhere
+Where we drive real slow
+
+[Outro]
+Population eight hundred and two
+One gas station and a barbecue
+```
+
+**Processing:** −15.7 → −16.1 LUFS (true peak −4.5 dBTP), no tail silence to trim.
+
+**Note:** the cleanest song on the station so far (one passing beer). It would also suit the menus, if the radio ever picks songs by context.
+
 ## Ideas for the next songs
 
 Each needs lyrics, then a style prompt from the template above.
 
-- **Goonling Lullaby (Don't Cross the Road):** the variation song. A slow country waltz with pedal steel, sung deadpan by a goon parent warning their kid about the road ("Your uncle tried it Tuesday / Now he's a puddle on the overpass"). It breaks the tempo on purpose, so play it rarely: one in the set, never two slow songs.
+- **Goonling Lullaby (Don't Cross the Road):** the variation song. A slow country waltz with pedal steel, sung deadpan by a goon parent warning their kid about the road ("Your uncle tried it Tuesday / Now he's a puddle on the overpass"). It breaks the tempo on purpose; Welcome to Nowhere already fills the slower slot, so this would make two, which is the limit.
 - **Route Nowhere:** surf rock with twangy reverb guitar; a road with no end and no brakes.
 - **Hubcap Rodeo:** rockabilly; the Scrap Gang's wheels as rodeo bulls.
 - **Pit Stop Romance:** ska-punk; falling for the Pit Shop mechanic between legs of a Marathon.
