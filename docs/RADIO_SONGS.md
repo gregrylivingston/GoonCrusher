@@ -35,6 +35,7 @@ Fast, chaotic 2000s-style punk rock, aggressive distorted electric guitars, punc
 | Trailer Park Superstar | `sound/radio/gooncrusher/songs/Trailer Park Superstar.ogg` | 3:21 | brag song, demolition-derby rock (prompt not recorded) |
 | Welcome to Nowhere | `sound/radio/gooncrusher/songs/Welcome to Nowhere.ogg` | 3:23 | heartland punk, 135 BPM: the slower song |
 | Gas Station Romance | `sound/radio/gooncrusher/songs/Gas Station Romance.ogg` | 3:16 | Southern punk / garage rock love song, 145 BPM |
+| She Left Me at the Truck Stop | `sound/radio/gooncrusher/songs/She Left Me at the Truck Stop.ogg` | 2:31 | country-punk heartbreak, 155 BPM |
 
 ### Crush Hour
 
@@ -713,6 +714,81 @@ Lets keep cruising its what we do
 **Processing:** −15.4 → −16.1 LUFS (true peak −3.7 dBTP), no tail silence to trim.
 
 **Note:** "Texaco" is a real brand (the house style says none). A song naming a gas station chain in passing is probably harmless, but the safe fix is a re-take with an invented name ("the Gas-N-Go"), which also fits the game's own stations. "Buying cigarettes" adds a tobacco reference to the content survey.
+
+### She Left Me at the Truck Stop
+
+The breakup song, and the other half of Gas Station Romance: she takes his money, his jacket and his truck. Country-punk with the heartbreak played for laughs. The shortest song on the station.
+
+**Style:**
+
+```
+Fast-ish country-punk / Southern garage rock, around 155 BPM. Twangy distorted electric guitar, crunchy rhythm guitar, driving bass, punchy live drums, slightly nasal/raspy male vocals, catchy bittersweet chorus. Roadside heartbreak with humor underneath genuine frustration. Occasional country-rock guitar fills but fundamentally punk. Build from restrained verses into a loud chorus, short twangy guitar break, comedic spoken ending. Gritty early-2000s production, no polished country-pop, no emo, no ballad.
+```
+
+**Lyrics:**
+
+```
+[Verse 1]
+She said she needed money for the road
+I lent her twenty and let her wear my coat
+She said she'd be right back had to make a call
+Then she snuck out and she took my truck
+
+I watched her disappear beneath the sign
+She didn't even wave or say a goodbye
+I stood there with a coffee in my hand
+Trying to figure out where I went wrong again
+
+[Chorus]
+She left me at the truck stop
+Somewhere outside of town
+She took my money my jacket and my keys
+And she never turned around
+
+She left me at the truck stop
+Underneath the neon light
+Now I'm drinking bad coffee
+Tryna to make it through the night
+
+[Verse 2]
+I asked the waitress if she'd seen her go
+She said, "Oh Honey, I don't know"
+I said, "I hope she comes back"
+She said, "They never do and that's a fact"
+
+I must be crazy still wanna try my luck
+Even though my phones dead and I lost my truck
+I can't stop thinking bout the way she moves
+Losing all of that is killing my mood
+
+[Chorus]
+She left me at the truck stop
+Somewhere outside of town
+She took my money my jacket and my keys
+And she never turned around
+
+She left me at the truck stop
+Underneath the neon light
+Now I'm drinking bad coffee
+Tryna to make it through the night
+
+[Instrumental / Guitar Break]
+
+[Final Chorus]
+She left me at the truck stop
+Somewhere outside of town
+She took my money my jacket and my keys
+And she never turned around
+
+She left me at the truck stop
+Underneath the neon light
+Now I'm drinking bad coffee
+Tryna to make it through the night
+```
+
+**Processing:** already at −16.1 LUFS (true peak −3.8 dBTP), no tail silence to trim. Suno's download was named "She Left Me at the Truck.mp3"; the file in the game uses the full title.
+
+**Note:** clean: bad coffee is the strongest drink in it.
 
 ## Ideas for the next songs
 
