@@ -112,7 +112,7 @@ A resisted hit calls the verb's `onResist`. That usually means `bounceCar`: the 
 
 **Death** (`destroy(cause)`):
 - **Causes:** `crush`, `boom` (killed by a blast), `self` (blew itself up) and `drown` (a splash ring, no decal).
-- **What it leaves** (`GoonFx.crushed`): a pooled crush decal with a tyre print along the car's heading, bits sprayed along the hit, goo spatter, death sounds (a giant's are pitched down), and the old Clover-based pickup chance. The node frees at once. See "Crush feel" below for the squash and fling.
+- **What it leaves** (`GoonFx.crushed`): a pooled crush decal with a tyre print along the car's heading, bits sprayed along the hit, goo spatter, death sounds (a giant's are pitched down; only for crushes and blasts within `DEATH_SOUND_RANGE` of the car, never drownings or self-destructs), and the old Clover-based pickup chance. The node frees at once. See "Crush feel" below for the squash and fling.
 - **Credit:** goons killed by blasts or a kicked shell count as crushes (`SpawnManager.creditCrush`). So does a goon that drowns within 3 s of the car touching it (a crush try, a bump, a lunge that hit, or the car alongside it), with a "SPLASH" label.
 
 ## Crush feel

@@ -36,7 +36,8 @@ Suggestions to discuss, not a spec; the author runs gameplay as a separate proje
 - **W-1** Run-wide waves: one wave clock for the whole run (`Region.wave`), a star and a wave chest every 60 s with no cap, the spawner's goon mix from the run's wave; districts only decide who spawns; the AI no longer hunts districts for stars (docs/WORLD.md).
 - **N-1** Pickup name tags (`Pickups.shortName`) on the gadget and boost boxes, new power-up rings, slot reels, the Scratch Card, the Claw Crane and the Vault (docs/PICKUPS.md, "Name tags").
 - **Package 16 (G-1 to G-4)** Gift boxes: crush XP by goon rank, giants, bosses, combo, style and night; box *n* needs 50 n² XP; Cardboard to Diamond tiers; six prize games weakest first (Claw Crane, Scratch Card, Prize Wheel, The Deal, Slot Machine, the new Vault), only the Claw open on a new save; better versions in higher boxes; no star per box; `--prize=` for testing (docs/PICKUPS.md, "Gift boxes").
-- **R-1 (code)** Radio: three stations scanned from `sound/radio/` (shuffle bags, crossfades, idents, talk and ads between songs, lazy threaded loads), picked in the pause menu and Settings, a now-playing card in the HUD and menu, music ducking under the Voice bus (docs/RADIO.md). Songs in: *Crush Hour*, *Gooncrusher*, *Full Tank, Empty Head*, *My Baby Loves My Truck*, *Cheap Beer, Premium Gas*, *Trailer Park Superstar*, *Welcome to Nowhere*, *Gas Station Romance*, *She Left Me at the Truck Stop* (docs/RADIO_SONGS.md).
+- **R-1 (code)** Radio: three stations scanned from `sound/radio/` (shuffle bags, crossfades, idents, talk and ads between songs, lazy threaded loads), picked in the pause menu and Settings, a now-playing card in the HUD and menu, music ducking under the Voice bus (docs/RADIO.md). Songs in: *Crush Hour*, *Gooncrusher*, *Full Tank, Empty Head*, *My Baby Loves My Truck*, *Cheap Beer, Premium Gas*, *Trailer Park Superstar*, *Welcome to Nowhere*, *Gas Station Romance*, *She Left Me at the Truck Stop* (docs/RADIO_SONGS.md); seven ads, twelve Dee Jay Crush talk segments and nine idents (docs/RADIO_SEGMENTS.md).
+- **Polish (2026-10-08)** An icon per game mode on the run setup medallions and Goonopedia tiles (`HudTheme.MODE_ICONS`). A mix pass: every sound effect on the FX or UI bus, the goon crush far quieter and only for crushes and blasts near the car (drownings and self-destructs anywhere on the map used to play it), the music 2 dB up and a gentler duck under the Voice bus. Removed: the level-start bell, the win jingle, all slot machine sounds but the reel clank, and 20 unused sound files (the slot machine set and ten never referenced). The results ticket wraps its Unlocked names and footer note instead of running off the screen (docs/RADIO.md "Mix", docs/UI.md).
 - **Tier 3** Shallows, fords and bridges; most of a daily seeded run (the map and its contents come from the world seed).
 
 ## Work packages, in order
@@ -157,7 +158,8 @@ Built (2026-10-08, "Done" above; docs/WORLD.md "Props and decor", "Interactive p
 
 ### Package 8: Sound and radio
 - **T1-13.** A `VoiceDirector`: priorities (warning > win > record > jackpot > giant > award > region), a ~5 s cooldown, no repeats in the last 3 lines, subtitles. S.
-- **T1-14.** Menu music, ducking under voice, stingers. S plus licensing.
+- **T1-14.** *Mostly covered by R-1:* the radio plays in the menus and runs, and ducks under the Voice bus. Stingers were dropped (2026-10-08): the level-start bell, win jingle and slot machine sounds clashed with the songs and are gone. Any new cue should be short and not tonal.
+- **Mix follow-ups (2026-10-08).** Listen to the new mix in play (docs/RADIO.md "Mix"). Still tonal and maybe clashing with the songs: the glockenspiel chime on every pickup and reward flyer (`short-success-sound-glockenspie.mp3`), the results ticket's impact on a loss and on stamps (`halloween-impact`, now -4 dB), and the wolf howl at nightfall. The goon death sounds are the old shared set for every goon (docs/GOONS.md). S.
 - **R-1. Radio stations.** The code is done (above, docs/RADIO.md). Left: more in-house tracks (GoonCrusher Radio has 9 songs (about 28 minutes, past the 8 to ship), seven ads, twelve DJ talk segments and nine idents, docs/RADIO_SEGMENTS.md; Classical Lofi and Lofi have none and stay hidden until they do; docs/RADIO.md part 1 and docs/RADIO_SONGS.md), then a listening pass on crossfade lengths, segment odds and the ducking depth. Stations could become unlocks (package 12, `Radio.isStationOpen`).
 
 ### Package 15: Cosmetics
@@ -203,6 +205,7 @@ Built (2026-10-08, "Done" above; docs/WORLD.md "Props and decor", "Interactive p
 - Cosmetics cost coins or gems.
 - Tree canopies may hide goons beneath them.
 - The two-wheel tilt is style only; cars never tip over.
+- No jingles or stingers over the radio: the music plays straight through a run's start, its prize games and its results (2026-10-08).
 - Radio: three stations of in-house tracks: GoonCrusher Radio (funny vocal tracks and radio talk), Classical Lofi and Lofi. Changed in the pause menu and Settings, no driving key. Talk is not contextual (no night, level or event lines).
 
 ## Open questions for the author
