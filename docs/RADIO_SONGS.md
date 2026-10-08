@@ -11,6 +11,8 @@ Fast, loud, funny songs about driving and crushing goons, sung completely straig
 - **Subject matter:** the car (full tank, dents, busted lights, bald tyres), the road and its goons, splatter and wipers, never braking, the world's places and goons (see the writing brief in `docs/RADIO.md`). First person, the driver as the hero.
 - **Shape:** short verses, a chorus with a shoutable hook that names the song, a bridge that builds to a chant. 2:30–3:30.
 - **Keep it clean:** cartoon violence only (crush, splat, goo), no swearing, no real brands, people or songs.
+- **Recurring motifs** (they make the station feel like one band): the full tank of gas, the cracked windshield and busted-up light, four good (or bald) tires, goon goo on the glass, never hitting the brakes. Reuse them, but give each song its own hook.
+- **Record the prompt:** paste each song's Suno style prompt into its entry below when you add it, so a good sound can be found again.
 - **Suno tips:** ask for a clean ending (no fade; the game crossfades). Keep the style prompt to one paragraph of comma-separated tags, like Crush Hour's below. Generate a few takes and keep the one whose chorus hits hardest.
 
 ### Style prompt template
@@ -26,6 +28,8 @@ Fast, chaotic 2000s-style punk rock, aggressive distorted electric guitars, punc
 | Song | File | Length | Style |
 |---|---|---|---|
 | Crush Hour | `sound/radio/gooncrusher/songs/Crush Hour.ogg` | 2:57 | 2000s punk, 170 BPM |
+| Gooncrusher | `sound/radio/gooncrusher/songs/Gooncrusher.ogg` | 3:11 | punk anthem (prompt not recorded) |
+| Full Tank, Empty Head | `sound/radio/gooncrusher/songs/Full Tank, Empty Head.ogg` | 3:06 | punk road song (prompt not recorded) |
 
 ### Crush Hour
 
@@ -88,6 +92,204 @@ Lets take a drive its, crush hour
 ```
 
 **Processing:** the Suno mp3 measured −14.7 LUFS; it went in at −16.2 LUFS (true peak −2.9 dBTP), 48 kHz Vorbis q5, with the last half second of silence trimmed.
+
+### Gooncrusher
+
+The title song: a chant-along anthem with a "ONE! TWO! THREE!" count-in to the chorus.
+
+**Style:** not recorded. If you still have it, paste it here; otherwise start from the house template.
+
+**Lyrics:**
+
+```
+[Verse 1]
+Steel on the bumper and my foot on the floor
+See a goon up ahead and I'm asking for more
+They thought they could stop me, they thought they were tough
+But I crushed those goons into gooey stuff
+
+Got a big V8 and a mean attitude
+Four bald tires and a really bad mood
+You can run to the left, you can run to the right
+But you're gonna get crushed if you're caught in my sight
+
+[Pre-Chorus]
+Hear that engine roar
+Hear those tires scream
+See those goons ahead
+You know what that means
+
+ONE! TWO! THREE!
+
+[Chorus]
+GOONCRUSHER!
+Born to run 'em down
+GOONCRUSHER!
+King of this town
+Four wheels turning round
+Goons up ahead, gonna run them down
+GOONCRUSHER!
+CRUSH 'EM INTO THE GROUND!
+
+[Verse 2]
+Got a cracked windshield and a busted-up light
+Got a trail of goon goo stretching out of sight
+There's a barricade waiting at the end of the street
+But I got four good tires and two lead feet
+
+They put up a wall, they put up a gate
+They should've figured out they were running too late
+I don't need a weapon, I don't need a plan
+Just a full tank of gas and a two-ton sedan
+
+[Pre-Chorus]
+Hear that engine roar
+Hear those tires scream
+See those goons ahead
+You know what that means
+
+ONE! TWO! THREE!
+
+[Chorus]
+GOONCRUSHER!
+Born to run 'em down
+GOONCRUSHER!
+King of this town
+Four wheels turning round
+Goons up ahead, gonna run them down
+GOONCRUSHER!
+CRUSH 'EM INTO THE GROUND!
+
+[Bridge]
+I don't want your money
+I don't want your gold
+I don't want your story
+I don't need to be told
+
+If you're standing in the road
+Then you're standing in my way
+And if you're standing in my way
+YOU'RE HAVING A REALLY BAD DAY!
+
+[Final Chorus]
+GOONCRUSHER!
+Born to run 'em down
+GOONCRUSHER!
+King of this town
+Four wheels turning round
+Goons up ahead, gonna run them down
+GOONCRUSHER!
+CRUSH 'EM INTO THE GROUND!
+
+GOONCRUSHER!
+Never gonna stop
+GOONCRUSHER!
+Pedal to the top
+Steel on the bumper
+Rubber on the ground
+GOONCRUSHER!
+RUN 'EM ALL DOWN!
+```
+
+**Processing:** −14.8 → −16.1 LUFS (true peak −4.9 dBTP), no tail silence to trim.
+
+### Full Tank, Empty Head
+
+The aimless night-drive song, with a call-and-response gang chant after the solo.
+
+**Style:** not recorded. If you still have it, paste it here; otherwise start from the house template.
+
+**Lyrics:**
+
+```
+[Verse 1]
+Don't know where I'm going, don't know where I was
+All I know is crushing goons and slipping the fuzz
+Twenty bucks in my pocket and a dashboard light
+I got nowhere to be and I got all damn night
+
+Got a half-dead phone and a quarter tank gauge
+Got a busted-up bumper and a real bad rage
+There's a highway ahead and a moon overhead
+I got four wheels rolling and nothing in my head
+
+[Pre-Chorus]
+So turn it up loud
+Let the whole crowd hear
+I'm driving nowhere
+But I'm getting out of here.
+
+[Chorus]
+Full tank, empty head
+Don't know where I'm going and I don't care where I end
+Full tank, empty head
+Turn the radio up and forget what you said
+Full tank, empty head
+Got a little bit of money and a lot of road ahead
+
+[Verse 2]
+Passed the same old diner three times tonight
+Saw a cop in the mirror so I killed the lights
+He turned left, I turned right,
+now I'm back on the road in the middle of the night
+
+There's a goon in the road and he's looking confused
+Buddy picked the wrong night to be in those shoes
+I hit the horn twice and I gave him a wave
+Then I hit the gas and I sent him to his grave
+
+[Pre-Chorus]
+So turn it up loud
+Let the whole crowd hear
+I'm driving nowhere
+But I'm getting out of here.
+
+[Chorus]
+Full tank, empty head
+Don't know where I'm going and I don't care where I end
+Full tank, empty head
+Turn the radio up and forget what you said
+Full tank, empty head
+Got a little bit of money and a lot of road ahead
+
+[Bridge]
+Maybe I'll go right
+Maybe I'll go left
+Maybe I'll keep driving
+Till there's no gas left
+Maybe I'll get lost
+Maybe that's the plan
+I can't read a map
+So I hope you understand
+
+[Instrumental Break / Guitar Solo]
+
+[Gang Vocals]
+WHERE WE GOING?
+DON'T KNOW!
+WHEN WE GET THERE?
+DON'T KNOW!
+WHAT WE DOING?
+GO! GO! GO!
+
+[Chorus]
+Full tank, empty head
+Don't know where I'm going and I don't care where I end
+Full tank, empty head
+Turn the radio up and forget what you said
+Full tank, empty head
+Got a little bit of money and a lot of road ahead
+
+[Pre-Chorus]
+So turn it up loud
+Let the whole crowd hear
+I'm driving nowhere
+But I'm getting out of here.
+```
+
+**Processing:** −16.3 → −16.1 LUFS (true peak −5.1 dBTP), no tail silence to trim.
+
+**Note:** "all damn night" is the one mild swear on the station so far (the house style says no swearing). Your call whether it stays.
 
 ## Ideas for the next songs
 

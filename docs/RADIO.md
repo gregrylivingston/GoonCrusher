@@ -18,7 +18,7 @@ This file has two halves: **for the audio author** (what to make, how to name an
 
 The default for a new save is **GoonCrusher Radio**. A station with no songs yet is hidden from the pickers, so Classical Lofi and Lofi appear once their first songs go in.
 
-**Songs so far** (lyrics, style prompts and ideas for more: `docs/RADIO_SONGS.md`): GoonCrusher Radio has *Crush Hour*. No idents, talk or ads yet, so it plays songs back to back.
+**Songs so far** (lyrics, style prompts and ideas for more: `docs/RADIO_SONGS.md`): GoonCrusher Radio has *Crush Hour*, *Gooncrusher* and *Full Tank, Empty Head*. No idents, talk or ads yet, so it plays songs back to back.
 
 ### Folder layout
 
@@ -138,7 +138,7 @@ Music only. Idents are optional and gentle: a soft voice ("Classical Lofi") or a
 ### Adding a song
 
 1. Make it in Suno from lyrics and a style prompt (`docs/RADIO_SONGS.md` has the house style and template).
-2. Bring it to −16 LUFS, true peak ≤ −1 dBTP, and save it as `.ogg` named `Title.ogg` or `Title - Artist.ogg` (e.g. `ffmpeg -i in.mp3 -af loudnorm=I=-16:TP=-1 -c:a libvorbis -q:a 5 "Title.ogg"`; a two-pass loudnorm is more exact).
+2. Run `python scripts/audio/prep_radio_track.py "<Title>.mp3" sound/radio/<station>/songs` (needs ffmpeg). It normalises to −16 LUFS / −1 dBTP in two passes, trims silence at the end and writes 48 kHz Ogg named after the source (`Title.ogg`, or `Title - Artist.ogg`; `--name` renames). Use `--quality 3` for idents, talk and ads.
 3. Drop it in the station's `songs/` folder and open the project in Godot so it imports (that writes the `.import` file to commit beside it).
 4. Add its lyrics and style prompt to `docs/RADIO_SONGS.md`.
 

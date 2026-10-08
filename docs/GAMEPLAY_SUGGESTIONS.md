@@ -29,7 +29,7 @@ Suggestions to discuss, not a spec; the author runs gameplay as a separate proje
 - **Driving controls** Handbrake powerslide (Space / RB, shaped per car by its stats; a held slide charges a drift boost, blue then orange sparks, fired on release; the tail and flanks slam goons), a second held slot for boosts (Shift / LB: Nitro as 2 stored burns, the new Hop, Jump Jets), gadgets on E / X; settings v2 migrates saved bindings (CLAUDE.md, docs/PICKUPS.md). Run setup sells a starting gadget and boost for gems.
 - **Menu juice** Garage shutter, hatch and tire-smoke transitions, and a mouse pass so every menu works with the mouse alone (docs/UI.md, "Transitions"; test checklist in docs/TEST_SCOPE_TRANSITIONS.md).
 - **Career playtests** Three personas play the whole game through the real menus (docs/AI_DRIVER.md).
-- **R-1 (code)** Radio: three stations scanned from `sound/radio/` (shuffle bags, crossfades, idents, talk and ads between songs, lazy threaded loads), picked in the pause menu and Settings, a now-playing card in the HUD and menu, music ducking under the Voice bus (docs/RADIO.md). First song in: *Crush Hour* (docs/RADIO_SONGS.md).
+- **R-1 (code)** Radio: three stations scanned from `sound/radio/` (shuffle bags, crossfades, idents, talk and ads between songs, lazy threaded loads), picked in the pause menu and Settings, a now-playing card in the HUD and menu, music ducking under the Voice bus (docs/RADIO.md). Songs in: *Crush Hour*, *Gooncrusher*, *Full Tank, Empty Head* (docs/RADIO_SONGS.md).
 - **Tier 3** Shallows, fords and bridges; most of a daily seeded run (the map and its contents come from the world seed).
 
 ## Work packages, in order
@@ -151,7 +151,7 @@ Driving should be the most fun part. The handbrake, drift boost, slams and crush
 ### Package 8: Sound and radio
 - **T1-13.** A `VoiceDirector`: priorities (warning > win > record > jackpot > giant > award > region), a ~5 s cooldown, no repeats in the last 3 lines, subtitles. S.
 - **T1-14.** Menu music, ducking under voice, stingers. S plus licensing.
-- **R-1. Radio stations.** The code is done (above, docs/RADIO.md). Left: more in-house tracks (GoonCrusher Radio has 1 of the 8 songs to ship and no idents, talk or ads yet; Classical Lofi and Lofi have none and stay hidden until they do; docs/RADIO.md part 1 and docs/RADIO_SONGS.md), then a listening pass on crossfade lengths, segment odds and the ducking depth. Stations could become unlocks (package 12, `Radio.isStationOpen`).
+- **R-1. Radio stations.** The code is done (above, docs/RADIO.md). Left: more in-house tracks (GoonCrusher Radio has 3 of the 8 songs to ship and no idents, talk or ads yet; Classical Lofi and Lofi have none and stay hidden until they do; docs/RADIO.md part 1 and docs/RADIO_SONGS.md), then a listening pass on crossfade lengths, segment odds and the ducking depth. Stations could become unlocks (package 12, `Radio.isStationOpen`).
 
 ### Package 15: Cosmetics
 - **C-1.** Unlockable looks that never change stats: paint jobs and liveries per car (look C "Showroom" is already a whole-car paint, docs/CAR_ART.md), decals and numbers, tyre-smoke and drift-spark colours, horns, a boost-flame colour, and driver outfits on the card portrait. Generated with `car_gen.js` (never painted by hand), chosen on the driver card, bought with coins or gems, or earned from medals and achievements through the unlock registry (package 12). Saved per car in `meta.cosmetics`. M.
