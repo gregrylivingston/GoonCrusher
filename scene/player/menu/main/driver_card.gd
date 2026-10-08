@@ -59,6 +59,7 @@ var portrait := TextureRect.new()
 var band := ColorRect.new()
 var nameLabel := Label.new()
 var infoLabel := Label.new()
+var priceLine := Control.new() #a locked driver's price, as numbers and symbols, under the car type
 var stats := Control.new()       #holds both stat layouts
 var compact := GridContainer.new()
 var sheet := VBoxContainer.new()
@@ -101,6 +102,10 @@ func _ready() -> void:
 	infoLabel.position = Vector2(0, ART_HEIGHT + BAND_HEIGHT + 24)
 	infoLabel.size = Vector2(SIZE.x, 40)
 	add_child(infoLabel)
+	priceLine.position = Vector2(0, ART_HEIGHT + BAND_HEIGHT + 68)
+	priceLine.size = Vector2(SIZE.x, 36)
+	priceLine.mouse_filter = MOUSE_FILTER_IGNORE
+	add_child(priceLine)
 
 	stats.mouse_filter = MOUSE_FILTER_IGNORE
 	stats.size = SIZE
@@ -131,7 +136,7 @@ func _ready() -> void:
 	mainButton.add_theme_font_size_override("font_size", 24)
 	mainButton.pressed.connect(onMainPressed)
 	actions.add_child(mainButton)
-	upgradeButton = MenuTheme.button("Upgrade", PackedStringArray(["ui_upgrade"]))
+	upgradeButton = MenuTheme.button("Upgrade", PackedStringArray(["ui_upgrade"]), false, preload("res://texture/icon/upgrade.svg"))
 	upgradeButton.custom_minimum_size = Vector2(168, 52)
 	upgradeButton.add_theme_font_size_override("font_size", 18)
 	upgradeButton.pressed.connect(func(): upgradePressed.emit(-1))
@@ -255,25 +260,35 @@ func refresh() -> void:
 	portrait.modulate = Color(0, 0, 0, 0.88) if locked else Color.WHITE
 	nameLabel.text = info.charName.to_upper()
 	var type = info.carId.capitalize()
-	if demoLocked: infoLabel.text = "Not in the demo"
-	elif car.cost != 0: infoLabel.text = "%s  -  %s" % [type, Unlocks.priceText(Unlocks.price("car:" + str(car.name)))]
-	else: infoLabel.text = type
+	infoLabel.text = "Not in the demo" if demoLocked else type
 	stats.visible = focused && not locked
 	infoLabel.visible = not stats.visible
+	for child in priceLine.get_children():
+		priceLine.remove_child(child)
+		child.queue_free()
+	var cost := Unlocks.price("car:" + str(car.name))
+	if car.cost != 0 && not demoLocked: #"10,000 (coin)  5 (gem)", gold when the bank covers it
+		var row := MenuTheme.symbolRow([HudTheme.LOCK_ICON, "  ", cost], 26, HudTheme.GOLD if Unlocks.canAfford("car:" + str(car.name)) else MenuTheme.BODY_TEXT)
+		row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		priceLine.add_child(row)
+	priceLine.visible = infoLabel.visible
 	actions.visible = focused
 	upgradeButton.visible = not locked
 	upgradeButton.text = "Done" if upgrading else "Upgrade"
+	var oldParts = mainButton.get_node_or_null("parts")
+	if oldParts:
+		mainButton.remove_child(oldParts)
+		oldParts.queue_free()
 	if demoLocked:
 		mainButton.text = "NOT IN DEMO"
 		mainButton.disabled = true
-	elif car.cost != 0: #entry cars cost coins; advanced ones coins and gems (Unlocks.price)
-		var gems: int = car.get("gems", 0)
-		var short: int = car.cost - SaveManager.playerData.coin
-		var shortGems: int = gems - SaveManager.playerData.gem
-		if short <= 0 && shortGems <= 0: mainButton.text = "UNLOCK  %s" % formatCoins(car.cost) + ("  +%d GEMS" % gems if gems > 0 else "")
-		elif short > 0: mainButton.text = "NEED %s MORE" % formatCoins(short) + ("  +%d GEMS" % shortGems if shortGems > 0 else "")
-		else: mainButton.text = "NEED %d MORE GEM%s" % [shortGems, "" if shortGems == 1 else "S"]
-		mainButton.disabled = short > 0 || shortGems > 0
+	elif car.cost != 0: #entry cars cost coins; advanced ones coins and gems (Unlocks.price); the price is shown above
+		var short := {}
+		if car.cost > SaveManager.playerData.coin: short.coin = car.cost - SaveManager.playerData.coin
+		if int(car.get("gems", 0)) > SaveManager.playerData.gem: short.gem = int(car.gems) - SaveManager.playerData.gem
+		mainButton.disabled = not short.is_empty()
+		if short.is_empty(): mainButton.text = "UNLOCK"
+		else: MenuTheme.setButtonParts(mainButton, ["NEED", short, "MORE"], 20)
 	else:
 		mainButton.text = "DRIVE"
 		mainButton.disabled = false
@@ -322,7 +337,7 @@ func showBuy(row: Button, isFocused: bool) -> void:
 		buy.set_anchors_and_offsets_preset(Control.PRESET_CENTER_RIGHT, Control.PRESET_MODE_MINSIZE)
 	holder.custom_minimum_size.x = maxf(PRICE_WIDTH, buy.get_combined_minimum_size().x) if on else PRICE_WIDTH
 
-#"BUY (coin) 504" on the orange of the primary button
+#"BUY 504 (coin)" on the orange of the primary button
 static func buyChip(price: String) -> PanelContainer:
 	var chipPanel = PanelContainer.new()
 	chipPanel.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -330,7 +345,7 @@ static func buyChip(price: String) -> PanelContainer:
 	var line = HBoxContainer.new()
 	line.add_theme_constant_override("separation", 4)
 	line.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	for part in ["BUY", HudTheme.COIN_ICON, price]:
+	for part in ["BUY", price, HudTheme.COIN_ICON]:
 		if part is Texture2D:
 			line.add_child(MenuTheme.iconRect(part, 18))
 			continue

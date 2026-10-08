@@ -291,9 +291,10 @@ func unlock(index: int) -> bool:
 	note("CAREER_SHOP session=%d unlock %s for %d (bank %d)" % [session, data.cars[index].name, price, data.coin])
 	return true
 
-## Unlocks a pickup in the Goonopedia's Pickups tab: G, a click on the tab, then two clicks on its tile (the
-## first shows it, the second buys it), then Back.
+## Unlocks a pickup or a prize game ("prize:<game>") in the Goonopedia's Pickups tab: G, a click on the tab,
+## then two clicks on its tile (the first shows it, the second buys it), then Back.
 func unlockPickup(id: String) -> bool:
+	var uid := id if id.begins_with("prize:") else "pickup:" + id
 	var data := SaveManager.playerData
 	if menu().upgrading:
 		await press("ui_cancel")
@@ -307,7 +308,7 @@ func unlockPickup(id: String) -> bool:
 		return false
 	var coins := data.coin
 	var gems := data.gem
-	var cost := Unlocks.pickupPrice(id)
+	var cost := Unlocks.price(uid)
 	var tile := page.tileFor(id)
 	if tile == null:
 		issue("ui", "no Goonopedia tile for the ready pickup %s" % id)
@@ -316,10 +317,10 @@ func unlockPickup(id: String) -> bool:
 		issue("mouse", "the mouse wheel couldn't bring the %s tile into view in the Goonopedia" % id)
 		return false
 	await click(tile)
-	if Unlocks.isPickupOpen(id): issue("ui", "the first click on %s bought it; a click should only show a tile" % id)
+	if Unlocks.isOpen(uid): issue("ui", "the first click on %s bought it; a click should only show a tile" % id)
 	else: await click(page.tileFor(id))
-	var ok := Unlocks.isPickupOpen(id) && data.coin == coins - int(cost.get("coin", 0)) && data.gem == gems - int(cost.get("gem", 0))
-	if not ok: issue("economy" if data.coin != coins else "block", "unlocking pickup %s: open %s, bank %d -> %d coins, %d -> %d gems (price %s)" % [id, Unlocks.isPickupOpen(id), coins, data.coin, gems, data.gem, cost])
+	var ok := Unlocks.isOpen(uid) && data.coin == coins - int(cost.get("coin", 0)) && data.gem == gems - int(cost.get("gem", 0))
+	if not ok: issue("economy" if data.coin != coins else "block", "unlocking %s: open %s, bank %d -> %d coins, %d -> %d gems (price %s)" % [uid, Unlocks.isOpen(uid), coins, data.coin, gems, data.gem, cost])
 	else:
 		shopping.pickups = int(shopping.get("pickups", 0)) + 1
 		shopping.pickup_coins = int(shopping.get("pickup_coins", 0)) + int(cost.get("coin", 0))

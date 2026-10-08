@@ -91,26 +91,34 @@ static func nextPurchase(persona: Dictionary, data: PlayerData, history: Array, 
 static func canBuyCar(data: PlayerData, index: int) -> bool:
 	return data.coin >= int(data.cars[index].cost) && data.gem >= int(data.cars[index].get("gems", 0))
 
-## A ready pickup unlock (Unlocks) the bank covers within `budget` coins: the cheapest, the most useful to
-## the AI per coin (`ai` in Pickups.DATA), or any. "" when there is none.
+## A ready unlock the bank covers within `budget` coins, sold in the Goonopedia: a pickup id, or a prize game
+## as "prize:<game>" (CrushPrizes). The cheapest, the most useful per coin, or any. "" when there is none.
 static func pickupToBuy(data: PlayerData, how: String, budget: int, rng: RandomNumberGenerator) -> String:
 	var options := []
-	for id in Pickups.DATA:
-		var uid: String = "pickup:" + id
-		var cost := Unlocks.pickupPrice(id)
+	var keys: Array = Pickups.DATA.keys()
+	for g in CrushPrizes.GAMES: keys.push_back(CrushPrizes.uid(g.id))
+	for key in keys:
+		var uid: String = key if str(key).begins_with("prize:") else "pickup:" + key
+		var cost := Unlocks.price(uid)
 		if cost.is_empty() || Unlocks.state(uid) != Unlocks.S.READY || not Unlocks.canAfford(uid): continue
 		if int(cost.get("coin", 0)) > budget: continue
-		options.push_back(id)
+		options.push_back(key)
 	if options.is_empty(): return ""
 	match how:
-		"cheapest": options.sort_custom(func(a, b): return Unlocks.pickupPrice(a).get("coin", 0) < Unlocks.pickupPrice(b).get("coin", 0))
+		"cheapest": options.sort_custom(func(a, b): return priceOf(a).get("coin", 0) < priceOf(b).get("coin", 0))
 		"useful": options.sort_custom(func(a, b): return worth(a) > worth(b))
 		_: return options[rng.randi() % options.size()]
 	return options[0]
 
-static func worth(id: String) -> float:
-	var cost := Unlocks.pickupPrice(id)
-	return float(Pickups.DATA[id].get("ai", 10)) / (1.0 + float(cost.get("coin", 0)) + 500.0 * float(cost.get("gem", 0)))
+static func priceOf(key: String) -> Dictionary:
+	return Unlocks.price(key if key.begins_with("prize:") else "pickup:" + key)
+
+## Worth per coin: a pickup's `ai` value; a prize game counts by its place on the ladder (each one up is
+## worth about another two pickups' rarity points a box)
+static func worth(key: String) -> float:
+	var cost := priceOf(key)
+	var value: float = 30.0 * (CrushPrizes.rank(key.trim_prefix("prize:")) + 1) if key.begins_with("prize:") else float(Pickups.DATA[key].get("ai", 10))
+	return value / (1.0 + float(cost.get("coin", 0)) + 500.0 * float(cost.get("gem", 0)))
 
 static func upgradeCost(level: int) -> int:
 	return int(pow(level + 1, 1.6) * 15) #SaveManager.requestStatCost

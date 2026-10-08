@@ -91,7 +91,8 @@ func test_a_locked_driver_is_a_silhouette_with_a_price():
 	assert_true(card.isLocked())
 	assert_eq(card.portrait.modulate.r, 0.0, "silhouette")
 	assert_false(card.stats.visible, "no stats on a locked card")
-	assert_true(card.mainButton.text.begins_with("UNLOCK") || card.mainButton.text.begins_with("NEED"))
+	assert_true(card.mainButton.text == "UNLOCK" || card.mainButton.has_node("parts"), "UNLOCK, or NEED (coin) MORE in symbols")
+	assert_eq(card.priceLine.get_child_count(), 1, "the price shows under the car type, in symbols")
 	card.free()
 
 func test_an_owned_driver_shows_stats_and_drive():

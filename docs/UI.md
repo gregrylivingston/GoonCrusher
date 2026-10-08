@@ -28,6 +28,16 @@ The menus use the same colors, fonts and pickup icons as the in-run HUD (`docs/H
 
 **Rules for a new menu.** One `PrimaryButton`. A `KeyHint` for every key that does something, and make bottom bars clickable (`KeyHint.bar`). Everything must work with the mouse alone: inside a clickable row, set every child that isn't the button to `MOUSE_FILTER_IGNORE` (a plain `Control` defaults to `STOP` and swallows the click). Never write "A" or "Enter" into a label. Build with the theme rather than per-node style overrides.
 
+### Symbols
+
+Amounts read as numbers followed by the game's symbols, not words: "1,500 (coin)  3 (gem)", not "1,500 coins and 3 gems". The helpers are in `MenuTheme`:
+- `symbolRow(parts, fontSize, color)`: a row of parts that ignores the mouse. A part is a String (a label), a Texture2D (an icon at the text's height) or a cost Dictionary `{"coin": n, "gem": n}`.
+- `costParts(cost, short)`: a cost as [amount, icon...]; `short` writes 10,000 and up as "10k" for tile corners.
+- `setButtonParts(button, parts)`: parts centered on a button in place of its text, in the button's own font colour (dark on a primary button); the key hint stays at the right end.
+- `priceChip` and the upgrade sheet's BUY chip put the number before the coin as well.
+
+Use words only where there is no symbol (UNLOCK, NEED ... MORE, PLAY, MAX).
+
 ## Transitions (`scene/ui/transitions/`)
 
 One language for every screen change: a corrugated **garage shutter** for screens, with **tire smoke and skid marks** wherever the car (or a panel acting like one) moves. Chosen from two rounds of concepts (Option 1, "shutter for screens, tires for the car", with the games a cross of 1 and 3).
@@ -71,7 +81,7 @@ One language for every screen change: a corrugated **garage shutter** for screen
 - **Esc / Menu:** opens Settings. The top-left buttons are quit, settings, Discord and Steam.
 - **Radio:** under the top-left buttons, a `NowPlaying` card shows the song and station; a click changes station (right click goes back). Mouse only; with keys or a pad it's in Settings → Audio (docs/RADIO.md).
 
-**Driver card.** Each card shows the driver's portrait over the car's background art and a name band. Locked drivers are silhouettes with their price. The focused card shows every stat in a compact 2 x 4 grid: the value and an underline against 100 (cream for the car's base stat, gold for upgrades bought). The upgrade sheet adds the stat's name, a tooltip saying what it does, and the next upgrade's price, dimmed when you can't afford it.
+**Driver card.** Each card shows the driver's portrait over the car's background art and a name band. Locked drivers are silhouettes with their car type and, under it, a lock and the price in symbols (`priceLine`: "10,000 (coin)  5 (gem)", gold when the bank covers it). The focused locked card's button says UNLOCK, or "NEED 7,000 (coin) 1 (gem) MORE" (disabled) when short. The Upgrade button carries the upgrade arrow. The focused card shows every stat in a compact 2 x 4 grid: the value and an underline against 100 (cream for the car's base stat, gold for upgrades bought). The upgrade sheet adds the stat's name, a tooltip saying what it does, and the next upgrade's price, dimmed when you can't afford it.
 
 **Run setup.** Level posters (Q/E or LB/RB, the number on the poster (1-8), the mouse wheel, or a click on a side poster) with the five mode medallions under them (A/D, or click one). Accept starts the run, Back returns to the garage. Two loadout buttons buy a consumable to start with for each of the car's slots: **Gadget (F / Y)**, left of Start, cycles a gadget for the Fire slot (`Pickups.LOADOUT`, 1 to 4 gems), and **Boost (V / RS)**, right of Start, a boost for the Boost slot (`Pickups.BOOST_LOADOUT`: Hop 1, Nitro 2, Jump Jets 4). Only unlocked gadgets and boosts are offered (`Pickups.openLoadout`). Each skips what the gems can't cover alongside the other slot's choice, and says which key fires it in the run (a tooltip gives the pickup's text). The choices are kept in `meta.records.loadout` and `meta.records.boostLoadout` and paid at Start, the gadget first (`slotPurchase`). A second into the run a toast names each one and its key ("AIR HORN x3 - PRESS E"). Under the buttons a **Next unlock** line names the nearest pickup to unlock, with its price or play condition and progress, and says when it can be bought in the Goonopedia (`main2.nextUnlockText`, `Unlocks.nextUnlock`). Closing the Goonopedia refreshes the setup and the bank.
 
@@ -88,14 +98,14 @@ One language for every screen change: a corrugated **garage shutter** for screen
 
 ## Goonopedia (`scene/player/menu/goonopedia/goonopedia.gd`)
 
-A reference to the game's content, opened from the main menu with G / View or the book button in the top bar. It's a full-screen overlay (group `menuOverlay`), built in code like the main menu. Six pill tabs (LB/RB, Q/E): **Goons, Cars, Levels, Pickups, Modes, Systems**. Each tab is a grid of tiles on the left and a detail card for the focused tile on the right. Back closes it and emits `closed`.
+A reference to the game's content, opened from the main menu with G / View or the book button in the top bar. It's a full-screen overlay (group `menuOverlay`), built in code like the main menu. Six pill tabs (LB/RB, Q/E, or 1-6), the pages with unlocks first: **Pickups, Cars, Levels, Modes, Goons, Systems**. It opens on Pickups. Each tab is a grid of tiles on the left (on Pickups, a tree per kind) and a detail card for the focused tile on the right. Back closes it and emits `closed`.
 
 **Where the content comes from.** Nothing is listed by hand, so new content shows up by itself:
 
 | Tab | Entries | Numbers |
 |---|---|---|
 | Goons | `Goons.DATA`, grouped by faction | speed, damage, crush speed, head-on armour, the system it wears, pack size, biomes, and the player's crush count |
-| Cars | the save's `cars` and their `CarInfo` | base stats plus upgrades bought (the driver card's bar), price, best run; one line of "strong / weak" against the other cars' averages |
+| Cars | the save's `cars` and their `CarInfo` | base stats plus upgrades bought (the driver card's bar), price, best run; one line of "strong / weak" against the other cars' averages. A locked car's tile shows its price in the corner and its card an UNLOCK button; an owned car's card has a "+1 price" button on every stat (MAX at the cap) |
 | Levels | the save's `levels`, named and described by the registry (`Levels`, `LevelDef`; docs/WORLD.md) | the act, the def's blurb, its grammar's line (`Levels.GRAMMAR_TEXT`), BARRIER and SURFACES chips (`LevelDef.barrier`, `surfaces`), modes beaten, the clock, starting spawn rate and giant odds from the def (`levelStats`), a strip showing which faction holds the land along the road out (the level's `factionBand`), and each faction's roster (`LevelRoster.rosterFor`, undiscovered goons as "???") |
 | Pickups | `Pickups.DATA`, grouped by kind, in unlock-tree order (`Unlocks.treeOrder`; docs/PICKUPS.md, "Unlocks") | rarity and kind chips, the registry's text, what it unlocks next, share of goon drops in the selected mode (`dropShare(id, mode)`), duration, uses, modes, night-only, factions that drop more of it; for a locked pickup its price and BUY button or its play condition and progress |
 | Modes | `Root.gameModeDescription` | availability, unlock rule, levels beaten |
@@ -107,7 +117,13 @@ Only the plain-language text lives in the script: `VERB_TEXT` (behaviour and tip
 
 **Discovery.** Goons show as silhouettes named "???" until the player crushes one; the card then shows their faction, rank and habitat. Every crush the car makes is counted per goon id (`crushedById`), and `gameSummary` adds the run's counts to `PlayerData.goonsCrushed` (save version 3) and names first-time goons on the ticket ("New in the Goonopedia: ..."). Goons the car kills another way count too: blasts, a kicked shell, and a drowning within 3 s of the car touching the goon (`SpawnManager.creditCrush`). Set `REVEAL_ALL` to show everything. Pickups follow their unlock trees instead (`Unlocks.state`): an open pickup shows in full; one whose parent is open shows dimmed, with its price (or PLAY, or FULL GAME in the demo) in the tile's corner, gold when the bank covers it; the rest are "???". The header shows pickups open and the bank.
 
-**Buying pickups.** Accept on a focused pickup tile buys it (the garage's sound, gold flash and pop; a shake when it can't be bought). With the mouse, the click that focuses a tile only shows it (`mouseDownOn`, the tile focused when the button went down); a second click, or the card's BUY button, buys. After a purchase the tab rebuilds in place, so children that came into view show at once.
+**Prize games.** The top of the Pickups tab is the gift box games' ladder (`buildPrizeLadder`; docs/PICKUPS.md, "Gift boxes"), weakest to strongest left to right: Claw Crane (open on a new save), Scratch Card, Prize Wheel, The Deal, Slot Machine, The Vault. They open in order, with the same line colours as the trees, and are bought like pickups (`buyPrize`, `Unlocks.buy("prize:<id>")`). Each card says how the game plays (`PRIZE_TEXT`).
+
+**Header bank.** On Pickups and Cars the header shows the bank in a pill, in symbols (`refreshBank`).
+
+**Pickup trees.** Each kind is drawn as its unlock tree (`buildPickupTree`): the roots (starters) on the top row, each pickup's children on the row below, spread over the columns their leaves take (`placeTreeNode`), and elbow lines from parent to child (`drawTreeEdges`). A gold line leads to an unlocked pickup, a cream one to a pickup you can unlock or work toward now, a dashed one to a "???" behind a locked pickup. A pickup with no line below it ends its branch. A legend line at the top of the tab says so.
+
+**Buying.** Accept on a focused pickup tile buys it (the garage's sound, gold flash and pop; a shake when it can't be bought). With the mouse, the click that focuses a tile only shows it (`isPickingClick`: the tile focused when the button went down); a second click, or the card's gold UNLOCK button (under the picture; NEED ... MORE when short), buys. After a purchase the tab rebuilds in place, so children that came into view show at once. The Cars tab works the same way: Accept on a locked car buys it (coins, and gems for advanced cars), and Accept on an owned car moves to its first upgrade button; each upgrade button buys one level at the garage's price (`SaveManager.requestStatUpgrade(stat, carIndex)`) and keeps the focus.
 
 ## In-run menus
 

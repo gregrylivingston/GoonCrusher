@@ -137,28 +137,29 @@ func unlockCar() -> bool:
 #upgrades each car can buy per stat. Saves from before the cap keep any levels above it (no refund).
 const MAX_UPGRADE_LEVEL := 20
 
-#how much the next upgrade will cost
-func requestStatCost(statString: Root.upgrade) -> int:
-	return int(pow( getUpgradeLevel(statString) + 1 , 1.6 ) * 15)
+#how much the next upgrade will cost. `carIndex` -1 is the selected car (the Goonopedia's Cars tab names its own).
+func requestStatCost(statString: Root.upgrade, carIndex := -1) -> int:
+	return int(pow( getUpgradeLevel(statString, carIndex) + 1 , 1.6 ) * 15)
 
-func isUpgradeMaxed(statString: Root.upgrade) -> bool:
-	return getUpgradeLevel(statString) >= MAX_UPGRADE_LEVEL
+func isUpgradeMaxed(statString: Root.upgrade, carIndex := -1) -> bool:
+	return getUpgradeLevel(statString, carIndex) >= MAX_UPGRADE_LEVEL
 
-func requestStatUpgrade(statString: Root.upgrade) -> bool:
-	if isUpgradeMaxed(statString): return false
-	var requestCost = requestStatCost(statString)
+func requestStatUpgrade(statString: Root.upgrade, carIndex := -1) -> bool:
+	if carIndex < 0: carIndex = playerData.selectedCar
+	if isUpgradeMaxed(statString, carIndex) || playerData.cars[carIndex].cost != 0: return false
+	var requestCost = requestStatCost(statString, carIndex)
 	if playerData.coin >= requestCost:
 		playerData.coin -= requestCost
-		var upgrades = playerData.cars[playerData.selectedCar].upgrades
+		var upgrades = playerData.cars[carIndex].upgrades
 		upgrades[statString] = upgrades.get(statString, 0) + 1
 		save_character_data()
-		Root.mainMenu.statUpdatesUiUpdate()
+		if is_instance_valid(Root.mainMenu): Root.mainMenu.statUpdatesUiUpdate()
 		return true #true because upgrade went through
 	else: return false #false if upgrade not allowed
 
-#gets the current cars upgrade value for a specific upgrade type
-func getUpgradeLevel(upgradeType:Root.upgrade) -> int:
-	return playerData.cars[playerData.selectedCar].upgrades.get(upgradeType, 0)
+#gets a car's upgrade value for a specific upgrade type (-1: the selected car)
+func getUpgradeLevel(upgradeType:Root.upgrade, carIndex := -1) -> int:
+	return playerData.cars[playerData.selectedCar if carIndex < 0 else carIndex].upgrades.get(upgradeType, 0)
 
 func selectNextLevel():
 	if playerData.selectedLevel < playerData.levels.size() - 1:

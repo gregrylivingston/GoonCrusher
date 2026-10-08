@@ -191,7 +191,7 @@ const DATA := {
 		"text":"Found in the world. Drive across it and your speed sets the spin, from BUST to JACKPOT."},
 	"deal": {"parent":"double", "name":"The Deal", "kind":K.CASINO, "rarity":R.RARE, "w":6, "icon":"deal", "ui":"slotmachineui", "ai":40,
 		"text":"Pick one of three cards. A gem deals a new hand; run coins raise the hand's rarity. It can also come in a gift box."},
-	"claw": {"parent":"mystery", "name":"Claw Crane", "kind":K.CASINO, "rarity":R.EPIC, "w":8, "icon":"claw", "ui":"slotmachineui", "ai":50,
+	"claw": {"parent":"mystery", "name":"Claw Crane", "kind":K.CASINO, "rarity":R.UNCOMMON, "w":5, "icon":"claw", "ui":"slotmachineui", "ai":25, #the weakest prize game (CrushPrizes), so an Uncommon drop
 		"text":"Steer the claw over a heap of prizes and drop it with Accelerate. Prizes can slip on the way up. Run coins buy another grab."},
 
 	#---------------------------------------------------------------- skill challenges

@@ -11,7 +11,8 @@ class_name Unlocks extends RefCounted
 ## ticket (refresh). OPEN: saved in meta.unlocks, and for a pickup, it can drop and be offered. An unlock
 ## never closes again, even when its rule is retuned.
 ##
-## Ids: "pickup:<id>", "car:<name>", "level:<id>", "mode:<level>:<mode>". Reserved for later: paint, station.
+## Ids: "pickup:<id>", "car:<name>", "level:<id>", "mode:<level>:<mode>", "prize:<game>" (the gift box games,
+## CrushPrizes, whose ladder and prices live there). Reserved for later: paint, station.
 
 enum S { HIDDEN, SHOWN, READY, OPEN }
 const STATE_NAMES := ["Hidden", "Shown", "Ready", "Open"]
@@ -94,6 +95,7 @@ static func state(uid: String) -> int:
 			var level: Dictionary = data().levels[i]
 			if Root.isModeUnlocked(level, mode): return S.OPEN
 			return S.SHOWN if level.unlocked else S.HIDDEN
+		"prize": return CrushPrizes.state(parts[1])
 	return S.OPEN if saved().has(uid) else S.HIDDEN
 
 ## What an unlock costs right now: {"coin": n, "gem": n}, either may be missing; {} when free.
@@ -107,6 +109,7 @@ static func price(uid: String) -> Dictionary:
 			var out := {"coin": int(car.cost)}
 			if int(car.get("gems", 0)) > 0: out.gem = int(car.gems)
 			return out
+		"prize": return {} if CrushPrizes.isOpen(parts[1]) else CrushPrizes.price(parts[1])
 	return {}
 
 static func canAfford(uid: String) -> bool:

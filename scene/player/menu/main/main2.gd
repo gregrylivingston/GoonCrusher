@@ -49,7 +49,7 @@ var medallions: Array[Control] = []
 var modeTitle := Label.new()
 var modeText := Label.new()
 var modeLock := Label.new()
-var nextUnlock := Label.new() #run setup's "Next unlock" line (Unlocks.nextUnlock)
+var nextUnlock := HBoxContainer.new() #run setup's "Next unlock" line (Unlocks.nextUnlock), in symbols
 var startButton: Button
 var buyPlayer := AudioStreamPlayer.new()
 
@@ -278,10 +278,9 @@ func buildSetup() -> void:
 	startButton.pressed.connect(onStartPressed)
 	setup.add_child(startButton)
 	nextUnlock.position = Vector2(300, 818)
-	nextUnlock.size = Vector2(1000, 26)
-	nextUnlock.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	nextUnlock.theme_type_variation = "MutedLabel"
-	nextUnlock.add_theme_font_size_override("font_size", 17)
+	nextUnlock.size = Vector2(1000, 28)
+	nextUnlock.alignment = BoxContainer.ALIGNMENT_CENTER
+	nextUnlock.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	setup.add_child(nextUnlock)
 	loadoutButton = loadoutSlotButton("ui_upgrade", Vector2(200, 744), cycleLoadout)
 	boostButton = loadoutSlotButton("ui_boost", Vector2(1010, 744), cycleBoost)
@@ -368,13 +367,20 @@ In the run: press %s" % [Pickups.displayName(id).to_upper(), "  x%d" % uses if u
 		button.icon = Pickups.texture(id) if id != "" else null
 		button.add_theme_constant_override("icon_max_width", 34)
 
-## "NEXT UNLOCK:  Purse  -  900 coins  (450 / 900)", or "" when nothing is waiting (Unlocks.nextUnlock)
-static func nextUnlockText() -> String:
+## "NEXT UNLOCK  (purse) Purse  900 (coin)", with the bank's progress toward it or its play condition, as
+## symbol parts (MenuTheme.symbolRow); [] when nothing is waiting (Unlocks.nextUnlock)
+static func nextUnlockParts() -> Array:
 	var next := Unlocks.nextUnlock()
-	if next.is_empty(): return ""
-	if Unlocks.canAfford(next.uid) && Unlocks.state(next.uid) == Unlocks.S.READY:
-		return "NEXT UNLOCK:  %s  -  %s, buy it in the Goonopedia (%s)" % [next.name, next.text, InputGlyphs.label("ui_codex")]
-	return "NEXT UNLOCK:  %s  -  %s  (%s / %s)" % [next.name, next.text, DriverCard.formatCoins(next.have), DriverCard.formatCoins(next.need)]
+	if next.is_empty(): return []
+	var id: String = next.uid.trim_prefix("pickup:")
+	var parts := ["NEXT UNLOCK  ", Pickups.texture(id), next.name, "  "]
+	var cost := Unlocks.pickupPrice(id)
+	if Unlocks.state(next.uid) == Unlocks.S.READY && not cost.is_empty():
+		parts.push_back(cost)
+		if Unlocks.canAfford(next.uid): parts.push_back("  in the Goonopedia (%s)" % InputGlyphs.label("ui_codex"))
+		else: parts.append_array(["  (", DriverCard.formatCoins(next.have), "/", DriverCard.formatCoins(next.need), ")"])
+	else: parts.push_back("%s  (%d / %d)" % [next.text, next.have, next.need])
+	return parts
 
 #the level at a save index as the registry describes it (Levels): poster art, name and scene
 static func levelDef(index: int) -> LevelDef:
@@ -679,7 +685,11 @@ func refreshSetup(animate := true) -> void:
 	if reason == "": reason = Root.modeLockReason(forModes, mode)
 	modeLock.text = reason
 	modeLock.visible = reason != ""
-	nextUnlock.text = nextUnlockText()
+	for child in nextUnlock.get_children():
+		nextUnlock.remove_child(child)
+		child.queue_free()
+	var parts := nextUnlockParts()
+	if not parts.is_empty(): nextUnlock.add_child(MenuTheme.symbolRow(parts, 17, HudTheme.MUTED))
 	var playable = isLevelSelectable(selected) && Root.isModePlayable(forModes, mode)
 	startButton.disabled = not playable
 	startButton.text = "START" if playable else ("COMING SOON" if reason == "Coming Soon" else "LOCKED")

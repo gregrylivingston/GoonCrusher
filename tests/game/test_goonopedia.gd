@@ -17,6 +17,7 @@ func test_every_goon_has_a_tile_and_is_hidden_until_crushed():
 	var first: StringName = Goons.DATA.keys()[0]
 	SaveManager.playerData.goonsCrushed[String(first)] = 3
 	var page = add_child_autofree(Goonopedia.new())
+	page.setTab(Goonopedia.Tab.GOONS)
 	assert_eq(page.tiles.size(), Goons.DATA.size(), "one tile per goon")
 	var names = page.tiles.map(func(t): return t.get_node("caption").text)
 	assert_true(Goons.DATA[first].name in names, "a crushed goon shows its name")

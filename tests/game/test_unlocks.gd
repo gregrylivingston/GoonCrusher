@@ -159,3 +159,60 @@ func test_career_tiers_open_pickups_down_each_tree():
 		assert_true(parent == "" || Pickups.DATA[parent].get("start", false) || mid.meta.unlocks.has("pickup:" + parent), "%s's parent is open" % id)
 	assert_true(CareerStart.build("fresh").meta.unlocks.is_empty(), "a fresh save has only the roots")
 	assert_eq(CareerStart.pickupsOpen(CareerStart.build("maxed")), Pickups.DATA.size(), "maxed has everything")
+
+func test_the_goonopedia_draws_each_kind_as_a_tree():
+	var page = add_child_autofree(Goonopedia.new())
+	assert_eq(page.tab, Goonopedia.Tab.PICKUPS, "the Goonopedia opens on Pickups, the first page with unlocks")
+	assert_eq(page.tiles.size(), Pickups.DATA.size() + CrushPrizes.GAMES.size(), "one tile per pickup and per prize game")
+	var at := {}
+	for b in page.tiles: at[b.get_meta("key")] = b.position
+	for id in Pickups.DATA:
+		var parent: String = Pickups.DATA[id].get("parent", "")
+		if parent == "": continue
+		assert_gt(at[id].y, at[parent].y, "%s sits below %s" % [id, parent])
+	for kind in Pickups.KIND_ORDER: #no two tiles of a tree overlap
+		var ids := Unlocks.treeOrder(kind)
+		for i in ids.size():
+			for j in range(i + 1, ids.size()):
+				var a := Rect2(at[ids[i]], Goonopedia.TREE_TILE)
+				assert_false(a.intersects(Rect2(at[ids[j]], Goonopedia.TREE_TILE)), "%s and %s overlap" % [ids[i], ids[j]])
+
+func test_the_goonopedia_buys_pickups_cars_and_upgrades():
+	data().coin = 20000
+	data().gem = 3
+	var page = add_child_autofree(Goonopedia.new())
+	page.buyPickup("purse")
+	assert_true(Unlocks.isPickupOpen("purse"), "a pickup bought on its tile")
+	assert_eq(data().coin, 19100)
+	page.setTab(Goonopedia.Tab.CARS)
+	var semi := data().cars.find(Unlocks.carEntry("semi"))
+	page.buyCar(semi)
+	assert_eq(data().cars[semi].cost, 0, "a car bought on the Cars tab")
+	assert_eq(data().gem, 0, "with its gems")
+	for i in 300: #the card's stats wait for the car's CarInfo, loaded on a worker
+		if page.carInfos.has(semi): break
+		await get_tree().process_frame
+	page.tileFor(semi).focus_entered.emit()
+	var before: int = data().coin
+	page.buyUpgrade(semi, Root.upgrade.ENGINE)
+	assert_eq(int(data().cars[semi].upgrades.get(Root.upgrade.ENGINE, 0)), 1, "an upgrade bought on its card")
+	assert_eq(data().coin, before - 15, "at the garage's price (15 for the first)")
+	assert_true(page.upgradeButton(Root.upgrade.ENGINE) != null, "the card is rebuilt with its buttons")
+	var locked := data().cars.find(Unlocks.carEntry("ambulance"))
+	page.buyUpgrade(locked, Root.upgrade.ENGINE)
+	assert_eq(int(data().cars[locked].upgrades.get(Root.upgrade.ENGINE, 0)), 0, "a locked car can't be upgraded")
+
+func test_the_goonopedia_sells_prize_games_in_ladder_order():
+	data().coin = 100000
+	var page = add_child_autofree(Goonopedia.new())
+	assert_true(page.tileFor("prize:claw") != null, "the ladder is on the Pickups tab")
+	assert_eq(Unlocks.state("prize:claw"), Unlocks.S.OPEN, "the Claw Crane starts open")
+	assert_eq(Unlocks.state("prize:wheel"), Unlocks.S.SHOWN, "the Wheel waits for the Scratch Card")
+	page.buyPrize("wheel")
+	assert_false(CrushPrizes.isOpen("wheel"), "the ladder opens in order")
+	page.buyPrize("scratch")
+	assert_true(CrushPrizes.isOpen("scratch"))
+	assert_eq(data().coin, 100000 - int(CrushPrizes.price("scratch").coin), "at its price")
+	assert_eq(Unlocks.state("prize:wheel"), Unlocks.S.READY, "and the next one is for sale")
+	assert_true(Unlocks.price("prize:scratch").is_empty(), "an open game has no price")
+	assert_eq(Pickups.rarity("claw"), Pickups.R.UNCOMMON, "the weakest prize game is an Uncommon drop")

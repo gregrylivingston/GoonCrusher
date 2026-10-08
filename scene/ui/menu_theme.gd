@@ -155,14 +155,81 @@ static func priceChip(amount: String, icon: Texture2D = HudTheme.COIN_ICON, affo
 	var row = HBoxContainer.new()
 	row.add_theme_constant_override("separation", 4)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.add_child(iconRect(icon, 18))
 	var label = Label.new()
 	label.text = amount
 	label.add_theme_font_size_override("font_size", 15)
 	row.add_child(label)
+	if amount != "MAX": row.add_child(iconRect(icon, 18)) #the number, then its symbol: "504 (coin)"
 	chipPanel.add_child(row)
 	if not affordable: chipPanel.modulate = Color(1, 1, 1, 0.5)
 	return chipPanel
+
+#---------- symbols in place of words ----------
+#Prices and amounts read as numbers with the game's own symbols ("1,500 (coin)  3 (gem)"), not words.
+#A part is a String (a label), a Texture2D (an icon at the text's height) or a cost Dictionary {"coin": n,
+#"gem": n} (each amount followed by its symbol). `color` null keeps the label theme's colour.
+
+## The parts of a cost: [amount, icon, amount, icon]. `short` writes 10,000 and up as "10k" (tile corners).
+static func costParts(cost: Dictionary, short := false) -> Array:
+	var out := []
+	if int(cost.get("coin", 0)) > 0: out.append_array([shortAmount(int(cost.coin)) if short else DriverCard.formatCoins(int(cost.coin)), HudTheme.COIN_ICON])
+	if int(cost.get("gem", 0)) > 0: out.append_array([str(int(cost.gem)), HudTheme.GEM_ICON])
+	return out
+
+## 40000 -> "40k", 12500 -> "12.5k"; below 10,000 the usual "9,000"
+static func shortAmount(n: int) -> String:
+	if n < 10000: return DriverCard.formatCoins(n)
+	return ("%dk" % (n / 1000)) if n % 1000 == 0 else ("%.1fk" % (n / 1000.0))
+
+## A row of text and symbols that ignores the mouse
+static func symbolRow(parts: Array, fontSize := 18, color = null, outline := -1) -> HBoxContainer:
+	var row = HBoxContainer.new()
+	row.add_theme_constant_override("separation", maxi(3, fontSize / 5))
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	var flat := []
+	for part in parts:
+		if part is Dictionary: flat.append_array(costParts(part))
+		else: flat.push_back(part)
+	for i in flat.size():
+		var part = flat[i]
+		if part is Texture2D:
+			var icon := iconRect(part, roundf(fontSize * 1.25))
+			icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			row.add_child(icon)
+			if i + 1 < flat.size() && not flat[i + 1] is Texture2D: #a little air before the next amount
+				var gap = Control.new()
+				gap.custom_minimum_size.x = fontSize * 0.35
+				gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				row.add_child(gap)
+			continue
+		var label = Label.new()
+		label.text = str(part)
+		label.add_theme_font_size_override("font_size", fontSize)
+		label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		if color != null: label.add_theme_color_override("font_color", color)
+		if outline >= 0: label.add_theme_constant_override("outline_size", outline)
+		row.add_child(label)
+	return row
+
+## Shows `parts` centered on a button in place of its text (its key hint stays at the right end), in the
+## button's own font colour: dark on a primary button, dimmer while disabled
+static func setButtonParts(b: Button, parts: Array, fontSize := 22) -> void:
+	var old = b.get_node_or_null("parts")
+	if old:
+		b.remove_child(old)
+		old.queue_free()
+	b.text = ""
+	var primary := b.theme_type_variation == "PrimaryButton"
+	var color: Color = (Color(0.15, 0.12, 0.1) if primary else Color(HudTheme.MUTED, 0.6)) if b.disabled else (DARK_TEXT if primary else HudTheme.TEXT)
+	var row := symbolRow(parts, fontSize, color, 0 if primary else -1)
+	row.name = "parts"
+	row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	row.offset_right = -56 if b.get_child_count() > 0 else 0 #clear of the key hint
+	if b.disabled: row.modulate = Color(1, 1, 1, 0.75)
+	b.add_child(row)
+	b.custom_minimum_size.x = maxf(b.custom_minimum_size.x, row.get_combined_minimum_size().x + 96)
 
 #a plain icon at a fixed size, resampled to its exact screen pixels so it stays sharp (CrispIcon)
 static func iconRect(texture: Texture2D, size: float) -> TextureRect:

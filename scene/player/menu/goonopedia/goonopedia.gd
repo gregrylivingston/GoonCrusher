@@ -12,13 +12,15 @@ class_name Goonopedia extends Control
 
 signal closed
 
-enum Tab { GOONS, CARS, LEVELS, PICKUPS, MODES, SYSTEMS }
-const TAB_NAMES := ["GOONS", "CARS", "LEVELS", "PICKUPS", "MODES", "SYSTEMS"]
+#the pages with something to unlock come first; the Goonopedia opens on Pickups
+enum Tab { PICKUPS, CARS, LEVELS, MODES, GOONS, SYSTEMS }
+const TAB_NAMES := ["PICKUPS", "CARS", "LEVELS", "MODES", "GOONS", "SYSTEMS"]
 const REVEAL_ALL := false #true shows every goon without crushing one first
 const ICON := preload("res://texture/icon/goonopedia.svg")
 const SHADOW := Color(0, 0, 0, 0.88) #silhouette tint for undiscovered goons and locked cars
 const LIST_WIDTH := 720.0
 const BUY_SOUND := preload("res://sound/fx/short-success-sound-glockenspie.mp3")
+const UPGRADE_ICON := preload("res://texture/icon/upgrade.svg")
 
 #---------- text ----------
 
@@ -119,13 +121,14 @@ const SYSTEM_STAT_NAMES := {"lights": "headlight reach", "engine": "engine power
 
 #---------- state ----------
 
-var tab := Tab.GOONS
+var tab := Tab.PICKUPS
 var tabButtons: Array[Button] = []
 var list := VBoxContainer.new()
 var listScroll := ScrollContainer.new()
 var detail := VBoxContainer.new()
 var into: VBoxContainer = detail #where the card helpers add rows: the detail card, or a showcase's side column
 var progressLabel := Label.new()
+var bankRow := HBoxContainer.new() #the header's coins and gems, as symbols
 var tiles: Array[Button] = []
 var shown = null #the entry in the detail card
 var preview: GoonPreview
@@ -179,8 +182,8 @@ func _ready() -> void:
 	detailScroll.add_child(detail)
 	right.add_child(detailScroll)
 	body.add_child(right)
-	root.add_child(KeyHint.bar([[["ui_tab_prev", "ui_tab_next"], "Tab"], [["ui_up", "ui_down"], "Browse"], [["ui_accept"], "Buy pickup"], [["ui_cancel"], "Back"]]))
-	setTab(Tab.GOONS)
+	root.add_child(KeyHint.bar([[["ui_tab_prev", "ui_tab_next"], "Tab"], [["ui_up", "ui_down"], "Browse"], [["ui_accept"], "Buy"], [["ui_cancel"], "Back"]]))
+	setTab(Tab.PICKUPS)
 	Juice.dropIn(self, 30.0)
 
 func buildHeader() -> Control:
@@ -198,6 +201,9 @@ func buildHeader() -> Control:
 	progressLabel.add_theme_font_size_override("font_size", 24)
 	progressLabel.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(progressLabel)
+	bankRow.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	bankRow.custom_minimum_size.x = 20
+	row.add_child(bankRow)
 	var close = MenuTheme.button("BACK", PackedStringArray(["ui_cancel"]))
 	close.custom_minimum_size = Vector2(150, 48)
 	close.focus_mode = Control.FOCUS_NONE
@@ -241,7 +247,23 @@ func setTab(value: int) -> void:
 		Tab.MODES: buildModes()
 		Tab.SYSTEMS: buildSystems()
 	listScroll.scroll_vertical = 0
+	refreshBank()
 	if not tiles.is_empty(): tiles[0].grab_focus()
+
+## The bank in the header, on the tabs that sell things: "3,000 (coin)  4 (gem)"
+func refreshBank() -> void:
+	for child in bankRow.get_children():
+		bankRow.remove_child(child)
+		child.queue_free()
+	if tab != Tab.PICKUPS && tab != Tab.CARS: return
+	var data := SaveManager.playerData
+	var pill = PanelContainer.new() #a pill like the garage's bank, apart from the page's count
+	pill.add_theme_stylebox_override("panel", MenuTheme.box(Color(0, 0, 0, 0.35), Color(HudTheme.RIM, 0.55), 12, 2, Vector4(14, 3, 14, 3)))
+	pill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var row := MenuTheme.symbolRow([DriverCard.formatCoins(data.coin), HudTheme.COIN_ICON, str(data.gem), HudTheme.GEM_ICON], 24, HudTheme.GOLD)
+	row.add_theme_constant_override("separation", 6)
+	pill.add_child(row)
+	bankRow.add_child(pill)
 
 func section(title: String, note := "", color := HudTheme.RIM) -> void:
 	var row = HBoxContainer.new()
@@ -500,6 +522,51 @@ func factRow(tag: String, text: String, color: Color) -> void:
 	row.add_child(label)
 	into.add_child(row)
 
+#a car's stats as statTable shows them, each with a button that buys its next upgrade (price, or MAX)
+func upgradeTable(index: int, rows: Array) -> void:
+	var table = GridContainer.new()
+	table.columns = 5
+	table.add_theme_constant_override("h_separation", 12)
+	table.add_theme_constant_override("v_separation", 6)
+	for i in DriverCard.STATS.size():
+		var stat: int = DriverCard.STATS[i][1]
+		var r: Array = rows[i]
+		table.add_child(MenuTheme.iconRect(r[4], 24))
+		var name = Label.new()
+		name.text = r[0]
+		name.theme_type_variation = "MutedLabel"
+		name.add_theme_font_size_override("font_size", 18)
+		name.custom_minimum_size.x = 120
+		table.add_child(name)
+		var barHolder = Control.new()
+		barHolder.custom_minimum_size = Vector2(180, 24)
+		var bar = DriverCard.StatBar.new()
+		bar.base = int(r[2])
+		bar.bought = int(r[3])
+		bar.position = Vector2(0, 9)
+		bar.size = Vector2(180, 7)
+		barHolder.add_child(bar)
+		table.add_child(barHolder)
+		var level: int = int(r[3])
+		var value := MenuTheme.symbolRow([str(int(r[2]) + level)], 20)
+		value.alignment = BoxContainer.ALIGNMENT_BEGIN
+		if level > 0: value.add_child(MenuTheme.symbolRow(["+%d" % level], 15, HudTheme.GOLD))
+		value.custom_minimum_size.x = 80
+		table.add_child(value)
+		var maxed := SaveManager.isUpgradeMaxed(stat, index)
+		var cost := SaveManager.requestStatCost(stat, index)
+		var affordable := not maxed && cost <= SaveManager.playerData.coin
+		var buy = MenuTheme.button("", PackedStringArray(), affordable)
+		buy.custom_minimum_size = Vector2(150, 36)
+		buy.disabled = maxed
+		buy.set_meta("stat", stat)
+		MenuTheme.setButtonParts(buy, ["MAX"] if maxed else [UPGRADE_ICON, {"coin": cost}], 17)
+		if not affordable && not maxed: buy.get_node("parts").modulate = Color(1, 1, 1, 0.55)
+		buy.tooltip_text = "" if maxed else "Next %s upgrade (%d / %d)" % [r[0], level + 1, SaveManager.MAX_UPGRADE_LEVEL]
+		buy.pressed.connect(buyUpgrade.bind(index, stat))
+		table.add_child(buy)
+	into.add_child(table)
+
 #rows of [label, value text] or [label, value text, bar 0-100, bonus 0-100, icon]
 func statTable(rows: Array) -> void:
 	var table = GridContainer.new()
@@ -547,6 +614,7 @@ func showDetail(entry: Dictionary) -> void:
 		"car": carDetail(entry)
 		"level": levelDetail(entry)
 		"pickup": pickupDetail(entry)
+		"prize": prizeDetail(entry)
 		"mode": modeDetail(entry)
 		"system": systemDetail(entry)
 
@@ -663,7 +731,83 @@ func buildCars() -> void:
 	for i in cars.size():
 		var locked = isCarLocked(i)
 		var b = tile(g, {"kind": "car", "key": i, "inset": 6.0}, null, str(cars[i].name).capitalize(), Vector2(162, 170), locked)
+		if locked && not (Root.IS_DEMO && i >= Root.DEMO_CAR_COUNT):
+			addTileTag(b, [Unlocks.price("car:" + str(cars[i].name))], HudTheme.GOLD if Unlocks.canAfford("car:" + str(cars[i].name)) else HudTheme.MUTED)
+		b.pressed.connect(onCarTilePressed.bind(i))
 		loadThen(CarInfo.pathFor(cars[i].scene), onCarInfo.bind(i, b))
+
+## Accept on a car tile: buys a locked car, or moves to an owned car's first upgrade button
+func onCarTilePressed(index: int) -> void:
+	if isPickingClick(index): return
+	if isCarLocked(index):
+		buyCar(index)
+		return
+	var first := upgradeButton(Root.upgrade.ENGINE)
+	if first != null: first.grab_focus()
+
+func buyCar(index: int) -> void:
+	var car: Dictionary = SaveManager.playerData.cars[index]
+	var b := tileFor(index)
+	if not isCarLocked(index) || (Root.IS_DEMO && index >= Root.DEMO_CAR_COUNT): return
+	if not Unlocks.buy("car:" + str(car.name)):
+		if b: Juice.shake(b)
+		return
+	purchased()
+	setTab(Tab.CARS)
+	b = tileFor(index)
+	if b:
+		b.grab_focus()
+		Juice.flash(b, HudTheme.GOLD, 0.6, 18)
+		Juice.pop(b, 1.08, 0.4)
+
+## Buys the next level of a stat on a car (the garage's price and cap) and keeps the focus on its button
+func buyUpgrade(index: int, stat: int) -> void:
+	var button := upgradeButton(stat)
+	if not SaveManager.requestStatUpgrade(stat, index):
+		if button: Juice.shake(button)
+		return
+	purchased()
+	refreshIfShown("car", index)
+	button = upgradeButton(stat)
+	if button:
+		button.grab_focus()
+		Juice.flash(button.get_parent(), HudTheme.GOLD, 0.45, 10)
+
+## The upgrade button for a stat on the car card showing, or null
+func upgradeButton(stat: int) -> Button:
+	for b in detail.find_children("*", "Button", true, false):
+		if b.get_meta("stat", -1) == stat: return b
+	return null
+
+## After anything is bought here: the sound, the save, and the garage behind the page
+func purchased() -> void:
+	Audio.play(BUY_SOUND)
+	SaveManager.flush()
+	if is_instance_valid(Root.mainMenu): Root.mainMenu.statUpdatesUiUpdate()
+
+## What the bank lacks for a price, as a cost ({} when it covers it)
+static func shortfall(cost: Dictionary) -> Dictionary:
+	var out := {}
+	var coins: int = int(cost.get("coin", 0)) - SaveManager.playerData.coin
+	var gems: int = int(cost.get("gem", 0)) - SaveManager.playerData.gem
+	if coins > 0: out.coin = coins
+	if gems > 0: out.gem = gems
+	return out
+
+## The card's big gold button for an unlock: "UNLOCK 2,500 (coin)", or "NEED 300 (coin) MORE" (disabled)
+## when the bank is short. Full width under the picture, where it has room; Accept on the tile buys too.
+func unlockButton(cost: Dictionary, onPress: Callable) -> Button:
+	endShowcase()
+	var short := shortfall(cost)
+	var buy = MenuTheme.button("", PackedStringArray(["ui_accept"]), true)
+	buy.focus_mode = Control.FOCUS_NONE
+	buy.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	buy.custom_minimum_size = Vector2(320, 58)
+	buy.disabled = not short.is_empty()
+	MenuTheme.setButtonParts(buy, ["UNLOCK", cost] if short.is_empty() else ["NEED", short, "MORE"], 24)
+	buy.pressed.connect(onPress)
+	into.add_child(buy)
+	return buy
 
 static func isCarLocked(index: int) -> bool:
 	return SaveManager.playerData.cars[index].cost != 0 || (Root.IS_DEMO && index >= Root.DEMO_CAR_COUNT)
@@ -680,7 +824,7 @@ func carDetail(entry: Dictionary) -> void:
 	var car: Dictionary = SaveManager.playerData.cars[index]
 	var info: CarInfo = carInfos.get(index)
 	var locked = isCarLocked(index)
-	var panel = hero(250)
+	var panel = hero(250 if locked else 170) #an owned car's card needs the room for its upgrade rows
 	if info:
 		var back = heroPicture(panel, info.backgroundPic, TextureRect.STRETCH_KEEP_ASPECT_COVERED)
 		back.modulate = Color(0.55, 0.55, 0.58)
@@ -688,11 +832,13 @@ func carDetail(entry: Dictionary) -> void:
 		if locked: face.modulate = SHADOW
 	var status: Array
 	if Root.IS_DEMO && index >= Root.DEMO_CAR_COUNT: status = ["NOT IN DEMO", HudTheme.MUTED]
-	elif car.cost != 0: status = [Unlocks.priceText(Unlocks.price("car:" + str(car.name))).to_upper(), HudTheme.RIM]
+	elif car.cost != 0: status = ["LOCKED", HudTheme.MUTED]
 	else: status = ["OWNED", HudTheme.OK]
 	titleRow((info.charName if info else str(car.name)).to_upper(), [[str(car.name).capitalize().to_upper(), HudTheme.SKY], status])
 	if info == null: return
 	paragraph(carTraits(info))
+	if locked && not (Root.IS_DEMO && index >= Root.DEMO_CAR_COUNT):
+		unlockButton(Unlocks.price("car:" + str(car.name)), buyCar.bind(index))
 	var rows = []
 	var bought := 0
 	for s in DriverCard.STATS:
@@ -700,7 +846,8 @@ func carDetail(entry: Dictionary) -> void:
 		var level: int = car.upgrades.get(s[1], 0)
 		bought += level
 		rows.push_back([PICKUP_TEXT[s[1]][0], str(base + level) if level == 0 else "%d  (+%d)" % [base + level, level], base, level, s[2]])
-	statTable(rows)
+	if locked: statTable(rows)
+	else: upgradeTable(index, rows)
 	var records: Dictionary = car.records
 	var bestLine = "Upgrades bought: %d / %d" % [bought, DriverCard.STATS.size() * SaveManager.MAX_UPGRADE_LEVEL]
 	if records.get("goonsCrushed", 0) > 0:
@@ -820,47 +967,200 @@ static func factionsOn(def: LevelDef) -> Array:
 #in full; one whose parent is open shows its picture dimmed with its price or condition; the rest are "???".
 func buildPickups() -> void:
 	var ids := Pickups.DATA.keys()
-	progressLabel.text = "PICKUPS  %d / %d     %s COINS   %d GEMS" % [ids.filter(Unlocks.isPickupOpen).size(), ids.size(),
-		DriverCard.formatCoins(SaveManager.playerData.coin), SaveManager.playerData.gem]
+	progressLabel.text = "PICKUPS  %d / %d" % [ids.filter(Unlocks.isPickupOpen).size(), ids.size()]
+	var legend = Label.new()
+	legend.text = "Starters sit at the top of each tree. A solid line leads to a pickup you can unlock now, a dashed one to a ??? behind a locked pickup; a pickup with no line below it is the end of its branch."
+	legend.theme_type_variation = "MutedLabel"
+	legend.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	legend.custom_minimum_size.x = 200
+	list.add_child(legend)
+	section("PRIZE GAMES", "What gift boxes hold. A box rolls among the games you've unlocked.", HudTheme.GOLD)
+	buildPrizeLadder()
 	for kind in Pickups.KIND_ORDER:
 		section(Pickups.KIND_NAMES[kind].to_upper(), Pickups.KIND_NOTES[kind], Pickups.rarityColor(kind % 5))
-		var g = grid(5)
-		for id in Unlocks.treeOrder(kind):
-			var state := Unlocks.state("pickup:" + id)
-			var b = tile(g, {"kind": "pickup", "key": id}, Pickups.texture(id), Pickups.displayName(id) if state != Unlocks.S.HIDDEN else "???", Vector2(124, 124), state == Unlocks.S.HIDDEN)
-			if state == Unlocks.S.SHOWN || state == Unlocks.S.READY: b.get_node("art").modulate = Color(0.45, 0.42, 0.4, 0.9) #a preview, still locked
-			var tag := pickupTag(id, state)
-			if tag != "": addTileTag(b, tag, HudTheme.GOLD if state == Unlocks.S.READY && Unlocks.canAfford("pickup:" + id) else HudTheme.MUTED)
-			b.pressed.connect(onPickupTilePressed.bind(id))
+		buildPickupTree(kind)
 
-## The corner tag on a locked pickup's tile: its price, PLAY (a condition), FULL GAME (the demo's cap)
-static func pickupTag(id: String, state: int) -> String:
-	if state == Unlocks.S.OPEN || state == Unlocks.S.HIDDEN: return ""
-	if Root.IS_DEMO && Pickups.rarity(id) > Unlocks.DEMO_MAX_RARITY: return "FULL GAME"
+#---------- prize games ----------
+#The gift box games (CrushPrizes.GAMES), weakest first, as a ladder that opens in order. They are bought
+#here like pickups ("prize:<id>" through Unlocks).
+const PRIZE_TEXT := {
+	"claw": "Steer the claw over the prize pile and drop it. One grab is free; run coins buy more.",
+	"scratch": "Three cells scratch open one by one. Two alike pay once, three alike pay three times.",
+	"wheel": "Drive the spin: the wedge under the pointer pays out, or busts.",
+	"deal": "Three cards face up. Take one, raise the hand with run coins, or pay a gem for a new one.",
+	"slot": "Three reels of prizes, with bets and paylines. A spin can pay three things.",
+	"vault": "Five sealed boxes of Rare or better. Open two of them, or three from a Diamond box.",
+}
+
+func buildPrizeLadder() -> void:
+	var count := CrushPrizes.GAMES.size()
+	var colWidth := minf(TREE_WIDTH / count, 150.0)
+	var left := (TREE_WIDTH - colWidth * count) / 2.0
+	var ladder = Control.new()
+	ladder.custom_minimum_size = Vector2(TREE_WIDTH, TREE_TILE.y + 6.0)
+	ladder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	list.add_child(ladder)
+	var edges := []
+	for i in count:
+		var id: String = CrushPrizes.GAMES[i].id
+		var key := CrushPrizes.uid(id)
+		var state := CrushPrizes.state(id)
+		var b = tile(ladder, {"kind": "prize", "key": key, "inset": 10.0}, CrushPrizes.texture(id), CrushPrizes.gameName(id), TREE_TILE, false)
+		b.position = Vector2(left + i * colWidth + (colWidth - TREE_TILE.x) / 2.0, 0)
+		b.size = TREE_TILE
+		b.get_node("caption").add_theme_font_size_override("font_size", 13)
+		if state != Unlocks.S.OPEN:
+			b.get_node("art").modulate = Color(0.45, 0.42, 0.4, 0.9)
+			addTileTag(b, [CrushPrizes.price(id)], HudTheme.GOLD if state == Unlocks.S.READY && Unlocks.canAfford(key) else HudTheme.MUTED)
+		b.pressed.connect(onPrizeTilePressed.bind(id))
+		if i > 0:
+			var y := TREE_TILE.y / 2.0
+			var color: Color = TREE_LINE_OPEN if state == Unlocks.S.OPEN else (TREE_LINE_NEXT if state == Unlocks.S.READY else TREE_LINE_HIDDEN)
+			edges.push_back([Vector2(b.position.x - (colWidth - TREE_TILE.x), y), Vector2(b.position.x, y), color, state == Unlocks.S.SHOWN])
+	ladder.draw.connect(drawTreeEdges.bind(ladder, edges))
+
+func onPrizeTilePressed(id: String) -> void:
+	if isPickingClick(CrushPrizes.uid(id)): return
+	buyPrize(id)
+
+func buyPrize(id: String) -> void:
+	var key := CrushPrizes.uid(id)
+	var b := tileFor(key)
+	if CrushPrizes.isOpen(id): return
+	if not Unlocks.buy(key):
+		if b: Juice.shake(b)
+		return
+	purchased()
+	var scroll := listScroll.scroll_vertical
+	setTab(Tab.PICKUPS)
+	listScroll.scroll_vertical = scroll
+	b = tileFor(key)
+	if b:
+		b.grab_focus()
+		Juice.flash(b, HudTheme.GOLD, 0.6, 18)
+		Juice.pop(b, 1.08, 0.4)
+
+func prizeDetail(entry: Dictionary) -> void:
+	var id: String = str(entry.key).trim_prefix("prize:")
+	var state := CrushPrizes.state(id)
+	var rank := CrushPrizes.rank(id)
+	var panel = showcase(260.0, HudTheme.GOLD if state == Unlocks.S.OPEN else HudTheme.MUTED)
+	var picture = heroPicture(panel, CrushPrizes.texture(id), TextureRect.STRETCH_KEEP_ASPECT_CENTERED, 64.0)
+	if state != Unlocks.S.OPEN: picture.modulate = Color(0.6, 0.57, 0.55)
+	titleRow(CrushPrizes.gameName(id).to_upper(), [["PRIZE GAME %d / %d" % [rank + 1, CrushPrizes.GAMES.size()], HudTheme.GOLD], ["OPEN" if state == Unlocks.S.OPEN else "LOCKED", HudTheme.OK if state == Unlocks.S.OPEN else HudTheme.MUTED]])
+	paragraph(PRIZE_TEXT.get(id, ""))
+	if state == Unlocks.S.READY: unlockButton(CrushPrizes.price(id), buyPrize.bind(id))
+	else:
+		if state == Unlocks.S.SHOWN: paragraph("Unlock %s first: the games open weakest first." % CrushPrizes.gameName(CrushPrizes.GAMES[rank - 1].id), "MutedLabel")
+		endShowcase()
+	tipRow("Crushing goons earns crush XP toward a gift box. Each box holds one game you have unlocked; higher boxes favour the stronger games.")
+
+const TREE_TILE := Vector2(100, 108)
+const TREE_ROW := 146.0 #from one depth of a tree to the next
+const TREE_WIDTH := 660.0
+const TREE_LINE_OPEN := Color(1.0, 0.761, 0.239) #to an unlocked pickup
+const TREE_LINE_NEXT := Color(0.902, 0.863, 0.796, 0.9) #to one you can unlock or work toward now
+const TREE_LINE_HIDDEN := Color(0.5, 0.46, 0.42, 0.55) #to a ??? behind a locked pickup
+
+## One kind's unlock tree: roots on the top row, each pickup's children on the row below it, spread over the
+## columns its leaves take, and lines from each pickup down to its children (Unlocks.children).
+func buildPickupTree(kind: int) -> void:
+	var order := Unlocks.treeOrder(kind)
+	var spots := {} #id -> Vector2(column, depth)
+	var columns := [0]
+	for id in order:
+		if Pickups.DATA[id].get("parent", "") == "": placeTreeNode(id, 0, spots, columns)
+	var depth := 0
+	for id in spots: depth = maxi(depth, int(spots[id].y))
+	var count := float(columns[0])
+	var colWidth := minf(TREE_WIDTH / maxf(count, 1.0), 150.0)
+	var left := (TREE_WIDTH - colWidth * count) / 2.0
+	var tree = Control.new()
+	tree.custom_minimum_size = Vector2(TREE_WIDTH, depth * TREE_ROW + TREE_TILE.y + 6.0)
+	tree.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	list.add_child(tree)
+	var at := {}
+	for id in order: #in tree order, so Tab and the harnesses meet them root first
+		at[id] = Vector2(left + spots[id].x * colWidth + (colWidth - TREE_TILE.x) / 2.0, spots[id].y * TREE_ROW)
+		var b := pickupTile(tree, id, TREE_TILE)
+		b.position = at[id]
+		b.size = TREE_TILE
+	var edges := []
+	for id in order:
+		var parent: String = Pickups.DATA[id].get("parent", "")
+		if parent == "" || not at.has(parent): continue
+		var state := Unlocks.state("pickup:" + id)
+		var color: Color = TREE_LINE_OPEN if state == Unlocks.S.OPEN else (TREE_LINE_HIDDEN if state == Unlocks.S.HIDDEN else TREE_LINE_NEXT)
+		edges.push_back([at[parent] + Vector2(TREE_TILE.x / 2.0, TREE_TILE.y), at[id] + Vector2(TREE_TILE.x / 2.0, 0.0), color, state == Unlocks.S.HIDDEN])
+	tree.draw.connect(drawTreeEdges.bind(tree, edges))
+
+## Leaves take the next free column; a parent sits over the middle of its children
+static func placeTreeNode(id: String, depth: int, spots: Dictionary, columns: Array) -> void:
+	var kids := Unlocks.children(id)
+	if kids.is_empty():
+		spots[id] = Vector2(columns[0], depth)
+		columns[0] += 1
+		return
+	for kid in kids: placeTreeNode(kid, depth + 1, spots, columns)
+	spots[id] = Vector2((spots[kids[0]].x + spots[kids[-1]].x) / 2.0, depth)
+
+## Elbow lines from each parent's bottom to its children's tops; dashed toward a ??? (behind the tiles)
+static func drawTreeEdges(tree: Control, edges: Array) -> void:
+	for e in edges:
+		var from: Vector2 = e[0]
+		var to: Vector2 = e[1]
+		var mid := (from.y + to.y) / 2.0
+		var points := [from, Vector2(from.x, mid), Vector2(to.x, mid), to]
+		for i in 3:
+			if e[3]: tree.draw_dashed_line(points[i], points[i + 1], e[2], 2.0, 7.0)
+			else: tree.draw_line(points[i], points[i + 1], e[2], 3.0, true)
+
+## A pickup's tile in its tree: its picture and name, dimmed while locked, "???" while hidden, its price or
+## PLAY in the corner
+func pickupTile(parent: Control, id: String, tileSize: Vector2) -> Button:
+	var state := Unlocks.state("pickup:" + id)
+	var b = tile(parent, {"kind": "pickup", "key": id, "inset": 10.0}, Pickups.texture(id), Pickups.displayName(id) if state != Unlocks.S.HIDDEN else "???", tileSize, state == Unlocks.S.HIDDEN)
+	b.get_node("caption").add_theme_font_size_override("font_size", 13)
+	if state == Unlocks.S.SHOWN || state == Unlocks.S.READY: b.get_node("art").modulate = Color(0.45, 0.42, 0.4, 0.9) #a preview, still locked
+	var tag := pickupTag(id, state)
+	if not tag.is_empty(): addTileTag(b, tag, HudTheme.GOLD if state == Unlocks.S.READY && Unlocks.canAfford("pickup:" + id) else HudTheme.MUTED)
+	b.pressed.connect(onPickupTilePressed.bind(id))
+	return b
+
+## The corner tag on a locked pickup's tile, as symbol parts (MenuTheme.symbolRow): its price, PLAY (a play
+## condition) or FULL GAME (the demo's cap); [] for none
+static func pickupTag(id: String, state: int) -> Array:
+	if state == Unlocks.S.OPEN || state == Unlocks.S.HIDDEN: return []
+	if Root.IS_DEMO && Pickups.rarity(id) > Unlocks.DEMO_MAX_RARITY: return ["FULL GAME"]
 	var cost := Unlocks.pickupPrice(id)
-	if cost.is_empty(): return "PLAY"
-	if cost.get("coin", 0) > 0: return DriverCard.formatCoins(cost.coin) + (" +%dG" % cost.gem if cost.get("gem", 0) > 0 else "")
-	return "%d GEMS" % cost.get("gem", 0)
+	return ["PLAY"] if cost.is_empty() else [cost]
 
-static func addTileTag(b: Button, text: String, color: Color) -> void:
-	var tag = Label.new()
+## A tag in a tile's top right corner: a price as numbers and symbols, or a word
+static func addTileTag(b: Button, parts: Array, color: Color) -> void:
+	var flat := []
+	for part in parts: #prices in short numbers, so a dear one still fits the corner
+		if part is Dictionary: flat.append_array(MenuTheme.costParts(part, true))
+		else: flat.push_back(part)
+	var tag := MenuTheme.symbolRow(flat, 13, color)
 	tag.name = "tag"
-	tag.text = text
-	tag.add_theme_font_size_override("font_size", 13)
-	tag.add_theme_color_override("font_color", color)
-	tag.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tag.add_theme_constant_override("separation", 2)
+	tag.alignment = BoxContainer.ALIGNMENT_END
 	tag.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
-	tag.offset_left = -112
+	tag.offset_left = -b.custom_minimum_size.x + 6
 	tag.offset_right = -6
-	tag.offset_top = 4
-	tag.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	tag.offset_top = 3
+	tag.offset_bottom = 21
 	b.add_child(tag)
 
 ## Accept on a pickup tile buys it. A click that only just focused the tile (the same press) just shows it,
 ## so browsing with the mouse never buys; a second click, or the card's BUY button, does.
 func onPickupTilePressed(id: String) -> void:
-	if Time.get_ticks_msec() - mouseDownMsec < 1000 && mouseDownOn != id: return #the click that picked the tile
+	if isPickingClick(id): return
 	buyPickup(id)
+
+## Is this press the mouse click that picked tile `key` (it had no focus when the button went down)?
+func isPickingClick(key) -> bool:
+	return Time.get_ticks_msec() - mouseDownMsec < 1000 && not sameKey(mouseDownOn, key)
 
 var mouseDownMsec := -100000 #the last left mouse press, and the tile that had focus then (onPickupTilePressed)
 var mouseDownOn = null
@@ -884,10 +1184,14 @@ func buyPickup(id: String) -> void:
 		Juice.flash(b, HudTheme.GOLD, 0.6, 18)
 		Juice.pop(b, 1.08, 0.4)
 
-func tileFor(id: String) -> Button:
+func tileFor(key) -> Button:
 	for b in tiles:
-		if is_instance_valid(b) && b.get_meta("key", null) == id: return b
+		if is_instance_valid(b) && sameKey(b.get_meta("key", null), key): return b
 	return null
+
+## Tile keys are pickup ids (String) or car indices (int); == between the two is an error
+static func sameKey(a, b) -> bool:
+	return typeof(a) == typeof(b) && a == b
 
 static func pickupKnown(id: String) -> bool:
 	return Unlocks.isPickupOpen(id) || Pickups.isDiscovered(id)
@@ -956,14 +1260,7 @@ func unlockRows(id: String) -> void:
 		endShowcase()
 		return
 	var cost := Unlocks.pickupPrice(id)
-	if not cost.is_empty():
-		paragraph("Unlock for %s. You have %s coins and %d gems." % [Unlocks.priceText(cost), DriverCard.formatCoins(SaveManager.playerData.coin), SaveManager.playerData.gem])
-		var buy = MenuTheme.button("BUY  -  " + Unlocks.priceText(cost).to_upper(), PackedStringArray(["ui_accept"]))
-		buy.focus_mode = Control.FOCUS_NONE #Accept on the tile buys too; this is for the mouse
-		buy.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-		buy.disabled = not Unlocks.canAfford(uid)
-		buy.pressed.connect(buyPickup.bind(id))
-		into.add_child(buy)
+	if not cost.is_empty(): unlockButton(cost, buyPickup.bind(id))
 	else:
 		var p := Unlocks.progress(uid)
 		if p.is_empty(): paragraph("Opens at the end of your next run.")

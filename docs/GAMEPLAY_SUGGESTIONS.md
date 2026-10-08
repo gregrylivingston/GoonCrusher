@@ -44,7 +44,7 @@ Package numbers are IDs (other docs link to them); the table is in the suggested
 | # | Package | Items | Effort | Needs |
 |---|---|---|---|---|
 | 1 | Playtest and tune | the numbers below, world follow-ups | S + play time | — |
-| 12 | Unlocks and progression (what's left) | U-3 upgrades, pace check | S | 1 for the pace |
+| 12 | Unlocks and progression (what's left) | pace check | S | 1 |
 | 16 | Crush prizes (what's left) | selling prize games, the curve by hand | S | 1 |
 | 6 | Economy | T1-11, T2-13, late-level payouts | M | 1, 12, 16 |
 | 13 | Driving juice | D-1 to D-4 | M | — |
@@ -118,17 +118,16 @@ Re-run the crowd benchmarks (S3, S4 in `PERFORMANCE.md`) after packages 1, 3, 9,
 
 ### Package 12: Unlocks and progression
 Built (2026-10-07, "Done" above; the proposal and its options are at https://claude.ai/artifact/5fVWpCsD8xZLferKDcYvTN). What is left:
-- **U-3, upgrades from the Goonopedia:** the Cars tab still only shows a car's upgrades. Reuse the driver card's upgrade sheet there. S.
+- **U-3** is done: the Cars tab buys cars and upgrades, and the Pickups tab draws each kind as a tree.
 - **Pace check:** re-run the three personas from `fresh` (`--unlocks=save` is the career default) and read `unlock_pace` in the career summary. The target is a Rookie who sees every mode before the last level and opens about 20 pickups by the end of Prairie. Then re-fit `Unlocks.PICKUP_PRICE` and the car gem prices with package 6.
 - **Prize games** (package 16) read `prize:<game>` through the registry's saved ids (`CrushPrizes`); show and buy them in the Goonopedia next to pickups.
 - Cosmetics (package 15) and radio stations (R-1) take `paint:` and `station:` ids in `meta.unlocks` when they are built.
 
 ### Package 16: Crush prizes (what's left)
 Built (2026-10-07, "Done" above; docs/PICKUPS.md "Gift boxes"). What is left:
-- **Sell the prize games** in the Goonopedia with the pickups (U-3's tiles): `CrushPrizes.state`, `price` and `grant` are ready, and the ladder opens in order. The prices in `CrushPrizes.GAMES` are placeholders (1.5k to 40k coins, the Vault also 10 gems). The career personas should buy them too. S.
 - **The curve by hand** (package 1): `XP_BASE` 50 and `XP_EXP` 2 were fitted to AI playtests only (150-1300 XP and 1-3 boxes in 3-4 minutes). Play a few runs and read `crush_xp` and `boxes` in `runlog.csv`. The goal is the first box in under a minute of decent play, then every 2-4 minutes.
 - **Ideas:** an "XP Boost" pickup or a car perk through `car.crushXpMult`; a small "+XP" tag flying to the pill; lifetime boxes and the best box in `meta.lifetime`; the AI could weight goons by XP.
-- **Claw Crane pickup:** it is an Epic drop but the weakest prize game (1.05 rarity points a play for an average grab). Lower its rarity or give the pickup version 2 grabs.
+- *Done:* the Goonopedia sells the prize games (a ladder at the top of the Pickups tab) and the personas buy them; the Claw Crane pickup is an Uncommon drop now (was Epic).
 
 ### Package 13: Driving juice
 Driving should be the most fun part. The handbrake, drift boost, slams and crush feel are done; these add feel to the car itself. All of it is visual or sound, outside `integrate()`, scaled by Reduce Motion and Car Shake, and benchmarked on the HD 620.
