@@ -204,7 +204,7 @@ func accessibilityRows() -> Array:
 		{"type":"choice", "key":"access/hit_stop", "label":"Hit-Stop", "options":onOff(),
 			"info":"A split-second freeze (about 1/20 s) when you crush a giant, a boss or a crowd at once.", "perf":"None"},
 		{"type":"slider", "key":"access/hud_scale", "label":"HUD Scale", "min":0.8, "max":1.3, "step":0.05, "format":percent,
-			"info":"Size of the in-run HUD: counters, region panel, crush goal and the car's bars. The view of the world is unchanged.", "perf":"None"},
+			"info":"Size of the in-run HUD: counters, region panel, gift box bar and the car's bars. The view of the world is unchanged.", "perf":"None"},
 	]
 
 func audioRow(bus: String, label: String) -> Dictionary:

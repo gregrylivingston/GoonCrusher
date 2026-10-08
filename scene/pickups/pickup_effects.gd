@@ -4,8 +4,11 @@ class_name PickupEffects extends RefCounted
 #is credited here at once; flyers, toasts and labels that follow are only for show.
 
 ## Collects `id` for the car. `pos` is where it was picked up (labels and spawned things go there).
-static func collect(car, id: String, pos: Vector2) -> void:
+## A locked pickup (Unlocks) pays its nearest open ancestor instead (Pickups.openOr), so fixed rewards
+## such as the Prize Wheel's wedges never hand one out; `exact` skips that (the dev console).
+static func collect(car, id: String, pos: Vector2, exact := false) -> void:
 	if not is_instance_valid(car) || not Pickups.has(id): return
+	if not exact: id = Pickups.openOr(id)
 	var d := Pickups.def(id)
 	if d.has("scene"): #an original pickup won from a slot, a card, the claw or a Mystery Box: its own scene pays it
 		dropAndCollect(car, id, car.global_position)
@@ -41,7 +44,7 @@ static func collect(car, id: String, pos: Vector2) -> void:
 ## Deferred, because it is often reached from a physics callback where areas can't be added.
 static func dropAndCollect(car, id: String, pos: Vector2) -> void:
 	if not is_instance_valid(Root.levelRoot): return
-	var node = Pickups.make(id)
+	var node = Pickups.make(Pickups.openOr(id))
 	node.position = pos
 	node.process_mode = Node.PROCESS_MODE_ALWAYS
 	var collectNow := func():
@@ -53,7 +56,7 @@ static func dropAndCollect(car, id: String, pos: Vector2) -> void:
 ## A pickup node of `id` lying at `pos`, to be driven over.
 static func spawnPickup(id: String, pos: Vector2) -> Node2D:
 	if not is_instance_valid(Root.levelRoot): return null
-	var node = Pickups.make(id)
+	var node = Pickups.make(Pickups.openOr(id))
 	node.position = pos
 	Root.levelRoot.add_child.call_deferred(node)
 	return node

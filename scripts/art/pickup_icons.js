@@ -117,6 +117,9 @@ const ICONS = {
   turret: {p:'steel', a:'ink', hi:'', draw:c => R(32, 21, 24, 8, 3, c.a, c, 1.8, 'rotate(-28 34 27)') + P('M12 54 L18 40 H46 L52 54 Z', c.b, c) + P('M17 40 A15 15 0 0 1 47 40 Z', c.b, c) + C(32, 33, 3, c.a, c, 0)},
   compass: {p:'cream', a:'crimson', a2:'ink', hi:'M15 25 A19 19 0 0 1 24 14', draw:c => C(32, 32, 24, c.b, c) + C(32, 32, 18, 'none', c, 1.2) + P('M32 11 L37.5 32 H26.5 Z', c.a, c, 1.4) + P('M26.5 32 H37.5 L32 53 Z', c.a2, c, 1.4)},
   panic: {p:'crimson', a:'ink', hi:'M20 34 A14 12 0 0 1 28 28', draw:c => R(8, 40, 48, 13, 4, c.a, c) + P('M13 42 A19 17 0 0 1 51 42 Z', c.b, c)},
+  //crush prizes (docs/PICKUPS.md, "Gift boxes"): the gift box on the crush pill, and the Vault's door
+  gift: {p:'crimson', a:'gold', hi:'M12 31 H24', draw:c => R(10, 28, 44, 26, 3, c.b, c) + R(7, 19, 50, 11, 3, c.b, c) + R(28, 19, 8, 35, 1, c.a, c, 1.6) + P('M32 19 C25 7 12 9 17 16 Q23 20 32 19 Z', c.a, c, 1.6) + P('M32 19 C39 7 52 9 47 16 Q41 20 32 19 Z', c.a, c, 1.6) + C(32, 18, 3.5, c.a, c, 1.4)},
+  vault: {p:'steel', a:'gold', a2:'ink', hi:'M12 14 H28', draw:c => R(7, 9, 50, 44, 4, c.b, c) + R(12, 14, 40, 34, 3, 'none', c, 1.6) + C(32, 31, 10, c.a, c, 1.8) + L('M32 22 V40 M23 31 H41 M26 25 L38 37 M38 25 L26 37', c.s, 1.6) + C(32, 31, 3.5, c.a2, c, 1.2) + R(13, 52, 8, 5, 1.5, c.a2, c, 1.2) + R(43, 52, 8, 5, 1.5, c.a2, c, 1.2)},
   chute: {p:'crimson', a:'wood', hi:'', draw:c => P('M7 25 A25 19 0 0 1 57 25 Q51 21 44.5 25 Q38 21 32 25 Q26 21 19.5 25 Q13 21 7 25 Z', c.b, c) + L('M9 25 L25 41 M55 25 L39 41 M32 25 V41', c.s, 1.5) + R(23, 40, 18, 15, 2, c.a, c) + L('M23 47.5 H41', c.s, 1.5)},
 };
 function icon(key) {

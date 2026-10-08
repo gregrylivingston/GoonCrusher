@@ -451,7 +451,7 @@ class Crate extends Area2D:
 		set_deferred("monitoring", false)
 		if is_instance_valid(Root.spawnManager): Root.spawnManager.fx.bits(global_position, 0)
 		var id := Pickups.rollAtLeast(Pickups.R.COMMON)
-		if Pickups.rarity(id) > Pickups.R.UNCOMMON: id = "coinstack"
+		if Pickups.rarity(id) > Pickups.R.UNCOMMON: id = Pickups.openOr("coinstack")
 		PickupEffects.collect(body, id, global_position)
 		var flyers = RewardFlyers.instance()
 		if flyers: flyers.launch(Pickups.texture(id), get_global_transform_with_canvas(), Pickups.uiGroup(id))

@@ -1,14 +1,14 @@
 class_name PickupDeal extends PickupMenu
 
 #The Deal: pick one of three face-up cards. A gem deals a new hand; run coins raise the hand a rarity
-#tier (and cost double each time). It comes as a drop, and every other crush goal deals one instead of
-#the slot machine (playerRoot.updateGoonsCrushed).
+#tier (and cost double each time). It comes as a drop, or in a gift box (CrushPrizes): a Silver or Gold
+#box deals Rare or better, a Diamond box Epic or better.
 
 const RAISE_COST := 100
 const BASE_TIER := Pickups.R.UNCOMMON
 const NEVER := ["deal", "mystery", "slotmachine", "claw"] #no menu opens another
 
-var crushGoal := false
+var crushGoal := false #from a gift box
 var minTier := BASE_TIER
 var raises := 0
 var cards: Array = []
@@ -18,15 +18,15 @@ var row := HBoxContainer.new()
 var raiseHint: KeyHint
 var info := Label.new()
 
-static func open(isCrushGoal: bool) -> void:
+static func open(isCrushGoal: bool, boxTier := 0) -> void:
 	if not is_instance_valid(Root.levelRoot): return
 	var deal = PickupDeal.new()
 	deal.crushGoal = isCrushGoal
+	deal.minTier = mini(BASE_TIER + boxTier / 2, Pickups.R.LEGENDARY)
 	Root.levelRoot.add_child.call_deferred(deal) #a crush can come from a node leaving the level (a Bait popping), while the level can't take children
 
 func build() -> void:
-	if crushGoal && is_instance_valid(Root.playerRoot): Root.playerRoot.animateNewGoonCrushGoal(false, "THE DEAL")
-	title("THE DEAL", "Crush goal reached: +1 star. Pick a card." if crushGoal else "Pick a card.")
+	title("THE DEAL", "Gift box: pick a card." if crushGoal else "Pick a card.")
 	row.add_theme_constant_override("separation", 18)
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	body.add_child(row)
@@ -39,11 +39,7 @@ func build() -> void:
 func deal() -> void:
 	cards.clear()
 	for i in 3:
-		var id := ""
-		for attempt in 8:
-			id = Pickups.rollAtLeast(minTier)
-			if id not in NEVER && id not in cards: break
-		cards.push_back(id)
+		cards.push_back(Pickups.rollOffer(minTier, NEVER, cards))
 	for b in buttons: b.queue_free()
 	buttons.clear()
 	for i in 3: buttons.push_back(makeCard(cards[i], i))
@@ -128,6 +124,5 @@ func raise() -> void:
 func take(index: int) -> void:
 	if closed || index >= cards.size(): return
 	var id: String = cards[index]
-	if crushGoal && is_instance_valid(Root.playerRoot): Root.playerRoot.animateNewGoonCrushGoal()
 	close()
 	PickupEffects.collect(Root.playerCar, id, Root.playerCar.global_position)

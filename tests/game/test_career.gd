@@ -20,7 +20,7 @@ func test_fresh_is_a_new_save():
 	assert_eq(data.coin, 0)
 	assert_eq(data.gem, 0)
 	assert_eq(data.cars.filter(func(c): return c.cost == 0).size(), 1, "only the sedan is owned")
-	assert_eq(data.levels.filter(func(l): return l.unlocked).size(), Root.DEMO_LEVEL_COUNT, "the demo's levels are open")
+	assert_eq(data.levels.filter(func(l): return l.unlocked).size(), 1, "only the first level is open")
 	for i in data.levels.size():
 		for mode in data.levels[i].gamemodeBeat: assert_false(data.levels[i].gamemodeBeat[mode], "nothing beaten")
 	assert_eq(data.cars.size(), defaults.cars.size())
@@ -34,7 +34,7 @@ func test_every_tier_is_reachable_by_play():
 			for mode in level.gamemodeBeat:
 				if not level.gamemodeBeat[mode]: continue
 				assert_true(level.unlocked, "%s: a level with a beaten mode is open" % tier)
-				if i + 1 < data.levels.size(): assert_true(data.levels[i + 1].unlocked, "%s: beating level %d opened the next" % [tier, i])
+				if i + 1 < data.levels.size() && Root.opensNextLevel(level): assert_true(data.levels[i + 1].unlocked, "%s: level %d's beaten modes opened the next" % [tier, i])
 				#the chain: Sprint needs Countdown, and so on, so every beaten mode was playable when it was beaten
 				var without := level.duplicate(true)
 				without.gamemodeBeat[mode] = false
@@ -68,14 +68,14 @@ func test_rookie_follows_the_path():
 	var data := CareerStart.build("fresh")
 	var next := Personas.chooseRun(rookie, data, [], rng())
 	assert_eq(next.mode, G.GOONCRUSHER, "a new player starts with Countdown")
-	assert_eq(next.level, Root.DEMO_LEVEL_COUNT - 1, "on the furthest open level")
+	assert_eq(next.level, 0, "on the only open level")
 	data.levels[next.level].gamemodeBeat[G.GOONCRUSHER] = true
 	assert_eq(Personas.chooseRun(rookie, data, [], rng()).mode, G.SPRINT, "then the mode it opened")
 
 func test_a_losing_streak_sends_the_rookie_back_to_farm():
 	var rookie := Personas.get_def("rookie")
-	var data := CareerStart.build("fresh")
-	var furthest := Root.DEMO_LEVEL_COUNT - 1
+	var data := CareerStart.build("early") #two levels open, so there is somewhere to go back to
+	var furthest := 1
 	var history := []
 	for i in rookie.retreat: history.push_back(run(furthest, G.GOONCRUSHER, false))
 	var next := Personas.chooseRun(rookie, data, history, rng())

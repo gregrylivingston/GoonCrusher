@@ -48,6 +48,13 @@ const CHAIN_PROPS := [&"fence", &"hedge", &"jersey", &"fortwall"]
 const DECOR_PLACE := {&"paint": "road", &"streetglow": "road", &"oilstain": "any", &"reeds": "wet", &"cracks": "any"}
 const PICKUP_IDS := {"fuel": "fuel", "health": "health", "purse": "purse", "slot": "slotmachine"}
 const POOL_CAP := {"quad": 200, "body": 16, "occluder": 160, "line": 160, "mmi": 24, "prop": 40}
+## PICKUP_IDS with each locked pickup swapped for its nearest open ancestor (Unlocks), worked out on the
+## main thread for the recipe job
+static func pickupIds() -> Dictionary:
+	var out := {}
+	for kind in PICKUP_IDS: out[kind] = Pickups.openOr(PICKUP_IDS[kind])
+	return out
+
 ## Ready-made pickups kept out of the tree (ChunkView takes them, then tops the stock up in spare steps): coins
 ## come in lines, so more of them
 const PICKUP_STOCK := {"coin": 14, "other": 2}
@@ -283,7 +290,7 @@ func recipeContext(lots: Array, lanes: Array) -> Dictionary:
 		"layerOf": layerOf, "mainLayer": 0, "blocked": blocked, "spawnable": spawnable,
 		"wallStrip": STRIPS.find(wallStrip), "waterStrip": STRIPS.find("shore_foam"),
 		"props": props, "decor": decor, "propTables": propTables, "decorTables": decorTables,
-		"pickupTable": pickupTable, "pickupsPerChunk": def.pickupsPerChunk, "pickupIds": PICKUP_IDS,
+		"pickupTable": pickupTable, "pickupsPerChunk": def.pickupsPerChunk, "pickupIds": pickupIds(),
 		"propsPerChunk": int(def.features.get("props", 16)), "decorPerChunk": int(def.features.get("decor", 110)),
 		"start": def.startPosition, "lots": lots, "lanes": lanes, "lotTerrain": Root.terrain.LOT,
 		"roofDecor": String(ROOF_DECOR.get(grammar, &"")) if decorMeshes.has(ROOF_DECOR.get(grammar, &"")) else "",
@@ -298,7 +305,7 @@ func prewarm() -> void:
 		for k in 2: give("prop:" + id, newProp(id), POOL_CAP.prop)
 	for kind in def.pickupTable:
 		if String(kind) == "none": continue
-		var id: String = PICKUP_IDS.get(String(kind), "coin")
+		var id: String = pickupIds().get(String(kind), "coin")
 		var scene: String = Pickups.def(id).get("scene", Pickups.GENERIC_SCENE)
 		keepLoaded.push_back(load(scene))
 		if not id in stockIds: stockIds.push_back(id)

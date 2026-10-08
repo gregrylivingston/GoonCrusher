@@ -14,7 +14,8 @@ class_name PlayerData extends Resource
 #Everything that isn't a car or a level, one section per feature. migrate() adds any section an
 #older save lacks. records: best runs per level and car (SaveManager.recordGoonpocalypse); hints: one-time
 #tips already shown; lifetime: totals over every run; medals and achievements: earned ids.
-@export var meta := {"records":{}, "hints":{}, "lifetime":{}, "medals":{}, "achievements":{}}
+#unlocks: opened unlock ids (Unlocks.saved); lifetime also holds the counters unlock conditions read (Unlocks.countRun).
+@export var meta := {"records":{}, "hints":{}, "lifetime":{}, "medals":{}, "achievements":{}, "unlocks":{}}
 
 @export var cars = [
 	{	"name":"sedan",
@@ -43,30 +44,35 @@ class_name PlayerData extends Resource
 	},
 	{	"name":"semi",
 		"cost":5000,
+		"gems":3, #advanced cars also cost gems (placeholder prices; package 6 re-fits them)
 		"upgrades":{},
 		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,"score":0,"combo":0,},
 		"scene":"res://scene/car/semi/semi.tscn",
 	},
 	{	"name":"audi",
 		"cost":10000,
+		"gems":5,
 		"upgrades":{},
 		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,"score":0,"combo":0,},
 		"scene":"res://scene/car/audi/audi.tscn"
 	},
 	{	"name":"racer",
 		"cost":10000,
+		"gems":5,
 		"upgrades":{},
 		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,"score":0,"combo":0,},
 		"scene":"res://scene/car/racer/racer.tscn"
 	},
 	{	"name":"police",
 		"cost":25000,
+		"gems":10,
 		"upgrades":{},
 		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,"score":0,"combo":0,},
 		"scene":"res://scene/car/police/police.tscn",
 	},
 	{	"name":"ambulance",
 		"cost":35000,
+		"gems":15,
 		"upgrades":{},
 		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,"score":0,"combo":0,},
 		"scene":"res://scene/car/ambulance/ambulance.tscn",

@@ -534,8 +534,26 @@ func crushGoon(collider, speed := -1.0) -> bool:
 	RewardFlyers.flyUpgrade(Root.upgrade.CURRENTGOONSCRUSHED, collider.global_position)
 	if isPlayer:
 		PickupEffects.onCrush(self, collider.global_position)
+		addCrushXp(collider, isStyleCrush(speed))
 		if is_instance_valid(crushFeel): crushFeel.onCrush(collider, speed)
 	return true
+
+#Crush XP (CrushPrizes): every crush earns XP toward the next gift box, which GameUI opens. Credited at
+#the crush, after the combo is counted; the box itself waits for an unpaused tree.
+var crushXp := 0.0     #this run's crush XP
+var crushXpMult := 1.0 #for pickups and perks that raise it
+
+func addCrushXp(goon: Object, style := false) -> void:
+	if not isPlayer || not is_instance_valid(goon): return
+	var goonDef = goon.get("def")
+	var night: bool = is_instance_valid(Root.spawnManager) && Root.spawnManager.isNight
+	crushXp += CrushPrizes.crushXp(goonDef if goonDef is Dictionary else {}, goon.get("isGiant") == true, comboCount, style, night, crushXpMult)
+
+#a slam with the flank or tail, or a crush in a slide (CrushFeel pays the same moments a coin bonus)
+func isStyleCrush(speed: float) -> bool:
+	if crushHitVel != Vector2.ZERO: return true
+	var slip := absf(angle_difference(velocity.angle(), rotation))
+	return speed >= CrushFeel.DRIFT_SPEED && slip > CrushFeel.DRIFT_ANGLE && slip < PI - 0.6
 
 #Slams: the physics shapes are only the bumpers (CollisionShape2D, or the rear one in reverse), so the
 #car's flanks and tail crush here. A goon touching the car's footprint (carBodyArea) on a side or the
@@ -763,7 +781,7 @@ func reward(powerup: String , quantity, forShowOnly: bool = false):
 		if not is_instance_valid(ui): ui = get_tree().get_nodes_in_group("playerGameUi")[0]
 		ui.updateStats()
 	match powerup:
-		"currentGoonsCrushed": ui.updateGoonsCrushed()
+		"currentGoonsCrushed": if is_instance_valid(ui): ui.updateGoonsCrushed() #no HUD in some tests
 		"headlights":setHeadlightStrength()
 
 #a stat after a powerup adds `quantity`: never past STAT_CAP, but a stat already above it

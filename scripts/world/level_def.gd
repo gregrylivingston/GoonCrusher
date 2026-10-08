@@ -28,6 +28,8 @@ class_name LevelDef extends Resource
 @export var sprintSlack: float = 1.3
 ## Modes this level offers; empty means every mode
 @export var modes: Array = []
+## Modes to beat here before the next level opens (Root.modesToOpenNext; the demo asks for its 2)
+@export_range(1, 5) var unlockModes: int = 3
 
 @export_group("Goons")
 ## Districts score their faction as Goons.factionFor does (distance from the start), clamped to this band

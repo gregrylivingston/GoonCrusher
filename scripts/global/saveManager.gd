@@ -1,11 +1,13 @@
 extends Node
 
 #Progress save. Settings live in user://settings.cfg (see Settings); only progress is kept here.
-#The demo and the full game share this file, so demo progress carries over: load_data() merges
-#each save with the current defaults (migrate()) before anything reads it.
+#The demo and the full game share this file: load_data() merges each save with the current defaults
+#(migrate()) before anything reads it.
 
-const SAVE_VERSION := 5 #2: every level's gamemodeBeat has a GOONPOCALYPSE key. 3: goonsCrushed (older saves load it empty). 4: meta, and a score record per car
-#5: levels come from the Levels registry (the world revamp) and carry an id; older level entries keep their unlocks by index, but their beaten modes reset and their records move to the new level's id
+const SAVE_VERSION := 6 #6: the unlock system (Unlocks, meta.unlocks, meta.lifetime, car gem prices)
+#Saves older than FIRST_KEPT_VERSION start over (the author's call when the unlocks went in): the old file is
+#copied beside the save as <name>.v<version>.tres, then a new save replaces it.
+const FIRST_KEPT_VERSION := 6
 var save_path = "user://saveData_0.1.tres"
 var playerData: PlayerData
 var saveTimer: Timer
@@ -33,10 +35,17 @@ func load_data():
 		var data = ResourceLoader.load(save_path, "", ResourceLoader.CACHE_MODE_IGNORE)
 		if data is PlayerData:
 			Settings.import_legacy_volume(data.settings.get("volume", {}))
+			if isObsolete(data):
+				DirAccess.copy_absolute(ProjectSettings.globalize_path(save_path), ProjectSettings.globalize_path(save_path.get_basename() + ".v%d.tres" % data.saveVersion))
+				return reset_save()
 			playerData = data
 			if migrate(): save_character_data()
 			return playerData
 	return reset_save()
+
+## A save from before FIRST_KEPT_VERSION, which load_data() replaces with a new one
+static func isObsolete(data: PlayerData) -> bool:
+	return data.saveVersion < FIRST_KEPT_VERSION
 
 func reset_save():
 	playerData = load("res://scene/player/save/playerData.tres").duplicate(true)
@@ -46,7 +55,7 @@ func reset_save():
 	return playerData
 
 #Merge the saved file with the current defaults. New cars and levels are added, moved scene
-#paths and new record keys are picked up, and price changes reach cars that are still locked.
+#paths and new record keys are picked up, and price changes (coins and gems) reach cars that are still locked.
 #Returns true when anything changed.
 func migrate() -> bool:
 	var defaults = PlayerData.new()
@@ -60,36 +69,27 @@ func migrate() -> bool:
 			continue
 		var car = saved[0]
 		car.scene = defaultCar.scene
-		if car.cost != 0: car.cost = defaultCar.cost
+		if car.cost != 0:
+			car.cost = defaultCar.cost
+			car.gems = defaultCar.get("gems", 0)
 		for key in defaultCar:
 			if not car.has(key): car[key] = defaultCar[key].duplicate(true) if defaultCar[key] is Dictionary else defaultCar[key]
 		for key in defaultCar.records:
 			if not car.records.has(key): car.records[key] = 0
 	#levels were not saved before version 1, so older saves get the defaults here
 	playerData.levels = mergeLevels(playerData.levels)
-	rekeyLevelRecords()
 	playerData.selectedCar = clampi(playerData.selectedCar, 0, playerData.cars.size() - 1)
 	playerData.selectedLevel = clampi(playerData.selectedLevel, 0, playerData.levels.size() - 1)
 	playerData.gameMode = clampi(playerData.gameMode, 0, Root.gameModes.size() - 1)
 	playerData.saveVersion = SAVE_VERSION
 	return before != var_to_str([playerData.cars, playerData.levels, playerData.saveVersion, playerData.selectedCar, playerData.selectedLevel, playerData.gameMode, playerData.meta])
 
-#The save's levels rebuilt from the registry (Levels.ORDER). A saved entry with a known id keeps its unlock
-#and beaten modes. An entry from before the registry (no id, or an old scene name, Levels.LEGACY_KEYS) keeps
-#only its unlock, carried to the level now at its old index: it was a different level, so its beaten modes
-#reset. Entries for levels no longer in the registry are dropped.
+#The save's levels rebuilt from the registry (Levels.ORDER). A saved entry keeps its unlock and beaten
+#modes; entries for levels no longer in the registry are dropped.
 static func mergeLevels(savedLevels: Array) -> Array:
 	var byId := {}
-	var legacy := {} #new index -> the old entry that sat there
-	for j in savedLevels.size():
-		var saved = savedLevels[j]
-		if not saved is Dictionary: continue
-		var id := str(saved.get("id", ""))
-		if Levels.indexOf(StringName(id)) >= 0:
-			byId[id] = saved
-			continue
-		var old := Levels.LEGACY_KEYS.find(levelKey(saved))
-		legacy[old if old >= 0 else j] = saved
+	for saved in savedLevels:
+		if saved is Dictionary && Levels.indexOf(StringName(str(saved.get("id", "")))) >= 0: byId[str(saved.id)] = saved
 	var merged := []
 	for i in Levels.count():
 		var level := Levels.defaultEntry(i)
@@ -100,23 +100,8 @@ static func mergeLevels(savedLevels: Array) -> Array:
 			var savedBeat = saved.get("gamemodeBeat", {})
 			if savedBeat is Dictionary:
 				for mode in savedBeat: level.gamemodeBeat[mode] = bool(savedBeat[mode])
-		elif legacy.has(i):
-			level.unlocked = bool(legacy[i].get("unlocked", level.unlocked))
 		merged.push_back(level)
 	return merged
-
-#records keyed by an old level scene name (meta.records.<section>.level_grass_1) move to the id of the level
-#now at that index; a record already under the new id wins
-func rekeyLevelRecords() -> void:
-	for section in playerData.meta.records:
-		var byLevel = playerData.meta.records[section]
-		if not byLevel is Dictionary: continue
-		for old in Levels.LEGACY_KEYS.size():
-			var oldKey: String = Levels.LEGACY_KEYS[old]
-			if not byLevel.has(oldKey) || old >= Levels.count(): continue
-			var newKey := String(Levels.ORDER[old])
-			if not byLevel.has(newKey): byLevel[newKey] = byLevel[oldKey]
-			byLevel.erase(oldKey)
 
 #marks the save dirty; it is written one second after the last change, on scene change and on exit
 func save_character_data():
@@ -145,14 +130,9 @@ func addGems(num: int):
 	flush()
 	if is_instance_valid(Root.mainMenu): Root.mainMenu.statUpdatesUiUpdate()
 
-func unlockCar():
-	var thisCar = playerData.cars[playerData.selectedCar]
-	if playerData.coin >= thisCar.cost:
-		playerData.coin -= thisCar.cost
-		thisCar.cost = 0
-		save_character_data()
-		return true
-	else: return false
+## Buys the selected car (Unlocks.buy): entry cars cost coins, advanced ones coins and gems.
+func unlockCar() -> bool:
+	return Unlocks.buy("car:" + str(playerData.cars[playerData.selectedCar].name))
 
 #upgrades each car can buy per stat. Saves from before the cap keep any levels above it (no refund).
 const MAX_UPGRADE_LEVEL := 20
@@ -208,16 +188,28 @@ func selectPreviousCar():
 	return playerData.cars[playerData.selectedCar]
 
 
+#A won run: the mode is beaten here. Once Root.modesToOpenNext(level) modes are beaten (Countdown, Sprint and one
+#more), the next level opens and the menu moves to it; until then the menu offers this level's next unbeaten
+#mode. Levels already open stay open (saves from before the rule keep theirs).
 func currentLevelPassed():
-	playerData.levels[playerData.selectedLevel].gamemodeBeat[playerData.gameMode] = true
+	var level: Dictionary = playerData.levels[playerData.selectedLevel]
+	level.gamemodeBeat[playerData.gameMode] = true
 	var next = playerData.selectedLevel + 1
-	if next < playerData.levels.size() && not playerData.levels[next].unlocked:
+	if Root.opensNextLevel(level) && next < playerData.levels.size() && not playerData.levels[next].unlocked:
 		playerData.levels[next].unlocked = true
 		#the demo unlocks the level for the full game but doesn't open the menu on a level it can't play
 		if not (Root.IS_DEMO && next >= Root.DEMO_LEVEL_COUNT):
 			playerData.selectedLevel = next
 			playerData.gameMode = Root.gameModes.GOONCRUSHER
+	else:
+		var unbeaten = Root.MODE_PATH.filter(func(m): return not level.gamemodeBeat.get(m, false) && Root.isModePlayable(level, m))
+		if not unbeaten.is_empty(): playerData.gameMode = unbeaten[0]
 	save_character_data()
+
+## Modes still to beat on a level before the next one opens (0 when it is open or there is none)
+func modesToGo(index: int) -> int:
+	if index + 1 >= playerData.levels.size() || playerData.levels[index + 1].unlocked: return 0
+	return maxi(Root.modesToOpenNext(playerData.levels[index]) - Root.modesBeaten(playerData.levels[index]), 0)
 
 var carNameToFind
 func getCarByName(carName):

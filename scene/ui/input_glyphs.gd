@@ -44,14 +44,38 @@ static func keyName(event: InputEventKey) -> String:
 	return KEY_SHORT.get(text, text)
 
 #menu actions beyond Godot's ui_* and the ones Settings adds (ui_tab_prev/next, ui_reset_tab),
-#and the controller's A and B for accept and back, which the project's ui_* don't bind
+#and the controller's A and B for accept and back, which the project's ui_* don't bind.
+#Every menu works from the left hand: WASD, Space accepts, Q/E switch, letters beside WASD for the rest.
 static func ensureMenuActions() -> void:
 	addEvent("ui_accept", pad(JOY_BUTTON_A))
 	addEvent("ui_cancel", pad(JOY_BUTTON_B))
-	addIfMissing("ui_upgrade", key(KEY_U), pad(JOY_BUTTON_Y))
+	addIfMissing("ui_upgrade", key(KEY_F), pad(JOY_BUTTON_Y)) #Upgrade in the garage, Gadget in run setup
 	addIfMissing("ui_records", key(KEY_R), pad(JOY_BUTTON_X))
 	addIfMissing("ui_codex", key(KEY_G), pad(JOY_BUTTON_BACK)) #the Goonopedia
-	addIfMissing("ui_boost", key(KEY_B), pad(JOY_BUTTON_RIGHT_STICK)) #run setup's Boost slot
+	addIfMissing("ui_boost", key(KEY_V), pad(JOY_BUTTON_RIGHT_STICK)) #run setup's Boost slot
+	#hints show an action's first key, so the left-hand keys go first: Space (Enter still accepts), WASD
+	for pair in [["ui_accept", KEY_SPACE], ["ui_up", KEY_W], ["ui_left", KEY_A], ["ui_down", KEY_S], ["ui_right", KEY_D]]:
+		keyFirst(pair[0], pair[1])
+
+#moves the key `code` (bound by keycode or physical key) to the front of `action`'s events, adding it if missing
+static func keyFirst(action: String, code: int) -> void:
+	if not InputMap.has_action(action): return
+	var events := InputMap.action_get_events(action)
+	var at := events.find_custom(func(e): return e is InputEventKey && (e.keycode == code || e.physical_keycode == code))
+	if at == 0: return
+	var event: InputEvent = key(code) if at < 0 else events[at]
+	if at > 0: events.remove_at(at)
+	events.push_front(event)
+	InputMap.action_erase_events(action)
+	for e in events: InputMap.action_add_event(action, e)
+
+#1-9 for a number key (top row or keypad), else 0: menus pick a level poster or a tab by number
+static func digit(event: InputEvent) -> int:
+	if not (event is InputEventKey && event.pressed): return 0
+	var code: int = event.physical_keycode if event.physical_keycode != KEY_NONE else event.keycode
+	if code >= KEY_1 && code <= KEY_9: return code - KEY_0
+	if code >= KEY_KP_1 && code <= KEY_KP_9: return code - KEY_KP_0
+	return 0
 
 static func addIfMissing(action: String, keyEvent: InputEvent, padEvent: InputEvent) -> void:
 	if InputMap.has_action(action): return

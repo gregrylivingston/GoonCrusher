@@ -4,6 +4,8 @@ extends SceneTree
 #  Godot_console.exe --headless --path . -s res://tests/game/run_tests.gd
 #Autoloads (Settings, Root, SaveManager...) are loaded as usual. Tests must not write the save
 #or the settings files. `-- --only=world_recipe` runs only the files whose names contain that text.
+#Every test starts with every pickup unlocked (Unlocks.allOpen), whatever the save has opened; tests of
+#the unlocks themselves turn it off.
 
 const DIR = "res://tests/game/"
 
@@ -12,6 +14,7 @@ func _initialize():
 
 func run() -> void:
 	await process_frame #let the autoloads finish _ready
+	var unlocks = load("res://scripts/global/unlocks.gd") #loaded, not named: naming it here compiles it before the autoloads exist
 	var failed := 0
 	var passed := 0
 	var only := ""
@@ -26,6 +29,7 @@ func run() -> void:
 			var test: GameTest = script.new()
 			root.add_child(test)
 			test.currentTest = file + " " + method.name
+			unlocks.allOpen = true
 			test.before_each()
 			await test.call(method.name)
 			test.after_each()

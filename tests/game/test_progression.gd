@@ -63,24 +63,52 @@ func test_every_default_level_has_every_mode_key():
 	for lvl in PlayerData.new().levels:
 		for mode in M.values(): assert_true(lvl.gamemodeBeat.has(mode), "%s lacks %s" % [lvl.name, M.find_key(mode)])
 
-func test_payout_is_coins_times_stars_but_never_zero_for_coins():
+func test_payout_is_coins_times_the_star_multiplier():
 	assert_eq(Root.computePayout(120, 0), 120, "0 stars still pays the coins")
-	assert_eq(Root.computePayout(120, 1), 120)
-	assert_eq(Root.computePayout(120, 3), 360)
+	assert_eq(Root.computePayout(120, 1), 132, "each star adds 0.1 to the multiplier")
+	assert_eq(Root.computePayout(120, 3), 156)
+	assert_eq(Root.computePayout(1000, 50), 6000, "50 stars pay x6")
 	assert_eq(Root.computePayout(0, 5), 0)
 	assert_eq(Root.computePayout(50, -2), 50, "a negative star count can't pay less than the coins")
+	assert_eq(Root.multiplierText(26), "3.6")
 
-func test_any_beaten_mode_unlocks_the_next_level():
+func test_three_beaten_modes_open_the_next_level():
 	var data = PlayerData.new()
-	data.selectedLevel = 2
-	data.gameMode = M.SPRINT
+	var keep = SaveManager.playerData
 	SaveManager.playerData = data
+	data.selectedLevel = 2
+	data.levels[2].unlocked = true #reached by play
 	assert_false(data.levels[3].unlocked)
+	data.gameMode = M.GOONCRUSHER
 	SaveManager.currentLevelPassed()
-	assert_true(data.levels[2].gamemodeBeat[M.SPRINT], "the mode is marked beaten")
-	assert_true(data.levels[3].unlocked, "the next level opens")
-	assert_eq(data.selectedLevel, 3, "and is selected")
+	assert_true(data.levels[2].gamemodeBeat[M.GOONCRUSHER], "the mode is marked beaten")
+	assert_false(data.levels[3].unlocked, "one mode isn't enough")
+	assert_eq(data.gameMode, M.SPRINT, "the menu offers the mode it opened")
+	assert_eq(SaveManager.modesToGo(2), 2)
+	SaveManager.currentLevelPassed()
+	assert_false(data.levels[3].unlocked, "nor two")
+	assert_eq(data.gameMode, M.GOONPOCALYPSE, "then the next unbeaten one")
+	data.gameMode = M.DEFENSE #any third mode will do
+	SaveManager.currentLevelPassed()
+	assert_true(data.levels[3].unlocked, "three open the next level")
+	assert_eq(data.selectedLevel, 3, "and it is selected")
 	assert_eq(data.gameMode, M.GOONCRUSHER, "starting from Countdown")
+	assert_eq(SaveManager.modesToGo(2), 0)
+	SaveManager.playerData = keep
+
+func test_the_results_ticket_says_what_opens_next():
+	var data = PlayerData.new()
+	var keep = SaveManager.playerData
+	SaveManager.playerData = data
+	var summary = load("res://scene/player/menu/gameSummary.gd")
+	data.levels[2].gamemodeBeat[M.GOONCRUSHER] = true
+	assert_eq(summary.nextLevelNote(2, false), "Beat 2 more modes here to open %s" % data.levels[3].name)
+	data.levels[2].gamemodeBeat[M.SPRINT] = true
+	data.levels[2].gamemodeBeat[M.MARATHON] = true
+	data.levels[3].unlocked = true
+	assert_eq(summary.nextLevelNote(2, false), "%s is open" % data.levels[3].name)
+	assert_eq(summary.nextLevelNote(2, true), "", "nothing to say when it was already open")
+	SaveManager.playerData = keep
 
 func test_summary_needs_a_fresh_press():
 	var summary = load("res://scene/player/menu/gameSummary.gd")

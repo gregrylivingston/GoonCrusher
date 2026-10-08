@@ -667,9 +667,23 @@ static func lotClear(flagArray: PackedByteArray, chunk: Vector2i) -> bool:
 ## The chunk for a station near `desired`: the nearest chunk (square rings outward, clamped to CHUNK_LIMIT)
 ## whose centre cells are passable and reachable (START) and whose lot rect is clear; failing that within
 ## three more rings, the nearest with a good centre. Never `forbidden`. {chunk, clear}
-static func findStationChunk(flagArray: PackedByteArray, desired: Vector2i, forbidden: Vector2i, needStart := true) -> Dictionary:
+## With an `origin` (the start, or Marathon's last station), only chunks at least STATION_MIN_SHARE as far
+## from it as `desired` count: the nearest good chunk could lie back toward the start, which once put a
+## Crusher Sprint station 11,812 px out instead of 32,000. If none qualifies, any chunk does, as before.
+const STATION_MIN_SHARE := 0.85
+static func findStationChunk(flagArray: PackedByteArray, desired: Vector2i, forbidden: Vector2i, needStart := true, origin := NO_CHUNK) -> Dictionary:
+	if origin != NO_CHUNK:
+		var far := findStationChunkFrom(flagArray, desired, forbidden, needStart, origin, STATION_MIN_SHARE)
+		if far.chunk != NO_CHUNK: return far
+	return findStationChunkFrom(flagArray, desired, forbidden, needStart, NO_CHUNK, 0.0, true)
+
+## findStationChunk's search. Chunks closer to `origin` than `minShare` of desired's distance are skipped;
+## {chunk: NO_CHUNK} when nothing qualifies, unless `orCentre` (then the clamped centre, as before)
+static func findStationChunkFrom(flagArray: PackedByteArray, desired: Vector2i, forbidden: Vector2i, needStart: bool, origin: Vector2i, minShare: float, orCentre := false) -> Dictionary:
 	var limit := Vector2i(CHUNK_LIMIT, CHUNK_LIMIT)
 	var centre := desired.clamp(-limit, limit)
+	var minDistance := 0.0
+	if origin != NO_CHUNK: minDistance = Vector2(centre - origin).length() * minShare
 	var fallback := NO_CHUNK
 	var fallbackRing := -1
 	for ring in range(0, 2 * CHUNK_LIMIT + 1):
@@ -679,6 +693,7 @@ static func findStationChunk(flagArray: PackedByteArray, desired: Vector2i, forb
 		var bestPlainDistance := INF
 		for chunk in ringChunks(centre, ring):
 			if chunk == forbidden || absi(chunk.x) > CHUNK_LIMIT || absi(chunk.y) > CHUNK_LIMIT: continue
+			if minDistance > 0.0 && Vector2(chunk - origin).length() < minDistance: continue
 			if not stationCoreOk(flagArray, chunk, needStart): continue
 			var distance := float((chunk - centre).length_squared())
 			if fallbackRing < 0 && distance < bestPlainDistance:
@@ -689,11 +704,11 @@ static func findStationChunk(flagArray: PackedByteArray, desired: Vector2i, forb
 				bestDistance = distance
 		if best != NO_CHUNK: return {"chunk": best, "clear": true}
 		if fallback != NO_CHUNK && fallbackRing < 0: fallbackRing = ring
-	return {"chunk": fallback if fallback != NO_CHUNK else centre, "clear": false}
+	return {"chunk": fallback if fallback != NO_CHUNK else (centre if orCentre else NO_CHUNK), "clear": false}
 
 func placeSprintStation(offset: Vector2) -> void:
 	var startChunk := chunkOf(startPos)
-	var found := findStationChunk(flags, chunkOf(startPos + offset), startChunk)
+	var found := findStationChunk(flags, chunkOf(startPos + offset), startChunk, true, startChunk)
 	stationChunk = found.chunk
 	station = chunkCentre(stationChunk)
 	clearLot(stationChunk)

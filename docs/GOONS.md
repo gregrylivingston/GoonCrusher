@@ -31,8 +31,9 @@ After a bake that adds new PNGs, run `Godot_console.exe --headless --path . --im
 
 - **Regions are the world map's districts** (docs/WORLD.md, "Districts"): each district's faction, three goons, name and landmark are decided once, seeded per district. The faction comes from the distance to the start, clamped to the level's `factionBand` (`LevelRoster.factionAt`; below `Goons.WILD_BELOW` 1.0 Wild, below `TRIBE_BELOW` 2.2 Tribe, else Scrap). `Goons.factionFor` is only the fallback with no level def.
 - **A district's three goons** (`LevelRoster.pickGoons`) come from the level's roster for that faction: goon 1 the lowest rank (fodder), goons 2 and 3 specials or heavies.
-- **Wave mix** (`WAVE_MIX`): in wave 1 a region spawns goon 1 95% of the time; goons 2 and 3 grow more common over waves 2 to 4, and the HUD reveals them on the same schedule. Global time adds a wave every 2 minutes.
-- **Region data:** `Region.currentRegion` (`faction`, `name`, `giantism`, `time`, `wave`, `goon` = goon ids) and `Region.factionName()`.
+- **Wave mix** (`WAVE_MIX`): in wave 1 the district spawns goon 1 95% of the time; goons 2 and 3 grow more common over waves 2 to 4. The wave is the run's (one clock wherever the car drives, `Region.wave`), and the spawner's escalation adds a wave every 2 minutes on top (`SpawnManager.pickGoonId`).
+- **Region data:** `Region.currentRegion` (`faction`, `name`, `giantism`, `goon` = goon ids) and `Region.factionName()`. The wave is the run's (`Region.wave`), not the district's.
+- **Crush XP:** each crush earns gift box XP by rank (1 / 3 / 8), ×4 for a giant, ×10 for a boss (docs/PICKUPS.md, "Gift boxes").
 - **Goonopedia:** a goon shows once crushed; the console's `unlock goons` / `lock goons` override that.
 - **Testing:** `-- --faction=wild|tribe|scrap` forces every district's faction, and `-- --goons=a,b,c` forces its three goons. Both work with `--playtest` and `--bench`.
 

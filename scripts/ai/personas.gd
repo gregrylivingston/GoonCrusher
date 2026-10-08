@@ -54,31 +54,63 @@ static func get_def(id: String) -> Dictionary:
 
 #---------- the garage ----------
 
-## The next thing to buy, or {} when done shopping: {"unlock": car index} or {"upgrade": stat, "car": car index}.
-## Called again after each purchase, with the bank updated.
+## The next thing to buy, or {} when done shopping: {"unlock": car index}, {"upgrade": stat, "car": car index}
+## or {"pickup": id} (unlocked in the Goonopedia). Called again after each purchase, with the bank updated.
 static func nextPurchase(persona: Dictionary, data: PlayerData, history: Array, rng: RandomNumberGenerator) -> Dictionary:
 	var cheapestLocked := -1
 	for i in data.cars.size():
 		if data.cars[i].cost > 0 && (cheapestLocked < 0 || data.cars[i].cost < data.cars[cheapestLocked].cost): cheapestLocked = i
 	var drive := chooseCar(persona, data, history)
+	var canCar := cheapestLocked >= 0 && canBuyCar(data, cheapestLocked)
 	match persona.shop:
-		"impulse": #a new car the moment it is affordable, then the cheapest upgrade going
-			if cheapestLocked >= 0 && data.coin >= data.cars[cheapestLocked].cost: return {"unlock": cheapestLocked}
+		"impulse": #a new car the moment it is affordable, any pickup under half the bank, then the cheapest upgrade
+			if canCar: return {"unlock": cheapestLocked}
+			var pick := pickupToBuy(data, "cheapest", data.coin / 2, rng)
+			if pick != "": return {"pickup": pick}
 			return cheapestUpgrade(data, drive, CareerStart.STATS, data.coin)
-		"focused": #save for the next car once it is within three good runs; upgrade the winning stats meanwhile
+		"focused": #save for the next car once it is within three good runs; useful pickups and the winning stats meanwhile
 			var income := averagePayout(history, 5)
 			if cheapestLocked >= 0:
 				var price: int = data.cars[cheapestLocked].cost
-				if data.coin >= price: return {"unlock": cheapestLocked}
+				if canCar: return {"unlock": cheapestLocked}
 				if income > 0.0 && price - data.coin <= income * 3.0: return {} #nearly there: keep saving
+			var pick := pickupToBuy(data, "useful", data.coin / 3, rng)
+			if pick != "": return {"pickup": pick}
 			return priorityUpgrade(data, drive, persona.stats, data.coin)
-		"variety": #every car to try it, then the stat it has least of
-			if cheapestLocked >= 0 && data.coin >= data.cars[cheapestLocked].cost: return {"unlock": cheapestLocked}
+		"variety": #every car to try it, a new pickup to try, then the stat it has least of
+			if canCar: return {"unlock": cheapestLocked}
+			var pick := pickupToBuy(data, "random", data.coin, rng)
+			if pick != "" && rng.randf() < 0.6: return {"pickup": pick}
 			var stats := CareerStart.STATS.duplicate()
 			stats.sort_custom(func(a, b): return int(data.cars[drive].upgrades.get(a, 0)) < int(data.cars[drive].upgrades.get(b, 0)))
 			if rng.randf() < 0.3: stats.shuffle() #sometimes just whatever looks fun
 			return priorityUpgrade(data, drive, stats, data.coin)
 	return {}
+
+## Coins and gems cover the car (advanced cars cost gems too)
+static func canBuyCar(data: PlayerData, index: int) -> bool:
+	return data.coin >= int(data.cars[index].cost) && data.gem >= int(data.cars[index].get("gems", 0))
+
+## A ready pickup unlock (Unlocks) the bank covers within `budget` coins: the cheapest, the most useful to
+## the AI per coin (`ai` in Pickups.DATA), or any. "" when there is none.
+static func pickupToBuy(data: PlayerData, how: String, budget: int, rng: RandomNumberGenerator) -> String:
+	var options := []
+	for id in Pickups.DATA:
+		var uid: String = "pickup:" + id
+		var cost := Unlocks.pickupPrice(id)
+		if cost.is_empty() || Unlocks.state(uid) != Unlocks.S.READY || not Unlocks.canAfford(uid): continue
+		if int(cost.get("coin", 0)) > budget: continue
+		options.push_back(id)
+	if options.is_empty(): return ""
+	match how:
+		"cheapest": options.sort_custom(func(a, b): return Unlocks.pickupPrice(a).get("coin", 0) < Unlocks.pickupPrice(b).get("coin", 0))
+		"useful": options.sort_custom(func(a, b): return worth(a) > worth(b))
+		_: return options[rng.randi() % options.size()]
+	return options[0]
+
+static func worth(id: String) -> float:
+	var cost := Unlocks.pickupPrice(id)
+	return float(Pickups.DATA[id].get("ai", 10)) / (1.0 + float(cost.get("coin", 0)) + 500.0 * float(cost.get("gem", 0)))
 
 static func upgradeCost(level: int) -> int:
 	return int(pow(level + 1, 1.6) * 15) #SaveManager.requestStatCost
@@ -222,7 +254,7 @@ static func averagePayout(history: Array, last: int) -> float:
 ## The starting gadget to buy with gems (Pickups.LOADOUT), or "".
 static func chooseLoadout(persona: Dictionary, gems: int, rng: RandomNumberGenerator) -> String:
 	if not persona.gems: return ""
-	var options := Pickups.LOADOUT.keys().filter(func(id): return Pickups.LOADOUT[id] <= gems)
+	var options := Pickups.LOADOUT.keys().filter(func(id): return Pickups.LOADOUT[id] <= gems && Unlocks.isPickupOpen(id))
 	if options.is_empty(): return ""
 	if persona.runs == "coverage": return options[rng.randi() % options.size()] if rng.randf() < 0.5 else ""
 	return options[0] if gems >= 6 else "" #the grinder keeps a reserve for slot rerolls
@@ -230,7 +262,7 @@ static func chooseLoadout(persona: Dictionary, gems: int, rng: RandomNumberGener
 ## The boost to buy with the gems left after the gadget (Pickups.BOOST_LOADOUT), or "".
 static func chooseBoost(persona: Dictionary, gems: int, rng: RandomNumberGenerator) -> String:
 	if not persona.gems: return ""
-	var options := Pickups.BOOST_LOADOUT.keys().filter(func(id): return Pickups.BOOST_LOADOUT[id] <= gems)
+	var options := Pickups.BOOST_LOADOUT.keys().filter(func(id): return Pickups.BOOST_LOADOUT[id] <= gems && Unlocks.isPickupOpen(id))
 	if options.is_empty(): return ""
 	if persona.runs == "coverage": return options[rng.randi() % options.size()] if rng.randf() < 0.5 else ""
 	return "nitro" if "nitro" in options && gems >= 8 else "" #the grinder keeps a reserve for slot rerolls

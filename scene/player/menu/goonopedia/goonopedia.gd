@@ -7,6 +7,8 @@ class_name Goonopedia extends Control
 #systems), so new goons, cars and levels show up by themselves; only the plain-language text is written
 #here. A goon's DATA can carry "blurb" and "tip" strings to replace the text its verb gives it.
 #Goons show as silhouettes until the player crushes one (PlayerData.goonsCrushed, credited by gameSummary).
+#The Pickups tab is also where pickups are unlocked (Unlocks): each kind's tree in order, a locked tile
+#shows its price or play condition, and Accept (or a click) buys a ready one.
 
 signal closed
 
@@ -16,6 +18,7 @@ const REVEAL_ALL := false #true shows every goon without crushing one first
 const ICON := preload("res://texture/icon/goonopedia.svg")
 const SHADOW := Color(0, 0, 0, 0.88) #silhouette tint for undiscovered goons and locked cars
 const LIST_WIDTH := 720.0
+const BUY_SOUND := preload("res://sound/fx/short-success-sound-glockenspie.mp3")
 
 #---------- text ----------
 
@@ -176,7 +179,7 @@ func _ready() -> void:
 	detailScroll.add_child(detail)
 	right.add_child(detailScroll)
 	body.add_child(right)
-	root.add_child(KeyHint.bar([[["ui_tab_prev", "ui_tab_next"], "Tab"], [["ui_up", "ui_down"], "Browse"], [["ui_cancel"], "Back"]]))
+	root.add_child(KeyHint.bar([[["ui_tab_prev", "ui_tab_next"], "Tab"], [["ui_up", "ui_down"], "Browse"], [["ui_accept"], "Buy pickup"], [["ui_cancel"], "Back"]]))
 	setTab(Tab.GOONS)
 	Juice.dropIn(self, 30.0)
 
@@ -209,7 +212,7 @@ func buildTabs() -> Control:
 	row.add_child(KeyHint.make(PackedStringArray(["ui_tab_prev"]), "", 15, true))
 	for i in TAB_NAMES.size():
 		var b = Button.new()
-		b.text = TAB_NAMES[i]
+		b.text = "%d  %s" % [i + 1, TAB_NAMES[i]] #number keys pick a tab, like the level posters
 		b.theme_type_variation = "TabButton"
 		b.toggle_mode = true
 		b.focus_mode = Control.FOCUS_NONE
@@ -299,6 +302,7 @@ func tile(parent: Control, entry: Dictionary, picture: Texture2D, caption: Strin
 	label.offset_top = -28
 	label.offset_bottom = -4
 	b.add_child(label)
+	b.set_meta("key", entry.get("key"))
 	b.focus_entered.connect(showDetail.bind(entry))
 	parent.add_child(b)
 	tiles.push_back(b)
@@ -684,7 +688,7 @@ func carDetail(entry: Dictionary) -> void:
 		if locked: face.modulate = SHADOW
 	var status: Array
 	if Root.IS_DEMO && index >= Root.DEMO_CAR_COUNT: status = ["NOT IN DEMO", HudTheme.MUTED]
-	elif car.cost != 0: status = ["%s COINS" % DriverCard.formatCoins(car.cost), HudTheme.RIM]
+	elif car.cost != 0: status = [Unlocks.priceText(Unlocks.price("car:" + str(car.name))).to_upper(), HudTheme.RIM]
 	else: status = ["OWNED", HudTheme.OK]
 	titleRow((info.charName if info else str(car.name)).to_upper(), [[str(car.name).capitalize().to_upper(), HudTheme.SKY], status])
 	if info == null: return
@@ -754,7 +758,7 @@ func levelDetail(entry: Dictionary) -> void:
 	var chips = [status]
 	if def: chips.push_front(["ACT %d" % def.act, HudTheme.RIM])
 	titleRow("%d  %s" % [index + 1, levelName(index).to_upper()], chips)
-	if not isLevelOpen(index) && level.unlocked == false: paragraph("Beat any mode on the level before it to unlock.", "MutedLabel")
+	if not isLevelOpen(index) && level.unlocked == false: paragraph("Beat %d modes on the level before it to unlock." % Root.modesToOpenNext(SaveManager.playerData.levels[index - 1] if index > 0 else {}), "MutedLabel")
 	if def:
 		if def.blurb != "": paragraph(def.blurb)
 		var grammar: String = Levels.GRAMMAR_TEXT.get(def.grammar, "")
@@ -812,27 +816,88 @@ static func factionsOn(def: LevelDef) -> Array:
 
 #---------- pickups ----------
 
-#Every pickup in Pickups.DATA, by kind. The original 14 are always shown; the rest stay silhouettes
-#until collected or played (Pickups.discover, meta.pickups).
+#Every pickup in Pickups.DATA, by kind, in its unlock tree's order (Unlocks.treeOrder). An open pickup shows
+#in full; one whose parent is open shows its picture dimmed with its price or condition; the rest are "???".
 func buildPickups() -> void:
 	var ids := Pickups.DATA.keys()
-	progressLabel.text = "PICKUPS  %d / %d" % [ids.filter(pickupKnown).size(), ids.size()]
+	progressLabel.text = "PICKUPS  %d / %d     %s COINS   %d GEMS" % [ids.filter(Unlocks.isPickupOpen).size(), ids.size(),
+		DriverCard.formatCoins(SaveManager.playerData.coin), SaveManager.playerData.gem]
 	for kind in Pickups.KIND_ORDER:
 		section(Pickups.KIND_NAMES[kind].to_upper(), Pickups.KIND_NOTES[kind], Pickups.rarityColor(kind % 5))
 		var g = grid(5)
-		for id in Pickups.ids(kind):
-			var known := pickupKnown(id)
-			tile(g, {"kind": "pickup", "key": id}, Pickups.texture(id), Pickups.displayName(id) if known else "???", Vector2(124, 124), not known)
+		for id in Unlocks.treeOrder(kind):
+			var state := Unlocks.state("pickup:" + id)
+			var b = tile(g, {"kind": "pickup", "key": id}, Pickups.texture(id), Pickups.displayName(id) if state != Unlocks.S.HIDDEN else "???", Vector2(124, 124), state == Unlocks.S.HIDDEN)
+			if state == Unlocks.S.SHOWN || state == Unlocks.S.READY: b.get_node("art").modulate = Color(0.45, 0.42, 0.4, 0.9) #a preview, still locked
+			var tag := pickupTag(id, state)
+			if tag != "": addTileTag(b, tag, HudTheme.GOLD if state == Unlocks.S.READY && Unlocks.canAfford("pickup:" + id) else HudTheme.MUTED)
+			b.pressed.connect(onPickupTilePressed.bind(id))
+
+## The corner tag on a locked pickup's tile: its price, PLAY (a condition), FULL GAME (the demo's cap)
+static func pickupTag(id: String, state: int) -> String:
+	if state == Unlocks.S.OPEN || state == Unlocks.S.HIDDEN: return ""
+	if Root.IS_DEMO && Pickups.rarity(id) > Unlocks.DEMO_MAX_RARITY: return "FULL GAME"
+	var cost := Unlocks.pickupPrice(id)
+	if cost.is_empty(): return "PLAY"
+	if cost.get("coin", 0) > 0: return DriverCard.formatCoins(cost.coin) + (" +%dG" % cost.gem if cost.get("gem", 0) > 0 else "")
+	return "%d GEMS" % cost.get("gem", 0)
+
+static func addTileTag(b: Button, text: String, color: Color) -> void:
+	var tag = Label.new()
+	tag.name = "tag"
+	tag.text = text
+	tag.add_theme_font_size_override("font_size", 13)
+	tag.add_theme_color_override("font_color", color)
+	tag.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tag.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+	tag.offset_left = -112
+	tag.offset_right = -6
+	tag.offset_top = 4
+	tag.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	b.add_child(tag)
+
+## Accept on a pickup tile buys it. A click that only just focused the tile (the same press) just shows it,
+## so browsing with the mouse never buys; a second click, or the card's BUY button, does.
+func onPickupTilePressed(id: String) -> void:
+	if Time.get_ticks_msec() - mouseDownMsec < 1000 && mouseDownOn != id: return #the click that picked the tile
+	buyPickup(id)
+
+var mouseDownMsec := -100000 #the last left mouse press, and the tile that had focus then (onPickupTilePressed)
+var mouseDownOn = null
+
+## Buys a pickup when it is ready and paid for, else shakes its tile
+func buyPickup(id: String) -> void:
+	var b := tileFor(id)
+	if Unlocks.isPickupOpen(id) || not is_instance_valid(b): return
+	if not Unlocks.buy("pickup:" + id):
+		Juice.shake(b)
+		return
+	Audio.play(BUY_SOUND)
+	SaveManager.flush()
+	if is_instance_valid(Root.mainMenu): Root.mainMenu.statUpdatesUiUpdate()
+	var scroll := listScroll.scroll_vertical
+	setTab(Tab.PICKUPS) #children may have come into view
+	listScroll.scroll_vertical = scroll
+	b = tileFor(id)
+	if is_instance_valid(b):
+		b.grab_focus()
+		Juice.flash(b, HudTheme.GOLD, 0.6, 18)
+		Juice.pop(b, 1.08, 0.4)
+
+func tileFor(id: String) -> Button:
+	for b in tiles:
+		if is_instance_valid(b) && b.get_meta("key", null) == id: return b
+	return null
 
 static func pickupKnown(id: String) -> bool:
-	return Pickups.def(id).has("scene") || Pickups.isDiscovered(id)
+	return Unlocks.isPickupOpen(id) || Pickups.isDiscovered(id)
 
 ## A pickup's share of goon drops in `mode` (a Root.gameModes value; -1: the selected mode), before
 ## Dice, faction and the pity counter, counting night-only pickups as if it were night.
 static func dropShare(id: String, mode := -1) -> float:
 	if mode < 0: mode = SaveManager.playerData.gameMode if SaveManager.playerData else 0
 	var d := Pickups.def(id)
-	if d.get("w", 0) <= 0 || not Pickups.allowedIn(id, mode): return 0.0
+	if d.get("w", 0) <= 0 || not Pickups.allowedIn(id, mode) || not Unlocks.isPickupOpen(id): return 0.0
 	var tiers := Pickups.tierWeights(0.0)
 	var tierTotal := 0.0
 	for t in tiers.size():
@@ -846,16 +911,24 @@ static func dropShare(id: String, mode := -1) -> float:
 func pickupDetail(entry: Dictionary) -> void:
 	var id: String = entry.key
 	var d := Pickups.def(id)
-	var known := pickupKnown(id)
+	var state := Unlocks.state("pickup:" + id)
 	var r := Pickups.rarity(id)
-	var panel = showcase(260.0, Pickups.rarityColor(r) if known else HudTheme.MUTED)
+	var panel = showcase(260.0, Pickups.rarityColor(r) if state != Unlocks.S.HIDDEN else HudTheme.MUTED)
 	var picture = heroPicture(panel, Pickups.texture(id), TextureRect.STRETCH_KEEP_ASPECT_CENTERED, 64.0)
-	if not known: picture.modulate = SHADOW
-	titleRow(Pickups.displayName(id).to_upper() if known else "???", [[Pickups.RARITY_NAMES[r].to_upper(), Pickups.rarityColor(r)], [Pickups.KIND_NAMES[d.kind].to_upper(), HudTheme.SKY]])
-	if not known:
-		paragraph("Not found yet. " + ("Look for it out in the world." if d.get("w", 0) <= 0 else "Crushed goons drop it."), "MutedLabel")
+	if state == Unlocks.S.HIDDEN: picture.modulate = SHADOW
+	elif state != Unlocks.S.OPEN: picture.modulate = Color(0.6, 0.57, 0.55)
+	var chips := [[Pickups.RARITY_NAMES[r].to_upper(), Pickups.rarityColor(r)], [Pickups.KIND_NAMES[d.kind].to_upper(), HudTheme.SKY]]
+	if state != Unlocks.S.OPEN: chips.push_back(["LOCKED", HudTheme.MUTED])
+	titleRow(Pickups.displayName(id).to_upper() if state != Unlocks.S.HIDDEN else "???", chips)
+	if state == Unlocks.S.HIDDEN:
+		paragraph("Unlock %s first to see what this is." % Pickups.displayName(d.get("parent", "")), "MutedLabel")
 		return
 	paragraph(d.get("text", ""))
+	if state != Unlocks.S.OPEN:
+		unlockRows(id)
+		return
+	var next := Unlocks.children(id).filter(func(c): return not Unlocks.isPickupOpen(c))
+	if not next.is_empty(): paragraph("Unlocks: " + ", ".join(next.map(Pickups.displayName)), "MutedLabel")
 	if d.get("stat", false):
 		paragraph("Run pickups stack up to %d per stat. Upgrades bought in the garage stay for good." % OverheadCarBody2D.STAT_CAP, "MutedLabel")
 	endShowcase()
@@ -874,6 +947,32 @@ func pickupDetail(entry: Dictionary) -> void:
 		Pickups.K.MOVE: tipRow("Boosts wait in their own slot, beside the gadget. Press %s to fire one. A rarer boost replaces the one you hold; a commoner one is sold for coins." % InputGlyphs.label("UseMove"))
 		Pickups.K.BOOST: tipRow("Up to four power-ups run at once; their rings drain above the systems strip.")
 		_: tipRow("A crushed goon drops a pickup about %d%% of the time, plus about half a percent per point of Clover. Dice makes the drop rarer." % roundi(10.0 / 201.0 * 100.0))
+
+## A locked pickup's way in: its price and a BUY button, or its play condition with a progress bar
+func unlockRows(id: String) -> void:
+	var uid := "pickup:" + id
+	if Root.IS_DEMO && Pickups.rarity(id) > Unlocks.DEMO_MAX_RARITY:
+		paragraph("In the full game.", "MutedLabel")
+		endShowcase()
+		return
+	var cost := Unlocks.pickupPrice(id)
+	if not cost.is_empty():
+		paragraph("Unlock for %s. You have %s coins and %d gems." % [Unlocks.priceText(cost), DriverCard.formatCoins(SaveManager.playerData.coin), SaveManager.playerData.gem])
+		var buy = MenuTheme.button("BUY  -  " + Unlocks.priceText(cost).to_upper(), PackedStringArray(["ui_accept"]))
+		buy.focus_mode = Control.FOCUS_NONE #Accept on the tile buys too; this is for the mouse
+		buy.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+		buy.disabled = not Unlocks.canAfford(uid)
+		buy.pressed.connect(buyPickup.bind(id))
+		into.add_child(buy)
+	else:
+		var p := Unlocks.progress(uid)
+		if p.is_empty(): paragraph("Opens at the end of your next run.")
+		else:
+			paragraph("Opens by play: %s." % p.text)
+			statTable([["Progress", "%d / %d" % [p.have, p.need], 100.0 * clampf(float(p.have) / maxf(p.need, 1.0), 0.0, 1.0)]])
+	endShowcase()
+	var next := Unlocks.children(id)
+	if not next.is_empty(): paragraph("Leads to: " + ", ".join(next.map(func(c): return Pickups.displayName(c) if Unlocks.state("pickup:" + c) != Unlocks.S.HIDDEN else "???")), "MutedLabel")
 
 #---------- modes ----------
 
@@ -899,7 +998,7 @@ func modeDetail(entry: Dictionary) -> void:
 	endShowcase()
 	paragraph(MODE_RULES.get(mode, ""))
 	if Root.isModeAvailable(mode):
-		tipRow("Stars from crush goals and region waves multiply the coins a run pays.")
+		tipRow("Stars from waves survived and Star Fragments raise the coins a run pays.")
 		var levels = SaveManager.playerData.levels
 		var beaten = levels.filter(func(l): return l.gamemodeBeat.get(mode, false)).size()
 		paragraph(MODE_UNLOCK.get(mode, ""), "MutedLabel")
@@ -939,11 +1038,16 @@ func systemDetail(entry: Dictionary) -> void:
 #---------- input ----------
 
 func _input(event: InputEvent) -> void:
+	if event is InputEventMouseButton && event.pressed && event.button_index == MOUSE_BUTTON_LEFT:
+		var focused := get_viewport().gui_get_focus_owner()
+		mouseDownMsec = Time.get_ticks_msec()
+		mouseDownOn = focused.get_meta("key", null) if focused != null else null
 	if Settings.menu_open || not event.is_pressed() || event.is_echo(): return
 	var handled := true
 	if event.is_action_pressed("ui_cancel") || event.is_action_pressed("ui_codex"): closePage()
 	elif event.is_action_pressed("ui_tab_prev"): setTab(tab - 1)
 	elif event.is_action_pressed("ui_tab_next"): setTab(tab + 1)
+	elif InputGlyphs.digit(event) > 0 && InputGlyphs.digit(event) <= TAB_NAMES.size(): setTab(InputGlyphs.digit(event) - 1)
 	else: handled = false
 	if handled: get_viewport().set_input_as_handled()
 

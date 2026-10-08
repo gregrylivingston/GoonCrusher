@@ -60,7 +60,8 @@ func _physics_process(delta: float) -> void:
 	eventIn -= delta
 	if eventIn <= 0.0:
 		eventIn = randf_range(EVENT_EVERY.x, EVENT_EVERY.y)
-		startEvent(EVENTS.pick_random(), car)
+		var open := EVENTS.filter(Unlocks.isPickupOpen) #locked events never start (Unlocks)
+		if not open.is_empty(): startEvent(open.pick_random(), car)
 
 func startEvent(kind: String, car) -> void:
 	var at := aheadOf(car, EVENT_DISTANCE)
@@ -78,7 +79,8 @@ func startEvent(kind: String, car) -> void:
 	PickupEffects.toast(Pickups.displayName(kind).to_upper() + " NEARBY", Pickups.rarityColor(Pickups.rarity(kind)), Pickups.texture(kind))
 
 ## Testing: `-- --pickup-shots=deal,claw,pitshop,scratch,double` (with a bench run, e.g. --bench=SL)
-## opens each in turn after the countdown and saves user://bench/pickup_<id>.png.
+## opens each in turn after the countdown and saves user://bench/pickup_<id>.png. Gift boxes (CrushPrizes):
+## `giftbox:<tier>:<game>` shows a box at its reveal, `prizewheel:<tier>` and `vault:<tier>` the pausing games.
 func screenshots(ids: PackedStringArray) -> void:
 	await get_tree().create_timer(4.5, true).timeout
 	var placed := 0
@@ -87,7 +89,17 @@ func screenshots(ids: PackedStringArray) -> void:
 		if not is_instance_valid(car): return
 		var beside: Vector2 = car.global_position + Vector2(-1100 + (placed % 3) * 1100, -600 + (placed / 3 % 2) * 1100)
 		placed += 1
-		match id:
+		var parts := id.split(":")
+		var boxTier := int(parts[1]) if parts.size() > 1 else 0
+		match parts[0]:
+			"giftbox":
+				var box := GiftBox.new()
+				box.gameId = parts[2] if parts.size() > 2 else "deal"
+				box.tier = boxTier
+				box.preview = 1.25
+				Root.levelRoot.add_child(box)
+			"prizewheel": PrizeWheelMenu.open(boxTier)
+			"vault": PrizeVault.open(boxTier)
 			"pitshop": PitShop.open()
 			"wheel": addToLevel(WorldProps.PrizeWheel.new(), beside)
 			"speedtrap": addToLevel(WorldProps.SpeedTrap.new(), beside)
@@ -110,9 +122,13 @@ func screenshots(ids: PackedStringArray) -> void:
 		await get_tree().create_timer(1.0, true).timeout
 		await RenderingServer.frame_post_draw
 		DirAccess.make_dir_recursive_absolute("user://bench")
-		get_viewport().get_texture().get_image().save_png("user://bench/pickup_%s.png" % id)
-		print("PICKUP_SHOT " + ProjectSettings.globalize_path("user://bench/pickup_%s.png" % id))
+		var file := "user://bench/pickup_%s.png" % id.replace(":", "_")
+		get_viewport().get_texture().get_image().save_png(file)
+		print("PICKUP_SHOT " + ProjectSettings.globalize_path(file))
 		for menu in get_tree().get_nodes_in_group("pickupMenu"): menu.close(false)
+		for box in get_tree().root.find_children("*", "GiftBox", true, false):
+			box.queue_free()
+			get_tree().paused = false
 		await get_tree().create_timer(0.6, true).timeout
 
 #--- helpers ------------------------------------------------------------------------------------
@@ -183,6 +199,7 @@ static func recordSpeedTrap(mph: int) -> bool:
 static func decorateChunk(objects: Node2D, rng: RandomNumberGenerator) -> void:
 	for prop in CHUNK_PROPS:
 		if rng.randf() >= prop[0]: continue
+		if prop[1] != "crates" && not Unlocks.isPickupOpen(prop[1]): continue #a locked challenge isn't placed
 		var offset := Vector2(rng.randf_range(-1400.0, 1400.0), rng.randf_range(-600.0, 600.0))
 		match prop[1]:
 			"crates":

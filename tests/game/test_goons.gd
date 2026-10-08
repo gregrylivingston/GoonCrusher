@@ -68,8 +68,21 @@ func test_waves_bring_goons_two_and_three():
 func test_regions_get_a_faction_and_its_goons():
 	var region: Dictionary = Region.createRegion(Root.terrain.SAND)
 	assert_true(region.has("faction"), "faction stored")
-	for key in ["name", "giantism", "time", "wave", "goon"]: assert_true(region.has(key), "keeps %s for the HUD" % key)
+	for key in ["name", "giantism", "goon"]: assert_true(region.has(key), "keeps %s for the HUD" % key)
+	assert_false(region.has("wave"), "waves are the run's, not the district's")
 	for id in region.goon: assert_eq(Goons.DATA[id].faction, region.faction, "%s matches the region" % id)
+
+func test_waves_are_one_clock_for_the_run():
+	Region.resetRegions()
+	Region.wave = 3
+	Region.runTime = 150.0
+	Region.updatePlayerRegion({"region": 901, "terrain": Root.terrain.GRASS})
+	Region.updatePlayerRegion({"region": 902, "terrain": Root.terrain.SAND})
+	assert_eq(Region.wave, 3, "crossing districts leaves the wave alone")
+	assert_eq(Region.runTime, 150.0)
+	assert_almost_eq(Region.waveProgress(), 0.5, 0.001, "halfway through wave 3")
+	Region.resetRegions()
+	assert_eq(Region.wave, 1, "a new world starts at wave 1")
 
 func spawnGoon(id: StringName, at := Vector2.ZERO) -> Walker:
 	var goon: Walker = load(Goons.scenePath(id)).instantiate()

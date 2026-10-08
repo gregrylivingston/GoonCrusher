@@ -2,26 +2,43 @@ extends Node
 
 #The run's regions are the world's districts (WorldMap, docs/WORLD.md): areas about 40,000 px across, cut
 #by the level's barriers, each held by one faction with three goons, a name, a tint and a giantism figure,
-#all decided when the world is built. Each region pays a star for every wave (waveLength s) the car spends
-#in it, up to LAST_WAVE (no limit in Goonpocalypse). Crossing into a district held by the same faction
-#carries the wave count over.
+#all decided when the world is built. A district decides *who* spawns.
+#
+#Waves are one clock for the whole run (roadmap W-1), whatever district the car is in: the longer the
+#run, the harder it gets. Every waveLength seconds of run clock is a new wave, which pays a star and a
+#wave chest, with no limit. The spawner's mix and pressure read waveIntensity().
 
 var waveLength: int = 60
-const LAST_WAVE := 4 #a region stops paying stars at this wave, except in Goonpocalypse
 const WASTELAND := -2 #barriers and anything off the map
 
-func waveCap() -> int:
-	return 1 << 30 if SaveManager.playerData && SaveManager.playerData.gameMode == Root.gameModes.GOONPOCALYPSE else LAST_WAVE
+var runTime := 0.0 #seconds of run clock so far (paused menus and the world build don't count)
+var wave := 1      #the wave the run is in: 1 + whole waves survived
 
+func resetWaves() -> void:
+	runTime = 0.0
+	wave = 1
+
+## How far into its current wave the run is, 0..1 (the HUD's ring)
+func waveProgress() -> float:
+	return clampf((runTime - (wave - 1) * waveLength) / waveLength, 0.0, 1.0)
+
+## Seconds left in the current wave
+func waveSecondsLeft() -> int:
+	return maxi(0, ceili(wave * waveLength - runTime))
+
+## The run's escalation as one number: the wave, plus a little for time inside it. The spawner's goon-slot
+## mix (Goons.pickSlot) and the giant odds read it.
+func waveIntensity() -> float:
+	return wave + waveProgress() * 0.5
 
 func _process(delta):
-	if currentRegion.has("time") && Root.isRunActive:
-		currentRegion.time += delta
-		if currentRegion.wave * waveLength < currentRegion.time && currentRegion.wave < waveCap():
-			currentRegion.wave += 1
-			Root.playerCar.star += 1
-			if is_instance_valid(Root.playerRoot): Root.playerRoot.waveSurvived()
-			PickupWorld.waveChest() #an Uncommon-or-better pickup for surviving the wave
+	if not Root.isRunActive || not is_instance_valid(Root.levelRoot) || not Root.levelRoot.get("clockReady"): return
+	runTime += delta
+	if wave * waveLength < runTime:
+		wave += 1
+		if is_instance_valid(Root.playerCar): Root.playerCar.star += 1
+		if is_instance_valid(Root.playerRoot): Root.playerRoot.waveSurvived()
+		PickupWorld.waveChest() #an Uncommon-or-better pickup for surviving the wave
 
 
 #names for a region made up outside the world map (tests, a level without one): by terrain
@@ -41,6 +58,7 @@ func resetRegions():
 	regions = {WASTELAND: wasteland()}
 	currentRegion = {}
 	currentRegionNumber = -99
+	resetWaves()
 
 var regions: Dictionary = {WASTELAND: {"name":"Wasteland", "giantism":0, "terrain_modulate":1.0}}
 var currentRegion: Dictionary = {}
@@ -91,8 +109,6 @@ func setDistricts(map: WorldMap) -> void:
 			"name": d.name,
 			"terrain": map.terrain[d.firstCell] if d.firstCell >= 0 else Root.terrain.GRASS,
 			"giantism": d.giantism,
-			"time": 0.0,
-			"wave": 1,
 			"faction": faction,
 			"goon": goons,
 			"terrain_modulate": d.tint,
@@ -117,8 +133,6 @@ func createRegion(terrain: int) -> Dictionary:#terrain is Enum Root.terrain
 		"name": pool[rng.randi() % pool.size()],
 		"terrain":terrain,
 		"giantism":rng.randi() % 100,
-		"time":0.0,
-		"wave":1,
 		"faction":faction,
 		"goon":goons,
 		"terrain_modulate":rng.randf_range(0.9, 1.08),
@@ -130,19 +144,16 @@ func factionName(faction: int = -1) -> String:
 
 ## The car entered another district (TileManager checks whenever its coarse cell changes; a barrier cell
 ## keeps the last district). `tile` is {"terrain", "region"}. Pushes the district's goons to the spawner;
-## the wave count carries over into a district of the same faction.
+## the run's wave is untouched.
 func updatePlayerRegion(tile):
 	var id: int = tile.region
 	if id < 0 || id == currentRegionNumber: return
 	var previous := currentRegion
 	var next := getRegion(id, tile.terrain)
-	if previous.has("time") && previous.get("faction", -1) == next.get("faction", -2):
-		next.time = maxf(next.time, previous.time)
-		next.wave = maxi(next.wave, previous.wave)
 	var firstVisit: bool = not next.get("visited", false)
 	next.visited = true
 	#a sign for each district met after the first (the run starts in one)
-	if is_instance_valid(Root.playerRoot) && previous.has("time") && firstVisit: Root.playerRoot.districtEntered(next)
+	if is_instance_valid(Root.playerRoot) && previous.has("faction") && firstVisit: Root.playerRoot.districtEntered(next)
 	if is_instance_valid(Root.spawnManager) && next.has("goon"): Root.spawnManager.basicGoons = next.goon
 	await get_tree().process_frame
 	if is_instance_valid(Root.playerRoot) && currentRegionNumber == id: Root.playerRoot.updatePlayerRegion(tile)

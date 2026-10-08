@@ -58,10 +58,12 @@ func test_goonpocalypse_records_keep_the_best_time_and_score_separately():
 
 func test_goonpocalypse_score_and_waves():
 	assert_eq(Level.pocalypseScore(10, 2, 61.0), 10 + 10 + 30)
-	SaveManager.playerData.gameMode = Root.gameModes.GOONPOCALYPSE
-	assert_gt(Region.waveCap(), 1000, "no wave cap in Goonpocalypse")
-	SaveManager.playerData.gameMode = Root.gameModes.GOONCRUSHER
-	assert_eq(Region.waveCap(), Region.LAST_WAVE)
+	Region.resetWaves()
+	Region.runTime = Region.waveLength * 9.5
+	Region.wave = 10 #what _process reaches by then: waves keep coming with no cap
+	assert_eq(Region.waveSecondsLeft(), int(Region.waveLength * 0.5), "the run clock keeps going: no wave cap")
+	assert_almost_eq(Region.waveIntensity(), 10.25, 0.001)
+	Region.resetWaves()
 
 #--- Defense ------------------------------------------------------------------------------------
 

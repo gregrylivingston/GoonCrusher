@@ -1,7 +1,9 @@
 class_name ClawCrane extends PickupMenu
 
 #The Claw Crane: steer the claw over a heap of prizes and drop it with Accelerate. A prize can slip on
-#the way up (less often with Dice). One grab is free; run coins buy more.
+#the way up (less often with Dice). One grab is free; run coins buy more. In a gift box (CrushPrizes) a
+#higher tier gives more free grabs (Silver 2, Diamond 3), slips less, and from Gold up fills the heap with
+#Rare or better.
 
 const W := 640.0
 const H := 420.0
@@ -20,13 +22,19 @@ var held = null           #the prize in the claw
 var slipAt := -1.0        #lift progress where the prize slips, or -1
 var grabs := 1
 var won: Array = []
+var boxTier := 0
+var fromBox := false
 
-static func open() -> void:
+static func open(tier := 0, isGiftBox := false) -> void:
 	if not is_instance_valid(Root.levelRoot): return
-	Root.levelRoot.add_child(ClawCrane.new())
+	var claw := ClawCrane.new()
+	claw.boxTier = tier
+	claw.fromBox = isGiftBox
+	claw.grabs = 1 + tier / 2
+	Root.levelRoot.add_child(claw)
 
 func build() -> void:
-	title("CLAW CRANE", "Line up the claw and drop it.")
+	title("CLAW CRANE", ("Gift box: " if fromBox else "") + "Line up the claw and drop it.")
 	machine.custom_minimum_size = Vector2(W, H)
 	machine.draw.connect(drawMachine)
 	body.add_child(machine)
@@ -34,9 +42,10 @@ func build() -> void:
 	info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	body.add_child(info)
 	hints([[["TurnLeft", "TurnRight"], "Move"], [["Accelerate"], "Drop / Leave"], [["Brake"], "Another grab  (%d coins)" % EXTRA_GRAB]])
+	var heapTier := Pickups.R.RARE if boxTier >= 3 else Pickups.R.UNCOMMON
 	for i in 14: #mostly Uncommon or better, padded with coin stacks
-		var id := Pickups.rollAtLeast(Pickups.R.UNCOMMON) if i < 10 else "coinstack"
-		if id in PickupDeal.NEVER: id = "coinstack"
+		var id := Pickups.rollAtLeast(heapTier) if i < 10 else Pickups.openOr("coinstack")
+		if id in PickupDeal.NEVER: id = Pickups.openOr("coinstack")
 		prizes.push_back({"id": id, "pos": Vector2(randf_range(60.0, W - 60.0), randf_range(H - 120.0, H - 40.0))})
 	prizes.sort_custom(func(a, b): return a.pos.y < b.pos.y)
 	updateInfo()
@@ -110,7 +119,7 @@ func grab() -> void:
 	prizes.erase(best)
 	held = best
 	var dice: float = Root.playerCar.luck if is_instance_valid(Root.playerCar) else 0.0
-	var slip := clampf(0.3 - dice * 0.002 + bestD / 55.0 * 0.25, 0.08, 0.55) #off-centre grabs slip more
+	var slip := clampf(0.3 - dice * 0.002 - boxTier * 0.03 + bestD / 55.0 * 0.25, 0.08, 0.55) #off-centre grabs slip more
 	slipAt = randf_range(0.3, 0.9) if randf() < slip else -1.0
 
 func finish() -> void:
@@ -131,6 +140,11 @@ func drawMachine() -> void:
 	for p in prizes:
 		m.draw_circle(p.pos, 34.0, Color(Pickups.rarityColor(Pickups.rarity(p.id)), 0.25))
 		m.draw_texture_rect(Pickups.texture(p.id), Rect2(p.pos - Vector2(30, 30), Vector2(60, 60)), false)
+	if phase == "aim": #the name tag of the prize the claw would grab (the heap is too crowded to tag them all)
+		var under = null
+		for p in prizes:
+			if absf(p.pos.x - clawX) < 55.0 && (under == null || absf(p.pos.x - clawX) < absf(under.pos.x - clawX)): under = p
+		if under != null: HudTheme.text(m, Vector2(under.pos.x, minf(under.pos.y + 46.0, H - 6.0)), Pickups.shortName(under.id), Pickups.TAG_SIZE + 2, HudTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER, 4, HudTheme.OUTLINE, HudTheme.BODY)
 	var y := clawY()
 	m.draw_line(Vector2(clawX, 0), Vector2(clawX, y), Color(0.7, 0.72, 0.76), 4.0)
 	m.draw_rect(Rect2(Vector2(clawX - 20, y - 12), Vector2(40, 18)), Color(0.66, 0.69, 0.74))

@@ -418,9 +418,10 @@ func cellReachable(cell: Vector2i) -> bool:
 
 #--- objectives --------------------------------------------------------------------------------------
 
-## A reachable station chunk near `desired`, never `forbidden` (Marathon's next leg)
-func findStationChunk(desired: Vector2i, forbidden: Vector2i) -> Vector2i:
-	return WorldGen.findStationChunk(flags, desired, forbidden, true).chunk
+## A reachable station chunk near `desired`, never `forbidden`, and with an `origin` not much nearer to it
+## than `desired` is (Marathon's next leg; WorldGen.findStationChunk)
+func findStationChunk(desired: Vector2i, forbidden: Vector2i, origin := WorldGen.NO_CHUNK) -> Vector2i:
+	return WorldGen.findStationChunk(flags, desired, forbidden, true, origin).chunk
 
 ## The A* route between two points on the coarse map: {points, length, reached}
 func routeBetween(a: Vector2, b: Vector2) -> Dictionary:

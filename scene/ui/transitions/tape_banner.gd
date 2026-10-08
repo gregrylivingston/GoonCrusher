@@ -2,7 +2,7 @@ class_name TapeBanner extends Control
 
 #A hazard-tape strip that slides across the run with stencil text (docs/UI.md, "Transitions"): in from
 #the left over 300 ms with an overshoot, a hold, out to the right over 250 ms. Banners queue so two
-#never overlap; toasts stay separate. Used for the crush goal, Marathon legs, new goons and nightfall.
+#never overlap; toasts stay separate. Used for Marathon legs, new goons and nightfall.
 #  TapeBanner.post("NIGHT FALLS")
 
 const BAND_Y := 210.0

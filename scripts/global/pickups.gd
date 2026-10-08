@@ -46,183 +46,186 @@ const TICKS := 60 #physics ticks per second (never changes; see CLAUDE.md)
 ## about 12), modes (M values it drops in; missing = all), night (only drops at night), fac (faction ->
 ## weight multiplier), scene (an original pickup's own scene), secs (a timed effect's length), charges
 ## (a gadget's or boost's uses), plus each item's own numbers.
+## The unlock tree (Unlocks): `start` marks a kind's root (open on a new save), `parent` the pickup that
+## must be open first, `needs` play conditions that open it instead of a price, `price` a price other than
+## its rarity's (Unlocks.PICKUP_PRICE). Locked pickups never drop and are never offered.
 const DATA := {
 	#---------------------------------------------------------------- the original 14
-	"fuel": {"name":"Fuel Can", "kind":K.SUPPLY, "rarity":R.COMMON, "w":32, "icon":"fuel", "scene":"res://scene/powerup/fuel.tscn", "ui":"fuelui", "fac":{F.SCRAP:1.4},
+	"fuel": {"start":true, "name":"Fuel Can", "kind":K.SUPPLY, "rarity":R.COMMON, "w":32, "icon":"fuel", "scene":"res://scene/powerup/fuel.tscn", "ui":"fuelui", "fac":{F.SCRAP:1.4},
 		"text":"Adds 20 fuel."},
-	"health": {"name":"Repair Kit", "kind":K.SUPPLY, "rarity":R.COMMON, "w":15, "icon":"health", "scene":"res://scene/powerup/health.tscn", "ui":"healthui", "fac":{F.WILD:1.3},
+	"health": {"start":true, "name":"Repair Kit", "kind":K.SUPPLY, "rarity":R.COMMON, "w":15, "icon":"health", "scene":"res://scene/powerup/health.tscn", "ui":"healthui", "fac":{F.WILD:1.3},
 		"text":"Patches up 20 hull."},
-	"coin": {"name":"Coin", "kind":K.LOOT, "rarity":R.COMMON, "w":20, "icon":"coin", "scene":"res://scene/powerup/coin.tscn", "ui":"coinui",
+	"coin": {"start":true, "name":"Coin", "kind":K.LOOT, "rarity":R.COMMON, "w":20, "icon":"coin", "scene":"res://scene/powerup/coin.tscn", "ui":"coinui",
 		"text":"+1 coin. Stars multiply what a run pays."},
-	"engine": {"name":"Engine", "kind":K.TUNE, "rarity":R.COMMON, "w":2, "icon":"engine", "scene":"res://scene/powerup/engine.tscn", "ui":"engineui", "stat":true,
+	"engine": {"start":true, "name":"Engine", "kind":K.TUNE, "rarity":R.COMMON, "w":2, "icon":"engine", "scene":"res://scene/powerup/engine.tscn", "ui":"engineui", "stat":true,
 		"text":"+1 Engine for this run: harder acceleration."},
-	"steering": {"name":"Steering", "kind":K.TUNE, "rarity":R.COMMON, "w":2, "icon":"steering", "scene":"res://scene/powerup/steering.tscn", "ui":"steeringui", "stat":true,
+	"steering": {"parent":"engine", "name":"Steering", "kind":K.TUNE, "rarity":R.COMMON, "w":2, "icon":"steering", "scene":"res://scene/powerup/steering.tscn", "ui":"steeringui", "stat":true,
 		"text":"+1 Steering for this run: the wheels turn further."},
-	"traction": {"name":"Traction", "kind":K.TUNE, "rarity":R.COMMON, "w":2, "icon":"traction", "scene":"res://scene/powerup/traction.tscn", "ui":"tractionui", "stat":true,
+	"traction": {"parent":"steering", "name":"Traction", "kind":K.TUNE, "rarity":R.COMMON, "w":2, "icon":"traction", "scene":"res://scene/powerup/traction.tscn", "ui":"tractionui", "stat":true,
 		"text":"+1 Traction for this run: more grip and better brakes."},
-	"armor": {"name":"Armor", "kind":K.TUNE, "rarity":R.COMMON, "w":2, "icon":"armor", "scene":"res://scene/powerup/armor.tscn", "ui":"armorui", "stat":true,
+	"armor": {"parent":"engine", "name":"Armor", "kind":K.TUNE, "rarity":R.COMMON, "w":2, "icon":"armor", "scene":"res://scene/powerup/armor.tscn", "ui":"armorui", "stat":true,
 		"text":"+1 Armor for this run: every hit does less damage."},
-	"headlights": {"name":"Headlights", "kind":K.TUNE, "rarity":R.COMMON, "w":2, "icon":"headlights", "scene":"res://scene/powerup/headlights.tscn", "ui":"headlightsui", "stat":true,
+	"headlights": {"parent":"engine", "needs":["nights:1"], "name":"Headlights", "kind":K.TUNE, "rarity":R.COMMON, "w":2, "icon":"headlights", "scene":"res://scene/powerup/headlights.tscn", "ui":"headlightsui", "stat":true,
 		"text":"+1 Headlights for this run: you see further at night."},
-	"oil": {"name":"Oil", "kind":K.TUNE, "rarity":R.COMMON, "w":2, "icon":"oil", "scene":"res://scene/powerup/oil.tscn", "ui":"oilui", "stat":true,
+	"oil": {"parent":"armor", "name":"Oil", "kind":K.TUNE, "rarity":R.COMMON, "w":2, "icon":"oil", "scene":"res://scene/powerup/oil.tscn", "ui":"oilui", "stat":true,
 		"text":"+1 Oil for this run: the engine burns less fuel."},
-	"clover": {"name":"Clover", "kind":K.TUNE, "rarity":R.COMMON, "w":2, "icon":"clover", "scene":"res://scene/powerup/clover.tscn", "ui":"cloverui", "stat":true,
+	"clover": {"parent":"engine", "name":"Clover", "kind":K.TUNE, "rarity":R.COMMON, "w":2, "icon":"clover", "scene":"res://scene/powerup/clover.tscn", "ui":"cloverui", "stat":true,
 		"text":"+1 Clover for this run: crushed goons drop pickups more often."},
-	"luck": {"name":"Dice", "kind":K.TUNE, "rarity":R.COMMON, "w":2, "icon":"luck", "scene":"res://scene/powerup/luck.tscn", "ui":"luckui", "stat":true,
+	"luck": {"parent":"clover", "name":"Dice", "kind":K.TUNE, "rarity":R.COMMON, "w":2, "icon":"luck", "scene":"res://scene/powerup/luck.tscn", "ui":"luckui", "stat":true,
 		"text":"+1 Dice for this run: drops are rarer more often, and slot reels land on better prizes."},
-	"purse": {"name":"Purse", "kind":K.LOOT, "rarity":R.UNCOMMON, "w":14, "icon":"purse", "scene":"res://scene/powerup/purse.tscn", "ui":"coinui",
+	"purse": {"parent":"coin", "name":"Purse", "kind":K.LOOT, "rarity":R.UNCOMMON, "w":14, "icon":"purse", "scene":"res://scene/powerup/purse.tscn", "ui":"coinui",
 		"text":"15 to 100 coins in one go."},
-	"gem": {"name":"Gem", "kind":K.LOOT, "rarity":R.UNCOMMON, "w":14, "icon":"gem", "scene":"res://scene/powerup/gem.tscn", "ui":"gemui",
+	"gem": {"parent":"coin", "name":"Gem", "kind":K.LOOT, "rarity":R.UNCOMMON, "w":14, "icon":"gem", "scene":"res://scene/powerup/gem.tscn", "ui":"gemui",
 		"text":"+1 gem. Gems pay for rerolls in the slot machine and The Deal, and are kept after the run."},
-	"slotmachine": {"name":"Slot Machine", "kind":K.CASINO, "rarity":R.RARE, "w":10, "icon":"slotMachine", "scene":"res://scene/powerup/slotMachine.tscn", "ui":"slotmachineui", "ai":50,
+	"slotmachine": {"start":true, "name":"Slot Machine", "kind":K.CASINO, "rarity":R.RARE, "w":10, "icon":"slotMachine", "scene":"res://scene/powerup/slotMachine.tscn", "ui":"slotmachineui", "ai":50,
 		"text":"Opens the slot machine. Pairs pay twice, triples five times, and three stars are the jackpot. Bet run coins for better reels."},
 
 	#---------------------------------------------------------------- supplies
-	"jerry": {"name":"Jerry Can", "kind":K.SUPPLY, "rarity":R.UNCOMMON, "w":8, "icon":"jerry", "ui":"fuelui", "fuel":50.0, "fac":{F.SCRAP:3.0}, "ai":30,
+	"jerry": {"parent":"fuel", "name":"Jerry Can", "kind":K.SUPPLY, "rarity":R.UNCOMMON, "w":8, "icon":"jerry", "ui":"fuelui", "fuel":50.0, "fac":{F.SCRAP:3.0}, "ai":30,
 		"text":"Adds 50 fuel in one go. Scrap Gang vehicles carry them."},
-	"wrench": {"name":"Wrench", "kind":K.SUPPLY, "rarity":R.COMMON, "w":6, "icon":"wrench", "ui":"healthui", "repair":35.0, "fac":{F.TRIBE:1.5}, "ai":14,
+	"wrench": {"parent":"health", "name":"Wrench", "kind":K.SUPPLY, "rarity":R.COMMON, "w":6, "icon":"wrench", "ui":"healthui", "repair":35.0, "fac":{F.TRIBE:1.5}, "ai":14,
 		"text":"Repairs your most damaged system by 35."},
-	"tyre": {"name":"Spare Tyre", "kind":K.SUPPLY, "rarity":R.COMMON, "w":1, "icon":"tyre", "ui":"tractionui", "system":"tires", "fac":{F.WILD:2.0}, "ai":10,
+	"tyre": {"parent":"wrench", "name":"Spare Tyre", "kind":K.SUPPLY, "rarity":R.COMMON, "w":1, "icon":"tyre", "ui":"tractionui", "system":"tires", "fac":{F.WILD:2.0}, "ai":10,
 		"text":"Puts the tires back to 100. Rattlers, Quills and Shredders wear them."},
-	"bulb": {"name":"Bulb", "kind":K.SUPPLY, "rarity":R.COMMON, "w":1, "icon":"bulb", "ui":"headlightsui", "system":"lights", "fac":{F.WILD:2.0}, "ai":8,
+	"bulb": {"parent":"wrench", "name":"Bulb", "kind":K.SUPPLY, "rarity":R.COMMON, "w":1, "icon":"bulb", "ui":"headlightsui", "system":"lights", "fac":{F.WILD:2.0}, "ai":8,
 		"text":"Puts the lights back to 100. Buzzards dive at them."},
-	"sparkplug": {"name":"Spark Plug", "kind":K.SUPPLY, "rarity":R.COMMON, "w":1, "icon":"sparkplug", "ui":"engineui", "system":"engine", "fac":{F.SCRAP:2.0}, "ai":10,
+	"sparkplug": {"parent":"wrench", "name":"Spark Plug", "kind":K.SUPPLY, "rarity":R.COMMON, "w":1, "icon":"sparkplug", "ui":"engineui", "system":"engine", "fac":{F.SCRAP:2.0}, "ai":10,
 		"text":"Puts the engine back to 100."},
-	"tierod": {"name":"Tie Rod", "kind":K.SUPPLY, "rarity":R.COMMON, "w":1, "icon":"tierod", "ui":"steeringui", "system":"steering", "fac":{F.TRIBE:2.0}, "ai":10,
+	"tierod": {"parent":"wrench", "name":"Tie Rod", "kind":K.SUPPLY, "rarity":R.COMMON, "w":1, "icon":"tierod", "ui":"steeringui", "system":"steering", "fac":{F.TRIBE:2.0}, "ai":10,
 		"text":"Puts the steering back to 100."},
-	"tankpatch": {"name":"Tank Patch", "kind":K.SUPPLY, "rarity":R.COMMON, "w":1, "icon":"tankpatch", "ui":"oilui", "system":"tank", "fac":{F.SCRAP:2.0}, "ai":10,
+	"tankpatch": {"parent":"jerry", "name":"Tank Patch", "kind":K.SUPPLY, "rarity":R.COMMON, "w":1, "icon":"tankpatch", "ui":"oilui", "system":"tank", "fac":{F.SCRAP:2.0}, "ai":10,
 		"text":"Puts the tank back to 100, which stops a leak."},
-	"toolbox": {"name":"Toolbox", "kind":K.SUPPLY, "rarity":R.UNCOMMON, "w":6, "icon":"toolbox", "ui":"healthui", "repair":40.0, "fac":{F.TRIBE:2.0}, "ai":22,
+	"toolbox": {"parent":"wrench", "name":"Toolbox", "kind":K.SUPPLY, "rarity":R.UNCOMMON, "w":6, "icon":"toolbox", "ui":"healthui", "repair":40.0, "fac":{F.TRIBE:2.0}, "ai":22,
 		"text":"+40 to all five systems."},
-	"service": {"name":"Full Service", "kind":K.SUPPLY, "rarity":R.RARE, "w":10, "icon":"service", "ui":"healthui", "ai":45,
+	"service": {"parent":"toolbox", "name":"Full Service", "kind":K.SUPPLY, "rarity":R.RARE, "w":10, "icon":"service", "ui":"healthui", "ai":45,
 		"text":"Fuel, hull and every system to full."},
 
 	#---------------------------------------------------------------- tune-ups
-	"crate": {"name":"Tune-up Crate", "kind":K.TUNE, "rarity":R.UNCOMMON, "w":10, "icon":"crate", "ui":"engineui", "amount":3, "ai":20,
+	"crate": {"parent":"engine", "name":"Tune-up Crate", "kind":K.TUNE, "rarity":R.UNCOMMON, "w":10, "icon":"crate", "ui":"engineui", "amount":3, "ai":20,
 		"text":"+3 to one stat for the run, picked from the car's three weakest."},
-	"overhaul": {"name":"Overhaul", "kind":K.TUNE, "rarity":R.RARE, "w":10, "icon":"overhaul", "ui":"engineui", "amount":2, "ai":40,
+	"overhaul": {"parent":"crate", "name":"Overhaul", "kind":K.TUNE, "rarity":R.RARE, "w":10, "icon":"overhaul", "ui":"engineui", "amount":2, "ai":40,
 		"text":"+2 to all eight stats for the run."},
-	"turbo": {"name":"Turbo Kit", "kind":K.TUNE, "rarity":R.EPIC, "w":10, "icon":"turbo", "ui":"engineui", "amount":12, "ai":60,
+	"turbo": {"parent":"overhaul", "name":"Turbo Kit", "kind":K.TUNE, "rarity":R.EPIC, "w":10, "icon":"turbo", "ui":"engineui", "amount":12, "ai":60,
 		"text":"+12 Engine for the run, and exhaust flames at full throttle."},
-	"blueprint": {"name":"Blueprint", "kind":K.TUNE, "rarity":R.LEGENDARY, "w":10, "icon":"blueprint", "ui":"starui", "ai":90,
+	"blueprint": {"parent":"overhaul", "needs":["open:quarry"], "name":"Blueprint", "kind":K.TUNE, "rarity":R.LEGENDARY, "w":10, "icon":"blueprint", "ui":"starui", "ai":90,
 		"text":"Kept after the run: a free garage upgrade for this car's lowest stat, credited on the results ticket however the run ends."},
 
 	#---------------------------------------------------------------- power-ups (timed)
-	"magnet": {"name":"Magnet", "kind":K.BOOST, "rarity":R.COMMON, "w":3, "icon":"magnet", "ui":"buffui", "secs":15.0, "radius":700.0, "ai":18,
+	"magnet": {"start":true, "name":"Magnet", "kind":K.BOOST, "rarity":R.COMMON, "w":3, "icon":"magnet", "ui":"buffui", "secs":15.0, "radius":700.0, "ai":18,
 		"text":"For 15 s: pickups within 700 px fly to the car."},
-	"frenzy": {"name":"Coin Frenzy", "kind":K.BOOST, "rarity":R.UNCOMMON, "w":6, "icon":"frenzy", "ui":"buffui", "secs":20.0, "ai":22,
+	"frenzy": {"parent":"magnet", "name":"Coin Frenzy", "kind":K.BOOST, "rarity":R.UNCOMMON, "w":6, "icon":"frenzy", "ui":"buffui", "secs":20.0, "ai":22,
 		"text":"For 20 s: every coin counts double, and every crush drops a coin."},
-	"freetank": {"name":"Free Tank", "kind":K.BOOST, "rarity":R.UNCOMMON, "w":5, "icon":"infinity", "ui":"buffui", "secs":20.0, "fac":{F.SCRAP:2.0}, "ai":20,
+	"freetank": {"parent":"magnet", "name":"Free Tank", "kind":K.BOOST, "rarity":R.UNCOMMON, "w":5, "icon":"infinity", "ui":"buffui", "secs":20.0, "fac":{F.SCRAP:2.0}, "ai":20,
 		"text":"For 20 s: the engine burns no fuel."},
-	"shield": {"name":"Bubble Shield", "kind":K.BOOST, "rarity":R.UNCOMMON, "w":7, "icon":"shield", "ui":"buffui", "secs":15.0, "hits":3, "ai":24,
+	"shield": {"parent":"magnet", "name":"Bubble Shield", "kind":K.BOOST, "rarity":R.UNCOMMON, "w":7, "icon":"shield", "ui":"buffui", "secs":15.0, "hits":3, "ai":24,
 		"text":"For 15 s, or three hits: blocks every hit, and bumps don't scuff the car."},
-	"plow": {"name":"Ram Plow", "kind":K.BOOST, "rarity":R.UNCOMMON, "w":7, "icon":"plow", "ui":"buffui", "secs":15.0, "fac":{F.TRIBE:1.5}, "ai":24,
+	"plow": {"parent":"magnet", "name":"Ram Plow", "kind":K.BOOST, "rarity":R.UNCOMMON, "w":7, "icon":"plow", "ui":"buffui", "secs":15.0, "fac":{F.TRIBE:1.5}, "ai":24,
 		"text":"For 15 s: a blade on the front. Head-on hits crush at any speed and ignore armour, shields and shells."},
-	"spikes": {"name":"Spiked Rims", "kind":K.BOOST, "rarity":R.UNCOMMON, "w":5, "icon":"spikes", "ui":"buffui", "secs":15.0, "ai":20,
+	"spikes": {"parent":"magnet", "name":"Spiked Rims", "kind":K.BOOST, "rarity":R.UNCOMMON, "w":5, "icon":"spikes", "ui":"buffui", "secs":15.0, "ai":20,
 		"text":"For 15 s: goons that touch your sides are crushed, and the tires take no wear."},
-	"flood": {"name":"Floodlights", "kind":K.BOOST, "rarity":R.UNCOMMON, "w":6, "icon":"flood", "ui":"buffui", "secs":40.0, "night":true, "reach":1.8, "ai":16,
+	"flood": {"parent":"magnet", "needs":["nights:3"], "name":"Floodlights", "kind":K.BOOST, "rarity":R.UNCOMMON, "w":6, "icon":"flood", "ui":"buffui", "secs":40.0, "night":true, "reach":1.8, "ai":16,
 		"text":"For 40 s: headlight reach x1.8, all round the car. Only drops at night."},
-	"firetrail": {"name":"Fire Trail", "kind":K.BOOST, "rarity":R.UNCOMMON, "w":5, "icon":"firetrail", "ui":"buffui", "secs":10.0, "ai":20,
+	"firetrail": {"parent":"spikes", "name":"Fire Trail", "kind":K.BOOST, "rarity":R.UNCOMMON, "w":5, "icon":"firetrail", "ui":"buffui", "secs":10.0, "ai":20,
 		"text":"For 10 s: the tires leave fire. Goons that walk into it burn, and count as crushes."},
-	"monster": {"name":"Monster Tires", "kind":K.BOOST, "rarity":R.RARE, "w":8, "icon":"monster", "ui":"buffui", "secs":10.0, "scale":1.35, "ai":40,
+	"monster": {"parent":"plow", "needs":["giants:10"], "name":"Monster Tires", "kind":K.BOOST, "rarity":R.RARE, "w":8, "icon":"monster", "ui":"buffui", "secs":10.0, "scale":1.35, "ai":40,
 		"text":"For 10 s: a bigger car that crushes every goon at any speed, shells, boulders and giants included."},
-	"timewarp": {"name":"Time Warp", "kind":K.BOOST, "rarity":R.RARE, "w":8, "icon":"timewarp", "ui":"buffui", "secs":8.0, "rate":0.4, "ai":35,
+	"timewarp": {"parent":"shield", "name":"Time Warp", "kind":K.BOOST, "rarity":R.RARE, "w":8, "icon":"timewarp", "ui":"buffui", "secs":8.0, "rate":0.4, "ai":35,
 		"text":"For 8 s: goons move at 40% speed. Your car doesn't."},
-	"wrecking": {"name":"Wrecking Ball", "kind":K.BOOST, "rarity":R.RARE, "w":6, "icon":"wrecking", "ui":"buffui", "secs":20.0, "ai":38,
+	"wrecking": {"parent":"firetrail", "name":"Wrecking Ball", "kind":K.BOOST, "rarity":R.RARE, "w":6, "icon":"wrecking", "ui":"buffui", "secs":20.0, "ai":38,
 		"text":"For 20 s: a ball on a chain swings behind the car. Anything it hits is crushed."},
-	"golden": {"name":"Golden Ride", "kind":K.BOOST, "rarity":R.LEGENDARY, "w":10, "icon":"golden", "ui":"buffui", "secs":15.0, "coins":5, "ai":90,
+	"golden": {"parent":"frenzy", "name":"Golden Ride", "kind":K.BOOST, "rarity":R.LEGENDARY, "w":10, "icon":"golden", "ui":"buffui", "secs":15.0, "coins":5, "ai":90,
 		"text":"For 15 s: invulnerable, crushes at any speed, and every crush pays 5 coins."},
 
 	#---------------------------------------------------------------- gadgets (held, Fire)
-	"horn": {"name":"Air Horn", "kind":K.GADGET, "rarity":R.COMMON, "w":2, "icon":"horn", "ui":"itemui", "charges":3, "radius":350.0, "stun":1.5, "fac":{F.TRIBE:2.0}, "ai":14,
+	"horn": {"start":true, "name":"Air Horn", "kind":K.GADGET, "rarity":R.COMMON, "w":2, "icon":"horn", "ui":"itemui", "charges":3, "radius":350.0, "stun":1.5, "fac":{F.TRIBE:2.0}, "ai":14,
 		"text":"3 uses. Stuns goons within 350 px for 1.5 s and throws off anything riding the car."},
-	"oilslick": {"name":"Oil Slick", "kind":K.GADGET, "rarity":R.COMMON, "w":2, "icon":"oilslick", "ui":"itemui", "charges":3, "radius":110.0, "ai":12,
+	"oilslick": {"parent":"horn", "name":"Oil Slick", "kind":K.GADGET, "rarity":R.COMMON, "w":2, "icon":"oilslick", "ui":"itemui", "charges":3, "radius":110.0, "ai":12,
 		"text":"3 uses. Drops a slick behind the car; goons that cross it spin out for 2 s."},
-	"flare": {"name":"Flare", "kind":K.GADGET, "rarity":R.COMMON, "w":2, "icon":"flare", "ui":"itemui", "charges":1, "night":true, "secs":25.0, "ai":10,
+	"flare": {"parent":"horn", "needs":["nights:1"], "name":"Flare", "kind":K.GADGET, "rarity":R.COMMON, "w":2, "icon":"flare", "ui":"itemui", "charges":1, "night":true, "secs":25.0, "ai":10,
 		"text":"Lights a wide circle for 25 s. Buzzards circle it instead of diving at your lights. Only drops at night."},
-	"mine": {"name":"Land Mine", "kind":K.GADGET, "rarity":R.UNCOMMON, "w":6, "icon":"mine", "ui":"itemui", "charges":3, "radius":190.0, "fac":{F.TRIBE:2.0}, "ai":20,
+	"mine": {"parent":"oilslick", "name":"Land Mine", "kind":K.GADGET, "rarity":R.UNCOMMON, "w":6, "icon":"mine", "ui":"itemui", "charges":3, "radius":190.0, "fac":{F.TRIBE:2.0}, "ai":20,
 		"text":"3 uses. Drops a mine behind the car. Goons it blows up count as crushes."},
-	"emp": {"name":"EMP", "kind":K.GADGET, "rarity":R.UNCOMMON, "w":5, "icon":"emp", "ui":"itemui", "charges":1, "radius":900.0, "fac":{F.SCRAP:2.5}, "ai":20,
+	"emp": {"parent":"horn", "needs":["crushed:scrap:150"], "name":"EMP", "kind":K.GADGET, "rarity":R.UNCOMMON, "w":5, "icon":"emp", "ui":"itemui", "charges":1, "radius":900.0, "fac":{F.SCRAP:2.5}, "ai":20,
 		"text":"Scrap Gang vehicles within 900 px stall for 5 s, harpoons and tow magnets let go, and riders fall off."},
-	"bait": {"name":"Goon Bait", "kind":K.GADGET, "rarity":R.UNCOMMON, "w":4, "icon":"bait", "ui":"itemui", "charges":1, "radius":1200.0, "secs":8.0, "fac":{F.WILD:2.0}, "ai":16,
+	"bait": {"parent":"horn", "name":"Goon Bait", "kind":K.GADGET, "rarity":R.UNCOMMON, "w":4, "icon":"bait", "ui":"itemui", "charges":1, "radius":1200.0, "secs":8.0, "fac":{F.WILD:2.0}, "ai":16,
 		"text":"Drops a steak. Goons within 1200 px go for it for 8 s. In Defense it pulls a siege off the walls."},
-	"hubcap": {"name":"Homing Hubcap", "kind":K.GADGET, "rarity":R.RARE, "w":8, "icon":"hubcap", "ui":"itemui", "charges":1, "bounces":6, "ai":28,
+	"hubcap": {"parent":"bait", "name":"Homing Hubcap", "kind":K.GADGET, "rarity":R.RARE, "w":8, "icon":"hubcap", "ui":"itemui", "charges":1, "bounces":6, "ai":28,
 		"text":"Throws a spinning hubcap that bounces between up to 6 goons, crushing each."},
-	"airstrike": {"name":"Airstrike", "kind":K.GADGET, "rarity":R.RARE, "w":8, "icon":"mortar", "ui":"itemui", "charges":1, "radius":230.0, "ai":30,
+	"airstrike": {"parent":"mine", "name":"Airstrike", "kind":K.GADGET, "rarity":R.RARE, "w":8, "icon":"mortar", "ui":"itemui", "charges":1, "radius":230.0, "ai":30,
 		"text":"Three blasts walk forward from 400 px ahead of the car."},
-	"pocket": {"name":"Pocket Station", "kind":K.GADGET, "rarity":R.RARE, "w":6, "icon":"pocket", "ui":"itemui", "charges":1, "modes":[M.COUNTDOWN, M.SPRINT, M.MARATHON, M.POCALYPSE], "ai":35,
+	"pocket": {"parent":"flare", "name":"Pocket Station", "kind":K.GADGET, "rarity":R.RARE, "w":6, "icon":"pocket", "ui":"itemui", "charges":1, "modes":[M.COUNTDOWN, M.SPRINT, M.MARATHON, M.POCALYPSE], "ai":35,
 		"text":"A pit stop when you choose: fuel, hull and every system to full."},
-	"nuke": {"name":"Goon Nuke", "kind":K.GADGET, "rarity":R.LEGENDARY, "w":10, "icon":"nuke", "ui":"itemui", "charges":1, "ai":80,
+	"nuke": {"parent":"airstrike", "name":"Goon Nuke", "kind":K.GADGET, "rarity":R.LEGENDARY, "w":10, "icon":"nuke", "ui":"itemui", "charges":1, "ai":80,
 		"text":"Every goon on screen dies, and every one counts as a crush."},
 
 	#---------------------------------------------------------------- boosts (held in the second slot, Boost)
-	"nitro": {"name":"Nitro", "kind":K.MOVE, "rarity":R.COMMON, "w":3, "icon":"nitro", "ui":"moveui", "charges":2, "secs":3.0, "thrust":1.8, "top":1.4, "fac":{F.SCRAP:3.0}, "ai":20,
+	"nitro": {"start":true, "name":"Nitro", "kind":K.MOVE, "rarity":R.COMMON, "w":3, "icon":"nitro", "ui":"moveui", "charges":2, "secs":3.0, "thrust":1.8, "top":1.4, "fac":{F.SCRAP:3.0}, "ai":20,
 		"text":"2 uses. Each fires 3 s of harder acceleration and a higher top speed."},
-	"jets": {"name":"Jump Jets", "kind":K.MOVE, "rarity":R.RARE, "w":6, "icon":"jets", "ui":"moveui", "charges":2, "secs":0.8, "radius":160.0, "ai":28,
+	"jets": {"parent":"hop", "name":"Jump Jets", "kind":K.MOVE, "rarity":R.RARE, "w":6, "icon":"jets", "ui":"moveui", "charges":2, "secs":0.8, "radius":160.0, "ai":28,
 		"text":"2 uses. A short hop over goons, slime and spikes. Landing crushes everything around the car."},
-	"hop": {"name":"Hop", "kind":K.MOVE, "rarity":R.COMMON, "w":3, "icon":"hop", "ui":"moveui", "charges":3, "secs":0.45, "lift":1.15, "ai":12,
+	"hop": {"parent":"nitro", "name":"Hop", "kind":K.MOVE, "rarity":R.COMMON, "w":3, "icon":"hop", "ui":"moveui", "charges":3, "secs":0.45, "lift":1.15, "ai":12,
 		"text":"3 uses. A quick hop over goons, slime and spikes. No landing blast: that takes Jump Jets."},
 
 	#---------------------------------------------------------------- loot
-	"coinstack": {"name":"Coin Stack", "kind":K.LOOT, "rarity":R.COMMON, "w":6, "icon":"coinstack", "ui":"coinui", "coins":5, "ai":12,
+	"coinstack": {"parent":"coin", "name":"Coin Stack", "kind":K.LOOT, "rarity":R.COMMON, "w":6, "icon":"coinstack", "ui":"coinui", "coins":5, "ai":12,
 		"text":"+5 coins."},
-	"strongbox": {"name":"Strongbox", "kind":K.LOOT, "rarity":R.RARE, "w":8, "icon":"strongbox", "ui":"coinui", "ai":40,
+	"strongbox": {"parent":"purse", "name":"Strongbox", "kind":K.LOOT, "rarity":R.RARE, "w":8, "icon":"strongbox", "ui":"coinui", "ai":40,
 		"text":"Drops a heavy box. Ram it three times above 300 px/s to burst it for 150 to 400 coins and a gem."},
-	"gemcluster": {"name":"Gem Cluster", "kind":K.LOOT, "rarity":R.RARE, "w":10, "icon":"gemcluster", "ui":"gemui", "gems":3, "fac":{F.SCRAP:1.5}, "ai":45,
+	"gemcluster": {"parent":"gem", "name":"Gem Cluster", "kind":K.LOOT, "rarity":R.RARE, "w":10, "icon":"gemcluster", "ui":"gemui", "gems":3, "fac":{F.SCRAP:1.5}, "ai":45,
 		"text":"+3 gems."},
-	"starfrag": {"name":"Star Fragment", "kind":K.LOOT, "rarity":R.RARE, "w":12, "icon":"starfrag", "ui":"starui", "ai":40,
+	"starfrag": {"parent":"gem", "name":"Star Fragment", "kind":K.LOOT, "rarity":R.RARE, "w":12, "icon":"starfrag", "ui":"starui", "ai":40,
 		"text":"Three make a star, and a star multiplies the whole run's payout."},
-	"goldgoon": {"name":"Golden Goon", "kind":K.LOOT, "rarity":R.EPIC, "w":8, "icon":"goldgoon", "ui":"coinui", "coins":250, "secs":25.0, "ai":30,
+	"goldgoon": {"parent":"starfrag", "name":"Golden Goon", "kind":K.LOOT, "rarity":R.EPIC, "w":8, "icon":"goldgoon", "ui":"coinui", "coins":250, "secs":25.0, "ai":30,
 		"text":"Lets loose a golden goon that runs from you for 25 s. Crush it for 250 coins and a Star Fragment."},
 
 	#---------------------------------------------------------------- casino and chance
-	"scratch": {"name":"Scratch Card", "kind":K.CASINO, "rarity":R.UNCOMMON, "w":6, "icon":"scratch", "ui":"coinui", "ai":18,
+	"scratch": {"parent":"slotmachine", "name":"Scratch Card", "kind":K.CASINO, "rarity":R.UNCOMMON, "w":6, "icon":"scratch", "ui":"coinui", "ai":18,
 		"text":"Scratches itself in the HUD corner while you drive. Three of a kind pays that prize three times; two of a kind pays it once."},
-	"mystery": {"name":"Mystery Box", "kind":K.CASINO, "rarity":R.UNCOMMON, "w":6, "icon":"mystery", "ui":"buffui", "ai":20,
+	"mystery": {"parent":"slotmachine", "name":"Mystery Box", "kind":K.CASINO, "rarity":R.UNCOMMON, "w":6, "icon":"mystery", "ui":"buffui", "ai":20,
 		"text":"Any pickup from any kind. Its rarity is rolled again, with Dice."},
-	"double": {"name":"Double or Nothing", "kind":K.CASINO, "rarity":R.UNCOMMON, "w":5, "icon":"double", "ui":"coinui", "secs":4.0, "odds":0.5, "ai":8,
+	"double": {"parent":"slotmachine", "name":"Double or Nothing", "kind":K.CASINO, "rarity":R.UNCOMMON, "w":5, "icon":"double", "ui":"coinui", "secs":4.0, "odds":0.5, "ai":8,
 		"text":"Bet the coins earned since your last bet: Accelerate rolls, Brake walks away. Even odds, a little better with Dice."},
-	"lottery": {"name":"Lottery Ticket", "kind":K.CASINO, "rarity":R.UNCOMMON, "w":4, "icon":"lottery", "ui":"coinui", "ai":10,
+	"lottery": {"parent":"scratch", "name":"Lottery Ticket", "kind":K.CASINO, "rarity":R.UNCOMMON, "w":4, "icon":"lottery", "ui":"coinui", "ai":10,
 		"text":"Three numbers from 0 to 9, checked on the results ticket against the last digit of your crushes, top speed and coins. Each match pays 50; all three pay 500."},
-	"wheel": {"name":"Prize Wheel", "kind":K.CASINO, "rarity":R.RARE, "w":0, "icon":"wheel", "ui":"coinui",
+	"wheel": {"parent":"scratch", "name":"Prize Wheel", "kind":K.CASINO, "rarity":R.RARE, "w":0, "icon":"wheel", "ui":"coinui",
 		"text":"Found in the world. Drive across it and your speed sets the spin, from BUST to JACKPOT."},
-	"deal": {"name":"The Deal", "kind":K.CASINO, "rarity":R.RARE, "w":6, "icon":"deal", "ui":"slotmachineui", "ai":40,
-		"text":"Pick one of three cards. A gem deals a new hand; run coins raise the hand's rarity. Every other crush goal deals one."},
-	"claw": {"name":"Claw Crane", "kind":K.CASINO, "rarity":R.EPIC, "w":8, "icon":"claw", "ui":"slotmachineui", "ai":50,
+	"deal": {"parent":"double", "name":"The Deal", "kind":K.CASINO, "rarity":R.RARE, "w":6, "icon":"deal", "ui":"slotmachineui", "ai":40,
+		"text":"Pick one of three cards. A gem deals a new hand; run coins raise the hand's rarity. It can also come in a gift box."},
+	"claw": {"parent":"mystery", "name":"Claw Crane", "kind":K.CASINO, "rarity":R.EPIC, "w":8, "icon":"claw", "ui":"slotmachineui", "ai":50,
 		"text":"Steer the claw over a heap of prizes and drop it with Accelerate. Prizes can slip on the way up. Run coins buy another grab."},
 
 	#---------------------------------------------------------------- skill challenges
-	"rings": {"name":"Ring Run", "kind":K.SKILL, "rarity":R.UNCOMMON, "w":0, "icon":"ring", "ui":"coinui",
+	"rings": {"parent":"speedtrap", "name":"Ring Run", "kind":K.SKILL, "rarity":R.UNCOMMON, "w":0, "icon":"ring", "ui":"coinui",
 		"text":"Found in the world. Driving through the gold ring starts a chain of 8, each 3 s from the last. Each pays 5 coins; all 8 pay a Rare pickup."},
-	"bowling": {"name":"Goon Bowling", "kind":K.SKILL, "rarity":R.RARE, "w":0, "icon":"bowling", "ui":"coinui",
+	"bowling": {"parent":"donut", "name":"Goon Bowling", "kind":K.SKILL, "rarity":R.RARE, "w":0, "icon":"bowling", "ui":"coinui",
 		"text":"Ten goons stand in a triangle. A strike pays a Star Fragment and 100 coins, a spare 50."},
-	"speedtrap": {"name":"Speed Trap", "kind":K.SKILL, "rarity":R.COMMON, "w":0, "icon":"speedtrap", "ui":"coinui",
+	"speedtrap": {"start":true, "name":"Speed Trap", "kind":K.SKILL, "rarity":R.COMMON, "w":0, "icon":"speedtrap", "ui":"coinui",
 		"text":"Found in the world. The camera pays your speed in MPH / 2 as coins."},
-	"donut": {"name":"Donut Zone", "kind":K.SKILL, "rarity":R.UNCOMMON, "w":0, "icon":"cone", "ui":"engineui",
+	"donut": {"parent":"speedtrap", "name":"Donut Zone", "kind":K.SKILL, "rarity":R.UNCOMMON, "w":0, "icon":"cone", "ui":"engineui",
 		"text":"Found in the world. Circle the cone inside its ring for 5 s to win a Tune-up Crate."},
-	"bullseye": {"name":"Bullseye", "kind":K.SKILL, "rarity":R.UNCOMMON, "w":0, "icon":"bullseye", "ui":"gemui",
+	"bullseye": {"parent":"speedtrap", "name":"Bullseye", "kind":K.SKILL, "rarity":R.UNCOMMON, "w":0, "icon":"bullseye", "ui":"gemui",
 		"text":"Found in the world. Come in above 40 MPH and stop on the target. The centre pays a gem, the rings pay coins."},
-	"potato": {"name":"Hot Potato", "kind":K.SKILL, "rarity":R.RARE, "w":5, "icon":"bomb", "ui":"buffui", "secs":10.0, "need":5, "radius":320.0, "ai":10,
+	"potato": {"parent":"bullseye", "name":"Hot Potato", "kind":K.SKILL, "rarity":R.RARE, "w":5, "icon":"bomb", "ui":"buffui", "secs":10.0, "need":5, "radius":320.0, "ai":10,
 		"text":"A bomb lands on your roof. Drive into 5 or more goons within 10 s to blow them all up. Miss, and it costs 25 hull."},
-	"truck": {"name":"Loot Truck", "kind":K.SKILL, "rarity":R.EPIC, "w":6, "icon":"truck", "ui":"coinui", "secs":40.0, "rams":5, "ai":30,
+	"truck": {"parent":"rings", "name":"Loot Truck", "kind":K.SKILL, "rarity":R.EPIC, "w":6, "icon":"truck", "ui":"coinui", "secs":40.0, "rams":5, "ai":30,
 		"text":"A Scrap Gang loot truck makes a run for it. Every ram spills coins; five rams burst it for a Rare pickup."},
-	"delivery": {"name":"Delivery", "kind":K.SKILL, "rarity":R.UNCOMMON, "w":3, "icon":"parcel", "ui":"starui", "modes":[M.SPRINT, M.MARATHON], "minHealth":30.0, "ai":25,
+	"delivery": {"parent":"rings", "needs":["wins:sprint:1"], "name":"Delivery", "kind":K.SKILL, "rarity":R.UNCOMMON, "w":3, "icon":"parcel", "ui":"starui", "modes":[M.SPRINT, M.MARATHON], "minHealth":30.0, "ai":25,
 		"text":"Carry the parcel to the station without dropping below 30 hull for +1 star."},
 	"combo": {"name":"Crush Combo", "kind":K.SKILL, "rarity":R.SYSTEM, "w":0, "icon":"combo", "ui":"coinui", "gap":1.5,
 		"text":"Crushes less than 1.5 s apart chain. A chain of 3 doubles coins, and it climbs to x5 at 12."},
 
 	#---------------------------------------------------------------- mode specials
-	"stopwatch": {"name":"Stopwatch", "kind":K.MODE, "rarity":R.UNCOMMON, "w":10, "icon":"stopwatch", "ui":"clockui", "modes":[M.SPRINT, M.MARATHON], "seconds":10.0, "ai":30,
+	"stopwatch": {"parent":"ffwd", "needs":["mode:sprint"], "name":"Stopwatch", "kind":K.MODE, "rarity":R.UNCOMMON, "w":10, "icon":"stopwatch", "ui":"clockui", "modes":[M.SPRINT, M.MARATHON], "seconds":10.0, "ai":30,
 		"text":"+10 s on the clock. Sprint and Marathon."},
-	"ffwd": {"name":"Fast Forward", "kind":K.MODE, "rarity":R.UNCOMMON, "w":10, "icon":"ffwd", "ui":"clockui", "modes":[M.COUNTDOWN, M.DEFENSE], "seconds":10.0, "ai":30,
+	"ffwd": {"start":true, "name":"Fast Forward", "kind":K.MODE, "rarity":R.UNCOMMON, "w":10, "icon":"ffwd", "ui":"clockui", "modes":[M.COUNTDOWN, M.DEFENSE], "seconds":10.0, "ai":30,
 		"text":"Takes 10 s off the clock, which these modes win at. Countdown and Defense."},
-	"barricade": {"name":"Barricade Kit", "kind":K.MODE, "rarity":R.COMMON, "w":10, "icon":"barricade", "ui":"itemui", "modes":[M.DEFENSE], "barrier":150.0, "ai":25,
+	"barricade": {"parent":"ffwd", "needs":["mode:defense"], "name":"Barricade Kit", "kind":K.MODE, "rarity":R.COMMON, "w":10, "icon":"barricade", "ui":"itemui", "modes":[M.DEFENSE], "barrier":150.0, "ai":25,
 		"text":"Bring it into the station's lot for +150 barrier. Defense."},
-	"turret": {"name":"Sentry Turret", "kind":K.MODE, "rarity":R.RARE, "w":10, "icon":"turret", "ui":"buffui", "modes":[M.DEFENSE], "secs":30.0, "ai":40,
+	"turret": {"parent":"barricade", "name":"Sentry Turret", "kind":K.MODE, "rarity":R.RARE, "w":10, "icon":"turret", "ui":"buffui", "modes":[M.DEFENSE], "secs":30.0, "ai":40,
 		"text":"Sets up on the station's nearest wall and shoots goons for 30 s. Kills count. Defense."},
-	"compass": {"name":"Shortcut Map", "kind":K.MODE, "rarity":R.UNCOMMON, "w":6, "icon":"compass", "ui":"buffui", "modes":[M.SPRINT, M.MARATHON], "secs":15.0, "ai":12,
+	"compass": {"parent":"stopwatch", "name":"Shortcut Map", "kind":K.MODE, "rarity":R.UNCOMMON, "w":6, "icon":"compass", "ui":"buffui", "modes":[M.SPRINT, M.MARATHON], "secs":15.0, "ai":12,
 		"text":"For 15 s: arrows mark a route to the station around water and hills. Sprint and Marathon."},
-	"panic": {"name":"Panic Button", "kind":K.MODE, "rarity":R.RARE, "w":10, "icon":"panic", "ui":"buffui", "modes":[M.POCALYPSE], "secs":30.0, "ai":30,
+	"panic": {"parent":"ffwd", "needs":["survive:180"], "name":"Panic Button", "kind":K.MODE, "rarity":R.RARE, "w":10, "icon":"panic", "ui":"buffui", "modes":[M.POCALYPSE], "secs":30.0, "ai":30,
 		"text":"For 30 s: the horde stops getting worse. The clock keeps counting. Goonpocalypse."},
 }
 
@@ -275,6 +278,18 @@ static func def(id: String) -> Dictionary:
 
 static func displayName(id: String) -> String:
 	return def(id).get("name", id.capitalize())
+
+## Name tags (docs/PICKUPS.md, "Name tags"): the small label printed next to an icon in the HUD's gadget,
+## boost and buff slots, on slot reels and in the prize games. The name itself unless it is too long for a
+## tag (TAG_MAX_PX at TAG_SIZE, tests check every one).
+const SHORT_NAMES := {"crate": "Tune-up", "shield": "Shield", "monster": "Big Tires", "wrecking": "Wreck Ball",
+	"hubcap": "Hubcap", "pocket": "Pocket Stn", "starfrag": "Star Frag", "double": "Double Up", "lottery": "Lottery",
+	"barricade": "Barricades", "turret": "Turret"}
+const TAG_SIZE := 12
+const TAG_MAX_PX := 84.0
+
+static func shortName(id: String) -> String:
+	return SHORT_NAMES.get(id, displayName(id))
 
 static func rarity(id: String) -> int:
 	return def(id).get("rarity", R.COMMON)
@@ -334,7 +349,7 @@ static func candidates(tier: int, mode: int, night: bool, faction := -1) -> Dict
 	var out := {}
 	for id in DATA:
 		var d: Dictionary = DATA[id]
-		if d.rarity != tier || d.get("w", 0) <= 0 || not allowedIn(id, mode): continue
+		if d.rarity != tier || d.get("w", 0) <= 0 || not allowedIn(id, mode) || not Unlocks.isPickupOpen(id): continue
 		if d.get("night", false) && not night: continue
 		out[id] = float(d.w) * float(d.get("fac", {}).get(faction, 1.0))
 	return out
@@ -361,7 +376,7 @@ static func roll(dice: float, mode: int, night: bool, faction := -1, bump := 0) 
 		var id := pickWeighted(candidates(tier, mode, night, faction), randf())
 		if id != "": return id
 		tier -= 1
-	return "coin"
+	return "coin" #a tree root: always open
 
 ## The roll for the player's car right now.
 static func rollForCar(faction := -1, bump := 0) -> String:
@@ -380,6 +395,40 @@ static func rollAtLeast(minTier: int) -> String:
 		var id := pickWeighted(candidates(tier, SaveManager.playerData.gameMode, night), randf())
 		if id != "": return id
 		tier -= 1
+	return "coin" #a tree root: always open
+
+## `id` when it is open, else the nearest open pickup above it in its tree (every root is open). Fixed
+## rewards (the Prize Wheel's wedges, the Donut Zone's crate, Coin Stack padding...) go through this, so a
+## locked pickup never turns up.
+static func openOr(id: String) -> String:
+	while id != "" && not Unlocks.isPickupOpen(id):
+		id = def(id).get("parent", "")
+	return id if id != "" else "coin"
+
+## The run setup's gadgets or boosts that are open (id -> gem price), in their listed order.
+static func openLoadout(table: Dictionary) -> Dictionary:
+	var out := {}
+	for id in table:
+		if Unlocks.isPickupOpen(id): out[id] = table[id]
+	return out
+
+## A menu's offer (The Deal, the Pit Shop, the Claw): a drop of at least `minTier` that isn't in `never` or
+## `taken`. With few pickups unlocked the tiers may hold nothing new, so it settles for lower tiers, then
+## for a repeat, then the Coin.
+static func rollOffer(minTier: int, never: Array, taken: Array) -> String:
+	for attempt in 8:
+		var id := rollAtLeast(minTier)
+		if id not in never && id not in taken: return id
+	var night: bool = is_instance_valid(Root.spawnManager) && Root.spawnManager.isNight
+	var mode: int = SaveManager.playerData.gameMode if SaveManager.playerData else 0
+	for allowRepeat in [false, true]:
+		for tier in range(R.LEGENDARY, -1, -1):
+			var options := candidates(tier, mode, night)
+			for id in never: options.erase(id)
+			if not allowRepeat:
+				for id in taken: options.erase(id)
+			var id := pickWeighted(options, randf())
+			if id != "": return id
 	return "coin"
 
 ## A pickup node for `id`, not yet in the tree.

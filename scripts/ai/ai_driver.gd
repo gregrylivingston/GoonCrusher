@@ -83,7 +83,8 @@ var car: OverheadCarBody2D
 var route: AIRoute
 var sight := "human"          #"human" or "full"
 var p: Dictionary = AIProfiles.resolve("") #tuning (AIProfiles); read as p.hitCost etc.
-var debug := false            #draws the chosen plan, goal and route
+var debug := false            #draws the chosen plan, goal and route...
+static var drawPlans := true  #...while this is on: the console's `ailines` turns every driver's drawing off and on
 var mode: int
 
 var tick := 0
@@ -108,6 +109,11 @@ var routePoints := PackedVector2Array()
 var routeFor := Vector2.INF
 var routeTick := -9999
 var raceDistance := 0.0       #px left along the route to the station (races)
+var legStation: Node = null   #the station this leg of a race is for; a new one starts a new leg
+var legTick := 0              #when the leg started...
+var legDistance := -1.0       #...how far the station was then...
+var legSlack := -1.0          #...and the spare time then, which sets the leg's whole detour budget
+var detourSpent := 0.0        #seconds this leg spent going for something other than the station
 var roamPoint := Vector2.INF
 var roamUntil := 0
 var stationPoints: Array = []   #the station graph's points: driveway, inner and outer marker, corners
@@ -220,7 +226,7 @@ func decide() -> void:
 		throttleCap = minf(throttleCap, p.waterSpeed)
 	keys = keysFor(plan, tick - planTick, forwardSpeed(), throttleCap)
 	if speedCap < INF: stats.eco_seconds += 1.0 / Engine.physics_ticks_per_second
-	if debug && tick % p.scanTicks == 1: queue_redraw()
+	if debug && drawPlans && tick % p.scanTicks == 1: queue_redraw()
 
 func buildRoute() -> void:
 	route = AIRoute.forWorld(Root.worldMap)
@@ -277,13 +283,18 @@ func updateGoal() -> void:
 			if crushNeed(g) > topSpeed() * 0.95: continue #too tough for this car: leave it be
 			for other in near:
 				if other != g && other.global_position.distance_squared_to(g.global_position) < 350.0 * 350.0: neighbours += 1
-			options.push_back({"kind":"goon", "node":g, "value":goonValue(neighbours, p.goonValue, p.goonPackBonus), "key":str(g.get_instance_id())})
+			var value = goonValue(neighbours, p.goonValue, p.goonPackBonus)
+			if isRaceMode(): value *= p.raceGoonScale
+			elif mode == Root.gameModes.DEFENSE:
+				value = defenseValue(g, value)
+				if value <= 0.0: continue
+			options.push_back({"kind":"goon", "node":g, "value":value, "key":str(g.get_instance_id())})
 
 	var objective = objectiveGoal()
 	var best = objective
 	var bestUtility = objective.value / (etaTo(objective.pos) + 1.0) if not objective.is_empty() else -INF
 	if goal.get("key") == objective.get("key"): bestUtility *= p.commitBonus
-	var isRace = mode == Root.gameModes.SPRINT || mode == Root.gameModes.MARATHON
+	var isRace = isRaceMode()
 	var allowedDetour = detourBudget() if isRace else INF
 	for option in options:
 		if blacklist.get(option.key, 0) > tick: continue
@@ -301,6 +312,7 @@ func updateGoal() -> void:
 			bestUtility = utility
 			best = option
 	if best.is_empty(): best = {"kind":"roam", "pos":car.global_position + car.global_transform.x * 2000.0, "value":1.0, "key":"roam"}
+	if isRace && best.get("kind") not in ["station", "escape", "roam"]: detourSpent += float(GOAL_TICKS) / Engine.physics_ticks_per_second
 	if best.get("key") != goal.get("key"):
 		goal = best
 		goalTick = tick
@@ -331,19 +343,21 @@ func objectiveGoal() -> Dictionary:
 	match mode:
 		Root.gameModes.SPRINT, Root.gameModes.MARATHON:
 			if is_instance_valid(Root.station):
+				startLegIfNew()
 				var target = stationTarget()
 				raceDistance = car.global_position.distance_to(target)
 				if not route.lineIsClear(car.global_position, target, 250.0):
 					var result = route.plan(car.global_position, target)
 					stats.route_reached = result.reached
 					if result.reached: raceDistance = AIRoute.pathLength(result.points) + result.points[result.points.size() - 1].distance_to(target)
+				if legDistance < 0.0: legDistance = raceDistance
 				var pressure = clampf(1.0 - raceSlack() / 60.0, 0.0, 1.0)
 				return {"kind":"station", "pos":target, "value":40.0 + 160.0 * pressure, "key":"station"}
 		Root.gameModes.DEFENSE:
 			if is_instance_valid(Root.station):
 				if roamPoint == Vector2.INF || tick > roamUntil || car.global_position.distance_to(roamPoint) < GOAL_RADIUS.patrol:
 					for attempt in 8: #a patrol point on dry land, clear of the water's edge
-						roamPoint = Root.station.global_position + Vector2.from_angle(randf() * TAU) * randf_range(600.0, 1800.0)
+						roamPoint = Root.station.global_position + Vector2.from_angle(randf() * TAU) * randf_range(500.0, 1100.0)
 						if not nearWater(roamPoint): break
 					roamUntil = tick + 15 * Engine.physics_ticks_per_second
 				return {"kind":"patrol", "pos":roamPoint, "value":4.0, "key":"patrol"}
@@ -471,29 +485,22 @@ func rocksNear(point: Vector2, radius: float) -> bool:
 		if World.isWall(hit.collider) && not (BreakableProp.isBreakable(hit.collider) && not hit.collider.get_meta(&"explosive", false)): return true
 	return false
 
-#Region stars: a region (a district of the world map) pays a star for each 60 s spent in it, up to 3
-#(Region.gd), so stay in a district until it has paid out, then head for one that hasn't. Passable,
-#reachable coarse cells only, preferably ahead.
+#Where to roam. Waves are one clock for the whole run (Region.gd), so no district pays more than another:
+#passable, reachable coarse cells, preferably ahead and not too close.
 const ROAM_CELLS := Vector2i(16, 12) #how far the candidates reach, in coarse cells (20,480 x 15,360 px)
 const ROAM_STEP := 3
 func pickRoamPoint() -> Vector2:
 	var map: WorldMap = Root.worldMap
 	var carCell: Vector2i = map.coarseCell(car.global_position)
-	var here := map.districtOfCell(carCell)
-	var hereMaxed = isRegionMaxed(here)
 	var forward = car.global_transform.x.normalized()
 	var best = Vector2.INF
 	var bestScore = -INF
 	for dy in range(-ROAM_CELLS.y, ROAM_CELLS.y + 1, ROAM_STEP):
 		for dx in range(-ROAM_CELLS.x, ROAM_CELLS.x + 1, ROAM_STEP):
 			var cell = carCell + Vector2i(dx, dy)
-			if (dx == 0 && dy == 0) || not map.cellReachable(cell): continue
-			var district := map.districtOfCell(cell)
-			if district == here && not hereMaxed && absi(dx) + absi(dy) <= ROAM_STEP: continue
+			if absi(dx) + absi(dy) <= ROAM_STEP || not map.cellReachable(cell): continue
 			var centre = WorldGen.cellCentre(cell)
 			var score = randf()
-			if district == here: score += 0.0 if hereMaxed else 3.0
-			elif not isRegionMaxed(district): score += 4.0 if hereMaxed else 0.5
 			#long straight runs: fresh goons spawn ahead and meet the bumper, the horde stays behind
 			if centre.distance_to(car.global_position) < p.roamMinPx: score -= 2.0
 			score += 1.5 * forward.dot((centre - car.global_position).normalized())
@@ -513,10 +520,6 @@ func wetPickup(pickup: Node) -> bool:
 	var id = pickup.get_instance_id()
 	if not wetPickups.has(id): wetPickups[id] = nearWater(pickup.global_position)
 	return wetPickups[id]
-
-static func isRegionMaxed(region: int) -> bool:
-	if region < 0: return true #barriers pay nothing
-	return Region.regions.has(region) && Region.regions[region].get("wave", 1) >= 4
 
 #--- values -----------------------------------------------------------------------------------
 
@@ -606,11 +609,46 @@ func raceSlack() -> float:
 	var drive = raceDistance
 	if level.has_method("driveLength"):
 		drive = level.driveLength(raceDistance) if raceDistance > STATION_GRAPH_PX else raceDistance * Level.ROUTE_FACTOR_DEFAULT
-	return level.seconds - drive / cruiseSpeed() * 1.1
+	#the speed the rest will be driven at: cruise, or the progress really made this leg if that is slower
+	#(the stretched route already allows for the drive's length, so progress is compared with it unstretched)
+	var speed: float = minf(cruiseSpeed(), raceProgressSpeed() * drive / maxf(raceDistance, 1.0))
+	return level.seconds - drive / maxf(speed, 1.0) * 1.1
 
-#how many seconds a race can spend on a detour
+#how many seconds a race can spend on a detour: a share of the spare time, and never more than the leg's
+#whole budget has left (raceDetourShare of the spare time when the leg started), so detours can't chain
 func detourBudget() -> float:
-	return clampf(raceSlack() * 0.15, 0.0, 8.0)
+	var slack := raceSlack()
+	if legSlack < 0.0: legSlack = maxf(slack, 0.0)
+	var left: float = legSlack * p.raceDetourShare - detourSpent
+	return clampf(minf(slack * 0.15, left), 0.0, 8.0)
+
+func isRaceMode() -> bool:
+	return mode == Root.gameModes.SPRINT || mode == Root.gameModes.MARATHON
+
+#a new station (the race's first, or Marathon's next) starts a leg: its progress and detour budget anew
+func startLegIfNew() -> void:
+	if legStation == Root.station: return
+	legStation = Root.station
+	legTick = tick
+	legDistance = -1.0
+	legSlack = -1.0
+	detourSpent = 0.0
+
+#px/s the car has really closed on the station this leg, detours, rocks and turns included; INF until
+#10 s of the leg have passed (too little to go on)
+func raceProgressSpeed() -> float:
+	var seconds := float(tick - legTick) / Engine.physics_ticks_per_second
+	if legDistance < 0.0 || seconds < 10.0: return INF
+	return maxf((legDistance - raceDistance) / seconds, 1.0)
+
+#Defense: a goon is worth more the nearer it is to the base (defenseThreat times more at the walls than at
+#defenseRingPx), and double once it is at the walls; 0 beyond the ring, where it is no threat yet
+func defenseValue(g: Node, base: float) -> float:
+	if not is_instance_valid(Root.station): return base
+	var d: float = g.global_position.distance_to(Root.station.global_position)
+	if d > p.defenseRingPx: return 0.0
+	var value: float = base * lerpf(p.defenseThreat, 1.0, d / p.defenseRingPx)
+	return value * 2.0 if g.state == &"siege" else value
 
 #the car's top speed on the current ground: engine force against drag and friction
 func topSpeed() -> float:
@@ -1042,7 +1080,7 @@ func roomiest(candidates: Array) -> Dictionary:
 #--- debug ------------------------------------------------------------------------------------
 
 func _draw():
-	if not debug: return
+	if not debug || not drawPlans: return
 	if planPath.size() > 1: draw_polyline(planPath, Color.RED if planHit else Color.LIME, 6.0)
 	if routePoints.size() > 1: draw_polyline(routePoints, Color(0.3, 0.6, 1.0, 0.6), 10.0)
 	if aim != Vector2.INF: draw_circle(aim, 40.0, Color.CYAN)

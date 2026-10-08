@@ -79,7 +79,8 @@ static func defaultEntries() -> Array:
 		out.push_back(defaultEntry(i))
 	return out
 
-## A new save's entry for the level at `index`. The first DEMO_LEVEL_COUNT levels start unlocked.
+## A new save's entry for the level at `index`. Only the first starts unlocked; the rest open by play
+## (LevelDef.unlockModes modes beaten on the level before). Saves keep whatever they had already opened.
 static func defaultEntry(index: int) -> Dictionary:
 	var id: StringName = ORDER[index]
 	var def := get_def(id)
@@ -89,7 +90,7 @@ static func defaultEntry(index: int) -> Dictionary:
 		"id": String(id),
 		"name": def.displayName if def else String(id).capitalize(),
 		"image": def.poster if def else "",
-		"unlocked": index < Root.DEMO_LEVEL_COUNT,
+		"unlocked": index == 0,
 		"scene": scenePath(id),
 		"gamemodeBeat": beat,
 	}

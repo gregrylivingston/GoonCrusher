@@ -70,6 +70,26 @@ static func isModeUnlocked(level: Dictionary, mode: int) -> bool:
 		gameModes.GOONPOCALYPSE: return beat.get(gameModes.GOONCRUSHER, false) && beat.get(gameModes.SPRINT, false)
 	return false
 
+#Modes beaten on a level that open the next one: its LevelDef.unlockModes (3 on every level for now; the
+#unlock chain makes them Countdown, Sprint and one of Goonpocalypse, Marathon and Defense). The demo offers
+#only Countdown and Sprint, so it asks for those two. LEVEL_UNLOCK_MODES is the default for a level with no def.
+const LEVEL_UNLOCK_MODES := 3
+const MODE_PATH := [gameModes.GOONCRUSHER, gameModes.SPRINT, gameModes.GOONPOCALYPSE, gameModes.MARATHON, gameModes.DEFENSE] #the order a player meets them
+
+static func modesToOpenNext(level: Dictionary = {}) -> int:
+	if IS_DEMO: return DEMO_MODES.size()
+	var def := Levels.get_def(StringName(str(level.get("id", "")))) if level.has("id") else null
+	return def.unlockModes if def else LEVEL_UNLOCK_MODES
+
+## Modes beaten on a level, counting only those that can be played (a demo save's extras don't count there)
+static func modesBeaten(level: Dictionary) -> int:
+	var beat: Dictionary = level.get("gamemodeBeat", {})
+	return MODE_PATH.filter(func(m): return beat.get(m, false) && isModeAvailable(m)).size()
+
+## Has this level done enough to open the one after it
+static func opensNextLevel(level: Dictionary) -> bool:
+	return modesBeaten(level) >= modesToOpenNext(level)
+
 #can this mode be started on this level from the menu
 static func isModePlayable(level: Dictionary, mode: int) -> bool:
 	return isModeAvailable(mode) && isModeUnlocked(level, mode)
@@ -85,9 +105,18 @@ static func modeLockReason(level: Dictionary, mode: int) -> String:
 		gameModes.GOONPOCALYPSE: return "Beat Countdown And Sprint To Unlock"
 	return "Locked"
 
-#coins a run pays: every run pays at least its coins, and each star multiplies them
+#coins a run pays: its coins times the star multiplier, x1 plus STAR_BONUS a star (50 stars pay x6).
+#Was coins x stars, which paid six-figure runs by the sixth level (career playtests, docs/GAMEPLAY_SUGGESTIONS.md).
+const STAR_BONUS := 0.1
+static func payoutMultiplier(star: int) -> float:
+	return 1.0 + STAR_BONUS * maxi(0, star)
+
+## The multiplier as the HUD and the results ticket show it: "3.6"
+static func multiplierText(star: int) -> String:
+	return "%.1f" % payoutMultiplier(star)
+
 static func computePayout(coin: int, star: int) -> int:
-	return coin * maxi(1, star)
+	return roundi(coin * payoutMultiplier(star))
 
 
 @onready var powerup = {

@@ -49,6 +49,7 @@ var medallions: Array[Control] = []
 var modeTitle := Label.new()
 var modeText := Label.new()
 var modeLock := Label.new()
+var nextUnlock := Label.new() #run setup's "Next unlock" line (Unlocks.nextUnlock)
 var startButton: Button
 var buyPlayer := AudioStreamPlayer.new()
 
@@ -271,6 +272,12 @@ func buildSetup() -> void:
 	startButton.add_theme_font_size_override("font_size", 30)
 	startButton.pressed.connect(onStartPressed)
 	setup.add_child(startButton)
+	nextUnlock.position = Vector2(300, 818)
+	nextUnlock.size = Vector2(1000, 26)
+	nextUnlock.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	nextUnlock.theme_type_variation = "MutedLabel"
+	nextUnlock.add_theme_font_size_override("font_size", 17)
+	setup.add_child(nextUnlock)
 	loadoutButton = loadoutSlotButton("ui_upgrade", Vector2(200, 744), cycleLoadout)
 	boostButton = loadoutSlotButton("ui_boost", Vector2(1010, 744), cycleBoost)
 	refreshLoadout()
@@ -296,7 +303,7 @@ var loadoutButton: Button #the gadget's (the career harness presses it)
 var boostButton: Button
 
 static func slotPrices(slot: String) -> Dictionary:
-	return Pickups.LOADOUT if slot == "loadout" else Pickups.BOOST_LOADOUT
+	return Pickups.openLoadout(Pickups.LOADOUT if slot == "loadout" else Pickups.BOOST_LOADOUT) #only unlocked ones are sold
 
 static func slotChoice(slot: String) -> String:
 	var id: String = SaveManager.playerData.meta.get("records", {}).get(slot, "")
@@ -355,6 +362,14 @@ In the run: press %s" % [Pickups.displayName(id).to_upper(), "  x%d" % uses if u
 			button.tooltip_text = Pickups.DATA[id].get("text", "")
 		button.icon = Pickups.texture(id) if id != "" else null
 		button.add_theme_constant_override("icon_max_width", 34)
+
+## "NEXT UNLOCK:  Purse  -  900 coins  (450 / 900)", or "" when nothing is waiting (Unlocks.nextUnlock)
+static func nextUnlockText() -> String:
+	var next := Unlocks.nextUnlock()
+	if next.is_empty(): return ""
+	if Unlocks.canAfford(next.uid) && Unlocks.state(next.uid) == Unlocks.S.READY:
+		return "NEXT UNLOCK:  %s  -  %s, buy it in the Goonopedia (%s)" % [next.name, next.text, InputGlyphs.label("ui_codex")]
+	return "NEXT UNLOCK:  %s  -  %s  (%s / %s)" % [next.name, next.text, DriverCard.formatCoins(next.have), DriverCard.formatCoins(next.need)]
 
 #the level at a save index as the registry describes it (Levels): poster art, name and scene
 static func levelDef(index: int) -> LevelDef:
@@ -655,10 +670,11 @@ func refreshSetup(animate := true) -> void:
 	if mode == Root.gameModes.GOONPOCALYPSE:
 		var best = SaveManager.bestGoonpocalypse(selected, SaveManager.playerData.cars[SaveManager.playerData.selectedCar].name)
 		if best.time > 0: modeText.text += "\nBest here: %d:%02d, score %d" % [best.time / 60, best.time % 60, best.score]
-	var reason = "" if isLevelSelectable(selected) else ("Not in the demo" if isDemoLockedLevel(selected) else "Beat the level before it to unlock")
+	var reason = "" if isLevelSelectable(selected) else ("Not in the demo" if isDemoLockedLevel(selected) else "Beat %d modes on the level before it to unlock" % Root.modesToOpenNext(SaveManager.playerData.levels[selected - 1] if selected > 0 else {}))
 	if reason == "": reason = Root.modeLockReason(forModes, mode)
 	modeLock.text = reason
 	modeLock.visible = reason != ""
+	nextUnlock.text = nextUnlockText()
 	var playable = isLevelSelectable(selected) && Root.isModePlayable(forModes, mode)
 	startButton.disabled = not playable
 	startButton.text = "START" if playable else ("COMING SOON" if reason == "Coming Soon" else "LOCKED")
@@ -788,6 +804,7 @@ func _input(event: InputEvent) -> void:
 		elif event.is_action_pressed("ui_upgrade"): cycleLoadout()
 		elif event.is_action_pressed("ui_boost"): cycleBoost()
 		elif event.is_action_pressed("ui_accept") && get_viewport().gui_get_focus_owner() == null: onStartPressed()
+		elif InputGlyphs.digit(event) > 0 && InputGlyphs.digit(event) <= posters.size(): stepLevelTo(InputGlyphs.digit(event) - 1) #the poster's number
 		else: handled = false
 	if handled: get_viewport().set_input_as_handled()
 
@@ -836,6 +853,8 @@ func openGoonopedia() -> void:
 #focus back to the screen under an overlay
 func onOverlayClosed() -> void:
 	if not is_inside_tree(): return
+	statUpdatesUiUpdate() #the Goonopedia may have spent coins and gems on unlocks
+	if screen == Screen.SETUP: refreshSetup(false)
 	if screen == Screen.SETUP: startButton.grab_focus()
 	else: cards[SaveManager.playerData.selectedCar].mainButton.grab_focus()
 

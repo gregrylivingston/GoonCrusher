@@ -2,7 +2,7 @@ class_name GameUI
 extends CanvasLayer
 
 #The in-run HUD. The widgets in scene/player/hud each read Root.playerCar and redraw only when their
-#numbers change (see docs/HUD.md); this script owns the crush goals, pausing and HUD Scale.
+#numbers change (see docs/HUD.md); this script owns the gift boxes, pausing and HUD Scale.
 
 func _ready():
 	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
@@ -28,9 +28,7 @@ func addCountdown() -> void:
 
 func _process(_delta):
 	if Input.is_action_just_pressed("ui_menu"): openPause()
-	if crushAwardPending && not get_tree().paused: #a goal reached while paused is granted on unpause
-		crushAwardPending = false
-		updateGoonsCrushed()
+	if not get_tree().paused: checkGiftBox() #a box earned under a paused tree opens once it unpauses
 
 #the only way to pause a run: Esc / Start, the HUD button, or losing focus.
 #never opens over the slot machine, countdown or summary, which pause the tree themselves
@@ -82,40 +80,31 @@ func applyHudScale() -> void:
 		control.pivot_offset = (anchor - control.position).clamp(Vector2.ZERO, control.size)
 		control.scale = control.get_meta("baseScale") * hudScale
 
-#crush goals: every goal reached pays a star and a free slot machine. HudCrush draws the goal.
-var awardBase = 12
-var crushingAwardLevel = 0
-var nextCrushingAward: float = awardBase
-var crushGoalStart: float = 0.0  #crushes when the current goal began; the goal's bar fills from here
-var crushAwardPending := false   #a crush goal was reached while the tree was paused (e.g. a slot machine reward)
+#Gift boxes (CrushPrizes, docs/PICKUPS.md): crushes earn crush XP (car.crushXp) toward the next box, which
+#holds one unlocked prize game. Box `boxLevel + 1` opens at CrushPrizes.boxAt(boxLevel + 1) total XP, and
+#leftover XP carries on. HudCrush draws the bar.
+var boxLevel := 0        #boxes opened this run
+var boxStartXp := 0.0    #total XP where the current box's bar starts
+var nextBoxXp: float = CrushPrizes.boxAt(1)
 
+#called on every crush (car.reward); the box opens from _process, never over a paused tree
 func updateGoonsCrushed():
-	var crushed = Root.playerCar.currentGoonsCrushed
-	if crushed >= nextCrushingAward && not Root.playerCar.isDestroyed && get_tree().paused:
-		crushAwardPending = true #the slot machine can't open over a paused tree; _process grants it on unpause
-	elif crushed >= nextCrushingAward && not Root.playerCar.isDestroyed:
-		crushGoalStart = nextCrushingAward
-		crushingAwardLevel += 1
-		Root.playerCar.star += 1
-		get_tree().paused = true
-		if crushingAwardLevel % 2 == 0: #every other goal deals The Deal instead of the slot machine
-			PickupDeal.open(true)
-			return
-		var newMachine = preload("res://scene/player/slots/slotMachine.tscn").instantiate()
-		newMachine.isGoonCrushBonus = true
-		Root.levelRoot.add_child.call_deferred(newMachine) #deferred: the crush may come from a node leaving the level
+	checkGiftBox()
+
+func checkGiftBox() -> void:
+	var car = Root.playerCar
+	if not is_instance_valid(car) || car.isDestroyed || car.crushXp < nextBoxXp || get_tree().paused: return
+	if not is_instance_valid(Root.levelRoot) || Root.levelRoot.get("hasEnded"): return
+	boxLevel += 1
+	boxStartXp = nextBoxXp
+	nextBoxXp = CrushPrizes.boxAt(boxLevel + 1)
+	var tier := CrushPrizes.tierFor(boxLevel)
+	var id := CrushPrizes.pickGame(tier, randf(), CrushPrizes.openGames())
+	flashWidget($TopLeft/CrushPill)
+	GiftBox.open(id, tier)
 
 func updatePlayerRegion(tile) ->void:
 	%RegionChip.updatePlayerRegion(tile)
-
-#a crush goal reached: a tape banner names the prize and the pill flashes gold in its corner while the
-#slot machine or The Deal arrives; called again (backwards) when it closes, to set the next goal
-func animateNewGoonCrushGoal(animatebackwards: bool = true, prize := "FREE SPIN") -> void:
-	if animatebackwards:
-		nextCrushingAward = pow(( crushingAwardLevel + 1 ), 1.7) * awardBase
-		return
-	TapeBanner.post("CRUSH GOAL  -  " + prize, 0.6)
-	flashWidget($TopLeft/CrushPill)
 
 #a wave survived in this region: the chip flashes and the star it paid flies to the star counter
 func waveSurvived() -> void:

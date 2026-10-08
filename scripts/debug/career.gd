@@ -16,6 +16,9 @@ class_name CareerPilot extends Node
 #Output in user://playtest/: results<tag>.csv (one row per run), <tag>_events.log (every menu action and
 #check), <tag>_summary.json (CAREER_SUMMARY: progress, milestones, economy, issues and script errors).
 #Lines printed: CAREER_RUN, CAREER_SHOP, CAREER_ISSUE, CAREER_MILESTONE, CAREER_SUMMARY.
+#Autopilot (the console's `autopilot`, beginAutopilot): the same persona play, on whatever save is in use,
+#in the running game with its transitions, until stop(). Without the Playtest autoload it attaches the
+#driver itself (its plan drawn) and records each run from the car when it ends.
 
 const MENU_SCENE := "res://scene/player/menu/main/main2.tscn"
 const GARAGE := 0 #main2.Screen
@@ -23,7 +26,11 @@ const SETUP := 1
 const MODE_ORDER := [Root.gameModes.GOONCRUSHER, Root.gameModes.SPRINT, Root.gameModes.MARATHON, Root.gameModes.DEFENSE, Root.gameModes.GOONPOCALYPSE] #main2.MODE_ORDER
 const SOFTLOCK_MS := 10000
 
-var playtest: Node #the Playtest autoload, which records the runs
+var playtest: Node #the Playtest autoload, which records the runs (null under autopilot)
+var standalone := false     #autopilot: no Playtest, the save in use, the game keeps running after stop()
+var stopped := false        #stop() was called: every wait returns at once and the career ends
+var injecting := false      #a click is being pushed in (the console tells it from a person's own click)
+var finished := Callable()  #autopilot: told the summary line when the career ends
 var options := {}
 var personaId := ""
 var persona := {}
@@ -33,7 +40,7 @@ var rng := RandomNumberGenerator.new()
 var history: Array = []   #one entry per run: car, level_index, mode_id, won, payout, level_time, ...
 var issues: Array = []    #{kind, session, text}
 var milestones: Array = []
-var shopping := {"cars": 0, "car_coins": 0, "upgrades": 0, "upgrade_coins": 0, "gadgets": 0, "boosts": 0}
+var shopping := {"cars": 0, "car_coins": 0, "upgrades": 0, "upgrade_coins": 0, "pickups": 0, "pickup_coins": 0, "gadgets": 0, "boosts": 0}
 var session := 0
 var sessions := 30
 var maxMinutes := INF
@@ -97,8 +104,46 @@ func setup(opts: Dictionary) -> String:
 	note("CAREER_START persona=%s start=%s sessions=%d seed=%d progress=%s" % [personaId, startName, sessions, firstSeed, JSON.stringify(startProgress)])
 	return ""
 
+## Autopilot: a persona plays the save in use from wherever the game is (the menu, or a run, which it takes
+## over). Returns what the console shows. stop() hands control back.
+func beginAutopilot(id: String) -> String:
+	process_mode = Node.PROCESS_MODE_ALWAYS
+	standalone = true
+	personaId = id
+	persona = Personas.get_def(id)
+	startName = CareerStart.activeTier() if CareerStart.activeTier() != "" else "real"
+	sessions = 1000000
+	rng.randomize()
+	tag = "autopilot"
+	DirAccess.make_dir_recursive_absolute("user://playtest")
+	startProgress = CareerStart.progress(SaveManager.playerData)
+	logFile = FileAccess.open("user://playtest/autopilot_events.log", FileAccess.WRITE)
+	OS.add_logger(errors)
+	note("CAREER_START autopilot persona=%s save=%s progress=%s" % [personaId, startName, JSON.stringify(startProgress)])
+	var device: String = {"mouse": "the mouse", "keys": "the keyboard", "mixed": "mouse and keys"}[persona.device]
+	return "%s (%s driver, menus by %s) at the wheel" % [persona.name, persona.profile, device]
+
+## Hands control back: the driver comes off the car, held keys are let go, and the career ends at its next step
+func stop() -> void:
+	if stopped: return
+	stopped = true
+	for action in ["Accelerate", "Brake", "TurnLeft", "TurnRight"]: Input.action_release(action)
+	if is_instance_valid(Root.playerCar) && Root.playerCar.myController.driver != null:
+		var driver = Root.playerCar.myController.driver
+		Root.playerCar.myController.driver = null
+		if is_instance_valid(driver): driver.queue_free()
+
 func _ready() -> void:
+	if standalone: get_tree().node_added.connect(onNodeAdded)
 	main.call_deferred()
+
+#autopilot: every run's car gets the persona's driver, plan drawn (the Playtest autoload does this for careers)
+func onNodeAdded(node: Node) -> void:
+	if not stopped && node is OverheadCarBody2D && node.isPlayer: node.ready.connect(attachDriver.bind(node), CONNECT_ONE_SHOT)
+
+func attachDriver(car: OverheadCarBody2D) -> void:
+	if stopped || not is_instance_valid(car) || car.myController.driver != null: return
+	AIDriver.attach(car, {"profile": persona.profile, "debug": true})
 
 func _exit_tree() -> void:
 	OS.remove_logger(errors)
@@ -106,7 +151,8 @@ func _exit_tree() -> void:
 #---------- the career ----------
 
 func main() -> void:
-	while session < sessions && minutesPlayed() < maxMinutes:
+	if standalone && Root.isRunActive && is_instance_valid(Root.playerCar): await takeOverRun()
+	while not stopped && session < sessions && minutesPlayed() < maxMinutes:
 		session += 1
 		var before := snapshot()
 		var ok := await menuVisit()
@@ -118,9 +164,23 @@ func main() -> void:
 			if recovering >= 3:
 				issue("abort", "three sessions in a row ended in a block; stopping")
 				break
+			if stopped: break
 			await recover()
 		else: recovering = 0
 	finish()
+
+#autopilot started mid-run: drive the rest of it, then carry on from the results as usual
+func takeOverRun() -> void:
+	session += 1
+	attachDriver(Root.playerCar)
+	var data := SaveManager.playerData
+	runPlan = {"level": data.selectedLevel, "mode": data.gameMode, "car": data.selectedCar, "gadget": "", "boost": ""}
+	bankBefore = {"coin": data.coin, "gem": data.gem, "gadget_cost": 0}
+	runRow = {}
+	runActive = true
+	pauseAt = INF
+	abandonThisRun = false
+	if await playRun(): await readResults()
 
 func minutesPlayed() -> float:
 	var total := 0.0
@@ -180,6 +240,7 @@ func shop() -> bool:
 		if want.is_empty(): break
 		var ok: bool
 		if want.has("unlock"): ok = await unlock(want.unlock)
+		elif want.has("pickup"): ok = await unlockPickup(want.pickup)
 		else: ok = await upgrade(want.car, want.upgrade)
 		if not ok: return false
 	var m := menu()
@@ -213,20 +274,83 @@ func unlock(index: int) -> bool:
 	if not await selectCar(index): return false
 	var card: DriverCard = menu().cards[index]
 	var price: int = data.cars[index].cost
+	var gemPrice: int = data.cars[index].get("gems", 0)
 	var coins := data.coin
+	var gems := data.gem
 	if not card.isLocked(): return true
 	if card.mainButton.disabled:
 		issue("ui", "the Unlock button for %s is disabled with %d coins against a price of %d" % [data.cars[index].name, coins, price])
 		return false
 	await activate(card.mainButton, "ui_accept")
 	await think(0.3)
-	if data.cars[index].cost != 0 || data.coin != coins - price:
-		issue("economy", "unlocking %s: cost %d, bank %d -> %d" % [data.cars[index].name, price, coins, data.coin])
+	if data.cars[index].cost != 0 || data.coin != coins - price || data.gem != gems - gemPrice:
+		issue("economy", "unlocking %s: cost %d + %d gems, bank %d -> %d, gems %d -> %d" % [data.cars[index].name, price, gemPrice, coins, data.coin, gems, data.gem])
 		return false
 	shopping.cars += 1
 	shopping.car_coins += price
 	note("CAREER_SHOP session=%d unlock %s for %d (bank %d)" % [session, data.cars[index].name, price, data.coin])
 	return true
+
+## Unlocks a pickup in the Goonopedia's Pickups tab: G, a click on the tab, then two clicks on its tile (the
+## first shows it, the second buys it), then Back.
+func unlockPickup(id: String) -> bool:
+	var data := SaveManager.playerData
+	if menu().upgrading:
+		await press("ui_cancel")
+		if not await waitFor(func(): return not menu().upgrading, 3.0, "Back to close the upgrade sheet"): return false
+	await press("ui_codex")
+	if not await waitFor(func(): return goonopedia() != null, 3.0, "G to open the Goonopedia"): return false
+	var page := goonopedia()
+	await click(page.tabButtons[Goonopedia.Tab.PICKUPS])
+	if page.tab != Goonopedia.Tab.PICKUPS:
+		issue("ui", "a click on the PICKUPS tab left the Goonopedia on %s" % Goonopedia.TAB_NAMES[page.tab])
+		return false
+	var coins := data.coin
+	var gems := data.gem
+	var cost := Unlocks.pickupPrice(id)
+	var tile := page.tileFor(id)
+	if tile == null:
+		issue("ui", "no Goonopedia tile for the ready pickup %s" % id)
+		return false
+	if not await wheelIntoView(page.listScroll, tile):
+		issue("mouse", "the mouse wheel couldn't bring the %s tile into view in the Goonopedia" % id)
+		return false
+	await click(tile)
+	if Unlocks.isPickupOpen(id): issue("ui", "the first click on %s bought it; a click should only show a tile" % id)
+	else: await click(page.tileFor(id))
+	var ok := Unlocks.isPickupOpen(id) && data.coin == coins - int(cost.get("coin", 0)) && data.gem == gems - int(cost.get("gem", 0))
+	if not ok: issue("economy" if data.coin != coins else "block", "unlocking pickup %s: open %s, bank %d -> %d coins, %d -> %d gems (price %s)" % [id, Unlocks.isPickupOpen(id), coins, data.coin, gems, data.gem, cost])
+	else:
+		shopping.pickups = int(shopping.get("pickups", 0)) + 1
+		shopping.pickup_coins = int(shopping.get("pickup_coins", 0)) + int(cost.get("coin", 0))
+		note("CAREER_SHOP session=%d pickup %s for %s (bank %d)" % [session, id, Unlocks.priceText(cost), data.coin])
+	await press("ui_cancel")
+	await waitFor(func(): return goonopedia() == null, 3.0, "Back to close the Goonopedia")
+	return ok
+
+## Turns the mouse wheel over a scroll container until `control` is wholly inside it, as a player scrolls
+## a list to find something. False when it never gets there.
+func wheelIntoView(scroll: ScrollContainer, control: Control) -> bool:
+	for step in 60:
+		var view := scroll.get_global_rect()
+		var rect := control.get_global_rect()
+		if view.encloses(rect): return true
+		var wheel := InputEventMouseButton.new()
+		wheel.button_index = MOUSE_BUTTON_WHEEL_DOWN if rect.end.y > view.end.y else MOUSE_BUTTON_WHEEL_UP
+		wheel.position = view.get_center()
+		wheel.global_position = wheel.position
+		for down in [true, false]:
+			wheel.pressed = down
+			injecting = true
+			scroll.get_viewport().push_input(wheel.duplicate(), true)
+			injecting = false
+		await get_tree().process_frame
+	return false
+
+func goonopedia() -> Goonopedia:
+	for node in get_tree().get_nodes_in_group("menuOverlay"):
+		if node is Goonopedia && not node.is_queued_for_deletion(): return node
+	return null
 
 func upgrade(index: int, stat: int) -> bool:
 	var data := SaveManager.playerData
@@ -386,7 +510,10 @@ func playRun() -> bool:
 		if not is_instance_valid(Root.levelRoot):
 			issue("block", "the level went away during the run")
 			return false
-		if Root.levelRoot.hasEnded: break
+		if Root.levelRoot.hasEnded:
+			if standalone: runRow = standaloneRow()
+			break
+		if stopped: return false
 		if not get_tree().paused: runTime += get_process_delta_time()
 		if handling: continue
 		if get_tree().paused:
@@ -396,7 +523,13 @@ func playRun() -> bool:
 				handling = true
 				await answer(screen)
 				handling = false
-			elif get_tree().get_nodes_in_group("pauseMenu").is_empty():
+			elif not get_tree().get_nodes_in_group("pauseMenu").is_empty():
+				#a pause the persona didn't ask for (the window lost focus): carry on
+				handling = true
+				await think(1.0)
+				await press("ui_menu")
+				handling = false
+			else:
 				if pausedEmptySince < 0: pausedEmptySince = Time.get_ticks_msec()
 				elif Time.get_ticks_msec() - pausedEmptySince > SOFTLOCK_MS && not countdownShowing():
 					issue("softlock", "the run was paused with no menu open for %d s; unpausing" % (SOFTLOCK_MS / 1000))
@@ -427,10 +560,14 @@ func answer(screen: Node) -> void:
 	if screen is PickupDeal: name = "The Deal"
 	elif screen is ClawCrane: name = "Claw Crane"
 	elif screen is PitShop: name = "Pit Shop"
+	elif screen is PrizeWheelMenu: name = "Prize Wheel"
+	elif screen is PrizeVault: name = "The Vault"
 	note("CAREER_SCREEN session=%d t=%.0f %s" % [session, runTime, name])
 	if screen is PickupDeal: await answerDeal(screen)
 	elif screen is ClawCrane: await answerClaw(screen)
 	elif screen is PitShop: await answerPit(screen)
+	elif screen is PrizeWheelMenu: await answerWheel(screen)
+	elif screen is PrizeVault: await answerVault(screen)
 	elif "activeSlots" in screen: await answerSlots(screen)
 	else: issue("ui", "an unknown screen in group slotMachine: %s" % screen.name)
 	if not await waitFor(func(): return screen.is_queued_for_deletion(), 12.0, "the %s to close" % name, screen):
@@ -493,7 +630,7 @@ func answerDeal(deal: PickupDeal) -> void:
 func answerClaw(crane: ClawCrane) -> void:
 	await think(PickupMenu.ARM_SECONDS + 0.3)
 	var extra: bool = persona.runs == "coverage" && Root.playerCar.coin >= ClawCrane.EXTRA_GRAB + 200
-	for grab in 2:
+	for grab in 4: #a gift box's claw can have up to 3 free grabs
 		var target := Personas.clawTarget(persona, crane.prizes, crane.clawX, rng)
 		if target >= 0:
 			var x: float = crane.prizes[target].pos.x
@@ -503,10 +640,32 @@ func answerClaw(crane: ClawCrane) -> void:
 			Input.action_release(key)
 		await press("Accelerate")
 		if not await waitFor(func(): return crane.phase == "done" || (crane.phase == "aim" && crane.grabs > 0), 6.0, "the claw to come back", crane): return
-		if not is_instance_valid(crane) || grab == 1 || not extra || crane.grabs > 0: break
+		if not is_instance_valid(crane): return
+		if crane.grabs > 0: continue #free grabs left
+		if grab >= 1 || not extra: break
 		await press("Brake", 0.3) #another grab for run coins
 		if crane.grabs == 0: break
 	if is_instance_valid(crane) && not crane.closed: await press("Accelerate")
+
+#the Prize Wheel from a gift box: spin, wait for it to stop, leave
+func answerWheel(wheel: PrizeWheelMenu) -> void:
+	await think(PickupMenu.ARM_SECONDS + 0.3)
+	var coins := Root.playerCar.coin
+	await press("Accelerate")
+	if not await waitFor(func(): return wheel.phase == "done", 8.0, "the Prize Wheel to stop", wheel): return
+	if wheel.result.is_valid_int() && Root.playerCar.coin < coins + int(wheel.result): issue("economy", "the Prize Wheel's %s wedge didn't pay" % wheel.result)
+	await press("Accelerate")
+
+#the Vault from a gift box: open boxes until the picks run out (focus moves on by itself), then leave
+func answerVault(vault: PrizeVault) -> void:
+	await think(PickupMenu.ARM_SECONDS + 0.3)
+	var picks := vault.picksLeft
+	for i in picks:
+		if vault.phase != "pick": break
+		if i == 0 && rng.randf() < 0.5: await press("TurnRight", 0.25)
+		await press("Accelerate", 0.35)
+	if vault.opened.count(true) != picks: issue("ui", "the Vault opened %d of %d boxes" % [vault.opened.count(true), picks])
+	await press("Accelerate")
 
 func answerPit(shop: PitShop) -> void:
 	await think(PickupMenu.ARM_SECONDS + 0.3)
@@ -576,7 +735,7 @@ func readResults() -> bool:
 	return true
 
 ## The checks after each run: the bank grew by the payout, gems by the run's gems less the gadget, a win
-## marked the mode beaten and opened the next level, and the save on disk matches the one in memory.
+## marked the mode beaten (and with enough beaten, opened the next level), and the save on disk matches.
 func checkRun() -> void:
 	var data := SaveManager.playerData
 	var row := runRow
@@ -589,7 +748,8 @@ func checkRun() -> void:
 		issue("economy", "gems went %d -> %d after a run that ended with %d gems (gadget %d)" % [bankBefore.gem, data.gem, gems, bankBefore.gadget_cost])
 	if row.get("won", false) && row.reason == "SUCCESS":
 		if not data.levels[level].gamemodeBeat.get(runPlan.mode, false): issue("progress", "a won %s on %s isn't marked beaten" % [row.mode, Levels.ORDER[level]])
-		if level + 1 < data.levels.size() && not data.levels[level + 1].unlocked: issue("progress", "winning on %s didn't open the next level" % Levels.ORDER[level])
+		if level + 1 < data.levels.size() && not data.levels[level + 1].unlocked && Root.opensNextLevel(data.levels[level]):
+			issue("progress", "%d modes beaten on %s didn't open the next level" % [Root.modesBeaten(data.levels[level]), Levels.ORDER[level]])
 	if data.coin < 0 || data.gem < 0: issue("economy", "the bank is negative: %d coins, %d gems" % [data.coin, data.gem])
 	SaveManager.flush()
 	var disk = ResourceLoader.load(SaveManager.save_path, "", ResourceLoader.CACHE_MODE_IGNORE)
@@ -598,6 +758,16 @@ func checkRun() -> void:
 		issue("save", "the save on disk differs from the one in memory after the results")
 	history.push_back({"session": session, "car": row.car, "level_index": level, "level": row.level, "mode_id": runPlan.mode, "mode": row.mode,
 		"won": row.won, "reason": row.reason, "payout": paid, "level_time": float(row.level_time), "crushed": row.crushed, "gem": gems})
+
+## Autopilot: the run's record from the car, as Playtest would write it (the fields the checks and history use)
+func standaloneRow() -> Dictionary:
+	var car := Root.playerCar
+	var level = Root.levelRoot
+	var data := SaveManager.playerData
+	return {"car": data.cars[data.selectedCar].name, "level": String(Levels.ORDER[data.selectedLevel]), "mode": str(Root.gameModes.find_key(data.gameMode)).to_lower(),
+		"reason": str(Root.endCondition.find_key(level.endReason)), "won": level.endReason == Root.endCondition.SUCCESS,
+		"payout": Root.computePayout(car.coin, car.star), "gem": car.gem, "crushed": car.currentGoonsCrushed,
+		"level_time": snappedf(float(level.elapsed), 0.1), "persona": personaId, "session": session}
 
 ## Playtest calls this once a run is recorded (its row, as in results<tag>.csv).
 func onRunRecorded(row: Dictionary) -> void:
@@ -614,7 +784,8 @@ func snapshot() -> Dictionary:
 		for mode in data.levels[i].gamemodeBeat:
 			if data.levels[i].gamemodeBeat[mode]: beaten["%s %s" % [data.levels[i].id, Root.gameModeDescription[mode].name]] = true
 	return {"cars": data.cars.filter(func(c): return c.cost == 0).map(func(c): return c.name),
-		"levels": data.levels.filter(func(l): return l.unlocked).map(func(l): return l.id), "beaten": beaten}
+		"levels": data.levels.filter(func(l): return l.unlocked).map(func(l): return l.id), "beaten": beaten,
+		"pickups": Pickups.DATA.keys().filter(Unlocks.isPickupOpen)}
 
 func milestonesSince(before: Dictionary) -> void:
 	var now := snapshot()
@@ -622,6 +793,7 @@ func milestonesSince(before: Dictionary) -> void:
 	for car in now.cars: if car not in before.cars: found.push_back("car " + car)
 	for level in now.levels: if level not in before.levels: found.push_back("level " + level)
 	for key in now.beaten: if not before.beaten.has(key): found.push_back("beat " + key)
+	for id in now.pickups: if id not in before.pickups: found.push_back("pickup " + id)
 	for what in found:
 		milestones.push_back({"session": session, "minutes": snappedf(minutesPlayed(), 0.1), "what": what})
 		note("CAREER_MILESTONE session=%d minutes=%.1f %s" % [session, minutesPlayed(), what])
@@ -643,17 +815,27 @@ func finish() -> void:
 		longestDry = maxi(longestDry, dry)
 	var kinds := {}
 	for i in issues: kinds[i.kind] = kinds.get(i.kind, 0) + 1
+	var pace := {} #unlock pace: per kind of milestone (car, level, beat, pickup), how many and when
+	for m in milestones:
+		var p: Dictionary = pace.get_or_add(str(m.what).split(" ")[0], {"count": 0, "first_minute": m.minutes, "last_minute": m.minutes})
+		p.count += 1
+		p.last_minute = m.minutes
 	var result := {"persona": personaId, "start": startName, "seed": firstSeed, "sessions": session, "runs": history.size(),
 		"wins": history.filter(func(r): return r.won).size(), "minutes": snappedf(minutesPlayed(), 0.1),
 		"progress_start": startProgress, "progress_end": CareerStart.progress(SaveManager.playerData),
-		"milestones": milestones, "longest_runs_without_progress": longestDry, "modes": byMode, "shopping": shopping,
+		"milestones": milestones, "unlock_pace": pace, "longest_runs_without_progress": longestDry, "modes": byMode, "shopping": shopping,
 		"issue_counts": kinds, "issues": issues, "script_errors": errors.summary()}
 	var file := FileAccess.open("user://playtest/%s_summary.json" % tag, FileAccess.WRITE)
 	file.store_string(JSON.stringify(result, "  "))
 	file.close()
 	note("CAREER_SUMMARY " + JSON.stringify(result))
-	print("CAREER_DONE %d runs, %d issues, %d script errors; files in %s" % [history.size(), issues.size(), errors.count(), ProjectSettings.globalize_path("user://playtest/")])
+	var done := "%d runs, %d issues, %d script errors; files in %s" % [history.size(), issues.size(), errors.count(), ProjectSettings.globalize_path("user://playtest/")]
+	print("CAREER_DONE " + done)
 	logFile.close()
+	if standalone:
+		if finished.is_valid(): finished.call("Autopilot off after " + done)
+		queue_free()
+		return
 	get_tree().quit(0)
 
 #---------- input, as a player gives it ----------
@@ -661,6 +843,8 @@ func finish() -> void:
 ## Presses and releases an action (KeyHint.fire: _input handlers, the GUI and polling all see it), then
 ## waits as a player would before the next press.
 func press(action: String, after := 0.25) -> void:
+	await holdForConsole()
+	if stopped: return
 	log_line("press %s" % action)
 	KeyHint.fire(action)
 	await think(after)
@@ -668,6 +852,8 @@ func press(action: String, after := 0.25) -> void:
 ## Clicks a control with the mouse: a move over it, then the button down and up, pushed into its
 ## viewport. A click that lands on another control (something covering it) is an issue.
 func click(control: Control, after := 0.25) -> void:
+	await holdForConsole()
+	if stopped: return
 	if not is_instance_valid(control) || not control.is_visible_in_tree():
 		issue("ui", "tried to click %s, which isn't showing" % (control.name if is_instance_valid(control) else "a freed control"))
 		return
@@ -677,7 +863,9 @@ func click(control: Control, after := 0.25) -> void:
 	var move := InputEventMouseMotion.new()
 	move.position = at
 	move.global_position = at
+	injecting = true
 	viewport.push_input(move, true)
+	injecting = false
 	await get_tree().process_frame
 	var hovered := viewport.gui_get_hovered_control()
 	if hovered != control && not control.is_ancestor_of(hovered):
@@ -688,7 +876,9 @@ func click(control: Control, after := 0.25) -> void:
 		button.pressed = down
 		button.position = at
 		button.global_position = at
+		injecting = true
 		viewport.push_input(button, true)
+		injecting = false
 		await get_tree().process_frame
 	await think(after)
 
@@ -709,8 +899,17 @@ func useMouse() -> bool:
 		"mixed": return rng.randf() < 0.4
 	return false
 
+## Autopilot: the console is open over the game (the persona's parent is the Console). The menus ignore input
+## under it, so the persona waits for it to close rather than press keys into it.
+func consoleOpen() -> bool:
+	return standalone && get_parent() is CanvasLayer && get_parent().visible
+
+func holdForConsole() -> void:
+	while consoleOpen() && not stopped: await get_tree().process_frame
+
 ## A player's pause between actions, in game time (paused or not).
 func think(seconds: float) -> void:
+	if stopped: return
 	await get_tree().create_timer(seconds * rng.randf_range(0.8, 1.3), true).timeout
 
 ## Waits until `condition` holds. After `seconds` of game time and as long in real time (a world can take
@@ -722,7 +921,12 @@ func waitFor(condition: Callable, seconds: float, what: String, watch = null) ->
 	var started := Time.get_ticks_msec()
 	var watching := typeof(watch) == TYPE_OBJECT #a freed node compares equal to null, but is still an object
 	while not (watching && not is_instance_valid(watch)) && not condition.call():
+		if stopped: return false
 		await get_tree().process_frame
+		if consoleOpen(): #time with the console open doesn't count toward giving up
+			frames = 0
+			started = Time.get_ticks_msec()
+			continue
 		frames += 1
 		if frames > seconds * 60.0 && Time.get_ticks_msec() - started > seconds * 1000.0:
 			if what != "": issue("block", "waited %d s for %s" % [int(seconds), what])

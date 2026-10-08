@@ -5,7 +5,8 @@ class_name DriverCard extends Panel
 #  stats    browsing: a compact 2 x 4 grid (icon, value, an underline against 100: cream = the car's
 #           base stat, gold = upgrades bought). Clicking a stat opens the upgrade sheet on it.
 #  sheet    upgrade mode: the art folds up and the stats become one row each with the stat's name and
-#           the next upgrade's price. Hovering a row focuses it; Accept or a click buys.
+#           the next upgrade's price. Hovering a row focuses it, and the focused row's price becomes a
+#           BUY button. Accept or a click buys, on the press; holding Accept keeps buying.
 #  buttons  Drive (or Unlock with its price) and Upgrade (Done in upgrade mode)
 #Locked drivers show as a silhouette with their unlock price.
 
@@ -20,6 +21,9 @@ const ART_HEIGHT := 380.0
 const SHEET_ART_HEIGHT := 150.0  #the art's height with the upgrade sheet open
 const BAND_HEIGHT := 64.0
 const SHEET_SECONDS := 0.28
+const PRICE_WIDTH := 84.0 #a sheet row's price slot; the focused row's BUY button widens it
+const HOLD_DELAY := 0.4    #holding Accept on a sheet row buys again after this...
+const HOLD_REPEAT := 0.12  #...and then this often, until the stat maxes or the coins run out
 const STATS := [
 	["engine", Root.upgrade.ENGINE, preload("res://texture/icon/engine.svg")],
 	["steering", Root.upgrade.STEERING, preload("res://texture/icon/steering.svg")],
@@ -66,8 +70,10 @@ var upgradeButton: Button
 var statButtons: Array[Button] = []    #the sheet's rows, which buy
 var compactButtons: Array[Button] = [] #the grid's rows, which open the sheet
 var sheetTween: Tween
+var holdTime := 0.0
 
 func _ready() -> void:
+	set_process(false) #runs in upgrade mode only, for the held Accept
 	size = SIZE
 	custom_minimum_size = SIZE
 	clip_children = CanvasItem.CLIP_CHILDREN_AND_DRAW
@@ -192,13 +198,16 @@ func makeSheetRow(stat: Array) -> Button:
 	line.add_child(statBar(8))
 	var price = Control.new()
 	price.name = "price"
-	price.custom_minimum_size = Vector2(84, 26)
+	price.custom_minimum_size = Vector2(PRICE_WIDTH, 26)
 	price.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	price.mouse_filter = MOUSE_FILTER_IGNORE
 	line.add_child(price)
+	row.action_mode = BaseButton.ACTION_MODE_BUTTON_PRESS #buys on the press, so a held Accept repeats from there
 	row.pressed.connect(onSheetRowPressed.bind(row, stat[1]))
 	row.mouse_entered.connect(func():
 		if row.focus_mode != Control.FOCUS_NONE: row.grab_focus())
+	row.focus_entered.connect(showBuy.bind(row, true))
+	row.focus_exited.connect(showBuy.bind(row, false))
 	MenuTheme.addSounds(row)
 	sheet.add_child(row)
 	return row
@@ -247,7 +256,7 @@ func refresh() -> void:
 	nameLabel.text = info.charName.to_upper()
 	var type = info.carId.capitalize()
 	if demoLocked: infoLabel.text = "Not in the demo"
-	elif car.cost != 0: infoLabel.text = "%s  -  %s coins" % [type, formatCoins(car.cost)]
+	elif car.cost != 0: infoLabel.text = "%s  -  %s" % [type, Unlocks.priceText(Unlocks.price("car:" + str(car.name)))]
 	else: infoLabel.text = type
 	stats.visible = focused && not locked
 	infoLabel.visible = not stats.visible
@@ -257,10 +266,14 @@ func refresh() -> void:
 	if demoLocked:
 		mainButton.text = "NOT IN DEMO"
 		mainButton.disabled = true
-	elif car.cost != 0:
-		var short = car.cost - SaveManager.playerData.coin
-		mainButton.text = "UNLOCK  %s" % formatCoins(car.cost) if short <= 0 else "NEED %s MORE" % formatCoins(short)
-		mainButton.disabled = short > 0
+	elif car.cost != 0: #entry cars cost coins; advanced ones coins and gems (Unlocks.price)
+		var gems: int = car.get("gems", 0)
+		var short: int = car.cost - SaveManager.playerData.coin
+		var shortGems: int = gems - SaveManager.playerData.gem
+		if short <= 0 && shortGems <= 0: mainButton.text = "UNLOCK  %s" % formatCoins(car.cost) + ("  +%d GEMS" % gems if gems > 0 else "")
+		elif short > 0: mainButton.text = "NEED %s MORE" % formatCoins(short) + ("  +%d GEMS" % shortGems if shortGems > 0 else "")
+		else: mainButton.text = "NEED %d MORE GEM%s" % [shortGems, "" if shortGems == 1 else "S"]
+		mainButton.disabled = short > 0 || shortGems > 0
 	else:
 		mainButton.text = "DRIVE"
 		mainButton.disabled = false
@@ -279,21 +292,77 @@ func refreshStats() -> void:
 			bar.queue_redraw()
 		var row = statButtons[i]
 		var holder: Control = row.get_node("line/price")
-		for child in holder.get_children(): child.queue_free()
+		for child in holder.get_children():
+			holder.remove_child(child) #now, so the new chips keep their names
+			child.queue_free()
 		var maxed = SaveManager.isUpgradeMaxed(s[1])
 		var affordable = canBuy(s[1])
-		var chipPanel = MenuTheme.priceChip("MAX" if maxed else formatCoins(SaveManager.requestStatCost(s[1])), HudTheme.COIN_ICON, affordable)
-		chipPanel.set_anchors_and_offsets_preset(Control.PRESET_CENTER_RIGHT, Control.PRESET_MODE_MINSIZE)
+		var price = "MAX" if maxed else formatCoins(SaveManager.requestStatCost(s[1]))
+		var chipPanel = MenuTheme.priceChip(price, HudTheme.COIN_ICON, affordable)
+		chipPanel.name = "plain"
 		holder.add_child(chipPanel)
+		if not maxed:
+			var buy = buyChip(price)
+			buy.name = "buy"
+			holder.add_child(buy)
+		for chip in holder.get_children(): chip.set_anchors_and_offsets_preset(Control.PRESET_CENTER_RIGHT, Control.PRESET_MODE_MINSIZE)
 		#unaffordable rows stay pressable so a click can say no (shakeRow); they are only dimmed
 		row.get_node("line").modulate = Color.WHITE if affordable else Color(1, 1, 1, 0.55)
+		showBuy(row, row.has_focus())
+
+#the focused row's price turns into a solid BUY button (none once the stat is maxed); the slot widens
+#for it and the bar gives up the room
+func showBuy(row: Button, isFocused: bool) -> void:
+	var holder: Control = row.get_node("line/price")
+	var buy: Control = holder.get_node_or_null("buy")
+	var on = isFocused && buy != null
+	holder.get_node("plain").visible = not on
+	if buy:
+		buy.visible = on
+		buy.set_anchors_and_offsets_preset(Control.PRESET_CENTER_RIGHT, Control.PRESET_MODE_MINSIZE)
+	holder.custom_minimum_size.x = maxf(PRICE_WIDTH, buy.get_combined_minimum_size().x) if on else PRICE_WIDTH
+
+#"BUY (coin) 504" on the orange of the primary button
+static func buyChip(price: String) -> PanelContainer:
+	var chipPanel = PanelContainer.new()
+	chipPanel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	chipPanel.add_theme_stylebox_override("panel", MenuTheme.box(HudTheme.RIM, MenuTheme.DEEP_ORANGE, 7, 2, Vector4(8, 1, 8, 1)))
+	var line = HBoxContainer.new()
+	line.add_theme_constant_override("separation", 4)
+	line.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	for part in ["BUY", HudTheme.COIN_ICON, price]:
+		if part is Texture2D:
+			line.add_child(MenuTheme.iconRect(part, 18))
+			continue
+		var label = Label.new()
+		label.text = part
+		label.add_theme_font_size_override("font_size", 15)
+		label.add_theme_color_override("font_color", MenuTheme.DARK_TEXT)
+		label.add_theme_constant_override("outline_size", 0)
+		line.add_child(label)
+	chipPanel.add_child(line)
+	return chipPanel
 
 static func canBuy(stat: int) -> bool:
 	return not SaveManager.isUpgradeMaxed(stat) && SaveManager.requestStatCost(stat) <= SaveManager.playerData.coin
 
 func onSheetRowPressed(row: Button, stat: int) -> void:
+	holdTime = 0.0
 	if canBuy(stat): upgradePressed.emit(stat)
 	else: Juice.shake(row)
+
+#a held Accept on the focused row buys again every HOLD_REPEAT after HOLD_DELAY, and stops for good
+#(until released) at the first upgrade it can't buy
+func _process(delta: float) -> void:
+	var at := statButtons.find(get_viewport().gui_get_focus_owner())
+	if at < 0 || not Input.is_action_pressed("ui_accept") || Settings.menu_open:
+		holdTime = 0.0
+		return
+	holdTime += delta
+	if holdTime < HOLD_DELAY: return
+	holdTime -= HOLD_REPEAT
+	if canBuy(STATS[at][1]): upgradePressed.emit(STATS[at][1])
+	else: holdTime = -INF
 
 #a bought upgrade: the row flashes gold, the value pops and the bar's new segment glows
 func celebrate(stat: int) -> void:
@@ -330,6 +399,8 @@ static func frameBox(isFocused: bool) -> StyleBoxFlat:
 #and the mouse focuses whichever row it is over. `stat` picks the row to start on.
 func setUpgradeMode(on: bool, animate := true, stat := -1) -> void:
 	upgrading = on
+	holdTime = 0.0
+	set_process(on)
 	for row in statButtons: row.focus_mode = Control.FOCUS_ALL if on else Control.FOCUS_NONE
 	if sheetTween: sheetTween.kill()
 	if animate:

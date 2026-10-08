@@ -12,7 +12,7 @@ Suggestions to discuss, not a spec; the author runs gameplay as a separate proje
 - **T0-6** Per-level mode unlock chain (`Root.isModeUnlocked`); demo gates read `Root.IS_DEMO`.
 - **T0-7** Marathon and Defense no longer crash.
 - **T0-8** Stat fixes: Oil (`fuelBurn`), Dice, traction (`gripFor`), armor once, upgrade cap 20, in-run cap 150, Clover/Dice labels.
-- **T0-9** Payout = coins × max(1, stars), credited on the summary; Abandon pays like a death.
+- **T0-9** Payout = coins × (1 + 0.1 × stars) (`Root.STAR_BONUS`; was coins × stars until the career playtests), credited on the summary; Abandon pays like a death.
 - **T0-10** Start pauses on a controller.
 - **Goon physics layer** (layer 3, goons don't collide with each other), **`meta` in the save**, **explosion pooling** (`Level.explode`, used by GoonFx too).
 - **T1-1** Debug run log (`user://runlog.csv`, `scripts/debug/run_log.gd`).
@@ -28,7 +28,12 @@ Suggestions to discuss, not a spec; the author runs gameplay as a separate proje
 - **Package 2 (T1-12, T2-6)** Crush feel: four death styles (splat, shove, hood ride, fling) picked by speed and hit point, goo spatter, impact bursts, camera trauma and kick, hit-stop and zoom punch on giants, bosses and crowds, a rising combo tick and hot combo readout; multi, drift, giant and boss crush bonuses; best combo as a car record; Crush Effects, Screen Shake and Hit-Stop settings (docs/GOONS.md, "Crush feel"). Crushes still chip 5 before armour, by choice.
 - **Driving controls** Handbrake powerslide (Space / RB, shaped per car by its stats; a held slide charges a drift boost, blue then orange sparks, fired on release; the tail and flanks slam goons), a second held slot for boosts (Shift / LB: Nitro as 2 stored burns, the new Hop, Jump Jets), gadgets on E / X; settings v2 migrates saved bindings (CLAUDE.md, docs/PICKUPS.md). Run setup sells a starting gadget and boost for gems.
 - **Menu juice** Garage shutter, hatch and tire-smoke transitions, and a mouse pass so every menu works with the mouse alone (docs/UI.md, "Transitions"; test checklist in docs/TEST_SCOPE_TRANSITIONS.md).
+- **Package 12 (U-1 to U-5, most)** One unlock system (`Unlocks`, docs/PICKUPS.md "Unlocks"): four states (hidden, shown, ready, open), nine pickup trees with 10 roots open on a new save, placeholder prices by rarity plus ten play unlocks (nights, giants, Scrap crushes, a won Sprint, modes, Quarry, survival), locked pickups never drop or get offered (fixed rewards fall back to an open ancestor), buying in the Goonopedia, results-ticket unlocks and a Next unlock line in run setup, advanced cars cost gems too, level gates in `LevelDef.unlockModes`, career personas shop for pickups, the demo caps pickups at Uncommon, and saves before version 6 start over.
+- **Package 11 (M-1)** Left-hand menu keys: hints show Space for Accept (Enter still works) and WASD before the arrows; F Upgrade or Gadget, V Boost, R Records, G Goonopedia; 1–8 pick a level poster, 1–6 a Goonopedia tab; the focused upgrade row's price becomes a BUY button and holding Accept keeps buying (docs/UI.md).
 - **Career playtests** Three personas play the whole game through the real menus (docs/AI_DRIVER.md).
+- **W-1** Run-wide waves: one wave clock for the whole run (`Region.wave`), a star and a wave chest every 60 s with no cap, the spawner's goon mix from the run's wave; districts only decide who spawns; the AI no longer hunts districts for stars (docs/WORLD.md).
+- **N-1** Pickup name tags (`Pickups.shortName`) on the gadget and boost boxes, new power-up rings, slot reels, the Scratch Card, the Claw Crane and the Vault (docs/PICKUPS.md, "Name tags").
+- **Package 16 (G-1 to G-4)** Gift boxes: crush XP by goon rank, giants, bosses, combo, style and night; box *n* needs 50 n² XP; Cardboard to Diamond tiers; six prize games weakest first (Claw Crane, Scratch Card, Prize Wheel, The Deal, Slot Machine, the new Vault), only the Claw open on a new save; better versions in higher boxes; no star per box; `--prize=` for testing (docs/PICKUPS.md, "Gift boxes").
 - **Tier 3** Shallows, fords and bridges; most of a daily seeded run (the map and its contents come from the world seed).
 
 ## Work packages, in order
@@ -38,9 +43,9 @@ Package numbers are IDs (other docs link to them); the table is in the suggested
 | # | Package | Items | Effort | Needs |
 |---|---|---|---|---|
 | 1 | Playtest and tune | the numbers below, world follow-ups | S + play time | — |
-| 11 | Left-hand menu controls | M-1 | S | — |
-| 12 | Unlocks and progression | U-1 to U-5 | M–L | questions 2, 4 |
-| 6 | Economy | T1-11, T2-13, late-level payouts | M | 1, 12 |
+| 12 | Unlocks and progression (what's left) | U-3 upgrades, pace check | S | 1 for the pace |
+| 16 | Crush prizes (what's left) | selling prize games, the curve by hand | S | 1 |
+| 6 | Economy | T1-11, T2-13, late-level payouts | M | 1, 12, 16 |
 | 13 | Driving juice | D-1 to D-4 | M | — |
 | 14 | Prop layers and reactions | P-1, P-2 | M | — |
 | 3 | Regions, waves and giants | T1-7 (giantism), T2-4, T2-8, T2-11 | M–L | 1 |
@@ -62,13 +67,36 @@ Re-run the crowd benchmarks (S3, S4 in `PERFORMANCE.md`) after packages 1, 3, 9,
     - The Grinder owned all 9 cars after 4 runs (23 min) and banked 813k by run 12. Countdown earns 16k-19k coins a minute.
     - One Goonpocalypse run with a maxed car survived the harness's 15-minute cap (4,209 crushes) and paid 1.93M.
     - Stars as a multiplier is the cause (open question 2). The economy work in package 6 needs that answer first.
-  - **Countdown alone opens every level.** Beating any mode opens the next level, so both personas that follow the path opened all 8 levels in 7 runs (about 40 min) playing nothing but Countdown. The Rookie ended with 5 of 40 modes beaten. Consider requiring Sprint (or two modes) to open the next level.
+  - **Countdown alone opens every level** (fixed: 3 modes now, `LevelDef.unlockModes`). Beating any mode opened the next level, so both personas that follow the path opened all 8 levels in 7 runs (about 40 min) playing nothing but Countdown. The Rookie ended with 5 of 40 modes beaten. Consider requiring Sprint (or two modes) to open the next level.
   - **Crusher is a wall for the Rookie.** It wrecked 3 times there, then twice more on City, with every car owned. The Grinder beat it first try. Check late-level escalation against a weaker driver before tuning it down.
   - **Races rarely finish.**
     - Sprint was won 3 times in 10 tries and Marathon 0 in 6, nearly all ending NOTIME (Defense 0 of 2).
     - One Crusher Sprint clock was 46.8 s, which looks too short to be right.
     - A won Sprint can pay 1-23 coins, so racing earns almost nothing next to Countdown.
     - Some of this is the AI (the Explorer drives `crusher`, which detours for goons), so check Sprint clocks with `--profiles=cautious` playtests before tuning `sprintSlack`.
+  - **Human checks** (where the AI struggles; is it the game or the driver?). Play each a few times from the console's `start <tier>` in the menu, or `-- --play-start=<tier>` (a scratch save either way; docs/AI_DRIVER.md "Career playtests"). Your runs log to `runlog.csv` as `driver = player`, to compare with the personas.
+
+    | Level and mode | Start | What to look for |
+    |---|---|---|
+    | Crusher, Countdown, in a mid car (`--play-start=late --cars=4`) | `late` | the Rookie wrecked 3 runs in a row here |
+    | Sprint and Marathon on Crusher, Highway and Bayou | `late` | clocks short or fair? Crusher's slack is 1.15 (stations no longer land short: `STATION_MIN_SHARE`) |
+    | Defense on Prairie and Bayou | `mid` | before the AI fix the barrier fell at about 95 s every time |
+    | Goonpocalypse in a maxed car | `maxed` | does it ever end? A run outlived the harness's 15 minutes |
+
+  - **Changed after the careers (2026-10-07):**
+    - **Payout:** coins × (1 + 0.1 × stars), `Root.STAR_BONUS`.
+    - **Level gate:** 3 modes beaten (Countdown, Sprint and one more) open the next level (`Root.LEVEL_UNLOCK_MODES`). The results ticket says what is left.
+    - **AI in races:** spare time is estimated from real progress, there is a detour budget per leg, and goons are worth 0.4 as goals.
+    - **AI in Defense:** it hunts goons by their threat to the base and patrols closer.
+    - **Human tests:** the console's `start <tier>` (or `--play-start`) for testing late levels by hand.
+    - **New saves:** only the first level starts open.
+    - **Station placement:** stations stay at least 85% of a Sprint's distance out.
+  - **Race and Defense rules, same seeds before and after** (`cautious`, sedan with 8 upgrades per stat):
+    - **Sprint:** Prairie 0 of 3 → 3 of 3 (50-71 s used of 101-128). Bayou 2 of 3 → 1 of 3, the two losses ending 1,600-2,700 px short; Bayou's water may be the problem rather than goons.
+    - **Marathon:** 1 of 6 complete. Three runs ran out of fuel with 40-73 stuck events, so the driver loses too much time stuck between legs.
+    - **Defense:** 0 of 9 either way. The barrier falls at 85-105 s on Prairie and Bayou whatever the car does.
+      - Some runs never leave their first patrol goal (stuck 32-36 times), so the car may be stuck where Defense starts it (`Level.DEFENSE_START`).
+      - Even a car hunting near the base loses the barrier at about 90 s. Play it by hand before blaming the AI: barrier 1000 may simply be too weak.
   - **Fixed from the careers:**
     - the records ticket and the upgrade sheet left keys and pads with no focus
     - Accept cycled the Gadget button instead of starting the run after a click on it
@@ -83,36 +111,23 @@ Re-run the crowd benchmarks (S3, S4 in `PERFORMANCE.md`) after packages 1, 3, 9,
   - World build speed (0.8–1.3 s map after the native crossings, 7–12 ms recipes): port `WorldField.sample` and the remaining coarse passes (docs/NATIVE.md, "What to port next"), keeping the GDScript as the reference the tests compare against. M–L.
 
 ### Package 2 follow-ups (play time)
-- Tune by hand: the death-style weights (`GoonFx.STYLE_WEIGHTS`), `FLING_SPEED`, trauma sizes, hit-stop lengths, the bonus coins (they feed coins × stars), and whether the giant's 10% speed loss feels heavy or sticky.
+- Tune by hand: the death-style weights (`GoonFx.STYLE_WEIGHTS`), `FLING_SPEED`, trauma sizes, hit-stop lengths, the bonus coins (they feed the payout), and whether the giant's 10% speed loss feels heavy or sticky.
 - Feel pass on the handbrake (the `HANDBRAKE_*` constants, strengthened once: grip 0.16/0.07, steer ×1.6, throttle 0.85, decel 60) and the drift boost (`DRIFT_TIERS`: 40 ticks for +120 px/s, 100 for +240), and on slams (`SLAM_MIN_SPEED` 150, 2 coins).
 - Benchmark S3/S4 at Crush Effects Full; drop the Low preset to Minimal if crowds cost frames.
 
-### Package 11: Left-hand menu controls
-- **M-1.** Menu keys are hard to discover. WASD already moves focus and Space already accepts (Godot's default `ui_accept`), but the hints show Enter, so buying an upgrade reads as "press Enter". The secondary actions are scattered across the keyboard: U Upgrade or Gadget, R Records, G Goonopedia, B Boost (`InputGlyphs.addIfMissing`). Goal: every menu works from the left hand on WASD (and with the mouse alone, as now). Proposal:
-  - Hints show Space for Accept (Buy, Drive, Start), with Enter still working; Esc is Back, Q/E switch the carousel or tab.
-  - Letters next to WASD for the secondary actions (the author prefers letters): F Upgrade (garage) or Gadget (run setup), V Boost (run setup), R Records, G Goonopedia. Numbers only where they index a list: 1–8 pick a level poster in run setup, 1–6 a Goonopedia tab.
-  - Upgrade sheet: W/S pick a stat, with a visible BUY button on the focused row (not just a flash) so the action is obvious; holding Space buys repeatedly.
-  - Key hints read their glyphs from the bindings (`KeyHint`, `InputGlyphs`), so the work is the default keys in `InputGlyphs`, which glyph the hints show first, and `main2.gd`'s `_input`.
-- Check with the career playtests (they press input actions) and a hand pass with each input type. S.
-
 ### Package 12: Unlocks and progression
-The author wants one designed unlock system across levels, modes, pickups, drivers, upgrades and cosmetics, mixing coins, gems and play-based triggers. Today each piece has its own rule, and the career playtests show it is too loose ("Countdown alone opens every level", above).
+Built (2026-10-07, "Done" above; the proposal and its options are at https://claude.ai/artifact/5fVWpCsD8xZLferKDcYvTN). What is left:
+- **U-3, upgrades from the Goonopedia:** the Cars tab still only shows a car's upgrades. Reuse the driver card's upgrade sheet there. S.
+- **Pace check:** re-run the three personas from `fresh` (`--unlocks=save` is the career default) and read `unlock_pace` in the career summary. The target is a Rookie who sees every mode before the last level and opens about 20 pickups by the end of Prairie. Then re-fit `Unlocks.PICKUP_PRICE` and the car gem prices with package 6.
+- **Prize games** (package 16) read `prize:<game>` through the registry's saved ids (`CrushPrizes`); show and buy them in the Goonopedia next to pickups.
+- Cosmetics (package 15) and radio stations (R-1) take `paint:` and `station:` ids in `meta.unlocks` when they are built.
 
-| What | Today | Direction |
-|---|---|---|
-| Levels | First 3 start unlocked (`Levels.DEMO_LEVEL_COUNT`); beating any mode opens the next | **Only the first starts unlocked**; a stricter trigger (e.g. beat Sprint, or two modes) opens the next |
-| Modes | Per level: Countdown → Sprint → Goonpocalypse; Marathon and Defense after Sprint (`Root.isModeUnlocked`) | Keep the chain; show what opens what |
-| Drivers | Bought with coins from the garage | Coins, some gated by a medal or level (T2-15) |
-| Upgrades | Coins, cap 20, same curve for every car | Package 6 (T1-11) |
-| Pickups | All 79 drop from the start; `meta.pickups` only records discovery for the Goonopedia | **Most start locked**, in a tree per kind (U-2) |
-| Cosmetics | Car Paint setting only | Package 15 |
-
-- **U-1. One unlock registry.** An `Unlocks` table: id, kind, cost (coins, gems, or none) and trigger (a flag such as `beat:prairie:sprint`, `crushes:500`, `discovered:<goon>`), with `Unlocks.isOpen(id)` and `Unlocks.progress(id)`. Store opened ids in `meta.unlocks`; `migrate()` grants existing saves whatever they already have. Level and mode gates read it instead of their own rules. M.
-- **U-2. Unlock pickups in a tree per kind.** Each of the nine kinds (`Pickups.K`) is its own small tree, handled separately: a new save opens one starter pickup per kind (Loot starts with the Coin), and each unlocked pickup opens better ones of its kind (the Coin leads to the Purse). Locked pickups never drop: the drop roll (`Pickups.roll`, `rollForCar`, `rollAtLeast`, `dropShare`) and every menu that offers pickups (slot reels, The Deal, the Claw, the Pit Shop) skip them. In the Goonopedia a pickup whose parent is still locked is a "???" tile; one whose parent is unlocked shows its preview and its price or trigger (coins, gems or play: crush a faction's goons, reach a level, play a mode). The tree is data in `Pickups.DATA` (a `parent` and a `cost` per pickup). M.
-- **U-3. Buy in the Goonopedia.** The Goonopedia becomes the place to see and buy unlocks: a locked tile shows its price or trigger and progress, and Accept buys it (the same flash and shake as the garage). Upgrades can be bought from the Cars tab (the driver card's upgrade sheet, reused). S–M after U-1.
-- **U-4. Level gates.** Only `prairie` starts open (the demo keeps its 3 levels available but still unlocks them in order). Pick the next-level trigger from career-playtest pace: the target is a Rookie who sees every mode before the last level. S.
-- **U-5. Show what's next.** An unlock toast on the results ticket ("BAYOU UNLOCKED", "NEW PICKUP: Magnet"), and a "Next unlock" line in run setup. Overlaps T2-12's "Next up" panel; build them together. S.
-- Re-run the three personas from `fresh` after each change, and add an unlock-pace table to the career summary (`CAREER_MILESTONE` already logs each unlock).
+### Package 16: Crush prizes (what's left)
+Built (2026-10-07, "Done" above; docs/PICKUPS.md "Gift boxes"). What is left:
+- **Sell the prize games** in the Goonopedia with the pickups (U-3's tiles): `CrushPrizes.state`, `price` and `grant` are ready, and the ladder opens in order. The prices in `CrushPrizes.GAMES` are placeholders (1.5k to 40k coins, the Vault also 10 gems). The career personas should buy them too. S.
+- **The curve by hand** (package 1): `XP_BASE` 50 and `XP_EXP` 2 were fitted to AI playtests only (150-1300 XP and 1-3 boxes in 3-4 minutes). Play a few runs and read `crush_xp` and `boxes` in `runlog.csv`. The goal is the first box in under a minute of decent play, then every 2-4 minutes.
+- **Ideas:** an "XP Boost" pickup or a car perk through `car.crushXpMult`; a small "+XP" tag flying to the pill; lifetime boxes and the best box in `meta.lifetime`; the AI could weight goons by XP.
+- **Claw Crane pickup:** it is an Epic drop but the weakest prize game (1.05 rarity points a play for an average grab). Lower its rarity or give the pickup version 2 grabs.
 
 ### Package 13: Driving juice
 Driving should be the most fun part. The handbrake, drift boost, slams and crush feel are done; these add feel to the car itself. All of it is visual or sound, outside `integrate()`, scaled by Reduce Motion and Car Shake, and benchmarked on the HD 620.
@@ -127,7 +142,8 @@ Driving should be the most fun part. The handbrake, drift boost, slams and crush
 - Keep reactions pooled and per chunk (inside `TileManager.APPLY_BUDGET_USEC`), and check S2/S3 frame times on the HD 620.
 
 ### Package 3: Regions, waves and giants
-- **T1-7.** `giantism` is shown but unused, and `pickGoonId` still adds global time to the wave. Proposal: giant odds = `giantOdds + giantism / 5`; decide whether global time should push the mix. S.
+- **T1-7.** `giantism` is shown but unused. Proposal: giant odds = `giantOdds + giantism / 5`, plus a term from the run's wave (`Region.waveIntensity()`). S.
+- **Wave stars** have no cap since W-1, so a long Goonpocalypse earns a star a minute: check star totals per mode in package 1 alongside the payout model (question 2).
 - **T2-4.** Giants get hp 3; a Warlord at wave 4 with a health bar, minions and charges, pointed at by the indicator (start from the Foreman's `Boss` verb). M.
 - **T2-8.** Region mutators ("fog", "giants only", "double coins") and objectives ("crush 20 Rat Pack"), anchored on district landmarks. M.
 - **T2-11.** Night as a real phase: about 150 s day and 90 s night, a night spawn table, ×1.5 coins at night (`Timer.gd` `daylength`). S.
@@ -180,13 +196,19 @@ Driving should be the most fun part. The handbrake, drift boost, slams and crush
 ## Decisions already made
 
 - All five modes are playable; the demo offers Countdown and Sprint.
-- Unlocks: Countdown → Sprint → Goonpocalypse; Marathon and Defense need Sprint. The level rule (beating any mode opens the next) and the 3 open levels are being replaced (package 12): only the first level starts unlocked, and most pickups start locked.
+- Unlocks: Countdown → Sprint → Goonpocalypse; Marathon and Defense need Sprint. A new save opens only the first level; each next one opens once 3 modes are beaten on the one before (Countdown, Sprint and one of the rest; 2 in the demo). Most pickups start locked, one tree per kind (package 12).
 - Sprint's clock ends the run; Marathon adds one Sprint clock per station.
-- Payout is coins × max(1, stars).
+- Payout is coins × (1 + 0.1 × stars): 50 stars pay ×6.
 - The demo and the full game share the save; one codebase (`Root.IS_DEMO`).
-- The slot machine stays as the signature pause, alternating with The Deal.
+- Crush goals are crush XP toward gift boxes holding one prize game. The games are ranked by measured strength: the Slot Machine beats pick-one games because it pays three things. Only the weakest game (the Claw Crane) starts unlocked. Higher boxes hold better versions, and boxes pay no star (package 16).
+- Waves are one clock for the whole run, not per district, with no cap: you keep going wave after wave. Districts still set faction, goons, name and giantism (W-1).
+- Pickups show short name tags in small type wherever an icon stands for something held or offered (N-1).
 - Menu shortcuts are letters near WASD; numbers only for lists such as levels and tabs.
 - Pickups unlock in a separate tree per kind; locked ones never drop and show as "???" until their parent is unlocked, then with a preview and price.
+- Entry cars cost coins; advanced ones (semi, audi, racer, police, ambulance) cost coins and gems. No level gates on cars.
+- The demo opens Common and Uncommon pickups only.
+- Saves from before the unlocks (version 6) start over; nothing from them is kept.
+- Unlock prices are placeholders, set now and re-fit in package 6.
 - Cosmetics cost coins or gems.
 - Tree canopies may hide goons beneath them.
 - The two-wheel tilt is style only; cars never tip over.
@@ -200,4 +222,5 @@ Driving should be the most fun part. The handbrake, drift boost, slams and crush
 4. Price and length target (sets the economy numbers).
 5. Gems: never sold? Is a gem-paid continue acceptable?
 6. Steam scope for 1.0 (achievements vs. leaderboards and dailies); Steam Deck needs analog steering.
-7. Should the demo hold some pickups back? (Package 12's starter set may answer this.)
+7. *(Answered: the demo opens Common and Uncommon pickups; see "Decisions".)*
+8–10. *(Answered: prize games ranked by measured strength, the weakest open first; better versions in higher boxes, no star per box; no wave cap. See "Decisions".)*

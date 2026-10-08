@@ -2,7 +2,7 @@ extends CanvasLayer
 
 #The end of a run, printed as a ticket (docs/UI.md), and the same ticket for a driver's records.
 #Results: rows reveal one at a time (a fresh press speeds that up, the next one continues), new
-#bests get a badge, the payout is coins x stars (Root.computePayout) and a stamp says how it ended.
+#bests get a badge, the payout is coins x the star multiplier (Root.computePayout) and a stamp says how it ended.
 #The payout and records are saved when the ticket opens, so quitting here can't lose the run.
 
 var isGameSummary: bool = true #false: the selected driver's records, opened from the main menu
@@ -143,9 +143,13 @@ func reasonLine() -> String:
 func buildGameSummary():
 	Root.playerRoot.visible = false
 	var level = Root.levelRoot
+	var progressNote := ""
 	#a Goonpocalypse run that survived its target beat the mode, even when it was abandoned afterwards
 	if levelCompleted && (reason != Root.endCondition.ABANDONED || level.targetReached):
+		var passedIndex: int = SaveManager.playerData.selectedLevel
+		var nextWasOpen: bool = passedIndex + 1 >= SaveManager.playerData.levels.size() || SaveManager.playerData.levels[passedIndex + 1].unlocked
 		SaveManager.currentLevelPassed()
+		progressNote = nextLevelNote(passedIndex, nextWasOpen)
 	else:
 		$AudioStreamPlayer_highImpact.play()
 	var car = Root.playerCar
@@ -190,6 +194,8 @@ func buildGameSummary():
 	records.slotMachines = maxi(records.slotMachines, car.slotMachines)
 	records.combo = maxi(records.get("combo", 0), car.bestCombo)
 	var discovered = Goonopedia.creditCrushes(car.crushedById)
+	var won: bool = levelCompleted && (reason != Root.endCondition.ABANDONED || level.targetReached)
+	Unlocks.countRun(won, gameMode, level.nightsSeen, car.giantsCrushed)
 	if OS.is_debug_build(): RunLog.append(car, level, reason, paid)
 
 	var blueprinted = PickupEffects.creditBlueprints(car) #free garage upgrades, however the run ended
@@ -197,6 +203,8 @@ func buildGameSummary():
 	#pay now and save, so quitting from the summary can't lose the run; the menu only animates it
 	SaveManager.addCoins(paid)
 	SaveManager.addGems(car.gem)
+	var unlocked := Unlocks.refresh() #after the crushes and records are in, so their conditions count
+	if not unlocked.is_empty(): addRow("Unlocked", ", ".join(unlocked.map(Pickups.displayName)), true, "NEW PICKUP")
 	Root.earnedCoins = paid
 	Root.earnedGems = car.gem
 	SaveManager.save_character_data()
@@ -208,11 +216,23 @@ func buildGameSummary():
 	reveal.push_back(stamp)
 	addContinue("CONTINUE", "Any button speeds up the count")
 	var notes = []
+	if progressNote != "": notes.push_back(progressNote)
 	if not discovered.is_empty(): notes.push_back("New in the Goonopedia: " + ", ".join(discovered))
 	if not blueprinted.is_empty(): notes.push_back("Blueprint: a free upgrade to " + ", ".join(blueprinted))
+	var next := Unlocks.nextUnlock()
+	if unlocked.is_empty() && not next.is_empty() && Unlocks.canAfford(next.uid): notes.push_back("Ready to buy in the Goonopedia: " + next.name)
 	var advice = Settings.take_advisor_message()
 	if advice != "": notes.push_back(advice)
 	if not notes.is_empty(): addFooterNote("   -   ".join(notes))
+
+#after a win: the next level just opened, or how many more modes here open it (LevelDef.unlockModes)
+static func nextLevelNote(index: int, wasOpen: bool) -> String:
+	var levels: Array = SaveManager.playerData.levels
+	if wasOpen || index + 1 >= levels.size(): return ""
+	var nextName: String = str(levels[index + 1].get("name", "the next level"))
+	var togo: int = SaveManager.modesToGo(index)
+	if togo <= 0: return "%s is open" % nextName
+	return "Beat %d more mode%s here to open %s" % [togo, "" if togo == 1 else "s", nextName]
 
 #---------- records ----------
 
@@ -283,7 +303,7 @@ func ink(text: String, size: int, color: Color, font: Font, centered := false) -
 	return label
 
 #"TOP SPEED ........ 61 MPH", with a NEW BEST badge when a record fell
-func addRow(name: String, value: String, isBest: bool) -> void:
+func addRow(name: String, value: String, isBest: bool, badgeText := "NEW BEST") -> void:
 	var row = HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
 	row.custom_minimum_size.y = 38
@@ -292,7 +312,7 @@ func addRow(name: String, value: String, isBest: bool) -> void:
 		var badge = PanelContainer.new()
 		badge.add_theme_stylebox_override("panel", MenuTheme.box(HudTheme.GAIN, Color(0, 0, 0, 0), 6, 0, Vector4(7, 0, 7, 0)))
 		badge.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		badge.add_child(ink("NEW BEST", 13, INK, HudTheme.BOLD))
+		badge.add_child(ink(badgeText, 13, INK, HudTheme.BOLD))
 		badge.name = "badge"
 		row.add_child(badge)
 	var dots = Dots.new()
@@ -308,11 +328,11 @@ func addPayout(body: VBoxContainer, coin: int, star: int, paid: int, isBest: boo
 	block.add_theme_constant_override("separation", 0)
 	block.add_child(Dashes.new())
 	var sum = HBoxContainer.new()
-	sum.add_child(ink("COINS x STARS", 20, INK, HudTheme.BODY))
+	sum.add_child(ink("COINS x STARS (%d)" % maxi(0, star), 20, INK, HudTheme.BODY))
 	var gap = Control.new()
 	gap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	sum.add_child(gap)
-	sum.add_child(ink("%s x %d" % [DriverCard.formatCoins(coin), maxi(1, star)], 22, INK, HudTheme.BOLD))
+	sum.add_child(ink("%s x %s" % [DriverCard.formatCoins(coin), Root.multiplierText(star)], 22, INK, HudTheme.BOLD))
 	block.add_child(sum)
 	var total = HBoxContainer.new()
 	total.add_child(ink("PAID", 26, INK, HudTheme.BOLD))

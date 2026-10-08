@@ -166,7 +166,7 @@ func placeNextStation(from: Vector2, heading: float, levelSeconds: float) -> Nod
 	legsPlaced += 1
 	var roll := WorldGen.hashf(worldSeed, WorldGen.TAG_LEG, legsPlaced, 1) * 2.0 - 1.0
 	var offset: Vector2 = Level.sprintOffsetPx(levelSeconds, roll).rotated(heading)
-	placeStation(worldMap.findStationChunk(chunkOf(from + offset), fromChunk))
+	placeStation(worldMap.findStationChunk(chunkOf(from + offset), fromChunk, fromChunk)) #not much nearer than a Sprint's distance
 	lastRouteLength = worldMap.routeBetween(from, Root.station.global_position).length
 	return Root.station
 

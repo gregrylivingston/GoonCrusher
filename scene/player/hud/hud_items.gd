@@ -4,11 +4,13 @@ class_name HudItems extends Control
 #the held boost beside it with the Boost key, small counters left of them (star fragments, lottery
 #tickets, a parcel, barricades), and on the right a ring per timed power-up that drains clockwise and
 #blinks in its last 2 s. Gadgets fly to "itemui", boosts to "moveui", power-ups to "buffui" and clock
-#pickups to "clockui" (on the run clock). Redraws only on change.
+#pickups to "clockui" (on the run clock). Name tags (Pickups.shortName) sit above the held boxes, and
+#above a ring for its first TAG_SECONDS. Redraws only on change.
 
 const BOX := 58.0
 const RING := 25.0
 const RING_PITCH := 60.0
+const TAG_SECONDS := 3.0 #a new power-up's ring shows its name this long
 
 var box := Vector2.ZERO        #centre of the held gadget's box
 var moveBox := Vector2.ZERO    #centre of the held boost's box
@@ -64,6 +66,8 @@ func _draw() -> void:
 		draw_arc(c, RING - 2.0, 0.0, TAU, 32, HudTheme.TRACK, 5.0, true)
 		if left >= 120 || HudTheme.blinkOn(): HudTheme.arc(self, c, RING - 2.0, 0.0, 360.0 * fraction, col, 5.0)
 		HudTheme.icon(self, Pickups.texture(id), c, 30.0)
+		if car.buffTicks.get(id, left) - left < TAG_SECONDS * Pickups.TICKS: #new: its name, staggered so neighbours don't touch
+			tag(c + Vector2(0, -RING - 9.0 - (i % 2) * 14.0), id)
 		HudTheme.text(self, c + Vector2(0, RING + 14.0), "%d" % ceili(left / float(Pickups.TICKS)), 13, HudTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER, 4)
 		i += 1
 
@@ -73,8 +77,13 @@ func drawSlot(at: Vector2, id: String, charges: int, action: String) -> void:
 	var col := Pickups.rarityColor(Pickups.rarity(id))
 	HudTheme.panel(self, Rect2(at - Vector2(BOX, BOX) * 0.5, Vector2(BOX, BOX)), col, 10)
 	HudTheme.icon(self, Pickups.texture(id), at, 44.0)
+	tag(at + Vector2(0, -BOX * 0.5 - 7.0), id)
 	if charges > 1:
 		draw_circle(at + Vector2(BOX * 0.5, -BOX * 0.5), 11.0, col)
 		HudTheme.text(self, at + Vector2(BOX * 0.5, -BOX * 0.5 + 6.0), str(charges), 15, HudTheme.OUTLINE, HORIZONTAL_ALIGNMENT_CENTER, 0)
 	var keyName := InputGlyphs.label(action)
 	if keyName != "": HudTheme.text(self, at + Vector2(BOX * 0.5 + 8.0, 8.0), keyName, 16, HudTheme.GOLD, HORIZONTAL_ALIGNMENT_LEFT, 5)
+
+#a pickup's name tag, centred on `at` (the baseline)
+func tag(at: Vector2, id: String) -> void:
+	HudTheme.text(self, at, Pickups.shortName(id), Pickups.TAG_SIZE, HudTheme.MUTED, HORIZONTAL_ALIGNMENT_CENTER, 4, HudTheme.OUTLINE, HudTheme.BODY)

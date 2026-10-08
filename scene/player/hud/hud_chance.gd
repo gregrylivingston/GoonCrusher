@@ -75,24 +75,30 @@ func flash() -> void:
 		var dir = Vector2.RIGHT.rotated(i * TAU / 10.0)
 		dust.puff(shockAt + dir * 40.0, dir * 520.0, TransitionFx.DUST, 0.9, 20, 110, 0.5, 0.0, 2.6)
 
-## A Scratch Card: three cells revealed one by one, then paid.
-func startScratch() -> void:
+## A Scratch Card: three cells revealed one by one, then paid. From a gift box (CrushPrizes) a higher
+## `tier` matches more often and pays more: a pair 1 + tier / 2 times, a triple 3 + tier.
+func startScratch(tier := 0) -> void:
 	if not scratch.is_empty(): payScratch() #a second card settles the first
-	var first := Pickups.pickWeighted(SCRATCH_POOL, randf())
-	var second := first if randf() < 0.45 else Pickups.pickWeighted(SCRATCH_POOL, randf())
-	var third := first if randf() < 0.3 else (second if randf() < 0.2 else Pickups.pickWeighted(SCRATCH_POOL, randf()))
-	scratch = {"cells": [first, second, third], "shown": 0, "t": 0.0}
+	var pool := {} #only unlocked prizes (Unlocks); a new save's card still has Nitro and the Magnet
+	for id in SCRATCH_POOL:
+		if Unlocks.isPickupOpen(id): pool[id] = SCRATCH_POOL[id]
+	if pool.is_empty(): pool = {"coin": 1}
+	var first := Pickups.pickWeighted(pool, randf())
+	var second := first if randf() < 0.45 + 0.07 * tier else Pickups.pickWeighted(pool, randf())
+	var third := first if randf() < 0.3 + 0.07 * tier else (second if randf() < 0.2 else Pickups.pickWeighted(pool, randf()))
+	scratch = {"cells": [first, second, third], "shown": 0, "t": 0.0, "tier": tier}
 
 func payScratch() -> void:
 	var car = Root.playerCar
 	var cells: Array = scratch.cells
+	var tier: int = scratch.get("tier", 0)
 	scratch = {}
 	if not is_instance_valid(car): return
 	var counts := {}
 	for c in cells: counts[c] = counts.get(c, 0) + 1
 	for id in counts:
 		if counts[id] < 2: continue
-		var times := 3 if counts[id] == 3 else 1
+		var times: int = 3 + tier if counts[id] == 3 else 1 + tier / 2
 		toast("SCRATCH  -  %s x%d" % [Pickups.displayName(id).to_upper(), times], Pickups.rarityColor(Pickups.rarity(id)), Pickups.texture(id))
 		for i in times: PickupEffects.collect(car, id, car.global_position)
 		return
@@ -161,7 +167,7 @@ func _draw() -> void:
 	var w := size.x
 	if not toasts.is_empty(): drawToast(toasts[0], w)
 	if not scratch.is_empty(): drawScratch(Vector2(w - 360.0, 150.0))
-	if doubleActive: drawDouble(Vector2(w - 360.0, 150.0 if scratch.is_empty() else 275.0))
+	if doubleActive: drawDouble(Vector2(w - 360.0, 150.0 if scratch.is_empty() else 290.0))
 	if not combo.is_empty():
 		var a := clampf(combo.t / 0.3, 0.0, 1.0)
 		var grow: float = 0.0 if Settings.reduce_motion() else combo.pop / COMBO_POP
@@ -190,13 +196,14 @@ func drawToast(t: Array, w: float) -> void:
 	HudTheme.text(self, rect.position + Vector2(52.0, 32.0), text, 24, Color(col, fade), HORIZONTAL_ALIGNMENT_LEFT, 6, Color(HudTheme.OUTLINE, fade))
 
 func drawScratch(at: Vector2) -> void:
-	HudTheme.panel(self, Rect2(at, Vector2(320.0, 112.0)), HudTheme.GOLD, 10)
+	HudTheme.panel(self, Rect2(at, Vector2(320.0, 128.0)), HudTheme.GOLD, 10)
 	HudTheme.text(self, at + Vector2(14.0, 26.0), "SCRATCH CARD", 18, HudTheme.GOLD)
 	for i in 3:
 		var cell := Rect2(at + Vector2(14.0 + i * 100.0, 36.0), Vector2(92.0, 66.0))
 		if i < scratch.shown:
 			draw_rect(cell, Color(1.0, 0.97, 0.9))
 			HudTheme.icon(self, Pickups.texture(scratch.cells[i]), cell.get_center(), 52.0)
+			HudTheme.text(self, Vector2(cell.get_center().x, cell.end.y + 15.0), Pickups.shortName(scratch.cells[i]), Pickups.TAG_SIZE, HudTheme.MUTED, HORIZONTAL_ALIGNMENT_CENTER, 4, HudTheme.OUTLINE, HudTheme.BODY)
 		else:
 			draw_rect(cell, Color(0.66, 0.68, 0.72))
 			HudTheme.text(self, cell.get_center() + Vector2(0, 9), "?", 28, Color(0.4, 0.42, 0.46), HORIZONTAL_ALIGNMENT_CENTER, 0)

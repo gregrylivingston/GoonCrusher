@@ -8,14 +8,19 @@ var isPlaying: bool = true
 var isReady: bool = false
 var inactiveSlots = []
 var slotDelayTime = 1.8
-var isGoonCrushBonus: bool = false
+var isGoonCrushBonus: bool = false #from a gift box (CrushPrizes)
+var prizeTier := 0 #the gift box's tier: free bet levels on top of the bet (SlotSymbols.bonus)
 
 var hatch: GameHatch #the skid in, the hatch over the reels and the peel out (docs/UI.md, "Transitions")
 var dim := ColorRect.new()
 # Called when the node enters the scene tree for the first time.
 func _ready():
+	if PickupMenu.runOver(): #added (deferred) in the frame the run ended: never over the results ticket
+		queue_free()
+		return
 	add_to_group("slotMachine")
 	SlotSymbols.bet = 0
+	SlotSymbols.bonus = prizeTier
 	restyle()
 	Root.playerCar.slotMachines += 1
 	$slotMachineBonusSound.stream = load(winSound[ randi_range( 0 , winSound.size() -1 ) ] )
@@ -27,13 +32,9 @@ func _ready():
 	move_child(dim, 0)
 	$Panel.visible = false
 
-	if isGoonCrushBonus:
-		Root.playerRoot.animateNewGoonCrushGoal(false, "FREE SPIN")
-		await get_tree().create_timer(0.9).timeout #the goal's tape banner lands first
-
 	create_tween().tween_property(dim, "color:a", 0.55, 0.25)
 	$Panel.visible = true
-	hatch = GameHatch.attach(self, $Panel, $Panel/Panel, "FREE SPIN" if isGoonCrushBonus else "BONUS")
+	hatch = GameHatch.attach(self, $Panel, $Panel/Panel, spinTitle() if isGoonCrushBonus else "BONUS")
 	hatch.enter(0.5) #the spin unlocks at slotDelayTime, just after the hatch is up
 
 
@@ -49,6 +50,9 @@ func _ready():
 	$Panel/Panel/VBoxContainer/play_button.disabled = false
 	delayKeyPress = false
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+
+func spinTitle() -> String:
+	return "FREE SPIN" if prizeTier <= 0 else "%s SPIN" % CrushPrizes.tierName(prizeTier).to_upper()
 
 func resetKeyPress():
 	await get_tree().create_timer(keyPressDelay).timeout
@@ -92,7 +96,7 @@ func restyle() -> void:
 	reels.offset_left = 40
 	reels.offset_right = -40
 	reels.offset_bottom = -132
-	$Panel/Panel/Panel/Label.text = "FREE SPIN" if isGoonCrushBonus else "SLOT MACHINE"
+	$Panel/Panel/Panel/Label.text = spinTitle() if isGoonCrushBonus else "SLOT MACHINE"
 	$Panel/Panel/VBoxContainer.visible = false
 	var row = HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -211,7 +215,6 @@ func _on_claim_button_pressed():
 		await hatch.leave(func(): await PayoutChute.pour(self, card, prizes))
 	visible = false
 	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
-	if isGoonCrushBonus: Root.playerRoot.animateNewGoonCrushGoal()
 	Root.playerCar.add_child(countdownScreen.instantiate())
 	queue_free()
 		
@@ -222,6 +225,7 @@ func payReels(reels: Array) -> Dictionary:
 	var car = Root.playerCar
 	var pays := SlotSymbols.payouts(reels)
 	SlotSymbols.bet = 0
+	SlotSymbols.bonus = 0
 	for id in pays:
 		if id == SlotSymbols.STAR:
 			if pays[id] == 3:

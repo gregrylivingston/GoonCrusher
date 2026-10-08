@@ -21,6 +21,14 @@ In a debug build (the editor's Play button), start any run from the menu, press 
 
 It keeps driving with the console open, and it drives every later run too until `ai off` gives the keys back. `-- --console="ai on"` turns it on at startup.
 
+**The whole game: `autopilot`.** In the console, from the menu or mid-run, type `autopilot` (a random persona) or `autopilot rookie`, `grinder` or `explorer`.
+- The persona plays as in a career playtest (below), with the transitions on and its plan drawn: it shops in the garage, picks the run, drives it, answers every screen that pauses it, reads the results and goes again.
+- Any key, pad button or click takes control back, and so does `autopilot off`. Mid-run the car is simply yours again.
+- Opening the console (backtick) doesn't take control back; nor does typing or clicking in it. While it is open the persona waits before its next menu press (the car keeps driving in a run), and its time-outs don't count that time.
+- `ailines off` hides what every AI driver draws (goal, plan and route), for `autopilot` and `ai` alike; `ailines on` brings it back.
+- It plays the save in use. Type `start mid` first to hand it a tier's scratch save. On your real save it backs the save up first, since the persona spends coins.
+- Its log is `user://playtest/autopilot_events.log`. `-- --console="start mid;autopilot explorer"` starts it at launch.
+
 ## Running playtests
 
 ```
@@ -40,6 +48,7 @@ Godot_console.exe --headless --fixed-fps 60 --path . -- --playtest --uncapped --
 | `--upgrades=N` or `save` | 0 | every stat upgraded to level N (0 = stock car), or the save's own upgrades |
 | `--sight=human` or `full` | `human` | what the driver may see (below) |
 | `--max-seconds=N` | 900 | level time after which a run is cut short (`TIMEOUT`) |
+| `--unlocks=all\|save` | `all` (`save` for careers and `--play-start`) | every pickup can drop, as before the unlocks, or only what the save has unlocked (`Unlocks.allOpen`; docs/PICKUPS.md, "Unlocks"). Benchmarks take the same option |
 | `--tag=name` | none | results go to `results<name>.csv` |
 | `--trace` | off | prints the driver's state and every plan's cost each second, each wall hit and stuck event, and an ASCII map of the terrain |
 | `--ai-debug` | off | draws the chosen plan, goal and route (needs a window, not `--headless`) |
@@ -73,7 +82,7 @@ python scripts/ai/tournament.py --profiles "default,default+reverseCost=6" --mod
 
 Each profile × mode is one headless Godot process, `--parallel` at a time (default 3 of the dev box's 4 threads). The script prints a table per mode and writes every run to `tournament_<name>.csv` next to the per-process logs. `--rerank <csv>` prints the tables of an earlier tournament again, so a change to the score doesn't need a replay.
 
-The score per run is **coins + the mode's result**, because payout (coins × stars) is what buys cars and upgrades, and a run pays out even when it is lost. It is computed by `runScore` in `playtest.gd` and again by `run_score` in `tournament.py`; keep the two in step.
+The score per run is **coins + the mode's result**, because payout (coins × the star multiplier, `Root.computePayout`) is what buys cars and upgrades, and a run pays out even when it is lost. It is computed by `runScore` in `playtest.gd` and again by `run_score` in `tournament.py`; keep the two in step.
 - **Coins:** 30 × log10(1 + payout): 60 for 100 coins, 90 for 1,000, 104 for 3,000. The log keeps one huge payout from swamping every other run.
 - **Countdown:** plus 50 × the share of the clock survived.
 - **Sprint and Marathon:** a win adds 50 + 25 × the share of the clock left; a loss adds up to 25 for the share of the way to the station covered.
@@ -114,7 +123,7 @@ Godot_console.exe --headless --fixed-fps 60 --path . -- --career --persona=rooki
 | Drives with | `rookie` (late keys, noisy plans) | `cautious` (`BEST`) | `crusher` |
 | Menus with | the mouse | keys | both, plus pad glyphs |
 | Runs | the obvious next one: the furthest open level's first unbeaten mode; after 3 losses in a row there, Countdown on the level before to farm coins | the path while it's winning, else the run that pays most per minute in its own history (20% sampling the others) | the level and mode it has played least, with the car it has driven least |
-| Garage | a new car the moment it is affordable, then the cheapest upgrade going | saves once the next car is within 3 average payouts; upgrades Engine, Armor, Oil, Traction first (no stat more than 2 levels ahead of the lowest) | buys every car to try it, then the stat it has least of |
+| Garage | a new car the moment it is affordable, any pickup unlock under half the bank, then the cheapest upgrade going | saves once the next car is within 3 average payouts; meanwhile the pickup unlock with the best `ai` worth per coin (under a third of the bank), then Engine, Armor, Oil, Traction first (no stat more than 2 levels ahead of the lowest) | buys every car to try it, often a random pickup unlock, then the stat it has least of |
 | Gems | never | a starting gadget only with 6+ gems, Nitro in the boost slot with 8+ left; slot rerolls when a spin paid nothing | gadgets, boosts, rerolls, new hands, raises at random |
 | In-run screens | slot bet 0; the rarest Deal card; the nearest claw prize; the first Pit Shop offer it can afford | bets 25 with 400+ run coins; the Deal card with the highest `ai` worth; the rarest claw prize; supplies in the Pit Shop | random bets; the card it hasn't discovered; extra claw grabs; buys the whole Pit Shop |
 | Side trips | Goonopedia or records sometimes (15%) | none | Goonopedia (every tab), records and Settings (every tab, changing nothing) every visit; pauses half its runs, opens Settings from pause; abandons 6% of runs |
@@ -123,13 +132,15 @@ Godot_console.exe --headless --fixed-fps 60 --path . -- --career --persona=rooki
 
 `--start=` picks a `CareerStart.TIERS` entry. Every tier is a state play can reach: levels open in order, beaten modes follow the unlock chain, and only owned cars carry upgrades.
 
-| Tier | Levels and modes | Cars | Upgrades | Bank |
-|---|---|---|---|---|
-| `fresh` | a new save | sedan | none | 0 |
-| `early` | Countdown and Sprint beaten on level 1 | 2 | 3 per stat | 1,500 coins, 2 gems |
-| `mid` | levels 1-4 beaten through Goonpocalypse | 4 | 8 | 8,000, 5 |
-| `late` | levels 1-7 fully beaten, all open | 7 | 14 | 40,000, 12 |
-| `maxed` | everything beaten | all 9 | 20 (max) | 1,000,000, 99 |
+| Tier | Levels and modes | Cars | Upgrades | Bank | Pickups |
+|---|---|---|---|---|---|
+| `fresh` | a new save | sedan | none | 0 | the 10 tree roots |
+| `early` | level 1 beaten through Goonpocalypse, so level 2 is open | 2 | 3 per stat | 1,500 coins, 2 gems | Commons |
+| `mid` | levels 1-4 beaten through Goonpocalypse | 4 | 8 | 8,000, 5 | up to Uncommon |
+| `late` | levels 1-7 fully beaten, all open | 7 | 14 | 40,000, 12 | up to Epic |
+| `maxed` | everything beaten | all 9 | 20 (max) | 1,000,000, 99 | all |
+
+Pickups open down each tree from its root, so none is open while its parent is locked (`CareerStart.build`).
 
 `--coins=`, `--gems=`, `--cars=`, `--upgrades=` and `--levels=` override a tier. `--save=<path>` starts from a copy of any save file instead (the file is only read). Progress always goes to a scratch save, `user://playtest/<tag>_save.tres`.
 
@@ -170,12 +181,15 @@ Every purchase must move the bank by its price and the stat by one level. Every 
 - `<tag>_events.log`: every press, click, purchase, screen and issue, by frame.
 - `<tag>_summary.json`, also printed as `CAREER_SUMMARY`:
   - progress at the start and end (`CareerStart.progress`)
-  - **milestones** (each car bought, level opened and mode beaten, with the session and minutes of level time it took)
+  - **milestones** (each car bought, level opened, mode beaten and pickup unlocked, with the session and minutes of level time it took)
+  - `unlock_pace`: per kind of milestone (car, level, beat, pickup), how many and the first and last minute
   - `longest_runs_without_progress`, where this player stalls
   - per mode: runs, wins and coins per minute
-  - shopping totals
+  - shopping totals (cars, upgrades and pickup unlocks bought through the Goonopedia, with their coins)
   - issues by kind (`block`, `ui`, `mouse`, `economy`, `progress`, `save`, `softlock`, `no_run`)
   - script errors
+
+**Playing it yourself.** In a debug build, open the console (backtick) in the menu and type `start late` (`start` lists the tiers, `start real` goes back to your save), or launch with `Godot_console.exe --path . -- --play-start=late`. Either gives you the `late` tier's progress on a scratch save, `user://playtest/human_late_save.tres`. Your real save isn't touched. Later launches with the same tier carry on from where you left it, and `--fresh` rebuilds it. The tier overrides (`--coins=` and so on) work here too. Runs land in `runlog.csv` as `driver = player`, to set beside the personas' rows.
 
 Lines to grep: `CAREER_RUN`, `CAREER_SHOP`, `CAREER_SCREEN`, `CAREER_ISSUE`, `CAREER_MILESTONE`, `CAREER_SUMMARY`.
 
@@ -230,18 +244,20 @@ Every candidate is scored **value ÷ (seconds to get there + 1)**. The current g
 
 ### Mode rules
 
-- **Countdown and Goonpocalypse: region stars.**
-  - A region pays a star for each 60 s spent in it, up to 3, and payout is coins × stars.
-  - With nothing better in sight, the car roams to a reachable point in the same region (a district of the world map) until that region has paid out. Then it heads for a district that hasn't.
+- **Countdown and Goonpocalypse: roaming.**
+  - Waves are one clock for the whole run (`Region.wave`): each 60 s survived pays a star wherever the car is, so no district is worth more than another.
+  - With nothing better in sight, the car roams to a reachable point (`pickRoamPoint`).
   - Roam points are at least 6000 px away and preferably ahead. Long straight runs meet fresh goons with the bumper, since 4 of the 5 spawners are 4000 px ahead of the car, and they leave the horde behind.
 - **Sprint and Marathon: the station.**
   - The station is the objective. The time needed is the A* route length at cruise speed. In Marathon the station moves on after each stop; the station graph is rebuilt when `Root.station` changes.
-  - Detours are allowed only if they fit in 15% of the spare time, up to 8 s. A needed fuel can may cost three times that.
+  - **Spare time** is the clock left minus the time the rest of the route needs. After the first 10 s of a leg, the time needed comes from the progress the car has really made toward the station on this leg (detours, rocks and turns included), not its cruise speed. Before this, the driver thought it had about a minute to spare when it had none.
+  - **Detours** must fit in 15% of the spare time, up to 8 s each. All detours on one leg together may use only `raceDetourShare` (30%) of the spare time the leg started with, so a chain of small goon detours can't eat the clock. A needed fuel can may cost three times the single-detour limit.
+  - **Goons** are worth `raceGoonScale` (0.4) of their usual value as a goal. Crushing those met on the way still pays through the plans' `crushReward`.
 - **Station approach.**
   - The lot is walled with one gap. The car keeps a small visibility graph: the driveway, two markers 1100 and 2000 px out in front of the gap, and four corners clear of the lot.
   - Points are joined wherever a car-wide sweep is clear, and the driveway and inner marker can only be entered from within 34° of the gap's line.
   - The car steers along the shortest way through the graph and slows to 450 px/s within 2500 px. It goes round the lot and turns in lined up, instead of pushing into a wall or reaching the gap side-on.
-- **Defense:** the car patrols within 600–1800 px of the base and crushes what comes. It doesn't yet weigh goons at the walls above others, or park to refuel, so it can lose the barrier while chasing pickups.
+- **Defense:** the car patrols 500–1100 px from the base. Goons beyond `defenseRingPx` (2500 px) from it are ignored. Nearer ones are worth up to `defenseThreat` (3) times more the closer they are, and double once they are at the walls (`siege`). It doesn't park to refuel yet.
 
 ### Fuel rules: pulse and glide
 
@@ -287,6 +303,6 @@ Every candidate is scored **value ÷ (seconds to get there + 1)**. The current g
 - **Horizon:** the planner simulates 0.75 s and sweeps on to 1,600 px; long walls are left to the route, the station graph and the breadcrumb escape.
 - **CPU:** simulating plans is most of the cost (several hundred ms per game second on a busy dev box), so `ai` in the console can lower the frame rate. Plans that share a beginning could share its simulation.
 - **Pockets:** the escape gets out of most, but can lose 10–20 s in one.
-- **Defense:** it only patrols 600–1800 px from the station; it doesn't weigh goons at the walls or park to refuel. The score's Defense line still uses survival out of 300 s, though Defense counts down and is won at 0.
+- **Defense:** it hunts goons by their threat to the base but doesn't guard lanes or park to refuel. The score's Defense line still uses survival out of 300 s, though Defense counts down and is won at 0.
 - **Water margins:** pickups within 400 px of deep water are skipped, which on Snapper Bayou leaves fuel behind.
 - **Rivals:** a rival car would also need `isPlayer = false`, its own camera off, no player HUD, goons, spawners and the sweep not assuming one `Root.playerCar`, and a difficulty knob (reaction time, sight, plan noise).

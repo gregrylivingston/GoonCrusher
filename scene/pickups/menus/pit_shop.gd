@@ -19,10 +19,7 @@ func build() -> void:
 	list.add_theme_constant_override("separation", 10)
 	body.add_child(list)
 	for i in 3:
-		var id := ""
-		for attempt in 8:
-			id = Pickups.rollAtLeast(Pickups.R.UNCOMMON)
-			if id not in PickupDeal.NEVER && id not in offers: break
+		var id := Pickups.rollOffer(Pickups.R.UNCOMMON, PickupDeal.NEVER, offers)
 		offers.push_back(id)
 		var b = MenuTheme.button("  %s  -  %d coins" % [Pickups.displayName(id), price(id)], PackedStringArray(), false, Pickups.texture(id))
 		b.custom_minimum_size = Vector2(560, 64)

@@ -104,4 +104,29 @@ func test_run_commands_need_a_run():
 func test_unknown_command_and_help():
 	assert_true(Console.execute("frobnicate").begins_with("Error"))
 	var help = Console.execute("help")
-	for cmd in ["unlock", "coins", "give", "win"]: assert_true(help.contains(cmd), "help lists " + cmd)
+	for cmd in ["start", "unlock", "coins", "help"]: assert_true(help.contains(cmd), "help in the menu lists " + cmd)
+	assert_false(help.contains("give <what>"), "but not the run's commands")
+	var run = Console.execute("help run")
+	for cmd in ["give", "win", "heal"]: assert_true(run.contains(cmd), "help run lists " + cmd)
+	assert_false(run.contains("coins ["), "and not the menu's")
+	var all = Console.execute("help all")
+	for cmd in ["start", "coins", "give", "win"]: assert_true(all.contains(cmd), "help all lists " + cmd)
+	assert_true(Console.execute("help start").contains("scratch save"), "one command explained")
+
+func test_autopilot_checks_its_persona():
+	assert_true(Console.execute("autopilot nobody").begins_with("Error"), "an unknown persona is an error")
+	assert_eq(Console.execute("autopilot off"), "Autopilot isn't on")
+	assert_true(Console.execute("help").contains("autopilot"), "help in the menu lists it")
+
+func test_ailines_toggles_every_drivers_drawing():
+	assert_eq(Console.execute("ailines off"), "AI lines off")
+	assert_false(AIDriver.drawPlans)
+	assert_eq(Console.execute("ailines"), "AI lines on", "bare ailines flips it")
+	assert_true(AIDriver.drawPlans)
+
+func test_start_lists_tiers_and_checks_them():
+	var list = Console.execute("start")
+	for tier in CareerStart.TIERS: assert_true(list.contains(tier), "start lists " + tier)
+	assert_true(list.contains("the real save"), "and says which save is in use")
+	assert_true(Console.execute("start nowhere").begins_with("Error"), "an unknown tier is an error")
+	assert_eq(Console.execute("start real"), "Already playing the real save")

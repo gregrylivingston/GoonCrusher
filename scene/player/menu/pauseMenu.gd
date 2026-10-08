@@ -242,7 +242,7 @@ func _on_quit_pressed():
 	if confirmed(quitButton, "Quit game", "Press again to quit to the desktop"):
 		get_tree().quit()
 
-#abandoning ends the run like a death: the summary shows it and pays coins x stars (at least x1)
+#abandoning ends the run like a death: the summary shows it and pays coins x the star multiplier
 func _on_abandon_pressed():
 	if is_queued_for_deletion(): return
 	if confirmed(abandonButton, abandonText(), "Press again to end this run"):

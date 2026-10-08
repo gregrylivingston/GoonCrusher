@@ -14,6 +14,7 @@ var levelSeconds: float #the level's authored seconds, kept after the mode repla
 var elapsed := 0.0 #run-clock seconds that have passed, whichever way the clock counts (Timer.gd)
 
 var isDaytime: bool = true
+var nightsSeen := 0 #nights that fell this run, for the unlock counters (Unlocks.countRun)
 var hasEnded := false #endLevel runs once per run, whichever ending gets there first
 var endReason: int = -1 #Root.endCondition once the run has ended
 var startPosition: Vector2 #where the car starts; objectives are placed relative to it
@@ -343,6 +344,7 @@ func createSprintSpawners():
 func setNighttime(isNighttime: bool):
 
 	if isNighttime:
+		nightsSeen += 1
 		TapeBanner.post("NIGHT FALLS", 1.0) #night is gameplay: only the headlights show the world
 		get_tree().create_tween().tween_property($CanvasModulate , "color" , Color(.0,.0,.0,1.0) , 5)
 			#if canvasmodulate this is set to .05 powerups and giants glow at night.  If set to 0 they don't

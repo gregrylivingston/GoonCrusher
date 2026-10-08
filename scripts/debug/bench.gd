@@ -109,6 +109,7 @@ func _ready():
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	DirAccess.make_dir_recursive_absolute("user://bench")
 	SaveManager.save_path = SCRATCH_SAVE
+	Unlocks.allOpen = str(args.get("unlocks", "all")) == "all" #every pickup can drop, as before the unlocks
 	RenderingServer.viewport_set_measure_render_time(get_viewport().get_viewport_rid(), true)
 	stripText = args.has("notext") #measure with every 3D-text material removed
 	get_tree().node_added.connect(onNodeAdded)

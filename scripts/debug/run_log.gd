@@ -3,12 +3,14 @@ class_name RunLog extends RefCounted
 #Developer run log (debug builds only): gameSummary appends one row per run to user://runlog.csv, so prices
 #and payouts can be tuned from real numbers. A file written with other columns is moved aside, not appended to.
 #`driver` is "ai" when the AI drove (playtests, the console's `ai`), so those rows can be filtered out.
-#pk_<kind>: pickups collected this run by Pickups kind (Pickups.KIND_KEYS, from car.pickedById).
+#pk_<kind>: pickups collected this run by Pickups kind (Pickups.KIND_KEYS, from car.pickedById). crush_xp and
+#boxes: crush XP earned and gift boxes opened (CrushPrizes), for fitting the box curve.
 
 const PATH := "user://runlog.csv"
 const COLUMNS := ["date", "version", "driver", "car", "upgrades", "level", "mode", "seconds", "coins", "stars", "payout",
 	"crushes", "giants", "regions", "reason", "gems", "slot_machines", "top_speed_px", "end_fuel", "end_health",
-	"score", "leg", "barrier", "pk_supply", "pk_tune", "pk_boost", "pk_gadget", "pk_loot", "pk_casino", "pk_skill", "pk_mode", "pk_move"]
+	"score", "leg", "barrier", "pk_supply", "pk_tune", "pk_boost", "pk_gadget", "pk_loot", "pk_casino", "pk_skill", "pk_mode", "pk_move",
+	"crush_xp", "boxes"]
 
 static func append(car: OverheadCarBody2D, level: Level, reason: int, payout: int, path := PATH) -> void:
 	write(row(car, level, reason, payout), path)
@@ -46,6 +48,8 @@ static func row(car: OverheadCarBody2D, level: Level, reason: int, payout: int) 
 		"barrier": int(Root.station.barrier) if mode == Root.gameModes.DEFENSE && is_instance_valid(Root.station) else "",
 	}
 	for kind in kinds: values["pk_" + kind] = kinds[kind]
+	values.crush_xp = int(car.crushXp)
+	values.boxes = Root.playerRoot.boxLevel if is_instance_valid(Root.playerRoot) else 0
 	return values
 
 static func write(values: Dictionary, path := PATH) -> void:

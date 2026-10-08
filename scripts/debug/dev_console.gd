@@ -2,8 +2,14 @@ extends CanvasLayer
 
 #Developer console (autoload `Console`). Debug builds only: in a release export it frees itself.
 #  `  (backtick) opens and closes it; Esc closes; Up/Down walk the history; Tab completes a command.
-#  `help` lists the commands; several can be given on one line, separated by ';'.
-#  At startup:  Godot_console.exe --path . -- --console="unlock all;coins 50k"
+#  `help` lists the commands for where you are (the menu or a run); `help menu`, `help run`, `help all`.
+#  Several can be given on one line, separated by ';'.
+#  `start <tier>` plays from further into the game (early, mid, late, maxed: CareerStart.TIERS) on a scratch
+#  save, so the real save is untouched; `start real` goes back to it.
+#  `autopilot [rookie | grinder | explorer]` hands the game to a persona (Personas; a random one if none is
+#  named) from the menu or mid-run: menus, runs and results, on the save in use. Any key, pad button or
+#  click takes control back.
+#  At startup:  Godot_console.exe --path . -- --console="start late"   or   --console="unlock all;coins 50k"
 #`unlock goons` (or `unlock all`) reveals every goon in the Goonopedia.
 #Progress commands (unlock, lock, coins, gems, upgrades, save) change the real save, so back it up
 #first. Run commands (heal, fuel, god, ai, give, win, lose, night, day) act on the current run.
@@ -21,6 +27,9 @@ var previousFocus: Control
 var godMode := false
 var aiMode := false #the AI driver (scripts/ai/) drives every run's car until `ai off`
 var commands := {} #name -> {"fn", "usage", "help", "group"}, in help order
+var pilot: CareerPilot #the autopilot while a persona has the game
+#which groups `help` shows where: the menu's (progress) and the run's; Console is always shown
+const CONTEXT_GROUPS := {"menu": ["Start here", "Progress"], "run": ["Run"]}
 
 func _ready():
 	if not OS.is_debug_build():
@@ -41,6 +50,12 @@ func runStartup(line: String) -> void:
 	say(result)
 
 func _input(event):
+	#a person's press takes the game back from the autopilot, except the console's own: opening it, typing in it
+	#and clicking in it leave the persona playing (it waits for the console to close; autopilot off stops it)
+	if is_instance_valid(pilot) && not pilot.stopped && not visible && isPersonPressing(event) \
+			&& not (event is InputEventKey && event.physical_keycode == TOGGLE_KEY):
+		stopAutopilot("You have control")
+		return
 	if not (event is InputEventKey) || not event.pressed || event.echo: return
 	if event.physical_keycode == TOGGLE_KEY:
 		toggle(not visible)
@@ -107,7 +122,7 @@ func buildUi() -> void:
 	input.text_submitted.connect(onSubmit)
 	input.gui_input.connect(onInputKey)
 	box.add_child(input)
-	say("Dev console. Type help.", ECHO_COLOR)
+	say("Dev console. help lists what works here (the menu or a run). start late plays from further in on a scratch save (start lists the tiers).", ECHO_COLOR)
 
 func say(text: String, color := Color.WHITE) -> void:
 	if text == "": return
@@ -166,10 +181,14 @@ func add(cmd: String, fn: Callable, usage: String, help: String, group: String) 
 	commands[cmd] = {"fn": fn, "usage": usage, "help": help, "group": group}
 
 func registerCommands() -> void:
-	add("help", cmdHelp, "help [command]", "list the commands, or explain one", "Console")
+	add("help", cmdHelp, "help [menu | run | all | command]", "the commands for where you are (the menu or a run), another set, or one explained", "Console")
 	add("clear", cmdClear, "clear", "clear the console", "Console")
-	add("unlock", cmdUnlock, "unlock cars [name...] | levels [id...] | modes | goons | all", "cars: free every driver (or the named ones). levels: open every level (or the named ones: ids or 0-based indices, Levels.ORDER). modes: mark Countdown and Sprint beaten on every level, which opens every mode. goons: reveal every goon in the Goonopedia", "Progress")
-	add("lock", cmdLock, "lock cars | levels [id...] | modes | goons | all", "undo unlock: cars back to their prices, levels, beaten modes and Goonopedia goons back to a new save's", "Progress")
+	add("autopilot", cmdAutopilot, "autopilot [rookie | grinder | explorer | off]", "a persona plays for you from here (a random one if none is named): it shops, picks runs, drives with its plan drawn, answers every screen. Any key, pad button or click takes control back (the console's own keys don't; it waits while the console is open). ailines hides its drawing. On the real save it backs the save up first", "Start here")
+	add("ailines", cmdAiLines, "ailines [on | off]", "show or hide what AI drivers draw (autopilot and ai): the goal (yellow), the plan (green, red when it expects a hit) and the route round water (blue)", "Run")
+	add("start", cmdStart, "start [fresh | early | mid | late | maxed | real] [fresh]", "play from further into the game on a scratch save (the real save is untouched); real goes back to it. A tier's save carries on between sessions; add fresh to rebuild it. Bare start lists the tiers", "Start here")
+	add("unlock", cmdUnlock, "unlock cars [name...] | levels [id...] | modes | goons | pickups [id...] | all", "cars: free every driver (or the named ones). levels: open every level (or the named ones: ids or 0-based indices, Levels.ORDER). modes: mark Countdown and Sprint beaten on every level, which opens every mode. goons: reveal every goon in the Goonopedia. pickups: unlock every pickup (or the named ones, with the pickups above them in their tree)", "Progress")
+	add("lock", cmdLock, "lock cars | levels [id...] | modes | goons | pickups | all", "undo unlock: cars back to their prices, levels, beaten modes, Goonopedia goons and pickups back to a new save's", "Progress")
+	add("unlocks", cmdUnlocks, "unlocks", "the pickups waiting to be unlocked: price or play condition and progress, nearest first (Unlocks)", "Progress")
 	add("coins", cmdCoins, "coins [amount | set amount]", "add coins to the bank (negative takes them away; 50k and 2m work)", "Progress")
 	add("gems", cmdGems, "gems [amount | set amount]", "add gems to the bank", "Progress")
 	add("upgrades", cmdUpgrades, "upgrades max | reset [all]", "the selected car's (or every car's) upgrades to the cap or to 0", "Progress")
@@ -188,17 +207,86 @@ func registerCommands() -> void:
 	add("day", cmdDay, "day", "turn day on now", "Run")
 
 func cmdHelp(args: Array) -> String:
+	var context := "run" if Root.isRunActive else "menu"
+	var heading := "In %s. help %s, help all or help <command> for more." % ["a run" if context == "run" else "the menu", "menu" if context == "run" else "run"]
 	if not args.is_empty():
-		if not commands.has(args[0]): return "Error: unknown command '%s'" % args[0]
-		return "%s\n  %s" % [commands[args[0]].usage, commands[args[0]].help]
-	var lines = []
-	var group = ""
-	for cmd in commands:
-		if commands[cmd].group != group:
-			group = commands[cmd].group
-			lines.push_back("-- %s --" % group)
-		lines.push_back("  %-45s %s" % [commands[cmd].usage, commands[cmd].help])
+		match args[0]:
+			"menu", "run":
+				context = args[0]
+				heading = "Commands for the %s:" % args[0]
+			"all":
+				context = "all"
+				heading = "Every command:"
+			_:
+				if not commands.has(args[0]): return "Error: unknown command '%s'" % args[0]
+				return "%s\n  %s" % [commands[args[0]].usage, commands[args[0]].help]
+	var groups: Array = ["Console"]
+	if context == "all":
+		for c in CONTEXT_GROUPS: groups.append_array(CONTEXT_GROUPS[c])
+	else: groups.append_array(CONTEXT_GROUPS[context])
+	var lines = [heading]
+	for group in groups:
+		lines.push_back("-- %s --" % group)
+		for cmd in commands:
+			if commands[cmd].group == group: lines.push_back("  %-45s %s" % [commands[cmd].usage, commands[cmd].help])
 	return "\n".join(lines)
+
+#--- start here: autopilot ------------------------------------------------------------------
+
+func cmdAutopilot(args: Array) -> String:
+	var running := is_instance_valid(pilot) && not pilot.stopped
+	if not args.is_empty() && args[0] in ["off", "stop"]:
+		if not running: return "Autopilot isn't on"
+		stopAutopilot("Autopilot off")
+		return "Autopilot off: you have control"
+	if running: return "Error: %s is already at the wheel (autopilot off, or any key, stops it)" % pilot.persona.name
+	var id: String = args[0] if not args.is_empty() else Personas.DATA.keys().pick_random()
+	if not Personas.has(id): return "Error: unknown persona '%s' (have %s)" % [id, ", ".join(Personas.DATA.keys())]
+	var note := ""
+	if CareerStart.activeTier() == "": #it will spend the real save's coins: keep a copy
+		note = backupSave()
+		if note.begins_with("Error"): return note
+		note = "\nOn your real save. " + note
+	pilot = CareerPilot.new()
+	var line := pilot.beginAutopilot(id)
+	pilot.finished = func(text): say(text, ECHO_COLOR)
+	add_child(pilot)
+	toggle.call_deferred(false) #out of the way: the menus ignore input while the console is open
+	return "Autopilot: %s. Any key, pad button or click takes control back; the console (backtick) doesn't. ailines off hides its lines.%s" % [line, note]
+
+func cmdAiLines(args: Array) -> String:
+	AIDriver.drawPlans = (args[0] in ["on", "1", "true"]) if not args.is_empty() else not AIDriver.drawPlans
+	if is_instance_valid(Root.playerCar):
+		var driver = Root.playerCar.get_node_or_null("AIDriver")
+		if driver: driver.queue_redraw() #clears the lines at once when turned off
+	return "AI lines " + ("on" if AIDriver.drawPlans else "off")
+
+func stopAutopilot(message: String) -> void:
+	if not is_instance_valid(pilot): return
+	pilot.stop()
+	say(message, ECHO_COLOR)
+	print("[console] " + message)
+
+#a person's own press (not the autopilot's input actions or the clicks it pushes in): key, pad button or click
+func isPersonPressing(event: InputEvent) -> bool:
+	if not event.is_pressed() || event.is_echo(): return false
+	if event is InputEventKey || event is InputEventJoypadButton: return true
+	return event is InputEventMouseButton && not pilot.injecting
+
+#--- start here: play from a tier -----------------------------------------------------------
+
+func cmdStart(args: Array) -> String:
+	if args.is_empty():
+		var lines = ["Playing %s. start <tier> [fresh] plays from there on a scratch save; start real goes back:" % ("the real save" if CareerStart.activeTier() == "" else "the %s save" % CareerStart.activeTier())]
+		for tier in CareerStart.TIERS: lines.push_back("  %-7s %s" % [tier, CareerStart.TIER_TEXT[tier]])
+		return "\n".join(lines)
+	if Root.isRunActive: return "Error: leave the run first"
+	var result: String
+	if args[0] in ["real", "off", "back"]: result = CareerStart.useRealSave()
+	else: result = CareerStart.useScratchSave(args[0], args.size() > 1 && args[1] == "fresh")
+	if not result.begins_with("Error") && is_instance_valid(Root.mainMenu) && Root.mainMenu.is_inside_tree():
+		get_tree().change_scene_to_file("res://scene/player/menu/main/main2.tscn") #the garage rebuilt from the save now in use
+	return result
 
 func cmdClear(_args: Array) -> String:
 	output.clear()
@@ -225,13 +313,55 @@ func setUnlocks(what: String, unlock: bool, names: Array) -> String:
 		"level", "levels": return setLevels(unlock, names)
 		"mode", "modes": return setModes(unlock)
 		"goon", "goons", "goonopedia": return setGoons(unlock)
-		"all": return "\n".join([setCars(unlock, []), setLevels(unlock), setModes(unlock), setGoons(unlock)])
-	return "Error: unknown '%s' (cars, levels, modes, goons or all)" % what
+		"pickup", "pickups": return setPickups(unlock, names)
+		"all": return "\n".join([setCars(unlock, []), setLevels(unlock), setModes(unlock), setGoons(unlock), setPickups(unlock, [])])
+	return "Error: unknown '%s' (cars, levels, modes, goons, pickups or all)" % what
+
+#every pickup, or the named ones and the pickups above them in their tree (Unlocks); locking leaves the roots
+func setPickups(unlock: bool, names: Array) -> String:
+	for id in names:
+		if not Pickups.has(id): return "Error: no pickup '%s'" % id
+	var saved := Unlocks.saved()
+	if not unlock:
+		var count := saved.keys().filter(func(k): return str(k).begins_with("pickup:")).size()
+		for key in saved.keys(): if str(key).begins_with("pickup:"): saved.erase(key)
+		return "Pickups locked: %d back to a new save's (the tree roots)" % count
+	var opened := 0
+	for id in (names if not names.is_empty() else Pickups.DATA.keys()):
+		var at: String = id
+		while at != "":
+			if not Unlocks.isPickupOpen(at):
+				Unlocks.grant("pickup:" + at)
+				opened += 1
+			at = Pickups.def(at).get("parent", "")
+	return "Pickups unlocked: %d" % opened
+
+func cmdUnlocks(_args: Array) -> String:
+	var waiting := []
+	for id in Pickups.DATA:
+		var s := Unlocks.state("pickup:" + id)
+		if s != Unlocks.S.SHOWN && s != Unlocks.S.READY: continue
+		var cost := Unlocks.pickupPrice(id)
+		var p := Unlocks.progress("pickup:" + id)
+		var line: String
+		var done: float
+		if not cost.is_empty():
+			line = "%-18s %s%s" % [Pickups.displayName(id), Unlocks.priceText(cost), "  (affordable)" if Unlocks.canAfford("pickup:" + id) else ""]
+			done = 2.0 if Unlocks.canAfford("pickup:" + id) else 1.0
+		else:
+			line = "%-18s %s  %d / %d" % [Pickups.displayName(id), p.get("text", "opens after the next run"), p.get("have", 1), p.get("need", 1)]
+			done = float(p.get("have", 1)) / maxf(float(p.get("need", 1)), 1.0)
+		waiting.push_back([done, line])
+	waiting.sort_custom(func(a, b): return a[0] > b[0])
+	var open := Pickups.DATA.keys().filter(Unlocks.isPickupOpen).size()
+	var lines := ["Pickups open %d / %d%s. Waiting:" % [open, Pickups.DATA.size(), "  (all open: Unlocks.allOpen)" if Unlocks.allOpen else ""]]
+	for w in waiting.slice(0, 12): lines.push_back("  " + w[1])
+	return "\n".join(lines)
 
 #every car, or the named ones, bought for nothing; locking puts the default prices back
 func setCars(unlock: bool, names: Array) -> String:
 	var defaults = {}
-	for car in PlayerData.new().cars: defaults[car.name] = car.cost
+	for car in PlayerData.new().cars: defaults[car.name] = car.cost #gem prices stay on the save's entry
 	for carName in names:
 		if not defaults.has(carName): return "Error: no car '%s' (%s)" % [carName, ", ".join(defaults.keys())]
 	var changed = []
@@ -445,7 +575,7 @@ func cmdPickup(args: Array) -> String:
 	if args.is_empty() || not Pickups.has(args[0]): return "Error: pickup <id> [count]; ids: %s" % ", ".join(Pickups.DATA.keys())
 	var count = parseAmount(args[1]) if args.size() > 1 else 1
 	if count == null: return "Error: '%s' is not a number" % args[1]
-	for i in count: PickupEffects.collect(car, args[0], car.global_position)
+	for i in count: PickupEffects.collect(car, args[0], car.global_position, true) #locked ones too
 	return "Collected %s x%d" % [Pickups.displayName(args[0]), count]
 
 func cmdWin(_args: Array) -> String:

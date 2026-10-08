@@ -1,6 +1,7 @@
 class_name HudPayout extends Control
 
-#Top right: the pause button, the payout sum (coins x stars = what the run pays, Root.computePayout)
+#Top right: the pause button, the payout sum (coins x the star multiplier = what the run pays,
+#Root.computePayout; the number by the star is the multiplier, 1 + 0.1 a star)
 #and gems. Coin, star and gem pickups fly to their icons; luck and clover, which change what goons
 #drop, fly to the payout.
 
@@ -53,7 +54,7 @@ func layOut(car) -> void:
 	layout.star = x + 18
 	x += 42
 	layout.stars = x
-	x += HudTheme.textWidth(str(car.star), 26) + 12
+	x += HudTheme.textWidth(Root.multiplierText(car.star), 26) + 12
 	layout.equals = x
 	markers.coinui.position = Vector2(layout.coin, 31)
 	markers.starui.position = Vector2(layout.star, 31)
@@ -69,7 +70,7 @@ func _draw() -> void:
 	HudTheme.text(self, Vector2(layout.coins, 42), str(car.coin), 26)
 	HudTheme.text(self, Vector2(layout.times, 41), "x", 22, HudTheme.MUTED, HORIZONTAL_ALIGNMENT_LEFT, 4)
 	HudTheme.icon(self, STAR_ICON, Vector2(layout.star, 30), 36)
-	HudTheme.text(self, Vector2(layout.stars, 42), str(car.star), 26)
+	HudTheme.text(self, Vector2(layout.stars, 42), Root.multiplierText(car.star), 26)
 	HudTheme.text(self, Vector2(layout.equals, 41), "=", 22, HudTheme.MUTED, HORIZONTAL_ALIGNMENT_LEFT, 4)
 	HudTheme.text(self, Vector2(RIGHT, 19), "PAYOUT", 11, HudTheme.MUTED, HORIZONTAL_ALIGNMENT_RIGHT, 4)
 	HudTheme.text(self, Vector2(RIGHT, 51), str(Root.computePayout(car.coin, car.star)), 30, HudTheme.GOLD, HORIZONTAL_ALIGNMENT_RIGHT, 10, HudTheme.DEEP)

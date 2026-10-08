@@ -136,11 +136,11 @@ func makeGoon(id: StringName) -> Walker:
 
 #--- spawning -----------------------------------------------------------------------------------
 
-## Which of the region's goons to spawn: by the region's wave, so goons 2 and 3 come as the HUD reveals them.
+## Which of the district's goons to spawn: by the run's wave (Region.wave, one clock for the whole run) and
+## escalation, so goons 2 and 3 come as the run goes on, wherever the car is.
 func pickGoonId() -> StringName:
 	if basicGoons.is_empty(): return &"grunt"
-	var wave: int = Region.currentRegion.get("wave", 1) if Region.currentRegion else 1
-	return basicGoons[Goons.pickSlot(wave + int(gameTimeProgress / 12.0), randf())]
+	return basicGoons[Goons.pickSlot(Region.wave + int(gameTimeProgress / 12.0), randf())]
 
 var gameTimeProgress = 0
 @export var giantOdds = -10
@@ -219,6 +219,7 @@ func creditCrush(pos: Vector2, goon: Object = null) -> void:
 	if goon != null && Root.playerCar.has_method("creditGoon"):
 		Root.playerCar.creditGoon(goon)
 		announceNewGoon(goon)
+		Root.playerCar.addCrushXp(goon)
 	Root.playerCar.reward("currentGoonsCrushed", 1)
 	RewardFlyers.flyUpgrade(Root.upgrade.CURRENTGOONSCRUSHED, pos)
 	var feel = Root.playerCar.get("crushFeel")

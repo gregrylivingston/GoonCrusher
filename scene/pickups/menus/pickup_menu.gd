@@ -21,6 +21,9 @@ func _init() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 
 func _ready() -> void:
+	if runOver(): #opened (deferred) in the frame the run ended: never over the results ticket
+		queue_free()
+		return
 	add_to_group("slotMachine") #the playtest and bench harnesses tap Accelerate through anything in it
 	add_to_group("pickupMenu")
 	InputGlyphs.ensureMenuActions()
@@ -75,6 +78,10 @@ func hints(list: Array) -> HBoxContainer:
 	var row = KeyHint.bar(list)
 	body.add_child(row)
 	return row
+
+## The run has ended (the results ticket is up or about to be): no pausing screen opens any more.
+static func runOver() -> bool:
+	return is_instance_valid(Root.levelRoot) && Root.levelRoot.get("hasEnded") == true
 
 static func runCoins() -> int:
 	return Root.playerCar.coin if is_instance_valid(Root.playerCar) else 0

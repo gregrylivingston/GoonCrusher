@@ -15,6 +15,7 @@ const NEVER := ["slotmachine", "deal", "claw", "mystery"]
 const MAX_REPEAT := [5, 5, 3, 2, 1, 1]
 
 static var bet := 0 #the open machine's bet level
+static var bonus := 0 #free bet levels from a gift box's tier (CrushPrizes), on top of the bet
 
 static func weights(dice: float, betLevel: int) -> Array:
 	var out := []
@@ -23,11 +24,11 @@ static func weights(dice: float, betLevel: int) -> Array:
 	return out
 
 static func pick() -> String:
-	if randf() < STAR_CHANCE + STAR_PER_BET * bet: return STAR
+	if randf() < STAR_CHANCE + STAR_PER_BET * (bet + bonus): return STAR
 	var car = Root.playerCar
 	var dice: float = car.luck if is_instance_valid(car) else 0.0
 	var mode: int = SaveManager.playerData.gameMode if SaveManager.playerData else 0
-	var tier := Pickups.pickTier(weights(dice, bet), randf())
+	var tier := Pickups.pickTier(weights(dice, bet + bonus), randf())
 	while tier >= 0:
 		var options := Pickups.candidates(tier, mode, true)
 		for id in NEVER: options.erase(id)

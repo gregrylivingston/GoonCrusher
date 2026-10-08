@@ -24,7 +24,7 @@ Most effect timings are first-pass values. None has been tuned by hand.
    - Continue, Settings from pause, Abandon (shutter slam into results) and Quit.
    - Spam Esc during the drop and the lift.
 4. **Slot machine.**
-   - Crush-goal free spin: the banner, then the skid in, the hatch rolling up and the reel settles.
+   - Gift box: the drop-in and rattle, the lid pop (no shake under Reduce Motion), then the game's skid in and hatch; the slot's reels settle. Try `-- --prize=<game>` for each game.
    - Reroll, bet, then Collect: the chute, the peel-out, then the compact lamps.
    - Also check the Marathon free slot after the Pit Shop: the Pit Shop closes instantly into it.
 5. **The Deal, Claw Crane and Pit Shop.** Each skids in, the hatch rolls up, then on leaving the hatch slams, the panel peels out and the lamps start.

@@ -6,16 +6,18 @@ The HUD is `scene/player/playerRoot.tscn` (class `GameUI`): twin gauges in the b
 
 | Node | Script | Anchor | Shows |
 |---|---|---|---|
-| `TopLeft/CrushPill` | `hud_crush.gd` | top left | Goons left to the next crush goal, its progress bar and the star it pays. |
-| `TopLeft/RegionChip` | `hud_region.gd` | top left | Region name, goon size (giantism) and the wave ring: "survive m:ss for a star", up to `Region.waveCap()` waves (no cap in Goonpocalypse). |
+| `TopLeft/CrushPill` | `hud_crush.gd` | top left | The next gift box (docs/PICKUPS.md, "Gift boxes"): its tier in its colour, a crush XP bar and the XP still to go. Prize pickups fly to its box (`slotmachineui`). |
+| `TopLeft/RegionChip` | `hud_region.gd` | top left | District name, goon size (giantism) and the run's wave ring: "Wave n: survive m:ss for a star". Waves are one clock for the whole run (`Region.wave`, `waveProgress`), with no cap. |
 | `TopCenter/ModeLabel`, `TopCenter/Timer` | `Timer.gd` (unchanged) | top center | Mode name and run clock. `Timer` keeps group `runTimer`. |
 | `Objective` | `hud_objective.gd` | top center, under the clock | The mode's own goal: Goonpocalypse score and time to the star, Marathon "STATION n OF 5", Defense barrier bar. Hidden in Countdown and Sprint. |
-| `TopRight` | `hud_payout.gd` | top right | Pause button, coins x stars = payout (`Root.computePayout`), gems. |
+| `TopRight` | `hud_payout.gd` | top right | Pause button, coins x the star multiplier (1 + 0.1 a star, shown by the star) = payout (`Root.computePayout`), gems. |
 | `Tach`, `Fuel` | `hud_dial.gd` | bottom left | Tachometer with the gear (`car.gear`), and the fuel dial. |
 | `Speedo`, `Hull` | `hud_dial.gd` | bottom right | Speedometer and the hull (health) dial. |
 | `Systems` | `hud_systems.gd` | bottom center | One lamp per car system, each with a rating underline. |
 | `Items` (added in code) | `hud_items.gd` | bottom center, above the strip | The held gadget (charges, the Fire key) and the held boost beside it (charges, the Boost key), small counters left of them (star fragments, lottery tickets, a parcel, barricades), and a ring per timed power-up (right) that drains clockwise and blinks in its last 2 s. Groups `itemui`, `moveui`, `buffui`, and `clockui` (on `TopCenter`). |
 | `HudChance` (added in code) | `hud_chance.gd` | full screen, not HUD-scaled | Rare-pickup toasts under the clock, the Scratch Card and Double or Nothing under the payout, the Crush Combo under the crush pill, edge-of-screen beacons for events and supply drops, the Goon Nuke's flash. Redraws only while one shows. |
+
+**Name tags:** the held gadget and boost boxes carry their short names above them, and a power-up's ring for its first 3 s (`HudItems.tag`, `Pickups.shortName`; docs/PICKUPS.md, "Name tags").
 
 `hud_theme.gd` (class `HudTheme`) holds the colors, the Tektur fonts and the draw helpers.
 

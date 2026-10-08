@@ -53,6 +53,13 @@ const DEFAULTS = {
 	"waterSpeed": 340.0,       #the throttle lifts above this speed while deep water is ahead within 1.5x waterLookSeconds
 	"waterTargetPx": 400.0,    #pickups and roam points this close to deep water are skipped (unless on a bridge)
 	"waterGoonPx": 350.0,      #goons this close to deep water aren't hunted (they drown on their own)
+	#races (Sprint, Marathon): the clock is the opponent (career playtests found the driver hunting goons
+	#2-9 times as often as it headed for the station, and losing by 1,400-2,700 px)
+	"raceGoonScale": 0.4,      #goons are worth this share of their value as a race goal
+	"raceDetourShare": 0.3,    #all detours on one leg together may use this share of the leg's starting spare time
+	#Defense: the base is the objective
+	"defenseRingPx": 2500.0,   #goons further than this from the base are left alone
+	"defenseThreat": 3.0,      #a goon at the base's walls is worth this many times more than one at defenseRingPx
 	#human imperfection (the rookie persona, scripts/ai/personas.gd); 0 drives as well as the driver can
 	"reactionTicks": 0,        #the keys reach the car this many ticks after the driver chooses them
 	"planSlop": 0.0,           #up to this many seconds of noise on each plan's cost: close calls go either way, some wrong

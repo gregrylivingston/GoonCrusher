@@ -149,7 +149,7 @@ func test_demo_is_the_first_three():
 	assert_eq(Root.DEMO_LEVEL_COUNT, 3)
 	assert_eq(Levels.ORDER.slice(0, Root.DEMO_LEVEL_COUNT), [&"prairie", &"bayou", &"canyon"])
 	var levels = PlayerData.new().levels
-	for i in levels.size(): assert_eq(levels[i].unlocked, i < 3, "%s open in a new save" % levels[i].id)
+	for i in levels.size(): assert_eq(levels[i].unlocked, i == 0, "%s: only the first is open in a new save" % levels[i].id)
 
 func test_thin_scenes_exist_and_set_their_def():
 	for id in Levels.ORDER:

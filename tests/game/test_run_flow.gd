@@ -46,6 +46,37 @@ func test_station_search_prefers_a_clear_lot():
 	var picked := WorldGen.findStationChunk(island, Vector2i(3, 2), NO_CHUNK)
 	assert_false(picked.clear, "nothing reachable: no clear lot")
 
+#a chunk where no station can stand: its four centre cells (WorldGen.stationCoreOk) blocked
+func blockCore(flags: PackedByteArray, chunk: Vector2i) -> void:
+	var c := WorldGen.chunkCell(chunk) + Vector2i(1, 0)
+	for d in [Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)]:
+		var cell: Vector2i = c + d
+		if WorldGen.inMap(cell): flags[cell.y * WorldGen.W + cell.x] = WorldGen.BLOCKED
+
+func test_a_station_is_never_placed_much_nearer_than_asked():
+	var flags := openFlags()
+	for x in range(6, 13): #a band of chunks where nothing can stand, from 6 to 12 chunks out
+		for y in range(-WorldGen.CHUNK_LIMIT, WorldGen.CHUNK_LIMIT + 1): blockCore(flags, Vector2i(x, y))
+	var desired := Vector2i(8, 0)
+	var near: Vector2i = WorldGen.findStationChunk(flags, desired, NO_CHUNK).chunk
+	assert_eq(near, Vector2i(5, 0), "without an origin the nearest good chunk wins, even back toward the start")
+	var far: Vector2i = WorldGen.findStationChunk(flags, desired, NO_CHUNK, true, Vector2i.ZERO).chunk
+	assert_true(Vector2(far).length() >= 8.0 * WorldGen.STATION_MIN_SHARE, "from the start it stays at least 85%% as far (%s)" % far)
+	assert_true(WorldGen.stationCoreOk(flags, far, true), "on good ground")
+	var only: Vector2i = WorldGen.findStationChunk(openOnly(Vector2i(2, 0)), desired, NO_CHUNK, true, Vector2i.ZERO).chunk
+	assert_eq(only, Vector2i(2, 0), "when nothing far enough is good, the nearest good chunk still gets the station")
+
+#every cell blocked but one chunk's station core
+func openOnly(chunk: Vector2i) -> PackedByteArray:
+	var flags := PackedByteArray()
+	flags.resize(WorldGen.W * WorldGen.H)
+	flags.fill(WorldGen.BLOCKED)
+	var c := WorldGen.chunkCell(chunk) + Vector2i(1, 0)
+	for d in [Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)]:
+		var cell: Vector2i = c + d
+		flags[cell.y * WorldGen.W + cell.x] = WorldGen.START
+	return flags
+
 func test_sprint_distance_and_clock():
 	assert_almost_eq(Level.sprintSlack(250), 1.5, 0.0001, "Easy")
 	assert_almost_eq(Level.sprintSlack(540), 1.1, 0.0001, "Northern Wastes")

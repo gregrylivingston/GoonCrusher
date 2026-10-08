@@ -48,6 +48,10 @@ var career: CareerPilot #--career: the persona playing through the menus starts 
 
 func _ready():
 	options = parseArgs()
+	if options.has("play-start") && not options.has("career") && not options.has("playtest"):
+		startHumanSave()
+		queue_free() #a person plays: no harness, transitions on
+		return
 	if not options.has("playtest") && not options.has("career"):
 		queue_free()
 		return
@@ -60,6 +64,10 @@ func _ready():
 	Settings.set_value("display/pause_unfocused", false, false)
 	DirAccess.make_dir_recursive_absolute("user://playtest")
 	maxSeconds = float(options.get("max-seconds", 900.0))
+	#--unlocks=all|save: every pickup open (the default, so tuning runs compare with older ones) or what the
+	#save has opened (the default for careers and --play-start, which play the progression)
+	var progression: bool = options.has("career") || options.has("play-start")
+	Unlocks.allOpen = str(options.get("unlocks", "save" if progression else "all")) == "all"
 	if options.has("career"):
 		career = CareerPilot.new()
 		career.playtest = self
@@ -85,6 +93,18 @@ func _ready():
 	get_tree().node_added.connect(onNodeAdded)
 	await get_tree().create_timer(1.0).timeout
 	startNext()
+
+#--play-start=<tier> (CareerStart.TIERS): a person plays from that point in progress on a scratch save,
+#user://playtest/human_<tier>_save.tres, so late levels can be checked by hand without touching the real
+#save. Later launches with the same tier carry on with it; --fresh rebuilds it. --coins= --gems= --cars=
+#--upgrades= --levels= override the tier as for careers. Runs still log to runlog.csv as driver "player".
+func startHumanSave() -> void:
+	var overrides := {}
+	for key in ["coins", "gems", "cars", "upgrades", "levels"]:
+		if options.has(key): overrides[key] = int(options[key])
+	var result := CareerStart.useScratchSave(str(options["play-start"]), options.has("fresh"), overrides) #the console's `start` does the same
+	if result.begins_with("Error"): push_error("PLAYTEST " + result)
+	else: print("PLAYTEST_HUMAN " + result)
 
 static func parseArgs() -> Dictionary:
 	var result = {}
@@ -194,6 +214,7 @@ func _physics_process(delta):
 	if get_tree().paused:
 		if not career: tapSlotMachine(delta) #a persona answers pausing screens itself
 		return
+	pausedEmptySince = -1 #a softlock is one unbroken pause: an earlier countdown's doesn't count towards it
 	if Root.levelRoot.clockReady && not clockSeen:
 		clockSeen = true
 		row.clock = snappedf(Root.levelRoot.seconds, 0.1)
@@ -398,6 +419,8 @@ func recordRun() -> void:
 	row.reason = reason
 	row.won = Root.levelRoot.endReason == Root.endCondition.SUCCESS
 	row.level_time = snappedf(levelTime, 0.1)
+	row.crush_xp = int(car.crushXp)
+	row.boxes = Root.playerRoot.boxLevel if is_instance_valid(Root.playerRoot) else 0
 	row.time_left = snappedf(Root.levelRoot.seconds, 0.1) if row.mode != "goonpocalypse" else 0.0
 	row.station_left_px = int(car.global_position.distance_to(Root.station.global_position)) if is_instance_valid(Root.station) else 0
 	#stations reached (Sprint 0 or 1; Marathon counts each leg's station, TileManager.legsPlaced moves on at each)
