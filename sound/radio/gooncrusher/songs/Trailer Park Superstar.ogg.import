@@ -1,0 +1,19 @@
+[remap]
+
+importer="oggvorbisstr"
+type="AudioStreamOggVorbis"
+uid="uid://dx45va02pvk7n"
+path="res://.godot/imported/Trailer Park Superstar.ogg-81cc1fa0766c47c84b8f17070a174901.oggvorbisstr"
+
+[deps]
+
+source_file="res://sound/radio/gooncrusher/songs/Trailer Park Superstar.ogg"
+dest_files=["res://.godot/imported/Trailer Park Superstar.ogg-81cc1fa0766c47c84b8f17070a174901.oggvorbisstr"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

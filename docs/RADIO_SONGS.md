@@ -32,6 +32,7 @@ Fast, chaotic 2000s-style punk rock, aggressive distorted electric guitars, punc
 | Full Tank, Empty Head | `sound/radio/gooncrusher/songs/Full Tank, Empty Head.ogg` | 3:06 | punk road song (prompt not recorded) |
 | My Baby Loves My Truck | `sound/radio/gooncrusher/songs/My Baby Loves My Truck.ogg` | 3:15 | Southern pop-punk / garage punk love song, 160 BPM |
 | Cheap Beer, Premium Gas | `sound/radio/gooncrusher/songs/Cheap Beer, Premium Gas.ogg` | 2:59 | blue-collar weekend punk (prompt not recorded) |
+| Trailer Park Superstar | `sound/radio/gooncrusher/songs/Trailer Park Superstar.ogg` | 3:21 | brag song, demolition-derby rock (prompt not recorded) |
 
 ### Crush Hour
 
@@ -475,6 +476,89 @@ We're tearing up the blacktop and raising a glass
 **Processing:** −15.9 → −16.1 LUFS (true peak −4.2 dBTP), 0.3 s of tail silence trimmed.
 
 **Note:** beer and driving fast sit in the same chorus ("raising a glass" while "tearing up the blacktop"), which reads as drinking and driving. It's played for laughs, but rating boards flag alcohol references and especially alcohol paired with driving, and Steam's content survey asks about it. Worth deciding before launch whether this one ships, gets a tweaked line (e.g. the beer waits for the destination), or stays as is with the content descriptor.
+
+### Trailer Park Superstar
+
+The local-legend brag song: a demolition-derby hero famous in one county. A character song rather than a driving one, with a spoken breakdown; no goons in it.
+
+**Style:** not recorded. If you still have it, paste it here; otherwise start from the house template.
+
+**Lyrics:**
+
+```
+[Verse 1]
+Everybody knows me down on Lot 23
+Got a lawn chair throne and a busted TV
+I got a guitar with two good strings
+And three ex-girlfriends who still wear my rings
+
+I drove in the derby at the county fair
+I wrecked my car but I don't care
+I painted my name back on the side
+Hey there baby, you need a ride?
+
+[Chorus]
+I'm a trailer park superstar
+Everybody 'round here knows my car
+I'm super famous in West Tennessee
+Come to the county derby and you'll see
+
+I'm a trailer park superstar
+All the single mamas love my car
+I fix it up and drive it good
+I got six trophies painted onto the hood
+
+[Verse 2]
+I got a chrome exhaust and a primer coat
+A twenty-dollar muffler and a ten-dollar boat
+My transmission slips but my engine runs
+And everybody knows I ain't scared of no one
+
+I won third place in the mud last June
+I got kicked out the bar by half past noon
+The sheriff knows me, the mayor does too
+Hell, the whole damn county knows what I do
+
+[Chorus]
+I'm a trailer park superstar
+Everybody 'round here knows my car
+I'm super famous in West Tennessee
+Come to the county derby and you'll see
+
+I'm a trailer park superstar
+All the single mamas love my car
+I fix it up and drive it good
+I got six trophies painted onto the hood
+
+[Riff Break]
+
+[Spoken / Half-Sung Breakdown]
+Got the best-looking mullet...
+A mini-fridge on my mower.
+I got the loudest ride,
+And I love to show her.
+
+[Verse 3]
+Friday night, everybody's heading downtown
+But they know where to find me when the sun goes down
+Parked by the fence with the headlights on
+Cold beer in my hand and my senses all gone
+
+[Final Chorus]
+I'm a trailer park superstar
+Everybody 'round here knows my car
+I'm super famous in West Tennessee
+Come to the county derby and you'll see
+
+I'm a trailer park superstar
+All the single mamas love my car
+I fix it up and drive it good
+I got six trophies painted onto the hood
+```
+
+**Processing:** −15.8 → −16.1 LUFS (true peak −3.4 dBTP), no tail silence to trim.
+
+**Note:** "Hell, the whole damn county" and the drinking in verse 3 (parked, not driving) add to the language and alcohol tally for the content survey. "West Tennessee" is the station's first real-world place; the game's own places (Rust City, Snapper Bayou...) could stand in if the radio should stay inside the game's world.
 
 ## Ideas for the next songs
 

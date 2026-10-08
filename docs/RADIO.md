@@ -18,7 +18,7 @@ This file has two halves: **for the audio author** (what to make, how to name an
 
 The default for a new save is **GoonCrusher Radio**. A station with no songs yet is hidden from the pickers, so Classical Lofi and Lofi appear once their first songs go in.
 
-**Songs so far** (lyrics, style prompts and ideas for more: `docs/RADIO_SONGS.md`): GoonCrusher Radio has *Crush Hour*, *Gooncrusher*, *Full Tank, Empty Head*, *My Baby Loves My Truck* and *Cheap Beer, Premium Gas*. No idents, talk or ads yet, so it plays songs back to back.
+**Songs so far** (lyrics, style prompts and ideas for more: `docs/RADIO_SONGS.md`): GoonCrusher Radio has *Crush Hour*, *Gooncrusher*, *Full Tank, Empty Head*, *My Baby Loves My Truck*, *Cheap Beer, Premium Gas* and *Trailer Park Superstar*. No idents, talk or ads yet, so it plays songs back to back.
 
 ### Folder layout
 
