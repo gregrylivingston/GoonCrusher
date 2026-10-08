@@ -1,0 +1,19 @@
+[remap]
+
+importer="oggvorbisstr"
+type="AudioStreamOggVorbis"
+uid="uid://blxikvs57y0k4"
+path="res://.godot/imported/She Left Me at the Truck Stop.ogg-8732113b94fd93935225375eed5ab0e7.oggvorbisstr"
+
+[deps]
+
+source_file="res://sound/radio/gooncrusher/songs/She Left Me at the Truck Stop.ogg"
+dest_files=["res://.godot/imported/She Left Me at the Truck Stop.ogg-8732113b94fd93935225375eed5ab0e7.oggvorbisstr"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

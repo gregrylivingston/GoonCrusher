@@ -7,7 +7,7 @@ The song book for GoonCrusher Radio: the house style, every song's lyrics and th
 Fast, loud, funny songs about driving and crushing goons, sung completely straight. The joke is the commitment: a real band with real chops singing about goon goo on the windshield.
 
 - **Default sound:** 2000s punk rock, 160–180 BPM, distorted guitars, punchy live drums, shout-along gang vocals, a short guitar solo, polished video-game-soundtrack production. Every song should feel good at full throttle.
-- **Vary within it:** not every song should be the same punk song. Good neighbours: pop-punk, skate punk, garage rock, Southern garage punk (My Baby Loves My Truck), surf rock, rockabilly, ska-punk, metal parody, trucker country, 80s arena rock. Vary the subject too: a love song, a road song, an anthem. Keep the energy high; no ballads unless the joke is that it's a ballad.
+- **Vary within it:** not every song should be the same punk song. Good neighbours: pop-punk, skate punk, garage rock, Southern garage punk (My Baby Loves My Truck), surf rock, rockabilly, ska-punk, metal parody, trucker country, 80s arena rock. Vary the subject too: a love song, a road song, an anthem, a small-town song. Keep the energy high: the set has two mid-tempo songs (Welcome to Nowhere at 135 BPM, Gas Station Romance at 145), which is enough; new ones should be fast, and no ballads unless the joke is that it's a ballad.
 - **Subject matter:** the car (full tank, dents, busted lights, bald tyres), the road and its goons, splatter and wipers, never braking, the world's places and goons (see the writing brief in `docs/RADIO.md`). First person, the driver as the hero.
 - **Shape:** short verses, a chorus with a shoutable hook that names the song, a bridge that builds to a chant. 2:30–3:30.
 - **Keep it clean:** cartoon violence only (crush, splat, goo), no swearing, no real brands, people or songs.
@@ -31,6 +31,11 @@ Fast, chaotic 2000s-style punk rock, aggressive distorted electric guitars, punc
 | Gooncrusher | `sound/radio/gooncrusher/songs/Gooncrusher.ogg` | 3:11 | punk anthem (prompt not recorded) |
 | Full Tank, Empty Head | `sound/radio/gooncrusher/songs/Full Tank, Empty Head.ogg` | 3:06 | punk road song (prompt not recorded) |
 | My Baby Loves My Truck | `sound/radio/gooncrusher/songs/My Baby Loves My Truck.ogg` | 3:15 | Southern pop-punk / garage punk love song, 160 BPM |
+| Cheap Beer, Premium Gas | `sound/radio/gooncrusher/songs/Cheap Beer, Premium Gas.ogg` | 2:59 | blue-collar weekend punk (prompt not recorded) |
+| Trailer Park Superstar | `sound/radio/gooncrusher/songs/Trailer Park Superstar.ogg` | 3:21 | brag song, demolition-derby rock (prompt not recorded) |
+| Welcome to Nowhere | `sound/radio/gooncrusher/songs/Welcome to Nowhere.ogg` | 3:23 | heartland punk, 135 BPM: the slower song |
+| Gas Station Romance | `sound/radio/gooncrusher/songs/Gas Station Romance.ogg` | 3:16 | Southern punk / garage rock love song, 145 BPM |
+| She Left Me at the Truck Stop | `sound/radio/gooncrusher/songs/She Left Me at the Truck Stop.ogg` | 2:31 | country-punk heartbreak, 155 BPM |
 
 ### Crush Hour
 
@@ -396,11 +401,400 @@ It's like we're love making
 
 **Note:** the chorus's innuendo ("vibrating, shaking ... love making") and two "damn"s make this the edgiest song on the station. It's mild, but worth a thought for the store page's content questions (Steam asks about sexual content and language), and it rules the song out of anything aimed at kids.
 
+### Cheap Beer, Premium Gas
+
+The payday song: broke, Friday night, a full tank and nowhere to be. Like My Baby Loves My Truck, it's about the car culture more than the goons (none appear).
+
+**Style:** not recorded. If you still have it, paste it here; otherwise start from the house template.
+
+**Lyrics:**
+
+```
+[Verse 1]
+Paycheck's gone by Friday night
+Got enough for gas and a six-pack light
+Rent's due Monday, that's alright
+Tonight we're gonna take a drive
+
+[Chorus]
+Cheap beer and premium gas
+We fill up and we drive real fast
+Cheap beer and premium gas
+Put the pedal to the floor and get ready to pass
+Cheap beer and premium gas
+It's the weekend and we're looking for gas
+Cheap beer and premium gas
+We're tearing up the blacktop and raising a glass
+
+[Verse 2]
+Twenty dollars says we'll make it far
+Fill that tank and fire up the car
+Don't need money, don't need class
+Just cheap beer and premium gas
+
+[Pre-Chorus]
+Turn it up loud
+Let the engine sing
+It's Friday night
+Lets fill up this thing
+
+[Chorus]
+Cheap beer and premium gas
+We fill up and we drive real fast
+Cheap beer and premium gas
+Put the pedal to the floor and get ready to pass
+Cheap beer and premium gas
+It's the weekend and we're looking for gas
+Cheap beer and premium gas
+We're tearing up the blacktop and raising a glass
+
+[Verse 3]
+We got no plans and we got no boss
+Lets take a wrong turn and get lost
+There's a neon sign and a road up ahead
+We'll keep driving till we wind up dead
+
+[Bridge]
+Don't got a mansion
+Don't got a yacht
+Don't got a million
+Don't need a lot
+
+Give me four tires and somewhere to go
+Give me twenty bucks and a good looking doe
+
+[Instrumental Break / Guitar Solo]
+
+[Final Chorus]
+Cheap beer and premium gas
+We fill up and we drive real fast
+Cheap beer and premium gas
+Put the pedal to the floor and get ready to pass
+Cheap beer and premium gas
+It's the weekend and we're looking for gas
+Cheap beer and premium gas
+We're tearing up the blacktop and raising a glass
+```
+
+**Processing:** −15.9 → −16.1 LUFS (true peak −4.2 dBTP), 0.3 s of tail silence trimmed.
+
+**Note:** beer and driving fast sit in the same chorus ("raising a glass" while "tearing up the blacktop"), which reads as drinking and driving. It's played for laughs, but rating boards flag alcohol references and especially alcohol paired with driving, and Steam's content survey asks about it. Worth deciding before launch whether this one ships, gets a tweaked line (e.g. the beer waits for the destination), or stays as is with the content descriptor.
+
+### Trailer Park Superstar
+
+The local-legend brag song: a demolition-derby hero famous in one county. A character song rather than a driving one, with a spoken breakdown; no goons in it.
+
+**Style:** not recorded. If you still have it, paste it here; otherwise start from the house template.
+
+**Lyrics:**
+
+```
+[Verse 1]
+Everybody knows me down on Lot 23
+Got a lawn chair throne and a busted TV
+I got a guitar with two good strings
+And three ex-girlfriends who still wear my rings
+
+I drove in the derby at the county fair
+I wrecked my car but I don't care
+I painted my name back on the side
+Hey there baby, you need a ride?
+
+[Chorus]
+I'm a trailer park superstar
+Everybody 'round here knows my car
+I'm super famous in West Tennessee
+Come to the county derby and you'll see
+
+I'm a trailer park superstar
+All the single mamas love my car
+I fix it up and drive it good
+I got six trophies painted onto the hood
+
+[Verse 2]
+I got a chrome exhaust and a primer coat
+A twenty-dollar muffler and a ten-dollar boat
+My transmission slips but my engine runs
+And everybody knows I ain't scared of no one
+
+I won third place in the mud last June
+I got kicked out the bar by half past noon
+The sheriff knows me, the mayor does too
+Hell, the whole damn county knows what I do
+
+[Chorus]
+I'm a trailer park superstar
+Everybody 'round here knows my car
+I'm super famous in West Tennessee
+Come to the county derby and you'll see
+
+I'm a trailer park superstar
+All the single mamas love my car
+I fix it up and drive it good
+I got six trophies painted onto the hood
+
+[Riff Break]
+
+[Spoken / Half-Sung Breakdown]
+Got the best-looking mullet...
+A mini-fridge on my mower.
+I got the loudest ride,
+And I love to show her.
+
+[Verse 3]
+Friday night, everybody's heading downtown
+But they know where to find me when the sun goes down
+Parked by the fence with the headlights on
+Cold beer in my hand and my senses all gone
+
+[Final Chorus]
+I'm a trailer park superstar
+Everybody 'round here knows my car
+I'm super famous in West Tennessee
+Come to the county derby and you'll see
+
+I'm a trailer park superstar
+All the single mamas love my car
+I fix it up and drive it good
+I got six trophies painted onto the hood
+```
+
+**Processing:** −15.8 → −16.1 LUFS (true peak −3.4 dBTP), no tail silence to trim.
+
+**Note:** "Hell, the whole damn county" and the drinking in verse 3 (parked, not driving) add to the language and alcohol tally for the content survey. "West Tennessee" is the station's first real-world place; the game's own places (Rust City, Snapper Bayou...) could stand in if the radio should stay inside the game's world.
+
+### Welcome to Nowhere
+
+The station's breather: a mid-tempo small-town song where having nowhere to go turns out to feel like freedom. Its "where we drive real slow" is a deliberate counterpoint to the rest of the set.
+
+**Style:**
+
+```
+Melodic early-2000s Southern punk / heartland punk rock, around 135 BPM. Warm crunchy electric guitars with jangly melodic leads, steady driving bass, live drums with a relaxed groove, slightly raspy male vocals, and a big emotional sing-along chorus. Starts understated and gradually builds. Nostalgic small-town Americana atmosphere: empty main streets, old diners, gas stations, Friday night football, pickup trucks, neon signs and endless quiet roads. Sincere without becoming sentimental or country-ballad-like. Include a short melodic guitar instrumental and a stripped-down breakdown before an uplifting final chorus. The narrator discovers that having nowhere to go can actually feel like freedom. Gritty garage-punk character, natural live-band feel, polished video-game soundtrack production. No metal, no emo, no modern pop, no glossy arena rock, no country ballad.
+```
+
+**Lyrics:**
+
+```
+[Verse 1]
+Population eight hundred and two
+One gas station and a barbecue
+Main Street closes at half past nine
+There's nothing happening and that's just fine
+
+One old diner, one flashing sign
+Same three trucks parked there every night
+Everybody knows everybody's name
+Nothing ever happens and nobody complains
+
+[Verse 2]
+I came here running from the city lights
+Thought I'd stay a week, maybe just one night
+But the road got quiet and the sky got wide
+And nobody cared where I'd been or asked why
+
+There's an old man sitting outside the country store
+He's been sitting there since nineteen eighty-four
+He waved at me like we'd been friends for years
+I pulled up beside him and bought him a beer
+
+[Chorus]
+Welcome to Nowhere
+We got nowhere to go, nowhere to be
+Come for a slow drive and you'll see
+Welcome to Nowhere
+
+There's nowhere to go
+Welcome to Nowhere
+Where we drive real slow
+
+[Instrumental Break Slow jangly guitar riff]
+
+[Verse 3]
+There's a Friday night game at the high school field
+Everybody's there, keeping it real
+Kids in the bleachers, trucks in a line
+Everybody's watching the game tonight
+
+The diner stays open late till a quarter past ten
+Then everybody heads home again
+Tomorrow morning it'll all be the same
+Thats just great, theres no one to complain
+
+[Chorus]
+Welcome to Nowhere
+We got nowhere to go, nowhere to be
+Come for a slow drive and you'll see
+Welcome to Nowhere
+
+There's nowhere to go
+Welcome to Nowhere
+Where we drive real slow
+
+[Outro]
+Population eight hundred and two
+One gas station and a barbecue
+```
+
+**Processing:** −15.7 → −16.1 LUFS (true peak −4.5 dBTP), no tail silence to trim.
+
+**Note:** the cleanest song on the station so far (one passing beer). It would also suit the menus, if the radio ever picks songs by context.
+
+### Gas Station Romance
+
+The second love song, sweeter than My Baby Loves My Truck: a 2 AM meet-cute at a gas station that turns into a night drive.
+
+**Style:**
+
+```
+Mid-tempo melodic Southern punk / garage rock, around 145 BPM. Crunchy guitars, warm overdriven bass, punchy live drums, slightly raspy male vocals, catchy romantic chorus, subtle twang and blues-rock guitar touches. Sincere working-class romance at a lonely gas station at 2 AM. Starts intimate and builds into a big sing-along chorus. Short melodic guitar solo. Gritty, warm, nostalgic, funny in places but genuinely romantic. Early-2000s punk/garage production, no emo, no pop gloss, no country ballad.
+```
+
+**Lyrics:**
+
+```
+[Verse 1]
+Two in the morning at the Texaco
+You were buying cigarettes, I was laying low
+You had a red shirt and a lipstick smile
+I said, "Where you going?" You said, "Lets drive for awhile"
+
+I had ten bucks and you had five
+We put it in the tank and went for a drive
+We cruised for awhile crossed the county line
+Man this feels right and you're so fine
+
+[Chorus]
+Gas station romance
+Two hearts and a second chance
+Coffee's hot and the night's still young
+Lets keep cruising lets keep driving on
+
+Gas station romance
+Falling in love by the highway lights
+You got me, baby, and I got you
+Lets keep cruising its what we do
+
+[Verse 2]
+We stopped for coffee at a place down the road
+I stole your fries and you stole my coat
+You said, "Your truck is a piece of trash"
+I said, "Yeah, but baby, you make it first class"
+
+Sun came up somewhere past County Line
+You fell asleep with your hand in mine
+I pulled over but you didn't wake
+I hurried back so we could make
+
+[Chorus]
+Gas station romance
+Two hearts and a second chance
+Coffee's hot and the night's still young
+Lets keep cruising lets keep driving on
+
+Gas station romance
+Falling in love by the highway lights
+You got me, baby, and I got you
+Lets keep cruising its what we do
+
+[Guitar Solo]
+
+[Chorus]
+Gas station romance
+Two hearts and a second chance
+Coffee's hot and the night's still young
+Lets keep cruising lets keep driving on
+
+Gas station romance
+Falling in love by the highway lights
+You got me, baby, and I got you
+Lets keep cruising its what we do
+```
+
+**Processing:** −15.4 → −16.1 LUFS (true peak −3.7 dBTP), no tail silence to trim.
+
+**Note:** "Texaco" is a real brand (the house style says none). A song naming a gas station chain in passing is probably harmless, but the safe fix is a re-take with an invented name ("the Gas-N-Go"), which also fits the game's own stations. "Buying cigarettes" adds a tobacco reference to the content survey.
+
+### She Left Me at the Truck Stop
+
+The breakup song, and the other half of Gas Station Romance: she takes his money, his jacket and his truck. Country-punk with the heartbreak played for laughs. The shortest song on the station.
+
+**Style:**
+
+```
+Fast-ish country-punk / Southern garage rock, around 155 BPM. Twangy distorted electric guitar, crunchy rhythm guitar, driving bass, punchy live drums, slightly nasal/raspy male vocals, catchy bittersweet chorus. Roadside heartbreak with humor underneath genuine frustration. Occasional country-rock guitar fills but fundamentally punk. Build from restrained verses into a loud chorus, short twangy guitar break, comedic spoken ending. Gritty early-2000s production, no polished country-pop, no emo, no ballad.
+```
+
+**Lyrics:**
+
+```
+[Verse 1]
+She said she needed money for the road
+I lent her twenty and let her wear my coat
+She said she'd be right back had to make a call
+Then she snuck out and she took my truck
+
+I watched her disappear beneath the sign
+She didn't even wave or say a goodbye
+I stood there with a coffee in my hand
+Trying to figure out where I went wrong again
+
+[Chorus]
+She left me at the truck stop
+Somewhere outside of town
+She took my money my jacket and my keys
+And she never turned around
+
+She left me at the truck stop
+Underneath the neon light
+Now I'm drinking bad coffee
+Tryna to make it through the night
+
+[Verse 2]
+I asked the waitress if she'd seen her go
+She said, "Oh Honey, I don't know"
+I said, "I hope she comes back"
+She said, "They never do and that's a fact"
+
+I must be crazy still wanna try my luck
+Even though my phones dead and I lost my truck
+I can't stop thinking bout the way she moves
+Losing all of that is killing my mood
+
+[Chorus]
+She left me at the truck stop
+Somewhere outside of town
+She took my money my jacket and my keys
+And she never turned around
+
+She left me at the truck stop
+Underneath the neon light
+Now I'm drinking bad coffee
+Tryna to make it through the night
+
+[Instrumental / Guitar Break]
+
+[Final Chorus]
+She left me at the truck stop
+Somewhere outside of town
+She took my money my jacket and my keys
+And she never turned around
+
+She left me at the truck stop
+Underneath the neon light
+Now I'm drinking bad coffee
+Tryna to make it through the night
+```
+
+**Processing:** already at −16.1 LUFS (true peak −3.8 dBTP), no tail silence to trim. Suno's download was named "She Left Me at the Truck.mp3"; the file in the game uses the full title.
+
+**Note:** clean: bad coffee is the strongest drink in it.
+
 ## Ideas for the next songs
 
 Each needs lyrics, then a style prompt from the template above.
 
-- **Goonling Lullaby (Don't Cross the Road):** the variation song. A slow country waltz with pedal steel, sung deadpan by a goon parent warning their kid about the road ("Your uncle tried it Tuesday / Now he's a puddle on the overpass"). It breaks the tempo on purpose, so play it rarely: one in the set, never two slow songs.
+- **Goonling Lullaby (Don't Cross the Road):** the variation song. A slow country waltz with pedal steel, sung deadpan by a goon parent warning their kid about the road ("Your uncle tried it Tuesday / Now he's a puddle on the overpass"). It breaks the tempo on purpose; the set already has two mid-tempo songs, so it would need one of them to go, or to be the station's single novelty track.
 - **Route Nowhere:** surf rock with twangy reverb guitar; a road with no end and no brakes.
 - **Hubcap Rodeo:** rockabilly; the Scrap Gang's wheels as rodeo bulls.
 - **Pit Stop Romance:** ska-punk; falling for the Pit Shop mechanic between legs of a Marathon.

@@ -1,0 +1,19 @@
+[remap]
+
+importer="oggvorbisstr"
+type="AudioStreamOggVorbis"
+uid="uid://hqhap6v8lx41"
+path="res://.godot/imported/Cheap Beer, Premium Gas.ogg-3884d45cf0fb063a21908db324d4e215.oggvorbisstr"
+
+[deps]
+
+source_file="res://sound/radio/gooncrusher/songs/Cheap Beer, Premium Gas.ogg"
+dest_files=["res://.godot/imported/Cheap Beer, Premium Gas.ogg-3884d45cf0fb063a21908db324d4e215.oggvorbisstr"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4
