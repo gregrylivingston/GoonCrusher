@@ -9,8 +9,12 @@ The record of every segment that plays between songs on GoonCrusher Radio: its f
 | Goon-B-Gone | `sound/radio/gooncrusher/ads/ad_goon_b_gone.ogg` | 0:57 | ad |
 | Grunt, Grunt and Hubcap | `sound/radio/gooncrusher/ads/ad_law_firm.ogg` | 0:33 | ad |
 | Pete's Pit Shop | `sound/radio/gooncrusher/ads/ad_pit_shop.ogg` | 0:36 | ad |
+| Big Earl's Tire Barn | `sound/radio/gooncrusher/ads/ad_tires.ogg` | 0:42 | ad |
+| Gas N Go | `sound/radio/gooncrusher/ads/ad_gas_n_go.ogg` | 0:30 | ad (sung jingle) |
+| Fender Bender Mutual | `sound/radio/gooncrusher/ads/ad_insurance.ogg` | 1:02 | ad |
+| The Lucky Lug Nut | `sound/radio/gooncrusher/ads/ad_slot_parlour.ogg` | 0:32 | ad (sung) |
 
-**Segment odds:** with only three ads, `station.json` has `segment_chance` at 0.25: an ad after about one song in four, and the same ad roughly once an hour. Raise it toward 0.6 as idents and talk arrive.
+**Segment odds:** with seven ads and no idents or talk, `station.json` has `segment_chance` at 0.35: an ad after about one song in three, and any one ad roughly once every 70 minutes. Raise it toward 0.6 as idents and talk arrive.
 
 ## Writing segments that generate well
 
@@ -34,6 +38,8 @@ The first three ads (Goon-B-Gone, Grunt, Grunt and Hubcap, Pete's Pit Shop) came
 - **Opening and ending:** no more opening question lists, and no more fast disclaimers for a while.
 - **Music:** a different genre and tempo each time, and sometimes none (a skit with room sound, an a cappella jingle).
 - **Tool:** if spoken ads still converge, a text-to-speech tool with picked voices (and the music bed from Suno, mixed under) gives full control of who speaks.
+
+The second batch was written to these rules (each a different format: an auction chant, a sung jingle, a guided meditation, a lounge song; see the entries below). Four of five came out well enough to use. The fifth, a two-voice dialogue skit (SplatMaster 3000, a couple arguing in a car), did not: **dialogue skits don't work in Suno**. Make them with text-to-speech or skip them.
 
 ## Goon-B-Gone
 
@@ -66,7 +72,7 @@ Not for use on goons, goon be gone does not remove goons, Do not drink goon be g
 
 A daytime-TV injury-lawyer ad for the goons' law firm.
 
-The script and direction below are the draft it was made from; the final take may differ slightly.
+The script and direction below are the draft it was made from, used without changes.
 
 **Script**
 
@@ -94,7 +100,7 @@ Grunt, Grunt and Hubcap, Attorneys at Law. We fight for the little guy, and the 
 
 A local car-shop spot with the owner's one-line cameo.
 
-The script and direction below are the draft it was made from; the final take may differ slightly.
+The script and direction below are the draft it was made from, used without changes.
 
 **Script**
 
@@ -119,3 +125,138 @@ No appointment needed, no questions asked.
 | Sound effects | Engine knock and sputter on "Engine knocking"; ratchet-wrench zips under "Dents, dings, tires"; a weird boing-clunk on "whatever that noise is"; an air-wrench burst before Pete speaks. |
 
 **Processing:** 36 s; −17.0 → −16.1 LUFS, Vorbis q4.
+
+## Big Earl's Tire Barn
+
+A tire sale as a livestock auction.
+
+The script and direction below are the draft it was made from, used without changes.
+
+**Script**
+
+```
+(fast rolling cattle auctioneer chant, rhythmic and breathless, words tumbling together)
+Hey who'll gimme four, four, four tires now five, now five, mud tires snow tires, who'll gimme four on the floor,
+Big Earl's Tire Barn, Big Earl's Tire Barn, tires that been on fire only once, do I hear twice, twice,
+buy three get the fourth one rollin round the lot somewhere, you find it you got it, goin once, goin twice,
+(gavel bang, then slow, proud and loud) SOLD. To the man with the bald tires.
+(slow, satisfied) Big Earl's Tire Barn.
+```
+
+**Direction**
+
+| | |
+|---|---|
+| Format | A livestock auction where the tires are the cattle. Max length 30 seconds. |
+| Voice | Big Earl as the auctioneer: male, 60s, Texan, a real cattle-auction chant, rhythmic filler syllables between the words. |
+| Tone and pace | Machine-gun fast and musical, riding the beat, never pausing for breath until the gavel. Then dead slow and proud for "SOLD". |
+| Music | Bluegrass breakdown: fast fiddle and banjo, upright bass, 160 BPM, stopping dead on the gavel. |
+| Suno prompt | `male Texas cattle auctioneer rapid rhythmic chant vocal, bluegrass breakdown, fast fiddle and banjo, upright bass, 160 BPM, music stops on a gavel bang, ends with a slow spoken SOLD` |
+| Sound effects | Crowd murmur under the chant; a tire bouncing on "rollin round the lot"; a gavel bang before "SOLD". |
+
+**Processing:** 42 s; −15.7 → −16.1 LUFS, Vorbis q4. Longer than the 30 s asked for: the chant ran on.
+
+## Gas N Go
+
+A fully sung 1970s western-swing jingle for the gas stations at the end of each race.
+
+The script and direction below are the draft it was made from, used without changes.
+
+**Script**
+
+```
+[Verse]
+When your needle's on E and the road is long
+There's a light up ahead and it's singing this song
+Gas and snacks and coffee hot
+Brewed last Tuesday, still a lot
+
+[Chorus]
+Gas N Go, Gas N Go
+At the end of the race and the end of the road
+Big sign shining, goons out front
+Gas N Go
+```
+
+**Direction**
+
+| | |
+|---|---|
+| Format | A complete sung regional radio jingle, no speaking at all. Max length 30 seconds. |
+| Voices | Female country singer, 30s, bright and twangy, with a small mixed choir answering on the chorus. |
+| Tone and pace | Sunny, homey, a little old-fashioned; sung completely sincerely, so "goons out front" lands as a normal feature. |
+| Music | 1970s western swing jingle: fiddle, pedal steel, walking upright bass, brushed drums, 120 BPM. |
+| Suno prompt | `female country singer, bright twangy lead vocal, small mixed choir harmonies on the chorus, 1970s regional radio jingle, western swing, fiddle, pedal steel, upright bass, brushed drums, 120 BPM, short, ends on a big held harmony` |
+| Sound effects | None needed; optionally a shop-door chime before the first line. |
+
+**Processing:** 30 s; −15.7 → −16.1 LUFS, Vorbis q4. Right on length: sung jingles keep time better than talk.
+
+## Fender Bender Mutual
+
+An insurance ad as a whispered guided meditation.
+
+The script and direction below are the draft it was made from, used without changes.
+
+**Script**
+
+```
+(very soft, slow, whispered guided meditation, long pauses between lines)
+Breathe in.
+And breathe out.
+Picture a wall. A rock. Deep water. That one cactus.
+Now let it go.
+Whatever you hit, Fender Bender Mutual is here for you.
+Unless it was a goon. Or near a goon. Or a goon was looking at it.
+Breathe in.
+We cover nothing.
+Breathe out.
+```
+
+**Direction**
+
+| | |
+|---|---|
+| Format | A guided-meditation app ad. The joke is delivered as calmly as everything else; no fast disclaimer. Max length 30 seconds. |
+| Voice | Female, 30s, soft breathy whisper, close to the mic, soothing and slow. |
+| Tone and pace | Very slow with long pauses. "That one cactus" gets the faintest hint of a sigh. "We cover nothing" is the gentlest line in the ad. |
+| Music | Ambient synth pads, a singing bowl, distant ocean waves, about 60 BPM, no drums. |
+| Suno prompt | `soft breathy female whispered spoken word, guided meditation, ambient synth pads, singing bowl, gentle ocean waves, very slow 60 BPM, calm and spacious, no drums, no singing` |
+| Sound effects | A singing-bowl ring at the start and on "We cover nothing"; the waves are enough otherwise. |
+
+**Processing:** 62 s; −18.1 → −16.5 LUFS (the whisper is peaky, so the limiter stopped it 0.4 dB short), Vorbis q4. Twice the 30 s asked for: the long pauses in the direction were taken literally. Cut "long pauses" from the direction for a shorter take.
+
+## The Lucky Lug Nut
+
+A smoky lounge song for a "casino" that turns out to be a vending machine.
+
+The script and direction below are the draft it was made from, used without changes.
+
+**Script**
+
+```
+[Verse, sung slow and sultry]
+Baby, feel that lucky feeling
+Spinning reels and stars on the ceiling
+Pull the lever, hear it ring
+At the Lucky Lug Nut, hubcaps are king
+
+[Chorus]
+Lucky, Lucky Lug Nut
+Win big
+(beat) or at least win medium
+
+(music stops, she speaks plainly, tired, breaking character) It's a vending machine behind the gas station, honey. Stop putting coins in it.
+```
+
+**Direction**
+
+| | |
+|---|---|
+| Format | A smoky late-night lounge song that collapses when the singer drops the act. Max length 30 seconds. |
+| Voice | Female, 40s, smoky sultry jazz singer, Rat Pack era; the spoken ending in her own tired, ordinary voice. |
+| Tone and pace | Slow and seductive; "or at least win medium" sung with full glamour as if it were the big finish. The spoken line is flat and weary. |
+| Music | Late-night jazz combo: brushed drums, upright bass, piano, muted trumpet, slow swing, 80 BPM. Stops dead before she speaks. |
+| Suno prompt | `smoky sultry female jazz singer, late night lounge, slow swing, brushed drums, upright bass, piano, muted trumpet, 80 BPM, band stops and she speaks one tired line at the end` |
+| Sound effects | A slot-reel whir on "Spinning reels"; a lever clunk and a little bell on "hear it ring"; one sad coin clink after "medium". |
+
+**Processing:** 32 s; −16.8 → −16.0 LUFS, Vorbis q4.

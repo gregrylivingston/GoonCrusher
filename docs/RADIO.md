@@ -18,7 +18,7 @@ This file has two halves: **for the audio author** (what to make, how to name an
 
 The default for a new save is **GoonCrusher Radio**. A station with no songs yet is hidden from the pickers, so Classical Lofi and Lofi appear once their first songs go in.
 
-**Songs so far** (lyrics, style prompts and ideas for more: `docs/RADIO_SONGS.md`): GoonCrusher Radio has *Crush Hour*, *Gooncrusher*, *Full Tank, Empty Head*, *My Baby Loves My Truck*, *Cheap Beer, Premium Gas*, *Trailer Park Superstar*, *Welcome to Nowhere*, *Gas Station Romance* and *She Left Me at the Truck Stop*. Between songs: three ads, *Goon-B-Gone*, *Grunt, Grunt and Hubcap* and *Pete's Pit Shop* (`docs/RADIO_SEGMENTS.md`); no idents or talk yet.
+**Songs so far** (lyrics, style prompts and ideas for more: `docs/RADIO_SONGS.md`): GoonCrusher Radio has *Crush Hour*, *Gooncrusher*, *Full Tank, Empty Head*, *My Baby Loves My Truck*, *Cheap Beer, Premium Gas*, *Trailer Park Superstar*, *Welcome to Nowhere*, *Gas Station Romance* and *She Left Me at the Truck Stop*. Between songs: seven ads (Goon-B-Gone, Grunt, Grunt and Hubcap, Pete's Pit Shop, Big Earl's Tire Barn, Gas N Go, Fender Bender Mutual, The Lucky Lug Nut) (`docs/RADIO_SEGMENTS.md`); no idents or talk yet.
 
 ### Folder layout
 
