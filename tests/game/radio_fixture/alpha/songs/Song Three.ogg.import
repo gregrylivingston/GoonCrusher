@@ -1,0 +1,19 @@
+[remap]
+
+importer="oggvorbisstr"
+type="AudioStreamOggVorbis"
+uid="uid://cnd2e75lb2wi7"
+path="res://.godot/imported/Song Three.ogg-ef57d026372c82a041591fd4f3748567.oggvorbisstr"
+
+[deps]
+
+source_file="res://tests/game/radio_fixture/alpha/songs/Song Three.ogg"
+dest_files=["res://.godot/imported/Song Three.ogg-ef57d026372c82a041591fd4f3748567.oggvorbisstr"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

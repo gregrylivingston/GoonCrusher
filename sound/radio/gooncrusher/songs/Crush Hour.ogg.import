@@ -1,0 +1,19 @@
+[remap]
+
+importer="oggvorbisstr"
+type="AudioStreamOggVorbis"
+uid="uid://bgdhh2old74ch"
+path="res://.godot/imported/Crush Hour.ogg-0b285aaa828fe6d283acffe8c923c7d1.oggvorbisstr"
+
+[deps]
+
+source_file="res://sound/radio/gooncrusher/songs/Crush Hour.ogg"
+dest_files=["res://.godot/imported/Crush Hour.ogg-0b285aaa828fe6d283acffe8c923c7d1.oggvorbisstr"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

@@ -12,7 +12,7 @@ This file is a map. The detail lives in `docs/`:
 - `docs/AI_DRIVER.md`: the AI driver, the playtest harness and tournaments.
 - `docs/PERFORMANCE.md`: the settings system, every option and preset, benchmarks and the latest numbers.
 - `docs/NATIVE.md`: the C++ GDExtension (godot-cpp, building, adding a class, exporting, port candidates).
-- `docs/RADIO.md`: the radio stations: what the audio author delivers (folders, format, naming, the DJ brief) and how `Radio` plays it.
+- `docs/RADIO.md`: the radio stations: what the audio author delivers (folders, format, naming, the DJ brief) and how `Radio` plays it. `docs/RADIO_SONGS.md`: the songs' lyrics, Suno style prompts, house style and ideas.
 - `docs/GAMEPLAY_SUGGESTIONS.md`: the roadmap: what is done (one line each), the open work packages and questions for the author.
 - `docs/TEST_SCOPE_TRANSITIONS.md`: the manual test checklist for menus, transitions and effects.
 

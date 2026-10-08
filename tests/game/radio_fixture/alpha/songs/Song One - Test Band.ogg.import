@@ -1,0 +1,19 @@
+[remap]
+
+importer="oggvorbisstr"
+type="AudioStreamOggVorbis"
+uid="uid://buqwwoph5rcf3"
+path="res://.godot/imported/Song One - Test Band.ogg-2a24fab19ed55b65c32db1033117c0cb.oggvorbisstr"
+
+[deps]
+
+source_file="res://tests/game/radio_fixture/alpha/songs/Song One - Test Band.ogg"
+dest_files=["res://.godot/imported/Song One - Test Band.ogg-2a24fab19ed55b65c32db1033117c0cb.oggvorbisstr"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

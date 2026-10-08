@@ -1,18 +1,19 @@
 extends GameTest
 
 #The radio (docs/RADIO.md): shuffle bags, station scanning, segment scheduling and switching.
-#Headless, so Audio.radio schedules but never loads or plays. Nothing writes audio/station:
-#tests call tune() directly and put the station back afterwards.
+#Behaviour is tested on a private Radio over tests/game/radio_fixture (tiny tones), so the tests
+#don't depend on which songs ship; a few tests check the shipped stations in sound/radio/.
+#Headless: the radio schedules but never loads or plays. Nothing writes audio/station.
+
+const FIXTURE := "res://tests/game/radio_fixture"
 
 var radio: Radio
-var saved: StringName
 
 func before_each():
-	radio = Audio.radio
-	saved = radio.station
-
-func after_each():
-	radio.tune(saved)
+	radio = Radio.new()
+	add_child_autofree(radio)
+	radio.scan(FIXTURE)
+	radio.tune(&"alpha")
 
 func test_bag_plays_everything_once_per_cycle():
 	var rng = RandomNumberGenerator.new()
@@ -37,23 +38,20 @@ func test_bag_edge_cases():
 	assert_null(RadioBag.new([]).next(), "an empty bag gives nothing")
 	var one = RadioBag.new(["solo"])
 	assert_eq(one.next(), "solo")
-	assert_eq(one.next(), "solo", "a one-item bag repeats it")
+	assert_eq(one.next(), "solo", "a one-song station repeats its song")
 
 func test_stations_are_scanned_in_order():
-	assert_true(radio.stations.has(&"gooncrusher"))
-	assert_eq(radio.order.slice(0, 3), [&"gooncrusher", &"classical_lofi", &"lofi"])
-	var ids = radio.stationIds()
-	assert_eq(ids.back(), Radio.OFF, "Radio Off is the last choice")
-	assert_eq(radio.stationName(&"gooncrusher"), "GoonCrusher Radio")
+	assert_eq(radio.order, [&"alpha", &"beta"], "a station without songs is left out")
+	assert_eq(radio.stationIds(), [&"alpha", &"beta", Radio.OFF], "Radio Off is the last choice")
+	assert_eq(radio.stationName(&"alpha"), "Alpha FM")
 	assert_eq(radio.stationName(Radio.OFF), "Radio Off")
 	for option in radio.stationOptions(): assert_eq(typeof(option[0]), TYPE_STRING, "options match the String setting")
 
-func test_every_station_has_songs_and_valid_config():
-	for id in radio.order:
-		var station: RadioStation = radio.stations[id]
-		assert_true(station.hasSongs(), "%s has no songs" % id)
-		assert_between(station.segmentChance, 0.0, 1.0)
-		for path in station.files["song"]: assert_true(ResourceLoader.exists(path), path + " is not imported")
+func test_folders_are_read():
+	var alpha: RadioStation = radio.stations[&"alpha"]
+	assert_eq(alpha.files["song"].size(), 3)
+	for kind in ["ident", "talk", "ad"]: assert_eq(alpha.files[kind].size(), 1, kind)
+	assert_eq(radio.stations[&"beta"].short, "B", "short defaults to the name's initials")
 
 func test_song_names_come_from_the_file():
 	var station = RadioStation.new()
@@ -78,7 +76,6 @@ func test_segments_follow_chance_and_weights():
 	for i in 50: assert_eq(station.pickSegment().kind, "ident", "weight 0 turns a kind off")
 
 func test_a_song_always_follows_a_segment():
-	radio.tune(&"gooncrusher")
 	for i in 100:
 		var plan = radio.planAfterSong()
 		assert_between(plan.size(), 1, 2)
@@ -88,26 +85,32 @@ func test_a_song_always_follows_a_segment():
 func test_tuning_queues_an_ident_then_a_song():
 	radio.tune(Radio.OFF)
 	assert_true(radio.queue.is_empty(), "Radio Off queues nothing")
-	radio.tune(&"lofi")
-	assert_eq(radio.station, &"lofi")
+	radio.tune(&"beta")
+	assert_eq(radio.station, &"beta")
 	assert_eq(radio.queue.size(), 2)
 	assert_eq(radio.queue[0].kind, "ident")
 	assert_eq(radio.queue[1].kind, "song")
-	assert_true(radio.queue[1].path.begins_with("res://sound/radio/lofi/songs/"))
+	assert_true(radio.queue[1].path.begins_with(FIXTURE + "/beta/songs/"))
 
 func test_an_unknown_station_falls_back_to_the_first():
 	radio.tune(&"no_such_station")
-	assert_eq(radio.station, radio.order[0])
+	assert_eq(radio.station, &"alpha")
 
 func test_cycle_wraps_through_off():
 	var ids = radio.stationIds()
-	radio.tune(ids.back())
-	var index = ids.find(radio.station)
-	assert_eq(ids[posmod(index + 1, ids.size())], ids[0], "after Radio Off comes the first station")
+	var index = ids.find(Radio.OFF)
+	assert_eq(ids[posmod(index + 1, ids.size())], &"alpha", "after Radio Off comes the first station")
 
-func test_station_setting_exists():
-	assert_eq(Settings.DEFAULTS["audio/station"], "gooncrusher")
-	assert_true(radio.stations.has(StringName(Settings.DEFAULTS["audio/station"])), "the default station exists")
+#---------- the shipped stations ----------
+
+func test_shipped_stations_are_valid():
+	var shipped: Radio = Audio.radio
+	assert_true(shipped.stations.has(StringName(Settings.DEFAULTS["audio/station"])), "the default station has songs")
+	for id in shipped.order:
+		var station: RadioStation = shipped.stations[id]
+		assert_between(station.segmentChance, 0.0, 1.0)
+		for kind in station.files:
+			for path in station.files[kind]: assert_true(ResourceLoader.exists(path), path + " is not imported")
 
 func test_music_bus_ducks_under_voice():
 	var bus = AudioServer.get_bus_index("Music")
@@ -116,5 +119,5 @@ func test_music_bus_ducks_under_voice():
 		var effect = AudioServer.get_bus_effect(bus, i)
 		if effect is AudioEffectCompressor && effect.sidechain == &"Voice": ducks = true
 	assert_true(ducks, "the Music bus has a compressor keyed from Voice")
-	assert_true(radio.lowpass >= 0, "the pause muffle is on the Music bus")
-	assert_false(AudioServer.is_bus_effect_enabled(bus, radio.lowpass), "the muffle starts off")
+	assert_true(Audio.radio.lowpass >= 0, "the pause muffle is on the Music bus")
+	assert_false(AudioServer.is_bus_effect_enabled(bus, Audio.radio.lowpass), "the muffle starts off")
