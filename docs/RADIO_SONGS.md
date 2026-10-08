@@ -31,6 +31,7 @@ Fast, chaotic 2000s-style punk rock, aggressive distorted electric guitars, punc
 | Gooncrusher | `sound/radio/gooncrusher/songs/Gooncrusher.ogg` | 3:11 | punk anthem (prompt not recorded) |
 | Full Tank, Empty Head | `sound/radio/gooncrusher/songs/Full Tank, Empty Head.ogg` | 3:06 | punk road song (prompt not recorded) |
 | My Baby Loves My Truck | `sound/radio/gooncrusher/songs/My Baby Loves My Truck.ogg` | 3:15 | Southern pop-punk / garage punk love song, 160 BPM |
+| Cheap Beer, Premium Gas | `sound/radio/gooncrusher/songs/Cheap Beer, Premium Gas.ogg` | 2:59 | blue-collar weekend punk (prompt not recorded) |
 
 ### Crush Hour
 
@@ -395,6 +396,85 @@ It's like we're love making
 **Processing:** −15.1 → −16.1 LUFS (true peak −4.3 dBTP), no tail silence to trim.
 
 **Note:** the chorus's innuendo ("vibrating, shaking ... love making") and two "damn"s make this the edgiest song on the station. It's mild, but worth a thought for the store page's content questions (Steam asks about sexual content and language), and it rules the song out of anything aimed at kids.
+
+### Cheap Beer, Premium Gas
+
+The payday song: broke, Friday night, a full tank and nowhere to be. Like My Baby Loves My Truck, it's about the car culture more than the goons (none appear).
+
+**Style:** not recorded. If you still have it, paste it here; otherwise start from the house template.
+
+**Lyrics:**
+
+```
+[Verse 1]
+Paycheck's gone by Friday night
+Got enough for gas and a six-pack light
+Rent's due Monday, that's alright
+Tonight we're gonna take a drive
+
+[Chorus]
+Cheap beer and premium gas
+We fill up and we drive real fast
+Cheap beer and premium gas
+Put the pedal to the floor and get ready to pass
+Cheap beer and premium gas
+It's the weekend and we're looking for gas
+Cheap beer and premium gas
+We're tearing up the blacktop and raising a glass
+
+[Verse 2]
+Twenty dollars says we'll make it far
+Fill that tank and fire up the car
+Don't need money, don't need class
+Just cheap beer and premium gas
+
+[Pre-Chorus]
+Turn it up loud
+Let the engine sing
+It's Friday night
+Lets fill up this thing
+
+[Chorus]
+Cheap beer and premium gas
+We fill up and we drive real fast
+Cheap beer and premium gas
+Put the pedal to the floor and get ready to pass
+Cheap beer and premium gas
+It's the weekend and we're looking for gas
+Cheap beer and premium gas
+We're tearing up the blacktop and raising a glass
+
+[Verse 3]
+We got no plans and we got no boss
+Lets take a wrong turn and get lost
+There's a neon sign and a road up ahead
+We'll keep driving till we wind up dead
+
+[Bridge]
+Don't got a mansion
+Don't got a yacht
+Don't got a million
+Don't need a lot
+
+Give me four tires and somewhere to go
+Give me twenty bucks and a good looking doe
+
+[Instrumental Break / Guitar Solo]
+
+[Final Chorus]
+Cheap beer and premium gas
+We fill up and we drive real fast
+Cheap beer and premium gas
+Put the pedal to the floor and get ready to pass
+Cheap beer and premium gas
+It's the weekend and we're looking for gas
+Cheap beer and premium gas
+We're tearing up the blacktop and raising a glass
+```
+
+**Processing:** −15.9 → −16.1 LUFS (true peak −4.2 dBTP), 0.3 s of tail silence trimmed.
+
+**Note:** beer and driving fast sit in the same chorus ("raising a glass" while "tearing up the blacktop"), which reads as drinking and driving. It's played for laughs, but rating boards flag alcohol references and especially alcohol paired with driving, and Steam's content survey asks about it. Worth deciding before launch whether this one ships, gets a tweaked line (e.g. the beer waits for the destination), or stays as is with the content descriptor.
 
 ## Ideas for the next songs
 
