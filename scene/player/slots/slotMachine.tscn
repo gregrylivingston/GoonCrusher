@@ -1,13 +1,11 @@
-[gd_scene load_steps=18 format=3 uid="uid://c1rm1o0bg6ous"]
+[gd_scene load_steps=16 format=3 uid="uid://c1rm1o0bg6ous"]
 
 [ext_resource type="StyleBox" uid="uid://cgcjmjg4qdbt2" path="res://style/style_box_semitransparent.tres" id="1_83yg1"]
 [ext_resource type="Script" path="res://scene/player/slots/slotMachine.gd" id="1_lo6kv"]
 [ext_resource type="StyleBox" uid="uid://dp4qdn22d3ua6" path="res://style/style_box_thick.tres" id="3_ns1em"]
 [ext_resource type="PackedScene" uid="uid://dkwmaqrde7ne5" path="res://scene/player/slots/slot_row.tscn" id="4_e175g"]
 [ext_resource type="Shader" path="res://shader/3dtext.gdshader" id="5_iv5oe"]
-[ext_resource type="AudioStream" uid="uid://dj5d70cqn1f2t" path="res://sound/fx/slotmachine/slotmachine.mp3" id="6_bvdc6"]
 [ext_resource type="Texture2D" uid="uid://dlgpwix6wtodc" path="res://shader/emtpywhitegradient.tres" id="6_falni"]
-[ext_resource type="AudioStream" uid="uid://cv82k8fnavddt" path="res://sound/fx/slotmachine/slotlever.mp3" id="6_pqh6i"]
 [ext_resource type="Texture2D" uid="uid://c4jtoaca8fpkl" path="res://texture/icon/gem_flat.svg" id="7_wnnpu"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wfh4x"]
@@ -175,18 +173,6 @@ theme_override_font_sizes/font_size = 20
 disabled = true
 text = "Claim"
 alignment = 1
-
-[node name="slotMahineSound" type="AudioStreamPlayer" parent="."]
-stream = ExtResource("6_bvdc6")
-bus = &"FX"
-
-[node name="slotMahineLever" type="AudioStreamPlayer" parent="."]
-stream = ExtResource("6_pqh6i")
-pitch_scale = 0.6
-bus = &"FX"
-
-[node name="slotMachineBonusSound" type="AudioStreamPlayer" parent="."]
-bus = &"FX"
 
 [connection signal="pressed" from="Panel/Panel/VBoxContainer/play_button" to="." method="_on_play_button_pressed"]
 [connection signal="pressed" from="Panel/Panel/VBoxContainer/reroll_button" to="." method="_on_reroll_button_pressed"]

@@ -36,6 +36,7 @@ enum mode { MOVE, ATTACK, IDLE, DEAD, PREPAREATTACK } #read by the AI driver (my
 const RESIST_COOLDOWN := 0.4   #a resisted crush can't bounce the car again this soon
 const GIANT_SPEED := 1.5       #giants were 4x in the demo, too much once goons have specials
 const GIANT_SCALE := 1.6       #multiplies the scene's own scale
+const DEATH_SOUND_RANGE := 1400.0 #px from the car: about a screen at the widest zoom
 
 var isGiant: bool = false
 var def: Dictionary
@@ -302,11 +303,13 @@ func destroy(cause: StringName = &"crush"):
 	var f = fx()
 	if f && cause != &"drown":
 		f.crushed(self, cause, killedFrom)
-	#death sounds go through the shared, limited pool (Max Sound Effects); their own players
-	#are only used as data, 1-9 dB over the pool (two layers per crush, so they sit under the radio); a giant's are an octave-ish lower.
-	var pitch := 0.72 if isGiant else 1.0
-	Audio.play($AudioStreamPlayer2D2.stream, 1.0 + randf_range(0.0,5.0), pitch * randf_range(0.95,1.05))
-	Audio.play($AudioStreamPlayer2D.stream, 1.0 + randf_range(0.0,8.0), pitch * randf_range(0.95,1.05))
+	#death sounds go through the shared, limited pool (Max Sound Effects); their own players are only
+	#used as data. The pool isn't positional, so only crushes and blasts near the car sound: goons drowning,
+	#blowing themselves up or dying anywhere else in the world stay quiet. A giant's are an octave-ish lower.
+	if cause != &"drown" && cause != &"self" && is_instance_valid(Root.playerCar) && global_position.distance_to(Root.playerCar.global_position) < DEATH_SOUND_RANGE:
+		var pitch := 0.72 if isGiant else 1.0
+		Audio.play($AudioStreamPlayer2D2.stream, randf_range(-6.0, -2.0), pitch * randf_range(0.95,1.05))
+		Audio.play($AudioStreamPlayer2D.stream, randf_range(-8.0, -2.0), pitch * randf_range(0.95,1.05))
 	if f && cause != &"drown" && is_instance_valid(Root.playerCar) && randi_range(0,200) + Root.playerCar.clover > 190:
 		f.dropLater(global_position, dropTable())
 	queue_free()

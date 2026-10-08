@@ -23,8 +23,6 @@ func _ready():
 	SlotSymbols.bonus = prizeTier
 	restyle()
 	Root.playerCar.slotMachines += 1
-	$slotMachineBonusSound.stream = load(winSound[ randi_range( 0 , winSound.size() -1 ) ] )
-	$slotMachineBonusSound.play()
 	dim.color = Color(0, 0, 0, 0)
 	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -41,11 +39,7 @@ func _ready():
 	$Panel/Panel/VBoxContainer/play_button.disabled = true
 	if is_instance_valid(Root.playerCar):
 		Root.playerCar.playPurseRewardAudio()
-	$slotMahineSound.volume_db = -12.0
-	$slotMahineLever.volume_db = 4.0
-	$slotMachineBonusSound.volume_db = 4.0
 	await get_tree().create_timer( slotDelayTime ).timeout
-	$slotMahineSound.play()
 	isReady = true
 	$Panel/Panel/VBoxContainer/play_button.disabled = false
 	delayKeyPress = false
@@ -142,38 +136,19 @@ func syncButtons() -> void:
 	claimButton.visible = not claimButton.disabled
 	spinButton.visible = not claimButton.visible
 
-var bonusSound = [
-	"res://sound/fx/slotmachine/bonus_1.mp3",
-	"res://sound/fx/slotmachine/bonus_2.mp3",
-	"res://sound/fx/slotmachine/bonus_3.mp3"
-]
-
-var winSound = [
-	"res://sound/fx/slotmachine/winner_1.mp3",
-	"res://sound/fx/slotmachine/winner_2.mp3",
-	"res://sound/fx/slotmachine/winner_3.mp3",
-	"res://sound/fx/slotmachine/winner_4.mp3",
-	"res://sound/fx/slotmachine/winner_5.mp3"
-]
-
+#no spin, lever or win sounds (they clashed with the radio): each reel's stop clanks (SlotRow.settle)
 func _on_play_button_pressed():
 	if not isReady: return null
 	if not betPaid:
 		betPaid = true
 		Root.playerCar.coin -= SlotSymbols.BETS[SlotSymbols.bet]
-	$slotMahineLever.play()
 	if activeSlots.size() > 0:   #keep playing
-		$slotMachineBonusSound.stream = load(bonusSound[ randi_range( 0 , bonusSound.size() -1 ) ] )
-		$slotMachineBonusSound.play()
 		activeSlots[0].stopSpinning()
 		inactiveSlots.push_back( activeSlots.pop_front() )
 	if activeSlots.size() == 0:   #slots are over
-		$slotMahineSound.stop()
 		if Root.playerCar.gem > 0: $Panel/Panel/VBoxContainer/reroll_button.disabled = false
 		$Panel/Panel/VBoxContainer/claim_button.disabled = false
 		$Panel/Panel/VBoxContainer/play_button.disabled = true
-		$slotMachineBonusSound.stream = load(winSound[ randi_range( 0 , winSound.size() -1 ) ] )
-		$slotMachineBonusSound.play()
 		isReady = false
 
 		
@@ -192,7 +167,6 @@ func _on_reroll_button_pressed():
 		Root.playerCar.playPurseRewardAudio()
 	await get_tree().create_timer( slotDelayTime ).timeout
 	$Panel/Panel/VBoxContainer/play_button.disabled = false
-	$slotMahineSound.play()
 	isReady = true
 
 var countdownScreen = load("res://scene/player/countdown.tscn")

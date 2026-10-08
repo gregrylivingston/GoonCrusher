@@ -210,7 +210,9 @@ func buildGameSummary():
 	SaveManager.addCoins(paid + firstClear.coin)
 	SaveManager.addGems(car.gem + firstClear.gem)
 	var unlocked := Unlocks.refresh() #after the crushes and records are in, so their conditions count
-	if not unlocked.is_empty(): addRow("Unlocked", ", ".join(unlocked.map(Pickups.displayName)), true, "NEW PICKUP")
+	if not unlocked.is_empty(): #the count on the row, the names wrapped under it: a long list once ran the ticket off the screen
+		addRow("Unlocked", str(unlocked.size()), true, "NEW PICKUP")
+		addWrapped(listed(unlocked.map(Pickups.displayName), 8))
 	Root.earnedCoins = paid + firstClear.coin
 	Root.earnedGems = car.gem + firstClear.gem
 	SaveManager.save_character_data()
@@ -223,8 +225,8 @@ func buildGameSummary():
 	addContinue("CONTINUE", "Any button speeds up the count")
 	var notes = []
 	if progressNote != "": notes.push_back(progressNote)
-	if not discovered.is_empty(): notes.push_back("New in the Goonopedia: " + ", ".join(discovered))
-	if not blueprinted.is_empty(): notes.push_back("Blueprint: a free upgrade to " + ", ".join(blueprinted))
+	if not discovered.is_empty(): notes.push_back("New in the Goonopedia: " + listed(discovered, 4))
+	if not blueprinted.is_empty(): notes.push_back("Blueprint: a free upgrade to " + listed(blueprinted, 4))
 	var next := Unlocks.nextUnlock()
 	if unlocked.is_empty() && not next.is_empty() && Unlocks.canAfford(next.uid): notes.push_back("Ready to buy in the Goonopedia: " + next.name)
 	var advice = Settings.take_advisor_message()
@@ -312,6 +314,19 @@ func ink(text: String, size: int, color: Color, font: Font, centered := false) -
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	return label
+
+#"a, b, c and 5 more": keeps a list short enough for one line or two
+static func listed(names: Array, most: int) -> String:
+	if names.size() <= most: return ", ".join(names)
+	return "%s and %d more" % [", ".join(names.slice(0, most)), names.size() - most]
+
+#a centred line under the row before it that wraps inside the ticket (at most 3 lines), revealed in turn
+func addWrapped(text: String) -> void:
+	var label = ink(text, 16, FADED_INK, HudTheme.BODY, true)
+	label.max_lines_visible = 3
+	label.visible = false
+	rows.add_child(label)
+	reveal.push_back(label)
 
 #"TOP SPEED ........ 61 MPH", with a NEW BEST badge when a record fell
 func addRow(name: String, value: String, isBest: bool, badgeText := "NEW BEST") -> void:
@@ -422,7 +437,9 @@ func addFooterNote(text: String) -> void:
 	label.theme_type_variation = "HintLabel"
 	label.text = text
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.position = Vector2(300, 860)
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART #wraps under the button instead of running off the screen
+	label.max_lines_visible = 2
+	label.position = Vector2(300, 856)
 	label.size = Vector2(1000, 30)
 	get_node("ticketRoot").add_child(label)
 
