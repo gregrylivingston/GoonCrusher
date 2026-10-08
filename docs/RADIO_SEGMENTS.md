@@ -13,8 +13,20 @@ The record of every segment that plays between songs on GoonCrusher Radio: its f
 | Gas N Go | `sound/radio/gooncrusher/ads/ad_gas_n_go.ogg` | 0:30 | ad (sung jingle) |
 | Fender Bender Mutual | `sound/radio/gooncrusher/ads/ad_insurance.ogg` | 1:02 | ad |
 | The Lucky Lug Nut | `sound/radio/gooncrusher/ads/ad_slot_parlour.ogg` | 0:32 | ad (sung) |
+| DJ: Morning show | `sound/radio/gooncrusher/talk/talk_morning_show.ogg` | 0:21 | talk |
+| DJ: Traffic | `sound/radio/gooncrusher/talk/talk_traffic.ogg` | 0:21 | talk |
+| DJ: Weather | `sound/radio/gooncrusher/talk/talk_weather.ogg` | 0:15 | talk |
+| DJ: Sports desk | `sound/radio/gooncrusher/talk/talk_sports.ogg` | 0:21 | talk |
+| DJ: Listener letter | `sound/radio/gooncrusher/talk/talk_listener_letter.ogg` | 0:20 | talk |
+| DJ: Song request | `sound/radio/gooncrusher/talk/talk_song_request.ogg` | 0:19 | talk |
+| DJ: Lost and found | `sound/radio/gooncrusher/talk/talk_lost_and_found.ogg` | 0:18 | talk |
+| DJ: Safety minute | `sound/radio/gooncrusher/talk/talk_safety_minute.ogg` | 0:23 | talk |
+| DJ: Community board | `sound/radio/gooncrusher/talk/talk_community_board.ogg` | 0:25 | talk |
+| DJ: Station promo | `sound/radio/gooncrusher/talk/talk_station_promo.ogg` | 0:18 | talk |
+| DJ: DJ confession | `sound/radio/gooncrusher/talk/talk_dj_confession.ogg` | 0:25 | talk |
+| DJ: Contest | `sound/radio/gooncrusher/talk/talk_contest.ogg` | 0:17 | talk |
 
-**Segment odds:** with seven ads and no idents or talk, `station.json` has `segment_chance` at 0.35: an ad after about one song in three, and any one ad roughly once every 70 minutes. Raise it toward 0.6 as idents and talk arrive.
+**Segment odds:** with seven ads and twelve talk segments, `station.json` has `segment_chance` at 0.5: something plays between about every other pair of songs, talk twice as often as an ad (weights talk 4, ad 2). Idents (weight 3) join the mix when they arrive.
 
 ## Writing segments that generate well
 
@@ -37,9 +49,23 @@ The first three ads (Goon-B-Gone, Grunt, Grunt and Hubcap, Pete's Pit Shop) came
 - **Sung or spoken:** Suno is strongest when it sings. A fully sung ad comes out far more distinct than a spoken one over a bed.
 - **Opening and ending:** no more opening question lists, and no more fast disclaimers for a while.
 - **Music:** a different genre and tempo each time, and sometimes none (a skit with room sound, an a cappella jingle).
-- **Tool:** if spoken ads still converge, a text-to-speech tool with picked voices (and the music bed from Suno, mixed under) gives full control of who speaks.
+- **Tool:** for one consistent spoken voice (the DJ), ElevenLabs with a fixed voice and settings works; Suno is better for sung and music-driven pieces. If spoken ads still converge, a text-to-speech tool with picked voices (and the music bed from Suno, mixed under) gives full control of who speaks.
 
 The second batch was written to these rules (each a different format: an auction chant, a sung jingle, a guided meditation, a lounge song; see the entries below). Four of five came out well enough to use. The fifth, a two-voice dialogue skit (SplatMaster 3000, a couple arguing in a car), did not: **dialogue skits don't work in Suno**. Make them with text-to-speech or skip them.
+
+## The DJ: Dee Jay Crush
+
+One host for every talk segment, made in ElevenLabs text-to-speech so the voice is identical every time.
+
+| | |
+|---|---|
+| Voice | ElevenLabs "Sia - Energetic, Confident - Commercial": female, energetic and confident. |
+| Settings | As the download names record them: speed 1.06, stability 50, similarity 75, model v4 (`_sp106_s50_sb75_v4`). Use the same voice and settings for every new segment. |
+| Delivery | The script text exactly as written below, including the cues in parentheses. |
+| Music | None; talk is dry, between songs. |
+| Processing | ElevenLabs output is quiet (about −23 to −26 LUFS); the prep script brings it to −16 like everything else (`--quality 3`). |
+
+Character (from the brief): the morning-zoo host, convinced goon-crushing is the greatest sport on Earth, covering it like traffic, weather and sports. Loud, warm, a little too pleased with herself, never mean. The scripts were written for a male voice, but nothing spoken depends on it.
 
 ## Goon-B-Gone
 
@@ -260,3 +286,157 @@ Win big
 | Sound effects | A slot-reel whir on "Spinning reels"; a lever clunk and a little bell on "hear it ring"; one sad coin clink after "medium". |
 
 **Processing:** 32 s; −16.8 → −16.0 LUFS, Vorbis q4.
+
+## DJ: Morning show (`talk_morning_show`)
+
+```
+(big, warm, fast, like he just slammed the mic on)
+Good morning, good afternoon, good whatever it is out there, this is Dee Jay Crush on Goon Crusher Radio!
+If you're just joining us, here's what you missed. Goons. Lots of goons. Standing in the road like they own it.
+(slowing down, pointing at the listener) They do not own it.
+You know who owns the road? Whoever's going fastest.
+(laughing) Let's keep it moving!
+```
+
+Max length 25 seconds. Mood: the show's opener, pure energy.
+
+## DJ: Traffic (`talk_traffic`)
+
+```
+(rapid traffic-report rhythm, cheerful)
+Time for traffic on Goon Crusher Radio!
+Route Nowhere is backed up three miles with a Rat Pack convention, expect delays, or don't, if you brake for nobody.
+Rust City's Main Street is closed for a Foreman rally.
+And Frostbite Pass is icy, slippery, and full of Yetis.
+(delighted) Honestly? Perfect conditions.
+(beat) Drive safe. (beat) Well. Drive.
+```
+
+Max length 30 seconds. Mood: a real traffic report delivered at speed, with one slow beat at the end.
+
+## DJ: Weather (`talk_weather`)
+
+```
+(smooth, mock-serious TV weatherman)
+Let's check the weather.
+Scattered Buzzards over Red Canyon, clearing to Jackalopes by the afternoon.
+A ninety percent chance of goo on Prairie Run.
+Snapper Bayou stays humid, with a high of one large Snapper.
+(back to his normal grin) Pack a wiper, people.
+```
+
+Max length 25 seconds. Mood: he puts on a weatherman voice for the forecast, then drops it.
+
+## DJ: Sports desk (`talk_sports`)
+
+```
+(fast, excited sports desk)
+Goon Crusher sports desk!
+The Wild Things are having a rough season. They lead the league in getting run over, and it isn't close.
+The Goon Tribe made a big trade, picking up two Grunts and a Hubcap for a Goonling to be named later.
+(sympathetic) And the Scrap Gang's star Sawbot is day to day with what the team is calling a flattening injury.
+(beat) Coach says he'll be back. (beat) Coach always says that.
+```
+
+Max length 35 seconds. Mood: a play-by-play man reading the scores.
+
+## DJ: Listener letter (`talk_listener_letter`)
+
+```
+(amused, reading a letter aloud)
+We got a letter! It says: Dear Dee Jay Crush, I am a Grunt, from the Goon Tribe. Long time listener.
+You play your station very loud, in the car, while you drive at us. We can hear you coming.
+Maybe turn it down? Give a guy a chance?
+(putting the letter down, warm and sincere) Thank you for writing in, buddy.
+(beat, cheerful) We're turning it up.
+```
+
+Max length 30 seconds. Mood: genuinely touched, then not at all. He reads the letter in his own voice, no impression.
+
+## DJ: Song request (`talk_song_request`)
+
+```
+(laughing as he starts)
+Got a request here from a listener who loves the sound of hubcaps.
+He says that clang clang clang when a Hubcap goes under the bumper is his favorite song, and could we play just that, for an hour.
+(patient, like explaining to a child) Sir. That's not a song.
+(beat, considering it) It is a pretty good sound though.
+```
+
+Max length 25 seconds. Mood: indulgent, slowly coming round to the idea.
+
+## DJ: Lost and found (`talk_lost_and_found`)
+
+```
+(brisk, community-bulletin cheer)
+Goon Crusher lost and found!
+Somebody lost a tusk on Prairie Run. It's yours if you can catch the Tusker it came off.
+Also found, one left boot and one right boot, from two different goons.
+(lower, a little suspicious) And a very nice hat, on the hood of somebody's car.
+(beat) Not ours. (beat) Probably.
+```
+
+Max length 25 seconds. Mood: a small-town announcement board.
+
+## DJ: Safety minute (`talk_safety_minute`)
+
+```
+(mock-serious public service voice)
+It's the Goon Crusher safety minute.
+Remember folks, crushing is all about speed. Go too slow and the goon just climbs on the hood and rides along, and that's embarrassing for everybody.
+So stay above ten. Keep your windshield clean.
+(grave) And never, ever stop in deep water.
+(beat, back to normal) The car does not float. We've checked. Several times.
+```
+
+Max length 30 seconds. Mood: public-service announcement that slowly admits experience. These are real game tips: crush speed, and deep water wrecks the car.
+
+## DJ: Community board (`talk_community_board`)
+
+```
+(warm, folksy, reading the board)
+The Goon Crusher community board!
+The Goon Quarry book club meets Thursday. This month's book is How to Get Out of the Road. Nobody has finished it.
+The Snapper Bayou bake sale is Saturday, all proceeds go to the new crosswalk, which goons will also not use.
+(bright) And the Rust City demolition derby is looking for drivers. Requirements, a car.
+(beat) That's it. That's the whole list.
+```
+
+Max length 35 seconds. Mood: friendly local-radio notices.
+
+## DJ: Station promo (`talk_station_promo`)
+
+```
+(proud, a little grand)
+You're listening to Goon Crusher Radio, broadcasting live from the inside of your dashboard.
+We play the hits, we play them loud, and we play them for everybody who knows that a full tank of gas is a full tank of opportunity.
+(grinning) Stay tuned, and stay out of the road.
+(quick) Unless you're driving on it.
+```
+
+Max length 25 seconds. Mood: the station's own promo, chest out.
+
+## DJ: DJ confession (`talk_dj_confession`)
+
+```
+(slower, quieter, a personal moment)
+Personal moment, folks.
+People ask me, Dee Jay, don't you feel bad for the goons?
+And I think about it. I really do. The little Goonlings, out there in the road, making their choices.
+(beat, firm) Then I remember. They chose the road. The road is for cars.
+(trailing off, less sure) It's right there in the name. (beat) Road. (beat) Okay, it isn't. But it's implied.
+```
+
+Max length 35 seconds. Mood: sincere and reflective, unravelling at the end.
+
+## DJ: Contest (`talk_contest`)
+
+```
+(game-show excitement)
+It's contest time on Goon Crusher Radio! Be the hundredth caller and win absolutely nothing!
+(conspiratorial) Our phones have been ringing nonstop since nineteen eighty four and we lost count.
+(warm) But call anyway, we love to hear from you.
+(beat, suspicious) Unless you're a goon. (beat) Grunt, we know that was you again.
+```
+
+Max length 25 seconds. Mood: a contest with no prize, announced at full volume.
