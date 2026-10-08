@@ -1,0 +1,19 @@
+[remap]
+
+importer="oggvorbisstr"
+type="AudioStreamOggVorbis"
+uid="uid://dt0gdcyihmr6j"
+path="res://.godot/imported/Gas Station Romance.ogg-014fab14f76bdd4ba9103a78e00d8577.oggvorbisstr"
+
+[deps]
+
+source_file="res://sound/radio/gooncrusher/songs/Gas Station Romance.ogg"
+dest_files=["res://.godot/imported/Gas Station Romance.ogg-014fab14f76bdd4ba9103a78e00d8577.oggvorbisstr"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4
