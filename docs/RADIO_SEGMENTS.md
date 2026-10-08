@@ -13,6 +13,7 @@ The record of every segment that plays between songs on GoonCrusher Radio: its f
 | Gas N Go | `sound/radio/gooncrusher/ads/ad_gas_n_go.ogg` | 0:30 | ad (sung jingle) |
 | Fender Bender Mutual | `sound/radio/gooncrusher/ads/ad_insurance.ogg` | 1:02 | ad |
 | The Lucky Lug Nut | `sound/radio/gooncrusher/ads/ad_slot_parlour.ogg` | 0:32 | ad (sung) |
+| Ident 01: "We don't brake for goons" | `sound/radio/gooncrusher/idents/ident_01.ogg` | 0:04 | ident (DJ voice) |
 | DJ: Morning show | `sound/radio/gooncrusher/talk/talk_morning_show.ogg` | 0:21 | talk |
 | DJ: Traffic | `sound/radio/gooncrusher/talk/talk_traffic.ogg` | 0:21 | talk |
 | DJ: Weather | `sound/radio/gooncrusher/talk/talk_weather.ogg` | 0:15 | talk |
@@ -26,7 +27,7 @@ The record of every segment that plays between songs on GoonCrusher Radio: its f
 | DJ: DJ confession | `sound/radio/gooncrusher/talk/talk_dj_confession.ogg` | 0:25 | talk |
 | DJ: Contest | `sound/radio/gooncrusher/talk/talk_contest.ogg` | 0:17 | talk |
 
-**Segment odds:** with seven ads and twelve talk segments, `station.json` has `segment_chance` at 0.5: something plays between about every other pair of songs, talk twice as often as an ad (weights talk 4, ad 2). Idents (weight 3) join the mix when they arrive.
+**Segment odds:** with seven ads, twelve talk segments and one ident, `station.json` has `segment_chance` at 0.5: something plays between about every other pair of songs, picked by weight (ident 3, talk 4, ad 2). With a single ident it repeats often (about a third of segments, and on every tune-in), so more idents are the next thing to add.
 
 ## Writing segments that generate well
 
@@ -440,3 +441,13 @@ It's contest time on Goon Crusher Radio! Be the hundredth caller and win absolut
 ```
 
 Max length 25 seconds. Mood: a contest with no prize, announced at full volume.
+
+## Ident 01 (`ident_01`)
+
+The DJ's signature line, in the same ElevenLabs voice and settings as the talk.
+
+```
+Goon Crusher Radio. We don't brake for goons.
+```
+
+Plays when a player tunes in to the station, and between some songs.
