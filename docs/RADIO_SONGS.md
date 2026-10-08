@@ -7,7 +7,7 @@ The song book for GoonCrusher Radio: the house style, every song's lyrics and th
 Fast, loud, funny songs about driving and crushing goons, sung completely straight. The joke is the commitment: a real band with real chops singing about goon goo on the windshield.
 
 - **Default sound:** 2000s punk rock, 160–180 BPM, distorted guitars, punchy live drums, shout-along gang vocals, a short guitar solo, polished video-game-soundtrack production. Every song should feel good at full throttle.
-- **Vary within it:** not every song should be the same punk song. Good neighbours: pop-punk, skate punk, garage rock, surf rock, rockabilly, ska-punk, metal parody, trucker country, 80s arena rock. Keep the energy high; no ballads unless the joke is that it's a ballad.
+- **Vary within it:** not every song should be the same punk song. Good neighbours: pop-punk, skate punk, garage rock, Southern garage punk (My Baby Loves My Truck), surf rock, rockabilly, ska-punk, metal parody, trucker country, 80s arena rock. Vary the subject too: a love song, a road song, an anthem. Keep the energy high; no ballads unless the joke is that it's a ballad.
 - **Subject matter:** the car (full tank, dents, busted lights, bald tyres), the road and its goons, splatter and wipers, never braking, the world's places and goons (see the writing brief in `docs/RADIO.md`). First person, the driver as the hero.
 - **Shape:** short verses, a chorus with a shoutable hook that names the song, a bridge that builds to a chant. 2:30–3:30.
 - **Keep it clean:** cartoon violence only (crush, splat, goo), no swearing, no real brands, people or songs.
@@ -30,6 +30,7 @@ Fast, chaotic 2000s-style punk rock, aggressive distorted electric guitars, punc
 | Crush Hour | `sound/radio/gooncrusher/songs/Crush Hour.ogg` | 2:57 | 2000s punk, 170 BPM |
 | Gooncrusher | `sound/radio/gooncrusher/songs/Gooncrusher.ogg` | 3:11 | punk anthem (prompt not recorded) |
 | Full Tank, Empty Head | `sound/radio/gooncrusher/songs/Full Tank, Empty Head.ogg` | 3:06 | punk road song (prompt not recorded) |
+| My Baby Loves My Truck | `sound/radio/gooncrusher/songs/My Baby Loves My Truck.ogg` | 3:15 | Southern pop-punk / garage punk love song, 160 BPM |
 
 ### Crush Hour
 
@@ -290,6 +291,110 @@ But I'm getting out of here.
 **Processing:** −16.3 → −16.1 LUFS (true peak −5.1 dBTP), no tail silence to trim.
 
 **Note:** "all damn night" is the one mild swear on the station so far (the house style says no swearing). Your call whether it stays.
+
+### My Baby Loves My Truck
+
+The station's love song, and its first step away from straight punk: Southern garage punk with twangy blues-rock licks. Note that goons are barely in it ("We crushing tonight"); a song can be about the car culture around the crushing.
+
+**Style:**
+
+```
+Upbeat early-2000s Southern pop-punk / garage punk love song, 160 BPM, crunchy distorted electric guitars, twangy blues-rock guitar touches, driving bass, punchy live drums, energetic slightly raspy male lead vocals, catchy melodic verses, huge simple shout-along chorus, playful blue-collar humor, sincere but ridiculous romantic attitude, road-trip energy, working-class Americana, loud old truck and gasoline aesthetic. The singer genuinely loves his girlfriend but is comically obsessed with his truck. Warm, fun, rowdy, charming rather than aggressive. Short bluesy punk guitar solo, gang vocals on the final chorus, polished video game soundtrack production with gritty garage-rock character. No metal, no emo, no country ballad, no modern pop, no overly polished radio-pop sound.
+```
+
+**Lyrics:**
+
+```
+[Verse 1]
+She don't like flowers, she don't care for wine
+But she loves that old Chevy sitting outside
+She hears that engine and she comes running
+Says, "Baby, start it up, let's go hunting"
+
+She don't want diamonds, she don't want gold
+She likes that big block when the weather gets cold
+She climbs up beside me and sits with a smile
+Says, "Take me somewhere, baby, let's drive for a while"
+
+[Pre-Chorus]
+She says, "Turn it up"
+I say, "Hold on tight"
+She says, "Step on it"
+We crushing tonight
+
+[Chorus]
+My baby loves my truck
+I think she loves me too
+But if I had to choose
+you know I'd choose you
+That big old motor
+Get me vibrating, shaking
+Everytime I drive
+It's like we're love making
+
+[Verse 2]
+She knows every scratch and she knows every dent
+She knows exactly where every damn cent went
+She'll check the oil, She'll wash it on Sunday,
+She takes such good care of my honey
+
+I bought her a necklace, she gave it right back
+Said, "Go get new tires for that thing out back"
+So I bought her some tires and she kissed me twice
+Now that's what I call a damn good wife
+
+[Pre-Chorus]
+She says, "Turn it up"
+I say, "Hold on tight"
+She says, "Step on it"
+We crushing tonight
+
+[Chorus]
+My baby loves my truck
+I think she loves me too
+But if I had to choose
+you know I'd choose you
+That big old motor
+Get me vibrating, shaking
+Everytime I drive
+It's like we're love making
+
+[Bridge]
+I said, "Baby, I love you"
+I was talking to the truck
+I heard "I love you to"
+and I thought "just my luck"
+
+[Chorus]
+My baby loves my truck
+I think she loves me too
+But if I had to choose
+you know I'd choose you
+That big old motor
+Get me vibrating, shaking
+Everytime I drive
+It's like we're love making
+
+[Pre-Chorus]
+She says, "Turn it up"
+I say, "Hold on tight"
+She says, "Step on it"
+We crushing tonight
+
+[Chorus]
+My baby loves my truck
+I think she loves me too
+But if I had to choose
+you know I'd choose you
+That big old motor
+Get me vibrating, shaking
+Everytime I drive
+It's like we're love making
+```
+
+**Processing:** −15.1 → −16.1 LUFS (true peak −4.3 dBTP), no tail silence to trim.
+
+**Note:** the chorus's innuendo ("vibrating, shaking ... love making") and two "damn"s make this the edgiest song on the station. It's mild, but worth a thought for the store page's content questions (Steam asks about sexual content and language), and it rules the song out of anything aimed at kids.
 
 ## Ideas for the next songs
 
