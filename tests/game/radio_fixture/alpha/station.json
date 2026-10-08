@@ -1,0 +1,6 @@
+{
+	"name": "Alpha FM",
+	"order": 0,
+	"segment_chance": 0.6,
+	"weights": {"ident": 1, "talk": 1, "ad": 1}
+}

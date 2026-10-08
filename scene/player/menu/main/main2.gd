@@ -191,6 +191,11 @@ func buildTopBar() -> void:
 		b.pressed.connect(item[2])
 		left.add_child(b)
 	ui.add_child(left)
+	#the radio, under the icons: shows the song, a click changes station (docs/RADIO.md)
+	var radio = NowPlaying.new()
+	radio.pinned = true
+	radio.position = Vector2(24, 88)
+	ui.add_child(radio)
 	var pill = PanelContainer.new()
 	pill.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
 	pill.grow_horizontal = Control.GROW_DIRECTION_BEGIN

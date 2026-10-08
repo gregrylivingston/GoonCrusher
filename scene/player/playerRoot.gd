@@ -9,6 +9,7 @@ func _ready():
 	$VersionTracker.text = Root.versionText()
 	%ModeLabel.text = Root.gameModeDescription[SaveManager.playerData.gameMode].name
 	addPickupWidgets()
+	addNowPlaying()
 	setupHudScale()
 	add_child(HudChance.new()) #toasts, the scratch card, beacons: over everything, not HUD-scaled
 	if is_instance_valid(Root.playerCar):
@@ -54,6 +55,18 @@ func addPickupWidgets() -> void:
 	items.offset_top = -124.0
 	items.offset_bottom = -50.0
 	add_child(items)
+
+#the radio's now-playing card, above the tachometer; shows for a few seconds at each song (docs/RADIO.md)
+func addNowPlaying() -> void:
+	var card = NowPlaying.new()
+	card.name = "NowPlaying"
+	card.anchor_top = 1.0
+	card.anchor_bottom = 1.0
+	card.offset_left = 32.0
+	card.offset_right = 32.0 + NowPlaying.SIZE.x
+	card.offset_top = -334.0
+	card.offset_bottom = -334.0 + NowPlaying.SIZE.y
+	add_child(card)
 
 #HUD Scale (Accessibility). Each authored HUD control is scaled about its point nearest its anchor,
 #so corner widgets stay in their corners. Menus added at runtime (pause, slots, countdown, summary)

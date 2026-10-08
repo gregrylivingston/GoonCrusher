@@ -1,0 +1,9 @@
+{
+	"name": "Lofi",
+	"short": "LOFI",
+	"color": "#5fd6c4",
+	"order": 2,
+	"segment_chance": 0.25,
+	"weights": {"ident": 1},
+	"crossfade": 4.0
+}

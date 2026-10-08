@@ -1,16 +1,9 @@
-[gd_scene load_steps=3 format=3 uid="uid://d20itb73p7fmt"]
+[gd_scene load_steps=2 format=3 uid="uid://d20itb73p7fmt"]
 
 [ext_resource type="Script" path="res://scripts/global/Audio.gd" id="1_f1w12"]
-[ext_resource type="AudioStream" uid="uid://chsan1o1ku2c7" path="res://sound/music/abstract-world-127012.mp3" id="2_5ag8m"]
 
 [node name="Audio" type="Node"]
 script = ExtResource("1_f1w12")
-
-[node name="AudioStream_Music" type="AudioStreamPlayer" parent="."]
-stream = ExtResource("2_5ag8m")
-volume_db = -4.0
-autoplay = true
-bus = &"Music"
 
 [node name="enemy_sounds" type="Node" parent="."]
 
@@ -110,4 +103,3 @@ bus = &"FX"
 volume_db = 3.0
 bus = &"FX"
 
-[connection signal="finished" from="AudioStream_Music" to="." method="_on_audio_stream_music_finished"]

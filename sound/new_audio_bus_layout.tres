@@ -1,4 +1,16 @@
-[gd_resource type="AudioBusLayout" format=3 uid="uid://c6clxhfclej7b"]
+[gd_resource type="AudioBusLayout" load_steps=3 format=3 uid="uid://c6clxhfclej7b"]
+
+[sub_resource type="AudioEffectCompressor" id="AudioEffectCompressor_duck"]
+resource_name = "Duck under Voice"
+threshold = -26.0
+ratio = 6.0
+attack_us = 8000.0
+release_ms = 350.0
+sidechain = &"Voice"
+
+[sub_resource type="AudioEffectLowPassFilter" id="AudioEffectLowPassFilter_pause"]
+resource_name = "Pause muffle"
+cutoff_hz = 1400.0
 
 [resource]
 bus/1/name = &"Voice"
@@ -19,6 +31,10 @@ bus/3/mute = false
 bus/3/bypass_fx = false
 bus/3/volume_db = 0.0
 bus/3/send = &"Master"
+bus/3/effect/0/effect = SubResource("AudioEffectCompressor_duck")
+bus/3/effect/0/enabled = true
+bus/3/effect/1/effect = SubResource("AudioEffectLowPassFilter_pause")
+bus/3/effect/1/enabled = false
 bus/4/name = &"FX"
 bus/4/solo = false
 bus/4/mute = false

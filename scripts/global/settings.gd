@@ -83,6 +83,7 @@ const DEFAULTS := {
 	"audio/fx_mute": false,
 	"audio/ui_mute": false,
 	"audio/mute_unfocused": false,
+	"audio/station": "gooncrusher",  #radio station folder under sound/radio/, or "off" (docs/RADIO.md)
 
 	"gameplay/speed_units": "mph",
 	"gameplay/show_timer": true,

@@ -1,0 +1,9 @@
+{
+	"name": "Classical Lofi",
+	"short": "CLF",
+	"color": "#b9a6ff",
+	"order": 1,
+	"segment_chance": 0.25,
+	"weights": {"ident": 1},
+	"crossfade": 4.0
+}

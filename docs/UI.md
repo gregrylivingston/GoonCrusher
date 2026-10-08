@@ -69,6 +69,7 @@ One language for every screen change: a corrugated **garage shutter** for screen
 - **Upgrade (F / Y, the Upgrade button, or a click on any stat):** opens the upgrade sheet: the art folds up and each stat gets a full row with its name, value, bar and next price. W/S or hovering picks a row, and the focused row's price becomes a solid BUY button. Accept (Space) or a click buys on the press (the row flashes, the value pops, the coin counter ticks down), and a row you can't afford shakes; holding Accept keeps buying after 0.4 s, every 0.12 s, until the stat maxes or the coins run out (`DriverCard.HOLD_DELAY`, `HOLD_REPEAT`). Back, F or Done closes it.
 - **Records (R / X):** opens the driver's records ticket.
 - **Esc / Menu:** opens Settings. The top-left buttons are quit, settings, Discord and Steam.
+- **Radio:** under the top-left buttons, a `NowPlaying` card shows the song and station; a click changes station (right click goes back). Mouse only; with keys or a pad it's in Settings → Audio (docs/RADIO.md).
 
 **Driver card.** Each card shows the driver's portrait over the car's background art and a name band. Locked drivers are silhouettes with their price. The focused card shows every stat in a compact 2 x 4 grid: the value and an underline against 100 (cream for the car's base stat, gold for upgrades bought). The upgrade sheet adds the stat's name, a tooltip saying what it does, and the next upgrade's price, dimmed when you can't afford it.
 
@@ -110,7 +111,7 @@ Only the plain-language text lives in the script: `VERB_TEXT` (behaviour and tip
 
 ## In-run menus
 
-- **Pause** (`pauseMenu.gd`). A card hanging from a half shutter ("Transitions"): Continue (Esc / Menu), Settings, Abandon run (it says how many coins the run keeps), and Quit game. These are separate buttons, and with Confirm Abandon / Quit on, each asks for a second press. Under them are the mode, clock and crush count, and the car's stats with a gold +N for what pickups added.
+- **Pause** (`pauseMenu.gd`). A card hanging from a half shutter ("Transitions"): Continue (Esc / Menu), Settings, a Radio row (left/right change station, the song shows under it; docs/RADIO.md), Abandon run (it says how many coins the run keeps), and Quit game. These are separate buttons, and with Confirm Abandon / Quit on, each asks for a second press. Under them are the mode, clock and crush count, and the car's stats with a gold +N for what pickups added.
 - **Results** (`gameSummary.gd`). A torn paper ticket.
   - **Reveal:** rows appear one at a time (time, then the mode's own row: Goonpocalypse score, Marathon stations reached or Defense barrier, then top speed, crushes, coins, powerups, gems, slot machines). The first fresh press speeds the reveal up and the next one continues; `isFreshPress` is covered by `test_progression.gd`.
   - **Payout:** coins × the star multiplier (1 + 0.1 a star; the label gives the star count) = paid, from `Root.computePayout`.

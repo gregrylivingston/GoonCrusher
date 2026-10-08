@@ -12,6 +12,7 @@ This file is a map. The detail lives in `docs/`:
 - `docs/AI_DRIVER.md`: the AI driver, the playtest harness and tournaments.
 - `docs/PERFORMANCE.md`: the settings system, every option and preset, benchmarks and the latest numbers.
 - `docs/NATIVE.md`: the C++ GDExtension (godot-cpp, building, adding a class, exporting, port candidates).
+- `docs/RADIO.md`: the radio stations: what the audio author delivers (folders, format, naming, the DJ brief) and how `Radio` plays it. `docs/RADIO_SONGS.md`: the songs' lyrics, Suno style prompts, house style and ideas.
 - `docs/GAMEPLAY_SUGGESTIONS.md`: the roadmap: what is done (one line each), the open work packages and questions for the author.
 - `docs/TEST_SCOPE_TRANSITIONS.md`: the manual test checklist for menus, transitions and effects.
 
@@ -37,7 +38,7 @@ This file is a map. The detail lives in `docs/`:
 | `Settings` | `scripts/global/settings.gd` | `settings.cfg` (synced) and `graphics.cfg` (per machine), presets, tier detection and calibration, safe mode, the `gc_*` shader globals, the lighting hook on `node_added`, rebinding, the F3 overlay, and `menu_open` (push/pop) to block input under menus. Read with `Settings.get_value("gfx/smoke")`. |
 | `Root` | `scripts/global/root.gd` | Global enums (`gameModes`, `endCondition`, `upgrade`, `terrain`), shared refs (`playerCar` (null in the menu), `carInfo`, `station`, `levelRoot`, `spawnManager`, `playerRoot`, `mainMenu`, `worldMap`), run flags and currency, `getPowerupFromWeights`, mode descriptions, `IS_DEMO`. |
 | `SaveManager` | `scripts/global/saveManager.gd` | Loading, migrating and saving `PlayerData` (debounced 1 s, flushed on scene change and exit), the economy (upgrade cost `int((lvl+1)^1.6*15)`), selection, per-level records. |
-| `Audio` | `scripts/global/Audio.tscn/.gd` | Music and a pooled FX player (`Audio.play`), capped by Max Sound Effects. |
+| `Audio` | `scripts/global/Audio.tscn/.gd` | A pooled FX player (`Audio.play`), capped by Max Sound Effects, and the music: the radio, `Audio.radio` (`Radio`, docs/RADIO.md). |
 | `Region` | `scripts/global/Region.gd` | The run's regions = the world map's districts: faction, 3 goons, name. Waves are one clock for the whole run (`Region.wave`: a star every 60 s, no cap, untouched by districts). Pushes the goon list to the spawner. `-- --faction=` / `-- --goons=` force them. |
 | `Bench`, `Playtest` | `scripts/debug/` | Harnesses; free themselves without `--bench` / `--playtest`. |
 | `Console` | `scripts/debug/dev_console.gd` | Debug builds only. Backtick toggles it. `help` lists the commands for where you are (the menu's: `start`, unlocks, coins, gems, `level`...; a run's: `heal`, `god`, `ai`, `pickup <id>`, `win`, `night`...), `help menu`/`run`/`all` the others. **`start <tier>`** (early, mid, late, maxed; `CareerStart.TIERS`) plays from further into the game on a scratch save and `start real` goes back. **`autopilot [persona]`** hands the whole game (menus, runs, results) to a persona until any key is pressed. Other progress commands write the real save. `-- --console="start late"` runs commands at startup. |
@@ -61,6 +62,7 @@ This file is a map. The detail lives in `docs/`:
 - **HUD:** `scene/player/playerRoot.tscn` (docs/HUD.md). Pickups fly to the node in group `"<powerup>ui"`.
 - **Menus:** give a new menu `theme = MenuTheme.theme()`, one `PrimaryButton`, and `KeyHint`s; never hard-code "A" or "Enter" (docs/UI.md). Everything must work with the mouse alone (clickable `KeyHint.bar`s; children of a clickable row ignore the mouse).
 - **Transitions:** screen changes go behind the garage shutter (`Transition.play(swap)`, `scene/ui/transitions/`); in-run games use `GameHatch`, overlays `Juice.dropIn`. Headless and the harnesses skip them (`Transition.instant()`); Reduce Motion fades. Never credit rewards from a transition (docs/UI.md, "Transitions").
+- **Music** is the radio (docs/RADIO.md): tracks are files in `sound/radio/<station>/`, scanned at startup, so adding music needs no code. Never add another music player; anything that should duck the music plays on the Voice bus.
 - **Settings:** to add one, add the key to `Settings.DEFAULTS` (plus `OPTIONS`/`RANGES`, and `PRESET` if presets drive it), apply it in `Settings.applyKey` or where it is read, then add a row in `settings_menu.gd`'s `buildSchema()`.
 
 ### Save data (`scene/player/save/playerData.gd`)

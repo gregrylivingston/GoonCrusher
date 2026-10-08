@@ -2,10 +2,18 @@ extends Node
 
 #Pool of one-shot sound players for goons, pickups and crushes. Settings audio_perf/max_sfx
 #sets how many of the pool's players may sound at once; starts per frame scale with it.
+#Music is the radio (Radio, docs/RADIO.md), a child made here: Audio.radio.
 const POOL_VOLUME_DB = 3.0
 
 var soundsStartedThisFrame: int = 0
 @onready var players = $enemy_sounds.get_children()
+var radio: Radio
+
+
+func _ready():
+	radio = Radio.new()
+	radio.name = "Radio"
+	add_child(radio)
 
 
 func _process(_delta):
@@ -30,12 +38,3 @@ func play(stream: AudioStream, volumeOffsetDb: float = 0.0, pitch: float = 1.0) 
 			soundsStartedThisFrame += 1
 			return true
 	return false
-
-
-func loadNextNightSong():
-#	$AudioStream_Music.stream = load( nightSongs[ randi()%nightSongs.size()-1 ])
-	$AudioStream_Music.play()
-
-
-func _on_audio_stream_music_finished():
-	loadNextNightSong()
