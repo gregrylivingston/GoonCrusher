@@ -14,6 +14,14 @@ The record of every segment that plays between songs on GoonCrusher Radio: its f
 | Fender Bender Mutual | `sound/radio/gooncrusher/ads/ad_insurance.ogg` | 1:02 | ad |
 | The Lucky Lug Nut | `sound/radio/gooncrusher/ads/ad_slot_parlour.ogg` | 0:32 | ad (sung) |
 | Ident 01: "We don't brake for goons" | `sound/radio/gooncrusher/idents/ident_01.ogg` | 0:04 | ident (DJ voice) |
+| Ident 02 | `sound/radio/gooncrusher/idents/ident_02.ogg` | 0:05 | ident |
+| Ident 03 | `sound/radio/gooncrusher/idents/ident_03.ogg` | 0:04 | ident |
+| Ident 04 | `sound/radio/gooncrusher/idents/ident_04.ogg` | 0:05 | ident |
+| Ident 05 | `sound/radio/gooncrusher/idents/ident_05.ogg` | 0:05 | ident |
+| Ident 06 | `sound/radio/gooncrusher/idents/ident_06.ogg` | 0:04 | ident |
+| Ident 07 | `sound/radio/gooncrusher/idents/ident_07.ogg` | 0:04 | ident |
+| Ident 08 | `sound/radio/gooncrusher/idents/ident_08.ogg` | 0:06 | ident |
+| Ident 09 | `sound/radio/gooncrusher/idents/ident_09.ogg` | 0:07 | ident |
 | DJ: Morning show | `sound/radio/gooncrusher/talk/talk_morning_show.ogg` | 0:21 | talk |
 | DJ: Traffic | `sound/radio/gooncrusher/talk/talk_traffic.ogg` | 0:21 | talk |
 | DJ: Weather | `sound/radio/gooncrusher/talk/talk_weather.ogg` | 0:15 | talk |
@@ -27,7 +35,7 @@ The record of every segment that plays between songs on GoonCrusher Radio: its f
 | DJ: DJ confession | `sound/radio/gooncrusher/talk/talk_dj_confession.ogg` | 0:25 | talk |
 | DJ: Contest | `sound/radio/gooncrusher/talk/talk_contest.ogg` | 0:17 | talk |
 
-**Segment odds:** with seven ads, twelve talk segments and one ident, `station.json` has `segment_chance` at 0.5: something plays between about every other pair of songs, picked by weight (ident 3, talk 4, ad 2). With a single ident it repeats often (about a third of segments, and on every tune-in), so more idents are the next thing to add.
+**Segment odds:** with seven ads, twelve talk segments and nine idents, `station.json` has `segment_chance` at 0.5: something plays between about every other pair of songs, picked by weight (ident 3, talk 4, ad 2), and tuning in always opens with an ident.
 
 ## Writing segments that generate well
 
@@ -451,3 +459,20 @@ Goon Crusher Radio. We don't brake for goons.
 ```
 
 Plays when a player tunes in to the station, and between some songs.
+
+## Idents 02–09
+
+Made by the author with their own text and styles (not the drafted ident scripts), and chosen as the station's idents. Their scripts weren't recorded; the source files were:
+
+| In the game | Source download | Length |
+|---|---|---|
+| `ident_02` | `Goon_Crusher_Radio_Station_Ident_2026-10-08T202321.mp3` | 5.0 s |
+| `ident_03` | `Goon_Crusher_Station_ID_2026-10-08T202611.mp3` | 4.2 s |
+| `ident_04` | `Goon_Crusher_Radio_Ident_2026-10-08T202658.mp3` | 4.7 s |
+| `ident_05` | `Goon_Crusher_Radio_Ident_2026-10-08T202658 (1).mp3` | 5.0 s |
+| `ident_06` | `Goon_Crusher_Station_ID_2026-10-08T202806.mp3` | 4.3 s |
+| `ident_07` | `Goon_Crusher_Radio_Ident_2026-10-08T202822.mp3` | 3.9 s |
+| `ident_08` | `Goon_Crusher_Station_Launch_2026-10-08T202851.mp3` | 5.7 s |
+| `ident_09` | `Goon_Crusher_Radio_Station_Ident_2026-10-08T202851.mp3` | 6.6 s |
+
+Processing: −10 to −14 LUFS → −16.2 LUFS, Vorbis q4 (they carry music and effects); up to 1.2 s of tail silence trimmed.
