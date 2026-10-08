@@ -25,6 +25,8 @@ BATCH = {"ground": 5, "edge": 8, "prop": 5, "decor": 8, "station": 5, "poster": 
 FACTIONS = ["wild", "tribe", "scrap"]
 #VRAM-compressed (BC7 on desktop) files; everything else imports lossless. All get mipmaps.
 BEACON_MATERIAL = "res://shader/world_beacon.tres"
+#a layered prop's canopy (trees, the crane's jib) draws over the car and goons (PropReactions.CANOPY_Z)
+CANOPY_Z = 8
 VRAM = re.compile(r"^(ground/(?!macro_noise).*|posters/.*|station/station_(lot|roof)\.png)$")
 
 def run_page(browser, job, ids, budget=120000):
@@ -95,7 +97,8 @@ def level_tags():
 	for tres in sorted((ROOT / "world" / "levels").glob("*.tres")):
 		text = tres.read_text(encoding="utf-8")
 		lid = re.search(r'^id = &"([a-z_]+)"', text, re.M)
-		block = re.search(r"^dressing = \{(.*?)^\}$", text, re.M | re.S)
+		#the dressing block ends at its own closing brace, after the last faction's (`}` then `}`)
+		block = re.search(r"^dressing = \{\n(.*?\n\})\n\}$", text, re.M | re.S)
 		if not lid or not block: continue
 		for fac, body in re.findall(r"^(\d+): \{(.*?)^\}", block.group(1), re.M | re.S):
 			for pid in re.findall(r'&"([a-z_]+)"', body):
@@ -146,10 +149,23 @@ material = ExtResource("beaconMat")
 scale = Vector2({sc:.4f}, {sc:.4f})
 texture = ExtResource("beacon")
 """.format(sc=1.0 / m["res"])
+	#a layered prop's canopy: drawn above the car and goons (absolute z), no collision; ChunkView swaps its texture
+	#with the variant and PropReactions fades it while the car is under it
+	ext_canopy = node_canopy = ""
+	if m.get("canopy"):
+		ext_canopy = """[ext_resource type="Texture2D" path="%s" id="canopy"]
+""" % (RES_DIR + "props/" + m["canopy"][0])
+		node_canopy = """
+[node name="Canopy" type="Sprite2D" parent="."]
+z_index = {z}
+z_as_relative = false
+scale = Vector2({sc:.4f}, {sc:.4f})
+texture = ExtResource("canopy")
+""".format(z=CANOPY_Z, sc=1.0 / m["res"])
 	return """[gd_scene format=3]
 
 [ext_resource type="Texture2D" path="{tex}" id="tex"]
-{ext_beacon}
+{ext_canopy}{ext_beacon}
 [sub_resource type="ConvexPolygonShape2D" id="shape"]
 points = {pts}
 {sub_occ}
@@ -164,7 +180,7 @@ texture = ExtResource("tex")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("shape")
-{disabled}{node_occ}{node_beacon}""".format(tex=tex, ext_beacon=ext_beacon, pts=vec_array(hull), sub_occ=sub_occ, pid=pid, meta="\n".join(meta), sc=1.0 / m["res"], disabled=disabled, node_occ=node_occ, node_beacon=node_beacon)
+{disabled}{node_occ}{node_beacon}{node_canopy}""".format(tex=tex, ext_beacon=ext_beacon, ext_canopy=ext_canopy, node_canopy=node_canopy, pts=vec_array(hull), sub_occ=sub_occ, pid=pid, meta="\n".join(meta), sc=1.0 / m["res"], disabled=disabled, node_occ=node_occ, node_beacon=node_beacon)
 
 def manifest_entry(pid, m, tags):
 	res = lambda name: RES_DIR + ("decor/" if m["class"] == "DECOR" else "props/") + name
@@ -181,6 +197,8 @@ def manifest_entry(pid, m, tags):
 	if "solid" in m: e["solid"] = m["solid"]
 	if m.get("atlas"): e["atlas"] = m["atlas"]
 	if m.get("beacon"): e["beacon"] = res(m["beacon"])
+	if m.get("canopy"): e["canopy"] = [res(v) for v in m["canopy"]]
+	if m.get("leaves"): e["leaves"] = res(m["leaves"])
 	if m["class"] != "DECOR": e["scene"] = RES_DIR + "props/" + pid + ".tscn"
 	return e
 

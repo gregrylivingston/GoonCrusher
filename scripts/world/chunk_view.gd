@@ -7,7 +7,8 @@ class_name ChunkView extends RefCounted
 ##   OCCLUDE  wall occluders (LightOccluder2D, open polylines, metadata gc_world), one a step
 ##   LINES    shore foam and wall lips (Line2D, the baked strips tiled), one a step
 ##   DECOR    one MultiMeshInstance2D per decor id, one a step
-##   PROPS    pooled prop scenes (TALL, LOW, WALL); STATEFUL ones instanced, with their taken-set bit
+##   PROPS    pooled prop scenes (TALL, LOW, WALL); STATEFUL ones instanced, with their taken-set bit; a layered
+##            prop's canopy gets its variant's texture and joins PropReactions (fades over the car)
 ##   PICKUPS  the recipe's pickups, skipping the ones the taken set says were collected (from the skin's
 ##            stock of ready-made pickups when it has one)
 ##   EXTRAS   PickupWorld.decorateChunk's props, moved onto the recipe's open spots; then a few steps topping
@@ -152,15 +153,20 @@ func applyProp(skin: WorldSkin, tm: Node) -> bool:
 	if bit >= 0 && tm.isTaken(chunk, bit): return false
 	var stateful: bool = bit >= 0 || skin.manifest.get(String(id), {}).get("class", "") == "STATEFUL"
 	var node: StaticBody2D = skin.propScenes[id].instantiate() if stateful else skin.newProp(id)
+	if not stateful: PropReactions.reset(node) #a pooled prop may come back mid-wobble or knocked over
 	node.position = p[1] - ChunkRecipe.CHUNK * 0.5
 	node.rotation = p[2]
 	var sprite: Sprite2D = node.get_node_or_null("Sprite2D")
 	var textures: Array = skin.variants.get(id, [])
 	if sprite && not textures.is_empty(): sprite.texture = textures[clampi(p[3], 0, textures.size() - 1)]
+	var canopy: Sprite2D = node.get_node_or_null("Canopy")
+	var tops: Array = skin.canopies.get(id, [])
+	if canopy && not tops.is_empty(): canopy.texture = tops[clampi(p[3], 0, tops.size() - 1)]
 	var occ: LightOccluder2D = node.get_node_or_null("LightOccluder2D")
 	if occ:
 		if not node.has_meta("occluderPolygon"): node.set_meta("occluderPolygon", occ.occluder)
 		occ.occluder = node.get_meta("occluderPolygon") if p[5] else null
+	if Spill.DEFS.has(id): node.set_meta(&"spilled", tm.has_method("spillUsed") && tm.spillUsed(chunk, p[1])) #a crane drops its container once
 	if stateful:
 		node.set_meta(&"worldChunk", chunk)
 		node.set_meta(&"worldBit", bit)
@@ -168,6 +174,7 @@ func applyProp(skin: WorldSkin, tm: Node) -> bool:
 		if skin.breakableScript: node.set_script(skin.breakableScript)
 	objects.add_child(node)
 	props.push_back([id, node, not stateful])
+	if canopy && PropReactions.current: PropReactions.current.addCanopy(node, canopy)
 	return false
 
 ## One pickup (a coin line's coins one each); true when there are no more
@@ -193,6 +200,14 @@ func applyExtras(skin: WorldSkin, tm: Node) -> void:
 		if not skin.stockPickup(): nextStage()
 		return
 	index = 1
+	#what spilled out of interactive props and came to rest here (Spill.record)
+	if tm.has_method("spilledIn"):
+		for e in tm.spilledIn(chunk):
+			if not skin.propScenes.has(e[0]): continue
+			var node: Node2D = skin.propScenes[e[0]].instantiate()
+			node.position = e[1] - ChunkRecipe.CHUNK * 0.5
+			node.rotation = e[2]
+			objects.add_child(node)
 	if tm.decoratesChunk(chunk):
 		extras = Node2D.new()
 		PickupWorld.decorateChunk(extras, tm.chunkRng(chunk, "props"))
@@ -224,6 +239,7 @@ func release(skin: WorldSkin, deadline: int) -> bool:
 				while not props.is_empty():
 					var entry: Array = props.pop_back()
 					if not is_instance_valid(entry[1]): continue
+					if PropReactions.current: PropReactions.current.forget(entry[1])
 					if entry[2]: skin.give("prop:" + entry[0], entry[1], WorldSkin.POOL_CAP.prop)
 					if Time.get_ticks_usec() >= deadline: return false
 				releaseStage = 1

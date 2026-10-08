@@ -37,7 +37,8 @@ features = {
 "oilAbove": 0.55,
 "scrapWidth": 860.0,
 "containerWidth": 600.0,
-"barrierCap": 0.35
+"barrierCap": 0.35,
+"motifs": 1.2
 }
 baseTerrain = [6, 16, 6, 16, 6]
 accents = [10, 13, 16]
@@ -62,6 +63,15 @@ dressing = {
 &"barrel": 3,
 &"tyres": 3,
 &"oilstain": 3
+}
+}
+motifs = {
+1: {
+&"wreckpile": 1
+},
+2: {
+&"junkyard": 3,
+&"wreckpile": 2
 }
 }
 pickupTable = {

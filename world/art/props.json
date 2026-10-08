@@ -63,13 +63,17 @@
    "explosive": true,
    "tags": {
     "levels": [
+     "bayou",
      "canyon",
      "crusher",
+     "frostbite",
      "highway",
+     "prairie",
      "quarry"
     ],
     "faction": [
-     "tribe"
+     "tribe",
+     "scrap"
     ]
    },
    "solid": true,
@@ -150,6 +154,78 @@
    "solid": true,
    "scene": "res://world/art/props/barricade.tscn"
   },
+  "beehive": {
+   "class": "STATEFUL",
+   "sizePx": [
+    109,
+    119
+   ],
+   "variants": [
+    "res://world/art/props/beehive.png",
+    "res://world/art/props/beehive_v1.png"
+   ],
+   "hull": [
+    [
+     -64,
+     5.3
+    ],
+    [
+     -52,
+     -26.7
+    ],
+    [
+     -44,
+     -40
+    ],
+    [
+     -1.3,
+     -61.3
+    ],
+    [
+     45.3,
+     -38.7
+    ],
+    [
+     45.3,
+     38.7
+    ],
+    [
+     0,
+     57.3
+    ],
+    [
+     -14.7,
+     57.3
+    ],
+    [
+     -44,
+     40
+    ],
+    [
+     -60,
+     17.3
+    ]
+   ],
+   "occluder": false,
+   "breakable": {
+    "smashSpeed": 100,
+    "broken": "res://world/art/props/beehive_broken.png",
+    "debris": "res://world/art/props/beehive_debris.png",
+    "debrisCells": 4
+   },
+   "explosive": false,
+   "tags": {
+    "levels": [
+     "bayou",
+     "prairie"
+    ],
+    "faction": [
+     "wild"
+    ]
+   },
+   "solid": true,
+   "scene": "res://world/art/props/beehive.tscn"
+  },
   "billboard": {
    "class": "TALL",
    "sizePx": [
@@ -203,11 +279,21 @@
     ]
    ],
    "occluder": true,
-   "breakable": null,
+   "breakable": {
+    "smashSpeed": 360,
+    "broken": "res://world/art/props/billboard_broken.png",
+    "debris": "res://world/art/props/billboard_debris.png",
+    "debrisCells": 4
+   },
    "explosive": false,
    "tags": {
-    "levels": [],
-    "faction": []
+    "levels": [
+     "city",
+     "highway"
+    ],
+    "faction": [
+     "scrap"
+    ]
    },
    "solid": true,
    "scene": "res://world/art/props/billboard.tscn"
@@ -424,8 +510,13 @@
    "breakable": null,
    "explosive": false,
    "tags": {
-    "levels": [],
-    "faction": []
+    "levels": [
+     "city"
+    ],
+    "faction": [
+     "wild",
+     "scrap"
+    ]
    },
    "solid": true,
    "scene": "res://world/art/props/busstop.tscn"
@@ -619,10 +710,12 @@
    "explosive": false,
    "tags": {
     "levels": [
+     "city",
      "highway"
     ],
     "faction": [
-     "tribe"
+     "tribe",
+     "scrap"
     ]
    },
    "solid": true,
@@ -677,8 +770,12 @@
    "breakable": null,
    "explosive": false,
    "tags": {
-    "levels": [],
-    "faction": []
+    "levels": [
+     "crusher"
+    ],
+    "faction": [
+     "scrap"
+    ]
    },
    "solid": true,
    "scene": "res://world/art/props/container.tscn"
@@ -743,13 +840,18 @@
    "explosive": false,
    "tags": {
     "levels": [
+     "crusher",
      "quarry"
     ],
     "faction": [
-     "tribe"
+     "tribe",
+     "scrap"
     ]
    },
    "solid": true,
+   "canopy": [
+    "res://world/art/props/crane_canopy.png"
+   ],
    "scene": "res://world/art/props/crane.tscn"
   },
   "crate": {
@@ -865,10 +967,16 @@
     ],
     "faction": [
      "wild",
-     "tribe"
+     "tribe",
+     "scrap"
     ]
    },
    "solid": true,
+   "canopy": [
+    "res://world/art/props/cypress_canopy.png",
+    "res://world/art/props/cypress_canopy_v1.png"
+   ],
+   "leaves": "res://world/art/props/cypress_leaves.png",
    "scene": "res://world/art/props/cypress.tscn"
   },
   "deadtree": {
@@ -935,6 +1043,11 @@
     ]
    },
    "solid": true,
+   "canopy": [
+    "res://world/art/props/deadtree_canopy.png",
+    "res://world/art/props/deadtree_canopy_v1.png"
+   ],
+   "leaves": "res://world/art/props/deadtree_leaves.png",
    "scene": "res://world/art/props/deadtree.tscn"
   },
   "dumpster": {
@@ -998,7 +1111,8 @@
     ],
     "faction": [
      "wild",
-     "tribe"
+     "tribe",
+     "scrap"
     ]
    },
    "solid": true,
@@ -1265,8 +1379,12 @@
    "breakable": null,
    "explosive": false,
    "tags": {
-    "levels": [],
-    "faction": []
+    "levels": [
+     "highway"
+    ],
+    "faction": [
+     "scrap"
+    ]
    },
    "solid": true,
    "scene": "res://world/art/props/gaspump.tscn"
@@ -1473,7 +1591,8 @@
      "city"
     ],
     "faction": [
-     "tribe"
+     "tribe",
+     "scrap"
     ]
    },
    "solid": true,
@@ -1535,8 +1654,12 @@
    "breakable": null,
    "explosive": false,
    "tags": {
-    "levels": [],
-    "faction": []
+    "levels": [
+     "highway"
+    ],
+    "faction": [
+     "scrap"
+    ]
    },
    "solid": true,
    "scene": "res://world/art/props/jersey.tscn"
@@ -1800,6 +1923,80 @@
    "solid": true,
    "scene": "res://world/art/props/log.tscn"
   },
+  "logpile": {
+   "class": "STATEFUL",
+   "sizePx": [
+    275,
+    216
+   ],
+   "variants": [
+    "res://world/art/props/logpile.png",
+    "res://world/art/props/logpile_v1.png"
+   ],
+   "hull": [
+    [
+     -140,
+     -64
+    ],
+    [
+     -125.3,
+     -80
+    ],
+    [
+     125.3,
+     -80
+    ],
+    [
+     140,
+     -64
+    ],
+    [
+     140,
+     65.3
+    ],
+    [
+     134.7,
+     74.7
+    ],
+    [
+     124,
+     80
+    ],
+    [
+     -124,
+     80
+    ],
+    [
+     -134.7,
+     74.7
+    ],
+    [
+     -140,
+     65.3
+    ]
+   ],
+   "occluder": true,
+   "breakable": {
+    "smashSpeed": 350,
+    "broken": "res://world/art/props/logpile_broken.png",
+    "debris": "res://world/art/props/logpile_debris.png",
+    "debrisCells": 4
+   },
+   "explosive": false,
+   "tags": {
+    "levels": [
+     "bayou",
+     "frostbite",
+     "prairie"
+    ],
+    "faction": [
+     "wild",
+     "tribe"
+    ]
+   },
+   "solid": true,
+   "scene": "res://world/art/props/logpile.tscn"
+  },
   "manhole": {
    "class": "STATEFUL",
    "sizePx": [
@@ -1859,7 +2056,8 @@
      "city"
     ],
     "faction": [
-     "tribe"
+     "tribe",
+     "scrap"
     ]
    },
    "solid": false,
@@ -1928,10 +2126,17 @@
     ],
     "faction": [
      "wild",
-     "tribe"
+     "tribe",
+     "scrap"
     ]
    },
    "solid": true,
+   "canopy": [
+    "res://world/art/props/oak_canopy.png",
+    "res://world/art/props/oak_canopy_v1.png",
+    "res://world/art/props/oak_canopy_v2.png"
+   ],
+   "leaves": "res://world/art/props/oak_leaves.png",
    "scene": "res://world/art/props/oak.tscn"
   },
   "oilstain": {
@@ -1948,8 +2153,13 @@
    "breakable": null,
    "explosive": false,
    "tags": {
-    "levels": [],
-    "faction": []
+    "levels": [
+     "crusher",
+     "highway"
+    ],
+    "faction": [
+     "scrap"
+    ]
    },
    "solid": false,
    "atlas": {
@@ -1976,8 +2186,12 @@
    "breakable": null,
    "explosive": false,
    "tags": {
-    "levels": [],
-    "faction": []
+    "levels": [
+     "city"
+    ],
+    "faction": [
+     "scrap"
+    ]
    },
    "solid": false,
    "atlas": {
@@ -2085,10 +2299,17 @@
     ],
     "faction": [
      "wild",
-     "tribe"
+     "tribe",
+     "scrap"
     ]
    },
    "solid": true,
+   "canopy": [
+    "res://world/art/props/pine_canopy.png",
+    "res://world/art/props/pine_canopy_v1.png",
+    "res://world/art/props/pine_canopy_v2.png"
+   ],
+   "leaves": "res://world/art/props/pine_leaves.png",
    "scene": "res://world/art/props/pine.tscn"
   },
   "reeds": {
@@ -2110,7 +2331,8 @@
     ],
     "faction": [
      "wild",
-     "tribe"
+     "tribe",
+     "scrap"
     ]
    },
    "solid": false,
@@ -2254,7 +2476,8 @@
      "frostbite"
     ],
     "faction": [
-     "wild"
+     "wild",
+     "scrap"
     ]
    },
    "solid": true,
@@ -2322,7 +2545,8 @@
     ],
     "faction": [
      "wild",
-     "tribe"
+     "tribe",
+     "scrap"
     ]
    },
    "solid": true,
@@ -2485,7 +2709,8 @@
     ],
     "faction": [
      "wild",
-     "tribe"
+     "tribe",
+     "scrap"
     ]
    },
    "solid": true,
@@ -2554,7 +2779,9 @@
      "scrap"
     ],
     "levels": [
-     "crusher"
+     "crusher",
+     "prairie",
+     "quarry"
     ]
    },
    "solid": true,
@@ -2685,10 +2912,13 @@
    "explosive": false,
    "tags": {
     "levels": [
+     "city",
      "highway"
     ],
     "faction": [
-     "tribe"
+     "wild",
+     "tribe",
+     "scrap"
     ]
    },
    "solid": true,
@@ -2752,7 +2982,9 @@
     "faction": [
      "scrap"
     ],
-    "levels": []
+    "levels": [
+     "frostbite"
+    ]
    },
    "solid": true,
    "scene": "res://world/art/props/snowcat.tscn"
@@ -2771,8 +3003,12 @@
    "breakable": null,
    "explosive": false,
    "tags": {
-    "levels": [],
-    "faction": []
+    "levels": [
+     "city"
+    ],
+    "faction": [
+     "scrap"
+    ]
    },
    "solid": false,
    "atlas": {
@@ -2918,7 +3154,9 @@
     "faction": [
      "scrap"
     ],
-    "levels": []
+    "levels": [
+     "crusher"
+    ]
    },
    "solid": true,
    "scene": "res://world/art/props/tank.tscn"
@@ -3082,7 +3320,8 @@
     ],
     "faction": [
      "wild",
-     "tribe"
+     "tribe",
+     "scrap"
     ]
    },
    "solid": false,
@@ -3159,13 +3398,92 @@
      "scrap"
     ],
     "levels": [
+     "bayou",
+     "canyon",
      "crusher",
      "highway",
+     "prairie",
      "quarry"
     ]
    },
    "solid": true,
    "scene": "res://world/art/props/tyres.tscn"
+  },
+  "watertower": {
+   "class": "STATEFUL",
+   "sizePx": [
+    192,
+    192
+   ],
+   "variants": [
+    "res://world/art/props/watertower.png",
+    "res://world/art/props/watertower_v1.png"
+   ],
+   "hull": [
+    [
+     -78.7,
+     -62.7
+    ],
+    [
+     -30.7,
+     -96
+    ],
+    [
+     53.3,
+     -85.3
+    ],
+    [
+     90.7,
+     -44
+    ],
+    [
+     96,
+     30.7
+    ],
+    [
+     80,
+     61.3
+    ],
+    [
+     9.3,
+     100
+    ],
+    [
+     -50.7,
+     86.7
+    ],
+    [
+     -80,
+     61.3
+    ],
+    [
+     -100,
+     10.7
+    ]
+   ],
+   "occluder": true,
+   "breakable": {
+    "smashSpeed": 420,
+    "broken": "res://world/art/props/watertower_broken.png",
+    "debris": "res://world/art/props/watertower_debris.png",
+    "debrisCells": 4
+   },
+   "explosive": false,
+   "tags": {
+    "levels": [
+     "canyon",
+     "highway",
+     "prairie",
+     "quarry"
+    ],
+    "faction": [
+     "wild",
+     "tribe",
+     "scrap"
+    ]
+   },
+   "solid": true,
+   "scene": "res://world/art/props/watertower.tscn"
   },
   "wreck": {
    "class": "LOW",
@@ -3226,8 +3544,19 @@
    "breakable": null,
    "explosive": false,
    "tags": {
-    "levels": [],
-    "faction": []
+    "levels": [
+     "bayou",
+     "canyon",
+     "city",
+     "crusher",
+     "frostbite",
+     "highway",
+     "prairie",
+     "quarry"
+    ],
+    "faction": [
+     "scrap"
+    ]
    },
    "solid": true,
    "scene": "res://world/art/props/wreck.tscn"

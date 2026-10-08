@@ -23,7 +23,9 @@ func test_headlight_cone_scales_with_the_upgrade_at_every_lighting_level():
 	var lamps = car.get_node("headlamps/headlights").get_children().filter(func(n): return n is PointLight2D)
 	for level in 3:
 		Settings.set_value("gfx/lighting", level, false)
-		assert_eq(car.get_node("headlamps/headlights").scale, Vector2(1.4, 1.4), "headlight reach at level %d" % level)
+		var beam: Vector2 = car.get_node("headlamps/headlights").scale
+		assert_almost_eq(beam.x, 1.4, 0.0001, "headlight reach at level %d" % level)
+		assert_almost_eq(beam.y, 1.0 + OverheadCarBody2D.LIGHT_WIDTH * sqrt(0.4), 0.0001, "and width at level %d" % level)
 		var lit = lamps.filter(func(l): return l.enabled)
 		assert_gt(lit.size(), 0, "some headlight is on at level %d" % level)
 		for lamp in lit:

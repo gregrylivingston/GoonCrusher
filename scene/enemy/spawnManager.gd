@@ -3,10 +3,15 @@ class_name SpawnManager extends Node
 @export var spawnTimer: float = 6.0
 @export var escalationSpeed = 0.15
 var spawnFloor := 1.0 #spawnTimer never escalates below this (s)
+var spawnScale := 1.0 #a round of spawns every spawnTimer x this seconds (Defense: ModeTiers.DEFENSE_SPAWN_SCALE)
 
 #Goonpocalypse escalates faster and further: it is the endless mode
 const POCALYPSE_ESCALATION := 2.0
 const POCALYPSE_SPAWN_FLOOR := 0.6
+#Goonpocalypse past its survival target (Level.onClockTick): escalation speeds up again and spawns can come
+#faster, so an endless run does end (career playtests: a decent car outlived the harness's 15 minutes)
+const OVERTIME_ESCALATION := 2.0
+const OVERTIME_SPAWN_FLOOR := 0.3
 
 const GOON_CAP = 250          #same for every player and preset
 const DESPAWN_DISTANCE = 8000.0
@@ -104,6 +109,10 @@ func _ready():
 #props goons look for (logs, manholes, crates, carcasses, explosives) join groups as they stream in
 func onNodeAdded(node: Node) -> void:
 	if node is StaticBody2D && node.has_meta(&"propId"): BreakableProp.tag(node)
+
+func overtime() -> void:
+	escalationSpeed *= OVERTIME_ESCALATION
+	spawnFloor = minf(spawnFloor, OVERTIME_SPAWN_FLOOR)
 
 func increaseGiantOdds():
 	if is_instance_valid(Root.playerCar) && Root.playerCar.hasBuff("panic"): return #Panic Button: escalation holds
@@ -246,7 +255,7 @@ func _process(delta):
 		increaseGiantOdds()
 		giantTimer = 0
 	timeCount += delta
-	if timeCount > spawnTimer:
+	if timeCount > spawnTimer * spawnScale:
 		pendingSpawns.append_array(spawners)
 		timeCount = 0
 	#one spawner per frame, so a wave is spread over five frames instead of one

@@ -47,7 +47,7 @@ static func flyUpgrade(upgrade: Root.upgrade, worldPosition: Vector2, playSound 
 	flyers.launch(info.texture, canvas * Transform2D(0.0, info.scale, 0.0, worldPosition), info.ui)
 
 func launch(texture: Texture2D, screenTransform: Transform2D, uiGroup: String) -> void:
-	if active >= CAPS[Settings.get_value("gfx/reward_fx")]: return
+	if active >= CAPS[Settings.get_value("gfx/reward_fx")] || not is_inside_tree(): return #the layer left with the run
 	var target = get_tree().get_first_node_in_group(uiGroup)
 	if not is_instance_valid(target): return
 	var flyer = takeFlyer()

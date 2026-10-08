@@ -36,8 +36,9 @@ features = {
 "branchWidth": 1000.0,
 "oilAbove": 0.6,
 "rockAbove": 0.4,
-"pileupDensity": 0.2,
-"gasStationEvery": 6
+"gasStationEvery": 6,
+"motifs": 1.2,
+"props": 13
 }
 baseTerrain = [1, 6, 1, 6, 1]
 accents = [8, 10]
@@ -54,7 +55,8 @@ dressing = {
 &"tyres": 3,
 &"cone": 3,
 &"sign": 2,
-&"barrel": 1
+&"barrel": 1,
+&"watertower": 1
 },
 2: {
 &"jersey": 5,
@@ -64,7 +66,19 @@ dressing = {
 &"sign": 2,
 &"billboard": 1,
 &"oilstain": 4,
-&"tyres": 2
+&"tyres": 2,
+&"watertower": 1
+}
+}
+motifs = {
+0: {
+&"boneyard": 1
+},
+1: {
+&"roadblock": 2
+},
+2: {
+&"pileup": 3
 }
 }
 pickupTable = {

@@ -86,9 +86,39 @@ static func modesBeaten(level: Dictionary) -> int:
 	var beat: Dictionary = level.get("gamemodeBeat", {})
 	return MODE_PATH.filter(func(m): return beat.get(m, false) && isModeAvailable(m)).size()
 
+## Of those, how many must be won on Medium or harder (ModeTiers): none in act 1, one in act 2, two in act 3
+## (LevelDef.act), so the later levels ask for more than Easy wins (the author's call for a 15-hour game)
+const MEDIUM_TO_OPEN := [0, 0, 1, 2] #by act
+static func mediumToOpenNext(level: Dictionary = {}) -> int:
+	if IS_DEMO: return 0
+	var def := Levels.get_def(StringName(str(level.get("id", "")))) if level.has("id") else null
+	return MEDIUM_TO_OPEN[clampi(def.act, 0, MEDIUM_TO_OPEN.size() - 1)] if def else 0
+
+## Modes won on Medium or harder here, counting only those that can be played
+static func modesAtMedium(level: Dictionary) -> int:
+	return MODE_PATH.filter(func(m): return ModeTiers.best(level, m) >= ModeTiers.MEDIUM && isModeAvailable(m)).size()
+
 ## Has this level done enough to open the one after it
 static func opensNextLevel(level: Dictionary) -> bool:
-	return modesBeaten(level) >= modesToOpenNext(level)
+	return modesBeaten(level) >= modesToOpenNext(level) && modesAtMedium(level) >= mediumToOpenNext(level)
+
+## The rule that opens the next level, for a locked poster: "Beat 3 modes on the level before it (1 on
+## Medium) to unlock"
+static func openRuleText(level: Dictionary) -> String:
+	var medium := mediumToOpenNext(level)
+	return "Beat %d modes on the level before it%s to unlock" % [modesToOpenNext(level), " (%d on Medium)" % medium if medium > 0 else ""]
+
+## What is left here before the next level opens, or "" when nothing is: "Beat 1 more mode here",
+## "Win 1 more mode on Medium here", or both
+static func openLeftText(level: Dictionary) -> String:
+	var modes := maxi(modesToOpenNext(level) - modesBeaten(level), 0)
+	var medium := maxi(mediumToOpenNext(level) - modesAtMedium(level), 0)
+	var parts := []
+	if modes > 0: parts.push_back("beat %d more mode%s" % [modes, "" if modes == 1 else "s"])
+	if medium > 0: parts.push_back("win %d more on Medium" % medium)
+	if parts.is_empty(): return ""
+	var text := " and ".join(parts)
+	return text.left(1).to_upper() + text.substr(1) + " here"
 
 #can this mode be started on this level from the menu
 static func isModePlayable(level: Dictionary, mode: int) -> bool:
@@ -105,11 +135,13 @@ static func modeLockReason(level: Dictionary, mode: int) -> String:
 		gameModes.GOONPOCALYPSE: return "Beat Countdown And Sprint To Unlock"
 	return "Locked"
 
-#coins a run pays: its coins times the star multiplier, x1 plus STAR_BONUS a star (50 stars pay x6).
-#Was coins x stars, which paid six-figure runs by the sixth level (career playtests, docs/GAMEPLAY_SUGGESTIONS.md).
+#coins a run pays: its coins times the star multiplier, x1 plus STAR_BONUS a star, up to STAR_MULT_MAX (20 stars).
+#Was coins x stars, which paid six-figure runs by the sixth level (career playtests, docs/GAMEPLAY_SUGGESTIONS.md);
+#uncapped, a 15-minute Goonpocalypse (a star a minute and ever more coins) still paid 33,000-50,000.
 const STAR_BONUS := 0.1
+const STAR_MULT_MAX := 3.0
 static func payoutMultiplier(star: int) -> float:
-	return 1.0 + STAR_BONUS * maxi(0, star)
+	return minf(1.0 + STAR_BONUS * maxi(0, star), STAR_MULT_MAX)
 
 ## The multiplier as the HUD and the results ticket show it: "3.6"
 static func multiplierText(star: int) -> String:

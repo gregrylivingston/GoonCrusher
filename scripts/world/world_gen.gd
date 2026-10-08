@@ -1056,6 +1056,7 @@ static func fineRaster(job: Dictionary) -> void:
 				else: wallField = minf(wallField, pillar)
 			var bridge := false
 			var ford := false
+			var inPass := false
 			if special:
 				var fw := fillW[l] * w00 + fillW[l + 1] * w10 + fillW[l + LOCAL_W] * w01 + fillW[l + LOCAL_W + 1] * w11
 				var fh := fillH[l] * w00 + fillH[l + 1] * w10 + fillH[l + LOCAL_W] * w01 + fillH[l + LOCAL_W + 1] * w11
@@ -1081,7 +1082,11 @@ static func fineRaster(job: Dictionary) -> void:
 						BRIDGE:
 							if across < f.bridgeHalf: bridge = true
 						_:
-							if across < f.passHalf: wallField = maxf(wallField, 0.45)
+							if across < f.passHalf:
+								wallField = maxf(wallField, 0.45)
+								inPass = true
+			#a pass is driven ground: Frostbite's deep snow and ice there stuck heavy cars
+			if inPass && (t == WorldField.DEEPSNOW || t == WorldField.ICE): t = WorldField.SNOW
 			if wallField < 0.0: t = wallT
 			elif bridge && v.x < BAND: t = BRIDGE
 			elif waterField < 0.0: t = WATER

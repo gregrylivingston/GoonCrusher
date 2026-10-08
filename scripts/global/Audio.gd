@@ -3,7 +3,7 @@ extends Node
 #Pool of one-shot sound players for goons, pickups and crushes. Settings audio_perf/max_sfx
 #sets how many of the pool's players may sound at once; starts per frame scale with it.
 #Music is the radio (Radio, docs/RADIO.md), a child made here: Audio.radio.
-const POOL_VOLUME_DB = 3.0
+const POOL_VOLUME_DB = 0.0
 
 var soundsStartedThisFrame: int = 0
 @onready var players = $enemy_sounds.get_children()

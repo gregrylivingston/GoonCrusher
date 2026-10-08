@@ -18,6 +18,8 @@ Each of the 8 levels has its own generator grammar, signature barrier and surfac
 | `scripts/world/world_skin.gd` | `WorldSkin`: the level's ground material, strips, decor, prop scenes, node pools, pickup stock and `recipeContext()`. |
 | `scripts/world/world_hooks.gd` | `WorldHooks`: O(1) grid rules for goons, GoonFx and the AI driver. |
 | `scripts/world/breakable.gd` | `BreakableProp`: smashing, debris, coin spills, explosives and chains, prop groups for goons. |
+| `scripts/world/prop_reactions.gd` | `PropReactions`: canopies fading over the car, props answering hits (springs, leaves, dust, spray, near-miss cracks), knocked cones, the car's position for bending decor (package 14). |
+| `scripts/world/spill.gd` | `Spill`: interactive props (log piles, water towers, billboards, hives, the crane's container), goons cutting piles loose, what spilled (package 14). |
 | `scene/level/tileManager.gd` | `TileManager`: builds the map at level start, places stations, streams chunks, owns the apply budget. |
 | `scene/level/levelRoot.gd` | `Level`: applies the def (`applyDef`), sets the race clocks from route lengths, Marathon legs, Defense setup. |
 | `shader/ground.gdshader` | The ground: one material for every ground quad. |
@@ -139,7 +141,7 @@ Thresholds in `features` are raw noise values: plain simplex noise spans about �
 | bayou | lakes where an fbm rises above `lakeThreshold`; two braided channels either side of a noise's zero line, each strand masked by its own noise | `lakeFrequency` 1/12000, `lakeThreshold` 0.3, `channelFrequency` 1.1e-4, `channelWidth` 560, `channelGap` 0.2, `bridgeWidth` 900 | water with shallows; bridges (BRIDGE) |
 | canyon | canyon walls along ridged zero lines (masked); mesas where an fbm rises above `mesaAbove`; wash lanes along another noise's zero lines; sand dunes where a fifth noise is above `duneAbove` | `ridgeFrequency` 7e-5, `wallWidth` 900, `mesaFrequency` 1/9000, `mesaAbove` 0.38, `washFrequency` 4e-5, `washWidth` 700, `duneAbove` 0.35, `passWidth` 1400 | HILLS; passes |
 | quarry | noise ground and dirt haul roads; one set-piece slot per `pieceCells` coarse cells: a terraced pit (ring wall with `pitRamps` ramps, mud in the middle), a junk fort (ring wall with `fortGates` gates, a lot inside) or a tyre camp (open dirt, reserved for props); mud pits (radius `mudPitRadius`, at most one per 2560 px lattice cell, 14% chance, never on a haul road) | `haulFrequency` 4.5e-5, `haulRoadWidth` 900, `pieceCells` 10, `pitChance` 0.3, `pitRadius` 3200, `pitRamps` 2, `fortChance` 0.25, `fortRadius` 2200, `fortGates` 3, `tyreCamps` 0.25, `campRadius` 1500, `rampWidth` 1000, `mudPitRadius` 200, `passWidth` 1300 | HILLS; ramps and gates are crossings |
-| mountain | ranges along zero lines (masked) and massifs where an fbm peaks above `peakAbove`; ice lakes where another fbm is above `iceLakeThreshold`; deep snow where a fifth noise is above `deepSnowAbove` | `ridgeFrequency` 6e-5, `rangeWidth` 1800, `peakFrequency` 1/8000, `peakAbove` 0.42, `iceFrequency` 1/7000, `iceLakeThreshold` 0.3, `deepSnowAbove` 0.3, `passWidth` 1500 | HILLS; passes |
+| mountain | ranges along zero lines (masked) and massifs where an fbm peaks above `peakAbove`; ice lakes where another fbm is above `iceLakeThreshold`; deep snow where a fifth noise is above `deepSnowAbove` | `ridgeFrequency` 6e-5, `rangeWidth` 1800, `peakFrequency` 1/8000, `peakAbove` 0.42, `iceFrequency` 1/7000, `iceLakeThreshold` 0.3, `deepSnowAbove` 0.3, `passWidth` 1500 (Frostbite 1800) | HILLS; passes |
 | highway | highways along +x every `highwaySpacing` px of y (highway 0 through the start), warped by up to `warpAmplitude`; branch roads along y every `branchEvery` chunks (each with `branchChance`); oil on the asphalt where a noise is above `oilAbove`; a dirt verge; gas station lots beside the highways every `gasStationEvery` chunks; rock outcrops (the only walls) where an fbm is above `rockAbove`, at least 1600 px off any road | `warpFrequency` 4e-5, `roadWidth` 1600, `branchWidth` 1000, `warpAmplitude` 3000, `highwaySpacing` 23040, `branchEvery` 3, `branchChance` 0.7, `gasStationEvery` 6, `oilAbove` 0.6, `rockAbove` 0.4 | HILLS; passes |
 | city | a street lattice on the coarse grid: in every group of 5 columns (and rows) a street at offset 0 and at 2 or 3 (hashed); street cells are asphalt; blocks between streets are buildings (inset by a `sidewalk`, lot underneath), parks (grass, moss) or lots, by share; some street rows are canals (never within 6000 px of the start's row), bridged at every street column | `buildingShare` 0.45, `parkShare` 0.2, `lotShare` 0.25, `canalShare` 0.1, `canalWidth` 1040, `sidewalk` 110 | BUILDING; bridges at the full street width; no shallows |
 | yard | plots of `plotSize` + 1 coarse cells, the last row and column of each being its fence line; each fence segment is a scrap mountain, a container row or open, and a walled one has a gap cell with `gapChance`; corners are always open; some plots are tank farms (lot, reserved for props); every `conveyorEvery`-th plot row has a conveyor along its middle, running +x or −x (hashed per plot row); oil spills where a noise is above `oilAbove` | `plotSize` 3, `scrapMountainShare` 0.25 (+0.35), `containerRows` 0.3 (×0.5), `tankFarmChance` 0.15, `gapChance` 0.6, `conveyorEvery` 4, `conveyorWidth` 640, `oilAbove` 0.55, `scrapWidth` 860, `containerWidth` 600 | HILLS; the gaps and corners |
@@ -179,7 +181,7 @@ The result also lists every district (`id`, `cells`, `centroid`, `firstCell`, `n
 
 - Between the centres of two 4-adjacent passable coarse cells the fine map is always open: the fine fields stay above (the bilinear coarse envelope − `A_LO`), a corridor at least 2 × 448 px wide.
 - A blocked coarse cell is always blocked within `PILLAR_PX` (160 px) of its centre.
-- Filled pockets are filled; crossings in a cell or its 4-neighbours open their full width (`fordHalf`, `bridgeHalf`, `passHalf` across the way through).
+- Filled pockets are filled; crossings in a cell or its 4-neighbours open their full width (`fordHalf`, `bridgeHalf`, `passHalf` across the way through). Inside a pass, deep snow and ice become plain snow, so heavy cars don't stick there.
 - The fine terrain is the wall terrain where the wall field is below 0; BRIDGE where a bridge crossing covers water; WATER where the water field is below 0; SHALLOWS where the water field is below `BAND` (256 px) on grammars with shallows (all but the city) or at a ford; else the surface.
 
 The output is the 40 × 20 terrain bytes plus the `water` and `wall` fields at 42 × 22 (under a bridge the water field stays negative, for the art).
@@ -227,7 +229,7 @@ Order of work: control block; wall contours (marching squares over the padded wa
 
 | Budget | Value | Enforcement |
 |---|---|---|
-| Nodes per chunk (pickups and decorateChunk extras not counted) | 100 (`MAX_NODES`) | fixed cost first: 8 ground quads, the wall body, occluders, lines, one MultiMesh per decor id; then props in placement order, each costing 3 nodes (+1 with an occluder, +1 with a beacon); a prop that would pass the budget is dropped |
+| Nodes per chunk (pickups and decorateChunk extras not counted) | 100 (`MAX_NODES`) | fixed cost first: 8 ground quads, the wall body, occluders, lines, one MultiMesh per decor id; then props in placement order, each costing 3 nodes (+1 with an occluder, +1 with a beacon, +1 with a canopy); a prop that would pass the budget is dropped |
 | Occluders | 16 (`MAX_OCCLUDERS`), each at most 1280 px on a side (`SPAN`) | wall occluders are split to the span, sorted longest first, and the shortest dropped; props past the remaining room are placed without their occluder |
 | Static pieces | 48 (`MAX_PIECES`) | Douglas-Peucker simplification grows through 16, 32, 64, 128 px until the pieces fit; points on the chunk's edge are kept so neighbouring chunks meet; a simplification that lost too much area falls back to the exact outline |
 | Lines | 24 (`MAX_LINES`), each within 1280 px | split to the span, the shortest dropped |
@@ -239,8 +241,12 @@ Wall blobs and holes under 2500 px² are dropped or filled (`MIN_LOOP_AREA`), pi
 ### Props and decor
 
 - **Dressing:** `LevelDef.dressing` maps each faction to `{prop id: weight}`. `WorldSkin.dressingIds` splits them by the manifest's class: DECOR ids become MultiMesh decor, the rest (LOW, TALL, STATEFUL, WALL) pooled or instanced scenes. The three landmarks are always loaded, and the city adds the `rooftop` decor (`WorldSkin.ROOF_DECOR`).
-- **Props** (`placeProps`): `features.props` (16) × the chunk's open share, by dart throwing (up to 14 darts per prop wanted). Each spot uses its coarse cell's district faction's table. A prop must fit at its centre and 4 points across its box: on spawnable ground, never on a conveyor, mud pit or bridge, off asphalt and oil unless it is a road prop (`ROAD_PROPS`: cone, jersey, wreck, manhole, barricade, sign), at least 77 px (`PROP_MARGIN`) from water and walls, outside the start's core (1200 px), station lots and Defense lanes, and `PROP_GAP` (150 px) clear of everything placed, so a car can weave through. Chain props (fence, hedge, jersey, fortwall) are laid 2–4 end to end.
-- **Decor** (`placeDecor`): `features.decor` (110) × the open share, never on blocked, bridge or conveyor cells. `WorldSkin.DECOR_PLACE` limits some ids: `paint` and `streetglow` only on roads and lots, `reeds` only on shallows and banks, `oilstain` and `cracks` anywhere; the rest stay off asphalt, oil and shallows.
+- **Props** (`placeProps`) come in three passes, all counted against `features.props` (16 by default; Bayou and Frostbite 18, Canyon and Highway 13, City 12) × the chunk's open share:
+  1. **Field lines** (`placeFieldLines`, package 14 P-3). Fences and hedges (`WorldSkin.FIELD_PROPS`) are never scattered: they lie on the edges of a field lattice in world space, one lattice per `FIELD_REGION` (10,240 px) square, turned up to `FIELD_ANGLE` (0.6 rad) from the world axes by the seed, `features.fieldSpacing` px apart (1400; Prairie 1600). Each lattice edge is a fence (chance `features.fenceDensity`), a hedge (`hedgeDensity`) or nothing; a run has a gap (a gate; two on runs of `FIELD_GATE_LONG` pieces or more). A chunk places the pieces whose centres are inside it, in the dressing of the district there, on open ground off roads (so tracks and creeks cut gaps) and clear of water, walls and earlier reservations; pieces of one run touch end to end. Hedgerows get an oak at some corners (`CORNER_TREE`); a lattice cell fenced on `PADDOCK_EDGES` (3) sides is a paddock with 2-4 hay bales inside. Each piece counts as `FIELD_COST` (0.34) of a scattered prop.
+  2. **Motifs** (`placeMotifs`, P-5). `LevelDef.motifs` picks set pieces per district faction from `WorldSkin.MOTIFS` (camp, cabincamp, wreckpile, junkyard, pinestand, cypressgrove, orchard, boneyard, roadblock, pileup), `features.motifs` (1; City 0.4, Highway and Crusher 1.2) a fully open chunk. A motif's members sit at its centre, round a ring, scattered in a disc, or in a grid or line turned to the field lattice, `MOTIF_GAP` (70 px) apart instead of `PROP_GAP`; the motif keeps `PROP_GAP` from everything else and is skipped when fewer than its `min` members fit. Members load with the level whatever its dressing says. Each counts as `MOTIF_COST` (0.5).
+  3. **Scatter** by dart throwing for the rest (up to 14 darts per prop wanted), each spot from its coarse cell's district faction's table, field props left out. A prop must fit at its centre and 4 points across its box: on spawnable ground, never on a conveyor, mud pit or bridge, off asphalt and oil unless it is a road prop (`ROAD_PROPS`: cone, jersey, wreck, manhole, barricade, sign), at least 77 px (`PROP_MARGIN`) from water and walls, outside the start's core (1200 px), station lots and Defense lanes, and `PROP_GAP` (150 px) clear of everything placed, so a car can weave through. Other chain props (jersey, fortwall) are laid 2–4 end to end; a chain that may stand on roads lies along the road there (`roadAxis`: the heading of 8 with the longest run of road).
+  Breakables take taken-set bits in placement order across the passes (`nextBit`). Recipes now average about 14-15 ms on a worker on Prairie (field lines and motifs), Prairie's chunks reach the 100-node budget, and the rest stay under it.
+- **Decor** (`placeDecor`): `features.decor` (110) × the open share, never on blocked, bridge or conveyor cells. `WorldSkin.DECOR_PLACE` limits some ids: `paint` and `streetglow` only on roads and lots, `reeds` only on shallows and banks, `oilstain` and `cracks` anywhere; the rest stay off asphalt, oil and shallows. Tufts and reeds bend away from the player's car (`WorldSkin.BEND_DECOR`, `world_decor.gdshader`: each corner pushed by how close it is to `gc_car_pos`, which PropReactions sets each frame; off at Ground Detail Simple).
 - **Rooftops** (city): up to 48 a chunk on BUILDING cells, at least 0.3 field units (192 px) inside the parapet and 190 px apart, square to the street grid.
 
 ### Pickups and the taken set
@@ -308,12 +314,45 @@ Baked STATEFUL props carry their state as metadata on the root (`smashSpeed`, `b
 | barricade | 350 | |
 | barrel | 120 | explodes: radius 170 px, 8 car damage |
 | tank | blast only (100000) | explodes: radius 320 px, 16 car damage |
+| beehive | 100 | a swarm (Interactive props) |
+| logpile | 350 | rolling logs (Interactive props) |
+| billboard | 360 | topples (Interactive props) |
+| watertower | 420 | a flood (Interactive props) |
 
 - **The car** (`overhead_car_body_2d.gd`): a breakable hit at or above its smash speed is smashed with no wall damage, and the car keeps 85% of its speed (`BreakableProp.SPEED_KEEP`). Slower, it is a normal wall hit.
 - **Smash** (`smashNode`): the broken sprite in place, collision and occluder off, a pooled 5-piece debris burst on tweens, coins spilled ahead of the car (collected the usual way, never credited from an animation), a dust puff, and the taken bit set.
 - **Explosives** (`detonate`, `explode`): deferred, once per prop, through `GoonFx.blast` (car damage, goons flattened with crush credit, the pooled explosion). Every blast calls `blastAt`, which sets off other explosives in its radius with a clear line (`WorldHooks.lineClear`) 0.12 s later, so a chain spreads a hop at a time and each prop goes off once. Doomcart blasts and the Sidecar's bombs set barrels off too.
 - **Goons:** `SpawnManager.onNodeAdded` tags props (`BreakableProp.tag`): `prop_log` (Snapper spawns), `prop_manhole` (Rat Pack spawns), `prop_crate` (the Bandit smashes one open and steals what spills), `prop_carcass` (Buzzard perches), `prop_explosive`.
-- **The AI** plans through breakables it is fast enough to smash; explosives are always walls (docs/AI_DRIVER.md).
+- **The AI** plans through breakables it is fast enough to smash, and through standing cones above `PropReactions.KNOCK_SPEED`; explosives are always walls (docs/AI_DRIVER.md).
+
+## Interactive props
+
+`Spill` (`scripts/world/spill.gd`, package 14 P-4): props that let something loose when they go. `Spill.release(node, dir)` runs from `BreakableProp.smashNode` for every prop in `Spill.DEFS`, with the direction from the node's `spillDir` metadata (a goon or a blast sets it) or the car's travel.
+
+| Prop | Where | Breaks at | What comes out |
+|---|---|---|---|
+| `logpile` | Prairie, Bayou, Frostbite (Wild, Tribe) | 350 px/s, a blast, or a goon | `LOGS` (5) logs roll 260-560 px along the release direction over 1.1 s, fanned ±0.55 rad: goons in their path are flattened (crushes for the player), the car takes 6 once and stops the log; each settles as an ordinary `log` prop (so Snappers can use it) |
+| `watertower` | Prairie, Canyon, Quarry, Highway | 420 px/s or a blast | a flood flattens goons within 340 px in the clear ("SPLASH!") |
+| `billboard` | City, Highway (Scrap) | 360 px/s or a blast | it topples away from the car (its broken sprite is the board flat on its +y side, flipped when the car came from that side) and flattens what is under it; the car takes 8 if it is there |
+| `beehive` | Prairie, Bayou (Wild) | 100 px/s or a blast | a swarm hunts the nearest goon within 700 px for 12 s, flattening up to 8, and stings the car (1.5 every 0.4 s) when it is close |
+| `crane` | Quarry, Crusher | rammed at `DROP_SPEED` (320 px/s) or a blast, once | the container falls off the jib's tip over 0.7 s, flattens goons under it, hits the car for 10 if it is there, and stays as a `container` prop |
+
+- **Goons cut log piles loose.** Goons with `"releases": true` in `Goons.DATA` (Grunt, Yipper, Splitter) check every 0.5 s in their move state (`GoonVerbs.Verb.seekRelease`): with the car within `LURE_CAR` (900 px) of a pile that is within `LURE_GOON` (650 px) of the goon, it runs to the pile and, within `REACH`, cuts it loose aimed at the car ("TIMBER!"), then goes back to its own business.
+- **Blasts** (`BreakableProp.blastAt`) set off spilling props in their radius with a clear line: piles burst away from the blast, cranes drop their container.
+- **Groups:** `prop_logpile` (goons look for piles), `prop_spill` (blasts).
+- **What spilled is kept.** Logs and containers that come to rest are recorded on the TileManager (`addSpilled`, per chunk, chunk-local) and go into the chunk they landed in; a re-applied chunk puts them back (`ChunkView.applyExtras`). A crane that dropped its container is marked (`markSpillUsed`) and `ChunkView` sets its `spilled` metadata, so it never drops another.
+- **Loading:** `WorldSkin.dressingIds` adds `Spill.PRODUCTS` (a log pile's logs, the crane's container) for any spilling prop the level uses; `Spill.productScene` falls back to the manifest's scene.
+
+## Prop reactions
+
+`PropReactions` (`scripts/world/prop_reactions.gd`, package 14): one node per run, made by the TileManager after the skin (`TileManager.reactions`, `PropReactions.current`), pausable. Show only, except cones.
+
+- **Canopies.** A layered prop (trees and the crane, docs/WORLD_ART.md "Layered props") has a `Canopy` sprite at absolute z `CANOPY_Z` (8: over goons, at most 6, and the car; under the station roof, 20). `ChunkView.applyProp` gives it the variant's canopy texture (`WorldSkin.canopies`) and registers it (`addCanopy`); `release` forgets it. Each frame the canopy fades toward `FADE_ALPHA` (0.4) while the player's car is inside its shape grown by `UNDER_PAD` (34 px), else back to 1, at `FADE_RATE` a second. The shape is the canopy texture's opaque rect (read once per texture): the ellipse inside it for trees, the box for the crane (`SQUARE_CANOPIES`). It never fades for goons, so crowns can hide goons beneath them (by choice).
+- **Hits.** `collideWithFixedObject` in the car calls `PropReactions.hit(collider, moving, point)` on a fresh wall hit (not a scrape). `REACT` gives each prop id a kind: CANOPY (the crown springs, leaves fall), SWAY, WOBBLE (rotation springs), SHAKE (a positional rattle), SQUASH (scale across the hit), THUD (dust only), SPRAY (a hydrant: wobble and about 2 s of droplets), KNOCK (cones). Nothing reacts below `MIN_SPEED` (60 px/s); the size grows to `FULL_SPEED` (520). Breakables react only below their smash speed. Springs are `[amplitude, Hz, decay]` in `SPRING`, on the prop's existing sprites, and put back exactly at rest when they settle.
+- **Cones** (`knocks`, checked by the car before the wall branch): hit at `KNOCK_SPEED` (120 px/s) or more, a cone's sprite flies 140-230 px along the hit and its collision goes off; the car keeps `KNOCK_KEEP` (96%) of its speed and takes no wall damage. Cones have no taken bit: a reloaded chunk stands them up again (`reset`, called by `ChunkView` on every pooled prop).
+- **Blasts:** `BreakableProp.blastAt` calls `PropReactions.blast`, which shakes the crowns in the radius and drops a few leaves.
+- **Near misses:** a breakable hit too slow to smash wobbles by speed ÷ smash speed instead of by `FULL_SPEED`; at `NEAR_SMASH` (70%) or more it cracks (the "rattle" sound, pitched up) and throws 2-5 chips off its debris strip, so the player learns how close they were.
+- **Bits:** leaves from each layered prop's baked `<id>_leaves.png` strip (`WorldSkin.leaves`; pine drops snow clumps on the mountain grammar), drawn by one `Bits` node (72 pooled), and dust and spray through a `CarJuice.Particles` (96). Driving Effects (`gfx/driving_fx`) scales them by `PARTICLE_SCALE` (none at Minimal); Reduce Motion cuts the springs to 40%.
 
 ## Water
 
@@ -354,7 +393,7 @@ Spawning, props and FX rules for goons are in docs/GOONS.md ("The world").
 
 ## Determinism
 
-- Every random stream in the world is `WorldGen.ihash(seed, tag, a, b)`, an integer mixer (`hashf` gives a float in [0, 1)). Tags: `WorldGen` 1–12 (run, share, district, lane, sprint, leg, spawner, faction, name, tint, goons, giant), `WorldField` 101–111 (noise seeds, pieces, mud pits, branches, gas stations, lattice, canals, blocks, segments, plots), `ChunkRecipe` 201–206 (recipe, pickup, prop, decor, spot, roof). `FastNoiseLite` seeds come from `ihash` too.
+- Every random stream in the world is `WorldGen.ihash(seed, tag, a, b)`, an integer mixer (`hashf` gives a float in [0, 1)). Tags: `WorldGen` 1–12 (run, share, district, lane, sprint, leg, spawner, faction, name, tint, goons, giant), `WorldField` 101–111 (noise seeds, pieces, mud pits, branches, gas stations, lattice, canals, blocks, segments, plots), `ChunkRecipe` 201–212 (recipe, pickup, prop, decor, spot, roof; 207-211 field lines: region angle and edge kinds, gates, corner oaks, their turn, paddock bales; 212 motifs). `FastNoiseLite` seeds come from `ihash` too.
 - A seed rebuilds the same map, districts, stations, lanes and recipes. The worker threads don't change that: each job reads only its own input.
 - `TileManager.worldSeed` is −1 (rolls `randi()`) unless set: the playtest sets `--seed` (run *k* uses seed + *k*), the bench defaults to 1337 (`--seed=N` to change).
 - Spawners get their own RNG from `WorldMap.nextSpawnerSeed()` (seed and a counter). `PickupWorld.decorateChunk` uses `TileManager.chunkRng` (Godot's `hash([seed, x, y])`).
@@ -386,7 +425,8 @@ Spawning, props and FX rules for goons are in docs/GOONS.md ("The world").
 2. Add it to a level's `dressing` (per faction, with a weight). DECOR ids become decor automatically.
 3. If it may stand on roads, add it to `WorldSkin.ROAD_PROPS`; if it is laid in chains, to `CHAIN_PROPS`; a decor with a placement rule goes in `DECOR_PLACE`.
 4. A breakable needs `smashSpeed` (and optionally coins in `BreakableProp.COIN_SPILL`); an explosive a blast in `BreakableProp.BLAST`; a prop goons look for a group in `BreakableProp.GROUPS`.
-5. Run `test_world_art.gd` and `test_world_recipe.gd` (budgets).
+5. Give it a reaction in `PropReactions.REACT` (a prop without one is a plain wall when hit). Anything the car can pass under gets a `canopy` drawing (docs/WORLD_ART.md, "Layered props").
+6. Run `test_world_art.gd`, `test_world_recipe.gd` (budgets) and `test_prop_reactions.gd`.
 
 ## How to add a terrain value
 
@@ -413,16 +453,17 @@ Spawning, props and FX rules for goons are in docs/GOONS.md ("The world").
 | `test_world_hooks.gd` | `slideStep`, drowning and its credit, tethers and hazards near water, shells and shots against walls, breakables and explosives, prop groups, the AI's water margin |
 | `test_levels.gd` | the registry, defs, thin scenes, escalation, rosters, faction bands |
 | `test_world_art.gd` | the baked art and manifest (docs/WORLD_ART.md) |
+| `test_prop_reactions.gd` | canopies over the car and their fade, the crane's box, reactions by kind settling at rest, bits off at Minimal, hydrant spray, knocked cones and their reset, blasts, forget, the AI and cones, near-miss cracks, decor bending |
+| `test_prop_layout.gd` | field lines square to their lattice and off roads, road barriers along the road, motif clusters, level motif tables and dead keys, the skin loading motif members and spill leftovers |
+| `test_spill.gd` | log piles (rolling logs flatten goons and settle), water towers, billboards toppling away from the car, hives, the crane's one drop, goons cutting piles loose, blasts setting spills off, the TileManager's record |
 | `test_save_migration.gd` | `SAVE_VERSION` 5: levels rebuilt from the registry, old unlocks carried by index, records rekeyed to ids |
 
 ## Known issues
 
 - **Worker speed:** the map build takes 0.8–1.3 s on the HD 620 box (seed 1337; crossings run natively since 2026-10-07, which saved 0.5–0.7 s) and a recipe about 7–12 ms, the rest GDScript. The apply side stays inside its budget. `WorldField.sample` (280–620 ms of the build) is the next port (docs/NATIVE.md, "What to port next").
 - **Highway edges** look blobby: the asphalt edge comes from the 128 px raster through organic blending.
-- **Landmark beacons glow by day** (additive and unlit); the Tribe's reads oddly in daylight.
-- **Frostbite's passes** can be sticky for heavy cars (deep snow and ice in narrow passes).
 - **Bumper-only car collision:** the car's shape is a front and a rear polygon, so its middle can wedge on prop and wall corners (`overlap=` in `PLAYTEST_STUCK`).
-- **Unused def fields:** `nightTint`, `ambience`, `modes` (nothing reads `offersMode`), and density keys in some `features` (`reedDensity`, `pineDensity`, `hedgeDensity`, `fenceDensity`, `pileupDensity`, `sideStreetChance`).
+- **Unused def fields:** `nightTint`, `ambience`, `modes` (nothing reads `offersMode`), and `sideStreetChance` in City's `features`.
 - **Giantism** is per district but only shown on the HUD.
 - **Marathon's later stations** are found on the finished map, so their lot's terrain isn't cleared (props and pickups are kept out); a chunk with a naturally clear lot is preferred.
 - **No first-run hints** explain deep water or breakables.

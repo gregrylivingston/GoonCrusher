@@ -43,7 +43,8 @@ Godot_console.exe --headless --fixed-fps 60 --path . -- --playtest --uncapped --
 | `--mode=a,b` | `countdown` | `countdown`, `sprint`, `goonpocalypse`, `marathon`, `defense` |
 | `--car=a,b` | `sedan` | car names from the save (`sedan`, `van`, `police`, ...) |
 | `--profiles=a,b` | `cautious` (`AIProfiles.BEST`) | AI profiles to play (below); each is another dimension like car or mode |
-| `--runs=N` | 1 | runs per level × mode × car × profile |
+| `--tier=a,b` | `easy` | mode tiers (`ModeTiers`): `easy`, `medium`, `hard` |
+| `--runs=N` | 1 | runs per level × mode × tier × car × profile |
 | `--seed=N` | 1 | first map seed; run *k* uses seed + *k* |
 | `--upgrades=N` or `save` | 0 | every stat upgraded to level N (0 = stock car), or the save's own upgrades |
 | `--sight=human` or `full` | `human` | what the driver may see (below) |
@@ -275,7 +276,7 @@ Every candidate is scored **value ÷ (seconds to get there + 1)**. The current g
 - **Prediction:** each plan is simulated 0.75 s ahead (`horizonTicks`), tick by tick, with the car's own physics, `OverheadCarBody2D.integrate()`, and the controller's key rules (`playerCarController.nextSteering`). The prediction therefore includes the steering ramp, tyre slip, drag and terrain friction, and any handling change made inside `integrate()`.
 - **Sweeps:** the predicted path is swept in 0.1 s segments with the car's footprint against everything solid on layer 1: the chunks' wall pieces, props and the station.
   - Godot's `cast_motion` ignores anything the shape already overlaps, so each segment first tests for overlap with the exact footprint.
-  - **Breakable props** (fence, hedge, hay bale, crate, barricade) are passable when the predicted speed at that point is at least `smashMargin` (1.15) × the prop's smash speed: the sweep looks up what it touched (`get_rest_info`), leaves the prop out and sweeps on, and the plan pays `smashCost` (0.25 s) per prop. Slower, it is a wall. Explosives (barrel, tank) are always walls. Pickups among breakables don't count as "among rocks".
+  - **Breakable props** (fence, hedge, hay bale, crate, barricade) are passable when the predicted speed at that point is at least `smashMargin` (1.15) × the prop's smash speed: the sweep looks up what it touched (`get_rest_info`), leaves the prop out and sweeps on, and the plan pays `smashCost` (0.25 s) per prop. Slower, it is a wall. Explosives (barrel, tank) are always walls. Standing cones count the same way at `smashMargin` × `PropReactions.KNOCK_SPEED` (they knock over and the car keeps its speed; `PropReactions.isKnockable`). Pickups among breakables don't count as "among rocks".
   - Deep water under the car's centre (the car dies two ticks after its centre is over it) ends the plan with a death cost; under a corner of its footprint (with a 40 px margin) it costs 300 s per second, so when every plan is wet the one that keeps the centre dry wins.
   - **Deep water ahead** (`waterAheadCost`): at each 0.1 s point of a plan, deep water along the direction of travel within 0.9 s of travel (`waterLookSeconds`) costs up to 8 s per second (`waterNearCost`), more the closer and the faster. The end-of-plan probe charges for deep water like a wall, twice over. At 700 px/s on shallows the car can't stop in the 256 px band, so this is what makes it brake or turn while it still can.
 - **A plan's cost** is its estimated seconds to the goal:

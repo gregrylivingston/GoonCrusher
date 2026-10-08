@@ -15,11 +15,11 @@ class_name CrushPrizes extends RefCounted
 ## "prize:<id>" in meta.unlocks).
 const GAMES := [
 	{"id": "claw", "name": "Claw Crane", "icon": "res://texture/icon/claw.svg", "start": true},
-	{"id": "scratch", "name": "Scratch Card", "icon": "res://texture/icon/scratch.svg", "price": {"coin": 1500}},
-	{"id": "wheel", "name": "Prize Wheel", "icon": "res://texture/icon/wheel.svg", "price": {"coin": 4000}},
-	{"id": "deal", "name": "The Deal", "icon": "res://texture/icon/deal.svg", "price": {"coin": 9000}},
-	{"id": "slot", "name": "Slot Machine", "icon": "res://texture/icon/slotMachine.svg", "price": {"coin": 20000}},
-	{"id": "vault", "name": "The Vault", "icon": "res://texture/icon/vault.svg", "price": {"coin": 40000, "gem": 10}},
+	{"id": "scratch", "name": "Scratch Card", "icon": "res://texture/icon/scratch.svg", "price": {"coin": 3000}},
+	{"id": "wheel", "name": "Prize Wheel", "icon": "res://texture/icon/wheel.svg", "price": {"coin": 8000}},
+	{"id": "deal", "name": "The Deal", "icon": "res://texture/icon/deal.svg", "price": {"coin": 18000}},
+	{"id": "slot", "name": "Slot Machine", "icon": "res://texture/icon/slotMachine.svg", "price": {"coin": 40000}},
+	{"id": "vault", "name": "The Vault", "icon": "res://texture/icon/vault.svg", "price": {"coin": 80000, "gem": 10}},
 ]
 
 ## Box tiers by box level: box 1 is Cardboard, box 5 and later Diamond.

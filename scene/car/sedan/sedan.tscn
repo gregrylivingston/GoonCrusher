@@ -65,6 +65,9 @@ polygon = PackedVector2Array(103, 0, 101.8, 22.8, 99.5, 28.3, 95.9, 32.2, 87.2, 
 position = Vector2(0, 0)
 polygon = PackedVector2Array(-68, 42.3, -89.2, 37.8, -95.9, 34.7, -99.5, 31.2, -102.7, 20.9, -102.9, 16.6, -103, 0, -102.7, -20.9, -99.5, -31.2, -95.9, -34.7, -89.2, -37.8, -68, -42.3)
 
+[node name="CollisionShape2D_body" type="CollisionPolygon2D" parent="."]
+polygon = PackedVector2Array(48, -32.3, 48, 32.3, -68, 32.3, -68, -32.3)
+
 [node name="tireLocation" parent="sprite" index="0"]
 position = Vector2(37, 62)
 

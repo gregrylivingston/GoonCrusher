@@ -2,6 +2,7 @@ class_name Level extends Node2D
 
 var spawnerScene = preload("res://scene/player/spawner.tscn")
 var explosionScene = preload("res://scene/fx/explosion.tscn") #loaded with the level, not with every car
+const BEACON_MATERIAL := preload("res://shader/world_beacon.tres") #shared by every landmark's beacon: dim by day
 var explosions: ExplosionPool
 var playerCar: OverheadCarBody2D
 var playerController
@@ -11,6 +12,10 @@ var playerController
 var defApplied := false
 @export var seconds = 600 #the run clock. Every mode counts it down except Goonpocalypse, which counts up from 0
 var levelSeconds: float #the level's authored seconds, kept after the mode replaces `seconds`
+var tier: int = ModeTiers.EASY #the run's tier (ModeTiers, picked in run setup): its goal and how tough the world is
+#the run's mode and level index, kept: a won run moves the save's selection on (SaveManager.currentLevelPassed)
+var runMode: int = Root.gameModes.GOONCRUSHER
+var runLevel := 0
 var elapsed := 0.0 #run-clock seconds that have passed, whichever way the clock counts (Timer.gd)
 
 var isDaytime: bool = true
@@ -38,20 +43,18 @@ const ROUTE_FACTOR = {&"meadow": 1.08, &"bayou": 1.12, &"canyon": 1.15, &"quarry
 const ROUTE_FACTOR_DEFAULT = 1.1
 const STATION_APPROACH_PX = 1500.0
 
-#Marathon: a relay of Sprint-length legs. Each station but the last adds that leg's clock, refuels,
-#patches the car up and opens a free slot machine; the last one wins.
-const MARATHON_LEGS = 5
+#Marathon: a relay of Sprint-length legs (ModeTiers.LEGS by tier). Each station but the last adds that leg's
+#clock, refuels, patches the car up and opens a free slot machine; the last one wins.
 const MARATHON_TURN = PI / 3 #each leg heads off within this of the last leg's heading
 const MARATHON_HEAL = 35.0   #health restored at each station
 var leg := 1
 var legHeading := 0.0
 
-#Goonpocalypse: endless. Surviving POCALYPSE_TARGET x the level's seconds beats the mode (its star);
-#after that it is a chase for score and time (SaveManager.recordGoonpocalypse).
-const POCALYPSE_TARGET = 2.0
+#Goonpocalypse: endless. Surviving ModeTiers.POCALYPSE_TARGET x the level's seconds beats the mode on the
+#run's tier; after that it is a chase for score and time (SaveManager.recordGoonpocalypse).
 var targetReached := false
 
-#Defense: hold the station until the clock runs out. Goons spawn at the mouths of the straight lanes the
+#Defense: hold the station until the clock runs out (ModeTiers.DEFENSE_HOLD seconds). Goons spawn at the mouths of the straight lanes the
 #world generator cleared out from it (WorldGen.placeDefense) and march on its walls (Walker.siege); the
 #station's barrier health is in station.gd. Without lanes (no world map) they ring it instead.
 const DEFENSE_RING = 4000.0
@@ -61,24 +64,41 @@ const DEFENSE_START = Vector2(1250, 290) #outside the lot's gap (its east side),
 #Before any child is ready, so SpawnManager._ready (Goonpocalypse escalation) builds on the def's numbers,
 #and before the bench's node_added overrides, which come after this.
 func _enter_tree():
+	readRun()
 	applyDef()
+
+#the run's mode, level and tier from the save, once (a level can re-enter the tree: RunView)
+var runRead := false
+func readRun() -> void:
+	if runRead: return
+	runRead = true
+	tier = SaveManager.getGameTier()
+	runMode = SaveManager.playerData.gameMode
+	runLevel = SaveManager.playerData.selectedLevel
 
 func applyDef() -> void:
 	if defApplied || def == null: return
 	defApplied = true
+	readRun()
 	seconds = def.seconds
 	var spawnManager = get_node_or_null("SpawnManager")
 	if spawnManager:
-		spawnManager.spawnTimer = def.spawnTimer
-		spawnManager.giantOdds = def.giantOdds
-		spawnManager.escalationSpeed = def.escalationSpeed
+		spawnManager.spawnTimer = def.spawnTimer * ModeTiers.SPAWN_TIMER[tier]
+		spawnManager.giantOdds = def.giantOdds + ModeTiers.GIANT_ODDS[tier]
+		spawnManager.escalationSpeed = def.escalationSpeed * ModeTiers.ESCALATION[tier]
+		if runMode == Root.gameModes.DEFENSE: spawnManager.spawnScale = ModeTiers.DEFENSE_SPAWN_SCALE
 
-#Sprint and Marathon slack: the def's, else the old curve over the level's seconds
+#Sprint and Marathon slack: the def's (else the old curve over the level's seconds), x the tier's
 func slack() -> float:
-	return def.sprintSlack if def else sprintSlack(levelSeconds)
+	return (def.sprintSlack if def else sprintSlack(levelSeconds)) * ModeTiers.SLACK[tier]
+
+#Marathon: stations to reach on this tier
+func legs() -> int:
+	return ModeTiers.LEGS[tier]
 
 func _ready():
 	levelSeconds = seconds
+	BEACON_MATERIAL.set_shader_parameter("night", 0.0) #runs start by day
 	explosions = ExplosionPool.new(explosionScene)
 	add_child(explosions)
 
@@ -112,7 +132,10 @@ func _ready():
 		Root.gameModes.SPRINT:createSprintSpawners()
 		#DEFENSE: its spawners ring the station, which exists only once the world is ready
 
-	if SaveManager.playerData.gameMode == Root.gameModes.GOONPOCALYPSE: seconds = 0
+	match SaveManager.playerData.gameMode: #the tier's clock; Sprint and Marathon set theirs from the route
+		Root.gameModes.GOONPOCALYPSE: seconds = 0
+		Root.gameModes.GOONCRUSHER: seconds = levelSeconds * ModeTiers.CLOCK[tier]
+		Root.gameModes.DEFENSE: seconds = ModeTiers.DEFENSE_HOLD[tier]
 
 	#the TileManager waits at least one frame before placing stations, so this is never too late
 	var tileManager = $TileManager
@@ -241,10 +264,29 @@ func timeRanOut() -> void:
 	var condition = timeUpCondition(SaveManager.playerData.gameMode, wrecked)
 	endLevel(condition == Root.endCondition.SUCCESS, condition)
 
+#--- pay ----------------------------------------------------------------------------------------
+
+## Won: reached its goal (a Goonpocalypse that survived its target is won however it ended)
+func isWon() -> bool:
+	return hasEnded && (endReason == Root.endCondition.SUCCESS || targetReached)
+
+var firstClear := {"coin": 0, "gem": 0} #paid by the results ticket on a tier's first win (ModeTiers.firstClear)
+
+## The win bonus this run pays if it is won: by mode, level and tier (ModeTiers.winBonus)
+func winBonus() -> int:
+	return ModeTiers.winBonus(runMode, tier, runLevel)
+
+## What the run pays: its coins plus the win bonus when won, times the star multiplier (Root.computePayout).
+## The results ticket, the run log and the harnesses all use this.
+func runPayout(won: bool) -> int:
+	var car = Root.playerCar
+	if not is_instance_valid(car): return 0
+	return Root.computePayout(car.coin + (winBonus() if won else 0), car.star)
+
 #--- Goonpocalypse ------------------------------------------------------------------------------
 
 func pocalypseTarget() -> float:
-	return levelSeconds * POCALYPSE_TARGET
+	return levelSeconds * ModeTiers.POCALYPSE_TARGET[tier]
 
 #crushes, plus 5 per giant, plus a point for every 2 s survived
 static func pocalypseScore(crushes: int, giants: int, survived: float) -> int:
@@ -259,8 +301,7 @@ func onClockTick() -> void:
 	if targetReached || SaveManager.playerData.gameMode != Root.gameModes.GOONPOCALYPSE || hasEnded: return
 	if seconds >= pocalypseTarget():
 		targetReached = true #the mode is beaten however the run ends (endLevel)
-		$AudioStreamPlayer.stream = load("res://sound/fx/slotmachine/winner_3.mp3")
-		$AudioStreamPlayer.play()
+		if is_instance_valid(Root.spawnManager): Root.spawnManager.overtime() #from here it only gets worse
 		var host = TapeBanner.layer()
 		if host: Stamp.slam(host, "TARGET SMASHED", Vector2(get_viewport().get_visible_rect().size.x * 0.5, 320.0), HudTheme.GOLD, 72, 1.6)
 
@@ -268,11 +309,11 @@ func onClockTick() -> void:
 
 #the active station's driveway calls this in Marathon
 func stationReached(station: Node2D) -> void:
-	if leg >= MARATHON_LEGS:
+	if leg >= legs():
 		endLevel(true, Root.endCondition.SUCCESS)
 		return
 	leg += 1
-	TapeBanner.post("STATION  -  LEG %d OF %d" % [leg, MARATHON_LEGS], 1.0)
+	TapeBanner.post("STATION  -  LEG %d OF %d" % [leg, legs()], 1.0)
 	var car = Root.playerCar
 	car.fuel = 100.0 #a car coasting in on an empty tank is saved: outOfFuel checks the tank again
 	car.health = minf(100.0, car.health + MARATHON_HEAL)
@@ -347,6 +388,7 @@ func setNighttime(isNighttime: bool):
 		nightsSeen += 1
 		TapeBanner.post("NIGHT FALLS", 1.0) #night is gameplay: only the headlights show the world
 		get_tree().create_tween().tween_property($CanvasModulate , "color" , Color(.0,.0,.0,1.0) , 5)
+		fadeBeacons(1.0)
 			#if canvasmodulate this is set to .05 powerups and giants glow at night.  If set to 0 they don't
 		await get_tree().create_timer(2).timeout
 		if is_instance_valid(Root.station): Root.station.setNighttime(isNighttime)
@@ -356,12 +398,19 @@ func setNighttime(isNighttime: bool):
 		Root.playerCar.turnOnHeadlights(true)
 	else: 
 		get_tree().create_tween().tween_property($CanvasModulate , "color" , Color(1.0,1.0,1.0,1.0) , 5)
+		fadeBeacons(0.0)
 		await get_tree().create_timer(1).timeout
 		if is_instance_valid(Root.station): Root.station.setNighttime(isNighttime)
 		#$AudioStreamPlayer_wolf.play()
 		await get_tree().create_timer(2).timeout
 		Root.playerCar.turnOnHeadlights(false)
 	
+#landmark beacons glow at night and dim by day, with the CanvasModulate
+func fadeBeacons(night: float) -> void:
+	var from = BEACON_MATERIAL.get_shader_parameter("night")
+	if not from is float: from = 1.0 - night #never set (null)
+	get_tree().create_tween().tween_method(func(v): BEACON_MATERIAL.set_shader_parameter("night", v), from, night, 5.0)
+
 #spawners are children of the car by default, so their offsets rotate with it
 func newSpawner( spawnerPosition: Vector2, parent: Node = null ):
 	var newSpawner = spawnerScene.instantiate()
@@ -384,10 +433,7 @@ func endLevel(levelCompleted: bool, reason):  #reason takes Root.endCondition
 	if is_instance_valid(Root.playerCar): Root.playerCar.isDestroyed = true
 	var gameSummary = load("res://scene/player/menu/gameSummary.tscn").instantiate()
 	gameSummary.reason = reason 
-	if levelCompleted:
-		$AudioStreamPlayer.stream = load("res://sound/fx/slotmachine/winner_3.mp3")
-		$AudioStreamPlayer.play()
-		gameSummary.levelCompleted = true
+	if levelCompleted: gameSummary.levelCompleted = true #no win jingle: the radio plays on
 	add_child( gameSummary )
 	get_tree().paused = true
 

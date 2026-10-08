@@ -41,7 +41,7 @@ After a bake that adds new PNGs, run `Godot_console.exe --headless --path . --im
 
 | Goon | Faction | Verb | Rule |
 |---|---|---|---|
-| Jackalope | Wild | hopper | Hops; can't be hit in the air |
+| Jackalope | Wild | hopper | Hops; can't be hit at the peak of a hop (0.1-0.35 s of each 0.45 s hop, resting 0.6 s between: in the air about a quarter of the time). Take-off and landing can be crushed |
 | Tusker | Wild | charger | Long straight charge, armoured head-on while charging |
 | Bandit | Wild | thief | Steals pickups and runs; crush it to get them back |
 | Stinger | Wild | striker | Stops at its reach and strikes |
@@ -154,7 +154,8 @@ Goons read the world through `WorldHooks` (`scripts/world/world_hooks.gd`): O(1)
 - **Off screen** goons move without collision through `WorldHooks.slideStep` (natively, in `GoonBody.advance`), which treats water as blocked, so none drowns unseen. On screen, `move_and_slide` handles walls, in floating mode (top-down, like the car).
 - **Stuck:** a goon pressing a wall on screen and getting nowhere for 4 s (`Walker.isStuck`) is freed by the despawn sweep once it is off screen, whatever its distance. Defense keeps every goon near the station.
 - **Spawns:** spawn points must be `World.spawnableAt` (3 tries in `spawner.gd`); pack members that would land on water start at the pack's spot. Snappers spawn by a log prop and the Rat Pack out of a manhole when one is within 1,500 px of the spot and at least 1,600 px from the car (`SpawnManager.preferredSpot`).
-- **Props:** `SpawnManager.onNodeAdded` tags props as they stream in (`BreakableProp.tag`): `prop_log`, `prop_manhole`, `prop_crate` (Bandit bait: the Bandit breaks a crate open and steals what spills), `prop_carcass` (Buzzard perches, like crush decals) and `prop_explosive`.
+- **Props:** `SpawnManager.onNodeAdded` tags props as they stream in (`BreakableProp.tag`): `prop_log`, `prop_manhole`, `prop_crate` (Bandit bait: the Bandit breaks a crate open and steals what spills), `prop_carcass` (Buzzard perches, like crush decals), `prop_explosive`, `prop_logpile` and `prop_spill`.
+- **Releasing log piles:** goons with `"releases": true` in `Goons.DATA` (Grunt, Yipper, Splitter) leave their own move to run to a log pile near the car and cut it loose at the car (`GoonVerbs.Verb.seekRelease`; docs/WORLD.md, "Interactive props"). The logs flatten any goon in their way, which counts for the player.
 - **FX:** shots, quills and harpoons stop at wall cells, and lobs don't leave fire or slime on them. Blasts don't reach the car or goons behind a wall cell (`WorldHooks.lineClear`); water stops nothing. Every blast sets off explosive props in its radius (`BreakableProp.blastAt`): barrels and tanks chain a hop per 0.12 s, each once. A kicked shell rebounds off wall cells and off rocks, props and walls. Oil and slime are never laid on shallows or within a fine cell of deep water. Harpoon and magnet tethers snap ("SNAPPED") when the car is within 400 px of deep water.
 - **Chargers** (Tusker, Rammer) that hit a wall mid-charge stop with a "BONK" and are stunned twice as long: lure them into rocks.
 

@@ -83,16 +83,17 @@ func test_fixed_rewards_fall_back_to_an_open_ancestor():
 	assert_eq(ids.fuel, "fuel")
 
 func test_buying_spends_the_bank_and_shows_the_children():
-	data().coin = 1000
+	var purse: int = Unlocks.pickupPrice("purse").coin
+	data().coin = purse + 100
 	assert_true(Unlocks.buy("pickup:purse"))
-	assert_eq(data().coin, 100, "a Purse is 900 coins")
+	assert_eq(data().coin, 100, "a Purse costs its rarity's price")
 	assert_true(Unlocks.isPickupOpen("purse"))
 	assert_eq(Unlocks.state("pickup:strongbox"), Unlocks.S.READY, "the Strongbox comes into view")
 	assert_false(Unlocks.buy("pickup:strongbox"), "100 coins don't cover a Rare")
 	assert_eq(data().coin, 100, "a refused buy spends nothing")
 	assert_false(Unlocks.buy("pickup:purse"), "an open pickup can't be bought again")
 	assert_false(Unlocks.buy("pickup:goldgoon"), "nor a hidden one")
-	data().gem = 12
+	data().gem = int(Unlocks.pickupPrice("nuke").gem)
 	data().meta.unlocks["pickup:airstrike"] = true
 	assert_true(Unlocks.buy("pickup:nuke"), "a Legendary costs gems")
 	assert_eq(data().gem, 0)
@@ -127,13 +128,14 @@ func test_advanced_cars_cost_gems_too():
 	assert_eq(int(Unlocks.carEntry("van").get("gems", 0)), 0, "the Van costs coins only")
 	data().coin = 100000
 	data().gem = 0
+	var semiCost: int = semi.cost
 	data().selectedCar = data().cars.find(semi)
 	assert_false(SaveManager.unlockCar(), "coins alone don't buy the Semi")
 	data().gem = semi.gems
 	assert_true(SaveManager.unlockCar())
 	assert_eq(semi.cost, 0)
 	assert_eq(data().gem, 0)
-	assert_eq(data().coin, 100000 - 5000)
+	assert_eq(data().coin, 100000 - semiCost)
 
 func test_the_demo_caps_pickups_at_uncommon():
 	if not Root.IS_DEMO:
@@ -146,7 +148,7 @@ func test_next_unlock_names_something_to_aim_for():
 	var next := Unlocks.nextUnlock()
 	assert_false(next.is_empty(), "a new save has something next")
 	assert_true(Unlocks.state(next.uid) in [Unlocks.S.READY, Unlocks.S.SHOWN])
-	data().coin = 300
+	data().coin = int(Unlocks.PICKUP_PRICE[Pickups.R.COMMON].coin)
 	next = Unlocks.nextUnlock()
 	assert_true(Unlocks.canAfford(next.uid), "an affordable one comes first: %s" % next.name)
 
@@ -178,12 +180,14 @@ func test_the_goonopedia_draws_each_kind_as_a_tree():
 				assert_false(a.intersects(Rect2(at[ids[j]], Goonopedia.TREE_TILE)), "%s and %s overlap" % [ids[i], ids[j]])
 
 func test_the_goonopedia_buys_pickups_cars_and_upgrades():
-	data().coin = 20000
-	data().gem = 3
+	var semiEntry = Unlocks.carEntry("semi")
+	var purse: int = Unlocks.pickupPrice("purse").coin
+	data().coin = purse + int(semiEntry.cost) + 1000
+	data().gem = int(semiEntry.gems)
 	var page = add_child_autofree(Goonopedia.new())
 	page.buyPickup("purse")
 	assert_true(Unlocks.isPickupOpen("purse"), "a pickup bought on its tile")
-	assert_eq(data().coin, 19100)
+	assert_eq(data().coin, int(semiEntry.cost) + 1000)
 	page.setTab(Goonopedia.Tab.CARS)
 	var semi := data().cars.find(Unlocks.carEntry("semi"))
 	page.buyCar(semi)
@@ -196,7 +200,7 @@ func test_the_goonopedia_buys_pickups_cars_and_upgrades():
 	var before: int = data().coin
 	page.buyUpgrade(semi, Root.upgrade.ENGINE)
 	assert_eq(int(data().cars[semi].upgrades.get(Root.upgrade.ENGINE, 0)), 1, "an upgrade bought on its card")
-	assert_eq(data().coin, before - 15, "at the garage's price (15 for the first)")
+	assert_eq(data().coin, before - SaveManager.upgradePrice(0, "semi"), "at the garage's price")
 	assert_true(page.upgradeButton(Root.upgrade.ENGINE) != null, "the card is rebuilt with its buttons")
 	var locked := data().cars.find(Unlocks.carEntry("ambulance"))
 	page.buyUpgrade(locked, Root.upgrade.ENGINE)

@@ -64,6 +64,23 @@ After a bake that adds new PNGs, run `Godot_console.exe --headless --path . --im
 
 **Damage Effects** (`gfx/damage_fx`) is Low on Potato and Full on the other presets. Pools: 16 puffs and 24 drips. Every timer is delta-based.
 
+## Driving feel
+
+`scene/fx/car_juice.gd` (`CarJuice`, package 13) gives the player's car its feel. It is show only: it reads the car each physics tick after the car moves and never writes its velocity, input or stats, so handling and the AI's predictions don't change. The car calls it from `collideWithFixedObject` (`onWall`) and `tickDriftCharge` (`driftBoost`), and `Gadgets.land` calls `land`.
+
+| Part | What it does | Where to tune it |
+|---|---|---|
+| Lean (D-1) | The car's measured acceleration, smoothed, moves `sprite/body` and `sprite/shadow` on a spring. Sideways acceleration leans the body out of the turn: it slides out and narrows, and the shadow moves the other way. The lean is measured against the car's own grip limit (`maxLateral`: the yaw cap times top speed) on a curve (`LEAN_CURVE` 1.8), so an ordinary turn only settles the suspension (half the limit leans 0.29) whatever the car and its upgrades. Two wheels need 90% of the limit held for 0.4 s at 60% of top speed or more (lean 1.6, smoke off the outer tyres). The car drops back below 65% with a bounce and a thud. | `LEAN_CURVE`, `ROLL_*`, `TWO_WHEEL_*`, `LEAN_SPRING`/`LEAN_DAMP` |
+| Weight (D-2) | Braking dips the nose and launching, drift boosts and upshifts squat it, all from the same acceleration. A height spring bounces the body (scale and shadow) on two-wheel landings, Hop and Jump Jets landings, wall hits and road-to-rough ground changes. Wall hits add CrushFeel kick and trauma, scaled by the speed into the wall. | `PITCH_*`, `BUMP_*`, `HEIGHT_*`, `WALL_KICK_*`, `WALL_TRAUMA_*` |
+| Speed and ground (D-3) | Speed lines from 82% of the car's top speed on grass, during Nitro and after a drift boost. Per-surface trails from the rear tyres (`TRAILS`: dust on sand, dirt, wash and snow; clods on mud, oil, grass and ice; spray from all four tyres in shallows). Tyre smoke on hard ground in a slide. Wall-scrape and wall-hit sparks. A drift boost fires a flame and glow in the tier colour with a 2% zoom pull per tier. | `TRAILS`, `LEVELS`, `SPEED_LINES_FROM`, `FLAME_SECS`, `BOOST_ZOOM` |
+| Sound (D-4) | Engine pitch climbs through each 300 px/s gear and glides down at the shift (the controller's `car.gear` rule), 5 dB quieter off the throttle. Tyre squeal volume and pitch follow slip, a locked brake or two wheels, and a charged drift sings higher. Lifting off above 250 px/s backfires half the time (a pop and a flash at the exhaust). | `PITCH_*`, `SQUEAL_*`, `BACKFIRE_*` |
+
+**Settings:** Driving Effects (`gfx/driving_fx`; Minimal on Potato, Reduced on Low, else Full) sizes the particle pools and speed lines (`LEVELS`). Reduce Motion drops the speed lines, jolts and bounces and calms the lean to 40%. Car Shake Off drops the bounces and jolts. Screen Shake scales the wall jolts through CrushFeel. Particles are two pooled nodes (dust with normal blending, sparks additive and unshaded so they glow at night). The show-only rolls use their own RNG so seeded runs are unchanged. Only the player's car has one; other cars keep the old engine pitch and squeal.
+
+## Lights and the Headlights stat
+
+`setHeadlightStrength` turns the Headlights stat (times the lights' condition) into the lamps. Reach is `1 + stat/100` (the beam's `scale.x`, which the AI's sight reads). Width (`LIGHT_WIDTH` 0.7) and brightness (`LIGHT_GLOW` 0.9, on each lamp's authored energy) grow on `sqrt(stat/100)`, so the first upgrades show. The tail lamps grow (`TAIL_GROW` 0.6, per lamp, so they stay on the bumper) and brighten (`TAIL_GLOW` 1.2). They are faint cruising (`TAIL_DIM` 0.1) and bright when braking, handbraking or reversing (`TAIL_BRIGHT` 0.35). Flood Lights multiply the reach and width. Goons' headlight checks (`GoonVerbs.inHeadlights`) use fixed distances. Lighting Low (Potato) turns the tail lamps off.
+
 ## Checking it
 
 ```

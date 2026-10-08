@@ -201,24 +201,29 @@ scale = Vector2(0.5, 0.5)
 
 [node name="AudioStream-Engine" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("3_hfwa2")
+bus = &"FX"
 
 [node name="AudioStream-Tires" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("4_jbkbo")
 volume_db = -4.0
+bus = &"FX"
 
 [node name="AudioStream-Crash" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("5_pn0ef")
+bus = &"FX"
 
 [node name="AudioStream-Voice" type="AudioStreamPlayer" parent="."]
-volume_db = 4.0
+bus = &"Voice"
 
 [node name="AudioStream-CarDamage" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("8_qq4uq")
 volume_db = -5.0
 pitch_scale = 2.0
+bus = &"FX"
 
 [node name="AudioStream-Explosion" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("10_hc5pd")
+bus = &"FX"
 
 [node name="headlamps" type="Node2D" parent="."]
 visible = false

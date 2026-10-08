@@ -42,7 +42,7 @@ func _draw() -> void:
 				HudTheme.text(self, Vector2(size.x - 44, 29), "STAR IN %d:%02d" % [left / 60, left % 60], 15, HudTheme.MUTED, HORIZONTAL_ALIGNMENT_RIGHT)
 			HudTheme.icon(self, STAR_ICON, Vector2(size.x - 24, size.y * 0.5), 26, Color.WHITE if level.targetReached else Color(1, 1, 1, 0.35))
 		Root.gameModes.MARATHON:
-			HudTheme.text(self, Vector2(mid, 29), "STATION %d OF %d" % [level.leg, Level.MARATHON_LEGS], 20, HudTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER)
+			HudTheme.text(self, Vector2(mid, 29), "STATION %d OF %d" % [level.leg, level.legs()], 20, HudTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER)
 		Root.gameModes.DEFENSE:
 			var fraction = Root.station.barrier / Root.station.BARRIER_MAX if is_instance_valid(Root.station) else 1.0
 			HudTheme.text(self, Vector2(18, 29), "BARRIER", 18)

@@ -12,7 +12,7 @@ The ground, edges, props, station textures and level posters are generated top-d
 | `world/art/ground/` | 20 seamless materials (`<name>.png`, 512²) and `macro_noise.png` (256², greyscale). |
 | `world/art/edges/` | 9 edge strips for `Line2D` (512×96). |
 | `world/art/props/` | Each prop's variants (`<id>.png`, `<id>_v1.png`...), breakable and explosive states (`<id>_broken.png`, `<id>_debris.png`), the landmarks' beacon glows (`<id>_beacon.png`) and its scene (`<id>.tscn`). |
-| `shader/world_beacon.gdshader`, `shader/world_beacon.tres` | The landmarks' beacon: additive, unlit, a slow breath and a double flash, out of step per landmark; `gc_motion` (Reduce Motion) calms it. One shared material. |
+| `shader/world_beacon.gdshader`, `shader/world_beacon.tres` | The landmarks' beacon: additive, unlit, a slow breath and a double flash, out of step per landmark; `gc_motion` (Reduce Motion) calms it. One shared material; its `night` parameter dims it to 15% by day, faded by `Level.fadeBeacons` with the day and night. |
 | `world/art/decor/` | One atlas per decor id (`<id>.png`, a row of 4 square cells). |
 | `world/art/props.json` | The prop manifest (below). |
 | `world/art/station/` | `station_lot`, `station_roof` (512² tiles), `station_wall` (strip), `station_lamp` and `station_pump` (sprites). |
@@ -35,7 +35,7 @@ Godot_console.exe --headless --path . --import
 - Prop scenes are written without uids; Godot assigns them on import.
 - `--workers N` sets how many Edge processes run at once (default 3). Each gets a scratch profile.
 - The bake is deterministic: no `Math.random`, no `Date`. Re-baking without changes gives the same pixels.
-- Prop tags (`tags.levels`, `tags.faction`) come from the `dressing` tables in `world/levels/*.tres` at bake time, merged with tags set in the design. Re-bake props (`prop decor`) after changing a level's dressing.
+- Prop tags (`tags.levels`, `tags.faction`) come from the `dressing` tables in `world/levels/*.tres` at bake time, merged with tags set in the design. Re-bake props (`prop decor`) after changing a level's dressing. (Before package 14 the dressing regex stopped at the last faction's brace, so each level's last table, usually Scrap, was never tagged; fixed in `level_tags`.)
 
 ## Rules
 
@@ -93,9 +93,9 @@ Godot_console.exe --headless --path . --import
 
 The full list, with sizes, hulls and tags, is `props.json`. By class:
 
-- **TALL:** `rock`, `boulder`, `rock_white`, `rock_ice`, `rock_red`, `boulder_red`, `oak`, `pine`, `cypress`, `saguaro`, `deadtree`, `shack`, `tent`, `totem`, `crane`, `cabin`, `snowcat`, `billboard`, `scrapheap`, `container`, and the landmarks `landmark_wild`/`_tribe`/`_scrap` (each with a beacon glow).
+- **TALL:** (layered: `oak`, `pine`, `cypress`, `deadtree`, `crane`) `rock`, `boulder`, `rock_white`, `rock_ice`, `rock_red`, `boulder_red`, `oak`, `pine`, `cypress`, `saguaro`, `deadtree`, `shack`, `tent`, `totem`, `crane`, `cabin`, `snowcat`, `billboard`, `scrapheap`, `container`, and the landmarks `landmark_wild`/`_tribe`/`_scrap` (each with a beacon glow).
 - **LOW:** `log` (the Snapper's disguise), `stump`, `carcass` (Buzzard perch), `firepit`, `tyres`, `wreck` (rusted renders of the player's cars), `cone`, `gaspump`, `sign`, `hydrant`, `dumpster`, `busstop`.
-- **STATEFUL:** `haybale`, `fence`, `hedge`, `crate` (Bandit bait), `barricade`, `barrel` (explosive), `tank` (explosive, blast only), `manhole` (not solid; Rat Pack spawn). Smash speeds: docs/WORLD.md, "Breakables".
+- **STATEFUL:** `haybale`, `fence`, `hedge`, `crate` (Bandit bait), `barricade`, `barrel` (explosive), `tank` (explosive, blast only), `manhole` (not solid; Rat Pack spawn), and the interactive props `logpile`, `watertower`, `beehive` (package 14; what they let loose: docs/WORLD.md, "Interactive props"). The `billboard` (TALL) is breakable too: its broken state is the board lying flat on its +y side. Smash speeds: docs/WORLD.md, "Breakables".
 - **WALL:** `fortwall`, `jersey`.
 - **DECOR:** `tufts`, `pebbles`, `cracks`, `bones`, `paint`, `oilstain`, `reeds`, `streetglow`, and `rooftop` (laid on BUILDING cells by `ChunkRecipe.placeRoofs`, not by dressing).
 
@@ -109,6 +109,12 @@ The full list, with sizes, hulls and tags, is `props.json`. By class:
 6. **Breakables** also bake `<id>_broken.png` (what stays on the ground, no collision) and `<id>_debris.png` (a row of 4 square cells of flying pieces, for particles or flyers). Explosives bake a scorched `_broken` and a shard `_debris` strip. The tank's `smashSpeed` is 100000 with `blastOnly`: only explosions break it.
 7. **Decor** atlases are a row of 4 square cells (`atlas.cellTexels` wide each), with no rim and at most a faint shadow. The game draws one `MultiMeshInstance2D` per decor id per chunk (`WorldSkin.newMultiMesh`, `use_custom_data` on) and picks the cell per instance from its custom data in `shader/world_decor.gdshader`: `UV.x = (UV.x + floor(INSTANCE_CUSTOM.x * cells)) / cells;`. `streetglow` is a warm light pool baked at final brightness for additive blending (`atlas.blend = "add"`), drawn with `shader/world_decor_glow.gdshader`.
 
+### Layered props
+
+A design with a `canopy(c, R, v)` drawing is baked in two layers (package 14): `draw` becomes the **ground layer** (`<id>.png` and its variants: roots, the trunk's top and leaf litter for trees, the cab and tracks for the crane) with the canopy's silhouette baked under it as a soft shade (`shadowOf`), and the canopy becomes `<id>_canopy.png` (`_canopy_v1`...), rimmed, no shadow, drawn over the car. The canopy keeps the variant's random stream, so the crowns look as they did before the split; the ground layer has its own (`litter(c, R, v)` draws unrimmed litter between the shade and the trunk; `baseShadow` sets the ground layer's own shadow, 3 by default). The hull comes from `core` as before, so collision and night occluders stay on the trunk. A `leaves(c, R, k)` drawing bakes `<id>_leaves.png`, a row of 4 square cells of `LEAF_CELL` (28) px: what falls when the prop is hit (oak and cypress leaves, Spanish moss, pine needles and snow clumps, dead twigs). The manifest gets `canopy` (one path per variant) and `leaves`; posters draw the canopy over the ground layer. The saguaro stays one piece. PropReactions fades and shakes the canopy (docs/WORLD.md, "Prop reactions").
+
+Over-the-car layers were reviewed for every tall prop: the crane's jib reaches past its hull, so it has one; billboards and bus stops collide across their whole footprint and landmarks' and tents' overhang is ground clutter, so they don't.
+
 ### Scenes
 
 `world/art/props/<id>.tscn` for every non-DECOR prop:
@@ -117,6 +123,7 @@ The full list, with sizes, hulls and tags, is `props.json`. By class:
 - `Sprite2D` at scale 1.3333 with variant 0. Swap `texture` for another variant from the manifest.
 - `CollisionShape2D` with a `ConvexPolygonShape2D` from the hull (disabled when the manifest says `solid: false`).
 - `LightOccluder2D` with the same polygon, `cull_mode = 2` (one-sided), and metadata `gc_world = true`, so it stays on at Lighting Low. Only when the manifest says `occluder: true`.
+- `Canopy` (layered props): a `Sprite2D` at scale 1.3333 with canopy variant 0, `z_index = 8` with `z_as_relative = false` (`CANOPY_Z` in `bake_world.py` and `PropReactions`), so it draws over goons and the car. No collision. `ChunkView` swaps its texture with the variant. It counts as one more node in `ChunkRecipe`'s budget.
 - `Beacon` (landmarks): a `Sprite2D` at scale 1.3333 with the `_beacon.png` glow and the shared `res://shader/world_beacon.tres` material (`blend_add, unshaded`), so the landmark's top reads at night with no real light (world lights stay at 0 per chunk). It counts as one more node in `ChunkRecipe`'s budget.
 
 The root is a `StaticBody2D`, so the car's wall-hit checks (`World.isWall`) treat props as walls with no extra code. `ChunkView` instances STATEFUL props (and any prop with a taken-set bit) instead of pooling them and attaches `scripts/world/breakable.gd` (`BreakableProp`), which reads the metadata above (docs/WORLD.md, "Breakables and explosives").

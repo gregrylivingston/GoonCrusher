@@ -48,7 +48,7 @@ static func build(tier: String, overrides: Dictionary = {}) -> PlayerData:
 	for count in spec.get("beaten", {}):
 		for i in mini(int(count), data.levels.size()):
 			data.levels[i].unlocked = true
-			for mode in spec.beaten[count]: data.levels[i].gamemodeBeat[mode] = true
+			for mode in spec.beaten[count]: SaveManager.passTier(data.levels[i], mode, ModeTiers.MEDIUM) #Medium: later acts ask for it (Root.mediumToOpenNext)
 			#enough modes beaten open the next level (LevelDef.unlockModes)
 			if i + 1 < data.levels.size() && Root.opensNextLevel(data.levels[i]): data.levels[i + 1].unlocked = true
 	var byPrice: Array = data.cars.duplicate()

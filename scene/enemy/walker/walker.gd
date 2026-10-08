@@ -257,6 +257,10 @@ func isStuck() -> bool:
 func tryCrush(car: Node2D, carSpeed: float) -> bool:
 	if dead: return true
 	touchedByCar()
+	if not is_node_ready(): #hit the tick it spawned, before _ready made its verb and sprite: it just goes
+		dead = true
+		queue_free()
+		return true
 	if car.has_method("crushOverride") && car.crushOverride(self): #a plow, spikes, monster tires, a golden ride
 		verb.beforeCrush(car, carSpeed)
 		destroy(&"crush")
@@ -299,10 +303,10 @@ func destroy(cause: StringName = &"crush"):
 	if f && cause != &"drown":
 		f.crushed(self, cause, killedFrom)
 	#death sounds go through the shared, limited pool (Max Sound Effects); their own players
-	#are only used as data. Authored level is +10 dB over the pool's +3 dB; a giant's are an octave-ish lower.
+	#are only used as data, 1-9 dB over the pool (two layers per crush, so they sit under the radio); a giant's are an octave-ish lower.
 	var pitch := 0.72 if isGiant else 1.0
-	Audio.play($AudioStreamPlayer2D2.stream, 7.0 + randf_range(0.0,5.0), pitch * randf_range(0.95,1.05))
-	Audio.play($AudioStreamPlayer2D.stream, 7.0 + randf_range(0.0,8.0), pitch * randf_range(0.95,1.05))
+	Audio.play($AudioStreamPlayer2D2.stream, 1.0 + randf_range(0.0,5.0), pitch * randf_range(0.95,1.05))
+	Audio.play($AudioStreamPlayer2D.stream, 1.0 + randf_range(0.0,8.0), pitch * randf_range(0.95,1.05))
 	if f && cause != &"drown" && is_instance_valid(Root.playerCar) && randi_range(0,200) + Root.playerCar.clover > 190:
 		f.dropLater(global_position, dropTable())
 	queue_free()

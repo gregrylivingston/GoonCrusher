@@ -10,17 +10,18 @@ const PATH := "user://runlog.csv"
 const COLUMNS := ["date", "version", "driver", "car", "upgrades", "level", "mode", "seconds", "coins", "stars", "payout",
 	"crushes", "giants", "regions", "reason", "gems", "slot_machines", "top_speed_px", "end_fuel", "end_health",
 	"score", "leg", "barrier", "pk_supply", "pk_tune", "pk_boost", "pk_gadget", "pk_loot", "pk_casino", "pk_skill", "pk_mode", "pk_move",
-	"crush_xp", "boxes"]
+	"crush_xp", "boxes", "tier"]
 
 static func append(car: OverheadCarBody2D, level: Level, reason: int, payout: int, path := PATH) -> void:
 	write(row(car, level, reason, payout), path)
 
 static func row(car: OverheadCarBody2D, level: Level, reason: int, payout: int) -> Dictionary:
 	var data := SaveManager.playerData
+	var levelIndex: int = level.runLevel if level.runRead else data.selectedLevel #the save's selection moves on after a win
 	var upgrades := 0
 	for value in SaveManager.getCarByName(car.carId).upgrades.values(): upgrades += int(value)
 	var regions: int = Region.visitedCount() #districts the car has been in
-	var mode: int = data.gameMode
+	var mode: int = level.runMode if level.runRead else data.gameMode
 	var kinds := Pickups.countByKind(car.pickedById)
 	var values := {
 		"date": Time.get_datetime_string_from_system(),
@@ -28,7 +29,7 @@ static func row(car: OverheadCarBody2D, level: Level, reason: int, payout: int) 
 		"driver": "ai" if car.myController.get("driver") != null else "player",
 		"car": car.carId,
 		"upgrades": upgrades,
-		"level": SaveManager.levelKey(data.levels[data.selectedLevel]),
+		"level": SaveManager.levelKey(data.levels[levelIndex]),
 		"mode": str(Root.gameModes.find_key(mode)).to_lower(),
 		"seconds": snappedf(level.elapsed, 0.1),
 		"coins": car.coin,
@@ -50,6 +51,7 @@ static func row(car: OverheadCarBody2D, level: Level, reason: int, payout: int) 
 	for kind in kinds: values["pk_" + kind] = kinds[kind]
 	values.crush_xp = int(car.crushXp)
 	values.boxes = Root.playerRoot.boxLevel if is_instance_valid(Root.playerRoot) else 0
+	values.tier = ModeTiers.NAMES[level.tier].to_lower()
 	return values
 
 static func write(values: Dictionary, path := PATH) -> void:

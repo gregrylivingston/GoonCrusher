@@ -905,7 +905,7 @@ func levelDetail(entry: Dictionary) -> void:
 	var chips = [status]
 	if def: chips.push_front(["ACT %d" % def.act, HudTheme.RIM])
 	titleRow("%d  %s" % [index + 1, levelName(index).to_upper()], chips)
-	if not isLevelOpen(index) && level.unlocked == false: paragraph("Beat %d modes on the level before it to unlock." % Root.modesToOpenNext(SaveManager.playerData.levels[index - 1] if index > 0 else {}), "MutedLabel")
+	if not isLevelOpen(index) && level.unlocked == false: paragraph(Root.openRuleText(SaveManager.playerData.levels[index - 1] if index > 0 else {}) + ".", "MutedLabel")
 	if def:
 		if def.blurb != "": paragraph(def.blurb)
 		var grammar: String = Levels.GRAMMAR_TEXT.get(def.grammar, "")
@@ -1186,7 +1186,7 @@ func buyPickup(id: String) -> void:
 
 func tileFor(key) -> Button:
 	for b in tiles:
-		if is_instance_valid(b) && sameKey(b.get_meta("key", null), key): return b
+		if is_instance_valid(b) && b.has_meta("key") && sameKey(b.get_meta("key"), key): return b
 	return null
 
 ## Tile keys are pickup ids (String) or car indices (int); == between the two is an error
@@ -1282,13 +1282,13 @@ func buildModes() -> void:
 	var g = grid(3)
 	for mode in MODE_ORDER:
 		var open = Root.isModeAvailable(mode)
-		tile(g, {"kind": "mode", "key": mode, "inset": 34.0}, HudTheme.STAR_ICON if open else HudTheme.LOCK_ICON, Root.gameModeDescription[mode].name, Vector2(216, 150), false)
+		tile(g, {"kind": "mode", "key": mode, "inset": 34.0}, HudTheme.MODE_ICONS[mode] if open else HudTheme.LOCK_ICON, Root.gameModeDescription[mode].name, Vector2(216, 150), false)
 
 func modeDetail(entry: Dictionary) -> void:
 	var mode: int = entry.key
 	var open = Root.isModeAvailable(mode)
 	var panel = showcase(220.0, HudTheme.GOLD if open else HudTheme.MUTED)
-	heroPicture(panel, HudTheme.STAR_ICON if open else HudTheme.LOCK_ICON, TextureRect.STRETCH_KEEP_ASPECT_CENTERED, 50.0)
+	heroPicture(panel, HudTheme.MODE_ICONS[mode] if open else HudTheme.LOCK_ICON, TextureRect.STRETCH_KEEP_ASPECT_CENTERED, 50.0)
 	var reason = Root.modeLockReason({"unlocked": true}, mode) if not open else ""
 	titleRow(Root.gameModeDescription[mode].name, [[reason.to_upper(), HudTheme.MUTED]] if reason != "" else [])
 	paragraph(Root.gameModeDescription[mode].description)
@@ -1338,7 +1338,7 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton && event.pressed && event.button_index == MOUSE_BUTTON_LEFT:
 		var focused := get_viewport().gui_get_focus_owner()
 		mouseDownMsec = Time.get_ticks_msec()
-		mouseDownOn = focused.get_meta("key", null) if focused != null else null
+		mouseDownOn = focused.get_meta("key") if focused != null && focused.has_meta("key") else null
 	if Settings.menu_open || not event.is_pressed() || event.is_echo(): return
 	var handled := true
 	if event.is_action_pressed("ui_cancel") || event.is_action_pressed("ui_codex"): closePage()

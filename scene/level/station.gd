@@ -9,6 +9,7 @@ extends Node2D
 
 const LOT := Rect2(-770, -539, 1518, 1104) #the walled lot, walls included, from the station's origin
 const BARRIER_MAX := 1000.0     #Defense: the walls' health; goons at the walls wear it down (Walker.siege)
+const SIEGE_DAMAGE := 0.5       #Defense: a goon's blow on the walls does this share of its attack damage
 const REFUEL_PER_SECOND := 4.0  #Defense: fuel a car parked in the driveway gains
 
 var active := true #false once Marathon has moved on to the next station
@@ -25,11 +26,25 @@ func _ready():
 func setNighttime(isNighttime: bool):
 	$Lights.visible = isNighttime
 
-#Marathon: a reached station stays where it is, but its driveway does nothing more
+#Marathon: a reached station stays where it is, but its driveway does nothing more, and its lot opens up:
+#the walls fade and stop blocking, so the car leaves toward the next station the way it is pointing instead
+#of hunting for the lot's one gap with the goons piling in (playtests: 30-40 s stuck on the walls per leg)
 func retire() -> void:
 	active = false
 	parkedCar = null
 	set_physics_process(false)
+	openLot()
+
+const WALL_BODIES := ["wallNorth", "wallSouth", "wallWest", "wallEast"]
+
+func openLot() -> void:
+	for wall in WALL_BODIES:
+		var body := get_node_or_null(wall) as StaticBody2D
+		if body == null: continue
+		body.set_deferred("collision_layer", 0)
+		var occluder = body.get_node_or_null("LightOccluder2D")
+		if occluder: occluder.visible = false
+	create_tween().tween_property($walls, "modulate:a", 0.25, 0.6)
 
 #--- Defense: the barrier -------------------------------------------------------------------------
 
@@ -45,7 +60,7 @@ func nearestWallPoint(worldPoint: Vector2) -> Vector2:
 ## Goons hit the barrier through this; at 0 the run ends (BASEDESTROYED).
 func damage(amount: float) -> void:
 	if not hasBarrier || barrier <= 0.0 || (is_instance_valid(Root.levelRoot) && Root.levelRoot.hasEnded): return
-	barrier = maxf(0.0, barrier - amount)
+	barrier = maxf(0.0, barrier - amount * SIEGE_DAMAGE)
 	barrier_changed.emit(barrier)
 	tintWalls()
 	if barrier <= 0.0 && is_instance_valid(Root.levelRoot): Root.levelRoot.endLevel(false, Root.endCondition.BASEDESTROYED)

@@ -26,7 +26,7 @@ const BLAST := {&"barrel": Vector2(170.0, 8.0), &"tank": Vector2(320.0, 16.0)} #
 const DEFAULT_BLAST := Vector2(170.0, 8.0)
 const CHAIN_DELAY := 0.12
 const COIN_SCENE := "res://scene/powerup/coin.tscn"
-const GROUPS := {&"log": &"prop_log", &"manhole": &"prop_manhole", &"crate": &"prop_crate", &"carcass": &"prop_carcass"}
+const GROUPS := {&"log": &"prop_log", &"manhole": &"prop_manhole", &"crate": &"prop_crate", &"carcass": &"prop_carcass", &"logpile": &"prop_logpile"}
 const EXPLOSIVE_GROUP := &"prop_explosive"
 const DEBRIS_PIECES := 5
 const DEBRIS_POOL_MAX := 30
@@ -63,6 +63,7 @@ static func tag(node: Node) -> void:
 	var group: StringName = GROUPS.get(propId(node), &"")
 	if group != &"": node.add_to_group(group)
 	if node.get_meta(&"explosive", false): node.add_to_group(EXPLOSIVE_GROUP)
+	if Spill.DEFS.has(propId(node)): node.add_to_group(Spill.SPILL_GROUP)
 
 #--- smashing ----------------------------------------------------------------------------------------
 
@@ -78,6 +79,9 @@ static func smashNode(node: Node2D, car: Node2D = null) -> void:
 	debris(node)
 	spillCoins(propId(node), pos, car)
 	markTaken(node)
+	#a log pile, water tower, billboard or hive lets its contents loose (Spill), along the car's travel or
+	#the direction a goon or a blast gave it
+	Spill.release(node, node.get_meta(&"spillDir", car.velocity if is_instance_valid(car) else Vector2.ZERO))
 	var fx = Root.spawnManager.fx if is_instance_valid(Root.spawnManager) else null
 	if fx: fx.dust(pos)
 
@@ -91,7 +95,7 @@ static func breakVisual(node: Node) -> void:
 		elif child is LightOccluder2D:
 			child.set_meta("gc_vis", false) #Settings re-applies lighting from this
 			child.visible = false
-	for group in [GROUPS.get(propId(node), &""), EXPLOSIVE_GROUP]:
+	for group in [GROUPS.get(propId(node), &""), EXPLOSIVE_GROUP, Spill.SPILL_GROUP]:
 		if group != &"" && node.is_in_group(group): node.remove_from_group(group)
 
 ## Coin pickups thrown out ahead of the car; the car collects them like any other
@@ -156,6 +160,15 @@ static func explode(node: Node2D) -> void:
 ## CHAIN_DELAY later. Returns how many it set off.
 static func blastAt(tree: SceneTree, pos: Vector2, radius: float) -> int:
 	if tree == null: return 0
+	PropReactions.blast(pos, radius) #nearby crowns shake and drop leaves
+	#spilling props in the blast go too: a log pile bursts away from it, a crane loses its container
+	for node in tree.get_nodes_in_group(Spill.SPILL_GROUP):
+		if not node is Node2D || node.get_meta(&"smashed", false) || node.get_meta(&"spilled", false): continue
+		if node.global_position.distance_to(pos) > radius + 60.0 || not WorldHooks.lineClear(pos, node.global_position): continue
+		if propId(node) == &"crane": Spill.ramCrane.call_deferred(node, Spill.DROP_SPEED)
+		else:
+			node.set_meta(&"spillDir", node.global_position - pos)
+			smashNode.call_deferred(node, null)
 	var count := 0
 	for node in tree.get_nodes_in_group(EXPLOSIVE_GROUP):
 		if not node is Node2D || node.get_meta(&"smashed", false): continue

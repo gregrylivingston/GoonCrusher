@@ -44,7 +44,27 @@ const QUAD := 1280.0
 const ROAD_PROPS := [&"cone", &"jersey", &"wreck", &"manhole", &"barricade", &"sign"]
 ## Props laid in short chains, end to end
 const CHAIN_PROPS := [&"fence", &"hedge", &"jersey", &"fortwall"]
+## Props laid only as field lines (ChunkRecipe.placeFieldLines), by the features key giving the chance per lattice edge
+const FIELD_PROPS := {&"fence": "fenceDensity", &"hedge": "hedgeDensity"}
+## Set pieces (ChunkRecipe.placeMotifs), chosen per faction by LevelDef.motifs. members: [prop id, count, radius px,
+## shape]: "centre", "ring" (evenly round the radius), "disc" (scattered inside it), "grid" or "line" (turned to the
+## field lattice, `radius` apart). min: fewer members than this that fit and the motif is skipped. Members are
+## loaded with the level whether its dressing names them or not.
+const MOTIFS := {
+	&"camp": {"min": 3, "members": [["firepit", 1, 0.0, "centre"], ["tent", 3, 300.0, "ring"], ["totem", 1, 470.0, "ring"], ["crate", 1, 430.0, "disc"]]},
+	&"cabincamp": {"min": 2, "members": [["cabin", 1, 0.0, "centre"], ["firepit", 1, 340.0, "ring"], ["pine", 2, 560.0, "ring"]]},
+	&"wreckpile": {"min": 3, "members": [["wreck", 3, 330.0, "disc"], ["tyres", 2, 400.0, "disc"], ["barrel", 1, 380.0, "disc"]]},
+	&"junkyard": {"min": 3, "members": [["scrapheap", 1, 0.0, "centre"], ["container", 2, 580.0, "ring"], ["tyres", 2, 460.0, "disc"], ["barrel", 1, 430.0, "disc"]]},
+	&"pinestand": {"min": 4, "members": [["pine", 7, 560.0, "disc"], ["stump", 1, 500.0, "disc"]]},
+	&"cypressgrove": {"min": 3, "members": [["cypress", 4, 470.0, "disc"], ["log", 1, 430.0, "disc"]]},
+	&"orchard": {"min": 4, "members": [["oak", 6, 400.0, "grid"]]},
+	&"boneyard": {"min": 3, "members": [["deadtree", 1, 0.0, "centre"], ["carcass", 2, 340.0, "disc"], ["rock_red", 2, 400.0, "disc"]]},
+	&"roadblock": {"min": 3, "members": [["barricade", 3, 300.0, "line"], ["cone", 2, 360.0, "disc"], ["tyres", 1, 380.0, "disc"]]},
+	&"pileup": {"min": 3, "members": [["wreck", 3, 300.0, "disc"], ["cone", 4, 420.0, "disc"], ["sign", 1, 420.0, "disc"]]},
+}
 ## Where decor goes: "road" (asphalt, oil, lots), "wet" (shallows and banks), "any"; others off roads
+## Decor that bends away from the car (world_decor.gdshader `bend`: world px a corner moves right under it)
+const BEND_DECOR := {&"tufts": 14.0, &"reeds": 18.0}
 const DECOR_PLACE := {&"paint": "road", &"streetglow": "road", &"oilstain": "any", &"reeds": "wet", &"cracks": "any"}
 const PICKUP_IDS := {"fuel": "fuel", "health": "health", "purse": "purse", "slot": "slotmachine"}
 const POOL_CAP := {"quad": 200, "body": 16, "occluder": 160, "line": 160, "mmi": 24, "prop": 40}
@@ -77,6 +97,8 @@ var decorMaterials := {} #decor id -> ShaderMaterial
 var decorTextures := {}  #decor id -> Texture2D
 var propScenes := {}     #prop id -> PackedScene
 var variants := {}       #prop id -> Array of Texture2D
+var canopies := {}       #layered prop id -> Array of Texture2D, one per variant (the over-the-car layer)
+var leaves := {}         #layered prop id -> its leaves strip (PropReactions)
 var manifest := {}
 var breakableScript: Script
 var pools := {}          #pool key -> Array of nodes or shapes outside the tree
@@ -225,10 +247,19 @@ func dressingIds() -> Dictionary:
 			if entry.is_empty(): continue
 			var list := decor if entry.get("class", "") == "DECOR" else props
 			if not StringName(id) in list: list.push_back(StringName(id))
+	for faction in def.motifs:
+		for motif in def.motifs[faction]:
+			for m in MOTIFS.get(StringName(motif), {}).get("members", []):
+				var mid := StringName(m[0])
+				if manifest.get(String(mid), {}).get("class", "DECOR") != "DECOR" && not mid in props: props.push_back(mid)
 	var roof: StringName = ROOF_DECOR.get(grammar, &"")
 	if roof != &"" && manifest.has(String(roof)) && not roof in decor: decor.push_back(roof)
 	for id in LANDMARKS:
 		if manifest.has(String(id)) && not id in props: props.push_back(id)
+	#what interactive props leave behind (logs from a log pile, a crane's container)
+	for id in props.duplicate():
+		for product in Spill.PRODUCTS.get(id, []):
+			if manifest.has(String(product)) && not product in props: props.push_back(product)
 	return {"decor": decor, "props": props}
 
 func setupProps() -> void:
@@ -243,6 +274,7 @@ func setupProps() -> void:
 		var mat := ShaderMaterial.new()
 		mat.shader = load(GLOW_SHADER if atlas.get("blend", "mix") == "add" else DECOR_SHADER)
 		mat.set_shader_parameter("cells", float(atlas.get("cells", 4)))
+		if BEND_DECOR.has(id): mat.set_shader_parameter("bend", BEND_DECOR[id])
 		decorMaterials[id] = mat
 		decorTextures[id] = load(entry.variants[0])
 	for id in ids.props:
@@ -252,6 +284,11 @@ func setupProps() -> void:
 		var textures := []
 		for path in entry.variants: textures.push_back(load(path))
 		variants[id] = textures
+		if entry.get("canopy") is Array:
+			var tops := []
+			for path in entry.canopy: tops.push_back(load(path))
+			canopies[id] = tops
+		if entry.get("leaves", "") != "" && ResourceLoader.exists(entry.leaves): leaves[id] = load(entry.leaves)
 
 ## What ChunkRecipe reads on the workers: plain tables only. lots: Array of Rect2 (station lots, world px);
 ## lanes: Array of [from, to] (Defense lanes, world px).
@@ -267,7 +304,7 @@ func recipeContext(lots: Array, lanes: Array) -> Dictionary:
 		var size: Array = entry.get("sizePx", [100, 100])
 		var occluder: bool = entry.get("occluder", false)
 		props[String(id)] = {"w": float(size[0]), "h": float(size[1]), "radius": maxf(size[0], size[1]) * 0.5,
-			"nodes": 3 + (1 if occluder else 0) + (1 if entry.get("beacon") else 0), "occluder": occluder,
+			"nodes": 3 + (1 if occluder else 0) + (1 if entry.get("beacon") else 0) + (1 if entry.get("canopy") else 0), "occluder": occluder,
 			"chain": id in CHAIN_PROPS, "breakable": entry.get("breakable") != null, "variants": entry.variants.size(),
 			"road": id in ROAD_PROPS}
 	var decor := {}
@@ -283,6 +320,18 @@ func recipeContext(lots: Array, lanes: Array) -> Dictionary:
 			elif decor.has(String(id)): dt[String(id)] = w
 		propTables[int(faction)] = pt
 		decorTables[int(faction)] = dt
+	var motifTables := {}
+	for faction in def.motifs:
+		var mt := {}
+		for motif in def.motifs[faction]:
+			if MOTIFS.has(StringName(motif)): mt[String(motif)] = float(def.motifs[faction][motif])
+		motifTables[int(faction)] = mt
+	var motifDefs := {}
+	for motif in MOTIFS: motifDefs[String(motif)] = MOTIFS[motif].duplicate(true)
+	var fieldDensity := {}
+	for id in FIELD_PROPS:
+		var chance := float(def.features.get(FIELD_PROPS[id], 0.0))
+		if chance > 0.0 && props.has(String(id)): fieldDensity[String(id)] = chance
 	var pickupTable := {}
 	for kind in def.pickupTable: pickupTable[String(kind)] = float(def.pickupTable[kind])
 	var wallStrip: String = WALL_STRIP.get(grammar, "cliff_lip")
@@ -291,6 +340,8 @@ func recipeContext(lots: Array, lanes: Array) -> Dictionary:
 		"wallStrip": STRIPS.find(wallStrip), "waterStrip": STRIPS.find("shore_foam"),
 		"props": props, "decor": decor, "propTables": propTables, "decorTables": decorTables,
 		"pickupTable": pickupTable, "pickupsPerChunk": def.pickupsPerChunk, "pickupIds": pickupIds(),
+		"motifs": motifTables, "motifDefs": motifDefs, "motifsPerChunk": float(def.features.get("motifs", 1.0)),
+		"fieldDensity": fieldDensity, "fieldSpacing": float(def.features.get("fieldSpacing", 1400.0)),
 		"propsPerChunk": int(def.features.get("props", 16)), "decorPerChunk": int(def.features.get("decor", 110)),
 		"start": def.startPosition, "lots": lots, "lanes": lanes, "lotTerrain": Root.terrain.LOT,
 		"roofDecor": String(ROOF_DECOR.get(grammar, &"")) if decorMeshes.has(ROOF_DECOR.get(grammar, &"")) else "",

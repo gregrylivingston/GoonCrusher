@@ -327,4 +327,4 @@ func test_station_keeps_its_lot_gap_and_driveway():
 		if wall.get_parent().name != "house": assert_true(wall.get_meta("gc_world", false), "%s stays on at Lighting Low" % wall.get_parent().name)
 	station.startBarrier()
 	station.damage(400.0)
-	assert_almost_eq(station.barrier, station.BARRIER_MAX - 400.0, 0.01, "goons wear the barrier down")
+	assert_almost_eq(station.barrier, station.BARRIER_MAX - 400.0 * station.SIEGE_DAMAGE, 0.01, "goons wear the barrier down (walls take SIEGE_DAMAGE of a blow)")

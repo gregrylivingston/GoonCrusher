@@ -201,6 +201,19 @@ func test_hit_stop_is_off_under_the_harnesses():
 	car.crushFeel.hitStop(CrushFeel.HIT_STOP_GIANT, false)
 	assert_eq(Engine.time_scale, 1.0, "headless runs never change the time scale")
 
+func test_a_hit_stop_its_timer_missed_still_ends():
+	makeManager()
+	var car = makeCar()
+	#the end timer fired a few ms early and endHitStop let it go: the slow motion outlived its stop
+	Engine.time_scale = HIT_STOP_SCALE
+	car.crushFeel.stopUntil = Time.get_ticks_msec() - 5
+	car.crushFeel._process(0.016)
+	var scale := Engine.time_scale
+	Engine.time_scale = 1.0
+	assert_eq(scale, 1.0, "the next frame puts the time scale back")
+
+const HIT_STOP_SCALE := 0.1
+
 func test_a_drifting_car_slams_goons_with_its_side():
 	var manager := makeManager()
 	var car = makeCar()

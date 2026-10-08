@@ -1,6 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Texture2D" path="res://world/art/props/crane.png" id="tex"]
+[ext_resource type="Texture2D" path="res://world/art/props/crane_canopy.png" id="canopy"]
 
 [sub_resource type="ConvexPolygonShape2D" id="shape"]
 points = PackedVector2Array(-274.7, -109.3, -25.3, -109.3, -25.3, 109.3, -274.7, 109.3)
@@ -25,3 +26,9 @@ shape = SubResource("shape")
 [node name="LightOccluder2D" type="LightOccluder2D" parent="."]
 occluder = SubResource("occluder")
 metadata/gc_world = true
+
+[node name="Canopy" type="Sprite2D" parent="."]
+z_index = 8
+z_as_relative = false
+scale = Vector2(1.3333, 1.3333)
+texture = ExtResource("canopy")

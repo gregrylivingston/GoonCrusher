@@ -1,9 +1,9 @@
-[gd_resource type="AudioBusLayout" load_steps=3 format=3 uid="uid://c6clxhfclej7b"]
+[gd_resource type="AudioBusLayout" format=3 uid="uid://c6clxhfclej7b"]
 
 [sub_resource type="AudioEffectCompressor" id="AudioEffectCompressor_duck"]
 resource_name = "Duck under Voice"
-threshold = -26.0
-ratio = 6.0
+threshold = -22.0
+ratio = 3.0
 attack_us = 8000.0
 release_ms = 350.0
 sidechain = &"Voice"

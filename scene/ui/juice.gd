@@ -12,7 +12,7 @@ static var denyPlayer: AudioStreamPlayer
 static func shake(item: Control, distance := 7.0) -> void:
 	var home: float = item.get_meta("juiceHome", item.position.x)
 	item.set_meta("juiceHome", home)
-	var old: Tween = item.get_meta("juiceShake", null)
+	var old: Tween = item.get_meta("juiceShake") if item.has_meta("juiceShake") else null #a null default still errors
 	if old && old.is_valid(): old.kill()
 	var tween = item.create_tween()
 	for offset in [distance, -distance, distance * 0.6, -distance * 0.4, 0.0]:

@@ -73,7 +73,7 @@ const TAG_PICKUP := 202
 const TAG_PROP := 203
 const TAG_DECOR := 204
 const TAG_SPOT := 205
-const TAG_ROOF := 206
+const TAG_ROOF := 206 #field lines 207-211, motifs 212 (below)
 
 #terrain ids (Root.terrain, mirrored: worker code never touches the autoload)
 const WATER := 3
@@ -991,21 +991,41 @@ func openShare() -> float:
 
 var openShareCache := -1.0
 
-## Props by the dressing of each spot's district faction (LOW, TALL, STATEFUL, WALL from props.json), Poisson
-## spaced by dart throwing: never on a blocked, lethal, shallows, bridge or belt cell, never on a road
-## unless the prop belongs there, clear of water and walls and of every reservation. Linear props (fences,
-## hedges, barriers) come in short chains.
+## Props by the dressing of each spot's district faction (LOW, TALL, STATEFUL, WALL from props.json), in three
+## passes: field lines (fences and hedges on a lattice, placeFieldLines), motifs (small set pieces: camps, groves,
+## wreck piles, placeMotifs), then Poisson-spaced scatter by dart throwing for the rest. Every prop stands on
+## spawnable ground off blocked, lethal, shallows, bridge and belt cells, off roads unless it belongs there,
+## clear of water, walls and every reservation. Other chain props (barriers, fort walls) come in short chains;
+## a chain on a road lies along it.
 func placeProps() -> Array:
 	var out: Array = []
 	var tables: Dictionary = ctx.get("propTables", {})
 	if tables.is_empty(): return out
-	var picks := pickTables(tables)
 	var r := RandomNumberGenerator.new()
 	r.seed = WorldGen.ihash(mapSeed, TAG_PROP, chunk.x, chunk.y)
-	var target := roundi(float(ctx.get("propsPerChunk", 16)) * openShare())
-	var breakBit := 32
-	for attempt in target * 14:
-		if out.size() >= target: break
+	var target := float(ctx.get("propsPerChunk", 16)) * openShare()
+	breakBit = 32
+	var field := placeFieldLines()
+	out.append_array(field)
+	target -= field.size() * FIELD_COST
+	var motifs := placeMotifs()
+	out.append_array(motifs)
+	target -= motifs.size() * MOTIF_COST
+	#the scatter draws from the tables without the field props (they only come in lines)
+	var fieldIds: Dictionary = ctx.get("fieldDensity", {})
+	var scatterTables := tables
+	if not fieldIds.is_empty():
+		scatterTables = {}
+		for f in tables:
+			var t := {}
+			for id in tables[f]:
+				if not fieldIds.has(String(id)): t[id] = tables[f][id]
+			scatterTables[f] = t
+	var picks := pickTables(scatterTables)
+	var want := maxi(0, roundi(target))
+	var placedScatter := 0
+	for attempt in want * 14:
+		if placedScatter >= want: break
 		var p := Vector2(r.randf_range(100.0, CHUNK.x - 100.0), r.randf_range(100.0, CHUNK.y - 100.0))
 		var entry: Array = picks.get(factionAt(p), picks.get(majority, EMPTY_PICK))
 		if entry[0].is_empty(): entry = picks.values()[0]
@@ -1014,7 +1034,9 @@ func placeProps() -> Array:
 		var info: Dictionary = ctx.props[id]
 		var rot := r.randf() * TAU
 		var count := 1
-		if info.chain: count = r.randi_range(2, 4)
+		if info.chain:
+			count = r.randi_range(2, 4)
+			if info.road: rot = roadAxis(p, rot) #barriers line the road instead of lying across it at random
 		var axis := Vector2.from_angle(rot)
 		var step: float = info.w * 0.96
 		var placed: Array = []
@@ -1024,14 +1046,256 @@ func placeProps() -> Array:
 			placed.push_back(q)
 		if placed.is_empty(): continue
 		for q in placed:
-			var bit := -1
-			if info.breakable && breakBit < 63:
-				bit = breakBit
-				breakBit += 1
-			out.push_back([id, q, rot, r.randi() % maxi(int(info.variants), 1), bit, info.occluder])
+			out.push_back([id, q, rot, r.randi() % maxi(int(info.variants), 1), nextBit(info), info.occluder])
 			reserve(q, info.radius + PROP_GAP * 0.5)
-		if out.size() >= target: break
+		placedScatter += 1
 	return out
+
+var breakBit := 32
+## The next taken-set bit for a breakable (32-62), -1 for anything else or once they run out
+func nextBit(info: Dictionary) -> int:
+	if not info.breakable || breakBit >= 63: return -1
+	breakBit += 1
+	return breakBit - 1
+
+#--- field lines (package 14, P-3) -----------------------------------------------------------------
+#Fences and hedges lie on the edges of a field lattice in world space: one lattice per FIELD_REGION square,
+#turned by an angle from the seed, so runs line up across chunks. Each lattice edge is a fence, a hedge or
+#nothing (ctx.fieldDensity from features "fenceDensity" and "hedgeDensity": the chance per edge), and every
+#run has a gap the car's width (a gate; two on long runs). A chunk places only the pieces whose centres are
+#inside it, in the dressing of the district there. Hedgerows get an oak at some corners; a lattice cell fenced
+#on PADDOCK_EDGES sides or more is a paddock with a few hay bales inside.
+const TAG_FIELD := 207
+const TAG_MOTIF := 212
+const FIELD_REGION := 10240.0
+const FIELD_ANGLE := 0.6     #radians either way of the world axes
+const FIELD_COST := 0.5      #share of a scattered prop each field piece counts as
+const FIELD_GATE_LONG := 6   #a run of this many pieces or more gets a second gate
+const CORNER_TREE := 0.45    #chance of an oak at the corner a hedgerow starts from
+const PADDOCK_EDGES := 3
+const PADDOCK_BALES := Vector2i(2, 4)
+
+## The lattice of a field region: [region, centre (world px), u axis, v axis]
+func fieldFrame(region: Vector2i) -> Array:
+	var ang := (WorldGen.hashf(mapSeed, TAG_FIELD, region.x, region.y) - 0.5) * 2.0 * FIELD_ANGLE
+	var u := Vector2.from_angle(ang)
+	return [region, (Vector2(region) + Vector2(0.5, 0.5)) * FIELD_REGION, u, u.orthogonal()]
+
+static func regionOf(w: Vector2) -> Vector2i:
+	return Vector2i(floori(w.x / FIELD_REGION), floori(w.y / FIELD_REGION))
+
+## What lies on a lattice edge (dir 0 runs along u from lattice point (a, b), 1 along v): a field prop id or ""
+func edgeKind(region: Vector2i, a: int, b: int, dir: int, dens: Dictionary) -> String:
+	var roll := WorldGen.hashf(mapSeed, TAG_FIELD, (a * 2 + dir) * 7919 + region.x, b * 7919 + region.y)
+	for id in dens:
+		roll -= float(dens[id])
+		if roll < 0.0: return String(id)
+	return ""
+
+func placeFieldLines() -> Array:
+	var out: Array = []
+	var dens: Dictionary = ctx.get("fieldDensity", {})
+	if dens.is_empty(): return out
+	var spacing: float = ctx.get("fieldSpacing", 1400.0)
+	var tables: Dictionary = ctx.get("propTables", {})
+	var box := [origin, origin + Vector2(CHUNK.x, 0), origin + Vector2(0, CHUNK.y), origin + CHUNK]
+	var regions := {}
+	for c in box: regions[regionOf(c)] = true
+	var placed: Array = [] #[local pos, rot, info]
+	for region in regions:
+		var frame := fieldFrame(region)
+		var centre: Vector2 = frame[1]
+		var u: Vector2 = frame[2]
+		var v: Vector2 = frame[3]
+		#the lattice coordinates the chunk covers (its corners projected onto the axes)
+		var lo := Vector2(INF, INF)
+		var hi := Vector2(-INF, -INF)
+		for c in box:
+			var d: Vector2 = c - centre
+			var q := Vector2(d.dot(u), d.dot(v)) / spacing
+			lo = lo.min(q)
+			hi = hi.max(q)
+		for a in range(floori(lo.x) - 1, ceili(hi.x) + 1):
+			for b in range(floori(lo.y) - 1, ceili(hi.y) + 1):
+				var at: Vector2 = centre + (u * a + v * b) * spacing
+				for dir in 2:
+					var id := edgeKind(region, a, b, dir, dens)
+					if id == "" || not ctx.props.has(id): continue
+					var info: Dictionary = ctx.props[id]
+					var along: Vector2 = u if dir == 0 else v
+					var rot := along.angle()
+					var n := maxi(2, floori(spacing / (info.w * 0.96)))
+					var gateHash := WorldGen.ihash(mapSeed, TAG_FIELD + 1, a * 2 + dir + region.x * 131, b + region.y * 131)
+					var gate := posmod(gateHash, n)
+					var gate2 := posmod(gate + n / 2, n) if n >= FIELD_GATE_LONG else -1
+					for k in n:
+						if k == gate || k == gate2: continue
+						var w: Vector2 = at + along * spacing * (k + 0.5) / n
+						if not fieldPieceHere(w, region, id, tables): continue
+						var local := w - origin
+						if fieldFits(local, rot, info):
+							out.push_back([id, local, rot, posmod(gateHash >> (k % 16), maxi(int(info.variants), 1)), nextBit(info), info.occluder])
+							placed.push_back([local, rot, info])
+					#an oak at the corner a hedgerow starts from
+					if id == "hedge" && ctx.props.has("oak") && WorldGen.hashf(mapSeed, TAG_FIELD + 2, a * 2 + dir + region.x * 131, b + region.y * 131) < CORNER_TREE:
+						if fieldPieceHere(at, region, "oak", tables):
+							var oak: Dictionary = ctx.props["oak"]
+							var local := at - origin
+							if propFits(local, 0.0, oak, "oak") && clearOfPlaced(local, oak.radius * 0.4, placed):
+								out.push_back(["oak", local, WorldGen.hashf(mapSeed, TAG_FIELD + 3, a, b) * TAU, posmod(gateHash, maxi(int(oak.variants), 1)), -1, oak.occluder])
+								reserve(local, oak.radius + PROP_GAP * 0.5)
+				#a paddock: this cell fenced on PADDOCK_EDGES of its four sides
+				if ctx.props.has("haybale"):
+					var fences := 0
+					for e in [[a, b, 0], [a, b, 1], [a, b + 1, 0], [a + 1, b, 1]]:
+						if edgeKind(region, e[0], e[1], e[2], dens) == "fence": fences += 1
+					if fences >= PADDOCK_EDGES:
+						var bale: Dictionary = ctx.props["haybale"]
+						var count := PADDOCK_BALES.x + posmod(WorldGen.ihash(mapSeed, TAG_FIELD + 4, a + region.x * 131, b + region.y * 131), PADDOCK_BALES.y - PADDOCK_BALES.x + 1)
+						for i in count:
+							var f := Vector2(WorldGen.hashf(mapSeed, TAG_FIELD + 5, a * 8 + i, b + region.x), WorldGen.hashf(mapSeed, TAG_FIELD + 6, b * 8 + i, a + region.y))
+							var w: Vector2 = centre + (u * (a + 0.25 + f.x * 0.5) + v * (b + 0.25 + f.y * 0.5)) * spacing
+							if not fieldPieceHere(w, region, "haybale", tables): continue
+							var local := w - origin
+							var rot := u.angle() + (PI * 0.5 if i % 2 else 0.0)
+							if propFits(local, rot, bale, "haybale") && clearOfPlaced(local, bale.radius, placed):
+								out.push_back(["haybale", local, rot, i % maxi(int(bale.variants), 1), nextBit(bale), bale.occluder])
+								reserve(local, bale.radius + PROP_GAP * 0.5)
+	#the pieces keep later props off their whole length, not only a disc round each centre
+	for e in placed:
+		var axis: Vector2 = Vector2.from_angle(e[1]) * (e[2].w * 0.33)
+		for s in [-1.0, 0.0, 1.0]: reserve(e[0] + axis * s, e[2].h * 0.5 + PROP_GAP * 0.5)
+	return out
+
+## A field prop belongs at world point w: inside this chunk, in the lattice's region, and in the dressing of
+## the district there
+func fieldPieceHere(w: Vector2, region: Vector2i, id: String, tables: Dictionary) -> bool:
+	var local := w - origin
+	if local.x < 0.0 || local.y < 0.0 || local.x >= CHUNK.x || local.y >= CHUNK.y || regionOf(w) != region: return false
+	var table: Dictionary = tables.get(factionAt(local), {})
+	return float(table.get(id, 0.0)) > 0.0
+
+## propFits for a field piece: the same ground rules (never on a road, so tracks cut gaps in the runs), but
+## it keeps clear only of what was placed before the field pass: pieces of one run touch end to end
+func fieldFits(p: Vector2, rot: float, info: Dictionary) -> bool:
+	var along: Vector2 = Vector2.from_angle(rot) * (info.w * 0.5 * 0.85)
+	var across: Vector2 = Vector2.from_angle(rot).orthogonal() * (info.h * 0.5 * 0.85)
+	for q in [p, p + along, p - along, p + across, p - across]:
+		if not inChunk(q, 0.0): return false
+		var t := terrainAt(q)
+		if not spawnable(t) || t == CONVEYOR || t == MUDPIT || t == BRIDGE || t == ASPHALT || t == OIL: return false
+		if not clearOf(q, PROP_MARGIN): return false
+	for s in [-0.33, 0.0, 0.33]:
+		if not isFree(p + Vector2.from_angle(rot) * info.w * s, info.h * 0.5 + 40.0): return false
+	return true
+
+## Clear of the field pieces placed so far (each a box along its rotation), by `radius`
+static func clearOfPlaced(p: Vector2, radius: float, placed: Array) -> bool:
+	for e in placed:
+		var axis: Vector2 = Vector2.from_angle(e[1])
+		var off: Vector2 = p - e[0]
+		if absf(off.dot(axis)) < e[2].w * 0.5 + radius && absf(off.dot(axis.orthogonal())) < e[2].h * 0.5 + radius: return false
+	return true
+
+## The road's direction at p: the heading (of 8) with the longest run of road through p, else `fallback`
+func roadAxis(p: Vector2, fallback: float) -> float:
+	var best := 0
+	var bestRot := fallback
+	for k in 8:
+		var rot := PI * k / 8.0
+		var d := Vector2.from_angle(rot) * 96.0
+		var run := 0
+		for s in range(-6, 7):
+			var t := terrainAt(p + d * s)
+			if t == ASPHALT || t == OIL: run += 1
+		if run > best:
+			best = run
+			bestRot = rot
+	return bestRot if best >= 5 else fallback
+
+#--- motifs (package 14, P-5) ----------------------------------------------------------------------
+#Small set pieces placed before the scatter: ctx.motifs is {faction: {motif id: weight}} and ctx.motifDefs the
+#motifs (WorldSkin.MOTIFS): members in a ring, scattered in a disc, in a grid or a line turned to the field
+#lattice, or at the centre. Members keep MOTIF_GAP from each other instead of PROP_GAP; the motif keeps
+#PROP_GAP from everything else. features "motifs" is how many a fully open chunk gets on average (ctx.motifsPerChunk).
+const MOTIF_GAP := 70.0
+const MOTIF_TRIES := 10
+const MOTIF_COST := 1.0      #share of a scattered prop each motif member counts as
+
+func placeMotifs() -> Array:
+	var out: Array = []
+	var tables: Dictionary = ctx.get("motifs", {})
+	var defs: Dictionary = ctx.get("motifDefs", {})
+	if tables.is_empty() || defs.is_empty(): return out
+	var mr := RandomNumberGenerator.new()
+	mr.seed = WorldGen.ihash(mapSeed, TAG_MOTIF, chunk.x, chunk.y)
+	var expect: float = float(ctx.get("motifsPerChunk", 1.0)) * openShare()
+	var count := floori(expect) + (1 if mr.randf() < expect - floori(expect) else 0)
+	var picks := pickTables(tables)
+	for n in count:
+		for attempt in MOTIF_TRIES:
+			var c := Vector2(mr.randf_range(600.0, CHUNK.x - 600.0), mr.randf_range(500.0, CHUNK.y - 500.0))
+			var entry: Array = picks.get(factionAt(c), EMPTY_PICK)
+			var mid := pickFast(entry, mr)
+			if mid == "": break
+			if not defs.has(mid): continue
+			var def: Dictionary = defs[mid]
+			if not isFree(c, PROP_GAP): continue
+			var group := motifGroup(c, def, mr)
+			if group.size() < int(def.get("min", 2)): continue
+			for g in group:
+				var info: Dictionary = ctx.props[g[0]]
+				out.push_back([g[0], g[1], g[2], mr.randi() % maxi(int(info.variants), 1), nextBit(info), info.occluder])
+			for g in group: reserve(g[1], ctx.props[g[0]].radius + PROP_GAP * 0.5)
+			break
+	return out
+
+## A motif's members round centre c that fit: [[id, pos, rot], ...]
+func motifGroup(c: Vector2, def: Dictionary, mr: RandomNumberGenerator) -> Array:
+	var group: Array = []
+	var grid := fieldFrame(regionOf(origin + c))[2] as Vector2
+	var turn := mr.randf() * TAU
+	for m in def.members:
+		var id: String = m[0]
+		if not ctx.props.has(id): continue
+		var info: Dictionary = ctx.props[id]
+		var n: int = m[1]
+		var radius: float = m[2]
+		var shape: String = m[3]
+		for i in n:
+			var p := c
+			var rot := mr.randf() * TAU
+			match shape:
+				"ring":
+					var a := turn + TAU * i / n + mr.randf_range(-0.15, 0.15)
+					p = c + Vector2.from_angle(a) * radius
+					rot = a + PI * 0.5
+				"disc": p = c + Vector2.from_angle(mr.randf() * TAU) * radius * sqrt(mr.randf())
+				"grid":
+					var cols := ceili(sqrt(float(n)))
+					var rows := ceili(float(n) / cols)
+					var cell := Vector2(i % cols, i / cols) - Vector2(cols - 1, rows - 1) * 0.5
+					p = c + (grid * cell.x + grid.orthogonal() * cell.y) * radius
+				"line":
+					p = c + grid * (i - (n - 1) * 0.5) * radius
+					rot = grid.angle()
+			if not motifFits(p, rot, info, group): continue
+			group.push_back([id, p, rot])
+	return group
+
+func motifFits(p: Vector2, rot: float, info: Dictionary, group: Array) -> bool:
+	if not inChunk(p, 32.0) || not isFree(p, info.radius + PROP_GAP * 0.5): return false
+	for g in group:
+		if p.distance_to(g[1]) < (info.radius + ctx.props[g[0]].radius) * 0.75 + MOTIF_GAP: return false
+	var along: Vector2 = Vector2.from_angle(rot) * (info.w * 0.5 * 0.85)
+	var across: Vector2 = Vector2.from_angle(rot).orthogonal() * (info.h * 0.5 * 0.85)
+	for q in [p, p + along, p - along, p + across, p - across]:
+		if not inChunk(q, 0.0): return false
+		var t := terrainAt(q)
+		if not spawnable(t) || t == CONVEYOR || t == MUDPIT || t == BRIDGE: return false
+		if (t == ASPHALT || t == OIL) && not info.road: return false
+		if not clearOf(q, PROP_MARGIN): return false
+	return true
 
 func propFits(p: Vector2, rot: float, info: Dictionary, id: String) -> bool:
 	var radius: float = info.radius

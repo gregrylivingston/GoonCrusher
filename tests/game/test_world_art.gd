@@ -110,6 +110,12 @@ func test_scenes_match_the_manifest():
 		if occ: assert_true(occ.get_meta("gc_world", false), "%s: occluder is marked gc_world" % id)
 		if p.breakable is Dictionary: assert_eq(node.get_meta("smashSpeed", -1.0), float(p.breakable.smashSpeed), "%s: smashSpeed metadata" % id)
 		assert_eq(node.get_meta("explosive", false), p.explosive, "%s: explosive metadata" % id)
+		var canopy: Sprite2D = node.get_node_or_null("Canopy")
+		assert_eq(canopy != null, p.get("canopy") is Array, "%s: a Canopy node exactly when the manifest names canopies" % id)
+		if canopy:
+			assert_eq(canopy.texture.resource_path, p.canopy[0], "%s: the canopy shows variant 0" % id)
+			assert_eq(p.canopy.size(), p.variants.size(), "%s: a canopy per variant" % id)
+			for top in p.canopy: assert_true(ResourceLoader.exists(top), "%s: %s" % [id, top])
 		var beacon: Sprite2D = node.get_node_or_null("Beacon")
 		assert_eq(beacon != null, p.has("beacon"), "%s: a Beacon node exactly when the manifest names one" % id)
 		if beacon:

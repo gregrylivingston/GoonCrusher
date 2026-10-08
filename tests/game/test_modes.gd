@@ -74,7 +74,7 @@ func test_station_barrier_and_wall_points():
 	assert_eq(station.barrier, station.BARRIER_MAX, "no barrier outside Defense")
 	station.startBarrier()
 	station.damage(50)
-	assert_eq(station.barrier, station.BARRIER_MAX - 50)
+	assert_almost_eq(station.barrier, station.BARRIER_MAX - 50 * station.SIEGE_DAMAGE, 0.01, "walls take SIEGE_DAMAGE of a blow")
 	assert_gt(1.0, station.get_node("walls").self_modulate.g, "the walls redden as the barrier wears down")
 	var inside = station.global_position + Vector2(10, 10)
 	assert_eq(station.nearestWallPoint(inside), inside, "a goon inside the lot is already at the walls")
@@ -82,6 +82,7 @@ func test_station_barrier_and_wall_points():
 	assert_almost_eq(station.nearestWallPoint(far).x, station.global_position.x + station.LOT.end.x, 0.01, "east of the lot: its east edge")
 	station.retire()
 	assert_false(station.active, "a retired Marathon station's driveway does nothing")
+	for wall in station.WALL_BODIES: assert_false(station.get_node(wall + "/LightOccluder2D").visible, "%s: a passed station's lot opens up (its walls stop blocking)" % wall)
 
 #the wall bodies trace the lot (LOT) with its one gap on the east side, where the driveway is
 func test_station_walls_leave_the_east_gap():

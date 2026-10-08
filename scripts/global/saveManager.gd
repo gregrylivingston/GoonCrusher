@@ -4,7 +4,7 @@ extends Node
 #The demo and the full game share this file: load_data() merges each save with the current defaults
 #(migrate()) before anything reads it.
 
-const SAVE_VERSION := 6 #6: the unlock system (Unlocks, meta.unlocks, meta.lifetime, car gem prices)
+const SAVE_VERSION := 7 #6: the unlock system (Unlocks, meta.unlocks, meta.lifetime, car gem prices). 7: mode tiers (ModeTiers)
 #Saves older than FIRST_KEPT_VERSION start over (the author's call when the unlocks went in): the old file is
 #copied beside the save as <name>.v<version>.tres, then a new save replaces it.
 const FIRST_KEPT_VERSION := 6
@@ -59,7 +59,7 @@ func reset_save():
 #Returns true when anything changed.
 func migrate() -> bool:
 	var defaults = PlayerData.new()
-	var before = var_to_str([playerData.cars, playerData.levels, playerData.saveVersion, playerData.selectedCar, playerData.selectedLevel, playerData.gameMode, playerData.meta])
+	var before = var_to_str([playerData.cars, playerData.levels, playerData.saveVersion, playerData.selectedCar, playerData.selectedLevel, playerData.gameMode, playerData.gameTier, playerData.meta])
 	for section in defaults.meta:
 		if not playerData.meta.get(section) is Dictionary: playerData.meta[section] = {}
 	for defaultCar in defaults.cars:
@@ -81,11 +81,13 @@ func migrate() -> bool:
 	playerData.selectedCar = clampi(playerData.selectedCar, 0, playerData.cars.size() - 1)
 	playerData.selectedLevel = clampi(playerData.selectedLevel, 0, playerData.levels.size() - 1)
 	playerData.gameMode = clampi(playerData.gameMode, 0, Root.gameModes.size() - 1)
+	playerData.gameTier = ModeTiers.clampTier(playerData.gameTier)
 	playerData.saveVersion = SAVE_VERSION
-	return before != var_to_str([playerData.cars, playerData.levels, playerData.saveVersion, playerData.selectedCar, playerData.selectedLevel, playerData.gameMode, playerData.meta])
+	return before != var_to_str([playerData.cars, playerData.levels, playerData.saveVersion, playerData.selectedCar, playerData.selectedLevel, playerData.gameMode, playerData.gameTier, playerData.meta])
 
-#The save's levels rebuilt from the registry (Levels.ORDER). A saved entry keeps its unlock and beaten
-#modes; entries for levels no longer in the registry are dropped.
+#The save's levels rebuilt from the registry (Levels.ORDER). A saved entry keeps its unlock, beaten modes and
+#best tiers (a mode beaten before the tiers, version 7, counts as Easy); entries for levels no longer in the
+#registry are dropped.
 static func mergeLevels(savedLevels: Array) -> Array:
 	var byId := {}
 	for saved in savedLevels:
@@ -100,6 +102,12 @@ static func mergeLevels(savedLevels: Array) -> Array:
 			var savedBeat = saved.get("gamemodeBeat", {})
 			if savedBeat is Dictionary:
 				for mode in savedBeat: level.gamemodeBeat[mode] = bool(savedBeat[mode])
+			var savedTiers = saved.get("tiers", {})
+			for mode in level.tiers:
+				var t := int(savedTiers.get(mode, 0)) if savedTiers is Dictionary else 0
+				if level.gamemodeBeat.get(mode, false): t = maxi(t, ModeTiers.EASY)
+				level.tiers[mode] = clampi(t, ModeTiers.NONE, ModeTiers.HARD)
+				if t > ModeTiers.NONE: level.gamemodeBeat[mode] = true
 		merged.push_back(level)
 	return merged
 
@@ -139,7 +147,15 @@ const MAX_UPGRADE_LEVEL := 20
 
 #how much the next upgrade will cost. `carIndex` -1 is the selected car (the Goonopedia's Cars tab names its own).
 func requestStatCost(statString: Root.upgrade, carIndex := -1) -> int:
-	return int(pow( getUpgradeLevel(statString, carIndex) + 1 , 1.6 ) * 15)
+	return upgradePrice(getUpgradeLevel(statString, carIndex), str(playerData.cars[playerData.selectedCar if carIndex < 0 else carIndex].name))
+
+## An upgrade from `level` to the next: (level + 1)^1.6 x 15, x the car's scale. An upgrade is +1 to the stat
+## on any car, so it is worth most on the entry cars' low stats; the advanced cars' upgrades are the long
+## coin sink instead (package 1, B-4).
+const UPGRADE_COST_SCALE := {"sedan": 1.0, "van": 1.0, "taxi": 1.2, "pickup": 1.2, "semi": 1.6, "audi": 1.8,
+	"racer": 1.8, "police": 2.2, "ambulance": 2.5}
+static func upgradePrice(level: int, carName: String) -> int:
+	return int(pow(level + 1, 1.6) * 15 * UPGRADE_COST_SCALE.get(carName, 1.0))
 
 func isUpgradeMaxed(statString: Root.upgrade, carIndex := -1) -> bool:
 	return getUpgradeLevel(statString, carIndex) >= MAX_UPGRADE_LEVEL
@@ -189,12 +205,13 @@ func selectPreviousCar():
 	return playerData.cars[playerData.selectedCar]
 
 
-#A won run: the mode is beaten here. Once Root.modesToOpenNext(level) modes are beaten (Countdown, Sprint and one
-#more), the next level opens and the menu moves to it; until then the menu offers this level's next unbeaten
-#mode. Levels already open stay open (saves from before the rule keep theirs).
-func currentLevelPassed():
+#A won run: the mode is beaten here on the run's tier (and the tiers below it). Once Root.modesToOpenNext(level)
+#modes are beaten (Countdown, Sprint and one more), the next level opens and the menu moves to it; until then
+#the menu offers this level's next unbeaten mode. Levels already open stay open (saves from before the rule
+#keep theirs). Returns the best tier before this run, for the first-clear bonus (ModeTiers.firstClear).
+func currentLevelPassed() -> int:
 	var level: Dictionary = playerData.levels[playerData.selectedLevel]
-	level.gamemodeBeat[playerData.gameMode] = true
+	var before := passTier(level, playerData.gameMode, playerData.gameTier)
 	var next = playerData.selectedLevel + 1
 	if Root.opensNextLevel(level) && next < playerData.levels.size() && not playerData.levels[next].unlocked:
 		playerData.levels[next].unlocked = true
@@ -206,11 +223,34 @@ func currentLevelPassed():
 		var unbeaten = Root.MODE_PATH.filter(func(m): return not level.gamemodeBeat.get(m, false) && Root.isModePlayable(level, m))
 		if not unbeaten.is_empty(): playerData.gameMode = unbeaten[0]
 	save_character_data()
+	return before
+
+## Credits a tier beaten for a mode in a level entry; returns the best tier before it
+static func passTier(level: Dictionary, mode: int, tier: int) -> int:
+	var before := ModeTiers.best(level, mode)
+	if not level.get("tiers") is Dictionary: level["tiers"] = {}
+	level.tiers[mode] = maxi(before, ModeTiers.clampTier(tier))
+	level.gamemodeBeat[mode] = true
+	return before
+
+func getGameTier() -> int:
+	return ModeTiers.clampTier(playerData.gameTier)
+
+func setGameTier(tier: int) -> void:
+	tier = ModeTiers.clampTier(tier)
+	if playerData.gameTier == tier: return
+	playerData.gameTier = tier
+	save_character_data()
 
 ## Modes still to beat on a level before the next one opens (0 when it is open or there is none)
 func modesToGo(index: int) -> int:
 	if index + 1 >= playerData.levels.size() || playerData.levels[index + 1].unlocked: return 0
 	return maxi(Root.modesToOpenNext(playerData.levels[index]) - Root.modesBeaten(playerData.levels[index]), 0)
+
+## What is left on a level before the next one opens ("" when it is open or there is none): Root.openLeftText
+func openLeft(index: int) -> String:
+	if index + 1 >= playerData.levels.size() || playerData.levels[index + 1].unlocked: return ""
+	return Root.openLeftText(playerData.levels[index])
 
 var carNameToFind
 func getCarByName(carName):

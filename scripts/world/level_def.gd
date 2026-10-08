@@ -52,6 +52,9 @@ class_name LevelDef extends Resource
 ## Goons.faction -> {prop id: weight}: props.json ids, DECOR ones as MultiMesh decor (ChunkRecipe). features
 ## "props" and "decor" set how many of each a fully open chunk gets (16 and 110 by default).
 @export var dressing: Dictionary = {}
+## Goons.faction -> {motif id: weight}: set pieces from WorldSkin.MOTIFS (camps, groves, wreck piles...) placed
+## before the scattered dressing. features "motifs" sets how many a fully open chunk gets (1 by default).
+@export var motifs: Dictionary = {}
 ## pickup kind -> weight, rolled pickupsPerChunk times per chunk: coinline (a line of 7 coins), fuel, health,
 ## purse, slot, or none (nothing, so later levels can lean out the coins)
 @export var pickupTable: Dictionary = {}

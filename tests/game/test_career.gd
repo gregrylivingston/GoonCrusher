@@ -110,7 +110,7 @@ func test_shopping_spends_only_what_is_in_the_bank():
 				assert_eq(data.cars[want.car].cost, 0, "%s upgrades a car it owns" % id)
 				var level := int(data.cars[want.car].upgrades.get(want.upgrade, 0))
 				assert_true(level < SaveManager.MAX_UPGRADE_LEVEL, "%s stays under the cap" % id)
-				var cost := Personas.upgradeCost(level)
+				var cost := SaveManager.upgradePrice(level, str(data.cars[want.car].name))
 				assert_true(cost <= data.coin, "%s can afford the upgrade" % id)
 				data.coin -= cost
 				data.cars[want.car].upgrades[want.upgrade] = level + 1
@@ -120,9 +120,12 @@ func test_upgrade_cost_matches_the_garage():
 	var data := CareerStart.build("fresh")
 	var keep := SaveManager.playerData
 	SaveManager.playerData = data
-	for level in [0, 1, 5, 19]:
-		data.cars[data.selectedCar].upgrades[U.ENGINE] = level
-		assert_eq(Personas.upgradeCost(level), SaveManager.requestStatCost(U.ENGINE), "level %d" % level)
+	for car in [0, data.cars.size() - 1]: #the sedan and the priciest car (UPGRADE_COST_SCALE)
+		data.selectedCar = car
+		for level in [0, 1, 5, 19]:
+			data.cars[car].upgrades[U.ENGINE] = level
+			assert_eq(SaveManager.upgradePrice(level, str(data.cars[car].name)), SaveManager.requestStatCost(U.ENGINE), "%s level %d" % [data.cars[car].name, level])
+	assert_gt(SaveManager.upgradePrice(5, "ambulance"), SaveManager.upgradePrice(5, "sedan"), "advanced cars' upgrades cost more")
 	SaveManager.playerData = keep
 
 func test_grinder_saves_for_a_car_within_reach():

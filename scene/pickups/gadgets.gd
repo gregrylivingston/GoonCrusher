@@ -77,6 +77,7 @@ static func stun(goon, seconds: float, push: Vector2) -> void:
 ## Jump Jets and Hop come down; Jump Jets flatten everything around the car.
 static func land(car) -> void:
 	car.set_collision_mask_value(3, true)
+	if is_instance_valid(car.juice): car.juice.land(car.landingBlast)
 	if not car.landingBlast || not is_instance_valid(Root.spawnManager): return
 	var r: float = Pickups.DATA["jets"]["radius"]
 	for goon in Root.spawnManager.goonsNear(car.global_position, r): CarBuffFx.kill(goon)

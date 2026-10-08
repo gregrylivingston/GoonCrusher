@@ -1,10 +1,9 @@
-[gd_scene load_steps=8 format=3 uid="uid://dqcrli42u3gia"]
+[gd_scene load_steps=7 format=3 uid="uid://dqcrli42u3gia"]
 
 [ext_resource type="Script" path="res://scene/level/levelRoot.gd" id="1_65p74"]
 [ext_resource type="PackedScene" uid="uid://d4c6o8m1s51w1" path="res://scene/level/tileManager.tscn" id="2_jny74"]
 [ext_resource type="PackedScene" uid="uid://dbkp41oxg03o6" path="res://scene/car/car.tscn" id="2_v78xq"]
 [ext_resource type="PackedScene" uid="uid://pgobm7erc1f0" path="res://scene/player/playerRoot.tscn" id="3_sf05p"]
-[ext_resource type="AudioStream" uid="uid://mwmiy2un7jgn" path="res://sound/fx/tubular-bell-of-death-89485.mp3" id="7_ihcdj"]
 [ext_resource type="PackedScene" uid="uid://b6x6nemyty8wb" path="res://scene/enemy/spawnManager.tscn" id="17_3wer8"]
 [ext_resource type="AudioStream" uid="uid://bqf1c80fb8cpl" path="res://sound/fx/duskwolf-101348.mp3" id="19_b5cat"]
 
@@ -19,15 +18,10 @@ carId = "sedan"
 
 [node name="PlayerRoot" parent="." instance=ExtResource("3_sf05p")]
 
-[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
-process_mode = 3
-stream = ExtResource("7_ihcdj")
-volume_db = 2.0
-autoplay = true
-
 [node name="SpawnManager" parent="." instance=ExtResource("17_3wer8")]
 
 [node name="AudioStreamPlayer_wolf" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("19_b5cat")
+bus = &"FX"
 
 [node name="CanvasModulate" type="CanvasModulate" parent="."]

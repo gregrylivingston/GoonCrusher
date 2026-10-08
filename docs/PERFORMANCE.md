@@ -42,6 +42,7 @@ Reset Progress never touches the settings files.
 | Slot Celebration | Minimal / Reduced / Full | Minimal | Reduced | Full | Full | Prizes poured from the slot machine's chute (4 / 8 / 16 icons); reels and results unchanged (docs/UI.md, "Transitions") |
 | Reward Pop-ups | Minimal / Reduced / Full | Minimal | Reduced | Full | Full | Caps flying reward icons at 3/10/20; rewards are credited on collection |
 | Crush Effects | Minimal / Reduced / Full | Minimal | Reduced | Full | Full | Minimal: decal and bits; Reduced adds the death styles (splat, shove, hood ride, fling; up to 6 bodies at once) and goo spatter; Full up to 16 bodies, more bits and impact bursts (docs/GOONS.md, "Crush feel"). Not yet benchmarked in S3/S4 |
+| Driving Effects | Minimal / Reduced / Full | Minimal | Reduced | Full | Full | `CarJuice` (docs/CAR_ART.md, "Driving feel"): Minimal is 12 sparks and no ground trails or speed lines; Reduced 48 puffs, 24 sparks, 14 lines at half the trail rate; Full 128 puffs, 48 sparks, 26 lines. The lean, bounce and sounds are the same at every level. Not yet benchmarked |
 | Ground Detail | Simple / Full | Simple | Full | Full | Full | `gc_ground_quality`: Simple draws the nearest cell's material with no macro noise or water/belt animation (docs/WORLD.md, "The ground shader") |
 | Max Sound Effects | 8 / 12 / 24 | 8 | 12 | 24 | 24 | `Audio` FX pool size |
 
@@ -91,6 +92,8 @@ Measured 2026-10-07 with the native goon tick, grid and crossings. Vulkan Mobile
 | S4 night crowd, quarry, Low (2 runs) | 54.4 / 21.1, 56.3 / 25.4 (45.5 / 18.2, 49.2 / 17.5) | 35–44 ms | 65–68% (59%) | 7, 2 (42, 111) | 190–201 |
 | S4 night crowd, prairie, Low | 54.4 / 19.1 (49.4 / 13.6) | 44.6 ms | 62.7% (68.7%) | 21 (303) | 250 |
 | S4 night crowd, quarry, Potato | 94.7 / 28.0 (76.1 / 15.1) | 29.2 ms | 84.4% (80.1%) | 12 (236) | 202 |
+
+**Package 14 (props), 2026-10-08:** an A/B in one tree (a temporary switch turning off field lines, motifs, canopies and reactions; Low, uncapped, 90 s, one run each, the editor open in the background): S2 121.1 / 75.1 off, 121.8 / 98.0 on (p99 11.1 / 9.1 ms, 100% under 17.5 ms both); S3 65.9 / 33.2 off, 64.5 / 32.8 on (p99 24.8 / 26.2 ms, 74.0% / 70.9% under 17.5 ms). The props cost about 1.4 fps on S3, inside the run-to-run spread. S3 is down from 74.1 / 41.9 on 2026-10-07 with them off too, so that drop comes from other changes made since. It isn't the cars' middle collision hull either (balance pass A/B, same conditions: 67.5 / 34.9 with it, 65.8 / 31.3 without); nor package 13's CarJuice (player's car only, about 0.06 ms a frame measured); still to check on a quiet machine: the goon count after the wave changes, the gift box and crush-XP work, and the audio mix pass; S2 now meets 46-61 goons where it met 36. Recipes average 7-17 ms on workers (Prairie's field lines and motifs are the slow end); main-thread apply 1.6-2.7 ms average, a single stateful prop step up to 12 ms on its first instance.
 
 The S3 night, city and S6 rows of 2026-10-06 weren't re-run. Chunk work (`WORLD_CHUNKS`): fine raster about 16–25 ms and recipe 7–8 ms average on workers; main-thread apply 1.6–1.9 ms average, longest step under 5 ms.
 

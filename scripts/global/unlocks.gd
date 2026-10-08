@@ -17,14 +17,16 @@ class_name Unlocks extends RefCounted
 enum S { HIDDEN, SHOWN, READY, OPEN }
 const STATE_NAMES := ["Hidden", "Shown", "Ready", "Open"]
 
-## Placeholder prices by rarity, coins and gems (package 6 re-fits them). A pickup with a play condition
+## Prices by rarity, coins and gems, first fitted to the career playtests with tiers and win pay (2026-10-08:
+## the old 300-6,000 let the Rookie open 73 of 79 pickups in 89 minutes). A pickup with a play condition
 ## (`needs`) costs nothing: it opens when the condition is met.
-const PICKUP_PRICE := [{"coin": 300}, {"coin": 900}, {"coin": 2500}, {"coin": 6000, "gem": 3}, {"gem": 12}]
+const PICKUP_PRICE := [{"coin": 1000}, {"coin": 3000}, {"coin": 8000}, {"coin": 20000, "gem": 5}, {"gem": 15}]
 ## The demo opens Commons and Uncommons only (its tree roots are always open).
 const DEMO_MAX_RARITY := Pickups.R.UNCOMMON
 ## Condition words for modes, in Root.gameModes order.
 const MODE_KEYS := ["countdown", "sprint", "marathon", "defense", "goonpocalypse"]
 const FACTION_KEYS := ["wild", "tribe", "scrap"]
+const TIER_KEYS := ["", "easy", "medium", "hard"] #ModeTiers, for "clears:<tier>:<n>"
 
 ## Harnesses and tests: every pickup is open whatever the save says (`--unlocks=all`, the default in
 ## playtests and benchmarks, so their numbers stay comparable with older runs).
@@ -155,7 +157,9 @@ static func refresh() -> Array:
 #--- conditions ---------------------------------------------------------------------------------
 
 ## Conditions: "nights:<n>", "giants:<n>", "crushes:<n>", "crushed:<faction>:<n>", "wins:<mode>:<n>",
-## "mode:<mode>" (open on any level), "open:<level>", "survive:<seconds>" (best Goonpocalypse anywhere).
+## "mode:<mode>" (open on any level), "open:<level>", "survive:<seconds>" (best Goonpocalypse anywhere),
+## "clears:<tier>:<n>" (mode-and-level completions on that tier or harder, ModeTiers; tier easy, medium or hard),
+## "boxes:<n>" (gift boxes opened over every run).
 ## Lifetime counters (meta.lifetime) are added on the results ticket (countRun).
 static func needsMet(needs: Array) -> bool:
 	for need in needs:
@@ -191,6 +195,11 @@ static func progressOf(need: String) -> Dictionary:
 			return {"have": open, "need": 1, "text": "Open %s" % (Levels.defAt(i).displayName if i >= 0 else parts[1])}
 		"survive":
 			return {"have": bestSurvival(), "need": n, "text": "Survive %d:%02d in Goonpocalypse" % [n / 60, n % 60]}
+		"boxes": return {"have": lifetime("boxes"), "need": n, "text": "Open %d gift box%s" % [n, "" if n == 1 else "es"]}
+		"clears":
+			var tier := TIER_KEYS.find(parts[1])
+			var have := ModeTiers.clears(data().levels, tier) if data() != null && tier > 0 else 0
+			return {"have": have, "need": n, "text": "Win %d %s medal%s" % [n, ModeTiers.MEDALS[maxi(tier, 0)].to_lower(), "" if n == 1 else "s"]}
 	return {"have": 0, "need": 1, "text": need}
 
 ## A pickup's progress toward its condition (the first unmet one), or {} when it has none.
@@ -205,11 +214,12 @@ static func progress(uid: String) -> Dictionary:
 static func isValidNeed(need: String) -> bool:
 	var parts := need.split(":")
 	match parts[0]:
-		"nights", "giants", "crushes", "survive": return parts.size() == 2 && parts[1].is_valid_int()
+		"nights", "giants", "crushes", "survive", "boxes": return parts.size() == 2 && parts[1].is_valid_int()
 		"crushed": return parts.size() == 3 && parts[1] in FACTION_KEYS && parts[2].is_valid_int()
 		"wins": return parts.size() == 3 && parts[1] in MODE_KEYS && parts[2].is_valid_int()
 		"mode": return parts.size() == 2 && parts[1] in MODE_KEYS
 		"open": return parts.size() == 2 && Levels.indexOf(StringName(parts[1])) >= 0
+		"clears": return parts.size() == 3 && TIER_KEYS.find(parts[1]) > 0 && parts[2].is_valid_int()
 	return false
 
 #--- what's next --------------------------------------------------------------------------------
@@ -254,12 +264,14 @@ static func priceText(cost: Dictionary) -> String:
 #--- the results ticket -------------------------------------------------------------------------
 
 ## Adds a finished run to the lifetime counters the conditions read. Called once by the results ticket.
-static func countRun(won: bool, mode: int, nights: int, giants: int) -> void:
+static func countRun(won: bool, mode: int, nights: int, giants: int, boxes := 0) -> void:
 	if data() == null: return
 	var life: Dictionary = data().meta.get_or_add("lifetime", {})
 	life.runs = int(life.get("runs", 0)) + 1
 	life.nights = int(life.get("nights", 0)) + nights
 	life.giants = int(life.get("giants", 0)) + giants
+	life.boxes = int(life.get("boxes", 0)) + boxes #gift boxes opened (CrushPrizes)
+	life.bestBox = maxi(int(life.get("bestBox", 0)), boxes) #the most in one run
 	if won && mode >= 0 && mode < MODE_KEYS.size():
 		var key: String = "wins_" + MODE_KEYS[mode]
 		life[key] = int(life.get(key, 0)) + 1

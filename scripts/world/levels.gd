@@ -85,7 +85,10 @@ static func defaultEntry(index: int) -> Dictionary:
 	var id: StringName = ORDER[index]
 	var def := get_def(id)
 	var beat := {}
-	for mode in Root.gameModes.values(): beat[mode] = false
+	var tiers := {}
+	for mode in Root.gameModes.values():
+		beat[mode] = false
+		tiers[mode] = ModeTiers.NONE
 	return {
 		"id": String(id),
 		"name": def.displayName if def else String(id).capitalize(),
@@ -93,4 +96,5 @@ static func defaultEntry(index: int) -> Dictionary:
 		"unlocked": index == 0,
 		"scene": scenePath(id),
 		"gamemodeBeat": beat,
+		"tiers": tiers, #the best tier beaten per mode (ModeTiers)
 	}

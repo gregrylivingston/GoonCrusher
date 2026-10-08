@@ -55,6 +55,7 @@ var edgeLayer: Node2D
 var decorLayer: Node2D
 var wallLayer: Node2D
 var objectLayer: Node2D
+var reactions: PropReactions #canopies over the car, props answering hits (package 14)
 
 ## Main-thread ms spent applying and releasing chunks since the bench last read it (bench.gd chunk_ms)
 var chunkMs := 0.0
@@ -120,6 +121,8 @@ func buildWorld() -> void:
 	var skinStart := Time.get_ticks_usec()
 	skin = WorldSkin.new(def)
 	skin.prewarm()
+	reactions = PropReactions.new(def.grammar, skin.leaves)
+	add_child(reactions)
 	if objective != "" && worldMap.stationChunk != WorldGen.NO_CHUNK: lots.push_back(lotRect(worldMap.stationChunk))
 	if objective == "defense" && worldMap.station != Vector2.INF:
 		for mouth in worldMap.lanes:
@@ -228,6 +231,36 @@ func isTaken(chunk: Vector2i, bit: int) -> bool:
 ## A pickup collected or a breakable smashed (also WorldMap.markTaken; WorldMap.takeNode reads a node's slot)
 func markTaken(chunk: Vector2i, bit: int) -> void:
 	if worldMap != null: worldMap.markTaken(chunk, bit)
+
+## What spilled out of interactive props and came to rest (Spill.record), and the cranes that already dropped
+## their container (Spill.markUsed), per chunk: {"props": [[prop id, chunk-local pos, rotation]], "used": [chunk-local pos]}.
+## ChunkView puts the props back when it applies the chunk again and marks the used cranes.
+var spilled := {}
+
+func spillEntry(chunk: Vector2i) -> Dictionary:
+	if not spilled.has(chunk): spilled[chunk] = {"props": [], "used": []}
+	return spilled[chunk]
+
+func addSpilled(id: StringName, at: Vector2, rot: float) -> void:
+	var chunk := chunkOf(at)
+	spillEntry(chunk).props.push_back([id, at - Vector2(chunk) * ChunkRecipe.CHUNK, rot])
+
+func markSpillUsed(at: Vector2) -> void:
+	var chunk := chunkOf(at)
+	spillEntry(chunk).used.push_back(at - Vector2(chunk) * ChunkRecipe.CHUNK)
+
+func spilledIn(chunk: Vector2i) -> Array:
+	return spilled.get(chunk, {}).get("props", [])
+
+func spillUsed(chunk: Vector2i, local: Vector2) -> bool:
+	for u in spilled.get(chunk, {}).get("used", []):
+		if u.distance_to(local) < 8.0: return true
+	return false
+
+## The node an applied chunk keeps its props in, for a world point; null while it isn't applied
+func objectsAt(at: Vector2) -> Node2D:
+	var view = views.get(chunkOf(at))
+	return view.objects if view != null && is_instance_valid(view.objects) else null
 
 ## Inside a station lot (grown by radius): props and pickups keep out
 func reservedAt(worldPosition: Vector2, radius: float) -> bool:

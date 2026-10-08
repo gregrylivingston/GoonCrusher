@@ -150,6 +150,9 @@ func addTrauma(amount: float) -> void:
 	trauma = minf(1.0, trauma + amount)
 
 func _process(delta: float) -> void:
+	#the timer that ends a stop runs on the (smoothed) frame delta and can fire a few ms early, when
+	#endHitStop leaves it; without this the game stayed in slow motion for good
+	if Engine.time_scale != 1.0 && stopUntil > 0 && Time.get_ticks_msec() >= stopUntil: endHitStop(true)
 	if get_tree().paused || Settings.menu_open:
 		if stopUntil > Time.get_ticks_msec(): endHitStop(true)
 		return

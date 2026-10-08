@@ -175,10 +175,11 @@ func test_level_root_copies_the_def():
 	level.applyDef()
 	assert_eq(level.seconds, def.seconds, "clock")
 	var spawn = level.get_node("SpawnManager")
-	assert_eq(spawn.spawnTimer, def.spawnTimer, "spawn timer")
-	assert_eq(spawn.giantOdds, def.giantOdds, "giants")
-	assert_almost_eq(spawn.escalationSpeed, def.escalationSpeed, 0.0001, "escalation")
-	assert_almost_eq(level.slack(), def.sprintSlack, 0.0001, "sprint slack")
+	var tier: int = level.tier
+	assert_almost_eq(spawn.spawnTimer, def.spawnTimer * ModeTiers.SPAWN_TIMER[tier], 0.0001, "spawn timer, by tier")
+	assert_eq(spawn.giantOdds, def.giantOdds + ModeTiers.GIANT_ODDS[tier], "giants, by tier")
+	assert_almost_eq(spawn.escalationSpeed, def.escalationSpeed * ModeTiers.ESCALATION[tier], 0.0001, "escalation, by tier")
+	assert_almost_eq(level.slack(), def.sprintSlack * ModeTiers.SLACK[tier], 0.0001, "sprint slack, by tier")
 	level.seconds = 99
 	level.applyDef()
 	assert_eq(level.seconds, 99, "applied once, so the bench's later overrides stand")

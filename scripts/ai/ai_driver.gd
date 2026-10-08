@@ -482,7 +482,7 @@ func rocksNear(point: Vector2, radius: float) -> bool:
 	around.exclude = [car.get_rid()]
 	for hit in space.intersect_shape(around, 8):
 		#a fence or hedge is smashed on the way in (carefulSpeed is too slow for some: then the planner treats it as a wall)
-		if World.isWall(hit.collider) && not (BreakableProp.isBreakable(hit.collider) && not hit.collider.get_meta(&"explosive", false)): return true
+		if World.isWall(hit.collider) && not (BreakableProp.isBreakable(hit.collider) && not hit.collider.get_meta(&"explosive", false)) && not PropReactions.isKnockable(hit.collider): return true
 	return false
 
 #Where to roam. Waves are one clock for the whole run (Region.gd), so no district pays more than another:
@@ -671,7 +671,8 @@ func etaTo(point: Vector2) -> float:
 
 #the tightest circle the car drives at full lock; tyre slip at speed widens it by about a third
 func turnRadius() -> float:
-	return car.wheel_base / tan(deg_to_rad(8 + car.steering / 4.0)) * 1.3
+	var radius: float = car.wheel_base / tan(deg_to_rad(8 + car.steering / 4.0))
+	return maxf(radius, car.velocity.length() / OverheadCarBody2D.maxYaw(car.steering)) * 1.3 #fast, the yaw cap widens it
 
 #--- perception -------------------------------------------------------------------------------
 
@@ -1001,9 +1002,11 @@ func passThrough(hits: Array, speed: float, passed: Array[RID]) -> bool:
 	return true
 
 #would the car smash this prop at `speed` (with a margin over its smash speed)? Explosives never count:
-#driving into a barrel is a blast, not a shortcut.
+#driving into a barrel is a blast, not a shortcut. A cone counts too: it knocks over at
+#PropReactions.KNOCK_SPEED and the car keeps its speed.
 static func smashableAt(collider: Object, speed: float, margin := 1.15) -> bool:
 	if collider == null || not is_instance_valid(collider): return false
+	if PropReactions.isKnockable(collider): return speed >= PropReactions.KNOCK_SPEED * margin
 	if not (collider.has_method("smash") || BreakableProp.isBreakable(collider)): return false
 	if collider.get_meta(&"explosive", false) || collider.get_meta(&"smashed", false): return false
 	return speed >= OverheadCarBody2D.smashSpeedOf(collider) * margin

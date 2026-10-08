@@ -174,7 +174,7 @@ func takeOverRun() -> void:
 	session += 1
 	attachDriver(Root.playerCar)
 	var data := SaveManager.playerData
-	runPlan = {"level": data.selectedLevel, "mode": data.gameMode, "car": data.selectedCar, "gadget": "", "boost": ""}
+	runPlan = {"level": data.selectedLevel, "mode": data.gameMode, "tier": SaveManager.getGameTier(), "car": data.selectedCar, "gadget": "", "boost": ""}
 	bankBefore = {"coin": data.coin, "gem": data.gem, "gadget_cost": 0}
 	runRow = {}
 	runActive = true
@@ -228,6 +228,7 @@ func menuVisit() -> bool:
 	if not await openSetup(): return false
 	if not await selectLevel(run.level): return false
 	if not await selectMode(run.mode): return false
+	if not await selectTier(run.get("tier", ModeTiers.EASY)): return false
 	var gadget := Personas.chooseLoadout(persona, SaveManager.playerData.gem, rng)
 	await chooseSlot("loadout", gadget, m.loadoutButton, "ui_upgrade")
 	var boost := Personas.chooseBoost(persona, SaveManager.playerData.gem - Pickups.LOADOUT.get(m.slotPurchase("loadout"), 0), rng)
@@ -426,6 +427,19 @@ func selectMode(mode: int) -> bool:
 			return false
 	return SaveManager.playerData.gameMode == mode
 
+## Run setup's tier chips (ModeTiers): a click on the chip, or Up / Down
+func selectTier(tier: int) -> bool:
+	var m := menu()
+	for step in ModeTiers.TIERS.size() + 1:
+		if SaveManager.getGameTier() == tier: return true
+		var before := SaveManager.getGameTier()
+		if useMouse(): await click(m.tierButtons[ModeTiers.TIERS.find(tier)])
+		else: await press("ui_down" if tier > before else "ui_up")
+		if SaveManager.getGameTier() == before:
+			issue("block", "run setup didn't change the tier from %s" % ModeTiers.NAMES[before])
+			return false
+	return SaveManager.getGameTier() == tier
+
 ## Run setup's starting slots (main2.SLOTS): the gadget (Gadget, U / Y) and the boost (Boost, B / RS),
 ## each cycled until it shows `id`
 func chooseSlot(slot: String, id: String, button: Button, action: String) -> void:
@@ -444,14 +458,14 @@ func start(run: Dictionary, car: int, gadget: String, boost: String) -> bool:
 		return false
 	var paid: int = Pickups.LOADOUT.get(m.slotPurchase("loadout"), 0) + Pickups.BOOST_LOADOUT.get(m.slotPurchase("boostLoadout"), 0)
 	bankBefore = {"coin": data.coin, "gem": data.gem, "gadget_cost": paid} #what Start will take for the gadget and boost
-	runPlan = {"level": run.level, "mode": run.mode, "car": car, "gadget": gadget, "boost": boost}
+	runPlan = {"level": run.level, "mode": run.mode, "tier": run.get("tier", ModeTiers.EASY), "car": car, "gadget": gadget, "boost": boost}
 	runRow = {}
 	runActive = true
 	runTime = 0.0
 	pauseAt = rng.randf_range(20.0, 120.0) if rng.randf() < persona.pause else INF
 	abandonThisRun = rng.randf() < persona.abandon
 	if abandonThisRun: pauseAt = minf(pauseAt, rng.randf_range(20.0, 90.0))
-	note("CAREER_RUN session=%d %s %s %s gadget=%s boost=%s bank=%d gems=%d" % [session, Levels.ORDER[run.level], Root.gameModeDescription[run.mode].name,
+	note("CAREER_RUN session=%d %s %s %s %s gadget=%s boost=%s bank=%d gems=%d" % [session, Levels.ORDER[run.level], ModeTiers.NAMES[runPlan.tier], Root.gameModeDescription[run.mode].name,
 		data.cars[car].name, gadget if gadget != "" else "-", boost if boost != "" else "-", data.coin, data.gem])
 	await activate(m.startButton, "ui_accept")
 	if not await waitFor(func(): return menu() == null || menu().loadingLevel, 5.0, "START to begin loading the run (focus on %s)" % focusName()):
@@ -741,13 +755,13 @@ func checkRun() -> void:
 	var data := SaveManager.playerData
 	var row := runRow
 	var level: int = runPlan.level
-	var paid := int(row.get("payout", 0))
+	var paid := int(row.get("payout", 0)) + int(row.get("first_clear", 0))
 	if data.coin - bankBefore.coin != paid:
 		issue("economy", "the bank went %d -> %d after a run that paid %d" % [bankBefore.coin, data.coin, paid])
-	var gems := int(row.get("gem", 0))
+	var gems := int(row.get("gem", 0)) + int(row.get("first_clear_gem", 0))
 	if data.gem - bankBefore.gem != gems - bankBefore.gadget_cost:
 		issue("economy", "gems went %d -> %d after a run that ended with %d gems (gadget %d)" % [bankBefore.gem, data.gem, gems, bankBefore.gadget_cost])
-	if row.get("won", false) && row.reason == "SUCCESS":
+	if row.get("won", false):
 		if not data.levels[level].gamemodeBeat.get(runPlan.mode, false): issue("progress", "a won %s on %s isn't marked beaten" % [row.mode, Levels.ORDER[level]])
 		if level + 1 < data.levels.size() && not data.levels[level + 1].unlocked && Root.opensNextLevel(data.levels[level]):
 			issue("progress", "%d modes beaten on %s didn't open the next level" % [Root.modesBeaten(data.levels[level]), Levels.ORDER[level]])
@@ -757,7 +771,7 @@ func checkRun() -> void:
 	if not disk is PlayerData: issue("save", "the save file doesn't load back")
 	elif var_to_str([disk.coin, disk.gem, disk.cars, disk.levels]) != var_to_str([data.coin, data.gem, data.cars, data.levels]):
 		issue("save", "the save on disk differs from the one in memory after the results")
-	history.push_back({"session": session, "car": row.car, "level_index": level, "level": row.level, "mode_id": runPlan.mode, "mode": row.mode,
+	history.push_back({"session": session, "car": row.car, "level_index": level, "level": row.level, "mode_id": runPlan.mode, "mode": row.mode, "tier": runPlan.get("tier", ModeTiers.EASY),
 		"won": row.won, "reason": row.reason, "payout": paid, "level_time": float(row.level_time), "crushed": row.crushed, "gem": gems})
 
 ## Autopilot: the run's record from the car, as Playtest would write it (the fields the checks and history use)
@@ -766,8 +780,9 @@ func standaloneRow() -> Dictionary:
 	var level = Root.levelRoot
 	var data := SaveManager.playerData
 	return {"car": data.cars[data.selectedCar].name, "level": String(Levels.ORDER[data.selectedLevel]), "mode": str(Root.gameModes.find_key(data.gameMode)).to_lower(),
-		"reason": str(Root.endCondition.find_key(level.endReason)), "won": level.endReason == Root.endCondition.SUCCESS,
-		"payout": Root.computePayout(car.coin, car.star), "gem": car.gem, "crushed": car.currentGoonsCrushed,
+		"reason": str(Root.endCondition.find_key(level.endReason)), "won": level.isWon(),
+		"payout": level.runPayout(level.isWon()), "gem": car.gem, "crushed": car.currentGoonsCrushed,
+		"first_clear": level.firstClear.coin, "first_clear_gem": level.firstClear.gem, "tier": ModeTiers.NAMES[level.tier].to_lower(),
 		"level_time": snappedf(float(level.elapsed), 0.1), "persona": personaId, "session": session}
 
 ## Playtest calls this once a run is recorded (its row, as in results<tag>.csv).

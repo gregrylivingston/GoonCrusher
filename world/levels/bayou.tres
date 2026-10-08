@@ -33,7 +33,7 @@ features = {
 "channelWidth": 1000.0,
 "channelGap": 0.25,
 "bridgeWidth": 900.0,
-"reedDensity": 0.4
+"props": 18
 }
 baseTerrain = [2, 5, 0, 5, 2]
 accents = [11, 5]
@@ -44,7 +44,9 @@ dressing = {
 &"reeds": 8,
 &"stump": 3,
 &"tufts": 4,
-&"carcass": 1
+&"carcass": 1,
+&"beehive": 1,
+&"logpile": 1
 },
 1: {
 &"cypress": 4,
@@ -52,7 +54,8 @@ dressing = {
 &"log": 3,
 &"reeds": 6,
 &"totem": 1,
-&"crate": 2
+&"crate": 2,
+&"logpile": 1
 },
 2: {
 &"cypress": 3,
@@ -60,6 +63,18 @@ dressing = {
 &"barrel": 2,
 &"reeds": 5,
 &"tyres": 1
+}
+}
+motifs = {
+0: {
+&"cypressgrove": 3
+},
+1: {
+&"camp": 1,
+&"cypressgrove": 1
+},
+2: {
+&"wreckpile": 2
 }
 }
 pickupTable = {

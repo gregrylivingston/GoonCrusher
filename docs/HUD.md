@@ -10,7 +10,7 @@ The HUD is `scene/player/playerRoot.tscn` (class `GameUI`): twin gauges in the b
 | `TopLeft/RegionChip` | `hud_region.gd` | top left | District name, goon size (giantism) and the run's wave ring: "Wave n: survive m:ss for a star". Waves are one clock for the whole run (`Region.wave`, `waveProgress`), with no cap. |
 | `TopCenter/ModeLabel`, `TopCenter/Timer` | `Timer.gd` (unchanged) | top center | Mode name and run clock. `Timer` keeps group `runTimer`. |
 | `Objective` | `hud_objective.gd` | top center, under the clock | The mode's own goal: Goonpocalypse score and time to the star, Marathon "STATION n OF 5", Defense barrier bar. Hidden in Countdown and Sprint. |
-| `TopRight` | `hud_payout.gd` | top right | Pause button, coins x the star multiplier (1 + 0.1 a star, shown by the star) = payout (`Root.computePayout`), gems. |
+| `TopRight` | `hud_payout.gd` | top right | Pause button, coins x the star multiplier (1 + 0.1 a star up to ×3, shown by the star) = payout (`Root.computePayout`), gems. |
 | `Tach`, `Fuel` | `hud_dial.gd` | bottom left | Tachometer with the gear (`car.gear`), and the fuel dial. |
 | `Speedo`, `Hull` | `hud_dial.gd` | bottom right | Speedometer and the hull (health) dial. |
 | `Systems` | `hud_systems.gd` | bottom center | One lamp per car system, each with a rating underline. |

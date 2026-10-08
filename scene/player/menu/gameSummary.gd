@@ -144,26 +144,30 @@ func buildGameSummary():
 	Root.playerRoot.visible = false
 	var level = Root.levelRoot
 	var progressNote := ""
+	var levelIndex: int = level.runLevel #the save's selection may move on to the next level or mode below
+	var gameMode: int = level.runMode
 	#a Goonpocalypse run that survived its target beat the mode, even when it was abandoned afterwards
-	if levelCompleted && (reason != Root.endCondition.ABANDONED || level.targetReached):
-		var passedIndex: int = SaveManager.playerData.selectedLevel
-		var nextWasOpen: bool = passedIndex + 1 >= SaveManager.playerData.levels.size() || SaveManager.playerData.levels[passedIndex + 1].unlocked
-		SaveManager.currentLevelPassed()
-		progressNote = nextLevelNote(passedIndex, nextWasOpen)
+	var won: bool = levelCompleted && (reason != Root.endCondition.ABANDONED || level.targetReached)
+	var firstClear := {"coin": 0, "gem": 0}
+	if won:
+		var nextWasOpen: bool = levelIndex + 1 >= SaveManager.playerData.levels.size() || SaveManager.playerData.levels[levelIndex + 1].unlocked
+		var before := SaveManager.currentLevelPassed()
+		firstClear = ModeTiers.firstClear(before, level.tier, levelIndex)
+		level.firstClear = firstClear
+		progressNote = nextLevelNote(levelIndex, nextWasOpen)
 	else:
 		$AudioStreamPlayer_highImpact.play()
 	var car = Root.playerCar
 	var records = SaveManager.getCarByName(car.carId).records
-	var levelIndex = SaveManager.playerData.selectedLevel
-	var gameMode = SaveManager.playerData.gameMode
 	var mode = Root.gameModeDescription[gameMode].name
-	var body = buildTicket("%s  -  %s  -  %s" % [mode, SaveManager.playerData.levels[levelIndex].name.to_upper(), car.charName.to_upper()], reasonLine())
+	var body = buildTicket("%s %s  -  %s  -  %s" % [ModeTiers.NAMES[level.tier].to_upper(), mode, SaveManager.playerData.levels[levelIndex].name.to_upper(), car.charName.to_upper()], reasonLine())
 
 	#records: compare before updating, so a beaten record gets its badge
 	var crushed = car.currentGoonsCrushed
 	var topSpeed = int(car._highest_measured_speed / 10)
 	var lottery = PickupEffects.payLottery(car, topSpeed) #before the payout, so stars multiply it
-	var paid = Root.computePayout(car.coin, car.star)
+	var bonus: int = level.winBonus() if won else 0
+	var paid: int = level.runPayout(won)
 	var powerups = car.powerupsCollected
 	var timer = get_tree().get_first_node_in_group("runTimer")
 	var newBest = {"time": false, "score": false}
@@ -172,7 +176,7 @@ func buildGameSummary():
 	addRow("Time", timer.text if is_instance_valid(timer) else "-", newBest.time)
 	match gameMode: #one row for the mode's own goal
 		Root.gameModes.GOONPOCALYPSE: addRow("Score", str(level.runScore()), newBest.score)
-		Root.gameModes.MARATHON: addRow("Stations", "%d / %d" % [level.leg - (0 if reason == Root.endCondition.SUCCESS else 1), Level.MARATHON_LEGS], false)
+		Root.gameModes.MARATHON: addRow("Stations", "%d / %d" % [level.leg - (0 if reason == Root.endCondition.SUCCESS else 1), level.legs()], false)
 		Root.gameModes.DEFENSE:
 			if is_instance_valid(Root.station): addRow("Barrier", "%d%%" % ceili(100.0 * Root.station.barrier / Root.station.BARRIER_MAX), false)
 	addRow("Top speed", Settings.speed_text(car._highest_measured_speed), topSpeed > records.speed)
@@ -185,7 +189,10 @@ func buildGameSummary():
 		addRow("Lottery", "+%d  (%d matched)" % lottery, false)
 		if lottery[1] > 0: rows.get_child(rows.get_child_count() - 1).set_meta("stamp", "MATCH!")
 	if car.bestCombo >= 3: addRow("Best combo", str(car.bestCombo), car.bestCombo > records.get("combo", 0))
-	addPayout(body, car.coin, car.star, paid, paid > records.coin)
+	if bonus > 0: addRow("Win bonus  (%s)" % ModeTiers.NAMES[level.tier], "+%s" % DriverCard.formatCoins(bonus), false)
+	addPayout(body, car.coin + bonus, car.star, paid, paid > records.coin)
+	if firstClear.coin > 0 || firstClear.gem > 0:
+		addRow("First clear  (%s medal)" % ModeTiers.MEDALS[level.tier], "+%s%s" % [DriverCard.formatCoins(firstClear.coin), "  +%d gem%s" % [firstClear.gem, "" if firstClear.gem == 1 else "s"] if firstClear.gem > 0 else ""], true, ModeTiers.MEDALS[level.tier].to_upper())
 	records.goonsCrushed = maxi(records.goonsCrushed, crushed)
 	records.speed = maxi(records.speed, topSpeed)
 	records.coin = maxi(records.coin, paid)
@@ -194,19 +201,18 @@ func buildGameSummary():
 	records.slotMachines = maxi(records.slotMachines, car.slotMachines)
 	records.combo = maxi(records.get("combo", 0), car.bestCombo)
 	var discovered = Goonopedia.creditCrushes(car.crushedById)
-	var won: bool = levelCompleted && (reason != Root.endCondition.ABANDONED || level.targetReached)
-	Unlocks.countRun(won, gameMode, level.nightsSeen, car.giantsCrushed)
+	Unlocks.countRun(won, gameMode, level.nightsSeen, car.giantsCrushed, Root.playerRoot.boxLevel if is_instance_valid(Root.playerRoot) else 0)
 	if OS.is_debug_build(): RunLog.append(car, level, reason, paid)
 
 	var blueprinted = PickupEffects.creditBlueprints(car) #free garage upgrades, however the run ended
 
 	#pay now and save, so quitting from the summary can't lose the run; the menu only animates it
-	SaveManager.addCoins(paid)
-	SaveManager.addGems(car.gem)
+	SaveManager.addCoins(paid + firstClear.coin)
+	SaveManager.addGems(car.gem + firstClear.gem)
 	var unlocked := Unlocks.refresh() #after the crushes and records are in, so their conditions count
 	if not unlocked.is_empty(): addRow("Unlocked", ", ".join(unlocked.map(Pickups.displayName)), true, "NEW PICKUP")
-	Root.earnedCoins = paid
-	Root.earnedGems = car.gem
+	Root.earnedCoins = paid + firstClear.coin
+	Root.earnedGems = car.gem + firstClear.gem
 	SaveManager.save_character_data()
 	SaveManager.flush()
 	var stampInfo = STAMPS.get(reason, ["GAME OVER", Color(0.78, 0.14, 0.11)])
@@ -225,14 +231,15 @@ func buildGameSummary():
 	if advice != "": notes.push_back(advice)
 	if not notes.is_empty(): addFooterNote("   -   ".join(notes))
 
-#after a win: the next level just opened, or how many more modes here open it (LevelDef.unlockModes)
+#after a win: the next level just opened, or what is left here to open it (LevelDef.unlockModes, and in
+#later acts some on Medium: Root.mediumToOpenNext)
 static func nextLevelNote(index: int, wasOpen: bool) -> String:
 	var levels: Array = SaveManager.playerData.levels
 	if wasOpen || index + 1 >= levels.size(): return ""
 	var nextName: String = str(levels[index + 1].get("name", "the next level"))
-	var togo: int = SaveManager.modesToGo(index)
-	if togo <= 0: return "%s is open" % nextName
-	return "Beat %d more mode%s here to open %s" % [togo, "" if togo == 1 else "s", nextName]
+	var left: String = SaveManager.openLeft(index)
+	if left == "": return "%s is open" % nextName
+	return "%s to open %s" % [left, nextName]
 
 #---------- records ----------
 
@@ -249,6 +256,10 @@ func buildAchievementSummary():
 	if records.get("combo", 0) >= 3: addRow("Best combo", str(records.combo), false)
 	if records.get("time", 0) > 0: addRow("Longest Goonpocalypse", "%d:%02d" % [records.time / 60, records.time % 60], false)
 	if records.get("score", 0) > 0: addRow("Goonpocalypse score", str(records.score), false)
+	var life: Dictionary = SaveManager.playerData.meta.get("lifetime", {})
+	if int(life.get("boxes", 0)) > 0: addRow("Gift boxes (every driver)", "%d  (best run %d)" % [int(life.boxes), int(life.get("bestBox", 0))], false)
+	var medals := ModeTiers.clears(SaveManager.playerData.levels, ModeTiers.EASY)
+	if medals > 0: addRow("Medals (every driver)", "%d  /  %d gold" % [medals, ModeTiers.clears(SaveManager.playerData.levels, ModeTiers.HARD)], false)
 	addContinue("CLOSE", "")
 	for part in reveal: part.visible = true
 	reveal.clear()

@@ -72,3 +72,26 @@ func test_the_v2_bindings_migration_frees_space():
 	assert_true(bindings.has("UseMove"), "Shift is the player's Brake...")
 	assert_false(bindings["UseMove"].has({"key": KEY_SHIFT}), "...so Boost is saved without it")
 	assert_true(bindings["UseMove"].has({"button": JOY_BUTTON_LEFT_SHOULDER}), "and keeps its pad button")
+
+#Speed-sensitive steering (OverheadCarBody2D.steerLimit): a maxed fast car at top speed turned about
+#7.5 rad/s, too twitchy to drive. The yaw cap binds only at speed.
+func test_a_maxed_fast_car_turns_no_faster_than_the_yaw_cap():
+	var c = car("police")
+	c.steering = 45
+	var turned: Vector2 = slide(c, 1600.0, false, 10)[0]
+	var rate := absf(turned.angle()) / (10 * DT)
+	assert_gt(OverheadCarBody2D.maxYaw(45) * 1.1, rate, "at 1600 px/s, within the cap (%.2f rad/s)" % rate)
+	assert_gt(rate, OverheadCarBody2D.maxYaw(45) * 0.6, "but still turning hard")
+
+func test_the_yaw_cap_leaves_slow_steering_alone():
+	for stat in [4, 25, 45]:
+		var wheel := deg_to_rad(8 + stat / 4.0)
+		assert_gt(OverheadCarBody2D.steerLimit(300.0, stat, 70.0), wheel, "steering %d at 300 px/s: full lock" % stat)
+	assert_eq(OverheadCarBody2D.steerLimit(0.0, 45, 70.0), PI, "standing still")
+
+func test_the_handbrake_still_swings_past_the_cap():
+	var c = car("police")
+	c.steering = 45
+	var plain: Vector2 = slide(c, 1200.0, false, 20)[0]
+	var sliding: Vector2 = slide(c, 1200.0, true, 20)[0]
+	assert_gt(absf(sliding.angle()), absf(plain.angle()), "a powerslide turns the nose further")

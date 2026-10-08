@@ -124,6 +124,7 @@ var maxGears: int = 3
 var _car_input := CarInput.new()
 var _path_follow: OverheadCarPathFollow2D = null
 @onready var myController = $CarController
+@onready var bodyHull: Node = get_node_or_null("CollisionShape2D_body") #between the bumpers, so walls don't catch the flanks
 
 
 func _init():
@@ -153,6 +154,8 @@ func _ready():
 		add_child(buffFx)
 		crushFeel = CrushFeel.new()
 		add_child(crushFeel)
+		juice = CarJuice.new()
+		add_child(juice)
 		for id in [Pickups.loadout, Pickups.boostLoadout]: #bought with gems in run setup
 			if id != "": giveItem(id)
 		Pickups.loadout = ""
@@ -266,9 +269,13 @@ func _physics_process(delta):
 			if collider.has_method("smash"): collider.smash(self)
 			else: BreakableProp.smashNode(collider, self)
 			velocity = hitVelocity * BreakableProp.SPEED_KEEP #the slide stopped the car; a smash barely slows it
+		elif PropReactions.knocks(collider, hitVelocity):
+			velocity = hitVelocity * PropReactions.KNOCK_KEEP #a cone flies off instead of stopping the car
 		elif velocity.length() > 0.01 && World.isWall(collider):
 			collideWithFixedObject( collision, hitVelocity )
 		elif collider is CharacterBody2D:
+			#the flank hull (CollisionShape2D_body) is there for walls; a goon against it is slamGoons' to judge
+			if collision.get_local_shape() == bodyHull && bodyHull != null: continue
 			if goonBumpReady(collider): damage(GOON_CONTACT_DAMAGE)
 			#a crush never wears the car; a slow bump, or a goon that resists (shield, shell, heavy), scuffs it
 			#a plow, spikes, monster tires or a golden ride crush at any speed (crushOverride)
@@ -291,6 +298,8 @@ func integrate(pos: Vector2, forward: Vector2, vel: Vector2, input: CarInput, de
 	var engine_stat = engine * conditionFactor("engine")
 	var traction_stat = traction * conditionFactor("tires")
 	var steer_angle = input.steering * deg_to_rad( 8 + ( steer_stat / 4.0 ) )
+	var steer_limit := steerLimit(vel.length(), steer_stat, wheel_base)
+	steer_angle = clampf(steer_angle, -steer_limit, steer_limit) #fast cars don't whip round (maxYaw)
 	#the handbrake at speed: the wheel bites harder and the rear lets go (handbrakeGrip, below)
 	var sliding := input.handbrake && vel.length() > HANDBRAKE_MIN_SPEED
 	if sliding: steer_angle *= HANDBRAKE_STEER
@@ -356,6 +365,22 @@ const HANDBRAKE_GRIP_HEAVY := 0.07  #...and at HANDBRAKE_HEAVY_ARMOR or more: he
 const HANDBRAKE_HEAVY_ARMOR := 80.0
 const HANDBRAKE_CATCH_DOT := 0.34   #cos(70 degrees): the widest slide angle before the tires catch
 
+#Speed-sensitive steering: the wheel's angle is capped so the nose turns at most maxYaw rad/s, which
+#only binds at speed (a stock sedan near its top speed; a maxed police car above about 800 px/s). Low-speed
+#handling is unchanged, and the handbrake still swings the nose past it (HANDBRAKE_STEER comes after).
+const MAX_YAW := 2.4            #rad/s at steering 0...
+const MAX_YAW_PER_STEER := 0.015 #...plus this per steering point (maxed police, 45: 3.1 rad/s)
+
+static func maxYaw(steerStat: float) -> float:
+	return MAX_YAW + maxf(steerStat, 0.0) * MAX_YAW_PER_STEER
+
+## The widest wheel angle (rad) at `speed` that keeps the turn within maxYaw (the bicycle model turns at
+## speed x sin(angle) / wheelBase)
+static func steerLimit(speed: float, steerStat: float, wheelBase: float) -> float:
+	if speed < 1.0: return PI
+	var s := maxYaw(steerStat) * wheelBase / speed
+	return asin(s) if s < 1.0 else PI
+
 func handbrakeGrip() -> float:
 	return lerpf(HANDBRAKE_GRIP_LIGHT, HANDBRAKE_GRIP_HEAVY, clampf(armor / HANDBRAKE_HEAVY_ARMOR, 0.0, 1.0))
 
@@ -419,6 +444,9 @@ func collideWithFixedObject( collision, hitVelocity = null ):
 		Root.levelRoot.add_child(spark)
 	var moving: Vector2 = hitVelocity if hitVelocity != null else velocity
 	var hurt := wallTick(collision.get_normal(), moving, Engine.get_physics_frames())
+	if is_instance_valid(juice): juice.onWall(collision.get_position(), collision.get_normal(), moving, lastWallHitTick == lastWallTick)
+	#a fresh hit on a prop: trees shake, bushes squash, signs wobble... (show only)
+	if lastWallHitTick == lastWallTick: PropReactions.hit(collision.get_collider(), moving, collision.get_position())
 	if hurt > 0.0:
 		var before := health
 		damage(hurt) #armor is applied once, in damage()
@@ -621,6 +649,7 @@ func tickDriftCharge() -> void:
 	Transition.sound("rev", -6.0, 1.15 + 0.15 * tier)
 	Settings.vibrate(0.3, 0.5, 0.15)
 	if is_instance_valid(crushFeel): crushFeel.kick -= transform.x * 10.0 * (tier + 1)
+	if is_instance_valid(juice): juice.driftBoost(tier, DRIFT_TIERS[tier][2])
 	if is_instance_valid(Root.spawnManager) && Root.spawnManager.fx:
 		Root.spawnManager.fx.label(global_position, "DRIFT BOOST" if tier == 0 else "SUPER BOOST", 20 + 6 * tier, DRIFT_TIERS[tier][2])
 
@@ -660,7 +689,7 @@ func activeCarEffects(delta):
 	smoke.visible = true
 	if not engineAudio.playing: engineAudio.play()
 	if not carDamageAudio.playing && healthWarningGiven: carDamageAudio.play()
-	engineAudio.pitch_scale = 1  +  ( velocity.length() / 400 ) 
+	if not is_instance_valid(juice): engineAudio.pitch_scale = 1  +  ( velocity.length() / 400 ) #the player's follows the gears (CarJuice)
 	if not buffs.has("freetank"): fuel -= fuelBurn(_car_input.acceleration, oil * conditionFactor("tank")) + fuelLeak(condition.tank)
 
 	#body shake: the sprite slides between two offsets, one tick at a time (no tween per shake)
@@ -676,20 +705,20 @@ func activeCarEffects(delta):
 	sprite.position = shakeFrom.lerp(shakeTo, minf(float(vibrationSteps + 1) / vibrationFrequency, 1.0))
 
 
-	##FX and Audio
+	##FX and Audio (the player's squeal follows the tyres' slip: CarJuice)
 	if ( (_car_input.braking || _car_input.handbrake) && velocity.length() > 200.0) || ( velocity.length() > 500.0 && abs(_car_input.steering) > 0.2):
 		match Settings.get_value("gfx/tire_marks"):
 			1: for i in [tires[0], tires[1]]: createTiremarks(i, 6.0) #Short: rear tyres only
 			2: for i in tires: createTiremarks(i, 20.0)
-		if not tiresAudio.playing: tiresAudio.play()
+		if not tiresAudio.playing && not is_instance_valid(juice): tiresAudio.play()
 	else:
-		tiresAudio.stop()
+		if not is_instance_valid(juice): tiresAudio.stop()
 		tiremark = {}
 
 	var bright = _car_input.braking || _car_input.handbrake || gear == -1
 	if bright != tailLampsBright:
 		tailLampsBright = bright
-		for i in tailLamps: i.energy = 0.3 if bright else 0.1
+		for i in tailLamps: i.energy = tailLampEnergy(bright, lightCurve)
 
 	updateCameraZoom()
 
@@ -800,10 +829,41 @@ static func gripFor(baseGrip: float, tractionStat: float, maxGrip: float, perPoi
 	return clampf(baseGrip + tractionStat * perPoint, GRIP_MIN, maxGrip)
 
 
+#The Headlights stat (times the lights' condition) shows in the lamps: the beam reaches further (1 + stat/100,
+#what the AI reads), and grows wider and brighter on a square-root curve so the first upgrades show; the
+#tail lamps grow and brighten with it (tailLampEnergy). Flood Lights multiply the reach and width.
+const LIGHT_WIDTH := 0.7      #extra beam width at headlights 100
+const LIGHT_GLOW := 0.9       #extra beam brightness at headlights 100
+const TAIL_GROW := 0.6        #extra tail-lamp size at headlights 100
+const TAIL_GLOW := 1.2        #extra tail-lamp brightness at headlights 100
+const TAIL_DIM := 0.1         #tail-lamp energy cruising...
+const TAIL_BRIGHT := 0.35     #...and braking or reversing
+var lightCurve := 0.0         #sqrt(headlights / 100), 0 to 1, from setHeadlightStrength
+
+static func lightLevel(headlightStat: float) -> float:
+	return sqrt(clampf(headlightStat / 100.0, 0.0, 1.0))
+
 func setHeadlightStrength():
-	var reach = 1.0 + headlights * conditionFactor("lights") / 100.0
-	if buffs.has("flood"): reach *= Pickups.DATA["flood"]["reach"]
-	$headlamps/headlights.scale = Vector2(reach, reach)
+	var stat = headlights * conditionFactor("lights")
+	var reach = 1.0 + stat / 100.0
+	lightCurve = lightLevel(stat)
+	var width = 1.0 + LIGHT_WIDTH * lightCurve
+	if buffs.has("flood"):
+		reach *= Pickups.DATA["flood"]["reach"]
+		width *= Pickups.DATA["flood"]["reach"]
+	$headlamps/headlights.scale = Vector2(reach, width)
+	for lamp in $headlamps/headlights.get_children():
+		if not lamp is PointLight2D: continue
+		if not lamp.has_meta("baseEnergy"): lamp.set_meta("baseEnergy", lamp.energy)
+		lamp.energy = lamp.get_meta("baseEnergy") * (1.0 + LIGHT_GLOW * lightCurve)
+	for lamp in $headlamps/taillamps.get_children(): #each lamp, not the group, so they stay on the bumper
+		if not lamp.has_meta("baseScale"): lamp.set_meta("baseScale", lamp.scale)
+		lamp.scale = lamp.get_meta("baseScale") * (1.0 + TAIL_GROW * lightCurve)
+	tailLampsBright = null #brightness is set again on the next tick
+
+## A tail lamp's energy: faint cruising, bright braking or reversing, both stronger with better lights
+static func tailLampEnergy(bright: bool, curve: float) -> float:
+	return (TAIL_BRIGHT if bright else TAIL_DIM) * (1.0 + TAIL_GLOW * curve)
 
 func playPurseRewardAudio():
 	if  purseAudio.size() > 0 && not $"AudioStream-Voice".playing:
@@ -920,6 +980,7 @@ var coinsSinceBet := 0    #Double or Nothing's stake
 var turboKit := false     #Turbo Kit: exhaust flames at full throttle
 var buffFx: CarBuffFx
 var crushFeel: CrushFeel  #the player's: camera, hit-stop and crush bonuses (scene/fx/crush_feel.gd)
+var juice: CarJuice       #the player's driving feel: lean, bounce, trails, engine and tyre sound (scene/fx/car_juice.gd)
 var useWasDown := false
 var moveWasDown := false
 

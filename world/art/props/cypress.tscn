@@ -1,6 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Texture2D" path="res://world/art/props/cypress.png" id="tex"]
+[ext_resource type="Texture2D" path="res://world/art/props/cypress_canopy.png" id="canopy"]
 
 [sub_resource type="ConvexPolygonShape2D" id="shape"]
 points = PackedVector2Array(-40, -28, -17.3, -45.3, 5.3, -48, 29.3, -38.7, 48, -6.7, 45.3, 17.3, 29.3, 38.7, -5.3, 48, -28, 40, -45.3, 17.3)
@@ -25,3 +26,9 @@ shape = SubResource("shape")
 [node name="LightOccluder2D" type="LightOccluder2D" parent="."]
 occluder = SubResource("occluder")
 metadata/gc_world = true
+
+[node name="Canopy" type="Sprite2D" parent="."]
+z_index = 8
+z_as_relative = false
+scale = Vector2(1.3333, 1.3333)
+texture = ExtResource("canopy")

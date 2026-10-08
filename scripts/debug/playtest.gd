@@ -25,7 +25,8 @@ const COLUMNS = ["run", "level", "mode", "car", "profile", "seed", "upgrades", "
 	"slot_machines", "fuel_pickups", "health_pickups", "purses", "coins_picked", "gems_picked", "stat_pickups",
 	"damage_rocks", "damage_goon_contact", "damage_goon_attacks", "crush_misses", "min_fuel", "min_health",
 	"end_fuel", "end_health", "distance_px", "avg_speed", "top_speed", "eco_seconds", "stuck", "escapes", "ai_ms", "goals",
-	"pk_supply", "pk_tune", "pk_boost", "pk_gadget", "pk_loot", "pk_casino", "pk_skill", "pk_mode", "pk_move", "persona", "session"]
+	"pk_supply", "pk_tune", "pk_boost", "pk_gadget", "pk_loot", "pk_casino", "pk_skill", "pk_mode", "pk_move", "persona", "session",
+	"tier", "win_bonus", "first_clear", "first_clear_gem"]
 
 var options := {}
 var jobs: Array = []
@@ -88,8 +89,11 @@ func _ready():
 				if carIndex(carName) < 0: return fail("Unknown car " + carName)
 				for profile in listArg("profiles", AIProfiles.BEST):
 					if not AIProfiles.PROFILES.has(profile.split("+")[0]): return fail("Unknown AI profile " + profile)
-					for i in int(options.get("runs", 1)):
-						jobs.push_back({"level":level, "mode":key, "car":carName, "profile":profile, "seed":firstSeed + i})
+					for tierName in listArg("tier", "easy"): #ModeTiers: easy, medium, hard
+						var tier := ModeTiers.NAMES.map(func(n): return n.to_lower()).find(tierName.to_lower())
+						if tier < ModeTiers.EASY: return fail("Unknown tier " + tierName)
+						for i in int(options.get("runs", 1)):
+							jobs.push_back({"level":level, "mode":key, "tier":tier, "car":carName, "profile":profile, "seed":firstSeed + i})
 	get_tree().node_added.connect(onNodeAdded)
 	await get_tree().create_timer(1.0).timeout
 	startNext()
@@ -138,6 +142,7 @@ func startNext() -> void:
 	var data = SaveManager.playerData
 	data.selectedCar = carIndex(job.car)
 	data.gameMode = Root.gameModes[job.mode]
+	data.gameTier = job.get("tier", ModeTiers.EASY)
 	data.selectedLevel = Levels.indexOf(job.level) #Region reads the level's faction band and roster from it; gameSummary names and records it
 	var upgrades = str(options.get("upgrades", "0"))
 	if upgrades != "save":
@@ -417,7 +422,7 @@ func recordRun() -> void:
 		printWaterDeath()
 	row.erase("timeout")
 	row.reason = reason
-	row.won = Root.levelRoot.endReason == Root.endCondition.SUCCESS
+	row.won = Root.levelRoot.isWon() #as the results ticket counts it: a Goonpocalypse past its target is won
 	row.level_time = snappedf(levelTime, 0.1)
 	row.crush_xp = int(car.crushXp)
 	row.boxes = Root.playerRoot.boxLevel if is_instance_valid(Root.playerRoot) else 0
@@ -429,7 +434,11 @@ func recordRun() -> void:
 	row.crushed = car.currentGoonsCrushed
 	row.coin = car.coin
 	row.star = car.star
-	row.payout = Root.computePayout(car.coin, car.star)
+	row.payout = Root.levelRoot.runPayout(Root.levelRoot.isWon())
+	row.tier = ModeTiers.NAMES[Root.levelRoot.tier].to_lower()
+	row.win_bonus = Root.levelRoot.winBonus() if Root.levelRoot.isWon() else 0
+	row.first_clear = Root.levelRoot.firstClear.coin
+	row.first_clear_gem = Root.levelRoot.firstClear.gem
 	row.gem = car.gem
 	row.slot_machines = car.slotMachines
 	row.end_fuel = snappedf(car.fuel, 0.1)

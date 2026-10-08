@@ -26,6 +26,14 @@ const COIN_ICON := preload("res://texture/icon/coin.svg")
 const GEM_ICON := preload("res://texture/icon/gem.svg")
 const STAR_ICON := preload("res://texture/icon/star.svg")
 const LOCK_ICON := preload("res://texture/icon/lock.svg")
+#one per game mode (scripts/art/pickup_icons.js): run setup's medallions and the Goonopedia's mode tiles
+const MODE_ICONS := {
+	Root.gameModes.GOONCRUSHER: preload("res://texture/icon/mode_countdown.svg"),
+	Root.gameModes.SPRINT: preload("res://texture/icon/mode_sprint.svg"),
+	Root.gameModes.MARATHON: preload("res://texture/icon/mode_marathon.svg"),
+	Root.gameModes.DEFENSE: preload("res://texture/icon/mode_defense.svg"),
+	Root.gameModes.GOONPOCALYPSE: preload("res://texture/icon/mode_pocalypse.svg"),
+}
 
 static var boxes := {}
 

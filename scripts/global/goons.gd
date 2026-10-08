@@ -49,7 +49,7 @@ const DATA := {
 	&"snapper": {"name":"Snapper", "faction":faction.WILD, "rank":3, "biomes":[T.MUD, T.MOSS], "verb":&"burrow",
 		"speed":60, "atkT":0.35, "lunge":4.5, "dmg":6, "sys":"tires", "log":true},
 	&"yipper": {"name":"Yipper", "faction":faction.WILD, "rank":1, "biomes":[T.DIRT, T.SNOW], "verb":&"pack",
-		"speed":175, "windDist":70, "windT":0.25, "atkT":0.25, "lunge":2.5, "recT":0.5, "dmg":2, "sys":"tank", "pack":4, "flank":true},
+		"speed":175, "windDist":70, "windT":0.25, "atkT":0.25, "lunge":2.5, "recT":0.5, "dmg":2, "sys":"tank", "pack":4, "flank":true, "releases":true},
 	&"bullmoose": {"name":"Bullmoose", "faction":faction.WILD, "rank":3, "biomes":[T.SNOW], "verb":&"lunge",
 		"speed":70, "windDist":220, "windT":0.9, "atkT":0.7, "lunge":3.4, "dmg":8, "sys":"engine", "crush":400, "tele":"ring", "wander":true},
 	&"thunderhoof": {"name":"Thunderhoof", "faction":faction.WILD, "rank":3, "biomes":[T.GRASS, T.DIRT], "verb":&"herd",
@@ -57,7 +57,7 @@ const DATA := {
 
 	#---------------------------------------------------------------- Goon Tribe (tier 2)
 	&"grunt": {"name":"Grunt", "faction":faction.TRIBE, "rank":1, "biomes":[T.GRASS], "verb":&"lunge",
-		"speed":110, "windDist":150, "windT":0.55, "atkT":0.38, "lunge":3.4, "recT":0.7, "dmg":3},
+		"speed":110, "windDist":150, "windT":0.55, "atkT":0.38, "lunge":3.4, "recT":0.7, "dmg":3, "releases":true},
 	&"goonling": {"name":"Goonling", "faction":faction.TRIBE, "rank":0, "biomes":[], "verb":&"lunge",
 		"speed":150, "windDist":110, "windT":0.4, "atkT":0.3, "lunge":3.0, "recT":0.5, "dmg":1},
 	&"hubcap": {"name":"Hubcap", "faction":faction.TRIBE, "rank":2, "biomes":[T.GRASS, T.MUD], "verb":&"lunge",
@@ -88,7 +88,7 @@ const DATA := {
 	&"rammer": {"name":"Rammer", "faction":faction.TRIBE, "rank":3, "biomes":[T.MUD], "verb":&"charger",
 		"speed":90, "windDist":440, "windT":0.7, "atkT":1.4, "lunge":4.2, "recT":1.2, "dmg":8, "sys":"engine", "front":320},
 	&"splitter": {"name":"Splitter", "faction":faction.TRIBE, "rank":1, "biomes":[T.MUD], "verb":&"lunge",
-		"speed":80, "windDist":140, "windT":0.6, "atkT":0.4, "lunge":3.0, "recT":0.8, "dmg":3, "split":&"goonling"},
+		"speed":80, "windDist":140, "windT":0.6, "atkT":0.4, "lunge":3.0, "recT":0.8, "dmg":3, "split":&"goonling", "releases":true},
 
 	#---------------------------------------------------------------- Scrap Gang (tier 3): anything with an engine or wheels
 	&"spoke": {"name":"Spoke", "faction":faction.SCRAP, "rank":1, "biomes":[T.GRASS, T.SAND, T.DIRT, T.MUD], "verb":&"rider",

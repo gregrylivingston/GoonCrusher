@@ -34,7 +34,9 @@ features = {
 "canalWidth": 1040.0,
 "sidewalk": 110.0,
 "sideStreetChance": 0.5,
-"barrierCap": 0.35
+"barrierCap": 0.35,
+"motifs": 0.4,
+"props": 12
 }
 baseTerrain = [16, 8, 16, 0, 16]
 accents = [8, 16, 0]
@@ -42,7 +44,9 @@ dressing = {
 0: {
 &"oak": 3,
 &"tufts": 4,
-&"dumpster": 2
+&"dumpster": 2,
+&"busstop": 1,
+&"sign": 1
 },
 1: {
 &"dumpster": 3,
@@ -61,6 +65,11 @@ dressing = {
 &"wreck": 2,
 &"billboard": 1,
 &"paint": 3
+}
+}
+motifs = {
+2: {
+&"pileup": 1
 }
 }
 pickupTable = {

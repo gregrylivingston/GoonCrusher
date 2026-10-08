@@ -58,7 +58,8 @@ dressing = {
 &"shack": 2,
 &"barrel": 2,
 &"rock": 3,
-&"totem": 1
+&"totem": 1,
+&"watertower": 1
 },
 2: {
 &"tyres": 3,
@@ -66,6 +67,15 @@ dressing = {
 &"wreck": 2,
 &"barrel": 2,
 &"crane": 1
+}
+}
+motifs = {
+1: {
+&"junkyard": 1,
+&"camp": 1
+},
+2: {
+&"junkyard": 2
 }
 }
 pickupTable = {

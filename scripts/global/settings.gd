@@ -33,6 +33,7 @@ const PRESET := {
 	"gfx/celebration":     [0, 1, 2, 2],
 	"gfx/reward_fx":       [0, 1, 2, 2],
 	"gfx/crush_fx":        [0, 1, 2, 2],        #crush effects (CrushFeel, GoonFx): minimal, reduced, full
+	"gfx/driving_fx":      [0, 1, 2, 2],        #driving effects (CarJuice): ground trails, speed lines, sparks
 	"gfx/ground":          [0, 1, 1, 1],        #ground detail (gc_ground_quality): simple, full
 	"audio_perf/max_sfx":  [8, 12, 24, 24],
 }
@@ -69,6 +70,7 @@ const DEFAULTS := {
 	"gfx/celebration": 2,
 	"gfx/reward_fx": 2,
 	"gfx/crush_fx": 2,
+	"gfx/driving_fx": 2,
 	"gfx/ground": 1,
 	"audio_perf/max_sfx": 24,
 
@@ -123,6 +125,7 @@ const OPTIONS := {
 	"gfx/celebration": [0, 1, 2],
 	"gfx/reward_fx": [0, 1, 2],
 	"gfx/crush_fx": [0, 1, 2],
+	"gfx/driving_fx": [0, 1, 2],
 	"gfx/ground": [0, 1],
 	"audio_perf/max_sfx": [8, 12, 24],
 	"gameplay/speed_units": ["mph", "kmh"],

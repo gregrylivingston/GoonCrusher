@@ -4,7 +4,8 @@ extends CanvasLayer
 #  GARAGE     a carousel of driver cards (DriverCard). LB/RB or Left/Right picks a driver, Accept
 #             drives or unlocks, Upgrade hands focus to the stat rows, Records shows the driver's bests.
 #  RUN SETUP  level poster cards with the five mode medallions under them. LB/RB picks a level,
-#             Left/Right a mode, Accept starts the run, Back returns to the garage.
+#             Left/Right a mode, Up/Down its tier (ModeTiers: Easy, Medium, Hard), Accept starts the run,
+#             Back returns to the garage. Medals (bronze, silver, gold) show the best tier beaten.
 #The save holds every selection; this only draws it. Built in code with MenuTheme.
 #  G / View opens the Goonopedia (goonopedia.gd) over either screen.
 #Other scripts call: startLevel(path), animateCoins(from, to), statUpdatesUiUpdate(), add_child(menu).
@@ -47,6 +48,9 @@ var posters: Array[Control] = []
 var pendingPosters := {}     #poster index -> level image path still loading
 var medallions: Array[Control] = []
 var modeTitle := Label.new()
+var tierRow := HBoxContainer.new() #Easy, Medium, Hard (ModeTiers)
+var tierButtons: Array[Button] = []
+var goalRow := HBoxContainer.new() #the tier's goal and what winning pays, in symbols
 var modeText := Label.new()
 var modeLock := Label.new()
 var nextUnlock := HBoxContainer.new() #run setup's "Next unlock" line (Unlocks.nextUnlock), in symbols
@@ -250,8 +254,8 @@ func buildSetup() -> void:
 	var row = HBoxContainer.new()
 	row.add_theme_constant_override("separation", 30)
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.position = Vector2(0, 486)
-	row.size = Vector2(1600, 150)
+	row.position = Vector2(0, 462)
+	row.size = Vector2(1600, 140)
 	for mode in MODE_ORDER:
 		var medallion = makeMedallion(mode)
 		row.add_child(medallion)
@@ -259,9 +263,17 @@ func buildSetup() -> void:
 	setup.add_child(row)
 	var info = VBoxContainer.new()
 	info.alignment = BoxContainer.ALIGNMENT_CENTER
-	info.position = Vector2(300, 640)
-	info.size = Vector2(1000, 90)
-	info.add_theme_constant_override("separation", 4)
+	info.position = Vector2(300, 604)
+	info.size = Vector2(1000, 136)
+	info.add_theme_constant_override("separation", 3)
+	tierRow.alignment = BoxContainer.ALIGNMENT_CENTER
+	tierRow.add_theme_constant_override("separation", 12)
+	for tier in ModeTiers.TIERS: tierRow.add_child(makeTierButton(tier))
+	info.add_child(tierRow)
+	goalRow.alignment = BoxContainer.ALIGNMENT_CENTER
+	goalRow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	info.add_child(goalRow)
+	modeTitle.visible = false #the selected medallion names the mode
 	for l in [modeTitle, modeText, modeLock]:
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -476,7 +488,7 @@ func makeMedallion(mode: int) -> Control:
 	disc.custom_minimum_size = Vector2(96, 96)
 	disc.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	disc.focus_mode = Control.FOCUS_NONE
-	disc.icon = HudTheme.STAR_ICON
+	disc.icon = HudTheme.MODE_ICONS[mode]
 	disc.expand_icon = true
 	disc.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	disc.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
@@ -489,7 +501,57 @@ func makeMedallion(mode: int) -> Control:
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.add_theme_font_size_override("font_size", 16)
 	column.add_child(label)
+	var medals = HBoxContainer.new() #the best tier beaten here: bronze, silver, gold
+	medals.name = "medals"
+	medals.alignment = BoxContainer.ALIGNMENT_CENTER
+	medals.add_theme_constant_override("separation", 2)
+	medals.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	for tier in ModeTiers.TIERS: medals.add_child(MenuTheme.iconRect(HudTheme.STAR_ICON, 14))
+	column.add_child(medals)
 	return column
+
+#a tier chip under the medallions; a click picks it (focus stays on START)
+func makeTierButton(tier: int) -> Button:
+	var b := Button.new()
+	b.text = ModeTiers.NAMES[tier].to_upper()
+	b.custom_minimum_size = Vector2(150, 40)
+	b.focus_mode = Control.FOCUS_NONE
+	b.icon = HudTheme.STAR_ICON
+	b.expand_icon = true
+	b.add_theme_constant_override("icon_max_width", 20)
+	b.add_theme_font_size_override("font_size", 17)
+	b.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	b.pressed.connect(func(): SaveManager.setGameTier(tier); refreshSetup(false))
+	MenuTheme.addSounds(b)
+	tierButtons.push_back(b)
+	return b
+
+#each chip: lit while selected, its star in the medal colour once that tier is beaten, dim while locked
+func refreshTiers(level: Dictionary, mode: int) -> void:
+	var selected := SaveManager.getGameTier()
+	var best := ModeTiers.best(level, mode)
+	for i in tierButtons.size():
+		var b := tierButtons[i]
+		var tier: int = ModeTiers.TIERS[i]
+		var on := tier == selected
+		var style = MenuTheme.box(HudTheme.PANEL, HudTheme.RIM if on else Color(1, 1, 1, 0.22), 20, 3 if on else 2, Vector4(14, 4, 14, 4))
+		if on:
+			style.shadow_color = Color(HudTheme.GOLD, 0.4)
+			style.shadow_size = 8
+		for state in ["normal", "pressed", "focus", "hover"]: b.add_theme_stylebox_override(state, style)
+		b.add_theme_color_override("font_color", HudTheme.GOLD if on else HudTheme.TEXT)
+		b.add_theme_color_override("font_hover_color", HudTheme.GOLD)
+		b.add_theme_color_override("icon_normal_color", ModeTiers.MEDAL_COLORS[tier if best >= tier else 0])
+		b.icon = HudTheme.STAR_ICON if ModeTiers.isOpen(level, mode, tier) else HudTheme.LOCK_ICON
+		b.modulate = Color.WHITE if ModeTiers.isOpen(level, mode, tier) || on else Color(1, 1, 1, 0.55)
+
+## The goal line: what the tier asks here, what a win pays and the first-clear bonus still to earn
+func goalParts(level: Dictionary, mode: int, tier: int, index: int) -> Array:
+	var def := levelDef(index)
+	var parts: Array = [ModeTiers.goalText(mode, tier, def.seconds if def else 300.0), "     WIN  +", {"coin": ModeTiers.winBonus(mode, tier, index)}]
+	var first := ModeTiers.firstClear(ModeTiers.best(level, mode), tier, index)
+	if first.coin > 0 || first.gem > 0: parts.append_array(["     FIRST CLEAR  +", first])
+	return parts
 
 #---------- garage ----------
 
@@ -676,13 +738,20 @@ func refreshSetup(animate := true) -> void:
 	var mode = SaveManager.getGameMode()
 	var forModes = selectedLevelForModes()
 	for i in MODE_ORDER.size(): refreshMedallion(medallions[i], MODE_ORDER[i], MODE_ORDER[i] == mode, forModes)
+	var tier := SaveManager.getGameTier()
+	refreshTiers(forModes, mode)
+	for child in goalRow.get_children():
+		goalRow.remove_child(child)
+		child.queue_free()
+	goalRow.add_child(MenuTheme.symbolRow(goalParts(forModes, mode, tier, selected), 18, HudTheme.GOLD))
 	modeTitle.text = Root.gameModeDescription[mode].name
 	modeText.text = Root.gameModeDescription[mode].description
 	if mode == Root.gameModes.GOONPOCALYPSE:
 		var best = SaveManager.bestGoonpocalypse(selected, SaveManager.playerData.cars[SaveManager.playerData.selectedCar].name)
 		if best.time > 0: modeText.text += "\nBest here: %d:%02d, score %d" % [best.time / 60, best.time % 60, best.score]
-	var reason = "" if isLevelSelectable(selected) else ("Not in the demo" if isDemoLockedLevel(selected) else "Beat %d modes on the level before it to unlock" % Root.modesToOpenNext(SaveManager.playerData.levels[selected - 1] if selected > 0 else {}))
+	var reason = "" if isLevelSelectable(selected) else ("Not in the demo" if isDemoLockedLevel(selected) else Root.openRuleText(SaveManager.playerData.levels[selected - 1] if selected > 0 else {}))
 	if reason == "": reason = Root.modeLockReason(forModes, mode)
+	if reason == "": reason = ModeTiers.lockReason(forModes, mode, tier)
 	modeLock.text = reason
 	modeLock.visible = reason != ""
 	for child in nextUnlock.get_children():
@@ -690,7 +759,7 @@ func refreshSetup(animate := true) -> void:
 		child.queue_free()
 	var parts := nextUnlockParts()
 	if not parts.is_empty(): nextUnlock.add_child(MenuTheme.symbolRow(parts, 17, HudTheme.MUTED))
-	var playable = isLevelSelectable(selected) && Root.isModePlayable(forModes, mode)
+	var playable = isLevelSelectable(selected) && Root.isModePlayable(forModes, mode) && ModeTiers.isOpen(forModes, mode, tier)
 	startButton.disabled = not playable
 	startButton.text = "START" if playable else ("COMING SOON" if reason == "Coming Soon" else "LOCKED")
 	updateHints()
@@ -704,11 +773,9 @@ func refreshPoster(index: int, isFocused: bool) -> void:
 	poster.get_node("art").modulate = Color.WHITE if open else Color(0.35, 0.35, 0.35)
 	var stars: HBoxContainer = poster.get_node("band/row/stars")
 	for child in stars.get_children(): child.queue_free()
-	var beaten = 0
-	for mode in MODE_ORDER: if level.gamemodeBeat.get(mode, false): beaten += 1
-	for i in MODE_ORDER.size():
+	for mode in MODE_ORDER: #one star per mode, in the colour of the best medal won with it here
 		var star = MenuTheme.iconRect(HudTheme.STAR_ICON, 24)
-		if i >= beaten: star.modulate = Color(0.2, 0.15, 0.1, 0.55)
+		star.modulate = ModeTiers.MEDAL_COLORS[ModeTiers.best(level, mode)]
 		stars.add_child(star)
 	var style = MenuTheme.box(Color(0, 0, 0, 0), HudTheme.RIM if isFocused else Color(1, 1, 1, 0.22), 18, 5 if isFocused else 3)
 	style.draw_center = false
@@ -726,7 +793,7 @@ func refreshMedallion(column: Control, mode: int, selected: bool, level: Diction
 	var disc: Button = column.get_node("disc")
 	var playable = Root.isModePlayable(level, mode)
 	var beaten = playable && level.gamemodeBeat.get(mode, false)
-	disc.icon = HudTheme.STAR_ICON if playable else HudTheme.LOCK_ICON
+	disc.icon = HudTheme.MODE_ICONS[mode] if playable else HudTheme.LOCK_ICON
 	disc.modulate = Color.WHITE if beaten || not playable else Color(0.85, 0.85, 0.85)
 	var style = MenuTheme.box(HudTheme.PANEL, HudTheme.RIM if selected else Color(1, 1, 1, 0.25), 48, 4 if selected else 2, Vector4(16, 16, 16, 16))
 	if selected:
@@ -737,6 +804,9 @@ func refreshMedallion(column: Control, mode: int, selected: bool, level: Diction
 	hover.border_color = HudTheme.GOLD if selected else Color(HudTheme.RIM, 0.8)
 	hover.bg_color = HudTheme.PANEL.lerp(HudTheme.RIM, 0.12)
 	disc.add_theme_stylebox_override("hover", hover)
+	var best := ModeTiers.best(level, mode) if playable else ModeTiers.NONE
+	var medals = column.get_node("medals")
+	for i in medals.get_child_count(): medals.get_child(i).modulate = ModeTiers.MEDAL_COLORS[ModeTiers.TIERS[i] if best >= ModeTiers.TIERS[i] else 0]
 	var label: Label = column.get_node("name")
 	label.theme_type_variation = "GoldLabel" if selected else ""
 	label.add_theme_font_size_override("font_size", 19 if selected else 16)
@@ -744,7 +814,7 @@ func refreshMedallion(column: Control, mode: int, selected: bool, level: Diction
 
 func onStartPressed() -> void:
 	var index = SaveManager.playerData.selectedLevel
-	if screen == Screen.SETUP && isLevelSelectable(index) && Root.isModePlayable(selectedLevelForModes(), SaveManager.getGameMode()):
+	if screen == Screen.SETUP && isLevelSelectable(index) && Root.isModePlayable(selectedLevelForModes(), SaveManager.getGameMode()) && ModeTiers.isOpen(selectedLevelForModes(), SaveManager.getGameMode(), SaveManager.getGameTier()):
 		var gadget := slotPurchase("loadout")
 		var boost := slotPurchase("boostLoadout") #worked out before either is paid for
 		if gadget != "":
@@ -813,6 +883,8 @@ func _input(event: InputEvent) -> void:
 			refreshSetup()
 		elif event.is_action_pressed("ui_left"): stepMode(-1)
 		elif event.is_action_pressed("ui_right"): stepMode(1)
+		elif event.is_action_pressed("ui_up"): stepTier(-1)
+		elif event.is_action_pressed("ui_down"): stepTier(1)
 		elif event.is_action_pressed("ui_records"): openRecords()
 		elif event.is_action_pressed("ui_codex"): openGoonopedia()
 		elif event.is_action_pressed("ui_menu"): openSettings()
@@ -837,6 +909,11 @@ func stepMode(direction: int) -> void:
 	SaveManager.setGameMode(MODE_ORDER[wrapi(at + direction, 0, MODE_ORDER.size())])
 	refreshSetup()
 
+#Up is the easier tier, Down the harder (the chips read Easy, Medium, Hard left to right)
+func stepTier(direction: int) -> void:
+	SaveManager.setGameTier(SaveManager.getGameTier() + direction)
+	refreshSetup(false)
+
 func overlayOpen() -> bool:
 	return get_tree().get_nodes_in_group("menuOverlay").size() > 0
 
@@ -846,7 +923,7 @@ func updateHints() -> void:
 		child.queue_free()
 	var hints: Array
 	if screen == Screen.SETUP:
-		hints = [[["ui_tab_prev", "ui_tab_next"], "Level"], [["ui_left", "ui_right"], "Mode"], [["ui_accept"], "Start"], [["ui_upgrade"], "Gadget"], [["ui_boost"], "Boost"], [["ui_records"], "Records"], [["ui_codex"], "Goonopedia"], [["ui_cancel"], "Back"]]
+		hints = [[["ui_tab_prev", "ui_tab_next"], "Level"], [["ui_left", "ui_right"], "Mode"], [["ui_up", "ui_down"], "Tier"], [["ui_accept"], "Start"], [["ui_upgrade"], "Gadget"], [["ui_boost"], "Boost"], [["ui_records"], "Records"], [["ui_codex"], "Goonopedia"], [["ui_cancel"], "Back"]]
 	elif upgrading:
 		hints = [[["ui_up", "ui_down"], "Choose"], [["ui_accept"], "Buy"], [["ui_cancel"], "Done"]]
 	else:

@@ -185,3 +185,7 @@ gc_ground_quality={
 "type": "int",
 "value": 1
 }
+gc_car_pos={
+"type": "vec2",
+"value": Vector2(1e+06, 1e+06)
+}

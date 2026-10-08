@@ -67,7 +67,7 @@ class Verb extends RefCounted:
 
 	func tick(delta: float, car: Node2D) -> void:
 		match g.state:
-			&"move": move(delta, car)
+			&"move": if not seekRelease(delta, car): move(delta, car)
 			&"windup": windup(delta, car)
 			&"attack": attack(delta, car)
 			&"recover":
@@ -79,6 +79,29 @@ class Verb extends RefCounted:
 	func move(delta: float, car: Node2D) -> void:
 		g.chase(car.global_position, g.speedNow(), delta)
 		if g.cooldown <= 0.0 && g.distTo(car) < g.windDist: startWindup(car)
+
+	## Goons with "releases" (Goons.DATA): with the car near a log pile, run to the pile and cut it loose so the
+	## logs roll at the car (Spill). True while it is doing that instead of its own move.
+	var releaseT := 0.0
+	var releaseAt: Node2D = null
+	func seekRelease(delta: float, car: Node2D) -> bool:
+		if not g.def.get("releases", false): return false
+		releaseT -= delta
+		if releaseT <= 0.0:
+			releaseT = 0.5
+			releaseAt = null
+			if g.distTo(car) < Spill.LURE_CAR:
+				var pile := WorldHooks.nearestInGroup(g.get_tree(), Spill.PILE_GROUP, g.global_position, Spill.LURE_GOON, &"smashed")
+				if pile && pile.global_position.distance_to(car.global_position) < Spill.LURE_CAR: releaseAt = pile
+		if not is_instance_valid(releaseAt) || releaseAt.get_meta(&"smashed", false):
+			releaseAt = null
+			return false
+		g.chase(releaseAt.global_position, g.speedNow() * 1.15, delta)
+		if g.global_position.distance_to(releaseAt.global_position) < g.bodyRadius + Spill.REACH:
+			Spill.goonRelease(releaseAt, g, car)
+			releaseAt = null
+			releaseT = 3.0
+		return true
 
 	func startWindup(car: Node2D, lead := 0.25) -> void:
 		g.lockOn(car, lead)
@@ -568,10 +591,16 @@ class Charger extends Verb:
 #==================================================================================================
 ## Moves in hops; in the air it can't be hit, so time it for the landing (Jackalope).
 class Hopper extends Verb:
+	#a hop lasts HOP seconds; only its peak (AIR_FROM to AIR_TO) is out of reach, and it rests REST between
+	#hops, so it is in the air about a quarter of the time (it was two thirds, and cars drove under it)
+	const HOP := 0.45
+	const AIR_FROM := 0.1
+	const AIR_TO := 0.35
+	const REST := 0.6
 	var hopDir := Vector2.RIGHT
 	func move(delta: float, car: Node2D) -> void:
 		g.play(&"idle")
-		if g.stateTime < 0.25: return
+		if g.stateTime < REST: return
 		if g.cooldown <= 0.0 && g.distTo(car) < g.windDist:
 			startWindup(car, 0.1)
 			return
@@ -579,13 +608,15 @@ class Hopper extends Verb:
 		hopDir = Vector2.from_angle(to)
 		g.rotation = to
 		g.setState(&"hop")
-		g.play(&"special", 0.45)
-		g.setSolid(false)
-		g.invulnerable = true
+		g.play(&"special", HOP)
 	func other(delta: float, _car: Node2D) -> void:
 		if g.state == &"hop":
 			g.global_position += hopDir * g.speedNow() * 1.6 * delta
-			if g.stateTime >= 0.45:
+			var up: bool = g.stateTime >= AIR_FROM && g.stateTime < AIR_TO
+			if up != g.invulnerable: #take-off and landing can be crushed; the peak can't
+				g.setSolid(not up)
+				g.invulnerable = up
+			if g.stateTime >= HOP:
 				g.setSolid(true)
 				g.invulnerable = false
 				g.setState(&"move")

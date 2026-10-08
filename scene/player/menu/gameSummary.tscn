@@ -10,6 +10,10 @@ script = ExtResource("1_exyns")
 
 [node name="AudioStreamPlayer_highImpact" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("5_x2d5e")
+volume_db = -4.0
+bus = &"FX"
 
 [node name="AudioStreamPlayer2_lowImpact" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("7_6todt")
+volume_db = -6.0
+bus = &"FX"

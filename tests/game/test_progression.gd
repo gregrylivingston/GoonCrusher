@@ -67,10 +67,12 @@ func test_payout_is_coins_times_the_star_multiplier():
 	assert_eq(Root.computePayout(120, 0), 120, "0 stars still pays the coins")
 	assert_eq(Root.computePayout(120, 1), 132, "each star adds 0.1 to the multiplier")
 	assert_eq(Root.computePayout(120, 3), 156)
-	assert_eq(Root.computePayout(1000, 50), 6000, "50 stars pay x6")
+	assert_eq(Root.computePayout(1000, 20), 3000, "20 stars pay x3")
+	assert_eq(Root.computePayout(1000, 50), 3000, "and no more: the multiplier stops at STAR_MULT_MAX")
 	assert_eq(Root.computePayout(0, 5), 0)
 	assert_eq(Root.computePayout(50, -2), 50, "a negative star count can't pay less than the coins")
-	assert_eq(Root.multiplierText(26), "3.6")
+	assert_eq(Root.multiplierText(16), "2.6")
+	assert_eq(Root.multiplierText(26), "3.0", "the multiplier stops at STAR_MULT_MAX")
 
 func test_three_beaten_modes_open_the_next_level():
 	var data = PlayerData.new()

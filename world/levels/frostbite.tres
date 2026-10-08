@@ -31,11 +31,11 @@ features = {
 "rangeWidth": 1700.0,
 "peakFrequency": 0.000125,
 "peakAbove": 0.5,
-"passWidth": 1500.0,
+"passWidth": 1800.0,
 "iceFrequency": 0.000143,
 "iceLakeThreshold": 0.3,
 "deepSnowAbove": 0.3,
-"pineDensity": 0.45
+"props": 18
 }
 baseTerrain = [7, 7, 15, 7, 9]
 accents = [9, 15]
@@ -45,14 +45,16 @@ dressing = {
 &"rock_ice": 3,
 &"rock_white": 3,
 &"stump": 2,
-&"carcass": 1
+&"carcass": 1,
+&"logpile": 2
 },
 1: {
 &"pine": 5,
 &"cabin": 2,
 &"totem": 1,
 &"firepit": 2,
-&"rock_white": 2
+&"rock_white": 2,
+&"logpile": 1
 },
 2: {
 &"pine": 4,
@@ -60,6 +62,17 @@ dressing = {
 &"wreck": 1,
 &"barrel": 1,
 &"rock_ice": 2
+}
+}
+motifs = {
+0: {
+&"pinestand": 3
+},
+1: {
+&"cabincamp": 2
+},
+2: {
+&"wreckpile": 1
 }
 }
 pickupTable = {

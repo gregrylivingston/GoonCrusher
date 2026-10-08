@@ -28,13 +28,14 @@ const DATA := {
 		"abandon": 0.0,          #chance per run to abandon it from the pause menu
 		"bet": "never", "gems": false, "deal": "rarest", "claw": "nearest", "pit": "first",
 		"retreat": 3,            #losses in a row on one level and mode before it goes back to farm the previous level
+		"tierCap": 2,            #the hardest tier (ModeTiers) it goes for: Medium
 	},
 	"grinder": {
 		"name": "Grinder", "profile": "cautious", "device": "keys",
 		"shop": "focused", "runs": "payout", "car": "strongest",
 		"overlays": 0.0, "pause": 0.0, "abandon": 0.0,
 		"bet": "rich", "gems": true, "deal": "worth", "claw": "rarest", "pit": "supplies",
-		"retreat": 2,
+		"retreat": 2, "tierCap": 3,
 		"stats": [U.ENGINE, U.ARMOR, U.OIL, U.TRACTION, U.STEERING, U.CLOVER, U.LUCK, U.HEADLIGHTS],
 	},
 	"explorer": {
@@ -42,7 +43,7 @@ const DATA := {
 		"shop": "variety", "runs": "coverage", "car": "least",
 		"overlays": 1.0, "pause": 0.5, "abandon": 0.06,
 		"bet": "random", "gems": true, "deal": "new", "claw": "random", "pit": "all",
-		"retreat": 2,
+		"retreat": 2, "tierCap": 3,
 	},
 }
 
@@ -120,16 +121,13 @@ static func worth(key: String) -> float:
 	var value: float = 30.0 * (CrushPrizes.rank(key.trim_prefix("prize:")) + 1) if key.begins_with("prize:") else float(Pickups.DATA[key].get("ai", 10))
 	return value / (1.0 + float(cost.get("coin", 0)) + 500.0 * float(cost.get("gem", 0)))
 
-static func upgradeCost(level: int) -> int:
-	return int(pow(level + 1, 1.6) * 15) #SaveManager.requestStatCost
-
 static func cheapestUpgrade(data: PlayerData, car: int, stats: Array, coins: int) -> Dictionary:
 	var best := {}
 	var bestCost := 0
 	for stat in stats:
 		var level := int(data.cars[car].upgrades.get(stat, 0))
 		if level >= SaveManager.MAX_UPGRADE_LEVEL: continue
-		var cost := upgradeCost(level)
+		var cost := SaveManager.upgradePrice(level, str(data.cars[car].name))
 		if cost <= coins && (best.is_empty() || cost < bestCost):
 			best = {"upgrade": stat, "car": car}
 			bestCost = cost
@@ -145,7 +143,7 @@ static func priorityUpgrade(data: PlayerData, car: int, stats: Array, coins: int
 		for stat in stats:
 			var level := int(upgrades.get(stat, 0))
 			if level >= SaveManager.MAX_UPGRADE_LEVEL || level > floorLevel + lead: continue
-			if upgradeCost(level) <= coins: return {"upgrade": stat, "car": car}
+			if SaveManager.upgradePrice(level, str(data.cars[car].name)) <= coins: return {"upgrade": stat, "car": car}
 	return {}
 
 ## The owned car to drive next.
@@ -177,8 +175,25 @@ static func carScore(data: PlayerData, index: int, history: Array) -> float:
 
 #---------- run setup ----------
 
-## The level index and mode to play next, among those the menu lets this save start.
+## The level index, mode and tier to play next, among those the menu lets this save start.
 static func chooseRun(persona: Dictionary, data: PlayerData, history: Array, rng: RandomNumberGenerator) -> Dictionary:
+	var run := chooseLevelAndMode(persona, data, history, rng)
+	if not run.is_empty(): run.tier = chooseTier(persona, data, history, run, rng)
+	return run
+
+## The tier (ModeTiers) for a run: the next one above the best beaten there, up to the persona's cap; after a
+## losing streak, the one below. The Explorer picks any open tier.
+static func chooseTier(persona: Dictionary, data: PlayerData, history: Array, run: Dictionary, rng: RandomNumberGenerator) -> int:
+	var level: Dictionary = data.levels[run.level]
+	var open: Array = ModeTiers.TIERS.filter(func(t): return ModeTiers.isOpen(level, run.mode, t))
+	if persona.runs == "coverage": return open[rng.randi() % open.size()]
+	var tier := mini(ModeTiers.best(level, run.mode) + 1, int(persona.get("tierCap", ModeTiers.HARD)))
+	if losingStreak(history, run, persona.retreat): tier -= 1
+	tier = ModeTiers.clampTier(tier)
+	while tier > ModeTiers.EASY && not ModeTiers.isOpen(level, run.mode, tier): tier -= 1
+	return tier
+
+static func chooseLevelAndMode(persona: Dictionary, data: PlayerData, history: Array, rng: RandomNumberGenerator) -> Dictionary:
 	var playable := playableRuns(data)
 	if playable.is_empty(): return {}
 	match persona.runs:
@@ -208,8 +223,9 @@ static func playableRuns(data: PlayerData) -> Array:
 			if Root.isModePlayable(data.levels[i], mode): out.push_back({"level": i, "mode": mode})
 	return out
 
-## The obvious next run: the furthest open level's first unbeaten mode, else the furthest level's
-## Countdown. Modes this persona keeps losing there are skipped while another is left.
+## The obvious next run: the furthest open level's first unbeaten mode, else a mode with a tier left to win
+## (up to the persona's cap), else the furthest level's Countdown. Modes this persona keeps losing there are
+## skipped while another is left.
 static func pathRun(data: PlayerData, history: Array, persona: Dictionary) -> Dictionary:
 	var playable := playableRuns(data)
 	if playable.is_empty(): return {}
@@ -221,6 +237,10 @@ static func pathRun(data: PlayerData, history: Array, persona: Dictionary) -> Di
 			if not losingStreak(history, run, persona.retreat): return run
 			if fallback.is_empty(): fallback = run
 		if not fallback.is_empty(): return fallback
+	var cap := int(persona.get("tierCap", ModeTiers.HARD))
+	for level in range(furthest, -1, -1): #everything beaten on Easy: go for medals
+		for run in playable:
+			if run.level == level && ModeTiers.best(data.levels[level], run.mode) < cap && not losingStreak(history, run, persona.retreat): return run
 	return {"level": furthest, "mode": G.GOONCRUSHER}
 
 ## The last `count` runs of this level and mode were all lost.
