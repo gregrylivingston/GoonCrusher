@@ -7,12 +7,12 @@ class_name CarJuice extends Node2D
 ##   - D-2 weight: the nose dips under braking and the tail squats on launch and boost (both read from the
 ##     car's measured acceleration), bumps on Hop and Jump Jets landings, wall hits and ground changes, and a
 ##     camera jolt on wall hits scaled by speed (through CrushFeel's kick and trauma).
-##   - D-3 speed and ground: speed lines past top speed or while boosting, dust, spray and clods per surface
+##   - D-3 ground: dust, spray and clods per surface
 ##     (World.surfaceAt), tyre smoke in slides, wall-scrape sparks, and a flame and glow when a drift boost fires.
 ##   - D-4 sound: engine pitch through the gears (the controller's gear rule), tyre squeal from slip and a
 ##     backfire pop on lift-off.
-## Reduce Motion drops the lines, jolts and bounces and calms the lean; Car Shake Off drops the bounces;
-## Driving Effects (gfx/driving_fx) sizes the particles and lines. Particles are pooled, drawn by two nodes.
+## Reduce Motion drops the jolts and bounces and calms the lean; Car Shake Off drops the bounces;
+## Driving Effects (gfx/driving_fx) sizes the particles. Particles are pooled, drawn by two nodes.
 
 #--- body (D-1, D-2) ---
 const ACCEL_FILTER := 0.3        #share of each tick's acceleration reading kept (a low-pass)
@@ -83,9 +83,8 @@ const SPARK := Color(1.0, 0.75, 0.35)
 const SLIDE_SMOKE_SLIP := 0.35   #rad of slip before the tyres smoke
 const ROUGH_FRICTION := 0.25     #surfaces at least this draggy count as rough ground for bumps
 const TRAIL_MIN_SPEED := 120.0
-## Per Driving Effects level (Minimal, Reduced, Full): [dust pool, spark pool, speed lines, trail rate]
-const LEVELS := [[0, 12, 0, 0.0], [48, 24, 14, 0.5], [128, 48, 26, 1.0]]
-const SPEED_LINES_FROM := 0.82   #share of the car's top speed where the lines start; full at top speed
+## Per Driving Effects level (Minimal, Reduced, Full): [dust pool, spark pool, trail rate]
+const LEVELS := [[0, 12, 0.0], [48, 24, 0.5], [128, 48, 1.0]]
 const FLAME_SECS := 0.45
 const BACKFIRE_SECS := 0.12
 
@@ -126,11 +125,9 @@ var flameLeft := 0.0
 var flameColor := Color.WHITE
 var flameTier := 0
 var backfireLeft := 0.0
-var boostLines := 0.0            #extra speed-line strength after a drift boost, fading
 
 var dust: Particles
 var sparks: Particles
-var lines: SpeedLines
 
 static var trailBySurface := {}  #World surface index -> TRAILS entry, built once
 
@@ -155,8 +152,7 @@ func _ready() -> void:
 	dust = Particles.new(false, 0)
 	sparks = Particles.new(true, 2)
 	sparks.material = glow
-	lines = SpeedLines.new()
-	for n in [dust, sparks, lines]: add_child(n)
+	for n in [dust, sparks]: add_child(n)
 	readSettings()
 	Settings.changed.connect(onSettingChanged)
 
@@ -170,7 +166,6 @@ func readSettings() -> void:
 	bumps = not calm && Settings.get_value("access/car_shake")
 	dust.resize(level[0])
 	sparks.resize(level[1])
-	lines.resize(0 if calm else level[2])
 
 #--- each tick --------------------------------------------------------------------------------------
 
@@ -222,10 +217,6 @@ func _physics_process(delta: float) -> void:
 
 	flameLeft = maxf(0.0, flameLeft - delta)
 	backfireLeft = maxf(0.0, backfireLeft - delta)
-	boostLines = maxf(0.0, boostLines - delta / 0.8)
-	lines.strength = speedLineStrength(speed, top, car.buffs.has("nitro"), boostLines)
-	lines.direction = vel / speed if speed > 1.0 else Vector2.ZERO
-	lines.screenSpeed = speed
 	if flameLeft > 0.0 || backfireLeft > 0.0: queue_redraw()
 	elif tick % 30 == 0: queue_redraw() #clears the last flame frame
 
@@ -297,12 +288,6 @@ static func squeal(slip: float, speed: float, braking: bool, onTwoWheels: bool) 
 	if onTwoWheels: s = maxf(s, 0.55)
 	return s
 
-## Speed lines, 0 to 1: from SPEED_LINES_FROM of top speed to top speed, and while boosting
-static func speedLineStrength(speed: float, top: float, nitro: bool, boost: float) -> float:
-	var s := clampf((speed / maxf(top, 1.0) - SPEED_LINES_FROM) / (1.0 - SPEED_LINES_FROM), 0.0, 1.0)
-	if nitro: s = maxf(s, 0.6)
-	return maxf(s, boost)
-
 static func isRough(surface: int) -> bool:
 	return World.friction(surface) >= ROUGH_FRICTION
 
@@ -313,7 +298,7 @@ static func trailKind(surface: int) -> int:
 func maxLateral(topSpeed: float) -> float:
 	return OverheadCarBody2D.maxYaw(car.steering * car.conditionFactor("steering")) * topSpeed
 
-## The car's top speed on grass (engine against drag), so the lines mean the same on every ground
+## The car's top speed on grass (engine against drag), for the lean limit
 func topSpeed() -> float:
 	var force: float = (car.engine * car.conditionFactor("engine") + 14.0) * 10.0 * 2.2
 	var d: float = car.drag
@@ -368,7 +353,7 @@ func innerTires() -> Array:
 
 func emitTrail(surface: int, speed: float, slip: float) -> void:
 	if level[0] == 0 || speed < TRAIL_MIN_SPEED: return
-	var rate: float = level[3]
+	var rate: float = level[2]
 	var back := -Vector2.from_angle(car.rotation)
 	if trailBySurface.has(surface):
 		var t: Array = trailBySurface[surface]
@@ -424,7 +409,6 @@ func driftBoost(tier: int, color: Color) -> void:
 	flameLeft = FLAME_SECS
 	flameColor = color
 	flameTier = tier
-	boostLines = 0.6 + 0.4 * tier
 	var rear: Vector2 = car.to_global(Vector2(car.bodyRect.position.x, 0.0))
 	sparkBurst(rear, -Vector2.from_angle(car.rotation), 8 + 6 * tier, color, 0.7, 500.0)
 	if bumps && is_instance_valid(car.camera) && not Transition.instant(): car.camera.zoom *= 1.0 - BOOST_ZOOM * (tier + 1)
@@ -553,64 +537,3 @@ class Particles extends Node2D:
 			else:
 				c.a *= 1.0 - t * t
 				draw_circle(pos[i], size[i] * (1.0 - 0.4 * t), c)
-
-## Streaks flowing past the edges of the screen against the car's travel, in world space so they sit in
-## the run's viewport under the HUD. Faded toward the middle of the screen, where the car is.
-class SpeedLines extends Node2D:
-	var strength := 0.0
-	var direction := Vector2.ZERO
-	var screenSpeed := 0.0
-	var shown := 0.0                #eased strength
-	var offsets := PackedVector2Array() #per streak, screen px from the centre
-	var lengths := PackedFloat32Array()
-	var rng := RandomNumberGenerator.new()
-
-	func _init() -> void:
-		top_level = true
-		z_as_relative = false
-		z_index = 50
-		var m := CanvasItemMaterial.new()
-		m.light_mode = CanvasItemMaterial.LIGHT_MODE_UNSHADED
-		material = m
-
-	func resize(n: int) -> void:
-		offsets.resize(n)
-		lengths.resize(n)
-		for i in n:
-			offsets[i] = Vector2(rng.randf_range(-1, 1), rng.randf_range(-1, 1)) * 900.0
-			lengths[i] = rng.randf_range(60.0, 160.0)
-		visible = n > 0
-		queue_redraw()
-
-	func _process(delta: float) -> void:
-		shown = move_toward(shown, strength, delta * 3.0)
-		if offsets.is_empty() || (shown <= 0.0 && strength <= 0.0): return
-		var vp := get_viewport()
-		var half := vp.get_visible_rect().size / 2.0
-		var zoom := vp.get_canvas_transform().get_scale().x
-		var move := direction * screenSpeed * zoom * 2.5 * delta
-		var reach := half.length()
-		for i in offsets.size():
-			offsets[i] -= move
-			var o := offsets[i]
-			if absf(o.x) > half.x + 200.0 || absf(o.y) > half.y + 200.0 || (direction != Vector2.ZERO && o.dot(direction) < -reach):
-				#back in on the leading side
-				offsets[i] = direction * reach * rng.randf_range(0.9, 1.1) + direction.orthogonal() * rng.randf_range(-reach, reach)
-				lengths[i] = rng.randf_range(60.0, 160.0)
-		queue_redraw()
-
-	func _draw() -> void:
-		if shown <= 0.01 || direction == Vector2.ZERO: return
-		var vp := get_viewport()
-		var xf := vp.get_canvas_transform()
-		var inv := xf.affine_inverse()
-		var half := vp.get_visible_rect().size / 2.0
-		var zoom := xf.get_scale().x
-		for i in offsets.size():
-			var o := offsets[i]
-			var r := Vector2(o.x / half.x, o.y / half.y).length() #0 at the centre, 1 at the edge
-			var a := shown * smoothstep(0.45, 0.95, r) * 0.55
-			if a <= 0.01: continue
-			var from := inv * (half + o)
-			var to := inv * (half + o - direction * lengths[i] * shown)
-			draw_line(from, to, Color(1, 1, 1, a), 2.0 / maxf(zoom, 0.01))

@@ -33,7 +33,7 @@ const PRESET := {
 	"gfx/celebration":     [0, 1, 2, 2],
 	"gfx/reward_fx":       [0, 1, 2, 2],
 	"gfx/crush_fx":        [0, 1, 2, 2],        #crush effects (CrushFeel, GoonFx): minimal, reduced, full
-	"gfx/driving_fx":      [0, 1, 2, 2],        #driving effects (CarJuice): ground trails, speed lines, sparks
+	"gfx/driving_fx":      [0, 1, 2, 2],        #driving effects (CarJuice): ground trails, sparks
 	"gfx/ground":          [0, 1, 1, 1],        #ground detail (gc_ground_quality): simple, full
 	"audio_perf/max_sfx":  [8, 12, 24, 24],
 }
@@ -75,7 +75,7 @@ const DEFAULTS := {
 	"audio_perf/max_sfx": 24,
 
 	"audio/master": 0.8,
-	"audio/music": 0.7,
+	"audio/music": 1.0,
 	"audio/voice": 0.9,
 	"audio/fx": 0.8,
 	"audio/ui": 0.7,

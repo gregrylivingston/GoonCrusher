@@ -82,12 +82,6 @@ func test_slip_folds_reversing_straight_back_to_zero():
 	assert_almost_eq(CarJuice.slipAngle(Vector2(-300, 0), 0.0), 0.0, 0.001, "reversing")
 	assert_almost_eq(CarJuice.slipAngle(Vector2(0, 300), 0.0), PI / 2.0, 0.001, "sideways")
 
-func test_speed_lines_start_near_top_speed_or_boosting():
-	assert_eq(CarJuice.speedLineStrength(500.0, 1200.0, false, 0.0), 0.0, "cruising: none")
-	assert_eq(CarJuice.speedLineStrength(1200.0, 1200.0, false, 0.0), 1.0, "at top speed: full")
-	assert_true(CarJuice.speedLineStrength(300.0, 1200.0, true, 0.0) >= 0.6, "Nitro always shows them")
-	assert_eq(CarJuice.speedLineStrength(300.0, 1200.0, false, 0.8), 0.8, "a drift boost too")
-
 func test_surfaces_have_the_right_trails():
 	makeCar() #builds the table
 	assert_eq(CarJuice.trailKind(surface("SAND")), CarJuice.Kind.PUFF, "sand: dust")
@@ -106,7 +100,6 @@ func test_the_player_car_has_juice_and_its_pools_follow_the_setting():
 	assert_eq(car.juice.dust.pos.size(), CarJuice.LEVELS[2][0], "Full")
 	Settings.set_value("access/reduce_motion", true, false)
 	assert_false(car.juice.bumps, "Reduce Motion: no bounces or jolts")
-	assert_eq(car.juice.lines.offsets.size(), 0, "and no speed lines")
 	Settings.set_value("access/reduce_motion", false, false)
 	Settings.set_value("access/car_shake", false, false)
 	assert_false(car.juice.bumps, "Car Shake Off: no bounces")

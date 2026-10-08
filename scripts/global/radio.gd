@@ -11,7 +11,7 @@ signal stationChanged(id: StringName)
 
 const ROOT := "res://sound/radio"
 const OFF := &"off"
-const MUSIC_DB := -2.0
+const MUSIC_DB := 0.0
 const SILENT_DB := -80.0
 const SWITCH_FADE := 0.4      #s: the old station fades out before the new one starts
 const SEGMENT_OVERLAP := 0.1  #s: segments butt-join with this much overlap

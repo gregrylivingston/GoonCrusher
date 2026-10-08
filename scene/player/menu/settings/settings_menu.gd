@@ -152,7 +152,7 @@ func graphicsRows() -> Array:
 			"info":"What a crush leaves: Minimal is a flattened goon and a few bits; Reduced adds the squash, goo spatter and a few goons flung by fast hits; Full flings more goons and adds impact bursts. Crushes, combos and rewards count the same at every level.",
 			"perf":"Small, more in big crowds."},
 		{"type":"choice", "key":"gfx/driving_fx", "label":"Driving Effects", "options":[[0, "Minimal"], [1, "Reduced"], [2, "Full"]],
-			"info":"What your driving kicks up: dust, spray and clods off the ground, tyre smoke in slides, sparks and speed lines. Minimal keeps a few sparks only; Reduced makes about half. The car's lean, bounce and sounds are the same at every level.",
+			"info":"What your driving kicks up: dust, spray and clods off the ground, tyre smoke in slides and sparks. Minimal keeps a few sparks only; Reduced makes about half. The car's lean, bounce and sounds are the same at every level.",
 			"perf":"Small: at most 128 puffs and 48 sparks, drawn by two nodes."},
 		{"type":"choice", "key":"audio_perf/max_sfx", "label":"Max Sound Effects", "options":[[8, "8"], [12, "12"], [24, "24"]],
 			"info":"How many goon, pickup and crush sounds can play at once. Engine, crash and voice sounds are separate and always play.",
