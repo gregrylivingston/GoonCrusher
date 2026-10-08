@@ -1,7 +1,7 @@
 extends CanvasLayer
 
-#The pause card (docs/UI.md): Continue, Settings, Abandon run and Quit game, then this run's numbers
-#and the car's stats with what pickups added. Opened by GameUI.openPause; built in code with MenuTheme.
+#The pause card (docs/UI.md): Continue, Settings, the radio station, Abandon run and Quit game, then
+#this run's numbers and the car's stats with what pickups added. Opened by GameUI.openPause; built in code with MenuTheme.
 
 const SETTINGS_ICON := preload("res://texture/icon/settings.svg")
 const QUIT_ICON := preload("res://texture/icon/quit.svg")
@@ -10,6 +10,7 @@ const STATS := DriverCard.STATS
 var continueButton: Button
 var abandonButton: Button
 var quitButton: Button
+var radioLine: Label
 var confirmTimers = {}
 
 func _ready():
@@ -76,6 +77,7 @@ func build() -> void:
 	settingsButton.custom_minimum_size = Vector2(0, 58)
 	settingsButton.pressed.connect(_on_settings_pressed)
 	body.add_child(settingsButton)
+	body.add_child(radioRow())
 	abandonButton = MenuTheme.button(abandonText(), PackedStringArray(), false)
 	abandonButton.custom_minimum_size = Vector2(0, 58)
 	abandonButton.pressed.connect(_on_abandon_pressed)
@@ -91,7 +93,35 @@ func build() -> void:
 	runLine.text = runSummary()
 	body.add_child(runLine)
 	if is_instance_valid(Root.playerCar): body.add_child(statRow(Root.playerCar))
-	body.add_child(KeyHint.bar([[["ui_up", "ui_down"], "Choose"], [["ui_accept"], "Select"], [["ui_menu"], "Continue"]], 15, 22))
+	body.add_child(KeyHint.bar([[["ui_up", "ui_down"], "Choose"], [["ui_left", "ui_right"], "Station"], [["ui_accept"], "Select"], [["ui_menu"], "Continue"]], 15, 22))
+
+#the radio (docs/RADIO.md): a settings-style row, left/right or its arrows change station, and the song under it
+func radioRow() -> VBoxContainer:
+	var box = VBoxContainer.new()
+	box.add_theme_constant_override("separation", 2)
+	var row = OptionRow.new({"type":"choice", "key":"audio/station", "label":"Radio", "options":Audio.radio.stationOptions()})
+	box.add_child(row)
+	radioLine = Label.new()
+	radioLine.theme_type_variation = "MutedLabel"
+	radioLine.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	radioLine.clip_text = true
+	radioLine.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	box.add_child(radioLine)
+	showSong(Audio.radio.nowPlaying())
+	Audio.radio.trackStarted.connect(showSong)
+	Audio.radio.stationChanged.connect(onStationChanged)
+	return box
+
+func onStationChanged(_id: StringName) -> void:
+	showSong(Audio.radio.nowPlaying())
+
+func showSong(info: Dictionary) -> void:
+	if not is_instance_valid(radioLine): return
+	var title: String = info.get("title", "")
+	if info.get("station") == Radio.OFF: radioLine.text = ""
+	elif title == "": radioLine.text = "Tuning in..."
+	elif info.get("artist", "") == "" || info.artist == info.get("stationName"): radioLine.text = "Now playing: " + title
+	else: radioLine.text = "Now playing: %s - %s" % [title, info.artist]
 
 static func bandBox() -> StyleBoxFlat:
 	var style = MenuTheme.box(HudTheme.RIM, Color(0, 0, 0, 0), 0, 0, Vector4(12, 10, 12, 10))

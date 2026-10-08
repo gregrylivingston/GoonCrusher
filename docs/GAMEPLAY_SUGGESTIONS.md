@@ -29,6 +29,7 @@ Suggestions to discuss, not a spec; the author runs gameplay as a separate proje
 - **Driving controls** Handbrake powerslide (Space / RB, shaped per car by its stats; a held slide charges a drift boost, blue then orange sparks, fired on release; the tail and flanks slam goons), a second held slot for boosts (Shift / LB: Nitro as 2 stored burns, the new Hop, Jump Jets), gadgets on E / X; settings v2 migrates saved bindings (CLAUDE.md, docs/PICKUPS.md). Run setup sells a starting gadget and boost for gems.
 - **Menu juice** Garage shutter, hatch and tire-smoke transitions, and a mouse pass so every menu works with the mouse alone (docs/UI.md, "Transitions"; test checklist in docs/TEST_SCOPE_TRANSITIONS.md).
 - **Career playtests** Three personas play the whole game through the real menus (docs/AI_DRIVER.md).
+- **R-1 (code)** Radio: three stations scanned from `sound/radio/` (shuffle bags, crossfades, idents, talk and ads between songs, lazy threaded loads), picked in the pause menu and Settings, a now-playing card in the HUD and menu, music ducking under the Voice bus (docs/RADIO.md). Placeholder tones until the in-house tracks arrive.
 - **Tier 3** Shallows, fords and bridges; most of a daily seeded run (the map and its contents come from the world seed).
 
 ## Work packages, in order
@@ -150,11 +151,7 @@ Driving should be the most fun part. The handbrake, drift boost, slams and crush
 ### Package 8: Sound and radio
 - **T1-13.** A `VoiceDirector`: priorities (warning > win > record > jackpot > giant > award > region), a ~5 s cooldown, no repeats in the last 3 lines, subtitles. S.
 - **T1-14.** Menu music, ducking under voice, stingers. S plus licensing.
-- **R-1. Radio stations** (replaces the in-run day and night sets; `Audio.gd` `loadNextNightSong` is commented out). Three stations of in-house tracks (the author makes the audio; the work here is the integration):
-  - **GoonCrusher Radio:** funny vocal tracks with radio talk and DJ segments between songs.
-  - **Classical Lofi** and **Lofi:** pure music, easy to listen to.
-
-  A data-driven station list (name, logo, folder of tracks, idents, talk segments), so adding tracks needs no code. Each station plays a shuffled playlist with no repeats until it cycles, an ident or talk segment between some songs, and crossfades. Talk ducks under the `VoiceDirector`'s lines (T1-13) and the music ducks under both. Streams load lazily on a worker so a station switch never hitches the HD 620. Change station with a key in the run (and in pause), shown as a small "now playing" card in the HUD; Radio Off is a station. The choice is saved in `settings.cfg` (`audio/station`); stations could be unlocks (package 12). Night can push the DJ to night lines instead of changing the music. M.
+- **R-1. Radio stations.** The code is done (above, docs/RADIO.md). Left: the in-house tracks for GoonCrusher Radio, Classical Lofi and Lofi (docs/RADIO.md, part 1, has the format and the DJ brief), then a listening pass on crossfade lengths, segment odds and the ducking depth. Stations could become unlocks (package 12, `Radio.isStationOpen`).
 
 ### Package 15: Cosmetics
 - **C-1.** Unlockable looks that never change stats: paint jobs and liveries per car (look C "Showroom" is already a whole-car paint, docs/CAR_ART.md), decals and numbers, tyre-smoke and drift-spark colours, horns, a boost-flame colour, and driver outfits on the card portrait. Generated with `car_gen.js` (never painted by hand), chosen on the driver card, bought with coins or gems, or earned from medals and achievements through the unlock registry (package 12). Saved per car in `meta.cosmetics`. M.
@@ -190,7 +187,7 @@ Driving should be the most fun part. The handbrake, drift boost, slams and crush
 - Cosmetics cost coins or gems.
 - Tree canopies may hide goons beneath them.
 - The two-wheel tilt is style only; cars never tip over.
-- Radio: three stations of in-house tracks: GoonCrusher Radio (funny vocal tracks and radio talk), Classical Lofi and Lofi.
+- Radio: three stations of in-house tracks: GoonCrusher Radio (funny vocal tracks and radio talk), Classical Lofi and Lofi. Changed in the pause menu and Settings, no driving key. Talk is not contextual (no night, level or event lines).
 
 ## Open questions for the author
 

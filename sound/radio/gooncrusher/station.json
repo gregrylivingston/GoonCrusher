@@ -1,0 +1,9 @@
+{
+	"name": "GoonCrusher Radio",
+	"short": "GCR",
+	"color": "#ff8a1f",
+	"order": 0,
+	"segment_chance": 0.6,
+	"weights": {"ident": 3, "talk": 4, "ad": 2},
+	"crossfade": 2.5
+}

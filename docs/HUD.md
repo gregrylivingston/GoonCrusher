@@ -15,6 +15,7 @@ The HUD is `scene/player/playerRoot.tscn` (class `GameUI`): twin gauges in the b
 | `Speedo`, `Hull` | `hud_dial.gd` | bottom right | Speedometer and the hull (health) dial. |
 | `Systems` | `hud_systems.gd` | bottom center | One lamp per car system, each with a rating underline. |
 | `Items` (added in code) | `hud_items.gd` | bottom center, above the strip | The held gadget (charges, the Fire key) and the held boost beside it (charges, the Boost key), small counters left of them (star fragments, lottery tickets, a parcel, barricades), and a ring per timed power-up (right) that drains clockwise and blinks in its last 2 s. Groups `itemui`, `moveui`, `buffui`, and `clockui` (on `TopCenter`). |
+| `NowPlaying` (added in code) | `scene/ui/radio/now_playing.gd` | bottom left, above the tachometer | The radio: song, artist and station, sliding in for 5 s at each new song or station change (docs/RADIO.md). Hidden otherwise. |
 | `HudChance` (added in code) | `hud_chance.gd` | full screen, not HUD-scaled | Rare-pickup toasts under the clock, the Scratch Card and Double or Nothing under the payout, the Crush Combo under the crush pill, edge-of-screen beacons for events and supply drops, the Goon Nuke's flash. Redraws only while one shows. |
 
 `hud_theme.gd` (class `HudTheme`) holds the colors, the Tektur fonts and the draw helpers.
