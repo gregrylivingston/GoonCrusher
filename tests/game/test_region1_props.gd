@@ -64,6 +64,7 @@ func after_each():
 	SaveManager.playerData = savedData
 	SaveManager.dirty = false
 	Pickups.lures = savedLures
+	PickupWorld.beacons.clear() #the events' edge arrows point at nodes these tests free
 
 func level(id: StringName) -> LevelStub:
 	var s := LevelStub.new()
@@ -512,3 +513,88 @@ func test_an_orchard_oak_drops_apples_once():
 	var again := prop("oak", Vector2(0, 0))
 	assert_true(again.get_meta(&"spilled", false), "even after its chunk reloads")
 	reactions.queue_free()
+
+#--- world events and the levels' rules ---------------------------------------------------------------------
+
+func test_world_events_start_only_where_a_level_weighs_them():
+	assert_false(PickupWorld.openEvents({}).any(func(k): return k in PickupWorld.WORLD_EVENTS), "no weights: no world event")
+	var open := PickupWorld.openEvents({"stampede": 4, "goldgoon": 2})
+	assert_true("stampede" in open && not "flood" in open, "the level's own")
+	for i in 20: assert_true(PickupWorld.pickEvent(open, {"stampede": 4, "goldgoon": 2}) in ["stampede", "goldgoon"])
+	assert_true("haywagon" in PickupWorld.openEvents({"haywagon": 2}), "a truck re-skin opens with the truck")
+
+func test_the_wilds_levels_rules():
+	var want := {
+		&"prairie": [0.25, {"goldgoon": 3, "rings": 2, "bowling": 1}],
+		&"orchard": [0.3, {"rings": 3, "goldgoon": 2, "haywagon": 2, "stampede": 1}],
+		&"bayou": [0.4, {"goldgoon": 2, "rings": 2, "barge": 1}],
+		&"canyon": [0.35, {"flood": 3, "goldgoon": 2, "rings": 1}],
+		&"moosewoods": [0.5, {"stampede": 4, "goldgoon": 2}],
+	}
+	for id in want:
+		var rules: Dictionary = Levels.get_def(id).rules
+		assert_almost_eq(float(rules.nightShare), want[id][0], 0.001, "%s: night share" % id)
+		assert_eq(rules.events, want[id][1], "%s: events" % id)
+		assert_true(rules.dazeHeavies, "%s: dazed heavies" % id)
+	assert_false(Levels.get_def(&"prairie").rules.events.has("stampede"), "no out-of-line-up stampede on Prairie Run")
+	assert_eq(Levels.get_def(&"orchard").rules.get("oakCoins", 0), 2, "Orchard Lanes' oaks drop apples")
+
+func test_a_stampede_crosses_ahead_of_the_car():
+	var car := makeCar(Vector2(0, 0))
+	car.velocity = Vector2(300, 0)
+	var stampede: WorldProps.Stampede = PickupWorld.spawnStampede(car)
+	await get_tree().process_frame
+	assert_true(stampede.is_inside_tree(), "the dust is out")
+	assert_almost_eq(stampede.global_position.x, WorldProps.Stampede.AHEAD, 1.0, "off to the side of the path ahead")
+	assert_true(absf(stampede.dir.y) > 0.99, "and it will run across the path")
+	assert_true(PickupWorld.beacons.any(func(b): return b[0] == stampede), "with an edge arrow")
+	assert_true(stampede.herd.is_empty(), "the herd waits")
+	await frames(int(WorldProps.Stampede.WARN * 60) + 4)
+	assert_eq(stampede.herd.size(), WorldProps.Stampede.HERD, "then breaks cover")
+	for h in stampede.herd:
+		assert_eq(h.state, &"drive", "stampeding")
+		assert_true(h.verb.dir.dot(stampede.dir) > 0.95, "across the car's path")
+		assert_eq(h.verb.calm, &"move", "an ordinary herd after")
+
+func washRule(p: Vector2) -> int:
+	return Root.terrain.WASH if absf(p.y) < 450.0 else Root.terrain.GRASS
+
+func test_a_flash_flood_runs_down_the_wash_ahead():
+	var car := makeCar(Vector2(0, 0))
+	car.velocity = Vector2(300, 0)
+	var map := RuleMap.new()
+	map.rule = washRule
+	Root.worldMap = map
+	var found := WorldProps.FlashFlood.locate(car)
+	assert_false(found.is_empty(), "there is a wash ahead")
+	assert_eq(found[1], Vector2.RIGHT, "it runs the way the car goes")
+	assert_true(found[0].x < 500.0 && absf(found[0].y) < 450.0, "from upstream, on the wash")
+	Root.worldMap = RuleMap.new()
+	Root.worldMap.rule = func(_p): return Root.terrain.GRASS
+	assert_true(WorldProps.FlashFlood.locate(car).is_empty(), "no wash, no flood")
+	Root.worldMap = map
+
+func test_a_flash_flood_sweeps_the_wash_and_carries_the_car():
+	var car := makeCar(Vector2(-400, 600))
+	var map := RuleMap.new()
+	map.rule = washRule
+	Root.worldMap = map
+	var flood := WorldProps.FlashFlood.new()
+	flood.dir = Vector2.RIGHT
+	flood.age = WorldProps.FlashFlood.WARN
+	flood.position = Vector2(-300, 0)
+	add_child_autofree(flood)
+	var onWash := goon(&"grunt", Vector2(150, 200), true)
+	var onBank := goon(&"grunt", Vector2(150, 520), true)
+	await frames(60)
+	assert_true(flattened(onWash), "a goon on the wash is swept away")
+	assert_false(flattened(onBank), "one on the bank is not")
+	assert_true("SPLASH" in car.chainSources, "credited as SPLASH near the car")
+	car.global_position = flood.global_position - Vector2(200, 0)
+	car.velocity = Vector2.ZERO
+	var health := car.health
+	assert_true(flood.pushCar(), "the car on the wash behind the front...")
+	assert_true(car.velocity.x > 0.0, "...is carried along")
+	assert_eq(car.health, health, "never hurt")
+	car.global_position = flood.global_position + Vector2(0, 600)
+	assert_false(flood.pushCar(), "off the wash it is left alone")

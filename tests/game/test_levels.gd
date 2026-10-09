@@ -79,7 +79,7 @@ func test_every_def_loads_and_is_valid():
 		assert_false(def.baseTerrain.is_empty(), "%s: base terrain" % id)
 		assert_between(def.lineup.size(), 3, 6, "%s: a line-up of 3 to 6" % id)
 		if def.rules.has("nightShare"): assert_between(float(def.rules.nightShare), 0.0, 1.0, "%s: night share" % id)
-		for kind in def.rules.get("events", {}): assert_true(kind in PickupWorld.EVENTS, "%s: event %s exists" % [id, kind])
+		for kind in def.rules.get("events", {}): assert_true(kind in PickupWorld.EVENTS || kind in PickupWorld.WORLD_EVENTS, "%s: event %s exists" % [id, kind])
 	assert_eq(Levels.get_def(&"bayou").displayName, "Snapper Bayou")
 	assert_eq(Levels.get_def(&"lantern").rules.get("nightShare", 0.0), 0.75, "Lantern Marsh is mostly night")
 
@@ -257,7 +257,7 @@ func test_level_rules_weigh_events_and_night():
 	assert_eq(PickupWorld.pickEvent([], {}), "")
 	assert_eq(Levels.get_def(&"saltflats").rules.events.rings, 3, "Salt Flats favour Ring Runs")
 	assert_eq(Levels.get_def(&"culdesac").rules.nightShare, 0.75, "Cul-de-Sac is mostly night")
-	assert_false(Levels.get_def(&"prairie").rules.has("nightShare"), "Prairie keeps the old cycle")
+	assert_eq(Levels.get_def(&"prairie").rules.nightShare, 0.25, "Prairie Run's opener is seen in daylight")
 
 func test_resolve_level_arguments():
 	assert_eq(Levels.resolve("prairie"), &"prairie")

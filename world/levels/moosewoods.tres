@@ -20,7 +20,12 @@ giantOdds = -12
 escalationSpeed = 0.132
 sprintSlack = 1.44
 rules = {
-"dazeHeavies": true
+"dazeHeavies": true,
+"events": {
+"goldgoon": 2,
+"stampede": 4
+},
+"nightShare": 0.5
 }
 lineup = Array[StringName]([&"bullmoose", &"thunderhoof", &"tusker", &"yipper"])
 landscape = &"forest"

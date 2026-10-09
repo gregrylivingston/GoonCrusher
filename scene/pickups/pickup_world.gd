@@ -12,6 +12,12 @@ const EVENT_EVERY := Vector2(80.0, 120.0)
 const SUPPLY_DISTANCE := 1500.0
 const EVENT_DISTANCE := 1800.0
 const EVENTS := ["goldgoon", "truck", "bowling", "rings"]
+## Level-owned world events (docs/PICKUPS.md "The world"): they start only on a level whose rules.events weighs
+## them, and no pickup unlock gates them, but the Loot Truck's re-skins (TRUCK_SKINS) open with the truck. A
+## stampede (WorldProps.Stampede), a flash flood down a wash (WorldProps.FlashFlood), the Hay Wagon and the Bandit Barge.
+const WORLD_EVENTS := ["stampede", "flood", "haywagon", "barge"]
+const TRUCK_SKINS := {"haywagon": "HAY WAGON", "barge": "BANDIT BARGE"}
+const WORLD_EVENT_NAMES := {"stampede": "STAMPEDE", "flood": "FLASH FLOOD", "haywagon": "HAY WAGON", "barge": "BANDIT BARGE"}
 
 ## Chunk props: [chance, kind]. Rolled in order from the chunk's own seed, so a reloaded chunk is the same.
 const CHUNK_PROPS := [[0.10, "crates"], [0.03, "speedtrap"], [0.025, "donut"], [0.025, "bullseye"], [0.02, "wheel"], [0.02, "rings"], [0.01, "bowling"]]
@@ -60,13 +66,21 @@ func _physics_process(delta: float) -> void:
 	eventIn -= delta
 	if eventIn <= 0.0:
 		eventIn = randf_range(EVENT_EVERY.x, EVENT_EVERY.y)
-		var kind := pickEvent(EVENTS.filter(Unlocks.isPickupOpen), levelEventWeights()) #locked events never start (Unlocks)
+		var weights := levelEventWeights()
+		var kind := pickEvent(openEvents(weights), weights) #locked events never start (Unlocks)
 		if kind != "": startEvent(kind, car)
 
 ## The running level's rules.events (LevelDef.rules): {event: weight}, {} for none
 static func levelEventWeights() -> Dictionary:
 	var def = Root.levelRoot.def if is_instance_valid(Root.levelRoot) && Root.levelRoot is Level else null
 	return def.rules.get("events", {}) if def else {}
+
+## The events that may start: the open pickup events, and the world events the level's weights name
+static func openEvents(weights: Dictionary) -> Array:
+	var open := EVENTS.filter(Unlocks.isPickupOpen)
+	for kind in WORLD_EVENTS:
+		if weights.has(kind) && (not TRUCK_SKINS.has(kind) || Unlocks.isPickupOpen("truck")): open.push_back(kind)
+	return open
 
 ## One of the open events by `weights` (empty: all the same). "" when none is open or every open one weighs 0.
 static func pickEvent(open: Array, weights: Dictionary) -> String:
@@ -93,7 +107,24 @@ func startEvent(kind: String, car) -> void:
 			var rings = WorldProps.RingRun.new()
 			event = addToLevel(rings, at)
 			PickupWorld.beacon(rings, HudTheme.GOLD, Pickups.texture("ring"))
+		"stampede": event = spawnStampede(car)
+		"flood": event = spawnFlood(car)
+		"haywagon", "barge":
+			event = spawnLootTruck(car)
+			event.set("skin", kind)
+	if WORLD_EVENT_NAMES.has(kind):
+		if event != null: PickupEffects.toast(WORLD_EVENT_NAMES[kind] + ("!" if not TRUCK_SKINS.has(kind) else " NEARBY"), HudTheme.GOLD, worldEventIcon(kind))
+		return
 	PickupEffects.toast(Pickups.displayName(kind).to_upper() + " NEARBY", Pickups.rarityColor(Pickups.rarity(kind)), Pickups.texture(kind))
+
+## The icon a world event's toast and edge arrow show
+static func worldEventIcon(kind: String) -> Texture2D:
+	match kind:
+		"stampede":
+			var path := Goonopedia.goonArt(&"thunderhoof")
+			return load(path) if ResourceLoader.exists(path) else null
+		"flood": return Pickups.texture("flood")
+	return Pickups.texture("truck")
 
 ## Testing: `-- --pickup-shots=deal,claw,pitshop,scratch,double` (with a bench run, e.g. --bench=SL)
 ## opens each in turn after the countdown and saves user://bench/pickup_<id>.png. Gift boxes (CrushPrizes):
@@ -187,6 +218,24 @@ static func spawnLootTruck(car) -> Node2D:
 	var truck = addToLevel(WorldProps.LootTruck.new(), aheadOf(car, 1300.0))
 	truck.rotation = car.rotation
 	return truck
+
+## A stampede: dust and a rumble off to the side of the car's path, then a herd crosses ahead of it
+static func spawnStampede(car) -> Node2D:
+	var heading: float = car.velocity.angle() if car.velocity.length() > 80.0 else car.rotation
+	var cross: Vector2 = car.global_position + Vector2.from_angle(heading) * WorldProps.Stampede.AHEAD
+	var start := cross + Vector2.from_angle(heading + PI / 2.0) * WorldProps.Stampede.SIDE
+	if not onLand(start): start = cross - Vector2.from_angle(heading + PI / 2.0) * WorldProps.Stampede.SIDE
+	var stampede := WorldProps.Stampede.new()
+	stampede.dir = (cross - start).normalized()
+	return addToLevel(stampede, start)
+
+## A flash flood down the nearest wash ahead of the car, or null when there is none
+static func spawnFlood(car) -> Node2D:
+	var found := WorldProps.FlashFlood.locate(car)
+	if found.is_empty(): return null
+	var flood := WorldProps.FlashFlood.new()
+	flood.dir = found[1]
+	return addToLevel(flood, found[0])
 
 static func spawnStrongbox(pos: Vector2) -> Node2D:
 	return addToLevel(WorldProps.Strongbox.new(), pos)

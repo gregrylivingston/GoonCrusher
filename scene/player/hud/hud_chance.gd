@@ -236,7 +236,7 @@ func drawBeacons() -> void:
 	var inner := Rect2(Vector2(EDGE, 165.0), size - Vector2(EDGE * 2.0, 165.0 + 175.0)) #clear of the top panels and the dials
 	var centre := inner.get_center()
 	for b in PickupWorld.beacons:
-		if not b[0].is_inside_tree(): continue #spawns are deferred; it arrives next frame
+		if not is_instance_valid(b[0]) || not b[0].is_inside_tree(): continue #freed since the last prune; spawns are deferred (it arrives next frame)
 		var p: Vector2 = canvas * b[0].global_position
 		if screen.grow(-10.0).has_point(p): continue
 		var dir := (p - centre).normalized()
