@@ -149,7 +149,7 @@ func _physics_process(delta):
 		return
 	checkWade()
 	if (state == &"move" || state == &"lured") && not Pickups.lures.is_empty():
-		var lure := Pickups.lureFor(global_position, def.get("verb", &"lunge")) #Goon Bait, Flare
+		var lure := Pickups.lureFor(global_position, def.get("verb", &"lunge"), int(def.get("rank", 1)), distTo(car)) #Goon Bait, Flare, Dinner Bell, Salt Lick
 		if lure != Vector2.INF:
 			if state != &"lured": setState(&"lured")
 			if def.get("verb", &"") == &"flyer": chase(lure + Vector2.from_angle(stateTime * 0.8) * 220.0, speedNow(), delta, 3.0) #circles it
@@ -346,6 +346,15 @@ func bounceCar(car: Node2D, dmg: float, system: String, label := "BLOCKED") -> v
 
 func isDying() -> bool:
 	return dead
+
+## Gone without a death: no corpse, no drop, no credit (a Bandit home in its den)
+func vanish() -> void:
+	if dead: return
+	dead = true
+	myMode = mode.DEAD
+	var f = fx()
+	if f: f.dust(global_position)
+	queue_free()
 
 ## Every death: crushed or blown up (squashed or flung, decal, bits, spatter: GoonFx.crushed; maybe a
 ## pickup), or drowned (no decal).

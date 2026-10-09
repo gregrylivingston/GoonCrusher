@@ -42,18 +42,28 @@ enum T { GRASS, SAND, MUD, WATER, HILLS, MOSS, DIRT, SNOW, ASPHALT, ICE, OIL, SH
 ##   raid     break it open (a crate, a hive) and steal what spills (the Thief takes pickups first)
 ##   perch    land on it and feed until the car comes at it (a carcass, like a crush decal)
 ##   roost    sit in its crown out of reach until rammed down (Spill.ROOSTS: dead trees; scarecrows later)
-## Extension points: a den's "stash" (R-6) and a burrow's "hide" (R-7) come in as new actions here.
+##   stash    (SEEK_SELF) with loot, run home to the nearest den within goonRange and stash it there (Thief, Spill.stash)
+##   hide     (SEEK_SELF) when the car bears down from within carRange, dive into a free burrow within goonRange (Hopper)
+## SEEK_SELF actions aren't picked by the generic look (Verb.seekProp): the verb uses the row itself at its moment.
 const SEEKS_RELEASE := [[&"prop_logpile", &"release", 900.0, 650.0]]
 const SEEK_EVERY := 0.5
+const SEEK_SELF := [&"stash", &"hide"]
+
+## A goon's seeks row for `action`, [] when it has none
+static func seekRow(def: Dictionary, action: StringName) -> Array:
+	for row in def.get("seeks", []):
+		if row[1] == action: return row
+	return []
 
 const DATA := {
 	#---------------------------------------------------------------- Wild Things (tier 1)
 	&"jackalope": {"name":"Jackalope", "faction":faction.WILD, "rank":1, "biomes":[T.GRASS, T.MOSS, T.SNOW], "verb":&"hopper",
-		"speed":170, "windDist":120, "windT":0.35, "atkT":0.3, "lunge":2.6, "dmg":2, "sys":"tires"},
+		"speed":170, "windDist":120, "windT":0.35, "atkT":0.3, "lunge":2.6, "dmg":2, "sys":"tires",
+		"seeks":[[&"prop_burrow", &"hide", 420.0, 250.0]]},
 	&"tusker": {"name":"Tusker", "faction":faction.WILD, "rank":2, "biomes":[T.GRASS, T.MUD], "verb":&"charger",
 		"speed":110, "windDist":380, "windT":0.7, "atkT":1.1, "lunge":3.6, "dmg":6, "sys":"engine", "front":280, "smashes":true, "tramples":true},
 	&"bandit": {"name":"Bandit", "faction":faction.WILD, "rank":1, "biomes":[T.GRASS, T.DIRT], "verb":&"thief", "speed":150,
-		"seeks":[[&"prop_crate", &"raid", 0.0, 600.0], [&"prop_hive", &"raid", 0.0, 600.0]]},
+		"seeks":[[&"prop_crate", &"raid", 0.0, 600.0], [&"prop_hive", &"raid", 0.0, 600.0], [&"prop_den", &"stash", 0.0, 2500.0]]},
 	&"stinger": {"name":"Stinger", "faction":faction.WILD, "rank":2, "biomes":[T.SAND], "verb":&"striker",
 		"speed":100, "windDist":130, "windT":0.6, "atkT":0.35, "dmg":4, "sys":"steering", "tele":"ring"},
 	&"buzzard": {"name":"Buzzard", "faction":faction.WILD, "rank":1, "biomes":[T.SAND, T.DIRT], "verb":&"flyer",

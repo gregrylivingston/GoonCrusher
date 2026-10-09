@@ -325,7 +325,7 @@ func _physics_process(delta):
 		if (collider.has_method("smash") || BreakableProp.isBreakable(collider)) && hitVelocity.length() >= smashThreshold(collider):
 			if collider.has_method("smash"): collider.smash(self)
 			else: BreakableProp.smashNode(collider, self)
-			velocity = hitVelocity * BreakableProp.SPEED_KEEP #the slide stopped the car; a smash barely slows it
+			velocity = hitVelocity * BreakableProp.speedKeep(collider) #the slide stopped the car; a smash barely slows it
 		elif PropReactions.knocks(collider, hitVelocity):
 			velocity = hitVelocity * PropReactions.KNOCK_KEEP #a cone flies off instead of stopping the car
 		elif hitVelocity.length() > 0.01 && World.isWall(collider): #the speed going in: a square hit leaves none after the slide

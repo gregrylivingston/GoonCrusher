@@ -1,6 +1,7 @@
 class_name WorldProps extends RefCounted
 
-#Pickup things that live in the world: skill challenges, events, crates and supply drops
+#Pickup things that live in the world: skill challenges, events and supply drops (crates are the baked
+#crate prop: BreakableProp, PickupWorld.decorateChunk)
 #(docs/PICKUPS.md). Chunk props are children of their chunk's object node, so they unload with it;
 #events are children of the level. Every class draws itself; none needs a scene file.
 
@@ -155,10 +156,15 @@ class GoldenGoon extends RamTarget:
 		draw_set_transform(Vector2(0, -LIFT * h).rotated(-rotation), 0.0, Vector2.ONE)
 		draw_texture_rect(tex, Rect2(-size * 0.5, size), false, GOLD)
 
-## The Loot Truck: every ram spills coins; five burst it for a Rare pickup.
+## The Loot Truck: every ram spills coins; five burst it for a Rare pickup. `skin` re-skins it as a level's own
+## event (PickupWorld.TRUCK_SKINS): the Hay Wagon (Orchard Lanes), the Bandit Barge (Snapper Bayou).
 class LootTruck extends RamTarget:
+	const SKINS := {"": [Color(0.1, 0.7, 0.6), Color(0.02, 0.26, 0.22), Color(0.08, 0.55, 0.47)],
+		"haywagon": [Color(0.62, 0.36, 0.16), Color(0.3, 0.16, 0.06), Color(0.93, 0.78, 0.34)],
+		"barge": [Color(0.24, 0.32, 0.18), Color(0.1, 0.13, 0.07), Color(0.55, 0.42, 0.24)]}
 	var rams := 0
 	var cooldown := 0.0
+	var skin := ""
 	func _init() -> void:
 		super()
 		radius = 60.0
@@ -188,13 +194,210 @@ class LootTruck extends RamTarget:
 		WorldProps.say(global_position, "GOT AWAY")
 		super()
 	func _draw() -> void:
-		var teal := Color(0.1, 0.7, 0.6)
-		draw_rect(Rect2(-80, -36, 110, 72), teal)
-		draw_rect(Rect2(-80, -36, 110, 72), Color(0.02, 0.26, 0.22), false, 4.0)
-		draw_rect(Rect2(30, -30, 46, 60), Color(0.08, 0.55, 0.47))
+		var cols: Array = SKINS.get(skin, SKINS[""])
+		draw_rect(Rect2(-80, -36, 110, 72), cols[0])
+		draw_rect(Rect2(-80, -36, 110, 72), cols[1], false, 4.0)
+		if skin == "haywagon": #bales on the bed
+			for i in 3: draw_rect(Rect2(-74 + i * 34, -28, 30, 56), cols[2])
+		draw_rect(Rect2(30, -30, 46, 60), cols[2] if skin != "haywagon" else cols[0].darkened(0.2))
 		draw_rect(Rect2(52, -24, 18, 48), Color(0.8, 0.94, 1.0))
 		HudTheme.text(self, Vector2(-25, 12), "$", 40, HudTheme.GOLD, HORIZONTAL_ALIGNMENT_CENTER)
 		for i in rams: draw_circle(Vector2(-60 + i * 22, -48), 6.0, HudTheme.GOLD)
+
+## A world event's rumble: a camera shake, a pad buzz and a low thud
+static func rumble(amount: float) -> void:
+	var c = car()
+	if c == null: return
+	var feel = c.get("crushFeel")
+	if is_instance_valid(feel): feel.addTrauma(amount)
+	if c.get("isPlayer") && Settings.has_method("vibrate"): Settings.vibrate(0.3, 0.5, 0.25)
+	Audio.play(Transition.SOUNDS["thud"], -8.0, 0.5)
+
+## Unshaded, so night never hides a world event's tell
+static func unshaded(node: CanvasItem) -> void:
+	var m := CanvasItemMaterial.new()
+	m.light_mode = CanvasItemMaterial.LIGHT_MODE_UNSHADED
+	node.material = m
+
+#==================================================================================================
+## Stampede (a level's world event, PickupWorld.WORLD_EVENTS): dust on the horizon, an edge arrow and a rumble
+## for WARN s, then a herd of HERD Thunderhoof (SpawnManager.spawnGroup) bursts out and is driven along `dir`,
+## across the car's path AHEAD px in front of it (GoonVerbs.Herd.spook: trampling and bursting fences). After the
+## drive they are an ordinary herd. A driver who ignores it is never wrecked by it: it is a herd crossing.
+class Stampede extends Node2D:
+	const WARN := 2.5
+	const HERD := 5
+	const AHEAD := 1000.0
+	const SIDE := 1100.0
+	const DUST := Color(0.74, 0.63, 0.47, 0.6)
+	var dir := Vector2.RIGHT
+	var age := 0.0
+	var rumbleT := 0.0
+	var herd: Array = []
+	func _ready() -> void:
+		z_index = 2
+		WorldProps.unshaded(self)
+		PickupWorld.beacon(self, HudTheme.GOLD, PickupWorld.worldEventIcon("stampede"))
+		if is_instance_valid(Root.spawnManager): Root.spawnManager.requestScene(&"thunderhoof") #outside a line-up it loads now
+	func _physics_process(delta: float) -> void:
+		age += delta
+		if not herd.is_empty() || age >= WARN:
+			if herd.is_empty(): release()
+			if age > WARN + GoonVerbs.Herd.DRIVE_SECONDS + 1.0: queue_free()
+			return
+		rumbleT -= delta
+		if rumbleT <= 0.0:
+			rumbleT = 0.6
+			WorldProps.rumble(0.1)
+	func _process(_delta: float) -> void:
+		if age < WARN + 1.0: queue_redraw()
+	func release() -> void:
+		if not is_instance_valid(Root.spawnManager):
+			queue_free()
+			return
+		herd = Root.spawnManager.spawnGroup(&"thunderhoof", global_position, HERD, &"graze")
+		if herd.is_empty():
+			queue_free()
+			return
+		for h in herd:
+			if h.verb is GoonVerbs.Herd: h.verb.calm = &"move" #an ordinary herd once the drive is over
+		if herd[0].verb is GoonVerbs.Herd: herd[0].verb.spook(global_position - dir * 300.0)
+	func _draw() -> void:
+		var k := clampf(age / WARN, 0.0, 1.0)
+		var fade := 1.0 - clampf(age - WARN, 0.0, 1.0)
+		for i in 9:
+			var off := dir.orthogonal() * (i - 4) * 70.0 - dir * (40.0 + 30.0 * sin(age * 3.0 + i)) + dir * k * 120.0
+			draw_circle(off, (50.0 + 40.0 * k) * (0.7 + 0.3 * sin(age * 2.0 + i * 1.7)), Color(DUST, DUST.a * fade))
+
+#==================================================================================================
+## Flash flood (a level's world event; Red Canyon): a rumble and an edge arrow upstream for WARN s, then a water
+## sheet runs down the wash nearest ahead of the car at SPEED for SECONDS, following the wash's bends. It sweeps
+## away goons on WASH cells in its front (SPLASH, credited near the car like any kill the player set up) and, outside
+## integrate() like the oil hazard, nudges the car along the wash while the car is on it near the front. It never
+## damages the car. Its node sits at the front, so the edge arrow points at the water.
+class FlashFlood extends Node2D:
+	const SPEED := 520.0
+	const SECONDS := 8.0
+	const WARN := 2.0
+	const HALF := 420.0       #px either side of the wash's line it covers
+	const BAND := 260.0       #px deep, the front that sweeps goons
+	const CAR_BAND := 700.0   #the car is nudged while it is on the wash within this far behind the front
+	const PUSH := 14.0        #px/s added to the car's velocity a tick, along the flow
+	const SWEEP_EVERY := 3    #ticks between sweeps
+	const STEER_EVERY := 0.25 #s between looks for the wash's bend
+	const TRAIL := 16
+	const WATER := Color(0.5, 0.72, 0.9, 0.55)
+	const FOAM := Color(0.95, 0.98, 1.0, 0.85)
+	var dir := Vector2.RIGHT
+	var age := 0.0
+	var steerT := 0.0
+	var rumbleT := 0.0
+	var swept := 0
+	var trail := PackedVector2Array() #where the front has been, world px
+	func _ready() -> void:
+		z_index = 1
+		WorldProps.unshaded(self)
+		PickupWorld.beacon(self, Color(0.45, 0.75, 1.0), PickupWorld.worldEventIcon("flood"))
+	## Where the flood starts and which way it runs: [start, dir] for the nearest wash ahead of the car (its
+	## upstream end, up to 1,800 px back along it), [] for none
+	static func locate(c) -> Array:
+		var heading: float = c.velocity.angle() if c.velocity.length() > 80.0 else c.rotation
+		var found := Vector2.INF
+		for dist in [500.0, 900.0, 1300.0, 1700.0, 2100.0]:
+			for a in [0.0, 0.4, -0.4, 0.8, -0.8]:
+				var p: Vector2 = c.global_position + Vector2.from_angle(heading + a) * dist
+				if World.terrainAt(p) == Root.terrain.WASH:
+					found = p
+					break
+			if found != Vector2.INF: break
+		if found == Vector2.INF: return []
+		var axis := Vector2.ZERO
+		var bestN := 0
+		for k in 8:
+			var d := Vector2.from_angle(k * PI / 8.0)
+			var n := 0
+			for j in range(1, 6):
+				for s in [-1.0, 1.0]:
+					if World.terrainAt(found + d * s * j * 150.0) == Root.terrain.WASH: n += 1
+			if n > bestN:
+				bestN = n
+				axis = d
+		if axis == Vector2.ZERO: return []
+		if axis.dot(Vector2.from_angle(heading)) < 0.0: axis = -axis #it runs the way the car is going
+		var start := found
+		for i in 12:
+			if World.terrainAt(start - axis * 150.0) != Root.terrain.WASH: break
+			start -= axis * 150.0
+		return [start, axis]
+	## The wash's bend ahead: the heading within 0.5 rad of `d` with the most wash along it
+	static func followWash(at: Vector2, d: Vector2) -> Vector2:
+		var best := d
+		var bestN := 0
+		for k in [0, 1, -1, 2, -2]:
+			var t := d.rotated(k * 0.25)
+			var n := 0
+			for j in range(1, 4):
+				if World.terrainAt(at + t * j * 150.0) == Root.terrain.WASH: n += 1
+			if n > bestN:
+				bestN = n
+				best = t
+		return best
+	func _physics_process(delta: float) -> void:
+		age += delta
+		if age < WARN:
+			rumbleT -= delta
+			if rumbleT <= 0.0:
+				rumbleT = 0.5
+				WorldProps.rumble(0.12)
+			return
+		if age > WARN + SECONDS:
+			modulate.a -= delta * 2.0
+			if modulate.a <= 0.0: queue_free()
+			return
+		global_position += dir * SPEED * delta
+		steerT -= delta
+		if steerT <= 0.0:
+			steerT = STEER_EVERY
+			dir = followWash(global_position, dir)
+			trail.push_back(global_position)
+			if trail.size() > TRAIL: trail.remove_at(0)
+		if (Engine.get_physics_frames() + get_instance_id()) % SWEEP_EVERY == 0: sweep()
+		pushCar()
+	## Goons on the wash in the front are swept away
+	func sweep() -> int:
+		var n := 0
+		var side := dir.orthogonal()
+		for goon in Spill.goonsNear(global_position, HALF + BAND):
+			if goon.dead: continue
+			var off: Vector2 = goon.global_position - global_position
+			var along := off.dot(dir)
+			if along > 60.0 || along < -BAND || absf(off.dot(side)) > HALF: continue
+			if World.terrainAt(goon.global_position) != Root.terrain.WASH: continue
+			Spill.flatten(goon, global_position - dir * 80.0, &"boom", &"splash")
+			n += 1
+		swept += n
+		return n
+	## The car on the wash near the front is carried along it, never wrecked
+	func pushCar() -> bool:
+		var c = WorldProps.car()
+		if c == null: return false
+		var off: Vector2 = c.global_position - global_position
+		var along := off.dot(dir)
+		if along > 80.0 || along < -CAR_BAND || absf(off.dot(dir.orthogonal())) > HALF: return false
+		if World.terrainAt(c.global_position) != Root.terrain.WASH: return false
+		c.velocity += dir * PUSH
+		return true
+	func _process(_delta: float) -> void: queue_redraw()
+	func _draw() -> void:
+		var side := dir.orthogonal()
+		if age < WARN: #the roar upstream: a churning patch
+			for i in 6: draw_circle(side * (i - 2.5) * 120.0 + dir * sin(age * 6.0 + i) * 30.0, 70.0 + 20.0 * sin(age * 4.0 + i), Color(WATER, 0.25 + 0.2 * age / WARN))
+			return
+		for i in trail.size():
+			var p := to_local(trail[i])
+			draw_circle(p, HALF * 0.9, Color(WATER, WATER.a * (0.3 + 0.7 * float(i) / TRAIL)))
+		draw_colored_polygon(PackedVector2Array([side * HALF, side * HALF - dir * BAND, -side * HALF - dir * BAND, -side * HALF]), WATER)
+		draw_line(side * HALF, -side * HALF, FOAM, 22.0)
 
 ## A bowling pin: a fodder goon standing still. Crushing one counts as a crush.
 class Pin extends RamTarget:
@@ -462,31 +665,6 @@ class PrizeWheel extends Node2D:
 		draw_set_transform(Vector2.ZERO, -global_rotation, Vector2.ONE) #the pointer stays at the top
 		draw_colored_polygon(PackedVector2Array([Vector2(0, -R + 18), Vector2(-14, -R - 16), Vector2(14, -R - 16)]), Color(1.0, 0.95, 0.86))
 		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-
-## A breakable crate: smash it above 200 px/s for a Common or Uncommon pickup.
-class Crate extends Area2D:
-	const SMASH := 200.0
-	func _ready() -> void:
-		collision_layer = 0
-		collision_mask = 1
-		var shape = CollisionShape2D.new()
-		var box = RectangleShape2D.new()
-		box.size = Vector2(70, 70)
-		shape.shape = box
-		add_child(shape)
-		body_entered.connect(onBody)
-	func onBody(body) -> void:
-		if not body.has_method("getIsPlayer") || body.velocity.length() < SMASH: return
-		set_deferred("monitoring", false)
-		if is_instance_valid(Root.spawnManager): Root.spawnManager.fx.bits(global_position, 0)
-		var id := Pickups.rollAtLeast(Pickups.R.COMMON)
-		if Pickups.rarity(id) > Pickups.R.UNCOMMON: id = Pickups.openOr("coinstack")
-		PickupEffects.collect(body, id, global_position)
-		var flyers = RewardFlyers.instance()
-		if flyers: flyers.launch(Pickups.texture(id), get_global_transform_with_canvas(), Pickups.uiGroup(id))
-		queue_free()
-	func _draw() -> void:
-		draw_texture_rect(Pickups.texture("crate"), Rect2(-40, -40, 80, 80), false)
 
 ## A Supply Drop: a crate on a parachute that becomes a Rare-or-better pickup when it lands.
 class SupplyDrop extends Node2D:

@@ -183,11 +183,12 @@ func spawnAt(coordinates: Vector2) -> void:
 		Root.levelRoot.add_child(goon)
 
 ## Some goons spawn by a prop when one is near the spot and out of sight: Snappers by logs, the Rat Pack
-## from manholes, Rattlers sunning on red rocks (BreakableProp.tag groups them). Anything else, or no such
-## prop, keeps the spot. SPAWN_OFFSET puts the goon beside the prop instead of on it; SPAWN_STATE is the
-## state it starts in there (Walker._ready reads the spawnState meta).
-const SPAWN_PROPS := {&"snapper": &"prop_log", &"rat": &"prop_manhole", &"rattler": &"prop_rock"}
-const SPAWN_OFFSET := {&"snapper": 70.0, &"rattler": 130.0} #a red rock is about 75 px across: room to crush it without the rock
+## from manholes, Rattlers sunning on red rocks, Jackalopes out of burrows (BreakableProp.tag groups them; a
+## collapsed burrow leaves its group, so it spawns no more). Anything else, or no such prop, keeps the spot.
+## SPAWN_OFFSET puts the goon beside the prop instead of on it; SPAWN_STATE is the state it starts in there
+## (Walker._ready reads the spawnState meta).
+const SPAWN_PROPS := {&"snapper": &"prop_log", &"rat": &"prop_manhole", &"rattler": &"prop_rock", &"jackalope": &"prop_burrow"}
+const SPAWN_OFFSET := {&"snapper": 70.0, &"rattler": 130.0, &"jackalope": 75.0} #a red rock is about 75 px across: room to crush it without the rock
 const SPAWN_STATE := {&"rattler": &"sun"}
 const PROP_SEARCH_PX := 1500.0
 const PROP_HIDDEN_PX := 1600.0 #the prop must be at least this far from the car

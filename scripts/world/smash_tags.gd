@@ -18,6 +18,19 @@ const HEROES := {
 	&"fence": "Fences smash at %s",
 	&"haybale": "Hay bales smash at %s",
 	&"hedge": "Hedges smash at %s",
+	&"den": "Smash Bandit dens at %s: the stolen loot bursts out",
+	&"burrow": "Burrows cave in at %s: flush the Jackalopes out",
+	&"bell": "Ring the Dinner Bell at %s: every goon near comes running",
+	&"scarecrow": "Ram scarecrows at %s: the Buzzards drop",
+	&"farmgate": "Farm gates smash at %s",
+	&"pumpkin": "Pumpkins splat at %s and barely slow you",
+	&"still": "Stills blow up at %s and burn: mind the blast",
+	&"tnt": "TNT blows up at %s: mind the blast",
+	&"sluice": "Ram sluice gates at %s: the flood sweeps the shallows",
+	&"rockpile": "Smash rock piles at %s: a rockslide rolls on",
+	&"saguaro": "Big saguaros topple at %s onto the goons behind",
+	&"ranger_tower": "Ranger towers topple at %s onto the goons behind",
+	&"fallen_trunk": "Leaning trunks drop across the trail at %s",
 }
 const SHOW_PX := 700.0
 const HEADING_DOT := 0.82  #the car's travel within about 35 degrees of the prop
@@ -52,9 +65,11 @@ func forget(prop: Node2D) -> void:
 		shownProps.remove_at(i)
 		shownAlpha.remove_at(i)
 
-## The speed that smashes it now (a crane: the ram that drops its container), INF when spent
+## The speed that smashes it now (a crane, a bell, a scarecrow: the ram that does something, Spill.ramSpeed),
+## INF when spent
 static func smashSpeed(prop: Node2D) -> float:
-	if BreakableProp.propId(prop) == &"crane": return INF if prop.get_meta(&"spilled", false) else Spill.DROP_SPEED
+	var ram := Spill.ramSpeed(prop)
+	if ram >= 0.0: return ram
 	return BreakableProp.speedOf(prop)
 
 ## Whether the car at `carPos` moving at `vel` is heading at `at` within SHOW_PX
