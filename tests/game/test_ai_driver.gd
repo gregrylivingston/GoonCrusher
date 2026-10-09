@@ -60,10 +60,13 @@ func test_plan_keys():
 func test_steering_ramps_and_recentres():
 	var controller = load("res://scene/player/controller/playerCarController.gd")
 	var wheel = 0.0
-	for i in 5: wheel = controller.nextSteering(wheel, true, false, 4)
-	assert_almost_eq(wheel, -0.25, 0.0001, "holding left turns the wheel 0.05 a tick at traction 4")
-	wheel = controller.nextSteering(wheel, false, false, 4)
-	assert_almost_eq(wheel, -0.225, 0.0001, "letting go recentres it")
+	for i in 5: wheel = controller.nextSteering(wheel, true, false, 0.1)
+	assert_almost_eq(wheel, -0.5, 0.0001, "holding left turns the wheel `rate` a tick")
+	wheel = controller.nextSteering(wheel, false, false, 0.1)
+	assert_almost_eq(wheel, -0.5 + 0.1 * CarHandling.tune.steerReturn, 0.0001, "letting go recentres it, faster")
+	wheel = controller.nextSteering(-0.1, false, true, 0.1)
+	assert_almost_eq(wheel, 0.0, 0.0001, "counter-steering stops at the centre first")
+	assert_almost_eq(controller.steerToward(0.0, 0.4, 1.0), 0.4, 0.0001, "a stick held part way turns the wheel part way")
 
 func test_station_graph_shortest_first_hop():
 	#0 is the goal; the car sees only 2, and 2 reaches 0 through 1

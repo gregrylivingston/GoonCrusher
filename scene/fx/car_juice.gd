@@ -294,9 +294,9 @@ static func isRough(surface: int) -> bool:
 static func trailKind(surface: int) -> int:
 	return trailBySurface[surface][2] if trailBySurface.has(surface) else -1
 
-## The sideways acceleration the car can hold at top speed (the yaw cap at that speed): the most a turn can lean it
+## The sideways acceleration the car can hold at top speed (its turn rate there): the most a turn can lean it
 func maxLateral(topSpeed: float) -> float:
-	return OverheadCarBody2D.maxYaw(car.steering * car.conditionFactor("steering")) * topSpeed
+	return car.yawLimit(topSpeed) * topSpeed
 
 ## The car's top speed on grass (engine against drag), for the lean limit
 func topSpeed() -> float:

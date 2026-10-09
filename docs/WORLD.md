@@ -60,7 +60,7 @@ The map is pure data built from the seed and the def; the scene only ever sees r
 
 ## The terrain table
 
-`Root.terrain` is append-only, and `World.TERRAIN` has one row per value in the same order (`Goons.T` mirrors the enum too; `test_world.gd` and `test_goons.gd` check all three agree). Friction is on the car's scale; grip multiplies the car's grip after `gripFor`'s clamp; brake multiplies the brake force; push is a conveyor's speed in px/s.
+`Root.terrain` is append-only, and `World.TERRAIN` has one row per value in the same order (`Goons.T` mirrors the enum too; `test_world.gd` and `test_goons.gd` check all three agree). Friction is on the car's scale; grip multiplies the car's grip (`CarHandling.grip`); brake multiplies the brake force; push is a conveyor's speed in px/s.
 
 | id | Name | Letter | Friction | Grip | Brake | Push | Passable | Lethal | Wall | Route weight | Spawnable |
 |---|---|---|---|---|---|---|---|---|---|---|---|

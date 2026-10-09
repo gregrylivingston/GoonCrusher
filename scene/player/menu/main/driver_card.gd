@@ -38,7 +38,7 @@ const STATS := [
 const STAT_TEXT := {
 	"engine": ["Engine", "Acceleration and top speed"],
 	"steering": ["Steering", "How fast the car turns"],
-	"traction": ["Traction", "Grip on loose and slick ground"],
+	"traction": ["Traction", "Grip in corners and on slick ground, and brakes"],
 	"armor": ["Armor", "Less damage from goons and walls"],
 	"oil": ["Oil", "Burns less fuel"],
 	"headlights": ["Lights", "Headlight reach at night"],
@@ -260,7 +260,7 @@ func refresh() -> void:
 	portrait.modulate = Color(0, 0, 0, 0.88) if locked else Color.WHITE
 	nameLabel.text = info.charName.to_upper()
 	var type = info.carId.capitalize()
-	infoLabel.text = "Not in the demo" if demoLocked else type
+	infoLabel.text = "Not in the demo" if demoLocked else "%s  ·  %s" % [type, weightClass(info.weight)]
 	stats.visible = focused && not locked
 	infoLabel.visible = not stats.visible
 	for child in priceLine.get_children():
@@ -293,6 +293,12 @@ func refresh() -> void:
 		mainButton.text = "DRIVE"
 		mainButton.disabled = false
 	if stats.visible: refreshStats()
+
+#the car's weight (CarInfo.weight, CarHandling) in a word, under its name
+static func weightClass(weight: int) -> String:
+	if weight < 30: return "Light"
+	if weight < 60: return "Medium"
+	return "Heavy" if weight < 85 else "Very heavy"
 
 func refreshStats() -> void:
 	for i in STATS.size():

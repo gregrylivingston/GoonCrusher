@@ -25,7 +25,9 @@ func _provide_input(_input):
 	else:
 		_input.acceleration = 0.0
 
-	_input.steering = nextSteering(_input.steering, pressed("TurnLeft"), pressed("TurnRight"), car.traction)
+	#the AI holds keys; a player's stick steers part of the way (the keyboard gives -1, 0 or 1)
+	var target := Input.get_axis("TurnLeft", "TurnRight") if not driver else steerTarget(pressed("TurnLeft"), pressed("TurnRight"))
+	_input.steering = steerToward(_input.steering, target, car.steerRate())
 
 	if pressed("Brake"):
 		if car.velocity.length() < 10 || car.gear == -1:
@@ -37,9 +39,17 @@ func _provide_input(_input):
 	else: _input.braking = false
 	return _input
 
-#the wheel after one tick: a held key turns it further each tick (faster with traction), and
-#letting go recentres it. Shared with the AI driver's prediction.
-static func nextSteering(steering: float, left: bool, right: bool, traction: int) -> float:
-	if left: return steering - (0.01 + traction / 100.0)
-	if right: return steering + (0.01 + traction / 100.0)
-	return steering * 0.9
+#the wheel after one tick with these keys held. Shared with the AI driver's prediction.
+static func nextSteering(steering: float, left: bool, right: bool, rate: float) -> float:
+	return steerToward(steering, steerTarget(left, right), rate)
+
+static func steerTarget(left: bool, right: bool) -> float:
+	return -1.0 if left else (1.0 if right else 0.0)
+
+#The wheel moves toward `target` (-1 to 1) by `rate` a tick (OverheadCarBody2D.steerRate: the steering
+#stat and weight). Heading back toward the centre (letting go, easing off, or counter-steering) is
+#CarHandling.steerReturn times quicker, and stops at the centre before turning the other way.
+static func steerToward(steering: float, target: float, rate: float) -> float:
+	if steering != 0.0 && signf(target - steering) != signf(steering):
+		return move_toward(steering, target if target * steering > 0.0 else 0.0, rate * CarHandling.tune.steerReturn)
+	return move_toward(steering, target, rate)

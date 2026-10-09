@@ -58,13 +58,15 @@ func test_getPowerupFromWeights_leaves_the_walker_table_alone():
 		drop.free()
 	assert_eq(table, copy)
 
-func test_traction_adds_grip_within_bounds():
-	var stock = OverheadCarBody2D.gripFor(0.1, 0, OverheadCarBody2D.GRIP_FAST_MAX)
-	assert_almost_eq(stock, 0.1, 0.0001)
-	assert_gt(OverheadCarBody2D.gripFor(0.1, 25, OverheadCarBody2D.GRIP_FAST_MAX), stock, "traction adds grip")
-	assert_eq(OverheadCarBody2D.gripFor(0.1, 1000, OverheadCarBody2D.GRIP_FAST_MAX), OverheadCarBody2D.GRIP_FAST_MAX)
-	assert_eq(OverheadCarBody2D.gripFor(0.7, 1000, OverheadCarBody2D.GRIP_SLOW_MAX), OverheadCarBody2D.GRIP_SLOW_MAX)
-	assert_eq(OverheadCarBody2D.gripFor(0.0, -100, OverheadCarBody2D.GRIP_FAST_MAX), OverheadCarBody2D.GRIP_MIN)
+func test_traction_adds_grip_with_diminishing_returns():
+	var h := CarHandling.tune
+	var stock := h.grip(800.0, 0, 0.5)
+	assert_gt(h.grip(800.0, 25, 0.5), stock, "traction adds grip")
+	assert_gt(h.grip(800.0, 25, 0.5) - stock, h.grip(800.0, 150, 0.5) - h.grip(800.0, 125, 0.5), "the first points count most")
+	assert_gt(h.gripFastHigh * h.gripLight, h.grip(800.0, 100000, 0.0), "never past the ceiling")
+	assert_gt(h.grip(800.0, 25, 0.0), h.grip(800.0, 25, 1.0), "heavy cars grip less, so they slide wider")
+	assert_gt(h.grip(50.0, 0, 0.5), h.grip(800.0, 0, 0.5), "slow, the tyres hold")
+	assert_almost_eq(CarHandling.share(-100), 0.0, 0.0001, "a negative stat counts as 0")
 
 func test_powerups_stop_at_the_stat_cap():
 	var cap = OverheadCarBody2D.STAT_CAP

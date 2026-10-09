@@ -15,6 +15,7 @@
 [resource]
 script = ExtResource("11_gabta")
 carId = "racer"
+weight = 15
 charName = "Kim"
 profilePic = ExtResource("10_u8c0r")
 backgroundPic = ExtResource("1_fmok2")

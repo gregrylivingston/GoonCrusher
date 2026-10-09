@@ -36,7 +36,6 @@ shader_parameter/outline_width = 2.0
 shader_parameter/show_bound = false
 
 [node name="Car" instance=ExtResource("1_kgqi5")]
-slip_speed = 0
 purseAudio = Array[AudioStreamMP3]([ExtResource("12_ysw7g"), ExtResource("13_mhftg")])
 powerupAudio = Array[AudioStreamMP3]([ExtResource("14_5e0m1"), ExtResource("15_8o26u"), ExtResource("16_rvyge"), ExtResource("17_s5ex8"), ExtResource("18_pirrt"), ExtResource("19_gdkom"), ExtResource("20_2bfxb"), ExtResource("21_y7erb"), ExtResource("22_u0ryi")])
 lowGasAudio = Array[AudioStreamMP3]([ExtResource("23_5lx7c"), ExtResource("24_gnl76")])

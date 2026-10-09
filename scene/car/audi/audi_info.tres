@@ -16,6 +16,7 @@
 [resource]
 script = ExtResource("12_ancu4")
 carId = "audi"
+weight = 30
 charName = "Snake"
 profilePic = ExtResource("11_ivnrd")
 backgroundPic = ExtResource("1_i168s")

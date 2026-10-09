@@ -62,7 +62,7 @@ func test_slow_it_only_brakes():
 	assert_gt(plain[1].length(), held[1].length(), "and the car slows")
 
 func test_heavy_cars_slide_longer():
-	assert_gt(car("racer").handbrakeGrip(), car("semi").handbrakeGrip(), "weight (armor) loosens the slide")
+	assert_gt(car("racer").handbrakeGrip(), car("semi").handbrakeGrip(), "weight loosens the slide")
 
 func test_the_v2_bindings_migration_frees_space():
 	var bindings := {"UseItem": [{"key": KEY_E}, {"key": KEY_SPACE}, {"button": JOY_BUTTON_X}], "Brake": [{"key": KEY_SHIFT}]}
@@ -73,21 +73,23 @@ func test_the_v2_bindings_migration_frees_space():
 	assert_false(bindings["UseMove"].has({"key": KEY_SHIFT}), "...so Boost is saved without it")
 	assert_true(bindings["UseMove"].has({"button": JOY_BUTTON_LEFT_SHOULDER}), "and keeps its pad button")
 
-#Speed-sensitive steering (OverheadCarBody2D.steerLimit): a maxed fast car at top speed turned about
-#7.5 rad/s, too twitchy to drive. The yaw cap binds only at speed.
-func test_a_maxed_fast_car_turns_no_faster_than_the_yaw_cap():
+#Speed-sensitive steering (CarHandling.wheelAngle): a maxed fast car at top speed used to turn about
+#7.5 rad/s, too twitchy to drive. Now the wheel turns the car at most at its yaw ceiling.
+func test_a_maxed_fast_car_turns_no_faster_than_its_ceiling():
 	var c = car("police")
 	c.steering = 45
 	var turned: Vector2 = slide(c, 1600.0, false, 10)[0]
 	var rate := absf(turned.angle()) / (10 * DT)
-	assert_gt(OverheadCarBody2D.maxYaw(45) * 1.1, rate, "at 1600 px/s, within the cap (%.2f rad/s)" % rate)
-	assert_gt(rate, OverheadCarBody2D.maxYaw(45) * 0.6, "but still turning hard")
+	assert_gt(c.yawLimit(1600.0) * 1.1, rate, "at 1600 px/s, within the ceiling (%.2f rad/s)" % rate)
+	assert_gt(rate, c.yawLimit(1600.0) * 0.6, "but still turning hard")
 
-func test_the_yaw_cap_leaves_slow_steering_alone():
-	for stat in [4, 25, 45]:
-		var wheel := deg_to_rad(8 + stat / 4.0)
-		assert_gt(OverheadCarBody2D.steerLimit(300.0, stat, 70.0), wheel, "steering %d at 300 px/s: full lock" % stat)
-	assert_eq(OverheadCarBody2D.steerLimit(0.0, 45, 70.0), PI, "standing still")
+func test_slow_the_lock_limits_the_turn():
+	var c = car("police")
+	var h := CarHandling.tune
+	assert_almost_eq(h.wheelAngle(100.0, 25, 0.5, 70.0), h.wheelMax(25), 0.0001, "at walking pace: full lock")
+	assert_gt(h.wheelMax(25), h.wheelAngle(900.0, 25, 0.5, 70.0), "fast: less wheel")
+	assert_almost_eq(h.wheelAngle(0.0, 25, 0.5, 70.0), h.wheelMax(25), 0.0001, "standing still")
+	assert_gt(c.yawLimit(400.0), c.yawLimit(60.0) * 2.0, "the turn builds with speed from a crawl")
 
 func test_the_handbrake_still_swings_past_the_cap():
 	var c = car("police")

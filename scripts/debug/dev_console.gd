@@ -203,6 +203,7 @@ func registerCommands() -> void:
 	add("pickup", cmdPickup, "pickup <id> [count]", "collect any pickup from Pickups.DATA (docs/PICKUPS.md), e.g. nitro, deal, claw, goldgoon", "Run")
 	add("win", cmdWin, "win", "end the run as a success (beats the mode, as playing it would)", "Run")
 	add("lose", cmdLose, "lose", "end the run as a wreck", "Run")
+	add("handling", cmdHandling, "handling [name value | car stat value | reset]", "the driving numbers (CarHandling, docs/CAR_ART.md \"Handling\"): bare lists them with this car's turn rate, wheel and brakes; name value changes one for every car (the AI follows); car stat value sets this car's engine, steering, traction or weight for the run; reset puts every number back. Nothing is saved", "Run")
 	add("night", cmdNight, "night", "turn night on now (the level's own cycle carries on)", "Run")
 	add("day", cmdDay, "day", "turn day on now", "Run")
 
@@ -542,6 +543,34 @@ func cmdFuel(_args: Array) -> String:
 	car.reward("fuel", 100.0 - car.fuel)
 	car.resetGasWarning()
 	return "Fuel full"
+
+func cmdHandling(args: Array) -> String:
+	var h := CarHandling.tune
+	if not args.is_empty() && args[0] == "reset":
+		CarHandling.reset()
+		return "Handling numbers back to their defaults"
+	if not args.is_empty() && args[0] == "car":
+		if args.size() < 3 || not args[1] in ["engine", "steering", "traction", "weight"]: return "Error: handling car engine | steering | traction | weight <value>"
+		if not is_instance_valid(Root.playerCar): return "Error: no car (start a run)"
+		Root.playerCar.set(args[1], int(args[2]))
+		return "%s: %s %d for this run" % [Root.playerCar.carId, args[1], int(args[2])]
+	if args.size() >= 2:
+		for name in h.names():
+			if name.to_lower() == args[0]:
+				h.set(name, float(args[1]))
+				return "%s = %s" % [name, h.get(name)]
+		return "Error: no handling number '%s' (bare handling lists them)" % args[0]
+	var lines := []
+	for name in h.names(): lines.push_back("  %-16s %s" % [name, h.get(name)])
+	var car = Root.playerCar
+	if is_instance_valid(car):
+		var w := CarHandling.weightShare(car.weight)
+		var t: float = car.traction * car.conditionFactor("tires")
+		lines.push_back("%s (engine %d, steering %d, traction %d, weight %d):" % [car.carId, car.engine, car.steering, car.traction, car.weight])
+		lines.push_back("  turn rate %.2f / %.2f / %.2f / %.2f rad/s at 200 / 500 / 900 / 1400 px/s" % [car.yawLimit(200.0), car.yawLimit(500.0), car.yawLimit(900.0), car.yawLimit(1400.0)])
+		lines.push_back("  full lock in %.2f s, brakes %.0f px/s², reverse %.0f px/s" % [1.0 / (car.steerRate() * Engine.physics_ticks_per_second), h.brakeDecel(t, w), h.reverseTop(car.engine * car.conditionFactor("engine"))])
+	return "
+".join(lines)
 
 func cmdGod(args: Array) -> String:
 	godMode = (args[0] in ["on", "1", "true"]) if not args.is_empty() else not godMode

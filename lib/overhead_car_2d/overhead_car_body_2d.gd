@@ -31,16 +31,13 @@ var luck: int = 1   #"Dice": more high-value drops (Root.luckAdjustedWeights)
 var clover: int = 1 #"Clover": more goons drop a pickup (walker.gd)
 var oil: int = 1
 var headlights: int = 1
+var weight: int = 50 #0-100, never upgraded: how the car carries its mass (CarHandling)
 
 #stats that upgrades and powerups raise; powerups can't push them past STAT_CAP in a run
 const UPGRADEABLE_STATS = ["engine", "steering", "traction", "armor", "oil", "headlights", "clover", "luck"]
 const STAT_CAP := 150
 const FUEL_BURN_BASE := 0.021 #fuel per physics tick at full throttle with 0 oil
 const WALL_DAMAGE_PER_SPEED := 0.07 #wall-hit damage per px/s of speed; armor is applied in damage()
-const TRACTION_GRIP_PER_POINT := 0.003 #grip each traction point adds to traction_fast/traction_slow
-const GRIP_MIN := 0.05
-const GRIP_FAST_MAX := 0.40
-const GRIP_SLOW_MAX := 0.95
 
 #System damage (docs/HUD.md, docs/CAR_ART.md). Each system has a condition from 0 to 100, and the
 #stat it scales keeps CONDITION_FLOOR of its value at 0%. Wall hits wear the system on the side that
@@ -75,12 +72,6 @@ func conditionFactor(system: String) -> float:
 @export var friction:float = 0.1
 @export var drag:float = 0.0005   #.0015
 
-@export var slip_speed:int = 100  # Speed where traction is reduced
-@export var traction_fast:float = 0.1  # High-speed traction
-@export var traction_slow:float = 0.7  # Low-speed traction
-@export var grip_per_traction:float = TRACTION_GRIP_PER_POINT #grip each traction point adds (gripFor)
-@export var grip_fast_max:float = GRIP_FAST_MAX
-@export var grip_slow_max:float = GRIP_SLOW_MAX
 @export var wheel_base:int = 70  # Distance from front to rear wheel
 
 var health:float = 100.0
@@ -271,7 +262,7 @@ func _physics_process(delta):
 			velocity = hitVelocity * BreakableProp.SPEED_KEEP #the slide stopped the car; a smash barely slows it
 		elif PropReactions.knocks(collider, hitVelocity):
 			velocity = hitVelocity * PropReactions.KNOCK_KEEP #a cone flies off instead of stopping the car
-		elif velocity.length() > 0.01 && World.isWall(collider):
+		elif hitVelocity.length() > 0.01 && World.isWall(collider): #the speed going in: a square hit leaves none after the slide
 			collideWithFixedObject( collision, hitVelocity )
 		elif collider is CharacterBody2D:
 			#the flank hull (CollisionShape2D_body) is there for walls; a goon against it is slamGoons' to judge
@@ -287,21 +278,25 @@ func _physics_process(delta):
 		stopCarFX()
 	else:
 		activeCarEffects(delta)
+	if isPlayer: updateLookAhead(delta)
 
 #One physics tick of the bicycle model, without moving the body: returns [new heading (unit
 #Vector2), new velocity]. `forward` is transform.x. The AI driver (scripts/ai/ai_driver.gd) runs it
 #ahead from predicted states, so it must only read the car's stats, never change them.
+#The numbers come from CarHandling (lib/overhead_car_2d/car_handling.gd), which turns the stats and the
+#car's weight into a turn rate, grip, brakes and so on (docs/CAR_ART.md, "Handling").
 func integrate(pos: Vector2, forward: Vector2, vel: Vector2, input: CarInput, delta: float) -> Array:
-	# Base steering wheel angle and acceleration
+	var h := CarHandling.tune
 	#damaged systems keep CONDITION_FLOOR of their stat (read only, so the AI's prediction matches)
 	var steer_stat = steering * conditionFactor("steering")
 	var engine_stat = engine * conditionFactor("engine")
 	var traction_stat = traction * conditionFactor("tires")
-	var steer_angle = input.steering * deg_to_rad( 8 + ( steer_stat / 4.0 ) )
-	var steer_limit := steerLimit(vel.length(), steer_stat, wheel_base)
-	steer_angle = clampf(steer_angle, -steer_limit, steer_limit) #fast cars don't whip round (maxYaw)
+	var w := CarHandling.weightShare(weight)
+	var speed := vel.length()
+	#the wheel: at full input it turns the car at CarHandling.yawAt for this speed, or at full lock when slow
+	var steer_angle = input.steering * h.wheelAngle(speed, steer_stat, w, wheel_base)
 	#the handbrake at speed: the wheel bites harder and the rear lets go (handbrakeGrip, below)
-	var sliding := input.handbrake && vel.length() > HANDBRAKE_MIN_SPEED
+	var sliding := input.handbrake && speed > HANDBRAKE_MIN_SPEED
 	if sliding: steer_angle *= HANDBRAKE_STEER
 	#Nitro (a timed pickup): more thrust, and less drag so the top speed rises by `top`
 	var thrust := 1.0
@@ -310,8 +305,10 @@ func integrate(pos: Vector2, forward: Vector2, vel: Vector2, input: CarInput, de
 		thrust = Pickups.DATA["nitro"]["thrust"]
 		dragScale = thrust / pow(Pickups.DATA["nitro"]["top"], 2.0)
 
-	var acceleration = input.acceleration * forward * ( engine_stat + 14 ) * 10 * ( 2.2 - abs(input.steering)) * thrust
+	var acceleration = input.acceleration * forward * ( engine_stat + 14 ) * 10 * 2.2 * (1.0 - h.thrustSteerCut * absf(input.steering)) * thrust
 	if input.handbrake: acceleration *= HANDBRAKE_THROTTLE #the locked rear eats part of the throttle
+	#reverse tops out well below forward (CarHandling.reverseTop)
+	if input.acceleration < 0.0 && vel.dot(forward) < 0.0 && speed >= h.reverseTop(engine_stat): acceleration = Vector2.ZERO
 
 	#the ground under this position (World's terrain table): friction with the off-road rule, grip and
 	#brake multipliers, and a conveyor's push. UNKNOWN (no map loaded) keeps the car's own friction.
@@ -319,70 +316,70 @@ func integrate(pos: Vector2, forward: Vector2, vel: Vector2, input: CarInput, de
 	var ground_friction := groundFriction(surface)
 
 	# Apply friction
-	if abs(vel.length()) < 5:
+	if speed < 5:
 		vel = Vector2.ZERO
+		speed = 0.0
 	var friction_force = vel * -ground_friction
-	var drag_force = vel * vel.length() * -drag * dragScale
-	if vel.length() < 100:
+	var drag_force = vel * speed * -drag * dragScale
+	if speed < 100:
 		friction_force *= 3
 	acceleration += drag_force + friction_force
-	if input.braking:
-		acceleration += - ( (5 + traction_stat) * 50 / ( vel.length() + 1)  ) * vel * World.brake(surface)
-	if input.handbrake && vel.length() > 0.0:
-		acceleration -= vel.normalized() * HANDBRAKE_DECEL * World.brake(surface)
 	acceleration += conveyorPull(vel, World.pushAt(pos, surface))
+	acceleration *= h.inertia(w) #weight: the same top speed, reached (and lost) more slowly when heavy
+	if input.handbrake && speed > 0.0:
+		acceleration -= vel.normalized() * HANDBRAKE_DECEL * World.brake(surface)
 
 	# Calculate steering
 	#sliding, the nose swings at the car's speed as if the wheels still bit, rather than slowing as the
 	#slide angle grows (the bicycle model's turn rate falls with the cosine of the slip)
-	var steer_vel = forward * vel.length() if sliding else vel
+	var steer_vel = forward * speed if sliding else vel
 	var rear_wheel = pos - forward * wheel_base / 2.0 + steer_vel * delta
 	var front_wheel = pos + forward * wheel_base / 2.0 + steer_vel.rotated(steer_angle) * delta
 	var new_heading = (front_wheel - rear_wheel).normalized()
-	var grip = gripFor(traction_slow, traction_stat, grip_slow_max, grip_per_traction)
-	if vel.length() > slip_speed:
-		grip = gripFor(traction_fast, traction_stat, grip_fast_max, grip_per_traction)
-	grip *= World.grip(surface) #after the clamp, so ice and oil stay slippery whatever the traction
+	var grip := h.grip(speed, traction_stat, w) * World.grip(surface) #ice and oil stay slippery whatever the traction
 	var d = new_heading.dot(vel.normalized())
 	if sliding && d > HANDBRAKE_CATCH_DOT: grip *= handbrakeGrip() #past the catch angle the tires bite again, so a held slide doesn't spin
-	if d >= 0: #sliding swings the velocity round without the shortening a lerp across a wide angle brings
-		vel = vel.slerp(new_heading * vel.length(), grip) if sliding else vel.lerp(new_heading * vel.length(), grip)
+	if d >= 0: #the travel swings toward the nose keeping its length; only the scrub (CarHandling.turnScrub) costs speed
+		var turned: Vector2 = vel.slerp(new_heading * speed, grip)
+		vel = turned if sliding else turned * (1.0 - h.turnScrub * absf(vel.angle_to(turned)))
 	if d < 0:
-		var back = -new_heading * min(vel.length(), ( engine_stat + 20 ) * 20)#10
+		var back = -new_heading * min(speed, ( engine_stat + 20 ) * 20)#10
 		vel = vel.lerp(back, grip) if sliding else back #a spin past 90 degrees keeps sliding instead of snapping round
-	return [new_heading, vel + acceleration * delta]
+	var out: Vector2 = vel + acceleration * delta
+	#brakes take speed off down to zero, never past it (a strong brake used to overshoot and hover)
+	if input.braking: out = out.move_toward(Vector2.ZERO, h.brakeDecel(traction_stat, w) * World.brake(surface) * delta)
+	return [new_heading, out]
 
 #The handbrake (Space / RB): above HANDBRAKE_MIN_SPEED the rear lets go and the car powerslides; let
 #go and the normal grip pulls it straight, keeping its speed. Every car has it, and its stats shape it:
 #steering sets how fast the nose swings, engine how hard it powers through, traction how quickly the
-#grip comes back, and armor (weight) how long it slides. Slower, it is a weak brake (and donuts).
+#grip comes back, and weight how long it slides. Slower, it is a weak brake (and donuts).
 const HANDBRAKE_MIN_SPEED := 150.0
 const HANDBRAKE_STEER := 1.6        #the wheel turns further while sliding
 const HANDBRAKE_THROTTLE := 0.85    #share of the engine's push left with the rear locked
 const HANDBRAKE_DECEL := 60.0       #px/s² of drag from the locked wheels (times the ground's brake)
-const HANDBRAKE_GRIP_LIGHT := 0.16  #share of the usual grip kept while sliding, at armor 0...
-const HANDBRAKE_GRIP_HEAVY := 0.07  #...and at HANDBRAKE_HEAVY_ARMOR or more: heavy cars slide longer
-const HANDBRAKE_HEAVY_ARMOR := 80.0
+const HANDBRAKE_GRIP_LIGHT := 0.16  #share of the usual grip kept while sliding, at weight 0...
+const HANDBRAKE_GRIP_HEAVY := 0.07  #...and at weight 100: heavy cars slide longer
 const HANDBRAKE_CATCH_DOT := 0.34   #cos(70 degrees): the widest slide angle before the tires catch
 
-#Speed-sensitive steering: the wheel's angle is capped so the nose turns at most maxYaw rad/s, which
-#only binds at speed (a stock sedan near its top speed; a maxed police car above about 800 px/s). Low-speed
-#handling is unchanged, and the handbrake still swings the nose past it (HANDBRAKE_STEER comes after).
-const MAX_YAW := 2.4            #rad/s at steering 0...
-const MAX_YAW_PER_STEER := 0.015 #...plus this per steering point (maxed police, 45: 3.1 rad/s)
+#this car's numbers from CarHandling, with damage: for the controller, the AI driver and CarJuice
+func steerRate() -> float:
+	return CarHandling.tune.steerRate(steering * conditionFactor("steering"), CarHandling.weightShare(weight))
 
-static func maxYaw(steerStat: float) -> float:
-	return MAX_YAW + maxf(steerStat, 0.0) * MAX_YAW_PER_STEER
+## rad/s: the fastest this car turns at `speed` (the yaw ceiling, or the full lock when slow)
+func yawLimit(speed: float) -> float:
+	var steerStat: float = steering * conditionFactor("steering")
+	var h := CarHandling.tune
+	return minf(h.yawAt(speed, steerStat, CarHandling.weightShare(weight)), speed * sin(h.wheelMax(steerStat)) / wheel_base)
 
-## The widest wheel angle (rad) at `speed` that keeps the turn within maxYaw (the bicycle model turns at
-## speed x sin(angle) / wheelBase)
-static func steerLimit(speed: float, steerStat: float, wheelBase: float) -> float:
-	if speed < 1.0: return PI
-	var s := maxYaw(steerStat) * wheelBase / speed
-	return asin(s) if s < 1.0 else PI
+## px: the tightest circle the car drives at full lock at `speed`, before tyre slip
+func turnRadius(speed: float) -> float:
+	var steerStat: float = steering * conditionFactor("steering")
+	var h := CarHandling.tune
+	return maxf(wheel_base / sin(h.wheelMax(steerStat)), speed / h.yawAt(speed, steerStat, CarHandling.weightShare(weight)))
 
 func handbrakeGrip() -> float:
-	return lerpf(HANDBRAKE_GRIP_LIGHT, HANDBRAKE_GRIP_HEAVY, clampf(armor / HANDBRAKE_HEAVY_ARMOR, 0.0, 1.0))
+	return lerpf(HANDBRAKE_GRIP_LIGHT, HANDBRAKE_GRIP_HEAVY, CarHandling.weightShare(weight))
 
 #friction on a surface for this car: the table's value with the off-road rule (armor ploughs through
 #soft ground); the car's own `friction` when no map is loaded. Read only, so integrate() stays pure.
@@ -453,7 +450,36 @@ func collideWithFixedObject( collision, hitVelocity = null ):
 		wallHealthLost += before - health
 		if moving.length() >= ZONE_WEAR_MIN_SPEED:
 			wearSystem(hitZone(collision), ZONE_WEAR_PER_SPEED * hurt / WALL_DAMAGE_PER_SPEED * 100.0 / (maxf(armor, 0.0) + 100.0))
-	velocity *= wallSpeedKeep(wallImpact(collision.get_normal(), moving))
+	wallResponse(collision.get_normal(), moving, lastWallHitTick == lastWallTick)
+
+#How the car comes off a wall (CarHandling's wall numbers). A fresh hit loses speed once (wallSpeedKeep)
+#and, going in hard, bounces back off it, less for heavy cars; staying against it only scrapes a little
+#off. A nose meeting the wall at a glancing angle is turned along it, so the car slides off instead of
+#grinding (the grip would otherwise keep pulling the travel back into the wall).
+var wallResponseTick := -1 #two pieces of one wall in one tick: one response
+func wallResponse(normal: Vector2, moving: Vector2, fresh: bool) -> void:
+	var now := Engine.get_physics_frames()
+	if now == wallResponseTick: return
+	wallResponseTick = now
+	var h := CarHandling.tune
+	if fresh:
+		velocity *= wallSpeedKeep(wallImpact(normal, moving))
+		var into := -normal.dot(moving)
+		if into >= h.bounceMinSpeed: velocity += normal * into * h.bounce(CarHandling.weightShare(weight))
+	else:
+		velocity *= h.scrapeKeep
+	rotation += wallDeflect(normal, transform.x, moving)
+
+## radians to turn the nose this contact tick: toward the wall's line when the end leading into it (the
+## nose, or the tail in reverse) meets it within deflectMaxAngle of glancing; 0 for a squarer hit
+static func wallDeflect(normal: Vector2, forward: Vector2, moving: Vector2) -> float:
+	var lead := forward if moving.dot(forward) >= 0.0 else -forward
+	if lead.dot(normal) >= 0.0: return 0.0 #already pointing away
+	var along := normal.orthogonal()
+	if along.dot(lead) < 0.0: along = -along
+	var off := lead.angle_to(along)
+	if absf(off) > deg_to_rad(CarHandling.tune.deflectMaxAngle): return 0.0
+	return off * CarHandling.tune.deflect
 
 #Wall damage is per contact, not per tick. Meeting a wall (none touched in the last WALL_CONTACT_GAP_TICKS)
 #is a hit: WALL_DAMAGE_PER_SPEED x the speed going in x impact. Staying against it is a scrape, which costs
@@ -723,6 +749,18 @@ func activeCarEffects(delta):
 	updateCameraZoom()
 
 		
+#The camera leads the car along its travel (CarHandling.lookAhead), so at speed the player sees what is
+#coming. Camera2D.offset is shared with CrushFeel and Juice.rumble, so this adds only its own change.
+var lookAheadApplied := Vector2.ZERO
+func updateLookAhead(delta: float) -> void:
+	if not is_instance_valid(camera): return
+	var h := CarHandling.tune
+	var want := (velocity * h.lookAhead).limit_length(h.lookAheadMax)
+	if Settings.reduce_motion(): want *= 0.5
+	var next := lookAheadApplied.lerp(want, 1.0 - exp(-h.lookAheadRate * delta))
+	camera.offset += next - lookAheadApplied
+	lookAheadApplied = next
+
 var defaultZoomLevel:float = 0.45
 var cameraAdjustmentSpeed: float = 0.0008
 func updateCameraZoom():
@@ -825,9 +863,6 @@ static func fuelBurn(acceleration: float, oilStat: float) -> float:
 	return absf(acceleration) * FUEL_BURN_BASE * 100.0 / (100.0 + 2.0 * maxf(oilStat, 0.0))
 
 #how strongly velocity turns toward the heading each tick: the car's base grip plus the traction stat
-static func gripFor(baseGrip: float, tractionStat: float, maxGrip: float, perPoint: float = TRACTION_GRIP_PER_POINT) -> float:
-	return clampf(baseGrip + tractionStat * perPoint, GRIP_MIN, maxGrip)
-
 
 #The Headlights stat (times the lights' condition) shows in the lamps: the beam reaches further (1 + stat/100,
 #what the AI reads), and grows wider and brighter on a square-root curve so the first upgrades show; the

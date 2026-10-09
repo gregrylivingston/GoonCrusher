@@ -669,10 +669,10 @@ func etaTo(point: Vector2) -> float:
 		eta += TAU * radius / maxf(car.velocity.length(), 250.0)
 	return eta
 
-#the tightest circle the car drives at full lock; tyre slip at speed widens it by about a third
+#the tightest circle the car drives at full lock (CarHandling: the lock when slow, the yaw ceiling when
+#fast); tyre slip widens it by about a third
 func turnRadius() -> float:
-	var radius: float = car.wheel_base / tan(deg_to_rad(8 + car.steering / 4.0))
-	return maxf(radius, car.velocity.length() / OverheadCarBody2D.maxYaw(car.steering)) * 1.3 #fast, the yaw cap widens it
+	return car.turnRadius(car.velocity.length()) * 1.3
 
 #--- perception -------------------------------------------------------------------------------
 
@@ -804,6 +804,7 @@ func simulate(candidate: Dictionary, ticks: int) -> Dictionary:
 	var forward = car.global_transform.x
 	var vel = car.velocity
 	var steering = car._car_input.steering
+	var steerRate: float = car.steerRate() #the wheel's speed (CarHandling), fixed for the plan
 	var gear = car.gear
 	var input = OverheadCarBody2D.CarInput.new()
 	var path = PackedVector2Array([pos])
@@ -817,7 +818,7 @@ func simulate(candidate: Dictionary, ticks: int) -> Dictionary:
 		if held & ACCEL:
 			input.acceleration = 1.0
 			gear = int(vel.length()) / 300 + 1
-		steering = clampf(CONTROLLER.nextSteering(steering, (held & LEFT) != 0, (held & RIGHT) != 0, car.traction), -1.0, 1.0)
+		steering = clampf(CONTROLLER.nextSteering(steering, (held & LEFT) != 0, (held & RIGHT) != 0, steerRate), -1.0, 1.0)
 		if held & BRAKE:
 			if vel.length() < 10 || gear == -1:
 				gear = -1

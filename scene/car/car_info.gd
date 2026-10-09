@@ -14,15 +14,16 @@ class_name CarInfo extends Resource
 @export_group("Base stats")
 @export var engine: int = 25    # Forward acceleration force.
 @export var steering: int = 12  # Amount that front wheel turns, in degrees
-@export var traction: int = 4   #brakes and turn-rate-increase
+@export var traction: int = 4   #grip, slides and brakes
 @export var armor: int = 1
 @export var luck: int = 1
 @export var clover: int = 1
 @export var oil: int = 1
 @export var headlights: int = 1
+@export var weight: int = 50 #0-100, never upgraded: heavy cars turn in slower, slide wider, brake longer (CarHandling)
 
 #res://scene/car/sedan/sedan.tscn -> res://scene/car/sedan/sedan_info.tres
 static func pathFor(carScene: String) -> String:
 	return carScene.get_basename() + "_info.tres"
 
-const FIELDS =["carId", "charName", "profilePic", "backgroundPic", "introAudio", "engine", "steering", "traction", "armor", "luck", "clover", "oil", "headlights"]
+const FIELDS =["carId", "charName", "profilePic", "backgroundPic", "introAudio", "engine", "steering", "traction", "armor", "luck", "clover", "oil", "headlights", "weight"]
