@@ -53,8 +53,8 @@ var brakeHeavy := 0.8        #...and at weight 100
 var inertiaLight := 1.1      #how quickly speed changes (engine, drag, friction) at weight 0...
 var inertiaHeavy := 0.85     #...and at weight 100 (the top speed is the same; getting there isn't)
 var pickupLow := 0.8         #how quickly speed changes at a standstill (all cars)...
-var pickupHigh := 0.3        #...falling to this at pickupTo px/s and above, so the last stretch to top speed takes a while.
-var pickupTo := 1100.0       #It scales the net change (engine against drag and friction), so the top speed stays put
+var pickupHigh := 0.15       #...falling to this at pickupTo px/s and above, so the last stretch to top speed takes a while.
+var pickupTo := 900.0        #It scales the net change while speed is rising (engine against drag and friction), so the top speed stays put
 var reverseBase := 250.0     #px/s top speed in reverse, plus...
 var reversePerEngine := 6.0  #...this per dim(engine)
 
@@ -123,11 +123,10 @@ func brakeDecel(tractionStat: float, w: float) -> float:
 func inertia(w: float) -> float:
 	return lerpf(inertiaLight, inertiaHeavy, w)
 
-## The share of the net speed change a car gets at `speed` (pickupLow to pickupHigh, eased): the push fades
+## The share of the net speed change a car gets at `speed` (pickupLow to pickupHigh, falling steadily): the push fades
 ## as the car nears its top speed without moving it
 func pickup(speed: float) -> float:
-	var t := clampf(speed / pickupTo, 0.0, 1.0)
-	return lerpf(pickupLow, pickupHigh, t * t)
+	return lerpf(pickupLow, pickupHigh, clampf(speed / pickupTo, 0.0, 1.0))
 
 func reverseTop(engineStat: float) -> float:
 	return reverseBase + reversePerEngine * dim(engineStat)

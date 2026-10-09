@@ -428,7 +428,8 @@ func integrate(pos: Vector2, forward: Vector2, vel: Vector2, input: CarInput, de
 		friction_force *= 3
 	acceleration += drag_force + friction_force
 	acceleration += conveyorPull(vel, World.pushAt(pos, surface))
-	acceleration *= h.inertia(w) * h.pickup(speed) #weight: the same top speed, reached (and lost) more slowly when heavy; pickup: slower near the top
+	acceleration *= h.inertia(w) #weight: the same top speed, reached (and lost) more slowly when heavy
+	if acceleration.dot(vel) > 0.0: acceleration *= h.pickup(speed) #gaining speed gets slower toward the top; drag, water and brakes don't soften
 	if input.handbrake && speed > 0.0:
 		acceleration -= vel.normalized() * HANDBRAKE_DECEL * World.brake(surface)
 

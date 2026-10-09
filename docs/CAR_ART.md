@@ -155,7 +155,7 @@ The numbers are first guesses. The handling ones are constants on the car (`CITY
 
 **Adding a trait:** add it to `CarTraits.DATA` and to a car's `traits`, draw its icon in `pickup_icons.js` (`trait_<id>`) and run it, then add the `t<Name>` flag to the car (`cacheTraits` sets any flag named after the id). Put handling in the integrate helpers and rules in `CarTraitRig`, and give it a test.
 
-**Pickup.** Every car, manual or automatic, gains speed more slowly the faster it goes: the net change (engine against drag and friction) is scaled by `CarHandling.pickup(speed)`, 0.8 at a standstill easing to 0.3 at 1,100 px/s and above (`pickupLow`, `pickupHigh`, `pickupTo`). The top speed doesn't move; the last stretch to it takes a while.
+**Pickup.** Every car, manual or automatic, gains speed more slowly the faster it goes: while it is gaining speed, the net change (engine against drag and friction) is scaled by `CarHandling.pickup(speed)`, 0.8 at a standstill falling steadily to 0.15 at 900 px/s and above (`pickupLow`, `pickupHigh`, `pickupTo`). The top speed doesn't move and slowing down (coasting, water, mud) is untouched; the last stretch to top speed takes a while.
 
 ## Gearbox
 
