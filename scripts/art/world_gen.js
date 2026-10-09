@@ -142,6 +142,16 @@ water(S){ const deep=C('#284a57'), mid=C('#33606b'), dark=C('#1f3d49');
 	const x=cv.getContext('2d');
 	scatter(x,S,S,380,154,16,(c,R)=>{ const l=4+R()*10; c.beginPath(); c.moveTo(-l,0); c.quadraticCurveTo(0,-2-R()*2,l,0); c.lineWidth=.9+R()*.6; c.strokeStyle='rgba(120,160,168,'+(.15+R()*.2)+')'; c.stroke(); });
 	return cv; },
+/* wade: the mid-depth band between shallows and deep water (WADE): bluer and darker than shallows with the sandy
+   bottom only glimpsed, lighter than water, and choppier than either (dense short crests, a few whitecap flecks) */
+wade(S){ const deep=C('#2d5763'), tint=C('#3c6870'), bed=C('#6f735f'), light=C('#a6c6c6');
+	const cv=pixels(S,S,(u,v,i,j,o)=>{ const n=fbm(u*4,v*4,171,4,4), b=fbm(u*12,v*12,172,3,12), m=fbm(u*8,v*20,173,3,8,20), wx=fbm(u*3,v*3,175,3,3)*.8;
+		let c=mixc(deep,tint,.25+.75*smooth(.3,.7,n)); c=mixc(c,bed,.2*smooth(.45,.8,b)); c=shade(c,(m-.5)*.16);
+		const rd=1-Math.abs(2*fbm(u*9+wx,v*9+wx*.6,174,3,9)-1); c=mixc(c,light,smooth(.88,.98,rd)*.16); put(o,c); jitter(o,i,j,176,6); });
+	const x=cv.getContext('2d');
+	scatter(x,S,S,720,177,12,(c,R)=>{ const l=3+R()*7; c.rotate((R()-.5)*.6); c.beginPath(); c.moveTo(-l,0); c.quadraticCurveTo(0,-1.5-R()*2.5,l,0); c.lineWidth=.8+R()*.7; c.strokeStyle='rgba(150,192,198,'+(.22+R()*.25)+')'; c.stroke(); });
+	scatter(x,S,S,110,178,6,(c,R)=>{ ell(c,0,0,1+R()*2.2,.7+R()*1.2,R()*3); c.fillStyle='rgba(224,236,236,'+(.25+R()*.25)+')'; c.fill(); });
+	return cv; },
 conveyor(S){ const rub=C('#383733'), dark=C('#2a2926'), paint=C('#9a8a58'), P=32;
 	const cv=pixels(S,S,(u,v,i,j,o)=>{ const n=fbm(u*4,v*4,161,3,4), wl=fbm(u*2,v*64,162,3,2,64), k=i%P;
 		let c=mixc(dark,rub,.3+.7*smooth(.3,.7,n)); c=shade(c,(wl-.5)*.12);

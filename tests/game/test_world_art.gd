@@ -7,7 +7,7 @@ extends GameTest
 const ART := "res://world/art/"
 const CLASSES := ["DECOR", "LOW", "TALL", "STATEFUL", "WALL"]
 const GROUNDS := ["grass", "moss", "dirt", "sand", "mud", "mudpit", "snow", "deepsnow", "ice", "asphalt", "lot", "wash",
-	"oil", "shallows", "water", "conveyor", "rock", "roof", "bridge", "gravel",
+	"oil", "shallows", "water", "wade", "conveyor", "rock", "roof", "bridge", "gravel",
 	#Road Atlas landscapes (forest, coast, ghost town, salt flats, volcano, suburbs)
 	"needles", "beach", "salt", "ash", "tar", "lava", "basalt", "roof_timber", "roof_shingle", "lawn"]
 const EDGES := ["shore_foam", "cliff_lip", "canyon_rim", "mesa_lip", "kerb", "hedge", "scrapwall", "snow_ridge", "roof_edge",
