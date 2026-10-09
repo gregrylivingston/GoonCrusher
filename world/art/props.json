@@ -1,5 +1,36 @@
 {
  "props": {
+  "apples": {
+   "class": "DECOR",
+   "sizePx": [
+    40,
+    40
+   ],
+   "variants": [
+    "res://world/art/decor/apples.png"
+   ],
+   "hull": [],
+   "occluder": false,
+   "breakable": null,
+   "explosive": false,
+   "tags": {
+    "region": [
+     "wilds"
+    ],
+    "levels": [],
+    "faction": []
+   },
+   "solid": false,
+   "atlas": {
+    "cells": 4,
+    "cellPx": [
+     40,
+     40
+    ],
+    "cellTexels": 30,
+    "blend": "mix"
+   }
+  },
   "barrel": {
    "class": "STATEFUL",
    "sizePx": [
@@ -203,7 +234,9 @@
    ],
    "variants": [
     "res://world/art/props/beehive.png",
-    "res://world/art/props/beehive_v1.png"
+    "res://world/art/props/beehive_v1.png",
+    "res://world/art/props/beehive_v2.png",
+    "res://world/art/props/beehive_v3.png"
    ],
    "hull": [
     [
@@ -266,6 +299,47 @@
    },
    "solid": true,
    "scene": "res://world/art/props/beehive.tscn"
+  },
+  "bell": {
+   "class": "TALL",
+   "sizePx": [
+    97,
+    87
+   ],
+   "variants": [
+    "res://world/art/props/bell.png",
+    "res://world/art/props/bell_v1.png"
+   ],
+   "hull": [
+    [
+     -14.7,
+     -14.7
+    ],
+    [
+     14.7,
+     -14.7
+    ],
+    [
+     14.7,
+     14.7
+    ],
+    [
+     -14.7,
+     14.7
+    ]
+   ],
+   "occluder": true,
+   "breakable": null,
+   "explosive": false,
+   "tags": {
+    "region": [
+     "wilds"
+    ],
+    "levels": [],
+    "faction": []
+   },
+   "solid": true,
+   "scene": "res://world/art/props/bell.tscn"
   },
   "billboard": {
    "class": "TALL",
@@ -503,6 +577,76 @@
    },
    "solid": true,
    "scene": "res://world/art/props/boulder_red.tscn"
+  },
+  "burrow": {
+   "class": "STATEFUL",
+   "sizePx": [
+    125,
+    109
+   ],
+   "variants": [
+    "res://world/art/props/burrow.png",
+    "res://world/art/props/burrow_v1.png"
+   ],
+   "hull": [
+    [
+     -41.3,
+     -8
+    ],
+    [
+     -25.3,
+     -28
+    ],
+    [
+     -10.7,
+     -33.3
+    ],
+    [
+     10.7,
+     -33.3
+    ],
+    [
+     36,
+     -18.7
+    ],
+    [
+     41.3,
+     8
+    ],
+    [
+     36,
+     18.7
+    ],
+    [
+     10.7,
+     33.3
+    ],
+    [
+     -10.7,
+     33.3
+    ],
+    [
+     -36,
+     18.7
+    ]
+   ],
+   "occluder": false,
+   "breakable": {
+    "smashSpeed": 120,
+    "broken": "res://world/art/props/burrow_broken.png",
+    "debris": "res://world/art/props/burrow_debris.png",
+    "debrisCells": 4
+   },
+   "explosive": false,
+   "tags": {
+    "region": [
+     "wilds"
+    ],
+    "levels": [],
+    "faction": []
+   },
+   "solid": true,
+   "scene": "res://world/art/props/burrow.tscn"
   },
   "busstop": {
    "class": "LOW",
@@ -1091,6 +1235,82 @@
    "leaves": "res://world/art/props/deadtree_leaves.png",
    "scene": "res://world/art/props/deadtree.tscn"
   },
+  "den": {
+   "class": "STATEFUL",
+   "sizePx": [
+    160,
+    148
+   ],
+   "variants": [
+    "res://world/art/props/den.png",
+    "res://world/art/props/den_v1.png"
+   ],
+   "hull": [
+    [
+     -80,
+     -8
+    ],
+    [
+     -54.7,
+     -52
+    ],
+    [
+     -14.7,
+     -69.3
+    ],
+    [
+     37.3,
+     -62.7
+    ],
+    [
+     74.7,
+     -26.7
+    ],
+    [
+     73.3,
+     29.3
+    ],
+    [
+     42.7,
+     60
+    ],
+    [
+     -14.7,
+     69.3
+    ],
+    [
+     -42.7,
+     60
+    ],
+    [
+     -74.7,
+     26.7
+    ]
+   ],
+   "occluder": true,
+   "breakable": {
+    "smashSpeed": 250,
+    "broken": "res://world/art/props/den_broken.png",
+    "debris": "res://world/art/props/den_debris.png",
+    "debrisCells": 4
+   },
+   "explosive": false,
+   "tags": {
+    "region": [
+     "wilds"
+    ],
+    "levels": [],
+    "faction": []
+   },
+   "solid": true,
+   "overlays": {
+    "sacks": {
+     "path": "res://world/art/props/den_sacks.png",
+     "frames": 4
+    }
+   },
+   "scene": "res://world/art/props/den.tscn"
+  },
   "dumpster": {
    "class": "LOW",
    "sizePx": [
@@ -1160,14 +1380,15 @@
    "scene": "res://world/art/props/dumpster.tscn"
   },
   "fallen_trunk": {
-   "class": "LOW",
+   "class": "STATEFUL",
    "sizePx": [
     405,
     183
    ],
    "variants": [
     "res://world/art/props/fallen_trunk.png",
-    "res://world/art/props/fallen_trunk_v1.png"
+    "res://world/art/props/fallen_trunk_v1.png",
+    "res://world/art/props/fallen_trunk_v2.png"
    ],
    "hull": [
     [
@@ -1212,7 +1433,12 @@
     ]
    ],
    "occluder": false,
-   "breakable": null,
+   "breakable": {
+    "smashSpeed": 300,
+    "broken": "res://world/art/props/fallen_trunk_broken.png",
+    "debris": "res://world/art/props/fallen_trunk_debris.png",
+    "debrisCells": 4
+   },
    "explosive": false,
    "tags": {
     "landscape": [
@@ -1224,6 +1450,76 @@
    },
    "solid": true,
    "scene": "res://world/art/props/fallen_trunk.tscn"
+  },
+  "farmgate": {
+   "class": "STATEFUL",
+   "sizePx": [
+    341,
+    56
+   ],
+   "variants": [
+    "res://world/art/props/farmgate.png",
+    "res://world/art/props/farmgate_v1.png"
+   ],
+   "hull": [
+    [
+     -170.7,
+     -12
+    ],
+    [
+     -148,
+     -28
+    ],
+    [
+     148,
+     -28
+    ],
+    [
+     170.7,
+     -12
+    ],
+    [
+     170.7,
+     12
+    ],
+    [
+     169.3,
+     13.3
+    ],
+    [
+     146.7,
+     28
+    ],
+    [
+     -148,
+     28
+    ],
+    [
+     -169.3,
+     13.3
+    ],
+    [
+     -170.7,
+     12
+    ]
+   ],
+   "occluder": false,
+   "breakable": {
+    "smashSpeed": 180,
+    "broken": "res://world/art/props/farmgate_broken.png",
+    "debris": "res://world/art/props/farmgate_debris.png",
+    "debrisCells": 4
+   },
+   "explosive": false,
+   "tags": {
+    "region": [
+     "wilds"
+    ],
+    "levels": [],
+    "faction": []
+   },
+   "solid": true,
+   "scene": "res://world/art/props/farmgate.tscn"
   },
   "fence": {
    "class": "STATEFUL",
@@ -1638,6 +1934,77 @@
    },
    "solid": true,
    "scene": "res://world/art/props/hedge.tscn"
+  },
+  "hedgerow": {
+   "class": "DECOR",
+   "sizePx": [
+    192,
+    192
+   ],
+   "variants": [
+    "res://world/art/decor/hedgerow.png"
+   ],
+   "hull": [],
+   "occluder": false,
+   "breakable": null,
+   "explosive": false,
+   "tags": {
+    "region": [
+     "wilds"
+    ],
+    "levels": [],
+    "faction": []
+   },
+   "solid": false,
+   "atlas": {
+    "cells": 4,
+    "cellPx": [
+     192,
+     192
+    ],
+    "cellTexels": 144,
+    "blend": "mix"
+   }
+  },
+  "honeyshed": {
+   "class": "TALL",
+   "sizePx": [
+    261,
+    147
+   ],
+   "variants": [
+    "res://world/art/props/honeyshed.png"
+   ],
+   "hull": [
+    [
+     -92,
+     -73.3
+    ],
+    [
+     92,
+     -73.3
+    ],
+    [
+     92,
+     73.3
+    ],
+    [
+     -92,
+     73.3
+    ]
+   ],
+   "occluder": true,
+   "breakable": null,
+   "explosive": false,
+   "tags": {
+    "region": [
+     "wilds"
+    ],
+    "levels": [],
+    "faction": []
+   },
+   "solid": true,
+   "scene": "res://world/art/props/honeyshed.tscn"
   },
   "hunting_stand": {
    "class": "TALL",
@@ -2896,6 +3263,37 @@
    "leaves": "res://world/art/props/pine_leaves.png",
    "scene": "res://world/art/props/pine.tscn"
   },
+  "pine_crown": {
+   "class": "DECOR",
+   "sizePx": [
+    256,
+    256
+   ],
+   "variants": [
+    "res://world/art/decor/pine_crown.png"
+   ],
+   "hull": [],
+   "occluder": false,
+   "breakable": null,
+   "explosive": false,
+   "tags": {
+    "landscape": [
+     "forest"
+    ],
+    "levels": [],
+    "faction": []
+   },
+   "solid": false,
+   "atlas": {
+    "cells": 4,
+    "cellPx": [
+     256,
+     256
+    ],
+    "cellTexels": 192,
+    "blend": "mix"
+   }
+  },
   "pine_snow": {
    "class": "TALL",
    "sizePx": [
@@ -2968,6 +3366,77 @@
    "leaves": "res://world/art/props/pine_snow_leaves.png",
    "scene": "res://world/art/props/pine_snow.tscn"
   },
+  "pumpkin": {
+   "class": "STATEFUL",
+   "sizePx": [
+    93,
+    88
+   ],
+   "variants": [
+    "res://world/art/props/pumpkin.png",
+    "res://world/art/props/pumpkin_v1.png",
+    "res://world/art/props/pumpkin_v2.png"
+   ],
+   "hull": [
+    [
+     -32,
+     -6.7
+    ],
+    [
+     -20,
+     -24
+    ],
+    [
+     34.7,
+     -58.7
+    ],
+    [
+     50.7,
+     -57.3
+    ],
+    [
+     58.7,
+     -50.7
+    ],
+    [
+     58.7,
+     -25.3
+    ],
+    [
+     28,
+     16
+    ],
+    [
+     8,
+     29.3
+    ],
+    [
+     -20,
+     24
+    ],
+    [
+     -32,
+     6.7
+    ]
+   ],
+   "occluder": false,
+   "breakable": {
+    "smashSpeed": 40,
+    "broken": "res://world/art/props/pumpkin_broken.png",
+    "debris": "res://world/art/props/pumpkin_debris.png",
+    "debrisCells": 4
+   },
+   "explosive": false,
+   "tags": {
+    "region": [
+     "wilds"
+    ],
+    "levels": [],
+    "faction": []
+   },
+   "solid": true,
+   "scene": "res://world/art/props/pumpkin.tscn"
+  },
   "ranger_tower": {
    "class": "TALL",
    "sizePx": [
@@ -2997,7 +3466,12 @@
     ]
    ],
    "occluder": true,
-   "breakable": null,
+   "breakable": {
+    "smashSpeed": 420,
+    "broken": "res://world/art/props/ranger_tower_broken.png",
+    "debris": "res://world/art/props/ranger_tower_debris.png",
+    "debrisCells": 4
+   },
    "explosive": false,
    "tags": {
     "landscape": [
@@ -3316,6 +3790,71 @@
    "solid": true,
    "scene": "res://world/art/props/rock_red.tscn"
   },
+  "rock_roll": {
+   "class": "LOW",
+   "sizePx": [
+    89,
+    88
+   ],
+   "variants": [
+    "res://world/art/props/rock_roll.png",
+    "res://world/art/props/rock_roll_v1.png"
+   ],
+   "hull": [
+    [
+     -45.3,
+     0
+    ],
+    [
+     -32,
+     -34.7
+    ],
+    [
+     -17.3,
+     -42.7
+    ],
+    [
+     13.3,
+     -42.7
+    ],
+    [
+     41.3,
+     -16
+    ],
+    [
+     44,
+     2.7
+    ],
+    [
+     37.3,
+     26.7
+    ],
+    [
+     20,
+     38.7
+    ],
+    [
+     -2.7,
+     45.3
+    ],
+    [
+     -34.7,
+     30.7
+    ]
+   ],
+   "occluder": false,
+   "breakable": null,
+   "explosive": false,
+   "tags": {
+    "region": [
+     "wilds"
+    ],
+    "levels": [],
+    "faction": []
+   },
+   "solid": true,
+   "scene": "res://world/art/props/rock_roll.tscn"
+  },
   "rock_white": {
    "class": "TALL",
    "sizePx": [
@@ -3382,6 +3921,76 @@
    },
    "solid": true,
    "scene": "res://world/art/props/rock_white.tscn"
+  },
+  "rockpile": {
+   "class": "STATEFUL",
+   "sizePx": [
+    193,
+    160
+   ],
+   "variants": [
+    "res://world/art/props/rockpile.png",
+    "res://world/art/props/rockpile_v1.png"
+   ],
+   "hull": [
+    [
+     -76,
+     -36
+    ],
+    [
+     -49.3,
+     -61.3
+    ],
+    [
+     16,
+     -73.3
+    ],
+    [
+     57.3,
+     -56
+    ],
+    [
+     85.3,
+     -12
+    ],
+    [
+     82.7,
+     22.7
+    ],
+    [
+     57.3,
+     56
+    ],
+    [
+     -16,
+     73.3
+    ],
+    [
+     -57.3,
+     56
+    ],
+    [
+     -85.3,
+     12
+    ]
+   ],
+   "occluder": true,
+   "breakable": {
+    "smashSpeed": 350,
+    "broken": "res://world/art/props/rockpile_broken.png",
+    "debris": "res://world/art/props/rockpile_debris.png",
+    "debrisCells": 4
+   },
+   "explosive": false,
+   "tags": {
+    "region": [
+     "wilds"
+    ],
+    "levels": [],
+    "faction": []
+   },
+   "solid": true,
+   "scene": "res://world/art/props/rockpile.tscn"
   },
   "rooftop": {
    "class": "DECOR",
@@ -3478,6 +4087,10 @@
     ]
    },
    "solid": true,
+   "states": {
+    "fallen": "res://world/art/props/saguaro_fallen.png",
+    "chunks": "res://world/art/props/saguaro_chunks.png"
+   },
    "scene": "res://world/art/props/saguaro.tscn"
   },
   "salt_mound": {
@@ -3545,6 +4158,140 @@
    },
    "solid": true,
    "scene": "res://world/art/props/salt_mound.tscn"
+  },
+  "saltlick": {
+   "class": "LOW",
+   "sizePx": [
+    96,
+    100
+   ],
+   "variants": [
+    "res://world/art/props/saltlick.png"
+   ],
+   "hull": [
+    [
+     -45.3,
+     4
+    ],
+    [
+     -34.7,
+     -34.7
+    ],
+    [
+     -29.3,
+     -38.7
+    ],
+    [
+     10.7,
+     -48
+    ],
+    [
+     36,
+     -33.3
+    ],
+    [
+     50.7,
+     -10.7
+    ],
+    [
+     33.3,
+     38.7
+    ],
+    [
+     0,
+     52
+    ],
+    [
+     -9.3,
+     48
+    ],
+    [
+     -37.3,
+     22.7
+    ]
+   ],
+   "occluder": false,
+   "breakable": null,
+   "explosive": false,
+   "tags": {
+    "region": [
+     "wilds"
+    ],
+    "levels": [],
+    "faction": []
+   },
+   "solid": true,
+   "scene": "res://world/art/props/saltlick.tscn"
+  },
+  "scarecrow": {
+   "class": "TALL",
+   "sizePx": [
+    151,
+    53
+   ],
+   "variants": [
+    "res://world/art/props/scarecrow.png",
+    "res://world/art/props/scarecrow_v1.png"
+   ],
+   "hull": [
+    [
+     -17.3,
+     -6.7
+    ],
+    [
+     -6.7,
+     -17.3
+    ],
+    [
+     6.7,
+     -17.3
+    ],
+    [
+     17.3,
+     -6.7
+    ],
+    [
+     17.3,
+     6.7
+    ],
+    [
+     9.3,
+     16
+    ],
+    [
+     6.7,
+     17.3
+    ],
+    [
+     -6.7,
+     17.3
+    ],
+    [
+     -13.3,
+     13.3
+    ],
+    [
+     -17.3,
+     6.7
+    ]
+   ],
+   "occluder": true,
+   "breakable": {
+    "smashSpeed": 400,
+    "broken": "res://world/art/props/scarecrow_broken.png",
+    "debris": "res://world/art/props/scarecrow_debris.png",
+    "debrisCells": 4
+   },
+   "explosive": false,
+   "tags": {
+    "region": [
+     "wilds"
+    ],
+    "levels": [],
+    "faction": []
+   },
+   "solid": true,
+   "scene": "res://world/art/props/scarecrow.tscn"
   },
   "scrapheap": {
    "class": "TALL",
@@ -3754,6 +4501,75 @@
    "solid": true,
    "scene": "res://world/art/props/sign.tscn"
   },
+  "sluice": {
+   "class": "STATEFUL",
+   "sizePx": [
+    277,
+    56
+   ],
+   "variants": [
+    "res://world/art/props/sluice.png"
+   ],
+   "hull": [
+    [
+     -137.3,
+     -20
+    ],
+    [
+     -101.3,
+     -30.7
+    ],
+    [
+     98.7,
+     -30.7
+    ],
+    [
+     137.3,
+     -20
+    ],
+    [
+     138.7,
+     4
+    ],
+    [
+     137.3,
+     20
+    ],
+    [
+     104,
+     25.3
+    ],
+    [
+     -104,
+     25.3
+    ],
+    [
+     -137.3,
+     20
+    ],
+    [
+     -138.7,
+     4
+    ]
+   ],
+   "occluder": false,
+   "breakable": {
+    "smashSpeed": 350,
+    "broken": "res://world/art/props/sluice_broken.png",
+    "debris": "res://world/art/props/sluice_debris.png",
+    "debrisCells": 4
+   },
+   "explosive": false,
+   "tags": {
+    "region": [
+     "wilds"
+    ],
+    "levels": [],
+    "faction": []
+   },
+   "solid": true,
+   "scene": "res://world/art/props/sluice.tscn"
+  },
   "snowcat": {
    "class": "TALL",
    "sizePx": [
@@ -3849,6 +4665,75 @@
     "cellTexels": 120,
     "blend": "mix"
    }
+  },
+  "still": {
+   "class": "STATEFUL",
+   "sizePx": [
+    164,
+    101
+   ],
+   "variants": [
+    "res://world/art/props/still.png"
+   ],
+   "hull": [
+    [
+     -74.7,
+     -36
+    ],
+    [
+     -72,
+     -38.7
+    ],
+    [
+     -1.3,
+     -38.7
+    ],
+    [
+     45.3,
+     -33.3
+    ],
+    [
+     56,
+     -28
+    ],
+    [
+     86.7,
+     0
+    ],
+    [
+     88,
+     45.3
+    ],
+    [
+     62.7,
+     62.7
+    ],
+    [
+     -69.3,
+     38.7
+    ],
+    [
+     -74.7,
+     34.7
+    ]
+   ],
+   "occluder": false,
+   "breakable": {
+    "smashSpeed": 120,
+    "broken": "res://world/art/props/still_broken.png",
+    "debris": "res://world/art/props/still_debris.png",
+    "debrisCells": 4
+   },
+   "explosive": true,
+   "tags": {
+    "region": [
+     "wilds"
+    ],
+    "levels": [],
+    "faction": []
+   },
+   "solid": true,
+   "scene": "res://world/art/props/still.tscn"
   },
   "streetglow": {
    "class": "DECOR",
@@ -4145,6 +5030,76 @@
    },
    "solid": true,
    "scene": "res://world/art/props/tent.tscn"
+  },
+  "tnt": {
+   "class": "STATEFUL",
+   "sizePx": [
+    132,
+    127
+   ],
+   "variants": [
+    "res://world/art/props/tnt.png",
+    "res://world/art/props/tnt_v1.png"
+   ],
+   "hull": [
+    [
+     -52,
+     -30.7
+    ],
+    [
+     28,
+     -58.7
+    ],
+    [
+     44,
+     -52
+    ],
+    [
+     80,
+     -32
+    ],
+    [
+     74.7,
+     44
+    ],
+    [
+     25.3,
+     68
+    ],
+    [
+     24,
+     68
+    ],
+    [
+     -46.7,
+     36
+    ],
+    [
+     -48,
+     34.7
+    ],
+    [
+     -52,
+     -24
+    ]
+   ],
+   "occluder": false,
+   "breakable": {
+    "smashSpeed": 120,
+    "broken": "res://world/art/props/tnt_broken.png",
+    "debris": "res://world/art/props/tnt_debris.png",
+    "debrisCells": 4
+   },
+   "explosive": true,
+   "tags": {
+    "region": [
+     "wilds"
+    ],
+    "levels": [],
+    "faction": []
+   },
+   "solid": true,
+   "scene": "res://world/art/props/tnt.tscn"
   },
   "totem": {
    "class": "TALL",

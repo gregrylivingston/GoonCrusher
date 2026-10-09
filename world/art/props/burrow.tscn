@@ -1,0 +1,22 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://world/art/props/burrow.png" id="tex"]
+
+[sub_resource type="ConvexPolygonShape2D" id="shape"]
+points = PackedVector2Array(-41.3, -8, -25.3, -28, -10.7, -33.3, 10.7, -33.3, 36, -18.7, 41.3, 8, 36, 18.7, 10.7, 33.3, -10.7, 33.3, -36, 18.7)
+
+[node name="burrow" type="StaticBody2D"]
+collision_layer = 1
+collision_mask = 0
+metadata/propId = &"burrow"
+metadata/propClass = &"STATEFUL"
+metadata/smashSpeed = 120.0
+metadata/broken = "res://world/art/props/burrow_broken.png"
+metadata/debris = "res://world/art/props/burrow_debris.png"
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(1.3333, 1.3333)
+texture = ExtResource("tex")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("shape")

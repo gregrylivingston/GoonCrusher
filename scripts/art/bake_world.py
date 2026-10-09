@@ -162,10 +162,20 @@ z_as_relative = false
 scale = Vector2({sc:.4f}, {sc:.4f})
 texture = ExtResource("canopy")
 """.format(z=CANOPY_Z, sc=1.0 / m["res"])
+	#overlays (the den's loot sacks): a child sprite per overlay, hframes = its frames, frame 0 (usually empty) shown
+	ext_over = node_over = ""
+	for name, o in (m.get("overlays") or {}).items():
+		ext_over += '[ext_resource type="Texture2D" path="%s" id="over_%s"]\n' % (RES_DIR + "props/" + o["path"], name)
+		node_over += """
+[node name="{node}" type="Sprite2D" parent="."]
+scale = Vector2({sc:.4f}, {sc:.4f})
+texture = ExtResource("over_{name}")
+hframes = {frames}
+""".format(node=name.capitalize(), sc=1.0 / m["res"], name=name, frames=o["frames"])
 	return """[gd_scene format=3]
 
 [ext_resource type="Texture2D" path="{tex}" id="tex"]
-{ext_canopy}{ext_beacon}
+{ext_canopy}{ext_beacon}{ext_over}
 [sub_resource type="ConvexPolygonShape2D" id="shape"]
 points = {pts}
 {sub_occ}
@@ -180,7 +190,7 @@ texture = ExtResource("tex")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("shape")
-{disabled}{node_occ}{node_beacon}{node_canopy}""".format(tex=tex, ext_beacon=ext_beacon, ext_canopy=ext_canopy, node_canopy=node_canopy, pts=vec_array(hull), sub_occ=sub_occ, pid=pid, meta="\n".join(meta), sc=1.0 / m["res"], disabled=disabled, node_occ=node_occ, node_beacon=node_beacon)
+{disabled}{node_occ}{node_beacon}{node_over}{node_canopy}""".format(tex=tex, ext_beacon=ext_beacon, ext_canopy=ext_canopy, node_canopy=node_canopy, ext_over=ext_over, node_over=node_over, pts=vec_array(hull), sub_occ=sub_occ, pid=pid, meta="\n".join(meta), sc=1.0 / m["res"], disabled=disabled, node_occ=node_occ, node_beacon=node_beacon)
 
 def manifest_entry(pid, m, tags):
 	res = lambda name: RES_DIR + ("decor/" if m["class"] == "DECOR" else "props/") + name
@@ -199,6 +209,8 @@ def manifest_entry(pid, m, tags):
 	if m.get("beacon"): e["beacon"] = res(m["beacon"])
 	if m.get("canopy"): e["canopy"] = [res(v) for v in m["canopy"]]
 	if m.get("leaves"): e["leaves"] = res(m["leaves"])
+	if m.get("overlays"): e["overlays"] = {k: {"path": res(v["path"]), "frames": v["frames"]} for k, v in m["overlays"].items()}
+	if m.get("states"): e["states"] = {k: res(v) for k, v in m["states"].items()}
 	if m["class"] != "DECOR": e["scene"] = RES_DIR + "props/" + pid + ".tscn"
 	return e
 

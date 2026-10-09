@@ -11,7 +11,7 @@ const GROUNDS := ["grass", "moss", "dirt", "sand", "mud", "mudpit", "snow", "dee
 	#Road Atlas landscapes (forest, coast, ghost town, salt flats, volcano, suburbs)
 	"needles", "beach", "salt", "ash", "tar", "lava", "basalt", "roof_timber", "roof_shingle", "lawn"]
 const EDGES := ["shore_foam", "cliff_lip", "canyon_rim", "mesa_lip", "kerb", "hedge", "scrapwall", "snow_ridge", "roof_edge",
-	"basalt_lip", "timber_edge", "shingle_edge"]
+	"basalt_lip", "timber_edge", "shingle_edge", "hedgerow", "treeline"]
 const STATION := ["station_lot", "station_wall", "station_roof", "station_lamp", "station_pump"]
 #the prop catalog of the world spec (section 6)
 const CATALOG := ["rock", "boulder", "rock_white", "rock_ice", "oak", "pine", "cypress", "log", "stump", "saguaro", "deadtree",
@@ -19,14 +19,18 @@ const CATALOG := ["rock", "boulder", "rock_white", "rock_ice", "oak", "pine", "c
 	"fortwall", "cabin", "snowcat", "wreck", "jersey", "cone", "gaspump", "sign", "billboard", "hydrant", "dumpster", "busstop",
 	"manhole", "streetglow", "scrapheap", "container", "tank", "landmark_wild", "landmark_tribe", "landmark_scrap", "reeds",
 	"tufts", "pebbles", "cracks", "bones", "paint", "oilstain"]
-const BREAKABLE := ["haybale", "fence", "hedge", "crate", "barricade", "wagon", "water_trough", "mailbox", "trashbags"]
-const EXPLOSIVE := ["barrel", "tank"]
+const BREAKABLE := ["haybale", "fence", "hedge", "crate", "barricade", "wagon", "water_trough", "mailbox", "trashbags",
+	"den", "burrow", "scarecrow", "farmgate", "pumpkin", "still", "sluice", "rockpile", "tnt", "ranger_tower", "fallen_trunk"]
+const EXPLOSIVE := ["barrel", "tank", "still", "tnt"]
 #added after the spec: canyon's red rocks and the city's rooftop decor
 const EXTRA := ["rock_red", "boulder_red", "rooftop"]
 #the Road Atlas expansion's props (forest, coast, ghost town, salt flats, volcano, suburbs, the overlays, landmarks)
 const ROAD_ATLAS := ["ranger_tower", "fallen_trunk", "pine_snow", "palm", "beach_hut", "lifeguard_tower", "wagon", "water_trough",
 	"tumbleweed", "mile_marker", "salt_mound", "rock_black", "steam_vent", "mailbox", "swingset", "trampoline", "hunting_stand",
 	"trashbags", "landmark_big", "landmark_swarm", "landmark_war"]
+#Region 1 (The Wilds): its props, decor and pieces
+const REGION1 := ["den", "burrow", "honeyshed", "bell", "saltlick", "scarecrow", "farmgate", "pumpkin", "apples", "still", "sluice",
+	"rockpile", "rock_roll", "tnt", "hedgerow", "pine_crown"]
 const LANDMARKS := ["landmark_wild", "landmark_tribe", "landmark_scrap", "landmark_big", "landmark_swarm", "landmark_war"]
 
 func manifest() -> Dictionary:
@@ -135,6 +139,28 @@ func test_landmarks_have_beacons_and_extras_exist():
 	for id in ROAD_ATLAS: assert_true(props().has(id), "%s (Road Atlas): in the manifest" % id)
 	for id in ["tumbleweed", "steam_vent"]: assert_eq(props().get(id, {}).get("class", ""), "DECOR", "%s is decor" % id)
 	for id in ["pine_snow", "palm"]: assert_true(props().get(id, {}).get("canopy") is Array, "%s is layered" % id)
+	for id in REGION1: assert_true(props().has(id), "%s (Region 1): in the manifest" % id)
+	for id in ["hedgerow", "pine_crown", "apples"]: assert_eq(props().get(id, {}).get("class", ""), "DECOR", "%s is decor" % id)
+	assert_eq(props().get("beehive", {}).get("variants", []).size(), 4, "beehive: two skeps and two white box hives")
+
+func test_overlays_and_extra_states_exist():
+	for id in props():
+		var p: Dictionary = props()[id]
+		for state in p.get("states", {}): assert_true(ResourceLoader.exists(p.states[state]), "%s: state %s" % [id, state])
+		for name in p.get("overlays", {}):
+			var o: Dictionary = p.overlays[name]
+			assert_true(ResourceLoader.exists(o.path), "%s: overlay %s" % [id, name])
+			var tex: Texture2D = load(o.path) if ResourceLoader.exists(o.path) else null
+			var base: Texture2D = load(p.variants[0])
+			if tex && base: assert_eq(Vector2i(tex.get_width(), tex.get_height()), Vector2i(base.get_width() * int(o.frames), base.get_height()), "%s: overlay %s frames are the sprite's size" % [id, name])
+			var scene: PackedScene = load(p.scene)
+			var node = scene.instantiate() if scene else null
+			if node:
+				var sprite: Sprite2D = node.get_node_or_null(String(name).capitalize())
+				assert_true(sprite != null && sprite.hframes == int(o.frames), "%s: a %s sprite with its frames" % [id, name])
+				node.free()
+	assert_true(props().get("den", {}).has("overlays"), "the den has its loot-sack overlay")
+	assert_true(props().get("saguaro", {}).get("states", {}).has("fallen"), "the saguaro has a fallen state")
 	assert_eq(props().get("rooftop", {}).get("class", ""), "DECOR", "rooftop is decor (no collision)")
 
 func test_level_dressing_names_known_props():

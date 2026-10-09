@@ -10,7 +10,7 @@ The ground, edges, props, station textures and level posters are generated top-d
 | `scripts/art/world_gen.js` | The generator (`window.WorldArt`): `GROUND` (materials), `EDGE` (strips), `PROPS` (the catalog: class, size and a draw function per prop), `STATION`, `POSTER` (one vignette per level) and the bake functions. **Change world art here.** |
 | `scripts/art/bake_world.html`, `scripts/art/bake_world.py` | The bake. `python scripts/art/bake_world.py [job ...] [--only id,id]` opens `bake_world.html#<job>:<ids>` in headless Edge (3 in parallel) and writes the files, `props.json`, the prop scenes and every `.import` file. |
 | `world/art/ground/` | 30 seamless materials (`<name>.png`, 512²) and `macro_noise.png` (256², greyscale). |
-| `world/art/edges/` | 12 edge strips for `Line2D` (512×96). |
+| `world/art/edges/` | 14 edge strips for `Line2D` (512×96). |
 | `world/art/props/` | Each prop's variants (`<id>.png`, `<id>_v1.png`...), breakable and explosive states (`<id>_broken.png`, `<id>_debris.png`), the landmarks' beacon glows (`<id>_beacon.png`) and its scene (`<id>.tscn`). |
 | `shader/world_beacon.gdshader`, `shader/world_beacon.tres` | The landmarks' beacon: additive, unlit, a slow breath and a double flash, out of step per landmark; `gc_motion` (Reduce Motion) calms it. One shared material; its `night` parameter dims it to 15% by day, faded by `Level.fadeBeacons` with the day and night. |
 | `world/art/decor/` | One atlas per decor id (`<id>.png`, a row of 4 square cells). |
@@ -77,6 +77,8 @@ The Road Atlas landscapes added ten: `needles` (forest floor: rust-brown pine ne
 | `basalt_lip` | basalt column tops fading in, the lit broken column ends, a short grooved face | AO and fallen column chunks at the foot |
 | `timber_edge` | the roof: the last courses of shakes fading in, ragged butt ends, the eave's shadow, a lit fascia board on the contour | the building's AO on the street |
 | `shingle_edge` | the roof: a course of three-tab shingles fading in, the metal drip edge, a half-round gutter with leaves in it on the contour | the house's AO on the lawn |
+| `hedgerow` | symmetric: deep AO, a dry-stone base, the tall dark hedge with a hard lit top edge in the middle, base, AO (the unbreakable hedgerow as one continuous run; see "Hedgerow") | |
+| `treeline` | the thicket: solid dark fading in, then a ragged row of pine crowns (the thicket wall's lip) | deep AO and needle litter on the ground |
 
 `roof_edge` is the city's wall strip (`WorldSkin.WALL_STRIP`). One-sided strips put the barrier (water, cliff top, canyon, kerb, roof, volcano wall) at the top (v = 0). Which side of a `Line2D` that lands on depends on the direction of its points, so build contours with a consistent winding and reverse the points if the lip faces the wrong way. `ChunkRecipe` does this: its lines run with the barrier on the left (docs/WORLD.md).
 
@@ -110,8 +112,8 @@ Made for the new landscapes and regions, and dressed in by them (each landscape'
 
 | Prop | Class | Variants, states | Reaction | For |
 |---|---|---|---|---|
-| `ranger_tower` | TALL | 2 (green, rust roof): a fire lookout on splayed, braced legs, catwalk and stair | SWAY | forest |
-| `fallen_trunk` | LOW | 2 (root plate, snapped end) | THUD | forest |
+| `ranger_tower` | TALL | 2 (green, rust roof): a fire lookout on splayed, braced legs, catwalk and stair; breakable at 420 (toppled, see Region 1) | SWAY | forest |
+| `fallen_trunk` | STATEFUL, no occluder | 3 (root plate, snapped end, leaning deadfall); breakable at 300 (fallen) | THUD | forest |
 | `pine_snow` | TALL, layered | 3; canopy: the pine's tiers under snow; leaves: snow clumps and needles | CANOPY | snowy forest |
 | `palm` | TALL, layered | 3; canopy: 9-11 fronds and coconuts; litter: dead fronds and coconuts; leaves: frond pieces | CANOPY | coast |
 | `beach_hut` | TALL | 2 (striped plank gable roof and deck, thatched palapa) | SHAKE | coast |
@@ -133,6 +135,54 @@ Made for the new landscapes and regions, and dressed in by them (each landscape'
 | `steam_vent` | DECOR | 4 cells (three fissures, a crusted hole) with sulphur rims and a faint steam puff | none | volcano |
 
 The breakables above are STATEFUL like the older ones (`smashSpeed`, `_broken`, `_debris`); they only show. What a smash or spill should give is left to a later design pass.
+
+#### Region 1 props (The Wilds)
+
+Made for the Region 1 study (Lane B). The study's role for each is noted; none of the gameplay (stashes, lures, spills, roosts) is wired by the art.
+
+| Prop | Class | Variants, states | Reaction | Role |
+|---|---|---|---|---|
+| `den` | STATEFUL | 2 (twig dome with junk panels; junk shack under a tarp); breakable at 250: twigs, panels, tarp; overlay `sacks` (4 frames: 0-3 loot sacks) | SHAKE | the Bandit's stash (R-6) |
+| `burrow` | STATEFUL, no occluder | 2 (one hole; two holes and a bone); breakable at 120: collapsed into a filled crater | SQUASH | Jackalope warren (R-7) |
+| `beehive` | STATEFUL | now 4: the two skep-style hives and two white box hives (a lid with a brick, one on a second box) | WOBBLE | apiary (R-9) |
+| `honeyshed` | TALL | 1: tin shed, white supers, honey drums | SHAKE | apiary centre |
+| `bell` | TALL | 2 (ranch bell on a post and arm, dinner triangle) | SWAY | Dinner Bell lure (R-10) |
+| `saltlick` | LOW | 1: salt block on a stump, hoof prints | THUD | heavies' lure (R-10) |
+| `scarecrow` | TALL | 2 (plaid and straw hat, denim and felt hat); breakable at 400: pole down, hat off, straw | SWAY | Buzzard roost (R-11) |
+| `farmgate` | STATEFUL, no occluder | 2 (white five-bar gate, red gate with a white brace), stout posts; breakable at 180: painted planks | WOBBLE | gates in the hedgerow lattice |
+| `pumpkin` | STATEFUL, no occluder | 3 (orange, small, pale); breakable at 40: an orange splat with seeds | SQUASH | pumpkin patch |
+| `still` | STATEFUL, explosive | 1: copper pot on a firebox, worm coil, thump keg, jugs; scorched broken state, copper and shard debris | WOBBLE | Bayou hazard |
+| `sluice` | STATEFUL, no occluder | 1: two timber posts with a crank, stacked boards; breakable at 350: boards washed out | SHAKE | flood trigger |
+| `rockpile` | STATEFUL | 2 (plain, propped with timbers); breakable at 350: rubble | THUD | rockslide (with `rock_roll`) |
+| `rock_roll` | LOW | 2: a rounded red boulder with scuffs | THUD | what a rockslide rolls (like `log`) |
+| `tnt` | STATEFUL, explosive | 2 (dynamite crate, a closed crate and loose sticks; v1 adds a plunger); scorched broken, stick and splinter debris | WOBBLE | pass hazard |
+| `apples` | DECOR | 4 cells (red, yellow, bitten, a cluster), 40 px | none | windfall under orchard oaks; also usable as falling bits |
+| `pine_crown` | DECOR | 4 cells of 256 px: one to four dark overlapping pine crowns with lit needle tips | none | laid over thicket wall cells like `rooftop` |
+| `hedgerow` | DECOR | 4 pieces of 192 px (see "Hedgerow") | none | the unbreakable hedgerow |
+
+Upgrades to earlier props:
+
+- `ranger_tower` is breakable at 420. Its broken state is the tower toppled along +y: the footings stay, the frame lies across, and the cab is crushed at its end. The broken sprite is 340×760 px, centred like the prop.
+- `fallen_trunk` is now STATEFUL. It has a third variant, `v2`, a deadfall leaning on a stump, which reads through the wide soft gap under its raised end. It is breakable at 300; the broken state is the trunk fallen flat and split, with litter.
+- `saguaro` stays unbreakable, so nothing changes in play. It gains `states`: `fallen` (toppled along +y from its snapped base) and `chunks` (a 4-cell strip). Making it breakable is a code change: give the design a `breakable` that reuses those drawings.
+
+#### Hedgerow
+
+The unbreakable hedgerow is deliberately unlike the breakable `hedge`: tall, dark (`#253119` body), dense, flat-topped with a hard lit edge, on a dry-stone base, with deep AO. The hedge is a light, rounded, trimmed bush.
+
+- **Pieces:** `decor/hedgerow.png` is a 4-cell atlas, 192 world px per cell (144 texels), drawn edge to edge (`fill: true`, no inset).
+  - Cell 0 and cell 1 are straights running along x.
+  - Cell 2 is an end cap: the run enters from -x and ends in a round cap about 80 px into the cell.
+  - Cell 3 is a corner: the run enters from -x and leaves through +y (the bottom edge).
+- **Cross-section:** every piece shares one, centred on the cell's mid-line: base 112 px wide, hedge 80 px, AO about 28 px beyond the base.
+- **Joints:** within 30 px of every joint, the stones and foliage come from one fixed, point-symmetric set. Any piece therefore meets any other end to end, and the corner meets a straight rotated by ±90° with no seam.
+- **Laying a run:** lay cells every 192 px along the run.
+  - Straights at the run's angle; alternate cells 0 and 1 (or hash them).
+  - An end cap at a free end, rotated so its open side faces the run: 0 for a cap on the right, π for one on the left.
+  - At a turn, the corner rotated so its two arms face the run's two sides.
+  - The MultiMesh cell picks the piece (`INSTANCE_CUSTOM.x`); the instance transform rotates it.
+- **Continuous strip:** `edges/hedgerow.png` is the same look as a Line2D strip, for runs at any angle and length. Draw it 128 px wide (1:1), texture mode Tile. The strip ends square, so cap its ends with cell 2.
+- **Collision and occluders** are the code's (the chunk's wall body). The art has no hull.
 
 ### How a prop is baked
 
@@ -159,6 +209,7 @@ Over-the-car layers were reviewed for every tall prop: the crane's jib reaches p
 - `CollisionShape2D` with a `ConvexPolygonShape2D` from the hull (disabled when the manifest says `solid: false`).
 - `LightOccluder2D` with the same polygon, `cull_mode = 2` (one-sided), and metadata `gc_world = true`, so it stays on at Lighting Low. Only when the manifest says `occluder: true`.
 - `Canopy` (layered props): a `Sprite2D` at scale 1.3333 with canopy variant 0, `z_index = 8` with `z_as_relative = false` (`CANOPY_Z` in `bake_world.py` and `PropReactions`), so it draws over goons and the car. No collision. `ChunkView` swaps its texture with the variant. It counts as one more node in `ChunkRecipe`'s budget.
+- Overlays (the den's `Sacks`): a `Sprite2D` at scale 1.3333 over the body, `hframes` = the overlay's frames, showing frame 0. The code sets `frame` to the number of stashed sacks.
 - `Beacon` (landmarks): a `Sprite2D` at scale 1.3333 with the `_beacon.png` glow and the shared `res://shader/world_beacon.tres` material (`blend_add, unshaded`), so the landmark's top reads at night with no real light (world lights stay at 0 per chunk). It counts as one more node in `ChunkRecipe`'s budget.
 
 The root is a `StaticBody2D`, so the car's wall-hit checks (`World.isWall`) treat props as walls with no extra code. `ChunkView` instances STATEFUL props (and any prop with a taken-set bit) instead of pooling them and attaches `scripts/world/breakable.gd` (`BreakableProp`), which reads the metadata above (docs/WORLD.md, "Breakables and explosives").
@@ -193,6 +244,8 @@ The root is a `StaticBody2D`, so the car's wall-hit checks (`World.isWall`) trea
 - `solid`: present and `false` when the prop must not collide (decor, the manhole).
 - `atlas` (decor only): `{cells, cellPx, cellTexels, blend}`.
 - `beacon` (landmarks): the glow texture's path.
+- `overlays` (the den): `{name: {path, frames}}`. Each is a strip of `frames` frames, each the size of the sprite and with the same centre. The scene has a child `Sprite2D` named after it (`Sacks`, `hframes` = frames, frame 0 = no sacks).
+- `states` (the saguaro): `{name: path}`. These are extra baked states the code can adopt (`fallen`, and `chunks`, a 4-cell strip). They don't make the prop breakable.
 - `tags.levels` and `tags.faction` come from the levels' dressing tables (faction keys 0, 1, 2 become `wild`, `tribe`, `scrap`).
 
 ## Station
