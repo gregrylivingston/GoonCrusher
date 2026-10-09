@@ -1532,6 +1532,7 @@ const PASS_WALL := Vector2(0.15, 0.8)
 const CLEARING_R := 640.0
 const CLEARING_SHARE := 0.9
 const EDGE_FIELD := Vector2(0.3, 0.6)
+const LIP_FIELD := Vector2(0.03, 0.12) #edge props stand on a thicket's lip: no car-wide gap to wedge in
 const ANCHORS := ["ford", "bank", "track", "pass", "clearing", "edge", "any", "bridge"]
 
 var crossRuns: Array = []  #the raster's crossings round the chunk (WorldGen.crossingRuns)
@@ -1673,11 +1674,12 @@ func anchorSeeds(anchor: String) -> PackedVector2Array:
 					queue.push_back(k + FW)
 			for k in FW * FH:
 				if dist[k] >= BANK_CELLS.x && dist[k] <= BANK_CELLS.y && spawnable(terrain[k]): out.push_back(Vector2(k % FW + 0.5, k / FW + 0.5) * FINE)
-		"edge":
+		"edge", "lip":
+			var band := EDGE_FIELD if anchor == "edge" else LIP_FIELD
 			for j in FH:
 				for i in FW:
 					var v := wall[(j + 1) * RW + i + 1]
-					if v >= EDGE_FIELD.x && v <= EDGE_FIELD.y && spawnable(terrain[j * FW + i]): out.push_back(Vector2(i + 0.5, j + 0.5) * FINE)
+					if v >= band.x && v <= band.y && spawnable(terrain[j * FW + i]): out.push_back(Vector2(i + 0.5, j + 0.5) * FINE)
 		"track":
 			for j in FH:
 				for i in FW:
@@ -1722,7 +1724,7 @@ func placeEdgeProps() -> Array:
 	var out: Array = []
 	var spec: Dictionary = ctx.get("edgeProps", {})
 	if spec.is_empty(): return out
-	var seeds := anchorSeeds("edge")
+	var seeds := anchorSeeds("lip")
 	if seeds.is_empty(): return out
 	var er := RandomNumberGenerator.new()
 	er.seed = WorldGen.ihash(mapSeed, TAG_EDGE, chunk.x, chunk.y)
@@ -1735,13 +1737,22 @@ func placeEdgeProps() -> Array:
 			if placed >= want: break
 			var p := seeds[er.randi() % seeds.size()] + Vector2(er.randf_range(-64.0, 64.0), er.randf_range(-64.0, 64.0))
 			var rot := er.randf() * TAU
-			if not propFits(p, rot, info, id): continue
+			if not lipFits(p, info): continue
 			var bit := nextBit(info, id)
 			if lacksBit(info, bit): continue
 			out.push_back(propEntry(id, p, rot, er.randi() % maxi(int(info.variants), 1), bit, info.occluder))
 			reserve(p, info.radius + PROP_GAP * 0.5)
 			placed += 1
 	return out
+
+## An edge prop on a thicket's lip: its trunk on the wall's edge (so it leaves no gap a car could wedge in
+## between it and the wall), clear of water and every reservation
+func lipFits(p: Vector2, info: Dictionary) -> bool:
+	if not inChunk(p, 32.0) || not isFree(p, info.radius * 0.6): return false
+	var f := fieldAt(wall, p)
+	if f < LIP_FIELD.x || f > LIP_FIELD.y || fieldAt(water, p) < PROP_MARGIN + info.radius / 640.0: return false
+	var t := terrainAt(p)
+	return spawnable(t) && t != ASPHALT && t != OIL && t != BRIDGE && t != CONVEYOR && t != MUDPIT
 
 ## The road's direction at p: the heading (of 8) with the longest run of road through p, else `fallback`
 func roadAxis(p: Vector2, fallback: float) -> float:
