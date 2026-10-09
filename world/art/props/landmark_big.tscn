@@ -1,0 +1,34 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://world/art/props/landmark_big.png" id="tex"]
+[ext_resource type="Texture2D" path="res://world/art/props/landmark_big_beacon.png" id="beacon"]
+[ext_resource type="Material" path="res://shader/world_beacon.tres" id="beaconMat"]
+
+[sub_resource type="ConvexPolygonShape2D" id="shape"]
+points = PackedVector2Array(-100, -81.3, -58.7, -114.7, 12, -128, 82.7, -98.7, 122.7, -38.7, 106.7, 72, 46.7, 120, -14.7, 128, -98.7, 82.7, -128, 12)
+
+[sub_resource type="OccluderPolygon2D" id="occluder"]
+cull_mode = 2
+polygon = PackedVector2Array(-100, -81.3, -58.7, -114.7, 12, -128, 82.7, -98.7, 122.7, -38.7, 106.7, 72, 46.7, 120, -14.7, 128, -98.7, 82.7, -128, 12)
+
+[node name="landmark_big" type="StaticBody2D"]
+collision_layer = 1
+collision_mask = 0
+metadata/propId = &"landmark_big"
+metadata/propClass = &"TALL"
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(1.3333, 1.3333)
+texture = ExtResource("tex")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("shape")
+
+[node name="LightOccluder2D" type="LightOccluder2D" parent="."]
+occluder = SubResource("occluder")
+metadata/gc_world = true
+
+[node name="Beacon" type="Sprite2D" parent="."]
+material = ExtResource("beaconMat")
+scale = Vector2(1.3333, 1.3333)
+texture = ExtResource("beacon")

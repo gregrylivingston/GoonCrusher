@@ -104,6 +104,36 @@ The full list, with sizes, hulls and tags, is `props.json`. By class:
 - **WALL:** `fortwall`, `jersey`.
 - **DECOR:** `tufts`, `pebbles`, `cracks`, `bones`, `paint`, `oilstain`, `reeds`, `streetglow`, and `rooftop` (laid on BUILDING cells by `ChunkRecipe.placeRoofs`, not by dressing).
 
+#### Road Atlas props
+
+Made for the new landscapes and regions; no level dresses with them yet. Their `tags` carry `landscape` (or `region` for the class overlays and landmarks) as a hint for the dressing tables; the bake still adds `levels` and `faction` from the dressing. The hit reaction is the prop's entry in `PropReactions.REACT`.
+
+| Prop | Class | Variants, states | Reaction | For |
+|---|---|---|---|---|
+| `ranger_tower` | TALL | 2 (green, rust roof): a fire lookout on splayed, braced legs, catwalk and stair | SWAY | forest |
+| `fallen_trunk` | LOW | 2 (root plate, snapped end) | THUD | forest |
+| `pine_snow` | TALL, layered | 3; canopy: the pine's tiers under snow; leaves: snow clumps and needles | CANOPY | snowy forest |
+| `palm` | TALL, layered | 3; canopy: 9-11 fronds and coconuts; litter: dead fronds and coconuts; leaves: frond pieces | CANOPY | coast |
+| `beach_hut` | TALL | 2 (striped plank gable roof and deck, thatched palapa) | SHAKE | coast |
+| `lifeguard_tower` | TALL | 2 (red, blue roof): hut on stilts, ramp, ring buoy, flag | SWAY | coast |
+| `wagon` | STATEFUL | 2 (covered, open with crates); breakable at 380: boards, a wheel, torn canvas | SHAKE | ghost town |
+| `water_trough` | STATEFUL | 2 (plank, galvanised); breakable at 220: split planks and a wet stain | SHAKE | ghost town |
+| `mile_marker` | LOW | 2 (concrete marker stone, green sign edge-on) | WOBBLE | salt flats |
+| `salt_mound` | TALL | 3 (two sizes, a double mound) | THUD | salt flats |
+| `rock_black` | TALL | 3 (basalt, obsidian glints, red scoria) | THUD | volcano |
+| `mailbox` | STATEFUL | 3 (steel, blue-black, red); breakable at 260: crushed box and letters | KNOCK (flies off from 120 px/s like a cone, smashes from 260) | suburbs |
+| `swingset` | LOW | 2 (plain, rusty with a slide and a baby swing); no occluder | SWAY | suburbs |
+| `trampoline` | LOW | 2 (plain, with net posts); no occluder | SQUASH | suburbs |
+| `hunting_stand` | TALL | 2 (camo box blind, open ladder stand) | SWAY | Hunting Grounds overlay |
+| `trashbags` | STATEFUL | 3 (bags, plus a can and paper, plus a box); breakable at 140: burst bags and spilled rubbish | SQUASH | Sprawl overlay |
+| `landmark_big` | TALL, beacon | the giant skull cairn: a horned skull on a stone cairn, bones, four fire bowls; beacon: the eye sockets and the bowls | SHAKE | Hunting Grounds |
+| `landmark_swarm` | TALL, beacon | the junk throne: a couch seat with a crown on it, a back of tyres and panels, oil-drum fires, pallets and bags; beacon: the crown, the drums, string lights | SHAKE | The Sprawl |
+| `landmark_war` | TALL, beacon | the smokestack: a brick chimney with a glowing throat on a hazard-striped pad, a furnace door, tanks and coal; beacon: the throat, the furnace, two warning lights | SHAKE | The Works |
+| `tumbleweed` | DECOR | 4 cells, tangled dry twigs | none | ghost town, salt flats |
+| `steam_vent` | DECOR | 4 cells (three fissures, a crusted hole) with sulphur rims and a faint steam puff | none | volcano |
+
+The breakables above are STATEFUL like the older ones (`smashSpeed`, `_broken`, `_debris`); they only show. What a smash or spill should give is left to a later design pass.
+
 ### How a prop is baked
 
 1. The design draws into a canvas at 0.75 texels per px, centred on the prop's origin.
@@ -116,7 +146,7 @@ The full list, with sizes, hulls and tags, is `props.json`. By class:
 
 ### Layered props
 
-A design with a `canopy(c, R, v)` drawing is baked in two layers (package 14): `draw` becomes the **ground layer** (`<id>.png` and its variants: roots, the trunk's top and leaf litter for trees, the cab and tracks for the crane) with the canopy's silhouette baked under it as a soft shade (`shadowOf`), and the canopy becomes `<id>_canopy.png` (`_canopy_v1`...), rimmed, no shadow, drawn over the car. The canopy keeps the variant's random stream, so the crowns look as they did before the split; the ground layer has its own (`litter(c, R, v)` draws unrimmed litter between the shade and the trunk; `baseShadow` sets the ground layer's own shadow, 3 by default). The hull comes from `core` as before, so collision and night occluders stay on the trunk. A `leaves(c, R, k)` drawing bakes `<id>_leaves.png`, a row of 4 square cells of `LEAF_CELL` (28) px: what falls when the prop is hit (oak and cypress leaves, Spanish moss, pine needles and snow clumps, dead twigs). The manifest gets `canopy` (one path per variant) and `leaves`; posters draw the canopy over the ground layer. The saguaro stays one piece. PropReactions fades and shakes the canopy (docs/WORLD.md, "Prop reactions").
+A design with a `canopy(c, R, v)` drawing is baked in two layers (package 14): `draw` becomes the **ground layer** (`<id>.png` and its variants: roots, the trunk's top and leaf litter for trees, the cab and tracks for the crane) with the canopy's silhouette baked under it as a soft shade (`shadowOf`), and the canopy becomes `<id>_canopy.png` (`_canopy_v1`...), rimmed, no shadow, drawn over the car. The canopy keeps the variant's random stream, so the crowns look as they did before the split; the ground layer has its own (`litter(c, R, v)` draws unrimmed litter between the shade and the trunk; `baseShadow` sets the ground layer's own shadow, 3 by default). The hull comes from `core` as before, so collision and night occluders stay on the trunk. A `leaves(c, R, k)` drawing bakes `<id>_leaves.png`, a row of 4 square cells of `LEAF_CELL` (28) px: what falls when the prop is hit (oak and cypress leaves, Spanish moss, pine needles and snow clumps, dead twigs, palm frond pieces). The manifest gets `canopy` (one path per variant) and `leaves`; posters draw the canopy over the ground layer. The saguaro stays one piece. `palm` and `pine_snow` (Road Atlas) are layered like the trees; `pine_snow`'s strip is three snow cells and one needle cell, so a hit drops mostly snow on any level. PropReactions fades and shakes the canopy (docs/WORLD.md, "Prop reactions").
 
 Over-the-car layers were reviewed for every tall prop: the crane's jib reaches past its hull, so it has one; billboards and bus stops collide across their whole footprint and landmarks' and tents' overhang is ground clutter, so they don't.
 

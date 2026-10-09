@@ -9,7 +9,7 @@ class UiStub extends RefCounted:
 	func updateStats() -> void: pass
 	func updateGoonsCrushed() -> void: pass
 
-const LAYERED := ["oak", "pine", "cypress", "deadtree", "crane"]
+const LAYERED := ["oak", "pine", "cypress", "deadtree", "crane", "pine_snow", "palm"]
 
 var savedCar
 var reactions: PropReactions
@@ -58,7 +58,7 @@ func test_layered_props_draw_their_canopy_over_the_car():
 			assert_eq(canopy.z_index, PropReactions.CANOPY_Z, "%s: over goons and the car" % id)
 	assert_true(PropReactions.CANOPY_Z > 6, "above the highest goon layer (GoonFx top, 6)")
 	assert_false(props.saguaro.has("canopy"), "the saguaro stays one piece")
-	for id in ["oak", "pine", "cypress", "deadtree"]: assert_true(ResourceLoader.exists(props[id].get("leaves", "")), "%s drops leaves" % id)
+	for id in ["oak", "pine", "cypress", "deadtree", "pine_snow", "palm"]: assert_true(ResourceLoader.exists(props[id].get("leaves", "")), "%s drops leaves" % id)
 
 func test_a_canopy_fades_while_the_car_is_under_it_only():
 	var oak := prop("oak", Vector2(0, 0))

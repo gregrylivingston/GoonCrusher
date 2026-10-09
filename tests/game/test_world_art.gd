@@ -20,11 +20,15 @@ const CATALOG := ["rock", "boulder", "rock_white", "rock_ice", "oak", "pine", "c
 	"fortwall", "cabin", "snowcat", "wreck", "jersey", "cone", "gaspump", "sign", "billboard", "hydrant", "dumpster", "busstop",
 	"manhole", "streetglow", "scrapheap", "container", "tank", "landmark_wild", "landmark_tribe", "landmark_scrap", "reeds",
 	"tufts", "pebbles", "cracks", "bones", "paint", "oilstain"]
-const BREAKABLE := ["haybale", "fence", "hedge", "crate", "barricade"]
+const BREAKABLE := ["haybale", "fence", "hedge", "crate", "barricade", "wagon", "water_trough", "mailbox", "trashbags"]
 const EXPLOSIVE := ["barrel", "tank"]
 #added after the spec: canyon's red rocks and the city's rooftop decor
 const EXTRA := ["rock_red", "boulder_red", "rooftop"]
-const LANDMARKS := ["landmark_wild", "landmark_tribe", "landmark_scrap"]
+#the Road Atlas expansion's props (forest, coast, ghost town, salt flats, volcano, suburbs, the overlays, landmarks)
+const ROAD_ATLAS := ["ranger_tower", "fallen_trunk", "pine_snow", "palm", "beach_hut", "lifeguard_tower", "wagon", "water_trough",
+	"tumbleweed", "mile_marker", "salt_mound", "rock_black", "steam_vent", "mailbox", "swingset", "trampoline", "hunting_stand",
+	"trashbags", "landmark_big", "landmark_swarm", "landmark_war"]
+const LANDMARKS := ["landmark_wild", "landmark_tribe", "landmark_scrap", "landmark_big", "landmark_swarm", "landmark_war"]
 
 func manifest() -> Dictionary:
 	var data = JSON.parse_string(FileAccess.get_file_as_string(ART + "props.json"))
@@ -129,6 +133,9 @@ func test_scenes_match_the_manifest():
 func test_landmarks_have_beacons_and_extras_exist():
 	for id in LANDMARKS: assert_true(props().get(id, {}).has("beacon"), "%s: a beacon" % id)
 	for id in EXTRA: assert_true(props().has(id), "%s: in the manifest" % id)
+	for id in ROAD_ATLAS: assert_true(props().has(id), "%s (Road Atlas): in the manifest" % id)
+	for id in ["tumbleweed", "steam_vent"]: assert_eq(props().get(id, {}).get("class", ""), "DECOR", "%s is decor" % id)
+	for id in ["pine_snow", "palm"]: assert_true(props().get(id, {}).get("canopy") is Array, "%s is layered" % id)
 	assert_eq(props().get("rooftop", {}).get("class", ""), "DECOR", "rooftop is decor (no collision)")
 
 func test_level_dressing_names_known_props():

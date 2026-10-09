@@ -7,7 +7,7 @@ class_name PropReactions extends Node2D
 ##   - Hits: the car's wall hits on a prop (overhead_car_body_2d.gd collideWithFixedObject) call hit(). The prop
 ##     answers by its id (REACT): a tree's canopy shakes and drops leaves (snow on snowy levels), bushes and
 ##     bales squash and spring back, signs and pumps wobble, sheds, tents and crates shake, rocks only thud and
-##     dust, a hydrant sprays. A cone hit at KNOCK_SPEED flies off and stops being a wall until its chunk reloads.
+##     dust, a hydrant sprays. A cone (or a mailbox) hit at KNOCK_SPEED flies off and stops being a wall until its chunk reloads.
 ##   - Blasts (BreakableProp.blastAt) shake the canopies in their radius.
 ## Everything is a damped spring on the prop's sprite (no tweens), and the bits are pooled particles drawn by two
 ## nodes. Driving Effects (gfx/driving_fx) sizes the particles (none at Minimal); Reduce Motion calms the springs.
@@ -35,6 +35,15 @@ const REACT := {
 	&"hedge": SQUASH, &"haybale": SQUASH, &"tyres": SQUASH,
 	&"cone": KNOCK, &"hydrant": SPRAY,
 	&"logpile": SHAKE, &"watertower": SWAY, &"beehive": WOBBLE,
+	#Road Atlas props (docs/WORLD_ART.md)
+	&"pine_snow": CANOPY, &"palm": CANOPY,
+	&"ranger_tower": SWAY, &"lifeguard_tower": SWAY, &"hunting_stand": SWAY, &"swingset": SWAY,
+	&"mile_marker": WOBBLE,
+	&"beach_hut": SHAKE, &"wagon": SHAKE, &"water_trough": SHAKE,
+	&"landmark_big": SHAKE, &"landmark_swarm": SHAKE, &"landmark_war": SHAKE,
+	&"fallen_trunk": THUD, &"salt_mound": THUD, &"rock_black": THUD,
+	&"trampoline": SQUASH, &"trashbags": SQUASH,
+	&"mailbox": KNOCK,
 }
 const MIN_SPEED := 60.0    #px/s into the prop before anything reacts
 const FULL_SPEED := 520.0  #...and for the full reaction
