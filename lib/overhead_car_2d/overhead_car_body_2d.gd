@@ -36,7 +36,12 @@ var headlights: int = 1
 const UPGRADEABLE_STATS = ["engine", "steering", "traction", "armor", "oil", "headlights", "clover", "luck"]
 const STAT_CAP := 150
 const FUEL_BURN_BASE := 0.021 #fuel per physics tick at full throttle with 0 oil
-const WALL_DAMAGE_PER_SPEED := 0.07 #wall-hit damage per px/s of speed; armor is applied in damage()
+const WALL_DAMAGE_PER_SPEED := 0.012 #wall-hit health per px/s of speed (6 for a 500 px/s head-on); armor is applied in damage()
+#Health damage (docs/CAR_ART.md, "Health damage"). damage(amount) takes the health a car with no armor
+#loses; armorFactor scales it. A little armor helps a lot and a lot never makes the car immune: armor 10
+#takes 80% of a hit, 20 70%, 50 57%, 90 51%, the STAT_CAP 47%, and nothing goes under ARMOR_FLOOR.
+const ARMOR_FLOOR := 0.4 #share of a hit that even endless armor still takes
+const ARMOR_KNEE := 20.0 #armor that takes off half of what armor can
 const TRACTION_GRIP_PER_POINT := 0.003 #grip each traction point adds to traction_fast/traction_slow
 const GRIP_MIN := 0.05
 const GRIP_FAST_MAX := 0.40
@@ -47,7 +52,7 @@ const GRIP_SLOW_MAX := 0.95
 #hit (zoneForHit), physics reads the factor in integrate(), and the car art shows it (car_damage.gdshader).
 const SYSTEM_STATS := {"lights":"headlights", "engine":"engine", "steering":"steering", "tires":"traction", "tank":"oil"}
 const CONDITION_FLOOR := {"lights":0.35, "engine":0.6, "steering":0.7, "tires":0.5, "tank":0.4}
-const ZONE_WEAR_PER_SPEED := 0.035 #condition a wall hit takes per px/s of speed, before armor (a 500 px/s hit takes 17.5)
+const ZONE_WEAR_PER_SPEED := 0.035 #condition a wall hit takes per px/s of speed, before armorFactor (a 500 px/s hit takes 17.5)
 const ZONE_WEAR_MIN_SPEED := 80.0 #slower bumps and scrapes against a wall don't wear a system
 const ZONE_COOLDOWN_TICKS := 30   #a system takes wall wear at most every half second
 const GOON_SCUFF := 2.0           #condition a goon bump that doesn't crush takes from the side it hit
@@ -452,7 +457,7 @@ func collideWithFixedObject( collision, hitVelocity = null ):
 		damage(hurt) #armor is applied once, in damage()
 		wallHealthLost += before - health
 		if moving.length() >= ZONE_WEAR_MIN_SPEED:
-			wearSystem(hitZone(collision), ZONE_WEAR_PER_SPEED * hurt / WALL_DAMAGE_PER_SPEED * 100.0 / (maxf(armor, 0.0) + 100.0))
+			wearSystem(hitZone(collision), ZONE_WEAR_PER_SPEED * hurt / WALL_DAMAGE_PER_SPEED * armorFactor(armor))
 	velocity *= wallSpeedKeep(wallImpact(collision.get_normal(), moving))
 
 #Wall damage is per contact, not per tick. Meeting a wall (none touched in the last WALL_CONTACT_GAP_TICKS)
@@ -464,7 +469,7 @@ func collideWithFixedObject( collision, hitVelocity = null ):
 const WALL_CONTACT_GAP_TICKS := 10
 const WALL_REHIT_SPEED := 150.0
 const WALL_SCRAPE_TICKS := 15
-const WALL_SCRAPE_MAX := 4.0
+const WALL_SCRAPE_MAX := 0.3
 enum WallContact { HIT, SCRAPE, NONE }
 var wallHealthLost := 0.0    #health this run's wall hits and scrapes took (the playtest's damage_rocks)
 var lastWallTick := -1000    #physics frame of the last wall contact
@@ -535,9 +540,9 @@ func stopCarFX():
 #contact damage counts once per goon per GOON_BUMP_TICKS, not every tick the two touch, so a big goon
 #(a Scrap Gang van, a Thunderhoof) pressed against the car doesn't drain health per frame
 const GOON_BUMP_TICKS := 30
-#every goon contact chips the hull, crush or not (about 0.35 health at armour 1): crushing is cheap, never
+#every goon contact chips the hull, crush or not (0.35 health before armour): crushing is cheap, never
 #free. Keep it at most 5, or a Bubble Shield would spend a charge on every crush (blockedByPickup).
-const GOON_CONTACT_DAMAGE := 5.0
+const GOON_CONTACT_DAMAGE := 0.35
 var goonBumps := {}
 func goonBumpReady(goon: Object) -> bool:
 	var now := Engine.get_physics_frames()
@@ -880,10 +885,15 @@ func spendGems(numOfGems: int):
 
 func damage(damage: float):
 	if blockedByPickup(damage): return
-	health -= (damage * 7) / ( armor + 100)
+	health -= damage * armorFactor(armor)
 	updateDamageLook()
 	if health <= 0:
 		destroy()
+
+
+## The share of a hit a car with this much armor takes (ARMOR_FLOOR to 1)
+static func armorFactor(armorValue: float) -> float:
+	return ARMOR_FLOOR + (1.0 - ARMOR_FLOOR) * ARMOR_KNEE / (ARMOR_KNEE + maxf(armorValue, 0.0))
 
 
 func destroy():

@@ -309,7 +309,7 @@ func test_scraping_along_a_wall_costs_little():
 	var oldModel = OverheadCarBody2D.WALL_DAMAGE_PER_SPEED * 500.0 * OverheadCarBody2D.WALL_IMPACT_MIN * 60.0
 	assert_gt(oldModel / 4.0, scrape, "far less than a tick-by-tick scrape (%.0f)" % oldModel)
 	assert_almost_eq(car.wallTick(normal, Vector2(500, 5), 1061), 0.0, 0.0001, "the scrape is still cooling down")
-	assert_gt(car.wallTick(normal, Vector2(300, 400), 1062), 20.0, "turning hard into the wall is a new hit")
+	assert_gt(car.wallTick(normal, Vector2(300, 400), 1062), OverheadCarBody2D.WALL_DAMAGE_PER_SPEED * 300.0, "turning hard into the wall is a new hit")
 	assert_gt(car.wallTick(normal, Vector2(500, 5), 1200), 0.0, "after a gap, touching again is a new contact")
 	assert_almost_eq(car.wallTick(normal, Vector2(500, 5), 1200), 0.0, 0.0001, "and only one per tick")
 

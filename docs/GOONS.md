@@ -41,7 +41,7 @@ After a bake that adds new PNGs, run `Godot_console.exe --headless --path . --im
 
 | Goon | Faction | Verb | Rule |
 |---|---|---|---|
-| Jackalope | Wild | hopper | Hops; can't be hit at the peak of a hop (0.1-0.35 s of each 0.45 s hop, resting 0.6 s between: in the air about a quarter of the time). Take-off and landing can be crushed |
+| Jackalope | Wild | hopper | Hops; can't be hit in the air (0.12-0.6 s of each 0.75 s hop, resting 0.7 s between: in the air about a third of the time). Take-off and landing can be crushed. The hop is drawn as a jump: the sprite rises 46 px and grows, draws over the car while out of reach, leaves a shadow on the ground and dust at both ends; driving under one says "AIRBORNE" |
 | Tusker | Wild | charger | Long straight charge, armoured head-on while charging |
 | Bandit | Wild | thief | Steals pickups and runs; crush it to get them back |
 | Stinger | Wild | striker | Stops at its reach and strikes |
@@ -101,7 +101,7 @@ After a bake that adds new PNGs, run `Godot_console.exe --headless --path . --im
 
 ## Crushing
 
-`OverheadCarBody2D.crushGoon` calls `goon.tryCrush(car, speed)` and returns false when the goon resists. On false the car keeps its usual scuff (`wearSystem(hitZone, GOON_SCUFF)`). A successful crush never wears the car's systems, but every goon contact, crush or not, chips the hull by `GOON_CONTACT_DAMAGE` (5 before armour, about 0.35 health on a stock car; once per goon per 30 ticks). Keep it at 5 or less, or a Bubble Shield would spend a charge on every crush.
+`OverheadCarBody2D.crushGoon` calls `goon.tryCrush(car, speed)` and returns false when the goon resists. On false the car keeps its usual scuff (`wearSystem(hitZone, GOON_SCUFF)`). A successful crush never wears the car's systems, but every goon contact, crush or not, chips the hull by `GOON_CONTACT_DAMAGE` (0.35 health before armour; once per goon per 30 ticks). Keep it at 5 or less, or a Bubble Shield would spend a charge on every crush. A goon's `dmg` is the health its attack takes from a car with no armor (docs/CAR_ART.md, "Health damage").
 
 A goon resists when any of these holds:
 - it is invulnerable: a hidden shell, a rolling boulder, buried, airborne, riding the car, or a flying bird

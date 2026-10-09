@@ -369,8 +369,8 @@ Baked STATEFUL props carry their state as metadata on the root (`smashSpeed`, `b
 In `overhead_car_body_2d.gd` (`wallTick`, `wallContact`, `wallDamage`):
 
 - **Impact:** `|normal · direction of travel|`, clamped to 0.15–1 (`wallImpact`). Every contact tick keeps `lerp(1, 0.85, impact)` of the velocity.
-- **Hit:** meeting a wall with none touched in the last 10 ticks (`WALL_CONTACT_GAP_TICKS`), or driving into it again at 150 px/s or more along its normal (`WALL_REHIT_SPEED`), costs `0.07 × speed before the slide × impact` (`WALL_DAMAGE_PER_SPEED`; armor is applied in `damage()`). Two pieces of one wall in the same tick are one hit.
-- **Scrape:** staying against a wall costs at most every 15 ticks (`WALL_SCRAPE_TICKS`) `min(0.07 × speed × 0.15, 4)` (`WALL_SCRAPE_MAX`), about 1.1 health a second for a stock car.
+- **Hit:** meeting a wall with none touched in the last 10 ticks (`WALL_CONTACT_GAP_TICKS`), or driving into it again at 150 px/s or more along its normal (`WALL_REHIT_SPEED`), costs `0.012 × speed before the slide × impact` health (`WALL_DAMAGE_PER_SPEED`; armor is applied in `damage()`, docs/CAR_ART.md, "Health damage"). Two pieces of one wall in the same tick are one hit.
+- **Scrape:** staying against a wall costs at most every 15 ticks (`WALL_SCRAPE_TICKS`) `min(0.012 × speed × 0.15, 0.3)` (`WALL_SCRAPE_MAX`), about 1.2 health a second for a car with no armor.
 - Zone wear follows the damage (`zoneForHit`, a 30-tick cooldown per system). `wallHealthLost` sums what walls took (the playtest's `damage_rocks`).
 
 ## Goon and FX hooks

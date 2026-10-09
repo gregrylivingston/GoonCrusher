@@ -590,14 +590,35 @@ class Charger extends Verb:
 
 #==================================================================================================
 ## Moves in hops; in the air it can't be hit, so time it for the landing (Jackalope).
+## The hop is drawn as a real jump (the sprite rises, grows and draws over the car, a shadow stays on the
+## ground, dust at take-off and landing) and driving under one says "AIRBORNE", so a miss reads as a dodge.
 class Hopper extends Verb:
-	#a hop lasts HOP seconds; only its peak (AIR_FROM to AIR_TO) is out of reach, and it rests REST between
-	#hops, so it is in the air about a quarter of the time (it was two thirds, and cars drove under it)
-	const HOP := 0.45
-	const AIR_FROM := 0.1
-	const AIR_TO := 0.35
-	const REST := 0.6
+	#a hop lasts HOP seconds; only its middle (AIR_FROM to AIR_TO) is out of reach, and it rests REST between
+	#hops, so it is in the air about a third of the time (it was two thirds, and cars drove under it)
+	const HOP := 0.75
+	const AIR_FROM := 0.12
+	const AIR_TO := 0.6
+	const REST := 0.7
+	const STRIDE := 1.3      #ground speed in a hop, × its speed
+	const LIFT := 46.0       #px the sprite rises at the peak (screen up)
+	const GROW := 0.7        #and how much bigger it draws
 	var hopDir := Vector2.RIGHT
+	var shadow: Sprite2D
+	var baseScale := 1.0
+	var lifted := false
+	var called := false      #"AIRBORNE" once per hop
+	func setup() -> void:
+		baseScale = g.sprite.scale.x
+		shadow = Sprite2D.new()
+		shadow.texture = Walker.EYE_TEXTURE
+		shadow.top_level = true
+		shadow.z_index = -1
+		shadow.visible = false
+		g.add_child(shadow)
+	func tick(delta: float, car: Node2D) -> void:
+		super.tick(delta, car)
+		if g.state == &"hop": drawHop(car)
+		elif lifted: land() #knocked out of a hop (a blast, a stun)
 	func move(delta: float, car: Node2D) -> void:
 		g.play(&"idle")
 		if g.stateTime < REST: return
@@ -609,17 +630,42 @@ class Hopper extends Verb:
 		g.rotation = to
 		g.setState(&"hop")
 		g.play(&"special", HOP)
+		g.fx().dust(g.global_position)
+		lifted = true
+		called = false
+		shadow.visible = true
 	func other(delta: float, _car: Node2D) -> void:
 		if g.state == &"hop":
-			g.global_position += hopDir * g.speedNow() * 1.6 * delta
+			g.global_position += hopDir * g.speedNow() * STRIDE * delta
 			var up: bool = g.stateTime >= AIR_FROM && g.stateTime < AIR_TO
 			if up != g.invulnerable: #take-off and landing can be crushed; the peak can't
 				g.setSolid(not up)
 				g.invulnerable = up
 			if g.stateTime >= HOP:
-				g.setSolid(true)
-				g.invulnerable = false
+				land()
+				g.fx().dust(g.global_position)
 				g.setState(&"move")
+	## The jump's look, from how far through the hop it is: up and back down on a sine.
+	func drawHop(car: Node2D) -> void:
+		var h := sin(PI * clampf(g.stateTime / HOP, 0.0, 1.0))
+		g.sprite.scale = Vector2.ONE * baseScale * (1.0 + GROW * h)
+		g.sprite.position = Vector2(0, -LIFT * h).rotated(-g.rotation) / g.scale.x
+		g.z_index = 3 if g.invulnerable else 0 #over the car while it's out of reach
+		var size := g.bodyRadius * g.scale.x / 16.0 * (1.0 - 0.35 * h)
+		shadow.scale = Vector2(3.2, 2.4) * size
+		shadow.global_position = g.global_position + Vector2(2, 3)
+		shadow.modulate = Color(0, 0, 0, 0.5 - 0.2 * h)
+		if g.invulnerable && not called && car.velocity.length() > 150.0 				&& g.distTo(car) < g.bodyRadius * g.scale.x + 50.0:
+			called = true
+			g.fx().label(g.global_position, "AIRBORNE")
+	func land() -> void:
+		lifted = false
+		g.setSolid(true)
+		g.invulnerable = false
+		g.z_index = 0
+		g.sprite.scale = Vector2.ONE * baseScale
+		g.sprite.position = Vector2.ZERO
+		shadow.visible = false
 
 #==================================================================================================
 ## Steals pickups and runs; crush it to get them back with interest (Bandit).
