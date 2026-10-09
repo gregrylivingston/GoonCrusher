@@ -89,7 +89,7 @@ Enough that a 30-minute session doesn't repeat. The playlist is shuffled without
 	"short": "GCR",
 	"color": "#ff8a1f",
 	"order": 0,
-	"segment_chance": 0.6,
+	"segment_counts": [1, 1, 1],
 	"weights": {"ident": 3, "talk": 4, "ad": 2},
 	"crossfade": 2.5
 }
@@ -101,11 +101,12 @@ Enough that a 30-minute session doesn't repeat. The playlist is shuffled without
 | `short` | 3–4 letters for tight spots | first letters of `name` |
 | `color` | The card's accent | white |
 | `order` | Position in the picker | 99 |
-| `segment_chance` | Chance (0–1) that something plays between two songs | 0.6 talk stations, 0.3 music-only |
-| `weights` | Relative odds of each segment kind when one plays (`ident`, `talk`, `ad`) | 1 each |
+| `segment_counts` | Relative odds of **0, 1 or 2** segments between two songs. `[1, 1, 1]` is a third each | from `segment_chance` |
+| `segment_chance` | Older, simpler form: chance (0–1) of one segment between two songs; ignored when `segment_counts` is set | 0.6 talk stations, 0.3 music-only |
+| `weights` | Relative odds of each segment kind (`ident`, `talk`, `ad`) when a segment plays | 1 each |
 | `crossfade` | Seconds of song-to-song crossfade | 2.5 |
 
-A segment always sits between two songs: never two segments in a row. Switching to a station plays an ident first when it has one.
+After each song the radio rolls `segment_counts`: the next song straight away, one segment, or two segments **of different kinds** (an ad then the DJ, say; never two ads), each kind picked by `weights`. Then the next song. Switching to a station plays an ident first when it has one.
 
 ### Writing brief: GoonCrusher Radio
 

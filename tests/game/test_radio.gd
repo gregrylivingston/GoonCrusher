@@ -59,28 +59,58 @@ func test_song_names_come_from_the_file():
 	assert_eq(station.songInfo("res://x/songs/Crush Hour - DJ Grille.ogg"), {"title":"Crush Hour", "artist":"DJ Grille"})
 	assert_eq(station.songInfo("res://x/songs/rainy_drive.ogg"), {"title":"rainy drive", "artist":"Lofi"})
 
-func test_segments_follow_chance_and_weights():
+func test_segment_counts_and_weights():
 	var station = RadioStation.new()
 	station.files = {"song":["s1", "s2"], "ident":["i1"], "talk":["t1", "t2"], "ad":[]}
 	station.reseed(11)
-	station.segmentChance = 0.0
-	for i in 50: assert_eq(station.pickSegment(), {}, "chance 0 never plays a segment")
-	station.segmentChance = 1.0
+	station.segmentCounts.assign([1.0, 0.0, 0.0])
+	for i in 50: assert_eq(station.pickSegments(), [], "count 0 never plays a segment")
+	station.segmentCounts.assign([0.0, 1.0, 0.0])
 	var counts := {}
 	for i in 400:
-		var segment = station.pickSegment()
-		counts[segment.kind] = counts.get(segment.kind, 0) + 1
+		var picked = station.pickSegments()
+		assert_eq(picked.size(), 1)
+		counts[picked[0].kind] = counts.get(picked[0].kind, 0) + 1
 	assert_false(counts.has("ad"), "a kind with no files never plays")
 	assert_between(counts.get("ident", 0), 150, 250, "equal weights split evenly")
 	station.weights["talk"] = 0.0
-	for i in 50: assert_eq(station.pickSegment().kind, "ident", "weight 0 turns a kind off")
+	for i in 50: assert_eq(station.pickSegments()[0].kind, "ident", "weight 0 turns a kind off")
 
-func test_a_song_always_follows_a_segment():
+func test_two_segments_are_different_kinds():
+	var station = RadioStation.new()
+	station.files = {"song":["s1"], "ident":["i1", "i2"], "talk":["t1"], "ad":["a1"]}
+	station.reseed(5)
+	station.segmentCounts.assign([0.0, 0.0, 1.0])
+	for i in 200:
+		var picked = station.pickSegments()
+		assert_eq(picked.size(), 2)
+		assert_true(picked[0].kind != picked[1].kind, "two segments in a row are never the same kind")
+	station.files = {"song":["s1"], "ident":["i1"], "talk":[], "ad":[]}
+	assert_eq(station.pickSegments().size(), 1, "with one kind available, two becomes one")
+
+func test_counts_split_in_thirds():
+	var station = RadioStation.new()
+	station.files = {"song":["s1"], "ident":["i1"], "talk":["t1"], "ad":["a1"]}
+	station.reseed(9)
+	station.segmentCounts.assign([1.0, 1.0, 1.0])
+	var sizes := [0, 0, 0]
+	for i in 900: sizes[station.pickSegments().size()] += 1
+	for n in 3: assert_between(sizes[n], 240, 360, "%d segments about a third of the time" % n)
+
+func test_legacy_segment_chance():
+	var station = RadioStation.new()
+	station.applyConfig({"segment_chance": 0.25})
+	assert_eq(station.segmentCounts, [0.75, 0.25, 0.0] as Array[float])
+	station.applyConfig({"segment_counts": [1, 2, 3]})
+	assert_eq(station.segmentCounts, [1.0, 2.0, 3.0] as Array[float])
+
+func test_a_song_always_follows_the_segments():
 	for i in 100:
 		var plan = radio.planAfterSong()
-		assert_between(plan.size(), 1, 2)
+		assert_between(plan.size(), 1, 3)
 		assert_eq(plan.back().kind, "song")
-		if plan.size() == 2: assert_true(plan[0].kind in ["ident", "talk", "ad"], "unknown segment " + str(plan[0].kind))
+		for item in plan.slice(0, plan.size() - 1): assert_true(item.kind in ["ident", "talk", "ad"], "unknown segment " + str(item.kind))
+		if plan.size() == 3: assert_true(plan[0].kind != plan[1].kind, "two segments differ in kind")
 
 func test_tuning_queues_an_ident_then_a_song():
 	radio.tune(Radio.OFF)
@@ -108,7 +138,7 @@ func test_shipped_stations_are_valid():
 	assert_true(shipped.stations.has(StringName(Settings.DEFAULTS["audio/station"])), "the default station has songs")
 	for id in shipped.order:
 		var station: RadioStation = shipped.stations[id]
-		assert_between(station.segmentChance, 0.0, 1.0)
+		for w in station.segmentCounts: assert_true(w >= 0.0, "segment_counts are not negative")
 		for kind in station.files:
 			for path in station.files[kind]: assert_true(ResourceLoader.exists(path), path + " is not imported")
 
