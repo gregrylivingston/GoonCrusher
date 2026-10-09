@@ -44,15 +44,6 @@ static func theme() -> Theme:
 	t.set_constant("h_separation", "Button", 12)
 	t.set_font_size("font_size", "Button", 24)
 
-	#stat rows on the driver card: the highlight is the row's own rect, inset content sits inside it
-	t.set_type_variation("StatRow", "Button")
-	var rowMargins = Vector4(8, 2, 8, 2)
-	t.set_stylebox("normal", "StatRow", box(Color(1, 1, 1, 0.035), Color(0, 0, 0, 0), 7, 0, rowMargins))
-	t.set_stylebox("hover", "StatRow", box(Color(HudTheme.RIM, 0.14), Color(HudTheme.RIM, 0.75), 7, 2, rowMargins))
-	t.set_stylebox("pressed", "StatRow", box(Color(HudTheme.RIM, 0.3), HudTheme.RIM, 7, 2, rowMargins))
-	t.set_stylebox("focus", "StatRow", box(Color(HudTheme.RIM, 0.2), HudTheme.RIM, 7, 2, rowMargins))
-	t.set_stylebox("disabled", "StatRow", box(Color(1, 1, 1, 0.02), Color(0, 0, 0, 0), 7, 0, rowMargins))
-
 	#the primary action
 	t.set_type_variation("PrimaryButton", "Button")
 	t.set_stylebox("normal", "PrimaryButton", primaryBox(HudTheme.RIM))

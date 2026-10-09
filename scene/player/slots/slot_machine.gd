@@ -4,8 +4,8 @@ class_name SlotMachine extends PickupMenu
 #speed you can read, and each press of the action key (E) stops the next one on the symbol coming up, so a
 #good eye can time it. Before the first stop A / D set the bet (run coins that tilt the reels toward rarer
 #prizes). Once all three stand, nudges (one, plus one per gift box tier) roll a reel on by one symbol: A / D
-#pick the reel, W nudges it, and the line under the reels says what the pay line pays as it stands. REJECT
-#(Q) spins again for a gem. The action key collects: a pair pays its symbol twice, a triple five times, stars are
+#pick the reel, W nudges it, and the line under the reels says what the pay line pays as it stands. The
+#action key collects: a pair pays its symbol twice, a triple five times, stars are
 #Star Fragments and three are the jackpot. What the pay line shows is exactly what pays.
 
 const STRIP := 24          #symbols on a reel
@@ -15,7 +15,6 @@ const REEL_GAP := 18.0
 const REEL_TOP := 40.0
 const SPIN_SPEED := 7.0    #symbols per second
 const START_GAP := 0.12    #between the reels starting
-const REROLL_GEMS := 1
 
 var tier := 0
 var fromBox := false
@@ -71,12 +70,11 @@ func updateHints() -> void:
 	var list := [[[ACT], "Collect"]]
 	if nudges > 0: list.push_back([["TurnLeft", "TurnRight"], "Reel"])
 	if nudges > 0: list.push_back([["Accelerate"], "Nudge (%d)" % nudges])
-	if runGems() >= REROLL_GEMS: list.push_back([[REJECT], "Spin again (%d gem)" % REROLL_GEMS])
 	hints(list)
 
 func updateInfo() -> void:
 	if phase == "spin": say("Bet %d run coins   -   Run coins %d" % [SlotSymbols.BETS[SlotSymbols.bet], runCoins()])
-	else: say("Nudges left %d   -   Gems %d" % [nudges, runGems()])
+	else: say("Nudges left %d" % nudges)
 
 func onAction(action: String) -> void:
 	match action:
@@ -89,8 +87,6 @@ func onAction(action: String) -> void:
 			elif nudges > 0: cursor = wrapi(cursor + step, 0, 3)
 		"Accelerate":
 			if phase == "stopped": nudge(cursor)
-		REJECT:
-			if phase == "stopped": spinAgain()
 
 func onStageMouse(event: InputEvent) -> void:
 	if not isClick(event): return
@@ -173,19 +169,6 @@ func nudge(r: int) -> void:
 	nextStop = 3
 	Transition.sound("clank", -14.0, 1.4)
 	updateHints()
-
-func spinAgain() -> void:
-	if not is_instance_valid(Root.playerCar) || not Root.playerCar.spendGems(REROLL_GEMS): return
-	for r in 3:
-		target[r] = -1
-		stopped[r] = false
-		for i in STRIP: strips[r][i] = SlotSymbols.pick()
-	spinT = 0.0
-	nextStop = 0
-	phase = "spin"
-	betPaid = true
-	updateHints()
-	updateInfo()
 
 #Paylines (SlotSymbols.payouts): a pair pays its symbol twice, a triple five times; one or two stars are
 #Star Fragments, three are the jackpot (+1 star and a purse rain). Credited now; the board shows it.

@@ -76,7 +76,7 @@ const DATA := {
 	"purse": {"parent":"coin", "name":"Purse", "kind":K.LOOT, "rarity":R.UNCOMMON, "w":14, "icon":"purse", "scene":"res://scene/powerup/purse.tscn", "ui":"coinui",
 		"text":"15 to 100 coins in one go."},
 	"gem": {"parent":"coin", "name":"Gem", "kind":K.LOOT, "rarity":R.UNCOMMON, "w":14, "icon":"gem", "scene":"res://scene/powerup/gem.tscn", "ui":"gemui",
-		"text":"+1 gem. Gems pay for rerolls in the slot machine and The Deal, and are kept after the run."},
+		"text":"+1 gem. Gems buy starting gadgets, boosts and unlocks, and are kept after the run."},
 	"slotmachine": {"start":true, "name":"Slot Machine", "kind":K.CASINO, "rarity":R.RARE, "w":10, "icon":"slotMachine", "scene":"res://scene/powerup/slotMachine.tscn", "ui":"slotmachineui", "ai":50,
 		"text":"Opens the slot machine. Pairs pay twice, triples five times, and three stars are the jackpot. Bet run coins for better reels."},
 
@@ -428,7 +428,7 @@ static func openLoadout(table: Dictionary) -> Dictionary:
 		if Unlocks.isPickupOpen(id): out[id] = table[id]
 	return out
 
-## Prize games (the slot reels, the Claw, the Deal, the Wheel, the Vault, the Pit Shop) never pay these: each
+## Prize games (every PickupMenu game and the Pit Shop) never pay these: each
 ## is a game of its own, or a box that could roll one. Every Casino pickup.
 const NOT_IN_GAMES := ["slotmachine", "deal", "claw", "mystery", "scratch", "double", "lottery", "wheel"]
 

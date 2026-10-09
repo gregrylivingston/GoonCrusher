@@ -25,7 +25,7 @@ Most effect timings are first-pass values. None has been tuned by hand.
    - Spam Esc during the drop and the lift.
 4. **Slot machine.**
    - Gift box: the drop-in and rattle, the lid pop (no shake under Reduce Motion), then the game's skid in and hatch; the slot's reels settle. Try `-- --prize=<game>` for each game.
-   - Reroll, bet, then Collect: the chute, the peel-out, then the compact lamps.
+   - Bet, stop the reels, then Collect: the chute, the peel-out, then the compact lamps.
    - Also check the Marathon free slot after the Pit Shop: the Pit Shop closes instantly into it.
 5. **The Deal, Claw Crane and Pit Shop.** Each skids in, the hatch rolls up, then on leaving the hatch slams, the panel peels out and the lamps start.
 6. **Results.**
@@ -60,12 +60,12 @@ Run flows 1 to 6 under each of these:
 
 - Every bottom hint bar is clickable: the main menu (Back included), Goonopedia, pause, Deal, Claw and Pit Shop. Also the Q/E tab chips in Settings and Goonopedia.
 - Driver card:
-  - Clicking a stat opens the upgrade sheet on that stat.
-  - Hover focuses a row, and a click buys.
-  - A row you can't afford shakes.
-  - Done closes the sheet.
-  - Upgrade and unlock flashes.
-- The mouse wheel scrolls the carousels (not in upgrade mode).
+  - Upgrades opens the Goonopedia on that car with its Engine upgrade button focused. The stat rail ignores the mouse.
+  - Hovering a feature shows its full text.
+  - Side cards show only their art; selecting one flips it to its front (a crossfade with Reduce Motion), and the old one flips back.
+  - Drive and Upgrades sit at the bottom right and follow the selected card.
+  - Unlock flashes.
+- The mouse wheel scrolls the carousels.
 - Clicking a side poster selects that level.
 - The medallions have hover states.
 - Check that a synthetic action fired by a click never leaves an action stuck "pressed" (`KeyHint.fire`).

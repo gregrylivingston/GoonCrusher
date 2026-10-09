@@ -9,8 +9,8 @@ class_name CrushPrizes extends RefCounted
 
 ## Prize games, weakest first. Measured with each game's own rolls, no bet and no Dice, every pickup open
 ## (rarity points per play: Common 1, Uncommon 2, Rare 4, Epic 8, Legendary 16): Claw Crane 1.05 for an
-## average grab (2.67 aimed at the best prize), Scratch Card 2.12, Prize Wheel 2.78 (it can bust), The
-## Deal 2.77 (one card, but your pick), Slot Machine 6.95 (three reels pay three things), the Vault more.
+## average grab (2.67 aimed at the best prize), Scratch Card 2.12, The Deal 2.77 (old rules: one
+## card, your pick), Slot Machine 6.95 (three reels pay three things); the drafts are not measured yet.
 ## A new save opens only the first. Prices are placeholders until the unlock shop sells them (Unlocks,
 ## "prize:<id>" in meta.unlocks).
 const GAMES := [

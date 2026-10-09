@@ -400,7 +400,7 @@ func touchingWall() -> bool:
 		if World.isWall(collider): return true
 	return false
 
-#a prize game pauses the run: tap its action key (PickupMenu.ACT) until it closes (never reroll)
+#a prize game pauses the run: tap its action key (PickupMenu.ACT) until it closes
 #paused this long (real ms) with no menu to answer once the run has started, the run would hang (a crush goal
 #that paused for a menu that never opened)
 const SOFTLOCK_MS := 10000

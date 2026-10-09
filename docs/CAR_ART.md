@@ -123,7 +123,7 @@ Stock cars on grass after the first fit (2026-10-09). Before, the stock sedan to
 
 ## Traits
 
-Every car has signature features beyond its stats (`scripts/global/car_traits.gd`, `CarTraits`). A car lists them in its `CarInfo` (`traits`, edited in `<car>_info.tres`). The garage card shows them as badges along the foot of its art (`DriverCard.traitBadge`; a third wraps onto a second row), and the Goonopedia's Cars tab explains each under **Signature** (`signatureRows`). Each has an icon, `texture/icon/trait_<id>.svg`, drawn by `scripts/art/pickup_icons.js`.
+Every car has signature features beyond its stats (`scripts/global/car_traits.gd`, `CarTraits`). A car lists them in its `CarInfo` (`traits`, edited in `<car>_info.tres`). Every car lists exactly two: the garage card shows each as a row under the name band with its one-line `short` text (`DriverCard.traitLine`), and the Goonopedia's Cars tab explains each under **Signature** (`signatureRows`). Each has an icon, `texture/icon/trait_<id>.svg`, drawn by `scripts/art/pickup_icons.js`.
 
 Each trait has a kind, and its kind decides where it lives:
 - **Physics** changes handling inside `integrate()`, so the AI driver's predictions follow it. The car caches one flag per trait in `_ready` (`cacheTraits`: `second_wind` becomes `tSecondWind`), and `integrate()` reads them through `surfaceGrip`, `traitGrip`, `traitSteer`, `groundFriction`, `handbrakeGrip` and `effectiveWeight`.
@@ -148,7 +148,6 @@ Each trait has a kind, and its kind decides where it lives:
 | Police | Lightbar | Mechanic | At night a red and a blue light, 900 px, flash round the car | `CarTraitRig.buildLightbar` |
 | Ambulance | Defibrillator | Mechanic | Once a run, 0 health comes back to 30 (in deep water too) | `defibrillate` |
 | Ambulance | Box Sway | Physics | Braking above 200 px/s: wheel ×1.2, grip ×1.1; full power through a hard corner above 400: grip ×0.8 | `traitGrip`, `traitSteer` |
-| Semi | Fifth Wheel | Physics | The trailer (below) | `CarTrailer` |
 | Semi | Unstoppable | Physics | Smashes every breakable but explosives at any speed, the trailer too | `smashThreshold` |
 | Semi | Drop the Load | Ability | 7 crates out the back: goons under them are crushed, the rest stand as a barrier for 25 s and spill no coins. Empty, the rig is 25 weight lighter until it restocks in 40 s | `CarTraitRig.dropLoad` |
 

@@ -1,6 +1,7 @@
-[gd_resource type="ShaderMaterial" load_steps=2 format=3]
+[gd_resource type="ShaderMaterial" format=3 uid="uid://dha4kkncabodr"]
 
-[ext_resource type="Shader" path="res://shader/world_beacon.gdshader" id="1_beacon"]
+[ext_resource type="Shader" uid="uid://dmxkc3uu3oibh" path="res://shader/world_beacon.gdshader" id="1_beacon"]
 
 [resource]
 shader = ExtResource("1_beacon")
+shader_parameter/night = 1.0

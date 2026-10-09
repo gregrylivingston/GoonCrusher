@@ -86,7 +86,7 @@ const PICKUP_TEXT := {
 	Root.upgrade.LUCK: ["Dice", "+%d Dice for this run: drops are more often purses, gems and slot machines."],
 	Root.upgrade.COIN: ["Coin", "+%d coin. Stars multiply what a run pays."],
 	Root.upgrade.PURSE: ["Purse", "+%d coins in one go."],
-	Root.upgrade.GEM: ["Gem", "+%d gem. Gems pay for slot machine rerolls."],
+	Root.upgrade.GEM: ["Gem", "+%d gem. Gems buy a gadget and boost for the next run, and unlocks."],
 	Root.upgrade.SLOTMACHINE: ["Slot Machine", "Opens the slot machine: three reels of prizes, free to spin."],
 }
 const STAT_UPGRADES := [Root.upgrade.ENGINE, Root.upgrade.STEERING, Root.upgrade.TRACTION, Root.upgrade.ARMOR,
@@ -128,17 +128,43 @@ var listScroll := ScrollContainer.new()
 var detail := VBoxContainer.new()
 var into: VBoxContainer = detail #where the card helpers add rows: the detail card, or a showcase's side column
 var progressLabel := Label.new()
+var detailScroll := ScrollContainer.new() #the detail card's scroll
 var bankRow := HBoxContainer.new() #the header's coins and gems, as symbols
 var tiles: Array[Button] = []
 var shown = null #the entry in the detail card
 var preview: GoonPreview
 var pending := {}        #resource path -> Callable(resource) to run once it has loaded on a worker thread
 var carInfos := {}       #car index -> CarInfo
+var focusStat := -2 #the upgrade button showCar wants focused once the car's info has loaded; -2 none
 
 static func open(parent: Node) -> Goonopedia:
 	var page = Goonopedia.new()
 	parent.add_child(page)
 	return page
+
+## The garage's Upgrades: the page opened on a car's card in the Cars tab, with the focus on `stat`'s
+## upgrade button (the first stat's for -1)
+static func openCar(parent: Node, carIndex: int, stat := -1) -> Goonopedia:
+	var page := open(parent)
+	page.showCar(carIndex, stat)
+	return page
+
+
+func showCar(carIndex: int, stat := -1) -> void:
+	setTab(Tab.CARS)
+	var b := tileFor(carIndex)
+	if b == null: return
+	b.grab_focus() #shows its card
+	focusStat = stat if stat >= 0 else Root.upgrade.ENGINE
+	focusUpgrade()
+
+#moves the focus to the upgrade button showCar asked for, once the card has it
+func focusUpgrade() -> void:
+	if focusStat == -2: return
+	var button := upgradeButton(focusStat)
+	if button == null: return
+	focusStat = -2
+	button.grab_focus()
 
 func _ready() -> void:
 	add_to_group("menuOverlay")
@@ -175,8 +201,8 @@ func _ready() -> void:
 	body.add_child(left)
 	var right = PanelContainer.new()
 	right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var detailScroll = ScrollContainer.new()
 	detailScroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	detailScroll.follow_focus = true #an upgrade button moved to with keys scrolls into view
 	detail.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	detail.add_theme_constant_override("separation", 10)
 	detailScroll.add_child(detail)
@@ -820,6 +846,7 @@ func onCarInfo(info: CarInfo, index: int, b) -> void:
 		setTileArt(info.profilePic, b)
 		b.get_node("caption").text = info.charName
 	refreshIfShown("car", index)
+	focusUpgrade()
 
 func carDetail(entry: Dictionary) -> void:
 	var index: int = entry.key
@@ -1029,11 +1056,11 @@ func buildPickups() -> void:
 #here like pickups ("prize:<id>" through Unlocks).
 const PRIZE_TEXT := {
 	"claw": "The claw runs back and forth on its own: drop it at the right moment and hope it holds. Watch for junk.",
-	"shuffle": "A prize goes under a hubcap and they shuffle. Find it, then keep it or go again for a better one.",
+	"shuffle": "A prize, a coin and some junk go under three hubcaps and they shuffle. Find the prize, then keep it or go again.",
 	"scratch": "Three cells scratch open one by one. Two alike pay once, three alike pay three times.",
-	"press": "Slam the press on the conveyor: crush goons, crack prize crates, miss the bombs.",
+	"press": "Three slams on a fast conveyor: whatever is under the press is yours. Crates pay prizes, goons coins, bombs hurt.",
 	"deal": "Keep the card you're dealt or redraw, three times. The backs show what kind of card comes next.",
-	"pachinko": "Aim the dropper and let the ball rattle through the pegs. The outer cups pay best.",
+	"pachinko": "The dropper slides and swings by itself: time your drops, as many balls at once as you like. The outer cups pay best.",
 	"pusher": "Drop coins on the pile and push prizes over the ledge. Can pay several things at once.",
 	"slot": "Three reels of prizes, with bets and paylines. A spin can pay three things.",
 }

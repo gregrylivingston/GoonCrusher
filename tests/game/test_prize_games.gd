@@ -1,8 +1,8 @@
 extends GameTest
 
 #The prize games on the PickupMenu frame (docs/PICKUPS.md, "Prize games"): no game pays another, the winnings
-#board says what each prize did, and each game's rules (claw grip, slot pay line, wheel power, the Deal's
-#deck, the Vault's dial).
+#board says what each prize did, and each game's rules (claw grip, slot pay line, the Deal's deck, the
+#shuffle's rounds, the press, pachinko and pusher).
 
 var wasAllOpen := false
 

@@ -4,7 +4,9 @@ class_name CoinPusher extends PickupMenu
 #back, shoving a pile of coins and prizes along the floor toward the ledge at the front. The action key (E)
 #drops a coin from a slot that sweeps back and forth over the pile; whatever falls off the ledge is won the
 #moment it drops (coins pay run coins, prizes their pickup, the odd bit of junk costs you). Ten coins to
-#drop, more in better boxes; REJECT (Q) collects and stops. The pile runs on PrizePhysics.
+#drop, more in better boxes; REJECT (Q) gives up the rest. Either way the game plays on until the shelf has
+#pushed at least once more after the last coin (SETTLE) and nothing has fallen for QUIET seconds, so the last
+#coin's prizes always land. The pile runs on PrizePhysics.
 
 const FLOOR_Y := 330.0
 const BACK_X := 30.0
@@ -24,6 +26,9 @@ const PILE_PRIZES := 6
 const PILE_JUNK := 1
 const COIN_VALUE := 5      #run coins for a coin off the ledge
 const STEP := 1.0 / 240.0
+const SETTLE := SHELF_PERIOD + 1.0 #s after the last coin at least
+const QUIET := 1.5         #s with nothing falling
+const MAX_WAIT := 12.0     #s after the last coin at most
 
 var tier := 0
 var physics := PrizePhysics.new()
@@ -33,7 +38,8 @@ var slotX := SLOT_MIN
 var slotDir := 1.0
 var coins := 10
 var stopping := false
-var quietT := 0.0          #seconds since anything last fell, once out of coins
+var quietT := 0.0          #seconds since anything last fell
+var sinceDrop := 0.0       #seconds since the last coin went in
 var leftover := 0.0
 var prevShelf := SHELF_MIN
 
@@ -60,11 +66,11 @@ func build() -> void:
 		var b := physics.add(Vector2(randf_range(SHELF_MAX + 20.0, LEDGE_X - 60.0), randf_range(180.0, FLOOR_Y - r)), r, 0.8 if id == "coin" else 1.2)
 		b["id"] = id
 	for i in int(1.5 / STEP): physics.step(STEP, segments(Vector2.ZERO))
-	hints([[[ACT], "Drop a coin"], [[REJECT], "Collect"]])
+	hints([[[ACT], "Drop a coin"], [[REJECT], "Stop dropping"]])
 	updateInfo()
 
 func updateInfo() -> void:
-	say("Coins to drop %d" % coins if coins > 0 else "Out of coins: watching the pile settle...")
+	say("Coins to drop %d" % coins if coins > 0 else "Out of coins: the shelf pushes once more...")
 
 ## The floor (to the ledge), the back wall and the shelf; `shelfMove` is how far the shelf moved this step
 func segments(shelfMove: Vector2) -> Array:
@@ -77,7 +83,7 @@ func segments(shelfMove: Vector2) -> Array:
 func onAction(action: String) -> void:
 	match action:
 		ACT, "ui_accept": dropCoin()
-		REJECT: finish()
+		REJECT: cashOut()
 
 func onStageMouse(event: InputEvent) -> void:
 	if isClick(event): dropCoin()
@@ -85,10 +91,19 @@ func onStageMouse(event: InputEvent) -> void:
 func dropCoin() -> void:
 	if coins <= 0 || stopping: return
 	coins -= 1
+	sinceDrop = 0.0
+	quietT = 0.0
 	var b := physics.add(Vector2(slotX, SLOT_Y + 14.0), COIN_R, 0.8)
 	b["id"] = "coin"
 	b["mine"] = true
 	Transition.sound("clank", -16.0, 1.8)
+	updateInfo()
+
+## No more coins: the pile plays out and the game ends by itself
+func cashOut() -> void:
+	if coins <= 0: return
+	coins = 0
+	sinceDrop = 0.0
 	updateInfo()
 
 func finish() -> void:
@@ -109,9 +124,10 @@ func tick(delta: float) -> void:
 		shelfX = lerpf(SHELF_MIN, SHELF_MAX, 0.5 - 0.5 * cos(shelfT / SHELF_PERIOD * TAU))
 		physics.step(STEP, segments(Vector2(shelfX - prevShelf, 0)))
 	quietT += delta
+	sinceDrop += delta
 	for b in physics.bodies.duplicate():
 		if b.pos.y > STAGE.y + 30.0: fell(b)
-	if coins <= 0 && quietT > 2.5: finish()
+	if coins <= 0 && sinceDrop >= SETTLE && (quietT >= QUIET || sinceDrop >= MAX_WAIT): finish()
 
 ## Over the ledge: won now (the fall was the show)
 func fell(b: Dictionary) -> void:

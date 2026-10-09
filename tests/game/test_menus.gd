@@ -90,9 +90,11 @@ func test_a_locked_driver_is_a_silhouette_with_a_price():
 	card.setFocused(true)
 	assert_true(card.isLocked())
 	assert_eq(card.portrait.modulate.r, 0.0, "silhouette")
-	assert_false(card.stats.visible, "no stats on a locked card")
+	assert_false(card.statLine.visible, "no stats on a locked card")
+	assert_false(card.upgradeButton.visible, "nothing to upgrade yet")
+	assert_eq(card.traitList.get_child_count(), 2, "its features still show")
 	assert_true(card.mainButton.text == "UNLOCK" || card.mainButton.has_node("parts"), "UNLOCK, or NEED (coin) MORE in symbols")
-	assert_eq(card.priceLine.get_child_count(), 1, "the price shows under the car type, in symbols")
+	assert_eq(card.priceLine.get_child_count(), 1, "the price shows where the stats would be, in symbols")
 	card.free()
 
 func test_an_owned_driver_shows_stats_and_drive():
@@ -102,50 +104,54 @@ func test_an_owned_driver_shows_stats_and_drive():
 	card.setup({"name": "sedan", "cost": 0, "upgrades": {}, "records": {}}, info, 0)
 	card.setFocused(true)
 	assert_eq(card.mainButton.text, "DRIVE")
-	assert_true(card.stats.visible)
-	assert_eq(card.statButtons.size(), 8, "every upgradeable stat")
+	assert_almost_eq(card.portrait.position.x + card.portrait.size.x, DriverCard.SIZE.x, 0.5, "the portrait sits against the right edge")
+	assert_eq(card.upgradeButton.text, "", "the icon and its key, no word")
+	assert_eq(card.upgradeButton.tooltip_text, "Upgrades")
+	assert_true(card.statLine.visible)
+	assert_true(card.progress.visible)
+	assert_eq(card.statRows.size(), 8, "every upgradeable stat")
 	card.setFocused(false)
-	assert_false(card.stats.visible, "side cards show only the name and type")
+	assert_false(card.actions.visible, "side cards have no buttons")
+	assert_false(card.statLine.visible || card.traitList.visible || card.progress.visible, "side cards show their back: no details")
+	assert_eq(card.art.size, DriverCard.SIZE, "the back is all art")
 	card.free()
 
-func test_the_focused_upgrade_row_shows_buy():
+func test_every_card_lists_two_features_with_their_short_text():
+	for id in ["sedan", "van", "taxi", "pickup", "audi", "racer", "police", "ambulance", "semi"]:
+		var card = DriverCard.new()
+		add_child(card)
+		var info: CarInfo = load("res://scene/car/%s/%s_info.tres" % [id, id])
+		card.setup({"name": id, "cost": 0, "upgrades": {}, "records": {}}, info, 0)
+		assert_eq(card.traitList.get_child_count(), 2, "%s lists exactly two features" % id)
+		for row in card.traitList.get_children():
+			var texts = row.find_children("*", "Label", true, false).map(func(l): return l.text)
+			assert_true(texts.any(func(t): return CarTraits.DATA.values().any(func(d): return d.short == t)), "%s: a feature shows its short line" % id)
+		card.free()
+
+func test_upgrades_asks_for_no_particular_stat():
 	var card = DriverCard.new()
 	add_child(card)
 	card.setup({"name": "sedan", "cost": 0, "upgrades": {}, "records": {}}, load("res://scene/car/sedan/sedan_info.tres"), 0)
 	card.setFocused(true)
-	var row: Button = card.statButtons[2]
-	assert_eq(row.action_mode, BaseButton.ACTION_MODE_BUTTON_PRESS, "buys on the press, so holding repeats from there")
-	card.showBuy(row, true)
-	var buy = row.get_node_or_null("line/price/buy")
-	if SaveManager.isUpgradeMaxed(DriverCard.STATS[2][1]):
-		assert_null(buy, "no BUY on a maxed stat")
-	else:
-		assert_true(buy.visible, "the focused row's price is a BUY button")
-		assert_false(row.get_node("line/price/plain").visible)
-		card.showBuy(row, false)
-		assert_false(buy.visible)
-		assert_true(row.get_node("line/price/plain").visible, "other rows show the plain price")
+	var asked = []
+	card.upgradesRequested.connect(func(stat): asked.push_back(stat))
+	card.upgradeButton.pressed.emit()
+	assert_eq(asked, [-1])
 	card.free()
 
-func test_holding_accept_on_an_upgrade_row_repeats():
-	var card = DriverCard.new()
-	add_child(card)
-	card.setup({"name": "sedan", "cost": 0, "upgrades": {}, "records": {}}, load("res://scene/car/sedan/sedan_info.tres"), 0)
-	card.setFocused(true)
-	card.setUpgradeMode(true, false, DriverCard.STATS[0][1])
-	var bought = []
-	card.upgradePressed.connect(func(stat): bought.push_back(stat)) #not wired to the save: nothing is bought
-	Input.action_press("ui_accept")
-	card._process(DriverCard.HOLD_DELAY * 0.5)
-	assert_eq(bought.size(), 0, "a tap doesn't repeat")
-	card._process(DriverCard.HOLD_DELAY * 0.5)
-	card._process(DriverCard.HOLD_REPEAT)
-	if DriverCard.canBuy(DriverCard.STATS[0][1]): assert_eq(bought.size(), 2, "after the delay, one buy per repeat")
-	else: assert_eq(bought.size(), 0, "never a buy it can't afford")
-	Input.action_release("ui_accept")
-	card._process(1.0)
-	assert_eq(card.holdTime, 0.0, "letting go resets the hold")
-	card.free()
+func test_car_progress_counts_levels_and_tiers():
+	var data := SaveManager.playerData
+	var saved = data.meta.get("carClears", {}).duplicate(true)
+	data.meta["carClears"] = {}
+	var M = Root.gameModes
+	assert_eq(SaveManager.carProgress("sedan"), {"levels": 0, "tiers": [0, 0, 0, 0]}, "nothing won yet")
+	var key0 := SaveManager.levelKey(data.levels[0])
+	var key1 := SaveManager.levelKey(data.levels[1])
+	data.meta.carClears = {key0: {M.GOONCRUSHER: {"sedan": ModeTiers.HARD, "van": ModeTiers.EASY}, M.SPRINT: {"sedan": ModeTiers.EASY}}, key1: {M.GOONCRUSHER: {"van": ModeTiers.MEDIUM}}}
+	var won := SaveManager.carProgress("sedan")
+	assert_eq(won.levels, 1, "levels other cars won don't count")
+	assert_eq(won.tiers, [0, 2, 1, 1], "a Hard win counts on Easy and Medium too")
+	data.meta["carClears"] = saved
 
 func test_coin_amounts_get_thousands_separators():
 	assert_eq(DriverCard.formatCoins(37), "37")
