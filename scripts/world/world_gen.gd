@@ -83,6 +83,8 @@ const TAG_NAME := 9
 const TAG_TINT := 10
 const TAG_GOONS := 11
 const TAG_GIANT := 12
+const TAG_FORD := 13 #mixed crossings: which bridges are fords
+const TAG_SLOT := 14 #slot canyons: which passes are narrow
 
 #terrain ids used here (Root.terrain)
 const WATER := 3
@@ -213,6 +215,7 @@ func run(job: Dictionary) -> void:
 	steps.bfs = (Time.get_ticks_usec() - mark) / 1000.0
 	mark = Time.get_ticks_usec()
 	repairExits()
+	mixCrossings()
 	steps.exits = (Time.get_ticks_usec() - mark) / 1000.0
 	mark = Time.get_ticks_usec()
 	markStart()
@@ -447,6 +450,32 @@ func cutCrossingsGDScript(alongX: bool) -> void:
 				count = 0
 			cur.push_back([a0, a1, count])
 		prev = cur
+
+## The first cell of the crossing a crossing cell belongs to: walked back against its direction of travel
+## while the cells are crossings the same way. Every cell of one crossing (1-4 cells through a barrier) has
+## the same root, so a choice hashed on it (a ford or a bridge, a slot or a wide pass) holds for the whole way.
+static func crossingRoot(flagArray: PackedByteArray, i: int) -> int:
+	var how := flagArray[i] & (CROSS_X | CROSS_Y)
+	var step := -1 if how == CROSS_X else -W
+	for k in MAX_CUT + CONNECT_DEPTH:
+		var j := i + step
+		if j < 0 || (how == CROSS_X && j % W == W - 1): break
+		if flagArray[j] & CROSSING == 0 || flagArray[j] & (CROSS_X | CROSS_Y) != how: break
+		i = j
+	return i
+
+## Whether the pass through crossing cell i is a slot canyon (WorldField.slotShare of them, by its root)
+static func isSlot(mapSeed: int, flagArray: PackedByteArray, i: int, share: float) -> bool:
+	return share > 0.0 && hashf(mapSeed, TAG_SLOT, crossingRoot(flagArray, i), 0) < share
+
+## Mixed crossings (features "fordShare", L-6): on a grammar that bridges its water, a hashed share of the
+## water crossings become fords (SHALLOWS) instead, each crossing as a whole. The fine raster opens a ford
+## at fordHalf, a bridge at bridgeHalf, by the coarse terrain.
+func mixCrossings() -> void:
+	if field.fordShare <= 0.0 || field.waterCrossing != BRIDGE: return
+	for i in crossings:
+		if terrain[i] != BRIDGE || flags[i] & CROSSING == 0: continue
+		if hashf(seedValue, TAG_FORD, crossingRoot(flags, i), 0) < field.fordShare: terrain[i] = SHALLOWS
 
 ## Whether a run of barrier cells (a0..a1 along a column or row) continues the previous column's run
 ## (p0..p1): they overlap, or touch diagonally when both are short (a diagonal line of barrier). Longer runs
@@ -1011,6 +1040,13 @@ static func fineRaster(job: Dictionary) -> void:
 	var shallowsOn := f.shallows
 	var wadeDrop := WADE_DEPTH if f.wade else 0.0
 	var steep := WADE_STEEP if f.wade else 1.0 #water pillars and filled pockets: the same edge and shallows, deep sooner
+	var slots := {} #coarse index -> whether that pass is a slot canyon (isSlot, cached for the samples)
+	var seedValue := int(job.seed)
+	var meadowTracks := f.grammar == WorldField.Grammar.MEADOW
+	var tracks := PackedByteArray() #meadow: 1 where a fine cell is on a dirt track (WorldField.onTrack)
+	if meadowTracks:
+		tracks.resize(FINE_W * FINE_H)
+		tracks.fill(0)
 	#what depends only on the column, worked out once (the same doubles the loop used to compute per cell)
 	var colX := PackedFloat64Array()
 	var colTx := PackedFloat64Array()
@@ -1087,7 +1123,14 @@ static func fineRaster(job: Dictionary) -> void:
 						BRIDGE:
 							if across < f.bridgeHalf: bridge = true
 						_:
-							if across < f.passHalf:
+							var slot: bool = slots[idx] if slots.has(idx) else isSlot(seedValue, coarseFlags, idx, f.slotShare)
+							slots[idx] = slot
+							if slot:
+								#a slot canyon: the natural wall stands right up to slotHalf of the way through,
+								#closer than the coarse envelope's corridor would leave it
+								wallField = minf(wallField, maxf(v.y, (f.slotHalf - across) / WorldField.UNIT))
+								if across < f.slotHalf: inPass = true
+							elif across < f.passHalf:
 								wallField = maxf(wallField, 0.45)
 								inPass = true
 			#a pass is driven ground: Frostbite's deep snow and ice there stuck heavy cars
@@ -1100,8 +1143,41 @@ static func fineRaster(job: Dictionary) -> void:
 			if bridge && v.x < 0.0: waterField = v.x #the water under the deck, for the art
 			water[j * FIELD_W + i] = waterField
 			wall[j * FIELD_W + i] = wallField
-			if i >= 1 && i <= FINE_W && j >= 1 && j <= FINE_H: out[(j - 1) * FINE_W + i - 1] = t
-	job.result = {"chunk": chunk, "terrain": out, "water": water, "wall": wall, "usec": Time.get_ticks_usec() - t0}
+			if i >= 1 && i <= FINE_W && j >= 1 && j <= FINE_H:
+				out[(j - 1) * FINE_W + i - 1] = t
+				if meadowTracks && f.onTrack && t == WorldField.DIRT: tracks[(j - 1) * FINE_W + i - 1] = 1
+	job.result = {"chunk": chunk, "terrain": out, "water": water, "wall": wall, "crossings": crossingRuns(coarseFlags, coarseTerrain, lo, seedValue, f.slotShare) if special else [],
+		"tracks": tracks, "usec": Time.get_ticks_usec() - t0}
+
+## The crossings round a chunk (its raster's LOCAL_W x LOCAL_H coarse cells from `lo`), one entry per crossing
+## (cells grouped by crossingRoot): {centre (world px, the mean of its cells there), axis (the way through:
+## RIGHT or DOWN), kind ("ford", "bridge" or "pass"), slot (a slot canyon), cells}. The recipe anchors heroes
+## to them (fords, passes) and lays a coin line through a slot.
+static func crossingRuns(coarseFlags: PackedByteArray, coarseTerrain: PackedByteArray, lo: Vector2i, mapSeed: int, slotShare: float) -> Array:
+	var runs := {}
+	for ly in LOCAL_H:
+		for lx in LOCAL_W:
+			var c := lo + Vector2i(lx, ly)
+			if not inMap(c): continue
+			var idx := c.y * W + c.x
+			var fl := coarseFlags[idx]
+			if fl & CROSSING == 0 || fl & BLOCKED != 0: continue
+			var root := crossingRoot(coarseFlags, idx)
+			var run: Dictionary = runs.get(root, {})
+			if run.is_empty():
+				var t := coarseTerrain[idx]
+				var kind := "ford" if t == SHALLOWS else ("bridge" if t == BRIDGE else "pass")
+				run = {"centre": Vector2.ZERO, "axis": Vector2.RIGHT if fl & CROSS_X != 0 else Vector2.DOWN, "kind": kind,
+					"slot": kind == "pass" && isSlot(mapSeed, coarseFlags, idx, slotShare), "cells": 0}
+				runs[root] = run
+			run.centre += cellCentre(c)
+			run.cells += 1
+	var out: Array = []
+	for root in runs:
+		var run: Dictionary = runs[root]
+		run.centre /= float(run.cells)
+		out.push_back(run)
+	return out
 
 #--- debug -------------------------------------------------------------------------------------------
 

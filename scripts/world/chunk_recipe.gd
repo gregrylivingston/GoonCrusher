@@ -21,11 +21,16 @@ class_name ChunkRecipe extends RefCounted
 ##             Line2D, barrier on the left, so the strip's top (v = 0) lies on it
 ##   decor:    {decor id: PackedFloat32Array}: a MultiMesh buffer (2D transform + custom data, 12 floats);
 ##             in the city also the rooftop dressing (ctx.roofDecor) on BUILDING cells
-##   props:    Array of [id, pos, rotation, variant, bit (taken-set bit, -1 for none), occluder (bool)]; a
-##             district landmark first (it is placed before anything else)
+##   props:    Array of [id, pos, rotation, variant, bit (taken-set bit, -1 for none), occluder (bool), group
+##             (int: the motif instance it belongs to, 0 for none; ChunkView sets it as metadata `group`), hero
+##             (bool: placed by the hero pass; metadata `hero`)]; a district landmark first (it is placed before
+##             anything else), then the Home Paddock and the heroes, so the node budget keeps them
+##   fieldWalls: Array of convex PackedVector2Array: unbreakable field lines (Orchard Lanes' hedgerows), added
+##             to the chunk's wall body by ChunkView; drawn as decor (ctx.fieldWalls' decor id in `decor`) with
+##             their occluders among `occluders`
 ##   pickups:  Array of [pickup id (Pickups), pos, bit]
 ##   spots:    Array of Vector2: open places for PickupWorld.decorateChunk's props
-##   counts:   {nodes, occluders, pieces, props, pickups, decor, lines, dropped}
+##   counts:   {nodes, occluders, pieces, props, pickups, decor, lines, dropped, heroes, bits, fieldWalls}
 ##   usec:     build time
 
 const CHUNK := Vector2(5120, 2560)
@@ -80,6 +85,8 @@ const WATER := 3
 const SHALLOWS := 11
 const ASPHALT := 8
 const OIL := 10
+const DIRT := 6
+const HILLS := 4
 const CONVEYOR := 13
 const MUDPIT := 14
 const BRIDGE := 18
@@ -151,6 +158,10 @@ func run(job: Dictionary) -> Dictionary:
 	spawnTable = ctx.spawnable
 	blockedTable = ctx.blocked
 	lotTerrain = ctx.get("lotTerrain", 16)
+	crossRuns = raster.get("crossings", [])
+	tracks = raster.get("tracks", PackedByteArray())
+	bitProps = ctx.get("bitProps", {})
+	heroBreakable = ctx.get("heroBreakable", {})
 
 	var t := Time.get_ticks_usec()
 	var phases := {}
@@ -194,24 +205,38 @@ func run(job: Dictionary) -> Dictionary:
 	#things on the ground: decorateChunk's spots first, then pickups, then props, then decor
 	resetReservations()
 	var landmarks := placeLandmarks(job.get("landmarks", []))
+	reservePaddock()
+	#hedgerow walls are layout, like the terrain's: laid before the spots, pickups and props, which keep off them
+	wallRoom = MAX_PIECES - out.pieces.size()
+	breakBit = 32
+	wallFrom = resPos.size()
+	wallGates = placeFieldLines(true)
 	out.spots = placeSpots()
 	out.pickups = placePickups()
 	t = lap(phases, "pickups", t)
 	var props := landmarks + placeProps()
+	out.fieldWalls = fieldWalls
+	for occ in wallOccluders:
+		if occluders.size() >= MAX_OCCLUDERS: break
+		occluders.push_back(occ)
 	t = lap(phases, "props", t)
 	var decor := placeDecor()
 	var roofs := placeRoofs()
 	if roofs.count > 0:
 		decor.buffers[roofs.id] = roofs.buffer
 		decor.count += roofs.count
+	if not wallDecor.is_empty():
+		decor.buffers[wallDecorId] = wallDecor
+		decor.count += wallDecor.size() / 12
 	out.decor = decor.buffers
 	t = lap(phases, "decor", t)
 
 	#the node budget: ground quads, the body, occluders, lines, one MultiMesh per decor id, then props
-	var fixed: int = GROUND_NODES + (1 if not out.pieces.is_empty() else 0) + occluders.size() + lines.size() + decor.buffers.size()
+	var fixed: int = GROUND_NODES + (1 if not out.pieces.is_empty() || not fieldWalls.is_empty() else 0) + occluders.size() + lines.size() + decor.buffers.size()
 	var occluderRoom := MAX_OCCLUDERS - occluders.size()
 	var nodes: int = fixed
 	var kept: Array = []
+	var heroesDropped := 0
 	for p in props:
 		var info: Dictionary = ctx.props[p[0]]
 		var cost: int = info.nodes
@@ -219,6 +244,7 @@ func run(job: Dictionary) -> Dictionary:
 		if info.occluder && not occ: cost -= 1 #placed without its occluder
 		if nodes + cost > MAX_NODES:
 			dropped += 1
+			if p[7]: heroesDropped += 1
 			continue
 		if occ: occluderRoom -= 1
 		nodes += cost
@@ -226,11 +252,14 @@ func run(job: Dictionary) -> Dictionary:
 		kept.push_back(p)
 	out.props = kept
 	var propOccluders := 0
+	var heroes := 0
 	for p in kept:
 		if p[5]: propOccluders += 1
+		if p[7]: heroes += 1
 	out.counts = {"nodes": nodes, "occluders": occluders.size() + propOccluders, "pieces": out.pieces.size(),
 		"props": kept.size(), "pickups": out.pickups.size(), "decor": decor.count, "lines": lines.size(),
-		"dropped": dropped, "simplify": SIMPLIFY[walls.level]}
+		"dropped": dropped, "simplify": SIMPLIFY[walls.level], "heroes": heroes, "heroesDropped": heroesDropped,
+		"bits": breakBit - 32, "fieldWalls": fieldWalls.size()}
 	lap(phases, "rest", t)
 	out.phases = phases
 	return out
@@ -761,6 +790,11 @@ func offBridges(lines: Array) -> Array:
 func terrainAt(p: Vector2) -> int:
 	return terrain[clampi(floori(p.y / FINE), 0, FH - 1) * FW + clampi(floori(p.x / FINE), 0, FW - 1)]
 
+## On a dirt track (the meadow raster's track mask; elsewhere any DIRT), not a dirt patch of the base ground
+func trackAt(p: Vector2) -> bool:
+	var k := clampi(floori(p.y / FINE), 0, FH - 1) * FW + clampi(floori(p.x / FINE), 0, FW - 1)
+	return tracks[k] != 0 if not tracks.is_empty() else terrain[k] == DIRT
+
 ## Bilinear raster field at a chunk-local point (centre of raster cell (i, j) at ((i - 0.5), (j - 0.5)) * FINE)
 static func fieldAt(field: PackedFloat32Array, p: Vector2) -> float:
 	var u := p.x / FINE + 0.5
@@ -779,17 +813,24 @@ func zoneAt(p: Vector2) -> int:
 	var f := zones[clampi(floori(p.y / WorldGen.CELL), 0, 1) * 4 + clampi(floori(p.x / WorldGen.CELL), 0, 3)]
 	return f if f >= 0 else majority
 
-## Outside every reservation: the start's core, station lots, Defense lanes, things already placed
-func isFree(p: Vector2, radius: float) -> bool:
+## Outside every reservation: the start's core, station lots, Defense lanes, things already placed (the first
+## `upTo` reservations only, when given)
+func isFree(p: Vector2, radius: float, upTo := -1) -> bool:
 	var w := origin + p
 	if w.distance_to(startAt) < START_CORE + radius: return false
 	for lot in lotRects:
 		if lot.grow(radius).has_point(w): return false
 	for lane in laneSegs:
 		if Geometry2D.get_closest_point_to_segment(w, lane[0], lane[1]).distance_to(w) < LANE_HALF + radius: return false
-	for n in resPos.size():
+	for n in resPos.size() if upTo < 0 else mini(upTo, resPos.size()):
 		if p.distance_to(resPos[n]) < resRad[n] + radius: return false
+	#the field walls keep everything after them off their whole length (not checked for what came before them)
+	if upTo < 0:
+		for n in range(0, wallSegs.size(), 2):
+			if Geometry2D.get_closest_point_to_segment(p, wallSegs[n], wallSegs[n + 1]).distance_to(p) < WALL_DRAW_HALF + PROP_GAP * 0.5 + radius: return false
 	return true
+
+var wallSegs := PackedVector2Array() #the field walls' centre lines, two points each
 
 func resetReservations() -> void:
 	resPos.clear()
@@ -841,39 +882,51 @@ func placeLandmarks(list: Array) -> Array:
 					break
 			if at != Vector2.INF: break
 		if at == Vector2.INF: continue
-		out.push_back([id, at, 0.0, 0, -1, info.occluder])
+		out.push_back(propEntry(id, at, 0.0, 0, -1, info.occluder))
 		reserve(at, info.radius + PROP_GAP * 0.5)
 	return out
 
-## Rooftop dressing (the city's BUILDING blocks): ctx.roofDecor's atlas cells on roof cells well inside the
-## parapet, spaced, square to the street grid. No collision (decor). {id, buffer, count}
+## Roof dressing on the wall tops (ctx.roofTerrain cells): ctx.roofDecor's atlas cells well inside the wall's
+## edge, spaced. The city's rooftops (AC units, vents) square to the street grid; Moose Woods' pine crowns
+## over its thickets turned any way, denser (ctx.roofStyle). No collision (decor). {id, buffer, count}
 func placeRoofs() -> Dictionary:
 	var id: String = ctx.get("roofDecor", "")
 	var out := {"id": id, "buffer": PackedFloat32Array(), "count": 0}
-	if id == "" || minWall >= -ROOF_INSET: return out
+	var style: Dictionary = ctx.get("roofStyle", {})
+	var inset: float = style.get("inset", ROOF_INSET)
+	var gap: float = style.get("gap", ROOF_GAP)
+	var most: int = style.get("max", ROOF_MAX)
+	var square: bool = style.get("square", true)
+	var scale: Vector2 = style.get("scale", Vector2(1.15, 1.6))
+	var roofT: int = ctx.get("roofTerrain", BUILDING)
+	var tries: int = style.get("tries", ROOF_TRIES)
+	if id == "" || minWall >= -inset: return out
 	var r := RandomNumberGenerator.new()
 	r.seed = WorldGen.ihash(mapSeed, TAG_ROOF, chunk.x, chunk.y)
 	var placed := PackedVector2Array()
 	var buf := PackedFloat32Array()
 	for j in FH:
 		for i in FW:
-			if terrain[j * FW + i] != BUILDING: continue
-			for dart in ROOF_TRIES:
-				if out.count >= ROOF_MAX: break
+			if terrain[j * FW + i] != roofT: continue
+			for dart in tries:
+				if out.count >= most: break
 				var p := Vector2((i + r.randf()) * FINE, (j + r.randf()) * FINE)
 				var roll := r.randf()
 				var quarter := r.randi() % 4
-				var sc := r.randf_range(1.15, 1.6)
-				if fieldAt(wall, p) > -ROOF_INSET: continue
+				var sc := r.randf_range(scale.x, scale.y)
+				if fieldAt(wall, p) > -inset: continue
 				var near := false
 				for q in placed:
-					if q.distance_squared_to(p) < ROOF_GAP * ROOF_GAP:
+					if q.distance_squared_to(p) < gap * gap:
 						near = true
 						break
 				if near: continue
-				#AC units and vents are common, tanks and skylights rarer
+				#AC units and vents are common, tanks and skylights rarer; crowns any of the four, any way round
 				var cell := 0 if roll < 0.38 else (1 if roll < 0.68 else (3 if roll < 0.86 else 2))
 				var rot := quarter * PI * 0.5
+				if not square:
+					cell = mini(floori(roll * 4.0), 3)
+					rot = fposmod(roll * 37.0, 1.0) * TAU
 				var c := cos(rot) * sc
 				var sn := sin(rot) * sc
 				buf.append_array([c, -sn, 0.0, p.x, sn, c, 0.0, p.y, (cell + 0.5) / 4.0, 0.0, 0.0, 0.0])
@@ -897,6 +950,17 @@ func placePickups() -> Array:
 	var r := RandomNumberGenerator.new()
 	r.seed = WorldGen.ihash(mapSeed, TAG_PICKUP, chunk.x, chunk.y)
 	var bit := 0
+	#a slot canyon's coin line (L-6: the risky way through pays): along its centre line, each chunk laying the
+	#coins that fall inside it
+	for run in crossRuns:
+		if not run.get("slot", false): continue
+		var c: Vector2 = run.centre - origin
+		for k in COINS_PER_LINE:
+			var p: Vector2 = c + run.axis * (k - (COINS_PER_LINE - 1) * 0.5) * COIN_STEP
+			if not pickupFits(p, 60.0): continue
+			out.push_back(["coin", p, bit if bit < 32 else -1])
+			bit += 1
+			reserve(p, 70.0)
 	for n in int(ctx.get("pickupsPerChunk", 0)):
 		var roll := r.randf() * total
 		var kind := ""
@@ -991,12 +1055,15 @@ func openShare() -> float:
 
 var openShareCache := -1.0
 
-## Props by the dressing of each spot's district zone (LOW, TALL, STATEFUL, WALL from props.json), in three
-## passes: field lines (fences and hedges on a lattice, placeFieldLines), motifs (small set pieces: camps, groves,
-## wreck piles, placeMotifs), then Poisson-spaced scatter by dart throwing for the rest. Every prop stands on
-## spawnable ground off blocked, lethal, shallows, bridge and belt cells, off roads unless it belongs there,
-## clear of water, walls and every reservation. Other chain props (barriers, fort walls) come in short chains;
-## a chain on a road lies along it.
+## Props by the dressing of each spot's district zone (LOW, TALL, STATEFUL, WALL from props.json), in these
+## passes: the Home Paddock (a level's fixed opener, placeHomePaddock), heroes (interactive props and set
+## pieces on layout anchors, placeHeroes), edge props (Moose Woods' pines along its thickets), field lines
+## (fences and hedges on a lattice, placeFieldLines), motifs (small set pieces: camps, groves, wreck piles,
+## placeMotifs), then Poisson-spaced scatter by dart throwing for the rest. Every prop stands on spawnable
+## ground off blocked, lethal, shallows, bridge and belt cells, off roads unless it belongs there, clear of
+## water, walls and every reservation. Other chain props (barriers, fort walls) come in short chains; a chain
+## on a road lies along it. A paying breakable (coins, a spill) that gets no taken-set bit is left out, so
+## nothing pays twice (the no-farming rule).
 func placeProps() -> Array:
 	var out: Array = []
 	var tables: Dictionary = ctx.get("propTables", {})
@@ -1004,7 +1071,18 @@ func placeProps() -> Array:
 	var r := RandomNumberGenerator.new()
 	r.seed = WorldGen.ihash(mapSeed, TAG_PROP, chunk.x, chunk.y)
 	var target := float(ctx.get("propsPerChunk", 16)) * openShare()
-	breakBit = 32
+	out.append_array(placeHomePaddock())
+	var heroes := placeHeroes()
+	out.append_array(heroes)
+	target -= heroes.size() * HERO_COST
+	#the hedgerows' farm gates (laid with the walls), bits after the heroes'
+	for g in wallGates:
+		var info: Dictionary = ctx.props[g[0]]
+		g[4] = nextBit(info, g[0])
+		if not lacksBit(info, g[4]): out.push_back(g)
+	var edge := placeEdgeProps()
+	out.append_array(edge)
+	target -= edge.size() * FIELD_COST
 	var field := placeFieldLines()
 	out.append_array(field)
 	target -= field.size() * FIELD_COST
@@ -1046,17 +1124,32 @@ func placeProps() -> Array:
 			placed.push_back(q)
 		if placed.is_empty(): continue
 		for q in placed:
-			out.push_back([id, q, rot, r.randi() % maxi(int(info.variants), 1), nextBit(info), info.occluder])
+			var variant := r.randi() % maxi(int(info.variants), 1)
+			var bit := nextBit(info, id)
+			if lacksBit(info, bit): continue
+			out.push_back(propEntry(id, q, rot, variant, bit, info.occluder))
 			reserve(q, info.radius + PROP_GAP * 0.5)
 		placedScatter += 1
 	return out
 
+## A recipe prop entry (see the class comment)
+static func propEntry(id: String, pos: Vector2, rot: float, variant: int, bit: int, occluder: bool, group := 0, hero := false) -> Array:
+	return [id, pos, rot, variant, bit, occluder, group, hero]
+
 var breakBit := 32
-## The next taken-set bit for a breakable (32-62), -1 for anything else or once they run out
-func nextBit(info: Dictionary) -> int:
-	if not info.breakable || breakBit >= 63: return -1
+var bitProps := {}      #ctx.bitProps: ids that take a taken-set bit though they don't break (Orchard Lanes' oaks shake apples down once)
+var heroBreakable := {} #ctx.heroBreakable: ids that break only when the hero pass placed them (Red Canyon's saguaros)
+## The next taken-set bit (32-62) for a breakable, a bitProps id, or a heroBreakable one placed as a hero; -1 for
+## anything else or once they run out
+func nextBit(info: Dictionary, id := "", hero := false) -> int:
+	if not (info.breakable || bitProps.has(id) || (hero && heroBreakable.has(id))) || breakBit >= 63: return -1
 	breakBit += 1
 	return breakBit - 1
+
+## A paying breakable (coins or a spill: ctx.props "paying") that got no bit: left out, or reloading its chunk
+## would pay it again
+static func lacksBit(info: Dictionary, bit: int) -> bool:
+	return bit < 0 && info.get("paying", false)
 
 #--- field lines (package 14, P-3) -----------------------------------------------------------------
 #Fences and hedges lie on the edges of a field lattice in world space: one lattice per FIELD_REGION square,
@@ -1075,9 +1168,10 @@ const CORNER_TREE := 0.45    #chance of an oak at the corner a hedgerow starts f
 const PADDOCK_EDGES := 3
 const PADDOCK_BALES := Vector2i(2, 4)
 
-## The lattice of a field region: [region, centre (world px), u axis, v axis]
+## The lattice of a field region: [region, centre (world px), u axis, v axis], turned up to ctx.fieldAngle
+## (features "fieldAngle", FIELD_ANGLE by default) from the world axes
 func fieldFrame(region: Vector2i) -> Array:
-	var ang := (WorldGen.hashf(mapSeed, TAG_FIELD, region.x, region.y) - 0.5) * 2.0 * FIELD_ANGLE
+	var ang := (WorldGen.hashf(mapSeed, TAG_FIELD, region.x, region.y) - 0.5) * 2.0 * float(ctx.get("fieldAngle", FIELD_ANGLE))
 	var u := Vector2.from_angle(ang)
 	return [region, (Vector2(region) + Vector2(0.5, 0.5)) * FIELD_REGION, u, u.orthogonal()]
 
@@ -1092,12 +1186,16 @@ func edgeKind(region: Vector2i, a: int, b: int, dir: int, dens: Dictionary) -> S
 		if roll < 0.0: return String(id)
 	return ""
 
-func placeFieldLines() -> Array:
+## wallsOnly: only the edges laid as walls (ctx.fieldWalls), placed before everything but the landmarks and the
+## paddock (run); returns their gates, bits still to give. Otherwise every other edge, the paddocks and corner oaks.
+func placeFieldLines(wallsOnly := false) -> Array:
 	var out: Array = []
 	var dens: Dictionary = ctx.get("fieldDensity", {})
 	if dens.is_empty(): return out
 	var spacing: float = ctx.get("fieldSpacing", 1400.0)
 	var tables: Dictionary = ctx.get("propTables", {})
+	var walls: Dictionary = ctx.get("fieldWalls", {})
+	if wallsOnly && walls.is_empty(): return out
 	var box := [origin, origin + Vector2(CHUNK.x, 0), origin + Vector2(0, CHUNK.y), origin + CHUNK]
 	var regions := {}
 	for c in box: regions[regionOf(c)] = true
@@ -1128,13 +1226,19 @@ func placeFieldLines() -> Array:
 					var gateHash := WorldGen.ihash(mapSeed, TAG_FIELD + 1, a * 2 + dir + region.x * 131, b + region.y * 131)
 					var gate := posmod(gateHash, n)
 					var gate2 := posmod(gate + n / 2, n) if n >= FIELD_GATE_LONG else -1
+					if walls.has(id):
+						if wallsOnly: out.append_array(placeWallEdge(region, a, b, dir, n, gate, gate2, id, walls[id], dens, tables, placed))
+						continue
+					if wallsOnly: continue
 					for k in n:
 						if k == gate || k == gate2: continue
 						var w: Vector2 = at + along * spacing * (k + 0.5) / n
 						if not fieldPieceHere(w, region, id, tables): continue
 						var local := w - origin
 						if fieldFits(local, rot, info):
-							out.push_back([id, local, rot, posmod(gateHash >> (k % 16), maxi(int(info.variants), 1)), nextBit(info), info.occluder])
+							var bit := nextBit(info, id)
+							if lacksBit(info, bit): continue
+							out.push_back(propEntry(id, local, rot, posmod(gateHash >> (k % 16), maxi(int(info.variants), 1)), bit, info.occluder))
 							placed.push_back([local, rot, info])
 					#an oak at the corner a hedgerow starts from
 					if id == "hedge" && ctx.props.has("oak") && WorldGen.hashf(mapSeed, TAG_FIELD + 2, a * 2 + dir + region.x * 131, b + region.y * 131) < CORNER_TREE:
@@ -1142,10 +1246,10 @@ func placeFieldLines() -> Array:
 							var oak: Dictionary = ctx.props["oak"]
 							var local := at - origin
 							if propFits(local, 0.0, oak, "oak") && clearOfPlaced(local, oak.radius * 0.4, placed):
-								out.push_back(["oak", local, WorldGen.hashf(mapSeed, TAG_FIELD + 3, a, b) * TAU, posmod(gateHash, maxi(int(oak.variants), 1)), -1, oak.occluder])
+								out.push_back(propEntry("oak", local, WorldGen.hashf(mapSeed, TAG_FIELD + 3, a, b) * TAU, posmod(gateHash, maxi(int(oak.variants), 1)), nextBit(oak, "oak"), oak.occluder))
 								reserve(local, oak.radius + PROP_GAP * 0.5)
 				#a paddock: this cell fenced on PADDOCK_EDGES of its four sides
-				if ctx.props.has("haybale"):
+				if not wallsOnly && ctx.props.has("haybale"):
 					var fences := 0
 					for e in [[a, b, 0], [a, b, 1], [a, b + 1, 0], [a + 1, b, 1]]:
 						if edgeKind(region, e[0], e[1], e[2], dens) == "fence": fences += 1
@@ -1159,9 +1263,12 @@ func placeFieldLines() -> Array:
 							var local := w - origin
 							var rot := u.angle() + (PI * 0.5 if i % 2 else 0.0)
 							if propFits(local, rot, bale, "haybale") && clearOfPlaced(local, bale.radius, placed):
-								out.push_back(["haybale", local, rot, i % maxi(int(bale.variants), 1), nextBit(bale), bale.occluder])
+								var bit := nextBit(bale, "haybale")
+								if lacksBit(bale, bit): continue
+								out.push_back(propEntry("haybale", local, rot, i % maxi(int(bale.variants), 1), bit, bale.occluder))
 								reserve(local, bale.radius + PROP_GAP * 0.5)
-	#the pieces keep later props off their whole length, not only a disc round each centre
+	#the pieces keep later props off their whole length, not only a disc round each centre (walls: wallSegs)
+	if wallsOnly: return out
 	for e in placed:
 		var axis: Vector2 = Vector2.from_angle(e[1]) * (e[2].w * 0.33)
 		for s in [-1.0, 0.0, 1.0]: reserve(e[0] + axis * s, e[2].h * 0.5 + PROP_GAP * 0.5)
@@ -1196,6 +1303,456 @@ static func clearOfPlaced(p: Vector2, radius: float, placed: Array) -> bool:
 		var off: Vector2 = p - e[0]
 		if absf(off.dot(axis)) < e[2].w * 0.5 + radius && absf(off.dot(axis.orthogonal())) < e[2].h * 0.5 + radius: return false
 	return true
+
+#--- field walls (L-8: cheap walls from field lines) ------------------------------------------------
+#On a level with features "hedgeWalls" (Orchard Lanes), a hedge lattice edge is no row of 4-node breakable
+#props but an unbreakable hedgerow: boxes in the chunk's own wall body (fieldWalls), occluder loops and one
+#decor MultiMesh (the hedgerow atlas: straights, end caps; docs/WORLD_ART.md "Hedgerow"), so a dense lattice
+#costs almost no nodes. Each edge is cut into the same slots as a run of props; the gate slot gets a farm gate
+#(breakable) most of the time, and slots that don't fit (roads, tracks, water, reservations) are gaps. The
+#chunk holding a slot's centre owns it; consecutive owned slots make one box. Caps close a run at a gate, a
+#gap or a lattice point no other hedgerow meets.
+const WALL_HALF := 50.0      #the collision box's half width (the art: an 80 px hedge on a 112 px base)
+const WALL_OCC_HALF := 40.0
+const WALL_DRAW_HALF := 56.0 #the base, for the keep-off reservations
+const WALL_CELL := 192.0     #decor cell length
+const WALL_CAP := 80.0       #how far an end cap's hedge reaches into its cell
+const WALL_OCCLUDERS := 10   #at most this many of a chunk's occluders are hedgerows
+const TAG_GATE := 216
+
+var fieldWalls: Array = []           #convex boxes (out.fieldWalls)
+var wallOccluders: Array = []        #closed loops, inside on the right
+var wallDecor := PackedFloat32Array() #MultiMesh buffer for wallDecorId
+var wallDecorId := ""
+var wallRoom := MAX_PIECES           #wall pieces still allowed (MAX_PIECES less the terrain's)
+var wallGates: Array = []           #the gates placeWallEdge laid, given their bits in placeProps
+var wallFrom := -1                   #reservations made before the walls (the walls keep clear of only those)
+
+## One lattice edge as a hedgerow wall; returns the gate props it placed. spec: ctx.fieldWalls[id]
+## ({decor, gate, gateChance}).
+func placeWallEdge(region: Vector2i, a: int, b: int, dir: int, n: int, gate: int, gate2: int, id: String, spec: Dictionary, dens: Dictionary, tables: Dictionary, placed: Array) -> Array:
+	var out: Array = []
+	var frame := fieldFrame(region)
+	var spacing: float = ctx.get("fieldSpacing", 1400.0)
+	var along: Vector2 = frame[2] if dir == 0 else frame[3]
+	var at: Vector2 = frame[1] + (frame[2] * a + frame[3] * b) * spacing
+	var rot := along.angle()
+	var slotLen := spacing / n
+	#each slot: 0 a wall here, 1 a gate, 2 open (doesn't fit, or not this field), 3 another chunk's (taken as a wall)
+	var state := PackedInt32Array()
+	state.resize(n)
+	for k in n:
+		var w: Vector2 = at + along * spacing * (k + 0.5) / n
+		var local := w - origin
+		var mine := local.x >= 0.0 && local.y >= 0.0 && local.x < CHUNK.x && local.y < CHUNK.y
+		if regionOf(w) != region: state[k] = 2
+		elif k == gate || k == gate2: state[k] = 1
+		elif not mine: state[k] = 3
+		elif float(tables.get(zoneAt(local), {}).get(id, 0.0)) <= 0.0: state[k] = 2
+		else: state[k] = 0 if wallSlotFits(local, rot, slotLen) else 2
+		#a farm gate in an owned gate slot, most of the time (the rest stay open: "turn at the open end")
+		if state[k] == 1 && mine && float(tables.get(zoneAt(local), {}).get(id, 0.0)) > 0.0:
+			var gateId: String = spec.get("gate", "")
+			if gateId != "" && ctx.props.has(gateId) && WorldGen.hashf(mapSeed, TAG_GATE, a * 2 + dir + region.x * 131, b + region.y * 131) < float(spec.get("gateChance", 1.0)):
+				var g: Dictionary = ctx.props[gateId]
+				if not trackAt(local) && setPieceFits(local, rot, g, wallFrom) && isFree(local, g.h * 0.5 + 30.0, wallFrom):
+					out.push_back(propEntry(gateId, local, rot, posmod(a + b, maxi(int(g.variants), 1)), -1, g.occluder)) #its bit comes after the heroes'
+					reserve(local, 200.0)
+	#runs of consecutive owned wall slots
+	var k := 0
+	while k < n:
+		if state[k] != 0:
+			k += 1
+			continue
+		var k0 := k
+		while k < n && state[k] == 0: k += 1
+		var k1 := k - 1
+		if wallRoom <= 0: continue
+		wallRoom -= 1
+		var startCap := (latticeEndFree(region, a, b, dir, true, dens) if k0 == 0 else state[k0 - 1] != 3)
+		var endCap := (latticeEndFree(region, a, b, dir, false, dens) if k1 == n - 1 else state[k1 + 1] != 3)
+		var from: Vector2 = at + along * slotLen * k0 - origin
+		var len := slotLen * (k1 - k0 + 1)
+		addWall(from, along, len, startCap, endCap, a * 31 + b * 17 + k0, spec)
+		placed.push_back([from + along * len * 0.5, rot, {"w": len, "h": WALL_DRAW_HALF * 2.0}])
+	return out
+
+## Whether the lattice point at one end of an edge (the start: (a, b); the end: the next point along it) has no
+## other hedgerow wall meeting it, so the run ends there in a cap
+func latticeEndFree(region: Vector2i, a: int, b: int, dir: int, start: bool, dens: Dictionary) -> bool:
+	var walls: Dictionary = ctx.get("fieldWalls", {})
+	var pa := a if start || dir == 1 else a + 1
+	var pb := b if start || dir == 0 else b + 1
+	#the four edges touching lattice point (pa, pb), less this one
+	for e in [[pa, pb, 0], [pa, pb, 1], [pa - 1, pb, 0], [pa, pb - 1, 1]]:
+		if e[0] == a && e[1] == b && e[2] == dir: continue
+		if walls.has(edgeKind(region, e[0], e[1], e[2], dens)): return false
+	return true
+
+## A hedgerow slot fits: its box clear of roads, dirt tracks (so the farm tracks are the lanes), belts, mud
+## pits, bridges and water, and of every reservation; the parts outside the chunk are judged on its apron
+func wallSlotFits(p: Vector2, rot: float, len: float) -> bool:
+	var u := Vector2.from_angle(rot)
+	var v := u.orthogonal()
+	for s in [-0.45, -0.15, 0.15, 0.45]:
+		for o in [-1.0, 1.0]:
+			var q: Vector2 = p + u * len * s + v * WALL_DRAW_HALF * o
+			var t := terrainAt(q)
+			if not spawnable(t) || t == CONVEYOR || t == MUDPIT || t == BRIDGE || t == ASPHALT || t == OIL || trackAt(q): return false
+			if not clearOf(q, PROP_MARGIN * 0.5): return false
+	for s in [-0.4, 0.0, 0.4]:
+		if not isFree(p + u * len * s, WALL_DRAW_HALF + 30.0, wallFrom): return false #runs meet and cross: only what came before the walls
+	return true
+
+## A hedgerow run from `from` (chunk-local) along u for len px: its collision box, its occluder loop (while
+## there is room), its decor cells and its keep-off line (wallSegs, read by isFree)
+func addWall(from: Vector2, u: Vector2, len: float, startCap: bool, endCap: bool, salt: int, spec: Dictionary) -> void:
+	var v := u.orthogonal()
+	var c := from + u * len * 0.5
+	var box := PackedVector2Array([c - u * len * 0.5 + v * WALL_HALF, c + u * len * 0.5 + v * WALL_HALF, c + u * len * 0.5 - v * WALL_HALF, c - u * len * 0.5 - v * WALL_HALF])
+	if Geometry2D.is_polygon_clockwise(box): box.reverse() #the same winding as the terrain's pieces
+	fieldWalls.push_back(box)
+	if wallOccluders.size() < WALL_OCCLUDERS:
+		#clockwise on screen, closed: the inside on the right, like the terrain's occluders
+		var h := len * 0.5
+		wallOccluders.push_back(PackedVector2Array([c - u * h + v * WALL_OCC_HALF, c + u * h + v * WALL_OCC_HALF,
+			c + u * h - v * WALL_OCC_HALF, c - u * h - v * WALL_OCC_HALF, c - u * h + v * WALL_OCC_HALF]))
+	wallDecorId = String(spec.get("decor", ""))
+	if wallDecorId != "":
+		var rot := u.angle()
+		var a := WALL_CAP if startCap else 0.0
+		var b := len - (WALL_CAP if endCap else 0.0)
+		var span := b - a
+		if span > 1.0:
+			var cells := maxi(1, roundi(span / WALL_CELL))
+			for i in cells: wallCell(from + u * (a + (i + 0.5) * span / cells), rot, span / (cells * WALL_CELL), (salt + i) & 1)
+		#a cap's hedge runs from its cell's -x edge to WALL_CAP in: its cell sits 16 px past the run's end
+		if endCap: wallCell(from + u * (len + WALL_CELL * 0.5 - WALL_CAP), rot, 1.0, 2)
+		if startCap: wallCell(from - u * (WALL_CELL * 0.5 - WALL_CAP), rot + PI, 1.0, 2)
+	wallSegs.push_back(from)
+	wallSegs.push_back(from + u * len)
+
+## One hedgerow decor cell (atlas `cell`), stretched along its run by sx
+func wallCell(p: Vector2, rot: float, sx: float, cell: int) -> void:
+	var c := cos(rot)
+	var s := sin(rot)
+	wallDecor.append_array([c * sx, -s, 0.0, p.x, s * sx, c, 0.0, p.y, (cell + 0.5) / 4.0, 0.0, 0.0, 0.0])
+
+## A set piece's member fits where the layout puts it: its centre in this chunk, the ground under the parts of its
+## box inside the chunk open (as propFits), clear of the reservations made before the set piece (`upTo`)
+func setPieceFits(p: Vector2, rot: float, info: Dictionary, upTo := -1) -> bool:
+	if p.x < 0.0 || p.y < 0.0 || p.x >= CHUNK.x || p.y >= CHUNK.y: return false
+	var along: Vector2 = Vector2.from_angle(rot) * (info.w * 0.5 * 0.85)
+	var across: Vector2 = Vector2.from_angle(rot).orthogonal() * (info.h * 0.5 * 0.85)
+	for q in [p, p + along, p - along, p + across, p - across]:
+		if not inChunk(q, 0.0): continue
+		var t := terrainAt(q)
+		if not spawnable(t) || t == CONVEYOR || t == MUDPIT || t == BRIDGE || t == ASPHALT || t == OIL: return false
+		if not clearOf(q, PROP_MARGIN): return false
+	return isFree(p, info.radius * 0.3, upTo)
+
+#--- the Home Paddock (Prairie Run's opener) ---------------------------------------------------------
+#A fixed set piece PADDOCK_AHEAD px ahead of the start along +x (where Sprint goes; outside START_CORE): a
+#fenced paddock with its gate toward the start, a three-crate stash and two hay bales inside, a log pile at the
+#far corner above the dirt track that runs past it (WorldField.PADDOCK_TRACK_Y). It is laid out in world space
+#and each chunk places the members whose centres it holds, so it may straddle a seam; decorateChunk skips the
+#start's chunk, which is why the recipe builds it. features "homePaddock" (ctx.homePaddock) turns it on.
+const PADDOCK_AHEAD := 2600.0
+const PADDOCK_HALF := 480.0
+const TAG_PADDOCK := 217
+## [prop id, offset from the paddock's centre, rotation, in the crate stash's group]
+const PADDOCK := [
+	["fence", Vector2(-317, -480), 0.0, false], ["fence", Vector2(0, -480), 0.0, false], ["fence", Vector2(317, -480), 0.0, false],
+	["fence", Vector2(-317, 480), 0.0, false], ["fence", Vector2(0, 480), 0.0, false], ["fence", Vector2(317, 480), 0.0, false],
+	["fence", Vector2(480, -317), PI * 0.5, false], ["fence", Vector2(480, 0), PI * 0.5, false], ["fence", Vector2(480, 317), PI * 0.5, false],
+	["fence", Vector2(-480, -317), PI * 0.5, false], ["fence", Vector2(-480, 317), PI * 0.5, false], #the gate faces the start
+	["crate", Vector2(200, -200), 0.3, true], ["crate", Vector2(310, -110), 1.1, true], ["crate", Vector2(170, -70), 2.0, true],
+	["haybale", Vector2(-190, 210), 0.0, false], ["haybale", Vector2(-20, 270), PI * 0.5, false],
+	["logpile", Vector2(680, -600), 0.0, false],
+]
+var paddockFrom := -1 #reservations before the paddock's own (its members check only those)
+
+## The paddock's centre (chunk-local), or INF when the level has none or it is nowhere near this chunk
+func paddockCentre() -> Vector2:
+	if not ctx.get("homePaddock", false) || startAt == Vector2.INF: return Vector2.INF
+	var c: Vector2 = startAt + Vector2(PADDOCK_AHEAD, 0.0) - origin
+	return c if Rect2(Vector2.ZERO, CHUNK).grow(PADDOCK_HALF + 600.0).has_point(c) else Vector2.INF
+
+## Keeps the spots and pickups off the paddock (placed before the props)
+func reservePaddock() -> void:
+	var c := paddockCentre()
+	if c == Vector2.INF: return
+	paddockFrom = resPos.size()
+	reserve(c, PADDOCK_HALF + 250.0)
+
+func placeHomePaddock() -> Array:
+	var out: Array = []
+	var c := paddockCentre()
+	if c == Vector2.INF: return out
+	var key := maxi(1, WorldGen.ihash(mapSeed, TAG_PADDOCK, 0, 0))
+	var fits: Array = []
+	for m in PADDOCK:
+		if not ctx.props.has(m[0]): continue
+		var info: Dictionary = ctx.props[m[0]]
+		var p: Vector2 = c + m[1]
+		if setPieceFits(p, m[2], info, paddockFrom): fits.push_back([m, info, p])
+	for i in fits.size():
+		var m: Array = fits[i][0]
+		var info: Dictionary = fits[i][1]
+		var bit := nextBit(info, m[0])
+		if lacksBit(info, bit): continue
+		out.push_back(propEntry(m[0], fits[i][2], m[2], i % maxi(int(info.variants), 1), bit, info.occluder, key if m[3] else 0))
+	for f in fits: reserve(f[2], f[1].radius * 0.5 + 40.0)
+	return out
+
+#--- heroes (R-2: interactive props first, anchored to the layout) ----------------------------------
+#ctx.heroTables is {zone: {id: [weight, anchor, variant]}}: a prop id or a motif (WorldSkin.MOTIFS) placed on a
+#layout anchor before the field lines and motifs, so the node budget keeps them. ctx.heroesPerChunk (features
+#"heroes") are wanted in a fully open chunk. Anchors are cheap raster reads:
+#  ford      HERO_NEAR px from a ford crossing (WorldGen.crossingRuns)
+#  bank      BANK_CELLS fine cells from water, shallows or a deck (beside creeks, channels and lakes)
+#  track     TRACK_OFF px off a dirt track (the raster's track mask; not on it), turned so its +y faces the track
+#  pass      PASS_NEAR px from a pass cut through walls, where the wall field is within PASS_WALL (a wall's foot)
+#  clearing  open ground all round within CLEARING_R
+#  edge      a thicket's edge (the wall field within EDGE_FIELD)
+#  any       anywhere a prop fits
+#Everything a hero pass places carries hero = true; a motif's members share a group key.
+const TAG_HERO := 213
+const TAG_GROUP := 214
+const TAG_EDGE := 215
+const HERO_COST := 1.0
+const HERO_PICKS := 4   #ids tried per hero wanted (an anchor the chunk lacks moves on to another)
+const HERO_TRIES := 16  #darts per id
+const HERO_NEAR := Vector2(600.0, 1400.0) #from a ford's middle: past its shallows onto the bank
+const BANK_CELLS := Vector2i(2, 5) #fine cells (128 px) from water, shallows or a deck
+const TRACK_OFF := Vector2(250.0, 500.0)
+const TRACK_CLEAR := 200.0
+const PASS_NEAR := Vector2(350.0, 1000.0)
+const PASS_WALL := Vector2(0.15, 0.8)
+const CLEARING_R := 640.0
+const CLEARING_SHARE := 0.9
+const EDGE_FIELD := Vector2(0.3, 0.6)
+const LIP_FIELD := Vector2(0.03, 0.12) #edge props stand on a thicket's lip: no car-wide gap to wedge in
+const ANCHORS := ["ford", "bank", "track", "pass", "clearing", "edge", "any", "bridge"]
+
+var crossRuns: Array = []  #the raster's crossings round the chunk (WorldGen.crossingRuns)
+var tracks := PackedByteArray() #the raster's track mask (meadow), FW x FH
+var anchorCache := {}      #anchor -> PackedVector2Array of seed points
+var motifSerial := 0       #motif instances placed in this chunk, for their group keys
+
+func placeHeroes() -> Array:
+	var out: Array = []
+	var tables: Dictionary = ctx.get("heroTables", {})
+	var table: Dictionary = tables.get(majority, {})
+	if table.is_empty(): return out
+	var hr := RandomNumberGenerator.new()
+	hr.seed = WorldGen.ihash(mapSeed, TAG_HERO, chunk.x, chunk.y)
+	var expect: float = float(ctx.get("heroesPerChunk", 1.0)) * openShare()
+	var count := floori(expect) + (1 if hr.randf() < expect - floori(expect) else 0)
+	var weights := {}
+	for id in table: weights[id] = float(table[id][0])
+	var entry: Array = pickTables({0: weights})[0]
+	for n in count:
+		for attempt in HERO_PICKS:
+			var id := pickFast(entry, hr)
+			if id == "": break
+			var got := placeHero(id, table[id], hr)
+			if not got.is_empty():
+				out.append_array(got)
+				break
+	return out
+
+## One hero on its anchor: the props it placed (a motif's members), or [] when nothing fits
+func placeHero(id: String, spec: Array, hr: RandomNumberGenerator) -> Array:
+	var anchor: String = spec[1] if spec.size() > 1 else "any"
+	var variant: int = int(spec[2]) if spec.size() > 2 else -1
+	var defs: Dictionary = ctx.get("motifDefs", {})
+	var isMotif := defs.has(id)
+	if not isMotif && not ctx.props.has(id): return []
+	for dart in HERO_TRIES:
+		var a := anchorPoint(anchor, hr)
+		if a.is_empty():
+			if anchor != "any" && anchor != "clearing" && anchorSeeds(anchor).is_empty(): return [] #no such place here
+			continue
+		var p: Vector2 = a[0]
+		if isMotif:
+			var def: Dictionary = defs[id]
+			if not isFree(p, PROP_GAP): continue
+			var group := motifGroup(p, def, hr)
+			if group.size() < int(def.get("min", 2)): continue
+			return emitMotif(group, hr, true)
+		var info: Dictionary = ctx.props[id]
+		var rot: float = hr.randf() * TAU if is_nan(a[1]) else a[1]
+		if not propFits(p, rot, info, id): continue
+		var bit := nextBit(info, id, true)
+		if lacksBit(info, bit): return []
+		var v := clampi(variant, 0, maxi(int(info.variants), 1) - 1) if variant >= 0 else hr.randi() % maxi(int(info.variants), 1)
+		reserve(p, info.radius + PROP_GAP * 0.5)
+		return [propEntry(id, p, rot, v, bit, info.occluder, 0, true)]
+	return []
+
+## A spot for an anchor: [chunk-local point, facing (the rotation turning the prop's +y toward what it is
+## anchored to, NAN for any)], or [] for a miss
+func anchorPoint(anchor: String, r: RandomNumberGenerator) -> Array:
+	match anchor:
+		"any":
+			return [Vector2(r.randf_range(150.0, CHUNK.x - 150.0), r.randf_range(150.0, CHUNK.y - 150.0)), NAN]
+		"clearing":
+			var p := Vector2(r.randf_range(500.0, CHUNK.x - 500.0), r.randf_range(500.0, CHUNK.y - 500.0))
+			return [p, NAN] if clearingAt(p) else []
+		"bank", "edge":
+			var seeds := anchorSeeds(anchor)
+			if seeds.is_empty(): return []
+			return [seeds[r.randi() % seeds.size()] + Vector2(r.randf_range(-60.0, 60.0), r.randf_range(-60.0, 60.0)), NAN]
+		"ford", "pass", "bridge":
+			var seeds := anchorSeeds(anchor)
+			if seeds.is_empty(): return []
+			var s := seeds[r.randi() % seeds.size()]
+			var near := PASS_NEAR if anchor == "pass" else HERO_NEAR
+			#a crossing may lie just outside the chunk (the raster sees the cells round it): darts that land inside
+			var p := Vector2.INF
+			for k in 8:
+				var q := s + Vector2.from_angle(r.randf() * TAU) * r.randf_range(near.x, near.y)
+				if inChunk(q, 120.0):
+					p = q
+					break
+			if p == Vector2.INF: return []
+			if anchor == "pass":
+				var f := fieldAt(wall, p)
+				if f < PASS_WALL.x || f > PASS_WALL.y: return []
+			return [p, (s - p).angle() - PI * 0.5]
+		"track":
+			var seeds := anchorSeeds(anchor)
+			if seeds.is_empty(): return []
+			var s := seeds[r.randi() % seeds.size()]
+			var p := s + Vector2.from_angle(r.randf() * TAU) * r.randf_range(TRACK_OFF.x, TRACK_OFF.y)
+			if trackAt(p): return []
+			for k in 6:
+				if trackAt(p + Vector2.from_angle(TAU * k / 6.0) * TRACK_CLEAR): return []
+			return [p, (s - p).angle() - PI * 0.5]
+	return []
+
+## The raster points an anchor starts from (chunk-local), worked out once per recipe
+func anchorSeeds(anchor: String) -> PackedVector2Array:
+	if anchorCache.has(anchor): return anchorCache[anchor]
+	var out := PackedVector2Array()
+	match anchor:
+		"ford", "pass", "bridge":
+			var reach := Rect2(Vector2.ZERO, CHUNK).grow(maxf(HERO_NEAR.y, PASS_NEAR.y) - 120.0)
+			for run in crossRuns:
+				if run.kind == anchor && reach.has_point(run.centre - origin): out.push_back(run.centre - origin)
+		"bank":
+			#dry cells BANK_CELLS steps (4-connected) from water, shallows or a deck: a breadth-first search from
+			#the wet cells (the water field's lake fbm is too rough a distance for this)
+			var dist := PackedInt32Array()
+			dist.resize(FW * FH)
+			dist.fill(BANK_CELLS.y + 1)
+			var queue := PackedInt32Array()
+			for k in FW * FH:
+				var t := terrain[k]
+				if t == WATER || t == SHALLOWS || t == BRIDGE:
+					dist[k] = 0
+					queue.push_back(k)
+			var head := 0
+			while head < queue.size():
+				var k := queue[head]
+				head += 1
+				var d := dist[k] + 1
+				if d > BANK_CELLS.y: continue
+				var i := k % FW
+				if i > 0 && dist[k - 1] > d:
+					dist[k - 1] = d
+					queue.push_back(k - 1)
+				if i < FW - 1 && dist[k + 1] > d:
+					dist[k + 1] = d
+					queue.push_back(k + 1)
+				if k >= FW && dist[k - FW] > d:
+					dist[k - FW] = d
+					queue.push_back(k - FW)
+				if k + FW < FW * FH && dist[k + FW] > d:
+					dist[k + FW] = d
+					queue.push_back(k + FW)
+			for k in FW * FH:
+				if dist[k] >= BANK_CELLS.x && dist[k] <= BANK_CELLS.y && spawnable(terrain[k]): out.push_back(Vector2(k % FW + 0.5, k / FW + 0.5) * FINE)
+		"edge", "lip":
+			var band := EDGE_FIELD if anchor == "edge" else LIP_FIELD
+			for j in FH:
+				for i in FW:
+					var v := wall[(j + 1) * RW + i + 1]
+					if v >= band.x && v <= band.y && spawnable(terrain[j * FW + i]): out.push_back(Vector2(i + 0.5, j + 0.5) * FINE)
+		"track":
+			for j in FH:
+				for i in FW:
+					if trackAt(Vector2(i + 0.5, j + 0.5) * FINE): out.push_back(Vector2(i + 0.5, j + 0.5) * FINE)
+	anchorCache[anchor] = out
+	return out
+
+## Open ground all round p: at least CLEARING_SHARE of 17 points out to CLEARING_R are passable and well off
+## walls and water
+func clearingAt(p: Vector2) -> bool:
+	var open := 0
+	var total := 0
+	for ring in 3:
+		var steps := 1 if ring == 0 else 8
+		for s in steps:
+			var q := p + Vector2.from_angle(TAU * s / steps + ring * 0.4) * CLEARING_R * ring * 0.5
+			total += 1
+			var t := terrainAt(q)
+			if t >= 0 && t < blockedTable.size() && blockedTable[t] == 0 && fieldAt(wall, q) >= 0.4 && fieldAt(water, q) >= 0.4: open += 1
+	return open >= total * CLEARING_SHARE
+
+## A motif's members as recipe entries sharing one group key (the motif instance, for C2's warren and apiary
+## counts), reserved; hero = placed by the hero pass. A paying member that gets no bit is left out.
+func emitMotif(group: Array, r: RandomNumberGenerator, hero: bool) -> Array:
+	var out: Array = []
+	motifSerial += 1
+	var key := maxi(1, WorldGen.ihash(mapSeed, TAG_GROUP, (chunk.x + 512) * 1024 + chunk.y + 512, motifSerial))
+	for g in group:
+		var info: Dictionary = ctx.props[g[0]]
+		var vs: Array = g[3]
+		var variant := r.randi() % maxi(int(info.variants), 1)
+		if not vs.is_empty(): variant = clampi(int(vs[variant % vs.size()]), 0, maxi(int(info.variants), 1) - 1)
+		var bit := nextBit(info, g[0], hero)
+		if lacksBit(info, bit): continue
+		out.push_back(propEntry(g[0], g[1], g[2], variant, bit, info.occluder, key, hero))
+	for g in group: reserve(g[1], ctx.props[g[0]].radius + PROP_GAP * 0.5)
+	return out
+
+## Props along a thicket's edge (features "edgeProps": {id: count}; Moose Woods' pines): the only real trees
+## round its walls, which are drawn as pine crowns
+func placeEdgeProps() -> Array:
+	var out: Array = []
+	var spec: Dictionary = ctx.get("edgeProps", {})
+	if spec.is_empty(): return out
+	var seeds := anchorSeeds("lip")
+	if seeds.is_empty(): return out
+	var er := RandomNumberGenerator.new()
+	er.seed = WorldGen.ihash(mapSeed, TAG_EDGE, chunk.x, chunk.y)
+	for id in spec:
+		if not ctx.props.has(id): continue
+		var info: Dictionary = ctx.props[id]
+		var want := int(spec[id])
+		var placed := 0
+		for attempt in want * 6:
+			if placed >= want: break
+			var p := seeds[er.randi() % seeds.size()] + Vector2(er.randf_range(-64.0, 64.0), er.randf_range(-64.0, 64.0))
+			var rot := er.randf() * TAU
+			if not lipFits(p, info): continue
+			var bit := nextBit(info, id)
+			if lacksBit(info, bit): continue
+			out.push_back(propEntry(id, p, rot, er.randi() % maxi(int(info.variants), 1), bit, info.occluder))
+			reserve(p, info.radius + PROP_GAP * 0.5)
+			placed += 1
+	return out
+
+## An edge prop on a thicket's lip: its trunk on the wall's edge (so it leaves no gap a car could wedge in
+## between it and the wall), clear of water and every reservation
+func lipFits(p: Vector2, info: Dictionary) -> bool:
+	if not inChunk(p, 32.0) || not isFree(p, info.radius * 0.6): return false
+	var f := fieldAt(wall, p)
+	if f < LIP_FIELD.x || f > LIP_FIELD.y || fieldAt(water, p) < PROP_MARGIN + info.radius / 640.0: return false
+	var t := terrainAt(p)
+	return spawnable(t) && t != ASPHALT && t != OIL && t != BRIDGE && t != CONVEYOR && t != MUDPIT
 
 ## The road's direction at p: the heading (of 8) with the longest run of road through p, else `fallback`
 func roadAxis(p: Vector2, fallback: float) -> float:
@@ -1243,14 +1800,15 @@ func placeMotifs() -> Array:
 			if not isFree(c, PROP_GAP): continue
 			var group := motifGroup(c, def, mr)
 			if group.size() < int(def.get("min", 2)): continue
-			for g in group:
-				var info: Dictionary = ctx.props[g[0]]
-				out.push_back([g[0], g[1], g[2], mr.randi() % maxi(int(info.variants), 1), nextBit(info), info.occluder])
-			for g in group: reserve(g[1], ctx.props[g[0]].radius + PROP_GAP * 0.5)
+			out.append_array(emitMotif(group, mr, false))
 			break
 	return out
 
-## A motif's members round centre c that fit: [[id, pos, rot], ...]
+## A motif's members round centre c that fit: [[id, pos, rot, variants (the member's "variants" option, or
+## []), a pen piece], ...]. A member is [id, count (an int, or [low, high]), radius px, shape, options]; options
+## (optional): "variants" (the variant indices it picks from) and "offset" (px a line stands off the centre,
+## across the lattice). Shapes: centre, ring, disc, grid, line, and pen (count pieces round a square of half
+## side `radius`, one left out as the gate; pen pieces touch end to end).
 func motifGroup(c: Vector2, def: Dictionary, mr: RandomNumberGenerator) -> Array:
 	var group: Array = []
 	var grid := fieldFrame(regionOf(origin + c))[2] as Vector2
@@ -1259,9 +1817,14 @@ func motifGroup(c: Vector2, def: Dictionary, mr: RandomNumberGenerator) -> Array
 		var id: String = m[0]
 		if not ctx.props.has(id): continue
 		var info: Dictionary = ctx.props[id]
-		var n: int = m[1]
+		var n: int = m[1] if m[1] is int else mr.randi_range(int(m[1][0]), int(m[1][1]))
 		var radius: float = m[2]
 		var shape: String = m[3]
+		var opts: Dictionary = m[4] if m.size() > 4 else {}
+		var offset := grid.orthogonal() * float(opts.get("offset", 0.0))
+		var pen := shape == "pen"
+		var perSide := maxi(1, n / 4)
+		var gateAt := mr.randi() % (perSide * 4) if pen else -1
 		for i in n:
 			var p := c
 			var rot := mr.randf() * TAU
@@ -1277,16 +1840,36 @@ func motifGroup(c: Vector2, def: Dictionary, mr: RandomNumberGenerator) -> Array
 					var cell := Vector2(i % cols, i / cols) - Vector2(cols - 1, rows - 1) * 0.5
 					p = c + (grid * cell.x + grid.orthogonal() * cell.y) * radius
 				"line":
-					p = c + grid * (i - (n - 1) * 0.5) * radius
+					p = c + offset + grid * (i - (n - 1) * 0.5) * radius
 					rot = grid.angle()
-			if not motifFits(p, rot, info, group): continue
-			group.push_back([id, p, rot])
+				"pen":
+					if i >= perSide * 4 || i == gateAt: continue
+					var side := i / perSide
+					var along := -radius + (i % perSide + 0.5) * radius * 2.0 / perSide
+					var axis := grid if side % 2 == 0 else grid.orthogonal()
+					var normal := grid.orthogonal() if side % 2 == 0 else grid
+					p = c + axis * along + normal * radius * (-1.0 if side < 2 else 1.0)
+					rot = axis.angle()
+			if not motifFits(p, rot, info, group, pen): continue
+			group.push_back([id, p, rot, opts.get("variants", []), pen])
 	return group
 
-func motifFits(p: Vector2, rot: float, info: Dictionary, group: Array) -> bool:
+func motifFits(p: Vector2, rot: float, info: Dictionary, group: Array, pen := false) -> bool:
 	if not inChunk(p, 32.0) || not isFree(p, info.radius + PROP_GAP * 0.5): return false
 	for g in group:
-		if p.distance_to(g[1]) < (info.radius + ctx.props[g[0]].radius) * 0.75 + MOTIF_GAP: return false
+		var other: Dictionary = ctx.props[g[0]]
+		if pen || g[4]:
+			#a pen piece is a long thin box: pieces of one pen touch end to end, the rest keep off its box
+			if pen && g[4]: continue
+			var boxAt: Vector2 = p if pen else g[1]
+			var boxRot: float = rot if pen else g[2]
+			var box: Dictionary = info if pen else other
+			var disc: Vector2 = g[1] if pen else p
+			var r: float = (other.radius if pen else info.radius) * 0.75 + MOTIF_GAP * 0.5
+			var axis := Vector2.from_angle(boxRot)
+			var off := disc - boxAt
+			if absf(off.dot(axis)) < box.w * 0.5 + r && absf(off.dot(axis.orthogonal())) < box.h * 0.5 + r: return false
+		elif p.distance_to(g[1]) < (info.radius + other.radius) * 0.75 + MOTIF_GAP: return false
 	var along: Vector2 = Vector2.from_angle(rot) * (info.w * 0.5 * 0.85)
 	var across: Vector2 = Vector2.from_angle(rot).orthogonal() * (info.h * 0.5 * 0.85)
 	for q in [p, p + along, p - along, p + across, p - across]:

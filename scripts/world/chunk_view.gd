@@ -89,11 +89,12 @@ func applyGround(skin: WorldSkin, tm: Node) -> void:
 	nextStage()
 
 func applyBody(skin: WorldSkin, tm: Node) -> void:
-	if not recipe.pieces.is_empty():
+	var walls: Array = recipe.get("fieldWalls", []) #unbreakable field lines (hedgerows) join the terrain's pieces
+	if not recipe.pieces.is_empty() || not walls.is_empty():
 		body = skin.newBody()
 		body.position = origin
 		var owner: int = body.get_meta("shapeOwner")
-		for piece in recipe.pieces:
+		for piece in recipe.pieces + walls:
 			var shape := skin.takeShape()
 			shape.points = piece
 			body.shape_owner_add_shape(owner, shape)
@@ -168,6 +169,13 @@ func applyProp(skin: WorldSkin, tm: Node) -> bool:
 		if not node.has_meta("occluderPolygon"): node.set_meta("occluderPolygon", occ.occluder)
 		occ.occluder = node.get_meta("occluderPolygon") if p[5] else null
 	if Spill.DEFS.has(id): node.set_meta(&"spilled", tm.has_method("spillUsed") && tm.spillUsed(chunk, p[1])) #a crane drops its container once
+	#the motif instance it belongs to (a warren, an apiary) and whether the hero pass placed it (ChunkRecipe);
+	#set or cleared every time, as pooled props come back with the last chunk's metadata
+	var group: int = p[6] if p.size() > 6 else 0
+	if group != 0: node.set_meta(&"group", group)
+	elif node.has_meta(&"group"): node.remove_meta(&"group")
+	if p.size() > 7 && p[7]: node.set_meta(&"hero", true)
+	elif node.has_meta(&"hero"): node.remove_meta(&"hero")
 	if stateful:
 		node.set_meta(&"worldChunk", chunk)
 		node.set_meta(&"worldBit", bit)

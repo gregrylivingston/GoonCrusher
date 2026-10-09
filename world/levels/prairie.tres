@@ -37,16 +37,33 @@ features = {
 "poolThreshold": 0.45,
 "poolWidth": 520.0,
 "fordWidth": 1200.0,
-"trackWidth": 420.0,
+"trackWidth": 600.0,
 "barrierCap": 0.15,
-"hedgeDensity": 0.18,
-"fenceDensity": 0.15,
-"fieldSpacing": 1600.0
+"hedgeDensity": 0.1,
+"fenceDensity": 0.22,
+"fieldSpacing": 1600.0,
+"heroes": 1.5,
+"homePaddock": 1.0
 }
 baseTerrain = [0, 0, 5, 0, 6]
 accents = [5, 6, 11]
-dressing = {}
-motifs = {}
+dressing = {
+&"watertower": 0.3,
+&"logpile": 0.5
+}
+motifs = {
+&"orchard": 1,
+&"ranch": 0.6,
+&"warren": 0.6
+}
+heroes = {
+&"watertower": [2.0, "ford"],
+&"logpile": [3.0, "track"],
+&"cratestash": [2.0, "any"],
+&"bell": [1.5, "track"],
+&"den": [0.5, "any"],
+&"apiary": [0.5, "any"]
+}
 pickupTable = {
 &"coinline": 43,
 &"fuel": 50,

@@ -249,7 +249,11 @@ func routeLengthTo(target: Vector2) -> float:
 static func driveLengthFor(routePx: float, grammar: StringName) -> float:
 	return routePx * ROUTE_FACTOR.get(grammar, ROUTE_FACTOR_DEFAULT) + STATION_APPROACH_PX
 
+## A level's own route factor (features "routeFactor": Orchard Lanes' hedgerow lattice makes the drive a
+## staircase the coarse route doesn't see) replaces its grammar's
 func driveLength(routePx: float) -> float:
+	var own := float(def.features.get("routeFactor", 0.0)) if def else 0.0
+	if own > 0.0: return routePx * own + STATION_APPROACH_PX
 	return driveLengthFor(routePx, def.grammar if def else &"")
 
 #the Sprint clock: the drive's length (the route on the coarse map) at REFERENCE_SPEED, plus the level's

@@ -11,8 +11,8 @@ region = &"wilds"
 stop = 5
 order = 4
 blurb = "Dense pines broken by clearings. Herds stampede through the clearings and Bullmoose crash out of the trees."
-barrier = "A creek with deep pools winds through the meadow. Ford it where the shallows are."
-surfaces = "Grass and moss, fast dirt tracks, shallows that slow you down, deep pools that drown. Hedgerows, fences and hay bales smash at speed."
+barrier = "Thickets of pine too dense to drive through. Trails run through them; the clearings between are where you build speed."
+surfaces = "Needles and moss, fast dirt trails, shallows that slow you down, deep pools that drown. Log piles, deadfalls and ranger towers smash at speed."
 startPosition = Vector2(2866, 1583)
 seconds = 290
 spawnTimer = 4.6
@@ -29,8 +29,39 @@ rules = {
 }
 lineup = Array[StringName]([&"bullmoose", &"thunderhoof", &"tusker", &"yipper"])
 landscape = &"forest"
-dressing = {}
-motifs = {}
+features = {
+"creekFrequency": 3e-05,
+"creekWidth": 900.0,
+"poolThreshold": 0.5,
+"poolWidth": 400.0,
+"fordWidth": 1200.0,
+"trackWidth": 460.0,
+"barrierCap": 0.3,
+"props": 16,
+"motifs": 1.0,
+"standFrequency": 0.00014,
+"standAbove": 0.42,
+"heroes": 1.5,
+"edgeProps": {
+"pine": 7
+},
+"routeFactor": 1.15
+}
+dressing = {
+&"pine": 3,
+&"ranger_tower": 0.3,
+&"fallen_trunk": 1.5
+}
+motifs = {
+&"pinestand": 1,
+&"rangerpost": 0.5
+}
+heroes = {
+&"loglanding": [2.0, "clearing"],
+&"saltlick": [1.5, "clearing"],
+&"ranger_tower": [1.0, "track"],
+&"fallen_trunk": [2.0, "track", 2]
+}
 pickupTable = {
 &"coinline": 40,
 &"fuel": 48,
