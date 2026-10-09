@@ -324,6 +324,20 @@ func test_a_salt_lick_lures_heavies_while_loaded():
 	Spill.disarm(lick)
 	assert_eq(Pickups.lureFor(Vector2(600, 0), &"lunge", 3, 3000.0), Vector2.INF, "gone with its chunk")
 
+func test_a_salt_lick_costs_the_fodder_nothing_and_heavies_a_look_every_few_ticks():
+	makeCar(Vector2(0, 5000))
+	Pickups.lures = []
+	var lick := prop("saltlick", Vector2(0, 0))
+	var due := 0
+	for phase in Pickups.LURE_POLL:
+		assert_false(Pickups.lureCheckDue(1, false, phase), "a rank-1 goon never reads it")
+		if Pickups.lureCheckDue(3, false, phase): due += 1
+	assert_eq(due, 1, "a heavy looks once every LURE_POLL ticks")
+	assert_true(Pickups.lureCheckDue(3, true, 1), "a lured heavy keeps looking")
+	Pickups.addLure(Vector2(0, 0), 500.0, 5.0)
+	assert_true(Pickups.lureCheckDue(1, false, 1), "a timed lure is read by everyone every tick")
+	Spill.disarm(lick)
+
 #--- R-11 scarecrows ---------------------------------------------------------------------------------------
 
 func test_buzzards_roost_on_scarecrows_and_a_ram_drops_them():

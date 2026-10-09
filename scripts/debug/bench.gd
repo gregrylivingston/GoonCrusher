@@ -170,7 +170,7 @@ func startLevel() -> void:
 		if data.cars[i].name == cfg.get("car", "sedan"): data.selectedCar = i
 	data.gameMode = gameMode
 	var levelIndex := Levels.indexOf(Levels.resolve(levelPath))
-	if levelIndex >= 0: data.selectedLevel = levelIndex #Region reads the level's faction band and roster from it
+	if levelIndex >= 0: data.selectedLevel = levelIndex #Region reads the level's line-up from it
 	Root.selectedCar = data.cars[data.selectedCar]
 	seed(1337)
 	loadStart = Time.get_ticks_msec()

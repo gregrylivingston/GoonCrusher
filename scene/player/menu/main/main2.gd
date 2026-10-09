@@ -4,9 +4,11 @@ extends CanvasLayer
 #  GARAGE     a carousel of driver cards (DriverCard). LB/RB or Left/Right picks a driver, Accept
 #             drives or unlocks, Upgrades opens the driver's page in the Goonopedia (where upgrades are
 #             bought), Records shows the driver's bests.
-#  RUN SETUP  level poster cards with the five mode medallions under them. LB/RB picks a level,
-#             Left/Right a mode, Up/Down its tier (ModeTiers: Easy, Medium, Hard), Accept starts the run,
-#             Back returns to the garage. Medals (bronze, silver, gold) show the best tier beaten.
+#  RUN SETUP  the road map: six region tabs (Territories; Z/C or LT/RT), the region's five stops on a road
+#             (Q/E or LB/RB, 1-5), the five mode medallions under them (Left/Right), the tier chips
+#             (Up/Down; ModeTiers: Easy, Medium, Hard), the car strip (which cars have won this mode,
+#             level and tier; a click on an owned car drives it), Accept starts the run, Back returns to
+#             the garage. Medals (bronze, silver, gold) show the best tier beaten.
 #The save holds every selection; this only draws it. Built in code with MenuTheme.
 #  G / View opens the Goonopedia (goonopedia.gd) over either screen.
 #Other scripts call: startLevel(path), animateCoins(from, to), statUpdatesUiUpdate(), add_child(menu).
@@ -21,8 +23,21 @@ const CARD_SLOTS := {
 	-2: [Vector2(92, 290), 0.58], 2: [Vector2(1288, 290), 0.58],
 }
 const ACTION_DOCK_WIDTH := 280.0
-const POSTER_SIZE := Vector2(640, 340)
-const POSTER_SLOTS := {0: [Vector2(480, 112), 1.0], -1: [Vector2(110, 196), 0.5], 1: [Vector2(1170, 196), 0.5]}
+const POSTER_SIZE := Vector2(250, 140) #a stop on the road map
+const STOP_SPOTS := [Vector2(195, 262), Vector2(500, 214), Vector2(800, 262), Vector2(1100, 214), Vector2(1405, 262)] #stop centres, 1st to 5th
+const STOP_FOCUS_SCALE := 1.18
+const CAR_CELL := Vector2(112, 42) #a side view in the car strip; the current driver's is CAR_CELL_BIG
+const CAR_CELL_BIG := Vector2(144, 54)
+#the outline of a car not owned yet: its silhouette's edge only
+const OUTLINE_SHADER := "shader_type canvas_item;
+uniform vec4 line : source_color = vec4(1.0, 1.0, 1.0, 0.55);
+void fragment() {
+	vec2 p = TEXTURE_PIXEL_SIZE * 3.0;
+	float a = texture(TEXTURE, UV).a;
+	float n = max(max(texture(TEXTURE, UV + vec2(p.x, 0.0)).a, texture(TEXTURE, UV - vec2(p.x, 0.0)).a),
+		max(texture(TEXTURE, UV + vec2(0.0, p.y)).a, texture(TEXTURE, UV - vec2(0.0, p.y)).a));
+	COLOR = vec4(line.rgb, line.a * clamp(n - a, 0.0, 1.0));
+}"
 const SLIDE_SECONDS := 0.22
 const MODE_ORDER := Root.MODE_PATH #the medallions, left to right
 const TEXT_SHADER := preload("res://shader/3dtext.gdshader")
@@ -47,8 +62,15 @@ var coinsLabel := Label.new()
 var gemsLabel := Label.new()
 var shownCoins := 0
 var hintBar := HBoxContainer.new()
-var posters: Array[Control] = []
+var posters: Array[Control] = [] #one stop per level; only the selected region's five show
 var pendingPosters := {}     #poster index -> level image path still loading
+var regionTabs: Array[Button] = [] #Territories.ORDER
+var regionBlurb := Label.new()
+var road := Control.new()    #draws the road through the region's stops
+var carStrip := HBoxContainer.new()
+var carStripLabel := Label.new()
+var carCells: Array[Button] = []
+var outlineMaterial: ShaderMaterial
 var medallions: Array[Control] = []
 var modeTitle := Label.new()
 var tierRow := HBoxContainer.new() #Easy, Medium, Hard (ModeTiers)
@@ -253,24 +275,35 @@ func buildGarage() -> void:
 
 func buildSetup() -> void:
 	setup.visible = false
-	var title = Label.new()
-	title.text = "CHOOSE YOUR RUN"
-	title.theme_type_variation = "TitleLabel"
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
-	title.offset_left = -400
-	title.offset_right = 400
-	title.offset_top = 36
-	setup.add_child(title)
+	var tabs = HBoxContainer.new()
+	tabs.alignment = BoxContainer.ALIGNMENT_CENTER
+	tabs.add_theme_constant_override("separation", 6)
+	tabs.position = Vector2(392, 26)
+	tabs.size = Vector2(880, 46)
+	for r in Territories.ORDER.size(): tabs.add_child(makeRegionTab(r))
+	setup.add_child(tabs)
+	regionBlurb.theme_type_variation = "BodyLabel"
+	regionBlurb.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	regionBlurb.add_theme_font_size_override("font_size", 16)
+	regionBlurb.add_theme_color_override("font_color", HudTheme.MUTED)
+	regionBlurb.position = Vector2(330, 80)
+	regionBlurb.size = Vector2(940, 26)
+	regionBlurb.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	setup.add_child(regionBlurb)
+	road.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	road.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	road.draw.connect(drawRoad)
+	setup.add_child(road)
 	var levels = SaveManager.playerData.levels
 	for i in levels.size():
 		var poster = makePoster(i)
+		poster.visible = false
 		setup.add_child(poster)
 		posters.push_back(poster)
 	var row = HBoxContainer.new()
 	row.add_theme_constant_override("separation", 30)
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.position = Vector2(0, 462)
+	row.position = Vector2(0, 382)
 	row.size = Vector2(1600, 140)
 	for mode in MODE_ORDER:
 		var medallion = makeMedallion(mode)
@@ -279,7 +312,7 @@ func buildSetup() -> void:
 	setup.add_child(row)
 	var info = VBoxContainer.new()
 	info.alignment = BoxContainer.ALIGNMENT_CENTER
-	info.position = Vector2(300, 604)
+	info.position = Vector2(300, 524)
 	info.size = Vector2(1000, 136)
 	info.add_theme_constant_override("separation", 3)
 	tierRow.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -299,7 +332,8 @@ func buildSetup() -> void:
 	modeLock.theme_type_variation = "BodyLabel"
 	modeLock.add_theme_color_override("font_color", Color(1.0, 0.62, 0.55))
 	setup.add_child(info)
-	startButton = MenuTheme.button("START", PackedStringArray(["ui_accept"]), true)
+	buildCarStrip()
+	startButton =MenuTheme.button("START", PackedStringArray(["ui_accept"]), true)
 	startButton.position = Vector2(620, 744)
 	startButton.size = Vector2(360, 68)
 	startButton.add_theme_font_size_override("font_size", 30)
@@ -426,11 +460,12 @@ static func levelScene(index: int) -> String:
 	var def := levelDef(index)
 	return def.scenePath() if def else str(SaveManager.playerData.levels[index].get("scene", ""))
 
-#a level as a poster: its art, "1  PRAIRIE RUN" with a star per mode beaten, and a lock when locked
+#a level as a stop on the road: its poster art, "1  PRAIRIE RUN" with a star per mode beaten, and a lock when locked
 func makePoster(index: int) -> Control:
 	var image := posterPath(index)
 	var poster = Panel.new()
 	poster.size = POSTER_SIZE
+	poster.pivot_offset = POSTER_SIZE / 2.0
 	poster.clip_children = CanvasItem.CLIP_CHILDREN_AND_DRAW
 	poster.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	poster.add_theme_stylebox_override("panel", MenuTheme.box(Color(0.12, 0.1, 0.09), Color(0, 0, 0, 0), 18, 0))
@@ -448,35 +483,37 @@ func makePoster(index: int) -> Control:
 	var band = PanelContainer.new()
 	band.name = "band"
 	band.theme_type_variation = "BandPanel"
-	band.position = Vector2(0, POSTER_SIZE.y - 64)
-	band.size = Vector2(POSTER_SIZE.x, 64)
+	band.position = Vector2(0, POSTER_SIZE.y - 40)
+	band.size = Vector2(POSTER_SIZE.x, 40)
+	band.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var bandRow = HBoxContainer.new()
 	bandRow.name = "row"
 	bandRow.alignment = BoxContainer.ALIGNMENT_CENTER
-	bandRow.add_theme_constant_override("separation", 14)
+	bandRow.add_theme_constant_override("separation", 8)
 	var label = Label.new()
 	label.name = "name"
 	label.theme_type_variation = "DarkLabel"
-	label.text = "%d   %s" % [index + 1, levelName(index).to_upper()]
+	label.add_theme_font_size_override("font_size", 15)
+	label.text = "%d  %s" % [index % Territories.STOPS + 1, levelName(index).to_upper()]
 	bandRow.add_child(label)
 	var stars = HBoxContainer.new()
 	stars.name = "stars"
-	stars.add_theme_constant_override("separation", 3)
+	stars.add_theme_constant_override("separation", 1)
 	bandRow.add_child(stars)
 	band.add_child(bandRow)
 	poster.add_child(band)
 	var lock = VBoxContainer.new()
 	lock.name = "lock"
 	lock.alignment = BoxContainer.ALIGNMENT_CENTER
-	lock.size = Vector2(POSTER_SIZE.x, POSTER_SIZE.y - 64)
+	lock.size = Vector2(POSTER_SIZE.x, POSTER_SIZE.y - 40)
 	lock.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var lockIcon = MenuTheme.iconRect(HudTheme.LOCK_ICON, 72)
+	var lockIcon = MenuTheme.iconRect(HudTheme.LOCK_ICON, 40)
 	lockIcon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	lock.add_child(lockIcon)
 	var lockText = Label.new()
 	lockText.name = "text"
 	lockText.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	lockText.add_theme_font_size_override("font_size", 30)
+	lockText.add_theme_font_size_override("font_size", 17)
 	lock.add_child(lockText)
 	poster.add_child(lock)
 	var frame = Panel.new()
@@ -484,7 +521,7 @@ func makePoster(index: int) -> Control:
 	frame.size = POSTER_SIZE
 	frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	poster.add_child(frame)
-	var catcher = Button.new() #a click on a side poster selects it
+	var catcher = Button.new() #a click on another stop selects it
 	catcher.name = "catcher"
 	catcher.flat = true
 	catcher.focus_mode = Control.FOCUS_NONE
@@ -541,6 +578,134 @@ func makeTierButton(tier: int) -> Button:
 	MenuTheme.addSounds(b)
 	tierButtons.push_back(b)
 	return b
+
+#a region tab over the road map; a click opens that region at its furthest open stop
+func makeRegionTab(region: int) -> Button:
+	var def := Territories.get_def(Territories.ORDER[region])
+	var b := Button.new()
+	b.text = "%d  %s" % [region + 1, str(def.get("name", "")).to_upper()]
+	b.custom_minimum_size = Vector2(140, 44)
+	b.focus_mode = Control.FOCUS_NONE
+	b.expand_icon = true
+	b.add_theme_constant_override("icon_max_width", 16)
+	b.add_theme_font_size_override("font_size", 13)
+	b.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	b.pressed.connect(selectRegion.bind(region))
+	MenuTheme.addSounds(b)
+	regionTabs.push_back(b)
+	return b
+
+#the selected region's tab lit in its colour; a demo-locked region carries a lock
+func refreshRegionTabs(region: int) -> void:
+	for i in regionTabs.size():
+		var b := regionTabs[i]
+		var def := Territories.get_def(Territories.ORDER[i])
+		var color: Color = def.get("color", HudTheme.RIM)
+		var on := i == region
+		var style = MenuTheme.box(HudTheme.PANEL.lerp(color, 0.28) if on else HudTheme.PANEL, color if on else Color(color, 0.35), 12, 3 if on else 2, Vector4(10, 4, 10, 4))
+		for state in ["normal", "pressed", "focus"]: b.add_theme_stylebox_override(state, style)
+		var hover = style.duplicate()
+		hover.border_color = color
+		b.add_theme_stylebox_override("hover", hover)
+		b.add_theme_color_override("font_color", HudTheme.TEXT if on else HudTheme.MUTED)
+		b.add_theme_color_override("font_hover_color", HudTheme.TEXT)
+		var demoLocked: bool = Root.IS_DEMO && not def.get("demo", true)
+		b.icon = HudTheme.LOCK_ICON if demoLocked else null
+		b.modulate = Color.WHITE if on || not demoLocked else Color(1, 1, 1, 0.6)
+
+func selectedRegion() -> int:
+	return SaveManager.playerData.selectedLevel / Territories.STOPS
+
+#a region tab (or Z/C): its furthest stop that can be started, else its first
+func selectRegion(region: int) -> void:
+	region = wrapi(region, 0, Territories.ORDER.size())
+	var first := region * Territories.STOPS
+	var pick := first
+	for stop in Territories.STOPS:
+		if first + stop < posters.size() && isLevelSelectable(first + stop): pick = first + stop
+	stepLevelTo(pick)
+
+#the road through the region's five stops, in from the left edge and out to the right
+func drawRoad() -> void:
+	var color: Color = Territories.get_def(Territories.ORDER[selectedRegion()]).get("color", HudTheme.RIM)
+	var points := PackedVector2Array([Vector2(-40, STOP_SPOTS[0].y + 30)])
+	for spot in STOP_SPOTS: points.push_back(spot + Vector2(0, 30))
+	points.push_back(Vector2(1640, STOP_SPOTS[-1].y + 30))
+	road.draw_polyline(points, Color(color, 0.45), 40.0, true)
+	road.draw_polyline(points, Color(0.13, 0.12, 0.11, 0.95), 30.0, true)
+	for i in points.size() - 1: road.draw_dashed_line(points[i], points[i + 1], Color(HudTheme.GOLD, 0.8), 3.0, 14.0)
+
+func buildCarStrip() -> void:
+	outlineMaterial = ShaderMaterial.new()
+	outlineMaterial.shader = Shader.new()
+	outlineMaterial.shader.code = OUTLINE_SHADER
+	carStrip.alignment = BoxContainer.ALIGNMENT_CENTER
+	carStrip.add_theme_constant_override("separation", 6)
+	carStrip.position = Vector2(0, 664)
+	carStrip.size = Vector2(1600, CAR_CELL_BIG.y + 6)
+	carStripLabel.add_theme_font_size_override("font_size", 15)
+	carStripLabel.custom_minimum_size = Vector2(150, 0)
+	carStripLabel.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	carStripLabel.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	carStrip.add_child(carStripLabel)
+	for i in SaveManager.playerData.cars.size():
+		var cell := Button.new()
+		cell.flat = true
+		cell.focus_mode = Control.FOCUS_NONE
+		cell.size_flags_vertical = Control.SIZE_SHRINK_END
+		for state in ["normal", "hover", "pressed", "focus"]: cell.add_theme_stylebox_override(state, StyleBoxEmpty.new())
+		var pic := TextureRect.new()
+		pic.name = "pic"
+		pic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		pic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		pic.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		pic.offset_bottom = -6
+		pic.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		cell.add_child(pic)
+		var bar := ColorRect.new() #the current driver's orange bar
+		bar.name = "bar"
+		bar.color = HudTheme.NEEDLE
+		bar.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+		bar.offset_top = -4
+		bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		cell.add_child(bar)
+		cell.pressed.connect(onCarCellPressed.bind(i))
+		carStrip.add_child(cell)
+		carCells.push_back(cell)
+	setup.add_child(carStrip)
+
+static func isCarOwned(index: int) -> bool:
+	return int(SaveManager.playerData.cars[index].cost) == 0 && not (Root.IS_DEMO && index >= Root.DEMO_CAR_COUNT)
+
+#which cars have won this mode here on this tier: in colour = cleared, dark = owned but not cleared,
+#an outline = not owned; the current driver is bigger, over an orange bar
+func refreshCarStrip(index: int, mode: int, tier: int) -> void:
+	var cars = SaveManager.playerData.cars
+	for i in carCells.size():
+		if cards[i].info == null: finishCarLoad(i, true)
+		var cell := carCells[i]
+		var pic: TextureRect = cell.get_node("pic")
+		pic.texture = cards[i].info.sidePic
+		var current: bool = i == SaveManager.playerData.selectedCar
+		var owned := isCarOwned(i)
+		var best := SaveManager.carClearTier(index, mode, str(cars[i].name))
+		var cleared := owned && best >= tier
+		cell.custom_minimum_size = (CAR_CELL_BIG if current else CAR_CELL) + Vector2(0, 6)
+		cell.get_node("bar").visible = current
+		pic.material = null if owned else outlineMaterial
+		pic.modulate = Color.WHITE if cleared || not owned else Color(0.07, 0.07, 0.08)
+		cell.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if owned && not current else Control.CURSOR_ARROW
+		var carName: String = cards[i].info.charName
+		cell.tooltip_text = "%s: %s" % [carName, ("won on " + ModeTiers.NAMES[best]) if cleared else ("not won yet" if owned else "not owned")]
+	var full := SaveManager.isFullGarage(index, mode, tier)
+	carStripLabel.text = "FULL GARAGE" if full else "CARS  %d / %d" % [SaveManager.carsCleared(index, mode, tier), cars.size()]
+	carStripLabel.add_theme_color_override("font_color", HudTheme.GOLD if full else HudTheme.MUTED)
+
+#a click on an owned car in the strip makes it the driver
+func onCarCellPressed(index: int) -> void:
+	if not isCarOwned(index) || index == SaveManager.playerData.selectedCar: return
+	selectCar(index, false)
+	refreshSetup(false)
 
 #each chip: lit while selected, its star in the medal colour once that tier is beaten, dim while locked
 func refreshTiers(level: Dictionary, mode: int) -> void:
@@ -707,21 +872,22 @@ func switchLayer(show: Control, hide: Control) -> void:
 func refreshSetup(animate := true) -> void:
 	var levels = SaveManager.playerData.levels
 	var selected = SaveManager.playerData.selectedLevel
-	var count = levels.size()
-	for i in count:
+	var region := selectedRegion()
+	var first := region * Territories.STOPS
+	for i in levels.size(): #the region's five stops on the road; the selected one bigger
 		var poster = posters[i]
-		var offset = wrapi(i - selected + count / 2, 0, count) - count / 2
-		var slot = POSTER_SLOTS.get(offset)
-		if not slot:
+		var stop := i - first
+		if stop < 0 || stop >= Territories.STOPS || stop >= STOP_SPOTS.size():
 			poster.visible = false
 			continue
-		if not poster.visible: #sliding in from the side
-			poster.position = slot[0] + Vector2(signf(offset) * 300, 0)
+		var target: Vector2 = STOP_SPOTS[stop] - POSTER_SIZE / 2.0
+		var focused: bool = i == selected
+		var scale = Vector2.ONE * (STOP_FOCUS_SCALE if focused else 1.0)
+		var tint = Color.WHITE if focused else Color(0.72, 0.72, 0.72)
+		if not poster.visible: #a region just opened: its stops drop onto the road
+			poster.position = target + Vector2(0, -24)
 			poster.modulate.a = 0.0
 			poster.visible = true
-		var target: Vector2 = slot[0]
-		var scale = Vector2(slot[1], slot[1])
-		var tint = Color.WHITE if offset == 0 else Color(0.5, 0.5, 0.5)
 		if animate:
 			var tween = poster.create_tween().set_parallel().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 			tween.tween_property(poster, "position", target, SLIDE_SECONDS)
@@ -731,9 +897,15 @@ func refreshSetup(animate := true) -> void:
 			poster.position = target
 			poster.scale = scale
 			poster.modulate = tint
-		refreshPoster(i, offset == 0)
-		poster.get_node("catcher").visible = offset != 0
-	stackByDistance(setup, posters, selected)
+		refreshPoster(i, focused)
+		poster.get_node("catcher").visible = not focused
+	var top := 0
+	for poster in posters: top = maxi(top, poster.get_index())
+	setup.move_child(posters[selected], top) #the selected stop over its neighbours
+	refreshRegionTabs(region)
+	var territory := Territories.get_def(Territories.ORDER[region])
+	regionBlurb.text = str(territory.get("blurb", ""))
+	road.queue_redraw()
 	var level = levels[selected]
 	if posters[selected].get_node("art").texture == null: finishPosterLoad(selected, true)
 	showBackground(posters[selected].get_node("art").texture, animate)
@@ -746,6 +918,7 @@ func refreshSetup(animate := true) -> void:
 		goalRow.remove_child(child)
 		child.queue_free()
 	goalRow.add_child(MenuTheme.symbolRow(goalParts(forModes, mode, tier, selected), 18, HudTheme.GOLD))
+	refreshCarStrip(selected, mode, tier)
 	modeTitle.text = Root.gameModeDescription[mode].name
 	modeText.text = Root.gameModeDescription[mode].description
 	if mode == Root.gameModes.GOONPOCALYPSE:
@@ -776,7 +949,7 @@ func refreshPoster(index: int, isFocused: bool) -> void:
 	var stars: HBoxContainer = poster.get_node("band/row/stars")
 	for child in stars.get_children(): child.queue_free()
 	for mode in MODE_ORDER: #one star per mode, in the colour of the best medal won with it here
-		var star = MenuTheme.iconRect(HudTheme.STAR_ICON, 24)
+		var star = MenuTheme.iconRect(HudTheme.STAR_ICON, 13)
 		star.modulate = ModeTiers.MEDAL_COLORS[ModeTiers.best(level, mode)]
 		stars.add_child(star)
 	var style = MenuTheme.box(Color(0, 0, 0, 0), HudTheme.RIM if isFocused else Color(1, 1, 1, 0.22), 18, 5 if isFocused else 3)
@@ -873,12 +1046,10 @@ func _input(event: InputEvent) -> void:
 		else: handled = false
 	else:
 		if event.is_action_pressed("ui_cancel"): goToGarage()
-		elif event.is_action_pressed("ui_tab_prev"):
-			SaveManager.selectPreviousLevel()
-			refreshSetup()
-		elif event.is_action_pressed("ui_tab_next"):
-			SaveManager.selectNextLevel()
-			refreshSetup()
+		elif event.is_action_pressed("ui_tab_prev"): stepLevelTo(SaveManager.playerData.selectedLevel - 1)
+		elif event.is_action_pressed("ui_tab_next"): stepLevelTo(SaveManager.playerData.selectedLevel + 1)
+		elif event.is_action_pressed("ui_region_prev") && triggerEdge(event, "ui_region_prev"): selectRegion(selectedRegion() - 1)
+		elif event.is_action_pressed("ui_region_next") && triggerEdge(event, "ui_region_next"): selectRegion(selectedRegion() + 1)
 		elif event.is_action_pressed("ui_left"): stepMode(-1)
 		elif event.is_action_pressed("ui_right"): stepMode(1)
 		elif event.is_action_pressed("ui_up"): stepTier(-1)
@@ -889,18 +1060,22 @@ func _input(event: InputEvent) -> void:
 		elif event.is_action_pressed("ui_upgrade"): cycleLoadout()
 		elif event.is_action_pressed("ui_boost"): cycleBoost()
 		elif event.is_action_pressed("ui_accept") && get_viewport().gui_get_focus_owner() == null: onStartPressed()
-		elif InputGlyphs.digit(event) > 0 && InputGlyphs.digit(event) <= posters.size(): stepLevelTo(InputGlyphs.digit(event) - 1) #the poster's number
+		elif InputGlyphs.digit(event) > 0 && InputGlyphs.digit(event) <= Territories.STOPS: stepLevelTo(selectedRegion() * Territories.STOPS + InputGlyphs.digit(event) - 1) #the stop's number
 		else: handled = false
 	if handled: get_viewport().set_input_as_handled()
 
-#a clicked side poster (or the mouse wheel): step the carousel toward it
+#a clicked stop, a number key, Q/E or the mouse wheel: select that level (Q/E past a region's ends move
+#into the next region; the road wraps)
 func stepLevelTo(index: int) -> void:
-	var count = SaveManager.playerData.levels.size()
-	var offset = wrapi(index - SaveManager.playerData.selectedLevel + count / 2, 0, count) - count / 2
-	for i in absi(offset):
-		if offset < 0: SaveManager.selectPreviousLevel()
-		else: SaveManager.selectNextLevel()
+	index = wrapi(index, 0, SaveManager.playerData.levels.size())
+	if index != SaveManager.playerData.selectedLevel:
+		SaveManager.playerData.selectedLevel = index
+		SaveManager.save_character_data()
 	refreshSetup()
+
+#LT/RT are axes, sending events while held: only the press that first crosses the deadzone counts
+func triggerEdge(event: InputEvent, action: String) -> bool:
+	return not event is InputEventJoypadMotion || Input.is_action_just_pressed(action)
 
 func stepMode(direction: int) -> void:
 	var at = MODE_ORDER.find(SaveManager.getGameMode())
@@ -921,7 +1096,7 @@ func updateHints() -> void:
 		child.queue_free()
 	var hints: Array
 	if screen == Screen.SETUP:
-		hints = [[["ui_tab_prev", "ui_tab_next"], "Level"], [["ui_left", "ui_right"], "Mode"], [["ui_up", "ui_down"], "Tier"], [["ui_accept"], "Start"], [["ui_upgrade"], "Gadget"], [["ui_boost"], "Boost"], [["ui_records"], "Records"], [["ui_codex"], "Goonopedia"], [["ui_cancel"], "Back"]]
+		hints = [[["ui_region_prev", "ui_region_next"], "Region"], [["ui_tab_prev", "ui_tab_next"], "Stop"], [["ui_left", "ui_right"], "Mode"], [["ui_up", "ui_down"], "Tier"], [["ui_accept"], "Start"], [["ui_upgrade"], "Gadget"], [["ui_boost"], "Boost"], [["ui_records"], "Records"], [["ui_codex"], "Goonopedia"], [["ui_cancel"], "Back"]]
 	else:
 		var locked = cards[SaveManager.playerData.selectedCar].isLocked()
 		hints = [[["ui_tab_prev", "ui_tab_next"], "Driver"], [["ui_accept"], "Unlock" if locked else "Drive"]]

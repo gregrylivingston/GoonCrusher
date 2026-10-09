@@ -148,7 +148,7 @@ func _physics_process(delta):
 		drown()
 		return
 	checkWade()
-	if (state == &"move" || state == &"lured") && not Pickups.lures.is_empty():
+	if (state == &"move" || state == &"lured") && Pickups.lureCheckDue(int(def.get("rank", 1)), state == &"lured", get_instance_id()):
 		var lure := Pickups.lureFor(global_position, def.get("verb", &"lunge"), int(def.get("rank", 1)), distTo(car)) #Goon Bait, Flare, Dinner Bell, Salt Lick
 		if lure != Vector2.INF:
 			if state != &"lured": setState(&"lured")

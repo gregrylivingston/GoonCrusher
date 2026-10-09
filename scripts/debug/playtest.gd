@@ -144,7 +144,7 @@ func startNext() -> void:
 	data.selectedCar = carIndex(job.car)
 	data.gameMode = Root.gameModes[job.mode]
 	data.gameTier = job.get("tier", ModeTiers.EASY)
-	data.selectedLevel = Levels.indexOf(job.level) #Region reads the level's faction band and roster from it; gameSummary names and records it
+	data.selectedLevel = Levels.indexOf(job.level) #Region reads the level's line-up from it; gameSummary names and records it
 	var upgrades = str(options.get("upgrades", "0"))
 	if upgrades != "save":
 		var levels = {}
