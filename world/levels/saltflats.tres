@@ -1,0 +1,104 @@
+[gd_resource type="Resource" script_class="LevelDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/level_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"saltflats"
+displayName = "Salt Flats"
+poster = "res://world/art/posters/canyon.png"
+region = &"raiders"
+stop = 3
+order = 12
+blurb = "No walls, white ground to the horizon, top speed all run. Harpooners drag you off your line."
+barrier = "Rock outcrops off the road; jersey barriers and pile-ups on it."
+surfaces = "Fast asphalt, oil slicks with no grip, sand and dirt verges, gas station lots."
+startPosition = Vector2(2129, 1227)
+seconds = 360
+spawnTimer = 4
+giantOdds = 0
+escalationSpeed = 0.148
+sprintSlack = 1.36
+rules = {
+"events": {
+"rings": 3,
+"truck": 2,
+"goldgoon": 1,
+"bowling": 1
+}
+}
+lineup = Array[StringName]([&"sawbot", &"shredder", &"spoke", &"harpooner"])
+landscape = &"saltflats"
+grammar = &"highway"
+features = {
+"warpFrequency": 4e-05,
+"warpAmplitude": 3000.0,
+"roadWidth": 1600.0,
+"highwaySpacing": 23040.0,
+"branchEvery": 3,
+"branchChance": 0.7,
+"branchWidth": 1000.0,
+"oilAbove": 0.6,
+"rockAbove": 0.4,
+"gasStationEvery": 6,
+"motifs": 1.2,
+"props": 13
+}
+baseTerrain = [1, 6, 1, 6, 1]
+accents = [8]
+dressing = {
+0: {
+&"saguaro": 3,
+&"rock": 3,
+&"carcass": 2,
+&"bones": 2,
+&"pebbles": 4
+},
+1: {
+&"barricade": 3,
+&"tyres": 3,
+&"cone": 3,
+&"sign": 2,
+&"barrel": 1,
+&"watertower": 1
+},
+2: {
+&"jersey": 5,
+&"wreck": 4,
+&"cone": 4,
+&"gaspump": 1,
+&"sign": 2,
+&"billboard": 1,
+&"oilstain": 4,
+&"tyres": 2,
+&"watertower": 1
+}
+}
+motifs = {
+0: {
+&"boneyard": 1
+},
+1: {
+&"roadblock": 2
+},
+2: {
+&"pileup": 3
+}
+}
+pickupTable = {
+&"coinline": 34,
+&"fuel": 44,
+&"health": 8,
+&"purse": 5,
+&"slot": 4,
+&"none": 105
+}
+pickupsPerChunk = 2
+palette = {
+&"ground": Color(0.66, 0.56, 0.4, 1),
+&"accent": Color(0.56, 0.46, 0.34, 1),
+&"asphalt": Color(0.24, 0.24, 0.26, 1),
+&"paint": Color(0.9, 0.85, 0.6, 1)
+}
+nightTint = Color(0.08, 0.07, 0.1, 1)
+ambience = &"highway"

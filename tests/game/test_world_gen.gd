@@ -4,17 +4,17 @@ extends GameTest
 #the build completes and repeats exactly for a seed; the start bubble is clear and the start isn't lethal;
 #the station is reachable and its route is never shorter than the straight line; no barrier runs more
 #than MAX_RUN cells without a crossing; the fine rasters agree with the coarse map; every district has a
-#faction in the level's band, three goons of it and (in the start's component) two exits; barriers keep
-#under the level's share cap; Defense gets three clear lanes.
+#zone, three goons of the level's line-up and (in the start's component) two exits; barriers keep under
+#the level's share cap; Defense gets three clear lanes. Levels that share a world are built once (worldLevels).
 
 const SEEDS := [1, 2, 3, 4, 5]
 
 static func sprintOffset(def: LevelDef, worldSeed: int) -> Vector2:
-	return Level.sprintOffsetPx(def.seconds, WorldGen.hashf(worldSeed, WorldGen.TAG_SPRINT, 0, 0) * 2.0 - 1.0)
+	return Level.sprintOffsetPx(Level.sprintDistance(def), WorldGen.hashf(worldSeed, WorldGen.TAG_SPRINT, 0, 0) * 2.0 - 1.0)
 
 func test_every_level_keeps_its_guarantees():
 	var timings := PackedStringArray()
-	for id in Levels.ORDER:
+	for id in worldLevels():
 		var def := Levels.get_def(id)
 		var total := 0.0
 		var worst := 0.0
@@ -135,23 +135,22 @@ func checkFineAgrees(map: WorldMap, def: LevelDef, worldSeed: int, label: String
 						return
 
 func checkDistricts(map: WorldMap, def: LevelDef, label: String) -> void:
-	var allowed := {}
-	for score in [minf(def.factionBand.x, def.factionBand.y), LevelRoster.bandTop(def.factionBand)]:
-		allowed[LevelRoster.factionForScore(score)] = true
-	for f in range(LevelRoster.factionForScore(minf(def.factionBand.x, def.factionBand.y)), LevelRoster.factionForScore(LevelRoster.bandTop(def.factionBand)) + 1):
-		allowed[LevelRoster.rosterFaction(def, f)] = true
+	var lineup := LevelRoster.lineupFor(def)
 	var problems := 0
 	for d in map.districts:
-		if not allowed.has(d.faction):
-			fail("%s: district %d is %s, outside the band %s" % [label, d.id, Goons.factionName(d.faction), def.factionBand])
+		if not d.zone in [0, 1, 2]:
+			fail("%s: district %d has zone %s" % [label, d.id, d.zone])
 			problems += 1
 		if d.goons.size() != 3:
 			fail("%s: district %d has %d goons" % [label, d.id, d.goons.size()])
 			problems += 1
 		for g in d.goons:
-			if not Goons.DATA.has(g) || Goons.DATA[g].faction != d.faction:
-				fail("%s: district %d's goon %s isn't %s" % [label, d.id, g, Goons.factionName(d.faction)])
+			if not g in lineup:
+				fail("%s: district %d's goon %s isn't in the line-up %s" % [label, d.id, g, lineup])
 				problems += 1
+		if not d.goons.is_empty() && d.faction != Goons.DATA[d.goons[0]].faction:
+			fail("%s: district %d's faction isn't its first goon's" % [label, d.id])
+			problems += 1
 		if d.inStart && d.neighbours.size() < 2:
 			fail("%s: district %d (%d cells) has %d exits" % [label, d.id, d.cells, d.neighbours.size()])
 			problems += 1
@@ -174,18 +173,20 @@ func checkShare(map: WorldMap, label: String) -> void:
 				fail("%s: %.1f%% barrier in the window at %s (cap %.0f%%)" % [label, 100.0 * count / (255.0 * WorldGen.WINDOW.x * WorldGen.WINDOW.y), Vector2i(wx, wy), cap * 100.0])
 				return
 
-func test_the_start_district_is_the_levels_first_faction():
-	for id in Levels.ORDER:
+func test_the_start_district_is_zone_0_and_names_come_from_the_region():
+	for id in worldLevels():
 		var def := Levels.get_def(id)
 		var map := WorldMap.build(3, def)
 		var start: Dictionary = map.districts[map.districtAt(def.startPosition)]
-		var allowed := []
-		for jitter in [-Goons.FACTION_JITTER, 0.0, Goons.FACTION_JITTER]:
-			allowed.push_back(LevelRoster.rosterFaction(def, LevelRoster.factionAt(def, 0.0, jitter)))
-		assert_true(start.faction in allowed, "%s starts in the band's first faction (%s), not %s" % [id, allowed, Goons.factionName(start.faction)])
+		assert_eq(start.zone, 0, "%s starts in zone 0" % id)
+		var firsts: Array = Territories.get_def(def.region).nameFirst
+		for d in map.districts: assert_true(d.name.get_slice(" ", 0) in firsts || d.name.begins_with("Hunter's"), "%s: %s starts with a %s word" % [id, d.name, def.region])
+		var zones := {}
+		for d in map.districts: zones[d.zone] = true
+		assert_gt(zones.size(), 1, "%s: districts reach past zone 0" % id)
 
 func test_same_seed_same_world():
-	for id in Levels.ORDER:
+	for id in worldLevels():
 		var def := Levels.get_def(id)
 		var a := WorldMap.build(77, def, "sprint", sprintOffset(def, 77))
 		var b := WorldMap.build(77, def, "sprint", sprintOffset(def, 77))
@@ -217,7 +218,7 @@ func test_chunk_edges_agree():
 		assert_almost_eq(ra.wall[j * WorldGen.FIELD_W + WorldGen.FIELD_W - 2], rb.wall[j * WorldGen.FIELD_W], 0.0001, "row %d" % j)
 
 func test_defense_gets_three_clear_lanes():
-	for id in Levels.ORDER:
+	for id in worldLevels():
 		var def := Levels.get_def(id)
 		var map := WorldMap.build(1, def, "defense")
 		assert_eq(map.stationChunk, WorldGen.chunkOf(def.startPosition), "%s: the station is the start's chunk" % id)

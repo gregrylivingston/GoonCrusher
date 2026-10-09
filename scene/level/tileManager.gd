@@ -103,9 +103,7 @@ func buildWorld() -> void:
 	match SaveManager.playerData.gameMode:
 		Root.gameModes.SPRINT, Root.gameModes.MARATHON:
 			objective = "sprint"
-			var parent = get_parent()
-			var seconds: float = parent.seconds if parent is Level else def.seconds
-			offset = Level.sprintOffsetPx(seconds, WorldGen.hashf(worldSeed, WorldGen.TAG_SPRINT, 0, 0) * 2.0 - 1.0)
+			offset = Level.sprintOffsetPx(Level.sprintDistance(def), WorldGen.hashf(worldSeed, WorldGen.TAG_SPRINT, 0, 0) * 2.0 - 1.0)
 		Root.gameModes.DEFENSE: objective = "defense"
 	buildJob = WorldMap.jobFor(worldSeed, def, objective, offset)
 	var started := Time.get_ticks_msec()
@@ -162,13 +160,13 @@ func placeStation(chunk: Vector2i) -> void:
 #Marathon's next leg: the reached station is retired and unpinned (it unloads once the car leaves),
 #and a new one goes a Sprint's distance from it along `heading`, in a reachable chunk with a clear lot
 #(WorldGen.findStationChunk); lastRouteLength is the A* route to it. Returns the new station.
-func placeNextStation(from: Vector2, heading: float, levelSeconds: float) -> Node2D:
+func placeNextStation(from: Vector2, heading: float, distance: float) -> Node2D:
 	var fromChunk = chunkOf(from)
 	if is_instance_valid(Root.station) && Root.station.has_method("retire"): Root.station.retire()
 	unpinChunk(fromChunk)
 	legsPlaced += 1
 	var roll := WorldGen.hashf(worldSeed, WorldGen.TAG_LEG, legsPlaced, 1) * 2.0 - 1.0
-	var offset: Vector2 = Level.sprintOffsetPx(levelSeconds, roll).rotated(heading)
+	var offset: Vector2 = Level.sprintOffsetPx(distance, roll).rotated(heading)
 	placeStation(worldMap.findStationChunk(chunkOf(from + offset), fromChunk, fromChunk)) #not much nearer than a Sprint's distance
 	lastRouteLength = worldMap.routeBetween(from, Root.station.global_position).length
 	return Root.station

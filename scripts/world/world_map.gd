@@ -3,8 +3,9 @@ class_name WorldMap extends RefCounted
 ## static queries delegate here. It holds:
 ##   - the coarse map from WorldGen.buildCoarse (terrain, flags, district and aux per 1280 px cell), its
 ##     AStarGrid2D, the station and Defense lanes the generator placed, and the route length to the station;
-##   - the district table, with each district's faction, three goons, name, tint and giantism decided here
-##     on the main thread, deterministically from the world seed;
+##   - the district table, with each district's zone (how far out it is: Territories.zoneFor), three goons
+##     (from the level's line-up), faction (its first goon's), name, tint and giantism decided here on the
+##     main thread, deterministically from the world seed;
 ##   - an LRU cache of fine rasters (WorldGen.fineRaster, 40 x 20 cells of 128 px per chunk) and, once the
 ##     TileManager has set recipeContext, the chunk recipes built from them (ChunkRecipe: ground control,
 ##     wall pieces, occluders, edges, decor, props, pickups), both on one WorkerThreadPool task per chunk when
@@ -26,12 +27,8 @@ const CHUNK_Y := 2560.0
 const WATER := 3
 const HILLS := 4
 
-## Name halves for districts: a faction word, then a grammar word ("Tusker Flats", "Rust Junction")
-const NAME_FIRST := [
-	["Tusker", "Jackalope", "Thornback", "Wildroot", "Howling", "Bramble", "Snapjaw", "Feral", "Burrow", "Antler"],
-	["Totem", "Warpaint", "Grunt", "Bonefire", "Drumskull", "Spearhead", "Mudmask", "Hubcap", "Tusk", "Warband"],
-	["Rust", "Sprocket", "Gearhead", "Scrapper", "Chrome", "Piston", "Rivet", "Junker", "Sawtooth", "Busted"],
-]
+## Name halves for districts: a region word (Territories nameFirst), then a grammar word ("Tusker Flats",
+## "Rust Junction")
 const NAME_SECOND := {
 	&"meadow": ["Flats", "Meadow", "Fields", "Hollow", "Creekside", "Downs", "Pasture", "Commons", "Green", "Bottoms"],
 	&"bayou": ["Bog", "Marsh", "Bayou", "Slough", "Backwater", "Mire", "Landing", "Swamp", "Fen", "Shallows"],
@@ -53,7 +50,7 @@ var terrain := PackedByteArray()
 var flags := PackedByteArray()
 var aux := PackedByteArray()
 var district := PackedInt32Array()
-var districts: Array = [] #id -> {id, cells, centroid, neighbours, inStart, faction, goons, name, tint, giantism}
+var districts: Array = [] #id -> {id, cells, centroid, neighbours, inStart, zone, faction, goons, name, tint, giantism}
 var crossings := PackedInt32Array()
 var cover := PackedByteArray() #share of each blocked cell its barrier really covers (0..255)
 var astar: AStarGrid2D
@@ -82,7 +79,6 @@ var landmarks := {}
 ## district id -> its tint as a 4-bit code (0..15) for the ground shader (ChunkRecipe puts it in the control
 ## block's flags byte); TINT_LOW..TINT_HIGH on screen
 var tintCodes := PackedByteArray()
-const LANDMARK_IDS := ["landmark_wild", "landmark_tribe", "landmark_scrap"]
 
 var _cx := 1 << 30
 var _cy := 0
@@ -140,13 +136,16 @@ func setupGrid() -> void:
 	grid.setFineLayout(Vector2(CHUNK_X, CHUNK_Y), WorldGen.FINE, Vector2i(WorldGen.FINE_W, WorldGen.FINE_H))
 	grid.setCoarse(terrain, Vector2i(W, H), WorldGen.ORIGIN, WorldGen.CELL, WATER)
 
-## Faction, goons, name, tint and giantism for every district, seeded per district
+## Zone, goons, faction, name, tint and giantism for every district, seeded per district
 func setupDistricts(table: Array) -> void:
 	districts.clear()
 	landmarks.clear()
 	tintCodes.clear()
 	var usedNames := {}
 	var seconds: Array = NAME_SECOND.get(grammar, NAME_SECOND[&"meadow"])
+	var region: StringName = def.region if def else &"tribe"
+	var firsts: Array = Territories.get_def(region).get("nameFirst", Territories.DATA[&"tribe"].nameFirst)
+	var landmarkId := String(Territories.landmark(region, WorldSkin.loadManifest()))
 	var startIndex := coarseIndex(startPosition)
 	var startDistrict := district[startIndex] if startIndex >= 0 else -1
 	for entry in table:
@@ -155,14 +154,12 @@ func setupDistricts(table: Array) -> void:
 		var jitter := (WorldGen.hashf(worldSeed, WorldGen.TAG_FACTION, id, 0) * 2.0 - 1.0) * Goons.FACTION_JITTER
 		#scored by the centroid's distance from the start; the start's own district counts as the start
 		var distance: float = 0.0 if id == startDistrict else d.centroid.distance_to(startPosition)
-		var faction := LevelRoster.factionAt(def, distance, jitter)
+		d.zone = Territories.zoneFor(distance, jitter)
 		var rng := RandomNumberGenerator.new()
 		rng.seed = WorldGen.ihash(worldSeed, WorldGen.TAG_GOONS, id, 0)
-		var goons: Array = LevelRoster.pickGoons(def, faction, rng) if def else []
-		if not goons.is_empty(): faction = Goons.DATA[goons[0]].faction
-		d.faction = faction
+		var goons: Array = LevelRoster.pickGoons(def, rng)
+		d.faction = int(Goons.DATA[goons[0]].faction) if not goons.is_empty() else Goons.faction.TRIBE
 		d.goons = goons
-		var firsts: Array = NAME_FIRST[clampi(faction, 0, NAME_FIRST.size() - 1)]
 		var pick := WorldGen.ihash(worldSeed, WorldGen.TAG_NAME, id, 0)
 		var name := ""
 		for k in firsts.size() * seconds.size():
@@ -177,7 +174,7 @@ func setupDistricts(table: Array) -> void:
 		var at: Vector2 = d.get("landmark", Vector2.INF)
 		if at != Vector2.INF:
 			var chunk := WorldGen.chunkOf(at)
-			landmarks.get_or_add(chunk, []).push_back([LANDMARK_IDS[clampi(faction, 0, 2)], at])
+			landmarks.get_or_add(chunk, []).push_back([landmarkId, at])
 		districts.push_back(d)
 
 #--- fine rasters ------------------------------------------------------------------------------------
@@ -190,7 +187,7 @@ func fineJob(chunk: Vector2i) -> Dictionary:
 	if not recipeContext.is_empty():
 		job.ctx = recipeContext
 		job.aux = aux
-		job.factions = chunkFactions(chunk)
+		job.zones = chunkZones(chunk)
 		job.tints = chunkTints(chunk)
 		var here: Array = landmarks.get(chunk, [])
 		if not here.is_empty(): job.landmarks = here.duplicate(true)
@@ -214,14 +211,14 @@ func chunkTints(chunk: Vector2i) -> PackedByteArray:
 		out.push_back(tintCodes[d] if d >= 0 && d < tintCodes.size() else 8)
 	return out
 
-## The district faction of a chunk's 8 coarse cells (row-major, 4 x 2), -1 where there is none
-func chunkFactions(chunk: Vector2i) -> PackedInt32Array:
+## The district zone (Territories.zoneFor) of a chunk's 8 coarse cells (row-major, 4 x 2), -1 where there is none
+func chunkZones(chunk: Vector2i) -> PackedInt32Array:
 	var out := PackedInt32Array()
 	var base := WorldGen.chunkCell(chunk)
 	for k in 8:
 		var cell := base + Vector2i(k % 4, k / 4)
 		var d := districtOfCell(cell)
-		out.push_back(int(districts[d].faction) if d >= 0 && d < districts.size() else -1)
+		out.push_back(int(districts[d].zone) if d >= 0 && d < districts.size() else -1)
 	return out
 
 ## One chunk's worker task: its fine raster, then its recipe when the job carries a context

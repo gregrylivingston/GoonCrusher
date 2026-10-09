@@ -58,11 +58,14 @@ func test_level_numbers_come_from_the_def():
 	assert_eq(stats.giants, def.giantOdds)
 	assert_eq(Goonopedia.levelName(0), def.displayName, "names come from the registry")
 
-func test_level_tab_lists_the_factions_a_band_reaches():
-	assert_true(Goons.faction.WILD in Goonopedia.factionsOn(Levels.get_def(&"prairie")), "the prairie is wild")
-	var crusher = Goonopedia.factionsOn(Levels.get_def(&"crusher"))
-	assert_false(Goons.faction.WILD in crusher, "no Wild Things in The Crusher")
-	assert_true(Goons.faction.SCRAP in crusher)
+func test_level_tab_names_the_region_class_and_line_up():
+	var rows: Array = Goonopedia.regionRows(Levels.get_def(&"prairie"))
+	assert_eq(rows[0][1], "The Wilds  (1 of 5)")
+	assert_eq(rows[1][1], "Wild Things")
+	assert_eq(rows.size(), 3, "no elite step in the factions' regions")
+	var crusher: Array = Goonopedia.regionRows(Levels.get_def(&"crusher"))
+	assert_eq(crusher[1][1], "War Machine")
+	assert_true(crusher[3][1].contains("+20% harder hits"), "the elite step: %s" % crusher[3][1])
 
 func test_drop_shares_add_up_in_every_mode():
 	for mode in Root.gameModes.values():
@@ -70,7 +73,7 @@ func test_drop_shares_add_up_in_every_mode():
 		for id in Pickups.DATA: total += Goonopedia.dropShare(id, mode)
 		assert_true(absf(total - 100.0) < 0.01, "mode %d: shares sum to 100%%, got %f" % [mode, total])
 
-func test_every_level_card_names_its_act_barrier_and_surfaces():
+func test_every_level_card_names_its_region_barrier_and_surfaces():
 	var page = add_child_autofree(Goonopedia.new())
 	page.setTab(Goonopedia.Tab.LEVELS)
 	for i in Levels.count():
@@ -80,5 +83,5 @@ func test_every_level_card_names_its_act_barrier_and_surfaces():
 		var texts := PackedStringArray()
 		for node in page.detail.find_children("*", "Label", true, false): texts.push_back(node.text)
 		var all := "\n".join(texts)
-		for want in ["ACT %d" % def.act, "BARRIER", "SURFACES", def.barrier, def.surfaces]:
+		for want in [Territories.displayName(def.region).to_upper(), "WHO LIVES HERE", "BARRIER", "SURFACES", def.barrier, def.surfaces]:
 			assert_true(all.contains(want), "%s card shows %s" % [def.id, want])

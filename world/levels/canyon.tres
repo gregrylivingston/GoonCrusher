@@ -7,24 +7,21 @@ script = ExtResource("1_def")
 id = &"canyon"
 displayName = "Red Canyon"
 poster = "res://world/art/posters/canyon.png"
-act = 1
-order = 2
+region = &"wilds"
+stop = 4
+order = 3
 blurb = "Ridged canyon walls and mesas box the roads in. A pass opens every chunk, and the dry washes are the fast lanes."
 barrier = "Red canyon walls and mesas. A pass opens through them every chunk."
 surfaces = "Hardpan dirt, sand dunes that drag, dry washes that run fast."
 startPosition = Vector2(2129, 1227)
-seconds = 340
-spawnTimer = 4.2
-giantOdds = -5
-escalationSpeed = 0.14
-sprintSlack = 1.4
-modes = []
-factionBand = Vector2(0.3, 1.8)
-roster = {
-0: [&"rattler", &"buzzard", &"stinger", &"quill", &"yipper"],
-1: [&"nightcrawler", &"torch", &"boulder", &"doomcart"],
-2: [&"spoke", &"torcher", &"chainer"]
-}
+seconds = 270
+spawnTimer = 4.8
+giantOdds = -15
+escalationSpeed = 0.127
+sprintSlack = 1.47
+rules = {}
+lineup = Array[StringName]([&"rattler", &"stinger", &"quill", &"buzzard"])
+landscape = &"canyon"
 grammar = &"canyon"
 features = {
 "ridgeFrequency": 4.5e-05,
@@ -79,12 +76,12 @@ motifs = {
 }
 }
 pickupTable = {
-&"coinline": 37,
-&"fuel": 46,
+&"coinline": 41,
+&"fuel": 49,
 &"health": 8,
 &"purse": 5,
 &"slot": 4,
-&"none": 100
+&"none": 93
 }
 pickupsPerChunk = 2
 palette = {

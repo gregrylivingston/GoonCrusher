@@ -83,12 +83,12 @@ func test_sprint_distance_and_clock():
 	assert_almost_eq(Level.sprintSlack(395), 1.3, 0.0001, "half way")
 	assert_almost_eq(Level.sprintSlack(100), 1.5, 0.0001, "clamped high")
 	assert_almost_eq(Level.sprintSlack(900), 1.1, 0.0001, "clamped low")
-	var offset: Vector2 = Level.sprintOffsetPx(250, 0.0)
-	assert_almost_eq(offset.x, 250 * 0.25 * 450.0, 0.01, "62.5 s at 450 px/s")
+	var offset: Vector2 = Level.sprintOffsetPx(20000.0, 0.0)
+	assert_almost_eq(offset.x, 20000.0, 0.01, "straight ahead")
 	assert_almost_eq(offset.y, 0.0, 0.01)
-	assert_almost_eq(Level.sprintOffsetPx(250, 1.0).y, 28125.0 * 0.25, 0.01, "y spread is 25% of the distance")
-	assert_almost_eq(Level.sprintOffsetPx(250, -5.0).y, -28125.0 * 0.25, 0.01, "y roll is clamped")
-	assert_almost_eq(Level.sprintOffsetPx(540, 0.0).length(), Level.SPRINT_MAX_DISTANCE, 0.01, "long levels are capped")
+	assert_almost_eq(Level.sprintOffsetPx(20000.0, 1.0).y, 20000.0 * 0.25, 0.01, "y spread is 25% of the distance")
+	assert_almost_eq(Level.sprintOffsetPx(20000.0, -5.0).y, -20000.0 * 0.25, 0.01, "y roll is clamped")
+	assert_almost_eq(Level.sprintOffsetPx(50000.0, 0.0).length(), Level.SPRINT_MAX_DISTANCE, 0.01, "never further than the cap")
 	assert_almost_eq(Level.sprintSeconds(28125.0, 250), 93.75, 0.001, "Easy: 62.5 s of driving x 1.5")
 	assert_almost_eq(Level.sprintSeconds(32000.0, 540), 32000.0 / 450.0 * 1.1, 0.001, "Northern Wastes: capped distance x 1.1")
 	#the stock sedan: top speed about 499 px/s on sand and mud, about 87 s of fuel at full throttle
@@ -96,7 +96,7 @@ func test_sprint_distance_and_clock():
 	const SEDAN_TANK_SECONDS = 87.0
 	for levelSeconds in [250, 300, 330, 340, 370, 380, 420, 460, 470, 500, 540]:
 		for yRoll in [-1.0, 0.0, 1.0]:
-			var distance = Level.sprintOffsetPx(levelSeconds, yRoll).length()
+			var distance = Level.sprintOffsetPx(lerpf(Territories.SPRINT_DISTANCE.x, Territories.SPRINT_DISTANCE.y, (levelSeconds - 250.0) / 290.0), yRoll).length()
 			var clock = Level.sprintSeconds(distance, levelSeconds)
 			assert_true(distance <= Level.SPRINT_MAX_DISTANCE + 0.01, "level %d: capped" % levelSeconds)
 			#a station exactly where it was aimed always leaves more time than the reference drive needs

@@ -29,7 +29,8 @@ const GRAMMAR_TERRAIN := {
 const WALL_STRIP := {&"canyon": "mesa_lip", &"mountain": "snow_ridge", &"city": "roof_edge", &"yard": "scrapwall"}
 ## Decor the recipe lays on rooftops (BUILDING cells), by grammar
 const ROOF_DECOR := {&"city": &"rooftop"}
-## Every level loads these (one per district, ChunkRecipe.placeLandmarks), whatever its dressing
+## The landmarks with art today: the fallbacks of every region's own (Territories.landmark); a level loads its
+## region's one (every district has it, ChunkRecipe.placeLandmarks), whatever its dressing
 const LANDMARKS: Array[StringName] = [&"landmark_wild", &"landmark_tribe", &"landmark_scrap"]
 const WALL_TINT := {
 	&"canyon": Color(1.16, 0.84, 0.7), &"mountain": Color(1.12, 1.14, 1.2), &"quarry": Color(1.04, 0.99, 0.93),
@@ -46,7 +47,7 @@ const ROAD_PROPS := [&"cone", &"jersey", &"wreck", &"manhole", &"barricade", &"s
 const CHAIN_PROPS := [&"fence", &"hedge", &"jersey", &"fortwall"]
 ## Props laid only as field lines (ChunkRecipe.placeFieldLines), by the features key giving the chance per lattice edge
 const FIELD_PROPS := {&"fence": "fenceDensity", &"hedge": "hedgeDensity"}
-## Set pieces (ChunkRecipe.placeMotifs), chosen per faction by LevelDef.motifs. members: [prop id, count, radius px,
+## Set pieces (ChunkRecipe.placeMotifs), chosen per zone by LevelDef.motifs. members: [prop id, count, radius px,
 ## shape]: "centre", "ring" (evenly round the radius), "disc" (scattered inside it), "grid" or "line" (turned to the
 ## field lattice, `radius` apart). min: fewer members than this that fit and the motif is skipped. Members are
 ## loaded with the level whether its dressing names them or not.
@@ -241,21 +242,21 @@ func setupStrips() -> void:
 func dressingIds() -> Dictionary:
 	var decor := []
 	var props := []
-	for faction in def.dressing:
-		for id in def.dressing[faction]:
+	for zone in def.dressing:
+		for id in def.dressing[zone]:
 			var entry: Dictionary = manifest.get(String(id), {})
 			if entry.is_empty(): continue
 			var list := decor if entry.get("class", "") == "DECOR" else props
 			if not StringName(id) in list: list.push_back(StringName(id))
-	for faction in def.motifs:
-		for motif in def.motifs[faction]:
+	for zone in def.motifs:
+		for motif in def.motifs[zone]:
 			for m in MOTIFS.get(StringName(motif), {}).get("members", []):
 				var mid := StringName(m[0])
 				if manifest.get(String(mid), {}).get("class", "DECOR") != "DECOR" && not mid in props: props.push_back(mid)
 	var roof: StringName = ROOF_DECOR.get(grammar, &"")
 	if roof != &"" && manifest.has(String(roof)) && not roof in decor: decor.push_back(roof)
-	for id in LANDMARKS:
-		if manifest.has(String(id)) && not id in props: props.push_back(id)
+	var landmark := Territories.landmark(def.region, manifest)
+	if manifest.has(String(landmark)) && not landmark in props: props.push_back(landmark)
 	#what interactive props leave behind (logs from a log pile, a crane's container)
 	for id in props.duplicate():
 		for product in Spill.PRODUCTS.get(id, []):
@@ -311,21 +312,21 @@ func recipeContext(lots: Array, lanes: Array) -> Dictionary:
 	for id in decorMeshes: decor[String(id)] = {"place": DECOR_PLACE.get(id, "")}
 	var propTables := {}
 	var decorTables := {}
-	for faction in def.dressing:
+	for zone in def.dressing:
 		var pt := {}
 		var dt := {}
-		for id in def.dressing[faction]:
-			var w := float(def.dressing[faction][id])
+		for id in def.dressing[zone]:
+			var w := float(def.dressing[zone][id])
 			if props.has(String(id)): pt[String(id)] = w
 			elif decor.has(String(id)): dt[String(id)] = w
-		propTables[int(faction)] = pt
-		decorTables[int(faction)] = dt
+		propTables[int(zone)] = pt
+		decorTables[int(zone)] = dt
 	var motifTables := {}
-	for faction in def.motifs:
+	for zone in def.motifs:
 		var mt := {}
-		for motif in def.motifs[faction]:
-			if MOTIFS.has(StringName(motif)): mt[String(motif)] = float(def.motifs[faction][motif])
-		motifTables[int(faction)] = mt
+		for motif in def.motifs[zone]:
+			if MOTIFS.has(StringName(motif)): mt[String(motif)] = float(def.motifs[zone][motif])
+		motifTables[int(zone)] = mt
 	var motifDefs := {}
 	for motif in MOTIFS: motifDefs[String(motif)] = MOTIFS[motif].duplicate(true)
 	var fieldDensity := {}

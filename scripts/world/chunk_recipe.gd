@@ -6,8 +6,8 @@ class_name ChunkRecipe extends RefCounted
 ## always gives the same recipe.
 ##
 ## Job keys (besides the raster's, see WorldGen.fineRaster): ctx (WorldSkin.recipeContext: the level's
-## tables, made once on the main thread and only read here), factions (PackedInt32Array: the district
-## faction of the chunk's 8 coarse cells, -1 on a barrier), aux (the coarse aux bytes: belt directions),
+## tables, made once on the main thread and only read here), zones (PackedInt32Array: the district
+## zone of the chunk's 8 coarse cells, Territories.zoneFor, -1 on a barrier), aux (the coarse aux bytes: belt directions),
 ## tints (PackedByteArray: the district tint code, 0-15, of the 8 coarse cells), landmarks (Array of [prop
 ## id, world position]: the districts' landmarks that stand in this chunk; WorldMap.landmarks).
 ## Writes job.recipe, a Dictionary in chunk-local px (the chunk's top-left corner is 0, 0):
@@ -101,7 +101,7 @@ var ctx := {}
 var terrain := PackedByteArray()
 var water := PackedFloat32Array()
 var wall := PackedFloat32Array()
-var factions := PackedInt32Array()
+var zones := PackedInt32Array()
 var tints := PackedByteArray()
 var majority := 0
 var rng := RandomNumberGenerator.new()
@@ -132,11 +132,11 @@ func run(job: Dictionary) -> Dictionary:
 	terrain = raster.terrain
 	water = raster.water
 	wall = raster.wall
-	factions = job.get("factions", PackedInt32Array([0, 0, 0, 0, 0, 0, 0, 0]))
+	zones = job.get("zones", PackedInt32Array([0, 0, 0, 0, 0, 0, 0, 0]))
 	tints = job.get("tints", PackedByteArray())
 	origin = Vector2(chunk) * CHUNK
 	var votes := {}
-	for f in factions:
+	for f in zones:
 		if f >= 0: votes[f] = votes.get(f, 0) + 1
 	majority = 0
 	var best := -1
@@ -775,8 +775,8 @@ static func fieldAt(field: PackedFloat32Array, p: Vector2) -> float:
 func clearOf(p: Vector2, margin: float) -> bool:
 	return fieldAt(water, p) >= margin && fieldAt(wall, p) >= margin
 
-func factionAt(p: Vector2) -> int:
-	var f := factions[clampi(floori(p.y / WorldGen.CELL), 0, 1) * 4 + clampi(floori(p.x / WorldGen.CELL), 0, 3)]
+func zoneAt(p: Vector2) -> int:
+	var f := zones[clampi(floori(p.y / WorldGen.CELL), 0, 1) * 4 + clampi(floori(p.x / WorldGen.CELL), 0, 3)]
 	return f if f >= 0 else majority
 
 ## Outside every reservation: the start's core, station lots, Defense lanes, things already placed
@@ -953,7 +953,7 @@ func pickFrom(table: Dictionary, r: RandomNumberGenerator) -> String:
 		if roll < 0.0: return String(k)
 	return String(table.keys().back())
 
-## The faction tables of a ctx entry ({faction: {id: weight}}) as [ids, weights, total] per faction, so a pick
+## The zone tables of a ctx entry ({zone: {id: weight}}) as [ids, weights, total] per zone, so a pick
 ## doesn't walk a Dictionary twice. pickFrom's result, roll for roll.
 static func pickTables(tables: Dictionary) -> Dictionary:
 	var out := {}
@@ -991,7 +991,7 @@ func openShare() -> float:
 
 var openShareCache := -1.0
 
-## Props by the dressing of each spot's district faction (LOW, TALL, STATEFUL, WALL from props.json), in three
+## Props by the dressing of each spot's district zone (LOW, TALL, STATEFUL, WALL from props.json), in three
 ## passes: field lines (fences and hedges on a lattice, placeFieldLines), motifs (small set pieces: camps, groves,
 ## wreck piles, placeMotifs), then Poisson-spaced scatter by dart throwing for the rest. Every prop stands on
 ## spawnable ground off blocked, lethal, shallows, bridge and belt cells, off roads unless it belongs there,
@@ -1027,7 +1027,7 @@ func placeProps() -> Array:
 	for attempt in want * 14:
 		if placedScatter >= want: break
 		var p := Vector2(r.randf_range(100.0, CHUNK.x - 100.0), r.randf_range(100.0, CHUNK.y - 100.0))
-		var entry: Array = picks.get(factionAt(p), picks.get(majority, EMPTY_PICK))
+		var entry: Array = picks.get(zoneAt(p), picks.get(majority, EMPTY_PICK))
 		if entry[0].is_empty(): entry = picks.values()[0]
 		var id := pickFast(entry, r)
 		if id == "": continue
@@ -1172,7 +1172,7 @@ func placeFieldLines() -> Array:
 func fieldPieceHere(w: Vector2, region: Vector2i, id: String, tables: Dictionary) -> bool:
 	var local := w - origin
 	if local.x < 0.0 || local.y < 0.0 || local.x >= CHUNK.x || local.y >= CHUNK.y || regionOf(w) != region: return false
-	var table: Dictionary = tables.get(factionAt(local), {})
+	var table: Dictionary = tables.get(zoneAt(local), {})
 	return float(table.get(id, 0.0)) > 0.0
 
 ## propFits for a field piece: the same ground rules (never on a road, so tracks cut gaps in the runs), but
@@ -1214,7 +1214,7 @@ func roadAxis(p: Vector2, fallback: float) -> float:
 	return bestRot if best >= 5 else fallback
 
 #--- motifs (package 14, P-5) ----------------------------------------------------------------------
-#Small set pieces placed before the scatter: ctx.motifs is {faction: {motif id: weight}} and ctx.motifDefs the
+#Small set pieces placed before the scatter: ctx.motifs is {zone: {motif id: weight}} and ctx.motifDefs the
 #motifs (WorldSkin.MOTIFS): members in a ring, scattered in a disc, in a grid or a line turned to the field
 #lattice, or at the centre. Members keep MOTIF_GAP from each other instead of PROP_GAP; the motif keeps
 #PROP_GAP from everything else. features "motifs" is how many a fully open chunk gets on average (ctx.motifsPerChunk).
@@ -1235,7 +1235,7 @@ func placeMotifs() -> Array:
 	for n in count:
 		for attempt in MOTIF_TRIES:
 			var c := Vector2(mr.randf_range(600.0, CHUNK.x - 600.0), mr.randf_range(500.0, CHUNK.y - 500.0))
-			var entry: Array = picks.get(factionAt(c), EMPTY_PICK)
+			var entry: Array = picks.get(zoneAt(c), EMPTY_PICK)
 			var mid := pickFast(entry, mr)
 			if mid == "": break
 			if not defs.has(mid): continue
@@ -1312,7 +1312,7 @@ func propFits(p: Vector2, rot: float, info: Dictionary, id: String) -> bool:
 	return true
 
 ## Decor: MultiMesh buffers per decor id (12 floats an instance: the 2D transform, then custom data whose x
-## picks the atlas cell), scattered over open ground by the faction's DECOR weights. {buffers, count}
+## picks the atlas cell), scattered over open ground by the zone's DECOR weights. {buffers, count}
 func placeDecor() -> Dictionary:
 	var buffers := {}
 	var count := 0
@@ -1332,7 +1332,7 @@ func placeDecor() -> Dictionary:
 	for attempt in target * 3:
 		if count >= target: break
 		var p := Vector2(r.randf() * CHUNK.x, r.randf() * CHUNK.y)
-		var entry: Array = picks.get(factionAt(p), picks.get(majority, EMPTY_PICK))
+		var entry: Array = picks.get(zoneAt(p), picks.get(majority, EMPTY_PICK))
 		if entry[0].is_empty(): continue
 		var id := pickFast(entry, r)
 		if id == "": continue

@@ -39,7 +39,7 @@ const SPAWN_TIMER := [1.0, 1.0, 0.9, 0.8]
 ## Hard Sprint pay 1,575 coins a minute (career playtests, 2026-10-08).
 const WIN_RATE := {M.GOONCRUSHER: 100.0, M.SPRINT: 150.0, M.MARATHON: 120.0, M.DEFENSE: 150.0, M.GOONPOCALYPSE: 60.0}
 const TIER_BONUS := [0.0, 1.0, 1.3, 1.6]
-const LEVEL_STEP := 0.35 #each level after the first adds this share of the base
+const LEVEL_STEP := 0.085 #each level after the first adds this share of the base: the 30th pays about 3.5x the first
 ## Paid once, the first time a tier is beaten on a mode and level (not multiplied by stars)
 const FIRST_CLEAR_COINS := [0, 300, 800, 2000]
 const FIRST_CLEAR_GEMS := [0, 0, 1, 3]

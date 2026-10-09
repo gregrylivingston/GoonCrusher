@@ -16,7 +16,8 @@ class_name PlayerData extends Resource
 #older save lacks. records: best runs per level and car (SaveManager.recordGoonpocalypse); hints: one-time
 #tips already shown; lifetime: totals over every run; medals and achievements: earned ids.
 #unlocks: opened unlock ids (Unlocks.saved); lifetime also holds the counters unlock conditions read (Unlocks.countRun).
-@export var meta := {"records":{}, "hints":{}, "lifetime":{}, "medals":{}, "achievements":{}, "unlocks":{}}
+#carClears: level id -> mode -> car name -> the best tier that car has won it on (SaveManager.creditCarClear).
+@export var meta := {"records":{}, "hints":{}, "lifetime":{}, "medals":{}, "achievements":{}, "unlocks":{}, "carClears":{}}
 
 @export var cars = [
 	{	"name":"sedan",

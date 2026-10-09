@@ -7,24 +7,21 @@ script = ExtResource("1_def")
 id = &"quarry"
 displayName = "Goon Quarry"
 poster = "res://world/art/posters/quarry.png"
-act = 2
-order = 3
+region = &"tribe"
+stop = 5
+order = 9
 blurb = "Haul roads link a terraced pit, a junk fort with gates and tyre camps. The Tribe digs here, and the mud pits swallow speed."
 barrier = "The terraced pit and the junk fort's ring walls, with ramps and gates."
 surfaces = "Dirt haul roads, mud, concrete yards and mud pits that swallow speed. Barrels explode."
 startPosition = Vector2(2129, 1227)
-seconds = 380
-spawnTimer = 3.8
-giantOdds = 0
-escalationSpeed = 0.15
-sprintSlack = 1.35
-modes = []
-factionBand = Vector2(1.0, 2.2)
-roster = {
-0: [&"bandit", &"tusker"],
-1: [&"grunt", &"foreman", &"wrecker", &"rammer", &"hubcap", &"slinger", &"doomcart", &"spiker"],
-2: [&"spoke", &"magnet"]
-}
+seconds = 340
+spawnTimer = 4.2
+giantOdds = -3
+escalationSpeed = 0.143
+sprintSlack = 1.38
+rules = {}
+lineup = Array[StringName]([&"foreman", &"doomcart", &"wrecker", &"rammer", &"slinger"])
+landscape = &"quarry"
 grammar = &"quarry"
 features = {
 "pieceCells": 10.0,
@@ -79,12 +76,12 @@ motifs = {
 }
 }
 pickupTable = {
-&"coinline": 34,
-&"fuel": 44,
-&"health": 7,
+&"coinline": 36,
+&"fuel": 46,
+&"health": 8,
 &"purse": 5,
 &"slot": 4,
-&"none": 106
+&"none": 101
 }
 pickupsPerChunk = 2
 palette = {

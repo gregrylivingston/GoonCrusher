@@ -60,8 +60,23 @@ func _physics_process(delta: float) -> void:
 	eventIn -= delta
 	if eventIn <= 0.0:
 		eventIn = randf_range(EVENT_EVERY.x, EVENT_EVERY.y)
-		var open := EVENTS.filter(Unlocks.isPickupOpen) #locked events never start (Unlocks)
-		if not open.is_empty(): startEvent(open.pick_random(), car)
+		var kind := pickEvent(EVENTS.filter(Unlocks.isPickupOpen)) #locked events never start (Unlocks)
+		if kind != "": startEvent(kind, car)
+
+## One of the open events, by the level's rules.events weights (LevelDef.rules; missing: all the same).
+## "" when none is open or every open one weighs 0.
+static func pickEvent(open: Array) -> String:
+	var def = Root.levelRoot.def if is_instance_valid(Root.levelRoot) && Root.levelRoot is Level else null
+	var weights: Dictionary = def.rules.get("events", {}) if def else {}
+	if weights.is_empty(): return open.pick_random() if not open.is_empty() else ""
+	var total := 0.0
+	for kind in open: total += float(weights.get(kind, 0.0))
+	if total <= 0.0: return ""
+	var roll := randf() * total
+	for kind in open:
+		roll -= float(weights.get(kind, 0.0))
+		if roll < 0.0: return kind
+	return open.back()
 
 func startEvent(kind: String, car) -> void:
 	var at := aheadOf(car, EVENT_DISTANCE)

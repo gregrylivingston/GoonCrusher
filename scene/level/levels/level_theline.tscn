@@ -1,0 +1,7 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" uid="uid://dqcrli42u3gia" path="res://scene/level/levelRoot.tscn" id="1_root"]
+[ext_resource type="Resource" path="res://world/levels/theline.tres" id="2_def"]
+
+[node name="LevelRoot" instance=ExtResource("1_root")]
+def = ExtResource("2_def")

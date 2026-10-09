@@ -1,0 +1,95 @@
+[gd_resource type="Resource" script_class="LevelDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/level_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"blockparty"
+displayName = "Block Party"
+poster = "res://world/art/posters/city.png"
+region = &"sprawl"
+stop = 5
+order = 24
+blurb = "Wide plazas and the most goons in the game. Combo heaven, and the crowd is the threat."
+barrier = "Building blocks wall every street, and canals cut across the grid, bridged at each street."
+surfaces = "Asphalt streets, concrete lots, park grass. The canals drown."
+startPosition = Vector2(2129, 1227)
+seconds = 480
+spawnTimer = 3
+giantOdds = 22
+escalationSpeed = 0.178
+sprintSlack = 1.21
+rules = {
+"events": {
+"goldgoon": 2,
+"bowling": 2,
+"truck": 1,
+"rings": 1
+}
+}
+lineup = Array[StringName]([&"rat", &"yipper", &"karter", &"spoke", &"dasher", &"gremlin"])
+landscape = &"city"
+grammar = &"city"
+features = {
+"buildingShare": 0.45,
+"parkShare": 0.2,
+"lotShare": 0.25,
+"canalShare": 0.1,
+"canalWidth": 1040.0,
+"sidewalk": 110.0,
+"sideStreetChance": 0.5,
+"barrierCap": 0.35,
+"motifs": 0.4,
+"props": 12
+}
+baseTerrain = [16, 8, 16, 0, 16]
+accents = [8, 16, 0]
+dressing = {
+0: {
+&"oak": 3,
+&"tufts": 4,
+&"dumpster": 2,
+&"busstop": 1,
+&"sign": 1
+},
+1: {
+&"dumpster": 3,
+&"manhole": 3,
+&"barricade": 2,
+&"crate": 2,
+&"hydrant": 2
+},
+2: {
+&"streetglow": 3,
+&"hydrant": 3,
+&"dumpster": 3,
+&"busstop": 2,
+&"manhole": 2,
+&"cone": 3,
+&"wreck": 2,
+&"billboard": 1,
+&"paint": 3
+}
+}
+motifs = {
+2: {
+&"pileup": 1
+}
+}
+pickupTable = {
+&"coinline": 25,
+&"fuel": 38,
+&"health": 7,
+&"purse": 4,
+&"slot": 3,
+&"none": 123
+}
+pickupsPerChunk = 2
+palette = {
+&"ground": Color(0.46, 0.45, 0.43, 1),
+&"accent": Color(0.38, 0.36, 0.34, 1),
+&"asphalt": Color(0.22, 0.22, 0.24, 1),
+&"park": Color(0.38, 0.5, 0.3, 1)
+}
+nightTint = Color(0.06, 0.06, 0.1, 1)
+ambience = &"city"

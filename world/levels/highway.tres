@@ -7,24 +7,21 @@ script = ExtResource("1_def")
 id = &"highway"
 displayName = "Route Nowhere"
 poster = "res://world/art/posters/highway.png"
-act = 2
-order = 5
+region = &"raiders"
+stop = 1
+order = 10
 blurb = "A highway runs east with branch roads off it. Asphalt is fast; oil slicks, jersey barriers and pile-ups are not."
 barrier = "Rock outcrops off the road; jersey barriers and pile-ups on it."
 surfaces = "Fast asphalt, oil slicks with no grip, sand and dirt verges, gas station lots."
 startPosition = Vector2(2129, 1227)
-seconds = 460
-spawnTimer = 3.2
-giantOdds = 15
-escalationSpeed = 0.17
-sprintSlack = 1.25
-modes = []
-factionBand = Vector2(1.6, 2.8)
-roster = {
-0: [&"buzzard", &"rattler"],
-1: [&"spiker", &"grunt", &"hubcap"],
-2: [&"spoke", &"chainer", &"torcher", &"slick", &"sidecar", &"karter"]
-}
+seconds = 330
+spawnTimer = 4.3
+giantOdds = -5
+escalationSpeed = 0.141
+sprintSlack = 1.4
+rules = {}
+lineup = Array[StringName]([&"spoke", &"karter", &"chainer"])
+landscape = &"highway"
 grammar = &"highway"
 features = {
 "warpFrequency": 4e-05,
@@ -82,12 +79,12 @@ motifs = {
 }
 }
 pickupTable = {
-&"coinline": 28,
-&"fuel": 40,
-&"health": 7,
-&"purse": 4,
-&"slot": 3,
-&"none": 118
+&"coinline": 35,
+&"fuel": 45,
+&"health": 8,
+&"purse": 5,
+&"slot": 4,
+&"none": 103
 }
 pickupsPerChunk = 2
 palette = {

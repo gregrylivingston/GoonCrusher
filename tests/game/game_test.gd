@@ -29,6 +29,23 @@ func assert_eq(got, expected, message := "") -> void:
 	elif got != expected:
 		fail("expected %s, got %s. %s" % [expected, got, message])
 
+func assert_ne(got, notExpected, message := "") -> void:
+	if typeof(got) == typeof(notExpected) && got == notExpected: fail("expected anything but %s. %s" % [notExpected, message])
+
+## One level per distinct world (grammar, features, terrains, start and landscape): the world tests build
+## these instead of all 30, since levels that share a world build the same map
+static func worldLevels() -> Array:
+	var levels = load("res://scripts/world/levels.gd") #loaded, not named: naming it compiles it before the autoloads exist
+	var seen := {}
+	var out := []
+	for id in levels.ORDER:
+		var def = levels.get_def(id)
+		var key := var_to_str([def.grammar, def.features, def.baseTerrain, def.accents, def.startPosition, def.landscape])
+		if seen.has(key): continue
+		seen[key] = true
+		out.push_back(id)
+	return out
+
 func assert_almost_eq(got, expected, tolerance, message := "") -> void:
 	if absf(got - expected) > tolerance: fail("expected %s +/- %s, got %s. %s" % [expected, tolerance, got, message])
 

@@ -149,15 +149,21 @@ func buildGameSummary():
 	#a Goonpocalypse run that survived its target beat the mode, even when it was abandoned afterwards
 	var won: bool = levelCompleted && (reason != Root.endCondition.ABANDONED || level.targetReached)
 	var firstClear := {"coin": 0, "gem": 0}
+	var car = Root.playerCar
+	var carClear := {"tiers": [], "coin": 0, "gem": 0, "fullGarage": []}
+	var roadOpened := ""
 	if won:
 		var nextWasOpen: bool = levelIndex + 1 >= SaveManager.playerData.levels.size() || SaveManager.playerData.levels[levelIndex + 1].unlocked
-		var before := SaveManager.currentLevelPassed()
+		var before := SaveManager.currentLevelPassed(levelIndex, gameMode, level.tier) #the run's own, not the menu's selection
 		firstClear = ModeTiers.firstClear(before, level.tier, levelIndex)
+		carClear = SaveManager.creditCarClear(levelIndex, gameMode, level.tier, str(car.carId))
+		firstClear.coin += carClear.coin
+		firstClear.gem += carClear.gem
 		level.firstClear = firstClear
 		progressNote = nextLevelNote(levelIndex, nextWasOpen)
+		if not nextWasOpen && levelIndex + 1 < SaveManager.playerData.levels.size() && SaveManager.playerData.levels[levelIndex + 1].unlocked: roadOpened = roadText(levelIndex + 1)
 	else:
 		$AudioStreamPlayer_highImpact.play()
-	var car = Root.playerCar
 	var records = SaveManager.getCarByName(car.carId).records
 	var mode = Root.gameModeDescription[gameMode].name
 	var body = buildTicket("%s %s  -  %s  -  %s" % [ModeTiers.NAMES[level.tier].to_upper(), mode, SaveManager.playerData.levels[levelIndex].name.to_upper(), car.charName.to_upper()], reasonLine())
@@ -191,8 +197,13 @@ func buildGameSummary():
 	if car.bestCombo >= 3: addRow("Best combo", str(car.bestCombo), car.bestCombo > records.get("combo", 0))
 	if bonus > 0: addRow("Win bonus  (%s)" % ModeTiers.NAMES[level.tier], "+%s" % DriverCard.formatCoins(bonus), false)
 	addPayout(body, car.coin + bonus, car.star, paid, paid > records.coin)
-	if firstClear.coin > 0 || firstClear.gem > 0:
-		addRow("First clear  (%s medal)" % ModeTiers.MEDALS[level.tier], "+%s%s" % [DriverCard.formatCoins(firstClear.coin), "  +%d gem%s" % [firstClear.gem, "" if firstClear.gem == 1 else "s"] if firstClear.gem > 0 else ""], true, ModeTiers.MEDALS[level.tier].to_upper())
+	var medalClear := {"coin": firstClear.coin - carClear.coin, "gem": firstClear.gem - carClear.gem}
+	if medalClear.coin > 0 || medalClear.gem > 0:
+		addSymbolRow("First clear  (%s medal)" % ModeTiers.MEDALS[level.tier], ["+", medalClear], true, ModeTiers.MEDALS[level.tier].to_upper())
+	if carClear.coin > 0: addSymbolRow("New car clear  (%s)" % car.charName, ["+", {"coin": carClear.coin}], true, "NEW CAR")
+	if not carClear.fullGarage.is_empty():
+		addSymbolRow("Full Garage  (%s)" % ", ".join(carClear.fullGarage.map(func(t): return ModeTiers.NAMES[t])), ["+", {"gem": carClear.gem}], true, "FULL GARAGE")
+	if roadOpened != "": addRow("Road open", roadOpened, true, "NEW ROAD")
 	records.goonsCrushed = maxi(records.goonsCrushed, crushed)
 	records.speed = maxi(records.speed, topSpeed)
 	records.coin = maxi(records.coin, paid)
@@ -233,8 +244,15 @@ func buildGameSummary():
 	if advice != "": notes.push_back(advice)
 	if not notes.is_empty(): addFooterNote("   -   ".join(notes))
 
-#after a win: the next level just opened, or what is left here to open it (LevelDef.unlockModes, and in
-#later acts some on Medium: Root.mediumToOpenNext)
+#the road a won Marathon opened: the next level's name, and its region's when it starts a new one
+static func roadText(index: int) -> String:
+	var def := Levels.defAt(index)
+	var name: String = def.displayName if def else str(SaveManager.playerData.levels[index].get("name", ""))
+	if def && def.stop == 1: return "%s, %s" % [name, Territories.displayName(def.region)]
+	return name
+
+#after a win: the next level just opened, or what is left here to open it (the Marathon, on Medium at a
+#region's finale: Root.openLeftText)
 static func nextLevelNote(index: int, wasOpen: bool) -> String:
 	var levels: Array = SaveManager.playerData.levels
 	if wasOpen || index + 1 >= levels.size(): return ""
@@ -348,6 +366,17 @@ func addRow(name: String, value: String, isBest: bool, badgeText := "NEW BEST") 
 	row.visible = false
 	rows.add_child(row)
 	reveal.push_back(row)
+
+#a row whose value is amounts with the game's symbols ("+30 (coin)"; MenuTheme.symbolRow parts), in ink
+func addSymbolRow(name: String, parts: Array, isBest: bool, badgeText := "NEW BEST") -> void:
+	addRow(name, "", isBest, badgeText)
+	var row: HBoxContainer = rows.get_child(rows.get_child_count() - 1)
+	var value := row.get_child(row.get_child_count() - 1)
+	row.remove_child(value)
+	value.queue_free()
+	var symbols := MenuTheme.symbolRow(parts, 22, INK, 0)
+	symbols.alignment = BoxContainer.ALIGNMENT_END
+	row.add_child(symbols)
 
 func addPayout(body: VBoxContainer, coin: int, star: int, paid: int, isBest: bool) -> void:
 	var block = VBoxContainer.new()

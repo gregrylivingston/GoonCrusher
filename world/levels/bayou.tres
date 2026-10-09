@@ -7,24 +7,21 @@ script = ExtResource("1_def")
 id = &"bayou"
 displayName = "Snapper Bayou"
 poster = "res://world/art/posters/bayou.png"
-act = 1
-order = 1
+region = &"wilds"
+stop = 3
+order = 2
 blurb = "Basins fill into lakes and braided channels split the land. Boardwalk bridges cross the deep water; the shallows slow you down."
 barrier = "Lakes and braided channels. Boardwalk bridges cross the deep water."
 surfaces = "Mud that drags, moss and grass, shallows that slow you down, deep water that drowns."
 startPosition = Vector2(2129, 1227)
-seconds = 300
-spawnTimer = 4.6
-giantOdds = -12
-escalationSpeed = 0.13
-sprintSlack = 1.45
-modes = []
-factionBand = Vector2(0.2, 1.7)
-roster = {
-0: [&"bandit", &"snapper", &"spitter", &"tusker", &"jackalope"],
-1: [&"splitter", &"rat", &"shellback", &"skink", &"slinger"],
-2: [&"karter", &"slick", &"shredder"]
-}
+seconds = 260
+spawnTimer = 4.8
+giantOdds = -17
+escalationSpeed = 0.125
+sprintSlack = 1.48
+rules = {}
+lineup = Array[StringName]([&"snapper", &"spitter", &"jackalope", &"tusker"])
+landscape = &"bayou"
 grammar = &"bayou"
 features = {
 "lakeFrequency": 8.3e-05,
@@ -78,12 +75,12 @@ motifs = {
 }
 }
 pickupTable = {
-&"coinline": 40,
-&"fuel": 48,
+&"coinline": 41,
+&"fuel": 49,
 &"health": 8,
 &"purse": 5,
 &"slot": 4,
-&"none": 95
+&"none": 93
 }
 pickupsPerChunk = 2
 palette = {

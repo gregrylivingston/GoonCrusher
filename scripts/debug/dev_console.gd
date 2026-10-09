@@ -186,14 +186,15 @@ func registerCommands() -> void:
 	add("autopilot", cmdAutopilot, "autopilot [rookie | grinder | explorer | off]", "a persona plays for you from here (a random one if none is named): it shops, picks runs, drives with its plan drawn, answers every screen. Any key, pad button or click takes control back (the console's own keys don't; it waits while the console is open). ailines hides its drawing. On the real save it backs the save up first", "Start here")
 	add("ailines", cmdAiLines, "ailines [on | off]", "show or hide what AI drivers draw (autopilot and ai): the goal (yellow), the plan (green, red when it expects a hit) and the route round water (blue)", "Run")
 	add("start", cmdStart, "start [fresh | early | mid | late | maxed | real] [fresh]", "play from further into the game on a scratch save (the real save is untouched); real goes back to it. A tier's save carries on between sessions; add fresh to rebuild it. Bare start lists the tiers", "Start here")
-	add("unlock", cmdUnlock, "unlock cars [name...] | levels [id...] | modes | goons | pickups [id...] | all", "cars: free every driver (or the named ones). levels: open every level (or the named ones: ids or 0-based indices, Levels.ORDER). modes: mark Countdown and Sprint beaten on every level, which opens every mode. goons: reveal every goon in the Goonopedia. pickups: unlock every pickup (or the named ones, with the pickups above them in their tree)", "Progress")
+	add("unlock", cmdUnlock, "unlock cars [name...] | levels [id...] | region <n> | modes | goons | pickups [id...] | all", "cars: free every driver (or the named ones). levels: open every level (or the named ones: ids or 0-based indices, Levels.ORDER). region: open every level of region 1-6 (or its id) and the road up to it. modes: mark Countdown, Sprint and Marathon beaten on every level, which opens every mode. goons: reveal every goon in the Goonopedia. pickups: unlock every pickup (or the named ones, with the pickups above them in their tree)", "Progress")
 	add("lock", cmdLock, "lock cars | levels [id...] | modes | goons | pickups | all", "undo unlock: cars back to their prices, levels, beaten modes, Goonopedia goons and pickups back to a new save's", "Progress")
 	add("unlocks", cmdUnlocks, "unlocks", "the pickups waiting to be unlocked: price or play condition and progress, nearest first (Unlocks)", "Progress")
 	add("coins", cmdCoins, "coins [amount | set amount]", "add coins to the bank (negative takes them away; 50k and 2m work)", "Progress")
 	add("gems", cmdGems, "gems [amount | set amount]", "add gems to the bank", "Progress")
 	add("upgrades", cmdUpgrades, "upgrades max | reset [all]", "the selected car's (or every car's) upgrades to the cap or to 0", "Progress")
 	add("unfinished", cmdUnfinished, "unfinished on | off", "let Coming Soon modes (any in Root.MODE_AVAILABLE set to false) be started; this session only", "Progress")
-	add("level", cmdLevel, "level [id | index]", "list the levels (Levels.ORDER), or select one for the menu and direct launches", "Progress")
+	add("level", cmdLevel, "level [id | index]", "list the levels by region (Levels.ORDER), or select one for the menu and direct launches", "Progress")
+	add("cars", cmdCars, "cars all | <car> [tier]", "car clears (meta.carClears): every car (all) or one clears every beaten mode on the selected level (all: on every level), on its best tier or the one named (easy, medium, hard)", "Progress")
 	add("save", cmdSave, "save [backup | open | reset]", "show the save; back it up; open its folder; reset it (backs up first)", "Progress")
 	add("heal", cmdHeal, "heal", "full health", "Run")
 	add("fuel", cmdFuel, "fuel", "full fuel", "Run")
@@ -311,6 +312,7 @@ func setUnlocks(what: String, unlock: bool, names: Array) -> String:
 	match what:
 		"car", "cars", "driver", "drivers": return setCars(unlock, names)
 		"level", "levels": return setLevels(unlock, names)
+		"region", "regions": return setRegion(unlock, names)
 		"mode", "modes": return setModes(unlock)
 		"goon", "goons", "goonopedia": return setGoons(unlock)
 		"pickup", "pickups": return setPickups(unlock, names)
@@ -397,18 +399,38 @@ func setGoons(unlock: bool) -> String:
 	for id in Goons.DATA: crushed[String(id)] = maxi(crushed.get(String(id), 0), 1)
 	return "Goons: all %d revealed in the Goonopedia" % Goons.DATA.size()
 
-#Countdown and Sprint beaten opens every mode (Root.isModeUnlocked); locking clears every beaten mode
+#Countdown, Sprint and Marathon beaten opens every mode (Root.isModeUnlocked); locking clears every beaten mode
 func setModes(unlock: bool) -> String:
 	for level in SaveManager.playerData.levels:
 		if unlock:
-			level.gamemodeBeat[Root.gameModes.GOONCRUSHER] = true
-			level.gamemodeBeat[Root.gameModes.SPRINT] = true
+			for mode in [Root.gameModes.GOONCRUSHER, Root.gameModes.SPRINT, Root.gameModes.MARATHON]: SaveManager.passTier(level, mode, ModeTiers.EASY)
 		else:
 			for mode in level.gamemodeBeat: level.gamemodeBeat[mode] = false
+			if level.get("tiers") is Dictionary:
+				for mode in level.tiers: level.tiers[mode] = ModeTiers.NONE
 	if not unlock: return "Modes: every beaten mode cleared"
 	var comingSoon = Root.MODE_AVAILABLE.keys().filter(func(m): return not Root.MODE_AVAILABLE[m])
 	var note = "" if Root.devAllModesAvailable || comingSoon.is_empty() else " (Coming Soon modes stay hidden; see unfinished)"
-	return "Modes: Countdown and Sprint marked beaten on every level, so every mode is open on unlocked levels" + note
+	return "Modes: Countdown, Sprint and Marathon marked beaten on every level, so every mode is open on unlocked levels" + note
+
+#every level of a region (1-6 or its Territories id) and every level before it; locking closes the region's
+#levels (the first level of the game stays open)
+func setRegion(unlock: bool, names: Array) -> String:
+	if names.is_empty(): return "Error: unlock region <1-6 | %s>" % " | ".join(Territories.ORDER)
+	var region := regionArg(names[0])
+	if region == &"": return "Error: unknown region '%s' (1-6 or %s)" % [names[0], ", ".join(Territories.ORDER)]
+	var levels = SaveManager.playerData.levels
+	var ids := Territories.levelsOf(region)
+	for i in levels.size():
+		var inRegion: bool = Levels.ORDER[i] in ids
+		if unlock && (inRegion || i < Levels.indexOf(ids[0])): levels[i].unlocked = true
+		elif not unlock && inRegion && i > 0: levels[i].unlocked = false
+	return "Region %s: %s (%s)" % [Territories.displayName(region), "open, with the road up to it" if unlock else "locked", ", ".join(ids)]
+
+#"3" or "raiders" -> &"raiders"; &"" when it names no region
+static func regionArg(text: String) -> StringName:
+	if text.is_valid_int() && int(text) >= 1 && int(text) <= Territories.ORDER.size(): return Territories.ORDER[int(text) - 1]
+	return StringName(text) if Territories.has(StringName(text)) else &""
 
 func cmdCoins(args: Array) -> String: return changeBank("coin", args)
 func cmdGems(args: Array) -> String: return changeBank("gem", args)
@@ -463,14 +485,37 @@ func cmdLevel(args: Array) -> String:
 		var lines = []
 		for i in Levels.count():
 			var def := Levels.defAt(i)
-			lines.push_back("%s %d %-10s %-16s act %d  %s" % [">" if i == data.selectedLevel else " ", i, Levels.ORDER[i], def.displayName if def else "?",
-				def.act if def else 0, "open" if data.levels[i].unlocked else "locked"])
+			if def && def.stop == 1: lines.push_back("-- %d %s (%s) --" % [Territories.indexOf(def.region) + 1, Territories.displayName(def.region), Goons.className(Territories.classOf(def.region))])
+			lines.push_back("%s %2d %-4s %-12s %-16s %-11s %s%s" % [">" if i == data.selectedLevel else " ", i, Levels.stopText(i), Levels.ORDER[i], def.displayName if def else "?",
+				def.landscape if def else "", "open" if data.levels[i].unlocked else "locked", "  finale" if def && def.isFinale() else ""])
 		return "\n".join(lines)
 	var id := Levels.resolve(args[0])
 	if id == &"": return "Error: unknown level '%s' (%s)" % [args[0], Levels.idsText()]
 	data.selectedLevel = Levels.indexOf(id)
 	progressChanged()
 	return "Level %d selected: %s" % [data.selectedLevel, id]
+
+#car clears (SaveManager.creditCarClear): every car, or one, has won every beaten mode on the selected level
+#(or everywhere with all), on its best tier there or the one named
+func cmdCars(args: Array) -> String:
+	if args.is_empty(): return "Error: " + commands.cars.usage
+	var data = SaveManager.playerData
+	var names := []
+	for car in data.cars: names.push_back(str(car.name))
+	var who: Array = names if args[0] == "all" else [args[0]]
+	if args[0] != "all" && not args[0] in names: return "Error: no car '%s' (%s)" % [args[0], ", ".join(names)]
+	var tier := ModeTiers.NAMES.map(func(n): return n.to_lower()).find(args[1]) if args.size() > 1 else -1
+	if args.size() > 1 && tier < ModeTiers.EASY: return "Error: tier easy, medium or hard"
+	var levels: Array = range(data.levels.size()) if args[0] == "all" else [data.selectedLevel]
+	var count := 0
+	for i in levels:
+		for mode in Root.MODE_PATH:
+			var best := ModeTiers.best(data.levels[i], mode)
+			if best == ModeTiers.NONE: continue
+			for car in who:
+				if not SaveManager.creditCarClear(i, mode, tier if tier > 0 else best, car).tiers.is_empty(): count += 1
+	progressChanged()
+	return "Car clears: %d added for %s on %s" % [count, "every car" if args[0] == "all" else args[0], "every level" if args[0] == "all" else Levels.ORDER[data.selectedLevel]]
 
 func cmdSave(args: Array) -> String:
 	var data = SaveManager.playerData

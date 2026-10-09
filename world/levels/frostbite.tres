@@ -7,24 +7,21 @@ script = ExtResource("1_def")
 id = &"frostbite"
 displayName = "Frostbite Pass"
 poster = "res://world/art/posters/frostbite.png"
-act = 2
-order = 4
+region = &"hunting"
+stop = 1
+order = 15
 blurb = "Ridged ranges wall the valleys, with passes between. Frozen lakes give no grip and deep snow drags."
 barrier = "Mountain ranges wall the valleys, with passes between them."
 surfaces = "Packed snow, deep snow that drags, frozen lakes with no grip at all."
 startPosition = Vector2(2129, 1227)
-seconds = 420
-spawnTimer = 3.5
-giantOdds = 8
-escalationSpeed = 0.16
-sprintSlack = 1.3
-modes = []
-factionBand = Vector2(0.2, 2.6)
-roster = {
-0: [&"jackalope", &"yipper", &"bullmoose"],
-1: [&"skink", &"yeti", &"boulder", &"nightcrawler"],
-2: [&"sawbot", &"plowboss", &"harpooner", &"boostjack"]
-}
+seconds = 380
+spawnTimer = 3.9
+giantOdds = 3
+escalationSpeed = 0.153
+sprintSlack = 1.34
+rules = {}
+lineup = Array[StringName]([&"yeti", &"tusker", &"boulder"])
+landscape = &"mountain"
 grammar = &"mountain"
 features = {
 "ridgeFrequency": 4e-05,
@@ -76,12 +73,12 @@ motifs = {
 }
 }
 pickupTable = {
-&"coinline": 31,
-&"fuel": 44,
-&"health": 8,
+&"coinline": 32,
+&"fuel": 43,
+&"health": 7,
 &"purse": 4,
-&"slot": 4,
-&"none": 109
+&"slot": 3,
+&"none": 111
 }
 pickupsPerChunk = 2
 palette = {

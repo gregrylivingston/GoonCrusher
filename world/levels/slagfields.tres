@@ -1,0 +1,94 @@
+[gd_resource type="Resource" script_class="LevelDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/level_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"slagfields"
+displayName = "Slag Fields"
+poster = "res://world/art/posters/canyon.png"
+region = &"works"
+stop = 3
+order = 27
+blurb = "A foundry's lava runoff: slag heaps, lava channels and Turrets on the high ground."
+barrier = "Red canyon walls and mesas. A pass opens through them every chunk."
+surfaces = "Hardpan dirt, sand dunes that drag, dry washes that run fast."
+startPosition = Vector2(2129, 1227)
+seconds = 500
+spawnTimer = 2.8
+giantOdds = 25
+escalationSpeed = 0.183
+sprintSlack = 1.18
+rules = {}
+lineup = Array[StringName]([&"doomcart", &"turret", &"torcher", &"spitter"])
+landscape = &"volcano"
+grammar = &"canyon"
+features = {
+"ridgeFrequency": 4.5e-05,
+"wallWidth": 1400.0,
+"mesaFrequency": 8.3e-05,
+"mesaAbove": 0.42,
+"passWidth": 1400.0,
+"washFrequency": 4e-05,
+"washWidth": 700.0,
+"duneAbove": 0.35,
+"barrierCap": 0.35,
+"props": 13
+}
+baseTerrain = [6, 2, 6, 1, 6]
+accents = [12, 2]
+dressing = {
+0: {
+&"saguaro": 5,
+&"rock_red": 4,
+&"boulder_red": 2,
+&"deadtree": 2,
+&"bones": 3,
+&"carcass": 2,
+&"pebbles": 6
+},
+1: {
+&"rock_red": 3,
+&"totem": 2,
+&"tent": 2,
+&"firepit": 2,
+&"saguaro": 3,
+&"barrel": 1,
+&"watertower": 1
+},
+2: {
+&"rock_red": 3,
+&"wreck": 2,
+&"tyres": 2,
+&"barrel": 2,
+&"saguaro": 2
+}
+}
+motifs = {
+0: {
+&"boneyard": 2
+},
+1: {
+&"camp": 2
+},
+2: {
+&"wreckpile": 2
+}
+}
+pickupTable = {
+&"coinline": 23,
+&"fuel": 37,
+&"health": 7,
+&"purse": 4,
+&"slot": 3,
+&"none": 126
+}
+pickupsPerChunk = 2
+palette = {
+&"ground": Color(0.62, 0.42, 0.28, 1),
+&"accent": Color(0.7, 0.55, 0.38, 1),
+&"wall": Color(0.48, 0.28, 0.2, 1),
+&"wash": Color(0.72, 0.62, 0.46, 1)
+}
+nightTint = Color(0.1, 0.06, 0.08, 1)
+ambience = &"desert"

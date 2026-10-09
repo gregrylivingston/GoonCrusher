@@ -1,0 +1,90 @@
+[gd_resource type="Resource" script_class="LevelDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/level_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"theline"
+displayName = "The Line"
+poster = "res://world/art/posters/crusher.png"
+region = &"works"
+stop = 4
+order = 28
+blurb = "Conveyors on every plot push the car along. Magnets pull you off them; Turrets cover the belts."
+barrier = "Scrap mountains and container rows wall the yard plots."
+surfaces = "Dirt and concrete, oil spills with no grip, conveyor belts that push you along. Tanks and barrels explode."
+startPosition = Vector2(2129, 1227)
+seconds = 510
+spawnTimer = 2.8
+giantOdds = 27
+escalationSpeed = 0.185
+sprintSlack = 1.17
+rules = {}
+lineup = Array[StringName]([&"magnet", &"turret", &"slinger"])
+landscape = &"scrapyard"
+grammar = &"yard"
+features = {
+"plotSize": 3,
+"scrapMountainShare": 0.25,
+"containerRows": 0.3,
+"gapChance": 0.6,
+"tankFarmChance": 0.15,
+"conveyorEvery": 4,
+"conveyorWidth": 640.0,
+"oilAbove": 0.55,
+"scrapWidth": 860.0,
+"containerWidth": 600.0,
+"barrierCap": 0.35,
+"motifs": 1.2
+}
+baseTerrain = [6, 16, 6, 16, 6]
+accents = [10, 13, 16]
+dressing = {
+0: {
+&"scrapheap": 3,
+&"tyres": 2
+},
+1: {
+&"tyres": 3,
+&"barricade": 2,
+&"crate": 2,
+&"barrel": 2,
+&"scrapheap": 2
+},
+2: {
+&"scrapheap": 5,
+&"container": 4,
+&"tank": 2,
+&"crane": 2,
+&"wreck": 3,
+&"barrel": 3,
+&"tyres": 3,
+&"oilstain": 3
+}
+}
+motifs = {
+1: {
+&"wreckpile": 1
+},
+2: {
+&"junkyard": 3,
+&"wreckpile": 2
+}
+}
+pickupTable = {
+&"coinline": 22,
+&"fuel": 36,
+&"health": 7,
+&"purse": 4,
+&"slot": 3,
+&"none": 128
+}
+pickupsPerChunk = 2
+palette = {
+&"ground": Color(0.44, 0.4, 0.36, 1),
+&"accent": Color(0.36, 0.33, 0.3, 1),
+&"lot": Color(0.5, 0.5, 0.48, 1),
+&"oil": Color(0.12, 0.11, 0.12, 1)
+}
+nightTint = Color(0.07, 0.05, 0.05, 1)
+ambience = &"yard"

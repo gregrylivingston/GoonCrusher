@@ -43,7 +43,8 @@ func test_unlock_levels_and_modes():
 		assert_true(level.unlocked, "%s unlocked" % level.name)
 		for mode in [M.GOONCRUSHER, M.SPRINT, M.GOONPOCALYPSE, M.MARATHON, M.DEFENSE]:
 			assert_true(Root.isModeUnlocked(level, mode), "%s open on %s" % [M.find_key(mode), level.name])
-	assert_eq(Root.isModePlayable(SaveManager.playerData.levels[0], M.MARATHON), not Root.IS_DEMO, "Marathon opens with Sprint beaten")
+	assert_true(Root.isModePlayable(SaveManager.playerData.levels[0], M.MARATHON), "Marathon opens with Sprint beaten")
+	assert_true(SaveManager.playerData.levels[0].gamemodeBeat[M.MARATHON], "unlock modes credits the Marathon too")
 	Console.execute("unfinished on")
 	assert_true(Root.isModePlayable(SaveManager.playerData.levels[0], M.DEFENSE), "unfinished on lets any mode start")
 	Console.execute("lock all")
@@ -65,6 +66,33 @@ func test_levels_by_id():
 	Console.execute("lock levels city")
 	assert_false(levels[Levels.indexOf(&"city")].unlocked, "a named level locks")
 	assert_true(levels[3].unlocked, "only the named one")
+	var list := Console.execute("level")
+	assert_true(list.contains("The Works") && list.contains("2-5"), "level lists by region and stop")
+
+func test_unlock_region_opens_it_and_the_road_up_to_it():
+	var levels = SaveManager.playerData.levels
+	Console.execute("unlock region 3")
+	for i in levels.size(): assert_eq(levels[i].unlocked, i < 15, "%s: open up to Raider Road's last stop" % levels[i].id)
+	Console.execute("unlock region works")
+	assert_true(levels[Levels.indexOf(&"crusher")].unlocked, "an id works too")
+	Console.execute("lock region works")
+	assert_false(levels[Levels.indexOf(&"crusher")].unlocked, "and locks it again")
+	assert_true(levels[Levels.indexOf(&"city")].unlocked, "only that region")
+	assert_true(Console.execute("unlock region 9").begins_with("Error"), "an unknown region is an error")
+
+func test_cars_fills_car_clears():
+	var data := SaveManager.playerData
+	data.levels = Levels.defaultEntries()
+	SaveManager.passTier(data.levels[0], M.GOONCRUSHER, ModeTiers.MEDIUM)
+	SaveManager.passTier(data.levels[1], M.GOONCRUSHER, ModeTiers.EASY)
+	data.selectedLevel = 0
+	Console.execute("cars van")
+	assert_eq(SaveManager.carClearTier(0, M.GOONCRUSHER, "van"), ModeTiers.MEDIUM, "the van clears the selected level on its best tier")
+	assert_eq(SaveManager.carClearTier(1, M.GOONCRUSHER, "van"), ModeTiers.NONE, "only the selected level")
+	Console.execute("cars all")
+	assert_true(SaveManager.isFullGarage(1, M.GOONCRUSHER, ModeTiers.EASY), "all: every car on every level")
+	assert_false(SaveManager.isFullGarage(1, M.SPRINT, ModeTiers.EASY), "only modes beaten there")
+	assert_true(Console.execute("cars nosuchcar").begins_with("Error"))
 
 func test_unlock_and_lock_goons():
 	SaveManager.playerData.goonsCrushed = {"grunt": 5}

@@ -1,0 +1,91 @@
+[gd_resource type="Resource" script_class="LevelDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/level_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"frozenlake"
+displayName = "Frozen Lake"
+poster = "res://world/art/posters/frostbite.png"
+region = &"hunting"
+stop = 2
+order = 16
+blurb = "Huge ice lakes with almost no grip. Getting up to crush speed is easy; turning isn't."
+barrier = "Mountain ranges wall the valleys, with passes between them."
+surfaces = "Packed snow, deep snow that drags, frozen lakes with no grip at all."
+startPosition = Vector2(2129, 1227)
+seconds = 390
+spawnTimer = 3.7
+giantOdds = 7
+escalationSpeed = 0.157
+sprintSlack = 1.31
+rules = {}
+lineup = Array[StringName]([&"snapper", &"harpooner", &"tusker", &"plowboss"])
+landscape = &"mountain"
+grammar = &"mountain"
+features = {
+"ridgeFrequency": 4e-05,
+"rangeWidth": 1700.0,
+"peakFrequency": 0.000125,
+"peakAbove": 0.5,
+"passWidth": 1800.0,
+"iceFrequency": 0.000143,
+"iceLakeThreshold": 0.3,
+"deepSnowAbove": 0.3,
+"props": 18
+}
+baseTerrain = [7, 7, 15, 7, 9]
+accents = [9, 15]
+dressing = {
+0: {
+&"pine": 7,
+&"rock_ice": 3,
+&"rock_white": 3,
+&"stump": 2,
+&"carcass": 1,
+&"logpile": 2
+},
+1: {
+&"pine": 5,
+&"cabin": 2,
+&"totem": 1,
+&"firepit": 2,
+&"rock_white": 2,
+&"logpile": 1
+},
+2: {
+&"pine": 4,
+&"snowcat": 1,
+&"wreck": 1,
+&"barrel": 1,
+&"rock_ice": 2
+}
+}
+motifs = {
+0: {
+&"pinestand": 3
+},
+1: {
+&"cabincamp": 2
+},
+2: {
+&"wreckpile": 1
+}
+}
+pickupTable = {
+&"coinline": 31,
+&"fuel": 42,
+&"health": 7,
+&"purse": 4,
+&"slot": 3,
+&"none": 113
+}
+pickupsPerChunk = 2
+palette = {
+&"ground": Color(0.85, 0.88, 0.92, 1),
+&"accent": Color(0.7, 0.76, 0.84, 1),
+&"ice": Color(0.62, 0.78, 0.88, 1),
+&"rock": Color(0.42, 0.44, 0.5, 1)
+}
+nightTint = Color(0.06, 0.08, 0.16, 1)
+ambience = &"wind"

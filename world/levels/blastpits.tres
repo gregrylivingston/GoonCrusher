@@ -1,0 +1,94 @@
+[gd_resource type="Resource" script_class="LevelDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/level_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"blastpits"
+displayName = "Blast Pits"
+poster = "res://world/art/posters/quarry.png"
+region = &"works"
+stop = 1
+order = 25
+blurb = "Pits full of barrels and fuel tanks. Everything explodes, including the goons."
+barrier = "The terraced pit and the junk fort's ring walls, with ramps and gates."
+surfaces = "Dirt haul roads, mud, concrete yards and mud pits that swallow speed. Barrels explode."
+startPosition = Vector2(2129, 1227)
+seconds = 470
+spawnTimer = 3.1
+giantOdds = 20
+escalationSpeed = 0.176
+sprintSlack = 1.22
+rules = {}
+lineup = Array[StringName]([&"doomcart", &"sidecar", &"boostjack", &"slinger"])
+landscape = &"quarry"
+grammar = &"quarry"
+features = {
+"pieceCells": 10.0,
+"pitChance": 0.3,
+"pitRadius": 3200.0,
+"pitRamps": 2,
+"fortChance": 0.25,
+"fortRadius": 2200.0,
+"fortGates": 3,
+"tyreCamps": 0.25,
+"campRadius": 1500.0,
+"rampWidth": 1000.0,
+"haulFrequency": 4.5e-05,
+"haulRoadWidth": 900.0,
+"mudPitRadius": 200.0
+}
+baseTerrain = [6, 2, 6, 16, 6]
+accents = [2, 14, 16]
+dressing = {
+0: {
+&"rock": 4,
+&"boulder": 2,
+&"stump": 2,
+&"tufts": 4
+},
+1: {
+&"tyres": 5,
+&"barricade": 3,
+&"fortwall": 2,
+&"crane": 1,
+&"shack": 2,
+&"barrel": 2,
+&"rock": 3,
+&"totem": 1,
+&"watertower": 1
+},
+2: {
+&"tyres": 3,
+&"scrapheap": 2,
+&"wreck": 2,
+&"barrel": 2,
+&"crane": 1
+}
+}
+motifs = {
+1: {
+&"junkyard": 1,
+&"camp": 1
+},
+2: {
+&"junkyard": 2
+}
+}
+pickupTable = {
+&"coinline": 24,
+&"fuel": 38,
+&"health": 7,
+&"purse": 4,
+&"slot": 3,
+&"none": 124
+}
+pickupsPerChunk = 2
+palette = {
+&"ground": Color(0.5, 0.44, 0.36, 1),
+&"accent": Color(0.42, 0.36, 0.28, 1),
+&"lot": Color(0.55, 0.54, 0.5, 1),
+&"mud": Color(0.36, 0.3, 0.22, 1)
+}
+nightTint = Color(0.07, 0.06, 0.06, 1)
+ambience = &"quarry"

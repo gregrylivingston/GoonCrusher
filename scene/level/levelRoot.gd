@@ -13,6 +13,8 @@ var defApplied := false
 @export var seconds = 600 #the run clock. Every mode counts it down except Goonpocalypse, which counts up from 0
 var levelSeconds: float #the level's authored seconds, kept after the mode replaces `seconds`
 var tier: int = ModeTiers.EASY #the run's tier (ModeTiers, picked in run setup): its goal and how tough the world is
+#the region's elite strength step (Territories.step), applied to each goon as it spawns (Walker)
+var strength: Dictionary = Territories.NO_STEP
 #the run's mode and level index, kept: a won run moves the save's selection on (SaveManager.currentLevelPassed)
 var runMode: int = Root.gameModes.GOONCRUSHER
 var runLevel := 0
@@ -25,14 +27,15 @@ var endReason: int = -1 #Root.endCondition once the run has ended
 var startPosition: Vector2 #where the car starts; objectives are placed relative to it
 var clockReady := false #true once the clock holds its final starting value (Sprint sets it from the station distance)
 
-#Sprint: the station is placed by distance and the clock is derived from the real distance.
-const SPRINT_DRIVE_FRACTION = 0.25 #share of the level's authored seconds spent driving at REFERENCE_SPEED
+#Sprint: the station is placed by distance (by region: Territories.sprintDistance) and the clock is derived
+#from the real distance.
+const SPRINT_DRIVE_FRACTION = 0.25 #ModeTiers' pay estimate: share of the level's seconds spent driving at REFERENCE_SPEED
 #px/s; a fixed baseline, not the selected car, so fast cars feel fast. The stock sedan tops out at about
 #744 on grass, 615 on snow and 499 on sand and mud, so 450 leaves room for rocks, goons and turns.
 const REFERENCE_SPEED = 450.0
-#the station is never further than this (px): about 0.75 of the stock sedan's tank (87 s at full throttle)
+#the station is never further than this (px): about 0.8 of the stock sedan's tank (87 s at full throttle)
 #at its sand and mud top speed, so a run is possible without fuel pickups
-const SPRINT_MAX_DISTANCE = 32000.0
+const SPRINT_MAX_DISTANCE = 34000.0
 const SPRINT_Y_SPREAD = 0.25 #the station's y offset is up to this share of the distance, either way
 #The clock is set from the A* route on the coarse map (1280 px cells), which is shorter than the drive: the
 #fine walls, pools, props and fords inside passable cells, the corners, and the lot's single gap (east
@@ -81,6 +84,7 @@ func applyDef() -> void:
 	defApplied = true
 	readRun()
 	seconds = def.seconds
+	strength = Territories.step(def.region)
 	var spawnManager = get_node_or_null("SpawnManager")
 	if spawnManager:
 		spawnManager.spawnTimer = def.spawnTimer * ModeTiers.SPAWN_TIMER[tier]
@@ -221,11 +225,14 @@ func burnout(fx: TransitionFx) -> void:
 	Transition.sound("screech", -8.0)
 	for i in 6: fx.burst(tail, 4, -canvas.x.normalized() * 160.0, 200.0, 110.0, 1.2, i * 0.08)
 
-#Sprint station offset from the car start, in px: straight ahead (+x), with a y offset of up
-#to SPRINT_Y_SPREAD of the distance. yRoll is -1..1.
-static func sprintOffsetPx(levelSeconds: float, yRoll: float) -> Vector2:
-	var distance = levelSeconds * SPRINT_DRIVE_FRACTION * REFERENCE_SPEED
+#Sprint station offset from the car start, in px: `distance` straight ahead (+x), with a y offset of up
+#to SPRINT_Y_SPREAD of the distance, never further than SPRINT_MAX_DISTANCE. yRoll is -1..1.
+static func sprintOffsetPx(distance: float, yRoll: float) -> Vector2:
 	return Vector2(distance, distance * SPRINT_Y_SPREAD * clampf(yRoll, -1.0, 1.0)).limit_length(SPRINT_MAX_DISTANCE)
+
+#how far a level's Sprint station (and each Marathon leg) is: by its region (Territories.sprintDistance)
+static func sprintDistance(levelDef: LevelDef) -> float:
+	return Territories.sprintDistance(levelDef.region if levelDef else &"")
 
 #time allowed per second of reference driving: 1.5 on Easy (250 s) down to 1.1 on Northern Wastes (540 s)
 static func sprintSlack(levelSeconds: float) -> float:
@@ -324,7 +331,7 @@ func stationReached(station: Node2D) -> void:
 	var from = station.global_position
 	var tileManager = $TileManager
 	var turn := (WorldGen.hashf(tileManager.worldSeed, WorldGen.TAG_LEG, leg, 0) * 2.0 - 1.0) * MARATHON_TURN
-	var next = tileManager.placeNextStation(from, legHeading + turn, levelSeconds)
+	var next = tileManager.placeNextStation(from, legHeading + turn, sprintDistance(def))
 	legHeading = (next.global_position - from).angle()
 	seconds += sprintSeconds(driveLength(maxf(tileManager.lastRouteLength, from.distance_to(next.global_position))), levelSeconds, slack())
 	call_deferred("openPitShop")

@@ -2,9 +2,9 @@ class_name Unlocks extends RefCounted
 ## What is open: levels, modes, cars and pickups, asked in one place (docs/PICKUPS.md, "Unlocks").
 ##
 ## Each owner keeps its own data. A pickup's place in its kind's tree is `parent` (and `start` for a root)
-## in Pickups.DATA, with an optional play condition in `needs`. A level opens once `LevelDef.unlockModes`
-## modes are beaten on the one before it (SaveManager.currentLevelPassed), and the mode chain is
-## Root.isModeUnlocked. A car is open once bought (`cost` and `gems` in PlayerData.cars).
+## in Pickups.DATA, with an optional play condition in `needs`. A level opens once the Marathon is won on the
+## one before it, on Medium after a region's finale (Root.opensNextLevel, SaveManager.currentLevelPassed), and
+## the mode chain is Root.isModeUnlocked. A car is open once bought (`cost` and `gems` in PlayerData.cars).
 ##
 ## Every unlock has one of four states. HIDDEN: its parent is still locked ("???"). SHOWN: its parent is
 ## open but its condition isn't met yet. READY: it can be bought, or opens on its own at the next results
@@ -159,7 +159,8 @@ static func refresh() -> Array:
 ## Conditions: "nights:<n>", "giants:<n>", "crushes:<n>", "crushed:<faction>:<n>", "wins:<mode>:<n>",
 ## "mode:<mode>" (open on any level), "open:<level>", "survive:<seconds>" (best Goonpocalypse anywhere),
 ## "clears:<tier>:<n>" (mode-and-level completions on that tier or harder, ModeTiers; tier easy, medium or hard),
-## "boxes:<n>" (gift boxes opened over every run).
+## "boxes:<n>" (gift boxes opened over every run), "carclears:<n>" (mode-and-level wins by distinct cars, any tier:
+## SaveManager.carClearCount), "garages:<n>" (Full Garages: every car has won a mode on a level).
 ## Lifetime counters (meta.lifetime) are added on the results ticket (countRun).
 static func needsMet(needs: Array) -> bool:
 	for need in needs:
@@ -196,6 +197,8 @@ static func progressOf(need: String) -> Dictionary:
 		"survive":
 			return {"have": bestSurvival(), "need": n, "text": "Survive %d:%02d in Goonpocalypse" % [n / 60, n % 60]}
 		"boxes": return {"have": lifetime("boxes"), "need": n, "text": "Open %d gift box%s" % [n, "" if n == 1 else "es"]}
+		"carclears": return {"have": SaveManager.carClearCount() if data() != null else 0, "need": n, "text": "Earn %d car clear%s" % [n, "" if n == 1 else "s"]}
+		"garages": return {"have": SaveManager.fullGarageCount() if data() != null else 0, "need": n, "text": "Win %d Full Garage%s" % [n, "" if n == 1 else "s"]}
 		"clears":
 			var tier := TIER_KEYS.find(parts[1])
 			var have := ModeTiers.clears(data().levels, tier) if data() != null && tier > 0 else 0
@@ -214,7 +217,7 @@ static func progress(uid: String) -> Dictionary:
 static func isValidNeed(need: String) -> bool:
 	var parts := need.split(":")
 	match parts[0]:
-		"nights", "giants", "crushes", "survive", "boxes": return parts.size() == 2 && parts[1].is_valid_int()
+		"nights", "giants", "crushes", "survive", "boxes", "carclears", "garages": return parts.size() == 2 && parts[1].is_valid_int()
 		"crushed": return parts.size() == 3 && parts[1] in FACTION_KEYS && parts[2].is_valid_int()
 		"wins": return parts.size() == 3 && parts[1] in MODE_KEYS && parts[2].is_valid_int()
 		"mode": return parts.size() == 2 && parts[1] in MODE_KEYS

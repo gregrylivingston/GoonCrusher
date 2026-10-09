@@ -1,8 +1,9 @@
 extends Node
 
 #The run's regions are the world's districts (WorldMap, docs/WORLD.md): areas about 40,000 px across, cut
-#by the level's barriers, each held by one faction with three goons, a name, a tint and a giantism figure,
-#all decided when the world is built. A district decides *who* spawns.
+#by the level's barriers, each with three goons from the level's line-up (its faction is its first goon's),
+#a name, a tint and a giantism figure, all decided when the world is built. A district decides *who* spawns.
+#(The road atlas's six regions are Territories, scripts/world/territories.gd.)
 #
 #Waves are one clock for the whole run (roadmap W-1), whatever district the car is in: the longer the
 #run, the harder it gets. Every waveLength seconds of run clock is a new wave, which pays a star and a
@@ -75,33 +76,37 @@ func getRegion(regionNumber: int , terrainType: int) -> Dictionary:
 #seeded from the world seed by setDistricts, so made-up regions repeat with the map
 var rng := RandomNumberGenerator.new()
 
-#Testing: `-- --faction=wild|tribe|scrap` forces every region's faction, `-- --goons=spoke,karter,turret`
-#forces its three goons (cycled if fewer are given). Also read by playtest and bench runs.
-var forcedFaction := -1
+#Testing: `-- --class=wild|tribe|scrap|biggame|swarm|warmachine` picks every region's goons from that class
+#(Goons.CLASSES) instead of the level's line-up, `-- --goons=spoke,karter,turret` forces its three goons
+#(cycled if fewer are given). Also read by playtest and bench runs.
+var forcedClass := &""
 var forcedGoons: Array = []
 
 func _ready() -> void:
 	for arg in OS.get_cmdline_user_args():
-		if arg.begins_with("--faction="): forcedFaction = ["wild", "tribe", "scrap"].find(arg.get_slice("=", 1))
+		if arg.begins_with("--class="):
+			forcedClass = StringName(arg.get_slice("=", 1))
+			if not Goons.CLASSES.has(forcedClass):
+				push_warning("--class: unknown class %s (%s)" % [forcedClass, ", ".join(Goons.CLASS_ORDER)])
+				forcedClass = &""
 		elif arg.begins_with("--goons="):
 			for id in arg.get_slice("=", 1).split(","):
 				if Goons.DATA.has(StringName(id)): forcedGoons.push_back(StringName(id))
 				else: push_warning("--goons: unknown goon " + id)
 
-## The regions of a new world: one per district, with the faction, goons, name, tint and giantism the
-## WorldMap gave it (and the --faction / --goons overrides)
+## The regions of a new world: one per district, with the goons, faction, name, tint and giantism the
+## WorldMap gave it (and the --class / --goons overrides)
 func setDistricts(map: WorldMap) -> void:
 	resetRegions()
 	rng.seed = WorldGen.ihash(map.worldSeed, WorldGen.TAG_DISTRICT, 7, 7)
 	for d in map.districts:
 		var faction: int = d.faction
 		var goons: Array = d.goons.duplicate()
-		if forcedFaction >= 0 && faction != forcedFaction:
-			faction = forcedFaction
+		if forcedClass != &"":
 			var pick := RandomNumberGenerator.new()
 			pick.seed = WorldGen.ihash(map.worldSeed, WorldGen.TAG_GOONS, d.id, 1)
-			goons = LevelRoster.pickGoons(map.def, faction, pick) if map.def else Goons.regionGoons(faction, Root.terrain.GRASS, pick)
-			if not goons.is_empty(): faction = Goons.DATA[goons[0]].faction
+			goons = LevelRoster.pickFrom(LevelRoster.validIds(Goons.classMembers(forcedClass)), pick)
+			faction = Goons.DATA[goons[0]].faction
 		if not forcedGoons.is_empty():
 			goons = [forcedGoons[0], forcedGoons[1 % forcedGoons.size()], forcedGoons[2 % forcedGoons.size()]]
 			faction = Goons.DATA[goons[0]].faction
@@ -115,16 +120,12 @@ func setDistricts(map: WorldMap) -> void:
 			"visited": false,
 		}
 
-#A region made up without a world map (tests; a level launched before its map exists). Its faction comes
-#from the car's distance from the start, scored as Goons.factionFor does and clamped to the level's
-#LevelDef.factionBand (LevelRoster); its goons from the level's roster for that faction.
+#A region made up without a world map (tests; a level launched before its map exists): three goons of the
+#level's line-up (LevelRoster), or of the --class one.
 func createRegion(terrain: int) -> Dictionary:#terrain is Enum Root.terrain
-	var distance: float = Root.playerCar.global_position.length() if is_instance_valid(Root.playerCar) else 0.0
 	var def := Levels.current()
-	var faction := LevelRoster.factionAt(def, distance, rng.randf_range(-Goons.FACTION_JITTER, Goons.FACTION_JITTER))
-	if forcedFaction >= 0: faction = forcedFaction
-	var goons := LevelRoster.pickGoons(def, faction, rng) if def else Goons.regionGoons(faction, terrain, rng)
-	if not goons.is_empty(): faction = Goons.DATA[goons[0]].faction
+	var goons := LevelRoster.pickFrom(LevelRoster.validIds(Goons.classMembers(forcedClass)), rng) if forcedClass != &"" else LevelRoster.pickGoons(def, rng)
+	var faction: int = Goons.DATA[goons[0]].faction if not goons.is_empty() else Goons.faction.TRIBE
 	if not forcedGoons.is_empty():
 		goons = [forcedGoons[0], forcedGoons[1 % forcedGoons.size()], forcedGoons[2 % forcedGoons.size()]]
 		faction = Goons.DATA[goons[0]].faction
