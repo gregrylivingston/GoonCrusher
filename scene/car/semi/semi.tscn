@@ -24,8 +24,11 @@
 [ext_resource type="Resource" path="res://scene/car/semi/semi_info.tres" id="ci_info"]
 [ext_resource type="Resource" path="res://scene/car/semi/art/semi_art.tres" id="ca_art"]
 
+[ext_resource type="Script" path="res://lib/overhead_car_2d/car_trailer.gd" id="ct_trailer"]
+[ext_resource type="Resource" path="res://scene/car/semi/art/semi_trailer_art.tres" id="ct_art"]
+
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_kaiga"]
-size = Vector2(277, 96)
+size = Vector2(142, 92)
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_cn64w"]
 resource_local_to_scene = true
@@ -47,42 +50,51 @@ lowHealthAudio = Array[AudioStreamMP3]([ExtResource("23_43kt5"), ExtResource("24
 engineNoise = ExtResource("25_yd7s4")
 art = ExtResource("ca_art")
 info = ExtResource("ci_info")
+wheel_base = 90
 
 [node name="CollisionShape2D" parent="." index="2"]
 position = Vector2(0, 0)
-polygon = PackedVector2Array(133, 0, 131.9, 27.5, 129.3, 34.3, 125.3, 38.9, 117.5, 43.6, 109.3, 45.7, 78, 45, 78, -45, 109.3, -45.7, 117.5, -43.6, 125.3, -38.9, 129.3, -34.3, 131.9, -27.5)
+polygon = PackedVector2Array(66, 0, 64.9, 27.5, 62.3, 34.3, 58.3, 38.9, 50.5, 43.6, 42.3, 45.7, 11, 45, 11, -45, 42.3, -45.7, 50.5, -43.6, 58.3, -38.9, 62.3, -34.3, 64.9, -27.5)
 
 [node name="CollisionShape2D_rear" parent="." index="3"]
 position = Vector2(0, 0)
-polygon = PackedVector2Array(-103, 48, -132, 47.8, -135.8, 47, -137.5, 45.3, -137.9, -42.2, -137, -46, -135, -47.3, -103, -48)
+polygon = PackedVector2Array(-62, 44, -73, 44, -73, -44, -62, -44)
 
 [node name="CollisionShape2D_body" type="CollisionPolygon2D" parent="."]
-polygon = PackedVector2Array(78, -35, 78, 35, -103, 35, -103, -35)
+polygon = PackedVector2Array(11, -40, 11, 40, -62, 40, -62, -40)
 
 [node name="tireLocation" parent="sprite" index="0"]
-position = Vector2(42, 122)
+position = Vector2(40, 45)
 
 [node name="tireLocation2" parent="sprite" index="1"]
-position = Vector2(-42, 122)
+position = Vector2(-40, 45)
 
 [node name="tireLocation3" parent="sprite" index="2"]
-position = Vector2(39, -112)
+position = Vector2(39, -45)
 
 [node name="tireLocation4" parent="sprite" index="3"]
-position = Vector2(-39, -112)
+position = Vector2(-39, -45)
 
 [node name="Smoke" parent="sprite/exhaust" index="0"]
-position = Vector2(36, -41)
+position = Vector2(36, 27)
 
 [node name="taillamps" parent="headlamps" index="1"]
 position = Vector2(-30, 0)
 
 [node name="headlights" parent="headlamps" index="2"]
-position = Vector2(13, 0)
+position = Vector2(-54, 0)
 
 [node name="Smoke2" parent="sprite/exhaust" index="1" instance=ExtResource("27_6mbgo")]
-position = Vector2(-36, -41)
+position = Vector2(-36, 27)
 
 [node name="CollisionShape2D" parent="carBodyArea" index="0"]
-position = Vector2(-2.5, 0)
+position = Vector2(-2, 0)
 shape = SubResource("RectangleShape2D_kaiga")
+
+[node name="trailer" type="CharacterBody2D" parent="."]
+top_level = true
+script = ExtResource("ct_trailer")
+art = ExtResource("ct_art")
+
+[node name="shape" type="CollisionPolygon2D" parent="trailer"]
+polygon = PackedVector2Array(254, -48, 254, 48, -52, 48, -52, -48)

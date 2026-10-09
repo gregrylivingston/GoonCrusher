@@ -2,7 +2,7 @@ class_name HudChance extends Control
 
 #The HUD's moments (docs/HUD.md): rare-pickup toasts under the clock, the Scratch Card and Double or
 #Nothing in the top-right corner under the payout, the Crush Combo under the crush pill, arrows at the
-#screen edge for events and supply drops (PickupWorld.beacons), and the Goon Nuke's flash. It covers
+#screen edge for events and supply drops (PickupWorld.beacons), the station pointer, and the Goon Nuke's flash. It covers
 #the screen, isn't scaled by HUD Scale, and only redraws while one of these is showing.
 
 const TOAST_SECONDS := 2.2
@@ -159,9 +159,9 @@ func _process(delta: float) -> void:
 		busy = true
 		flashT -= delta
 	PickupWorld.beacons = PickupWorld.beacons.filter(func(b): return is_instance_valid(b[0]) && not b[0].is_queued_for_deletion())
-	var stationFar := is_instance_valid(Root.station) && is_instance_valid(Root.playerCar) && Root.playerCar.global_position.distance_to(Root.station.global_position) > STATION_FAR
-	if busy || not PickupWorld.beacons.is_empty() || stationFar || stationShown: queue_redraw()
-	stationShown = stationFar
+	var stationOn: bool = is_instance_valid(Root.station) && is_instance_valid(Root.playerCar) && Root.station.active
+	if busy || not PickupWorld.beacons.is_empty() || stationOn || stationShown: queue_redraw()
+	stationShown = stationOn
 
 func _draw() -> void:
 	var w := size.x
@@ -246,26 +246,62 @@ func drawShockwave(k: float) -> void:
 	draw_arc(shockAt, radius, 0.0, TAU, 96, Color(HudTheme.RIM, 0.9 * (1.0 - k)), lerpf(26.0, 3.0, k), true)
 	draw_arc(shockAt, radius * 0.82, 0.0, TAU, 96, Color(HudTheme.GOLD, 0.5 * (1.0 - k)), lerpf(10.0, 1.0, k), true)
 
-#the station (Sprint, Marathon, Defense): a pill on the screen edge pointing at it, with its distance,
-#once it is more than STATION_FAR away. It replaced the car's old 3D-text arrow.
-const STATION_FAR := 4000.0
+#The station (Sprint, Marathon, Defense), in its own blue (HudTheme.STATION) with the mode's icon. Off screen:
+#a pill on the screen edge pointing at it, with the distance. On screen: a tag over the driveway, which fades
+#as the car arrives. With HURRY_SECONDS left on a race clock the pill pulses; in Defense the pointer turns
+#red and shakes for a moment when a goon blows up at a pump (HudTheme.stationHit). It replaced the car's
+#old 3D-text arrow.
+const HURRY_SECONDS := 15.0
+const STATION_PILL := Vector2(200.0, 56.0)
 var stationShown := false
 
 func drawStation() -> void:
 	if not is_instance_valid(Root.station) || not is_instance_valid(Root.playerCar): return
-	var canvas := get_viewport().get_canvas_transform()
-	var inner := Rect2(Vector2(EDGE + 40.0, 175.0), size - Vector2((EDGE + 40.0) * 2.0, 175.0 + 185.0))
+	var mode: int = SaveManager.playerData.gameMode
+	var defense := mode == Root.gameModes.DEFENSE
+	var hit := HudTheme.stationHit()
+	var col: Color = HudTheme.STATION.lerp(HudTheme.BAD, hit)
+	var label := "BASE" if defense else "STATION"
+	var icon: Texture2D = HudTheme.MODE_ICONS.get(mode)
+	var calm := Settings.reduce_motion()
+	var shake := Vector2.ZERO
+	if hit > 0.0 && not calm: shake = Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)) * 6.0 * hit
+	var drive: Vector2 = Root.station.drivewayPoint()
+	var target: Vector2 = get_viewport().get_canvas_transform() * drive
+	if Rect2(Vector2.ZERO, size).grow(-40.0).has_point(target):
+		var fade := clampf((Root.playerCar.global_position.distance_to(drive) - 400.0) / 600.0, 0.0, 1.0)
+		if fade > 0.0 || hit > 0.0: drawStationTag(target + shake, label, Color(col, maxf(fade, hit)), icon)
+		return
+	#a race's last seconds: the rim pulses (and the pill swells, unless Reduce Motion)
+	var pulse := 0.0
+	var level = Root.levelRoot
+	if not defense && is_instance_valid(level) && level.seconds > 0.0 && level.seconds <= HURRY_SECONDS:
+		pulse = 1.0 if Settings.get_value("access/reduce_flashing") else 0.5 + 0.5 * sin(Time.get_ticks_msec() * 0.012)
+	var inner := Rect2(Vector2(EDGE + 60.0, 190.0), size - Vector2((EDGE + 60.0) * 2.0, 190.0 + 300.0)) #clear of the top panels and the dials
 	var centre := inner.get_center()
-	var dir: Vector2 = ((canvas * Root.station.global_position) - centre).normalized()
+	var dir: Vector2 = (target - centre).normalized()
 	var t := INF
 	if absf(dir.x) > 0.001: t = minf(t, (inner.size.x * 0.5) / absf(dir.x))
 	if absf(dir.y) > 0.001: t = minf(t, (inner.size.y * 0.5) / absf(dir.y))
-	var at := centre + dir * t
-	var miles: float = Root.playerCar.global_position.distance_to(Root.station.global_position) / 10000.0
-	if Settings.distance_unit() == "km": miles *= 1.609
-	var rect := Rect2(at - Vector2(70.0, 24.0), Vector2(140.0, 48.0))
-	var tip := at + dir * 46.0
-	draw_colored_polygon(PackedVector2Array([tip, at + dir * 26.0 + dir.orthogonal() * 16.0, at + dir * 26.0 - dir.orthogonal() * 16.0]), HudTheme.GOLD)
-	HudTheme.panel(self, rect, Color(HudTheme.GOLD, 0.9), 24)
-	HudTheme.text(self, rect.position + Vector2(70.0, 18.0), "STATION", 12, HudTheme.MUTED, HORIZONTAL_ALIGNMENT_CENTER, 0, HudTheme.OUTLINE, HudTheme.BODY)
-	HudTheme.text(self, rect.position + Vector2(70.0, 40.0), "%d %s" % [int(miles) + 1, Settings.distance_unit()], 20, HudTheme.GOLD, HORIZONTAL_ALIGNMENT_CENTER, 4)
+	var at := centre + dir * t + shake
+	var rect := Rect2(at - STATION_PILL * 0.5, STATION_PILL)
+	if not calm: rect = rect.grow(4.0 * pulse)
+	#the arrow starts where `dir` leaves the pill
+	var half := rect.size * 0.5
+	var edge := minf(half.x / maxf(absf(dir.x), 0.001), half.y / maxf(absf(dir.y), 0.001))
+	draw_colored_polygon(PackedVector2Array([at + dir * (edge + 24.0), at + dir * (edge - 4.0) + dir.orthogonal() * 16.0, at + dir * (edge - 4.0) - dir.orthogonal() * 16.0]), col)
+	HudTheme.panel(self, rect, col.lerp(Color.WHITE, pulse * 0.8), 26)
+	if icon: HudTheme.icon(self, icon, rect.position + Vector2(32.0, rect.size.y * 0.5), 36.0)
+	HudTheme.text(self, rect.position + Vector2(60.0, 23.0), label, 16, HudTheme.TEXT)
+	HudTheme.text(self, rect.position + Vector2(60.0, 46.0), HudTheme.stationDistance(), 20, col, HORIZONTAL_ALIGNMENT_LEFT, 5)
+
+#on screen: a small pill over the driveway with a notch pointing down at it
+func drawStationTag(at: Vector2, label: String, col: Color, icon: Texture2D) -> void:
+	col.a = snappedf(col.a, 0.1) #HudTheme.panel caches a box per colour
+	var w := HudTheme.textWidth(label, 16) + 58.0
+	var rect := Rect2(at + Vector2(-w * 0.5, -96.0), Vector2(w, 38.0))
+	var notch := at + Vector2(0.0, -40.0)
+	draw_colored_polygon(PackedVector2Array([notch, notch + Vector2(-12.0, -18.0), notch + Vector2(12.0, -18.0)]), col)
+	HudTheme.panel(self, rect, col, 19, Color(HudTheme.PANEL, HudTheme.PANEL.a * col.a))
+	if icon: HudTheme.icon(self, icon, rect.position + Vector2(22.0, 19.0), 26.0, Color(1, 1, 1, col.a))
+	HudTheme.text(self, rect.position + Vector2(42.0, 26.0), label, 16, Color(HudTheme.TEXT, col.a), HORIZONTAL_ALIGNMENT_LEFT, 5, Color(HudTheme.OUTLINE, col.a))

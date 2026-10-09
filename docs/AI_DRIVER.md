@@ -126,7 +126,8 @@ Godot_console.exe --headless --fixed-fps 60 --path . -- --career --persona=rooki
 | Runs | the obvious next one: the furthest open level's first unbeaten mode; after 3 losses in a row there, Countdown on the level before to farm coins | the path while it's winning, else the run that pays most per minute in its own history (20% sampling the others) | the level and mode it has played least, with the car it has driven least |
 | Garage | a new car the moment it is affordable, any pickup unlock under half the bank, then the cheapest upgrade going | saves once the next car is within 3 average payouts; meanwhile the pickup unlock with the best `ai` worth per coin (under a third of the bank), then Engine, Armor, Oil, Traction first (no stat more than 2 levels ahead of the lowest) | buys every car to try it, often a random pickup unlock, then the stat it has least of |
 | Gems | never | a starting gadget only with 6+ gems, Nitro in the boost slot with 8+ left; slot rerolls when a spin paid nothing | gadgets, boosts, rerolls, new hands, raises at random |
-| In-run screens | slot bet 0; the rarest Deal card; the nearest claw prize; the first Pit Shop offer it can afford | bets 25 with 400+ run coins; the Deal card with the highest `ai` worth; the rarest claw prize; supplies in the Pit Shop | random bets; the card it hasn't discovered; extra claw grabs; buys the whole Pit Shop |
+| In-run screens | slot bet 0; in The Deal keeps a card once fewer than half the deck beat it; the nearest claw prize; the first Pit Shop offer it can afford | bets 25 with 400+ run coins; keeps a Deal card worth 20+ (`ai`); the rarest claw prize; supplies in the Pit Shop | random bets; keeps a Deal card it hasn't discovered; extra claw grabs; buys the whole Pit Shop |
+| Prize games (all personas) | the claw waits for its swing to settle before dropping; the wheel is held for a random 0.2-2 s; the Vault's dial is turned to each number, 30% of the time 1-3 off (a person mishearing); every game's winnings board is left with Accelerate or a click (`career.gd`, `answer*`, `leaveBoard`) | | |
 | Side trips | Goonopedia or records sometimes (15%) | none | Goonopedia (every tab), records and Settings (every tab, changing nothing) every visit; pauses half its runs, opens Settings from pause; abandons 6% of runs |
 
 ### Starting points
@@ -258,7 +259,7 @@ Every candidate is scored **value ÷ (seconds to get there + 1)**. The current g
   - The lot is walled with one gap. The car keeps a small visibility graph: the driveway, two markers 1100 and 2000 px out in front of the gap, and four corners clear of the lot.
   - Points are joined wherever a car-wide sweep is clear, and the driveway and inner marker can only be entered from within 34° of the gap's line.
   - The car steers along the shortest way through the graph and slows to 450 px/s within 2500 px. It goes round the lot and turns in lined up, instead of pushing into a wall or reaching the gap side-on.
-- **Defense:** the car patrols 500–1100 px from the base. Goons beyond `defenseRingPx` (2500 px) from it are ignored. Nearer ones are worth up to `defenseThreat` (3) times more the closer they are, and double once they are at the walls (`siege`). It doesn't park to refuel yet.
+- **Defense:** the car patrols 500–1100 px from the base. Goons beyond `defenseRingPx` (2500 px) from it are ignored. Nearer ones are worth up to `defenseThreat` (3) times more the closer they are, and double within `DEFENSE_BLAST_PX` (500 px) of a pump, where they are about to blow up. It doesn't park to refuel yet.
 
 ### Fuel rules: pulse and glide
 

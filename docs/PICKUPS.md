@@ -15,10 +15,12 @@
 | `scene/pickups/pickup_nodes.gd` (`PickupNodes`) | Things gadgets leave in the world: Mine, OilSlick, Flare, Bait, Hubcap. |
 | `scene/pickups/world_props.gd` (`WorldProps`) | Skill challenges, events and crates: Strongbox, Golden Goon, Loot Truck, bowling lane and pins, Ring Run, Speed Trap, Donut Zone, Bullseye, Prize Wheel, Crate, Supply Drop, Turret. |
 | `scene/pickups/pickup_world.gd` (`PickupWorld`) | The level's director: supply drops and events on timers, chunk props, the wave chest, beacons and Speed Trap records. |
-| `scene/pickups/menus/*` | Pausing menus on one base (`PickupMenu`): `PickupDeal` (The Deal), `ClawCrane`, `PitShop`, and the gift box games `PrizeWheelMenu` and `PrizeVault`. |
+| `scene/pickups/menus/*`, `scene/player/slots/slot_machine.gd` | The prize games on one frame (`PickupMenu`, "Prize games" below): `ClawCrane`, `SlotMachine`, `PrizeWheelMenu`, `PickupDeal` (The Deal), `PrizeVault`, and the `PitShop`. |
 | `scripts/global/crush_prizes.gd` (`CrushPrizes`), `scene/player/slots/gift_box.gd` (`GiftBox`) | Gift boxes: crush XP, the box curve and tiers, the prize game ladder and its unlocks; the box reveal. |
 | `scene/player/hud/hud_items.gd`, `hud_chance.gd` | The HUD: gadget slot and buff rings; toasts, Scratch Card, Double or Nothing, combo, beacons, the Nuke's flash (`docs/HUD.md`). |
 | `scene/player/slots/slot_symbols.gd` (`SlotSymbols`) | What the slot reels show, the bets, and paylines. |
+| `tests/prize_lab/*.tscn` | The prize lab: one scene per game that loads a run and opens that game again and again ("Prize games", Testing). |
+| `tests/game/test_prize_games.gd` | No game pays another, the winnings board's lines, the claw's grip, the slot's pay line, the wheel's power, the Deal's count, the Vault's dial. |
 | `scripts/art/pickup_icons.js` | Generates the new icons in `texture/icon/`. Change art there and re-run `node scripts/art/pickup_icons.js`; never edit the SVGs by hand. It writes a `.svg.import` with `svg/scale=1.5` for new files. There are no `_flat` twins, because nothing draws these icons through the 3D text shader. |
 | `tests/game/test_pickups.gd` | Registry completeness, HUD targets, drop odds, pity, buffs on ticks, nitro in `integrate()`, crush overrides, the shield, the gadget and boost slots, Nitro charges, supplies, star fragments, combo, paylines, lottery. |
 
@@ -82,17 +84,21 @@ The Goonopedia, the HUD flyers and the tests pick the new pickup up from the reg
 
 **Time Warp** makes goons act on 2 physics ticks of every 5 (`Pickups.goonTickSkipped`, checked at the top of `Walker._physics_process`). It never touches `physics_ticks_per_second`.
 
-**Lures.** Goon Bait (all goons within 1200 px) and the Flare (Buzzards only) add an entry to `Pickups.lures`. A goon in `move` or `siege` walks to the lure instead (state `lured`), so Bait pulls a Defense siege off the walls.
+**Lures.** Goon Bait (all goons within 1200 px) and the Flare (Buzzards only) add an entry to `Pickups.lures`. A goon in `move` walks to the lure instead (state `lured`), so Bait pulls Defense goons off their march on the station.
 
 ## The slot machine
 
-- **Reels:** `SlotSymbols.pick()` rolls a tier with the reels' own odds (`TIER_WEIGHTS` 50/30/14/5/1), tilted up by Dice and the bet. It then picks a drop-eligible pickup of that tier, or STAR (6%, plus 2% per bet level). Pickups that pause the run (slot, Deal, Claw, Mystery Box) never show.
-- **Bet:** before the first spin, Steer Left and Right choose 0, 25, 100 or 250 run coins. The bet is paid when the spin starts.
+`SlotMachine` (`scene/player/slots/slot_machine.gd`), a prize game on the `PickupMenu` frame ("Prize games" below).
+
+- **Reels:** each reel is a strip of 24 symbols from `SlotSymbols.pick()`, which rolls a tier with the reels' own odds (`TIER_WEIGHTS` 50/30/14/5/1), tilted up by Dice and the bet, then a drop-eligible pickup of that tier, or STAR (6%, plus 2% per bet level). No game ever shows (`Pickups.NOT_IN_GAMES`).
+- **Play:** the reels spin at 7 symbols a second, slow enough to read. Each Accelerate stops the next reel on the symbol coming up, and the symbol on the pay line is exactly what pays (`SlotMachine.line`). Once all three stand, the line under them says what it pays.
+- **Nudges:** one, plus one per gift box tier. Steer picks a reel and Use (or a click on the reel) rolls it on by one symbol.
+- **Bet:** until the first stop, Steer Left and Right choose 0, 25, 100 or 250 run coins; the symbols out of sight are rolled again at the new odds. The bet is paid at the first stop.
 - **Paylines** (`SlotSymbols.payouts`): a pair pays its symbol twice and a triple five times, capped by rarity (`MAX_REPEAT`; a triple of Blueprints pays one). One or two stars pay Star Fragments; three are the jackpot, +1 star and five purses.
 - **Dice:** a `luck / 500` chance that reel 3 copies reel 2.
-- **Gems:** rerolling still costs 1 gem.
-- **From a gift box** (below) the machine is a free spin, and the box's tier adds free bet levels on top of the bet (`SlotSymbols.bonus`).
-- **Name tags:** each reel symbol has its short name under it (`slot_award_icon.gd`).
+- **Gems:** Brake spins all three again for 1 gem.
+- **From a gift box** (below) the machine is a free spin, and the box's tier adds free bet levels on top of the bet (`SlotSymbols.bonus`) and nudges.
+- **Name tags:** each reel symbol has its short name under it.
 
 ## Gift boxes
 
@@ -105,17 +111,19 @@ Crushing earns **crush XP** toward the next **gift box**; each box holds one pri
 
   | Game | Value per play | Box versions |
   |---|---|---|
-  | Claw Crane | 1.05 for an average grab, 2.67 aimed at the best prize | 1 free grab, 2 from Silver, 3 at Diamond; slips 3% less per tier; a Rare-or-better heap from Gold |
+  | Claw Crane | 1.05 for an average grab, 2.67 aimed at the best prize | 1 free grab, 2 from Silver, 3 at Diamond; +0.05 grip per tier; a Rare-or-better heap from Gold |
   | Scratch Card | 2.12 | matches 7% more often per tier; a pair pays 1 + tier / 2, a triple 3 + tier |
   | Prize Wheel (`PrizeWheelMenu`, a pausing version of the world wheel) | 2.78, and it can bust | Bronze: no busts; Silver: coin wedges doubled; Gold: the Wrench is a Gem; Diamond: the Nitro is a second Jackpot |
-  | The Deal | 2.77, one card but your pick | Rare or better from Silver, Epic or better at Diamond |
-  | Slot Machine | 6.95, three reels pay three things | free bet levels = tier |
-  | The Vault (`PrizeVault`, new) | highest: 2 of 5 sealed boxes of Rare or better | Epic or better from Gold; 3 picks at Diamond |
+  | The Deal | 2.77, one card but your pick | Rare or better from Silver, Epic or better at Diamond; +1 swap per tier, up to +2 |
+  | Slot Machine | 6.95, three reels pay three things | free bet levels and extra nudges = tier |
+  | The Vault (`PrizeVault`) | highest: up to 3 drawers of Rare or better (the third Epic or better), by skill | +1 strike from Silver; from Gold the dial may be 1 off and the drawers are a tier better |
+
+  The values were measured with the games' old rules (a random grab, a pick of three, 2 of 5 boxes). The reworked games ("Prize games" below) reward skill and need measuring again by hand (package 1).
 
 - **Which game:** `pickGame` rolls among the **unlocked** games: a Cardboard box favours the weakest, a Diamond box the strongest, the others less the further they are from that. A new save opens only the Claw Crane. The rest are unlocks `prize:<id>` in `meta.unlocks` (prices in `CrushPrizes.GAMES`: Scratch Card 3,000, Prize Wheel 8,000, The Deal 18,000, Slot Machine 40,000, The Vault 80,000 and 10 gems; opened in ladder order: `CrushPrizes.state`, `grant`); harnesses open every game (`Unlocks.allOpen`). The Goonopedia sells them: a PRIZE GAMES ladder at the top of the Pickups tab (docs/UI.md), bought through `Unlocks.buy("prize:<id>")` (`Unlocks.state` and `price` hand "prize:" ids to `CrushPrizes`). The career personas buy them like pickups.
-- **The box:** it pauses the run, drops in, rattles, pops its lid on the game (name and tier) and opens it after 1.9 s; Accelerate or a click skips ahead. It credits nothing. Headless runs and harnesses skip it (`Transition.instant()`), Reduce Motion drops the shake. The Scratch Card runs in the HUD corner, so the box resumes the run through the 3-2-1 before it starts. A box earned under a paused tree opens once it unpauses (`GameUI.checkGiftBox`, every frame).
+- **The box:** it pauses the run, drops in, rattles, pops its lid on the game (name and tier) and opens it after 1 s; Accelerate or a click skips ahead. It credits nothing. Headless runs and harnesses skip it (`Transition.instant()`), Reduce Motion drops the shake. The Scratch Card runs in the HUD corner, so the box resumes the run through the quick 3-2-1 before it starts. A box earned under a paused tree opens once it unpauses (`GameUI.checkGiftBox`, every frame).
 - **After the run:** no pausing screen opens once the run has ended (`PickupMenu.runOver`, also checked by the slot machine and the box): a pickup or box landing in the same frame as the end never covers the results ticket.
-- **Testing:** `-- --prize=<game id>` puts that game in every box. `-- --pickup-shots=giftbox:<tier>:<game>,prizewheel:<tier>,vault:<tier>` (with a bench run) screenshots them. The run log and playtest results carry `crush_xp` and `boxes`.
+- **Testing:** the prize lab (`tests/prize_lab/<game>.tscn`, "Prize games") plays one game again and again. `-- --prize=<game id>` puts that game in every box. `-- --pickup-shots=giftbox:<tier>:<game>,prizewheel:<tier>,vault:<tier>` (with a bench run) screenshots them. The run log and playtest results carry `crush_xp` and `boxes`.
 
 ## Name tags
 
@@ -127,13 +135,28 @@ Wherever an icon stands for something held or offered, its short name is printed
 
 The Deal's cards and the Pit Shop already show full names, and the Mystery Box names its prize in a toast.
 
-## Menus that pause
+## Prize games
 
-- **Base:** `PickupMenu` dims the screen, shows one CardPanel in the menu theme, and ignores keys for 0.6 s so a held Accelerate can't pick something. It closes through the 3-2-1 countdown. Every pausing menu joins group `slotMachine`, so the playtest and bench harnesses tap Accelerate through it.
-- **The Deal:** three cards of Uncommon or better. Steer to choose, Accelerate to take. Brake deals a new hand for 1 gem, and Use raises the hand one tier for 100 run coins, doubling each time.
-- **Claw Crane:** steer, then Accelerate to drop. Off-centre grabs slip more and Dice slips less. Brake buys another grab for 150 run coins.
-- **Prize Wheel** and **The Vault:** gift box games only ("Gift boxes" above). The wheel: Accelerate spins, the wedge pays the moment it stops, Accelerate leaves. The Vault: steer to a sealed box, Accelerate opens it (credited at once, and the focus moves to the next sealed one); when the picks are spent the rest are shown and Accelerate leaves.
-- **Pit Shop** (Marathon, each station but the last): three offers of Uncommon or better for 60 / 150 / 400 / 900 run coins. Spent coins don't reach the payout. Leaving opens the station's free slot machine.
+Every game that pauses the run sits in the same frame, `PickupMenu` (`scene/pickups/menus/pickup_menu.gd`): the Claw Crane, the Slot Machine, the Prize Wheel, The Deal, The Vault and the Pit Shop. The Scratch Card and Double or Nothing are not on it: they run in the HUD corner without pausing.
+
+- **The frame:** one card in the menu theme over the dimmed run, always the same size: the title and one line under it, a 640 x 420 stage (`PickupMenu.STAGE`, the Claw Crane's size) that the game draws on (`drawStage`) or fills with controls, one status line (`say`) and a row of clickable key hints (`hints`). It skids in under the hatch (`GameHatch`) and pauses the tree. Mouse events on the stage go to `onStageMouse`, so every game plays with the mouse alone.
+- **One at a time:** a game that opens while another game, a gift box or the 3-2-1 is showing waits for it (`otherScreenUp`), so a pickup's game and a gift box landing together play one after the other and a game never opens under the countdown (which would unpause the run beneath it).
+- **Keys:** the driving keys and the menu keys (`onAction`). A key held when the game opens counts only once it is released, and nothing counts for the first `ARM_SECONDS` (0.2).
+- **Winnings:** a game credits each prize the moment it is won (`award`, `awardAll`, `awardCoins`, `awardGems`, or `note` for what the game credited itself) and ends on the winnings board (`showWinnings`). The board lists each prize in its rarity colour with what it did, which `PickupMenu.outcome` works out before collecting: "Ready, fire with E", "+2 charges", "Sold for 30 coins: your Rocket is rarer", "On now for 12 s", or the first sentence of the pickup's text. `awardAll` pays the rarest first, so a lesser gadget never takes the slot from a better one won at the same time. Accelerate or a click leaves.
+- **No game inside a game:** prize games never pay a Casino pickup (`Pickups.NOT_IN_GAMES`: slot machine, Deal, Claw, Mystery Box, Scratch Card, Double or Nothing, Lottery Ticket, Prize Wheel). `PickupDeal.NEVER` and `SlotSymbols.NEVER` are the same list.
+- **Leaving** (`close`) slams the hatch and resumes the run through the quick 3-2-1 (`PickupMenu.resumeRun`: `countdown.gd`'s `QUICK_STEP`, 0.25 s a lamp). The run's own start keeps 1 s lamps. The Pit Shop's hand-off to the free slot machine (`close(false)`) is instant.
+- **Harnesses:** every game joins group `slotMachine`, and tapping Accelerate alone always gets through it, as the playtest harness does. The career personas play each game properly (`career.gd`, the `answer*` functions).
+
+The games:
+
+- **Claw Crane** (`ClawCrane`): a side view of a crane over a heap of prizes; rarer prizes are smaller and heavier (`RADIUS`, `WEIGHT`). Steer drives the gantry and the claw swings on its cable as it starts and stops (a pendulum, `swing`), so a good drop waits for the swing or times it. The mouse steers it to the pointer. Accelerate drops it onto the first prize under it. The grip starts from how centred the claw is (`gripFor`, plus Dice and the box tier) and drains on the way up and over to the chute, faster for heavy prizes and while swinging (`GRIP_DRAIN`, `SWING_DRAIN`). The gauge shows it, and a weak grip wobbles before it lets go (`LET_GO`). A prize that slips over the chute still counts, and a lucky grab can bring two. Brake buys another grab for 150 run coins once the free ones are used.
+- **Slot Machine** (`SlotMachine`): "The slot machine" above.
+- **Prize Wheel** (`PrizeWheelMenu`, gift boxes only): hold Accelerate (or the mouse) and the power gauge sweeps up and down; let go to spin. Friction, drag and a small loss at each peg past the flapper make the same power run the same way, from about one turn to nearly three, so it can be aimed. The wedge pays when it stops.
+- **The Deal** (`PickupDeal`): press your luck. You hold one face-up card from a deck of six; what is left in the deck is shown by rarity, never in order. Accelerate keeps your card; Brake swaps it for the next one, and a swapped card is gone. Two swaps, plus one per box tier, up to four.
+- **The Vault** (`PrizeVault`, gift boxes only): crack a three-number combination on a 40-number dial. Steer turns it (tap for one number, hold to spin; the mouse wheel or a drag also turn it). The listening gauge rises within 7 numbers of the next one and the lock clicks on it. Accelerate (or a click) tries the number: right opens the next drawer, credited at once; wrong is a strike. The alarm ends the game after three strikes (four from Silver) with what is open, or a consolation Uncommon if nothing is.
+- **Pit Shop** (`PitShop`, Marathon, each station but the last): three offers of Uncommon or better for 60 / 150 / 400 / 900 run coins, as buttons on the stage. A bought one says what it did. Spent coins don't reach the payout. Leaving opens the station's free slot machine.
+
+**Testing.** The prize lab, `tests/prize_lab/`, has one scene per game (`claw`, `slot`, `wheel`, `deal`, `vault`, `scratch`, `pitshop`). Open one and press F6, or run `Godot --path . res://tests/prize_lab/claw.tscn`. It loads Prairie on a scratch save (`user://prize_lab/`) with every pickup open, keeps the car topped up and the clock away, and opens the game as soon as the run starts, then again after each play. Keys: R play now, 1-5 the box tier, B the next play comes in a gift box, A auto replay, G more coins and gems, C clear the held gadget and boost, H hold a Legendary gadget (to see a lesser prize sold). Its panel lists what each play really credited (the car's `rewarded` signal and the change in coins, gems, stars and held items), to check against the winnings board. `-- --lab-shots` plays by itself, saves a screenshot of each play when it opens and on its board, and quits.
 
 ## The world
 
@@ -204,7 +227,7 @@ These lines are all that pickups add to files other systems own. They are marked
 | `scripts/global/Region.gd` | `_process` wave: `PickupWorld.waveChest()`. |
 | `scene/enemy/spawnManager.gd` | `increaseGiantOdds`: the Panic Button. |
 | `scene/player/playerRoot.gd` | `addPickupWidgets`, `HudChance`, and the gift boxes (`checkGiftBox`). |
-| `scene/player/slots/*` | Reels from `SlotSymbols`; `slotMachine.payReels`, the bet. |
+| `scene/player/slots/*` | The slot machine (`SlotMachine`) and the gift box reveal (`GiftBox`). |
 | `scene/player/menu/gameSummary.gd` | The Lottery row, best combo, Blueprints; `Unlocks.countRun` and `refresh` (the Unlocked row). |
 | `scene/player/menu/main/main2.gd` | The loadout in run setup (a gadget and a boost, open ones only), the Next unlock line. |
 | `scene/player/menu/goonopedia/goonopedia.gd` | The Pickups tab from the registry in tree order, unlock states and buying, `dropShare(id, mode)`. |
@@ -212,7 +235,7 @@ These lines are all that pickups add to files other systems own. They are marked
 | `scene/level/levelRoot.gd` | `nightsSeen` (for the night unlocks). |
 | `scripts/ai/ai_driver.gd` | `pickupValue` reads `ai` from the registry. |
 | `scripts/global/settings.gd`, `project.godot` | The `UseItem` and `UseMove` actions, rebindable as "Fire Gadget" and "Boost / Hop" (settings v2 moved Space from Fire to the Handbrake: `migrateDrivingKeys`). |
-| `scene/powerup/powerup.gd`, `purse.gd`, `slotMachine.gd` | Discovery for the original pickups. |
+| `scene/powerup/powerup.gd`, `purse.gd`, `slotMachine.gd` | Discovery for the original pickups; the slot machine pickup opens `SlotMachine`. |
 
 ## Known gaps and tuning
 

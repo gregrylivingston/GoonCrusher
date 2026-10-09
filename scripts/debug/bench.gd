@@ -316,7 +316,7 @@ func levelEvents() -> void:
 		Root.levelRoot.setNighttime(true)
 	if cfg.has("slots") && slotsClaimed < cfg.slots && levelTime > 4.0 && not get_tree().paused && get_tree().get_nodes_in_group("slotMachine").size() == 0:
 		slotsClaimed += 1
-		Root.levelRoot.add_child(load("res://scene/player/slots/slotMachine.tscn").instantiate())
+		SlotMachine.open()
 		get_tree().paused = true
 	if cfg.has("purses") && pursesSpawned < cfg.purses && levelTime > 5.0 + pursesSpawned && not get_tree().paused:
 		pursesSpawned += 1

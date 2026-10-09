@@ -7,7 +7,7 @@ The 9 cars use generated top-down art that follows each driver's menu painting, 
 | Path | What |
 |---|---|
 | `scripts/art/car_gen.js` | The generator: each car is about 60 numbers (body outline, cabin, wheels, lights, livery). Change a car here. |
-| `scripts/art/bake.html`, `scripts/art/bake_cars.py` | The bake: `python scripts/art/bake_cars.py [car ...]` opens `bake.html#<car>` in headless Edge and writes the car's files. Takes about 5 s per car. |
+| `scripts/art/bake.html`, `scripts/art/bake_cars.py` | The bake: `python scripts/art/bake_cars.py [car ...]` opens `bake.html#<car>` in headless Edge and writes the car's files. Takes about 5 s per car. Baking `semi` also bakes its trailer (`EXTRA`: `car_gen.js`'s `semiTrailer`, written as `semi_trailer_*`, with `semi_trailer_geometry.json` and `semi_trailer_art.tres`). If headless Edge prints nothing (it can't run on every machine), any renderer that gives `car_gen.js` a 2D canvas and prints `bake.html`'s JSON works; `@napi-rs/canvas` in Node matched Edge to within 0.2% of pixels. |
 | `scene/car/<car>/art/` | Baked output: `<car>_a0..a2.png` (weathered), `<car>_c0..c2.png` (showroom), `<car>_mask.png`, `<car>_shadow.png`, `<car>_art.tres` and `geometry.json`. |
 | `scene/car/car_art_set.gd` | `CarArtSet`, the resource each car scene points at through `art`. |
 | `shader/car_damage.gdshader` | Blends the three sheets per system. |
@@ -99,6 +99,22 @@ Stock cars on grass after the first fit (2026-10-09). Before, the stock sedan to
 | semi | 906 | 13 | 1.49 / 1.46 / 1.44 | 1.37 s, 88% | 1.3 s | 307 |
 | audi | 1,417 | 9 | 2.11 / 2.05 / 1.85 | 1.03 s, 89% | 1.2 s | 409 |
 | racer | 1,553 | 9 | 2.11 / 2.02 / 1.77 | 1.08 s, 89% | 1.4 s | 417 |
+
+## Trailer
+
+The semi pulls a trailer on a fifth wheel (`lib/overhead_car_2d/car_trailer.gd`, `CarTrailer`, the `trailer` node in `semi.tscn`). The car is the tractor; the trailer is its own `CharacterBody2D` (top level, layer 1) that the car moves once a physics tick, after its own move (`follow()`). It is not part of `integrate()`, so the AI driver's predictions drive the tractor alone.
+
+**Art.** `car_gen.js` draws the semi as two cars on their own canvases (`box`): `semi`, the tractor (136 × 160, centred between its steer axle and drive tandem, its frame, fifth-wheel plate and mud flaps running on behind the cab), and `semiTrailer`, a US-style 53 ft box (136 × 330: 310 long, about 2.2 times the tractor, ribs, amber side markers, rear doors). The trailer draws its shadow under the cab and its body over it, so a folded trailer's nose covers the tractor's frame. Its zone mask is hull, with tyres by its tandem; its hits wear the truck's tyres. The car's taillamps and a copy of its night silhouette light ride on the trailer (`syncLights`).
+
+**Geometry** (tractor space, x forward): kingpin `(-40, 0)` (the plate), trailer axles `length` 238 behind it, the trailer's box 306 × 96 from 18 ahead of the kingpin. The tractor's wheelbase is 90.
+
+**Motion.** The trailer pivots on the kingpin with its own turn rate, `spin`. The rate at which its axles wouldn't slide sideways is the kingpin's sideways speed over `length`; each tick the tyres pull `spin` toward it by `CarHandling.trailerGrip` (0.35, times the ground's grip), capped at `MAX_SPIN` 5 rad/s. So it cuts inside corners, lags into a flick and swings past it after, swings wide on ice, and reversing straight it folds (about 2.6 s from 3° to the stop at 200 px/s) unless the driver steers it straight. The fold stops at `trailerJackknife` 80°, where it turns with the tractor and takes `trailerFoldDrag` 3% of the tractor's speed a tick.
+
+**Contact.** Walls stop it (`move_and_slide`), and a hit damages the truck through `collideWithFixedObject(..., respond = false, zone = "tires")`, judged by the trailer's real speed coming in (never the push that corrects it; that fed back into its swing and wrecked a semi in seconds). Blocked, it stops swinging. A snagged trailer holds the tractor back: no pulling away from it, and the gap closes at `MAX_TUG` 8 px a tick. Breakables smash and cones fly as for the car. Its sides and tail swat goons like the car's flanks (`slamGoons`, counting its swing); its nose, under the cab, doesn't.
+
+**Spawn and teleports.** It is placed straight behind the tractor once the car is placed (`placeBehind`, deferred from `attach`), and again whenever the kingpin is more than two trailer lengths away.
+
+`tests/game/test_trailer.gd` covers it: placement, cutting inside, the reverse fold and its stop, a teleport, low grip, and a snagged trailer staying calm.
 
 ## Driving feel
 

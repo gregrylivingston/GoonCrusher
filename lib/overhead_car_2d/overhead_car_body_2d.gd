@@ -122,7 +122,10 @@ func _init():
 	motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
 
 
+@onready var trailer: CarTrailer = get_node_or_null("trailer") #the semi's (CarTrailer); null for every other car
+
 func _ready():
+	if trailer: trailer.attach(self)
 	purseAudio.append_array(powerupAudio)
 	$"AudioStream-Engine".stream = engineNoise
 	$"AudioStream-Engine".play()
@@ -174,6 +177,7 @@ func applyArt() -> void:
 	$headlamps/carhighlight.texture = sheets[0]
 	$headlamps/carhighlight.scale = $sprite.scale * body.scale
 	$headlamps/carhighlight.position = $sprite.position
+	if trailer: trailer.applyArt(Settings.get_value("gameplay/car_paint"))
 	lastDamageLook = PackedFloat32Array()
 	updateDamageLook()
 
@@ -189,6 +193,7 @@ func updateDamageLook() -> void:
 	if look == lastDamageLook: return
 	lastDamageLook = look
 	$sprite/body.material.set_shader_parameter("damage", look)
+	if trailer: trailer.setDamage(look)
 
 var gasWarningGiven = false
 func resetGasWarning(): gasWarningGiven = false
@@ -272,7 +277,9 @@ func _physics_process(delta):
 			#a plow, spikes, monster tires or a golden ride crush at any speed (crushOverride)
 			if not (velocity.length() > (0.0 if crushBuffActive() else 100.0) && crushGoon(collider)): wearSystem(hitZone(collision), GOON_SCUFF)
 		#else: print(collider.get_class())
+	if trailer: trailer.follow(delta)
 	if isPlayer && (velocity.length() > SLAM_MIN_SPEED || absf(spinRate) > 1.5): slamGoons()
+	if isPlayer && trailer && (trailer.axleVel.length() > SLAM_MIN_SPEED || absf(trailer.spin) > 1.5): trailer.slamGoons()
 
 	if velocity.length() == 0:
 		stopCarFX()
@@ -432,13 +439,16 @@ static func smashSpeedOf(breakable: Object) -> float:
 	return BreakableProp.speedOf(breakable) if BreakableProp.isBreakable(breakable) else 0.0
 
 var sparks = preload("res://scene/fx/spark/spark.tscn")
-func collideWithFixedObject( collision, hitVelocity = null ):
+#`respond` false: the hit was the trailer's, so the car itself doesn't bounce or turn; `zone` names the
+#system it wears instead of the side of the car that hit
+func collideWithFixedObject( collision, hitVelocity = null, respond := true, zone := "" ):
 	if not $"AudioStream-Crash".playing: 
 		$"AudioStream-Crash".play()
 		if isPlayer: Settings.vibrate(0.3, 0.6, 0.15)
 		var spark = sparks.instantiate()
 		spark.global_position = collision.get_position()
-		Root.levelRoot.add_child(spark)
+		if is_instance_valid(Root.levelRoot): Root.levelRoot.add_child(spark)
+		else: spark.queue_free()
 	var moving: Vector2 = hitVelocity if hitVelocity != null else velocity
 	var hurt := wallTick(collision.get_normal(), moving, Engine.get_physics_frames())
 	if is_instance_valid(juice): juice.onWall(collision.get_position(), collision.get_normal(), moving, lastWallHitTick == lastWallTick)
@@ -449,8 +459,8 @@ func collideWithFixedObject( collision, hitVelocity = null ):
 		damage(hurt) #armor is applied once, in damage()
 		wallHealthLost += before - health
 		if moving.length() >= ZONE_WEAR_MIN_SPEED:
-			wearSystem(hitZone(collision), ZONE_WEAR_PER_SPEED * hurt / WALL_DAMAGE_PER_SPEED * 100.0 / (maxf(armor, 0.0) + 100.0))
-	wallResponse(collision.get_normal(), moving, lastWallHitTick == lastWallTick)
+			wearSystem(zone if zone != "" else hitZone(collision), ZONE_WEAR_PER_SPEED * hurt / WALL_DAMAGE_PER_SPEED * 100.0 / (maxf(armor, 0.0) + 100.0))
+	if respond: wallResponse(collision.get_normal(), moving, lastWallHitTick == lastWallTick)
 
 #How the car comes off a wall (CarHandling's wall numbers). A fresh hit loses speed once (wallSpeedKeep)
 #and, going in hard, bounces back off it, less for heavy cars; staying against it only scrapes a little

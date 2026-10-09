@@ -385,8 +385,6 @@ func test_rocks_walls_and_the_station_mark_their_occluders():
 	wall.free()
 	var station = load("res://scene/level/station.tscn").instantiate()
 	assert_true(station.get_node("house/LightOccluder2D").get_meta("gc_world", false), "and the station house")
-	for side in ["wallNorth", "wallSouth", "wallWest", "wallEast"]:
-		assert_true(station.get_node(side + "/LightOccluder2D").get_meta("gc_world", false), "and the station's %s" % side)
 	station.free()
 	var goon = load("res://scene/enemy/walker/walker.tscn").instantiate()
 	for occluder in goon.find_children("*", "LightOccluder2D", true, false):

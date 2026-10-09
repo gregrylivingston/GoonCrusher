@@ -139,9 +139,7 @@ func test_grinder_saves_for_a_car_within_reach():
 func test_in_run_choices_are_valid():
 	for id in Personas.DATA:
 		var persona := Personas.get_def(id)
-		var cards := ["jerry", "wrench", "fuel"]
-		var pick := Personas.dealPick(persona, cards, rng())
-		assert_true(pick >= 0 && pick < cards.size(), "%s picks a card" % id)
+		assert_true(Personas.dealKeep(persona, "jerry", [], rng()), "%s keeps the last card" % id)
 		var bet := Personas.slotBet(persona, 1000, rng())
 		assert_true(bet >= 0 && bet < SlotSymbols.BETS.size(), "%s bets a real level" % id)
 		var prizes := [{"id": "fuel", "pos": Vector2(100, 300)}, {"id": "jerry", "pos": Vector2(400, 300)}]

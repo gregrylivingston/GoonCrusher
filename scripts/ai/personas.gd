@@ -310,22 +310,15 @@ static func slotReroll(persona: Dictionary, gems: int, paid: Dictionary, rng: Ra
 	if persona.runs == "coverage": return rng.randf() < 0.5
 	return paid.is_empty() && gems >= 3
 
-## Which of The Deal's cards to take.
-static func dealPick(persona: Dictionary, cards: Array, rng: RandomNumberGenerator) -> int:
-	var best := 0
-	for i in cards.size():
-		match persona.deal:
-			"rarest": if Pickups.rarity(cards[i]) > Pickups.rarity(cards[best]): best = i
-			"worth": if float(Pickups.def(cards[i]).get("ai", 7)) > float(Pickups.def(cards[best]).get("ai", 7)): best = i
-			"new": if not Pickups.isDiscovered(cards[i]) && Pickups.isDiscovered(cards[best]): best = i
-	if persona.deal == "new" && Pickups.isDiscovered(cards[best]): return rng.randi() % cards.size()
-	return best
-
-## Before taking a card in The Deal: "raise", "reroll" or "".
-static func dealExtra(persona: Dictionary, runCoins: int, gems: int, raiseCost: int, rng: RandomNumberGenerator) -> String:
-	if persona.runs != "coverage" || rng.randf() > 0.4: return ""
-	if runCoins >= raiseCost && rng.randf() < 0.5: return "raise"
-	return "reroll" if gems > 0 else ""
+## The Deal: keep the card in hand (true) or swap it for the next one. "rarest" keeps once fewer than half
+## of the deck beat it, "worth" once it is worth enough to the AI, "new" keeps a card it hasn't seen yet.
+static func dealKeep(persona: Dictionary, hand: String, deck: Array, rng: RandomNumberGenerator) -> bool:
+	if deck.is_empty(): return true
+	match persona.deal:
+		"rarest": return PickupDeal.beats(hand, deck) * 2 < deck.size()
+		"worth": return float(Pickups.def(hand).get("ai", 7)) >= 20.0
+		"new": return not Pickups.isDiscovered(hand) || rng.randf() < 0.4
+	return true
 
 ## The claw's target: an index into the crane's prizes.
 static func clawTarget(persona: Dictionary, prizes: Array, clawX: float, rng: RandomNumberGenerator) -> int:

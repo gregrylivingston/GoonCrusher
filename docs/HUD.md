@@ -9,14 +9,20 @@ The HUD is `scene/player/playerRoot.tscn` (class `GameUI`): twin gauges in the b
 | `TopLeft/CrushPill` | `hud_crush.gd` | top left | The next gift box (docs/PICKUPS.md, "Gift boxes"): its tier in its colour, a crush XP bar and the XP still to go. Prize pickups fly to its box (`slotmachineui`). |
 | `TopLeft/RegionChip` | `hud_region.gd` | top left | District name, goon size (giantism) and the run's wave ring: "Wave n: survive m:ss for a star". Waves are one clock for the whole run (`Region.wave`, `waveProgress`), with no cap. |
 | `TopCenter/ModeLabel`, `TopCenter/Timer` | `Timer.gd` (unchanged) | top center | Mode name and run clock. `Timer` keeps group `runTimer`. |
-| `Objective` | `hud_objective.gd` | top center, under the clock | The mode's own goal: Goonpocalypse score and time to the star, Marathon "STATION n OF 5", Defense barrier bar. Hidden in Countdown and Sprint. |
+| `Objective` | `hud_objective.gd` | top center, under the clock | The mode's goal, in every mode, with its icon: Countdown "SURVIVE THE CLOCK", Sprint "REACH THE STATION" and Marathon "STATION n OF 5" with the distance in the station's blue, Defense the BASE bar and percent (the rim flashes red when a goon blows up at a pump), Goonpocalypse the score and time to the star. |
 | `TopRight` | `hud_payout.gd` | top right | Pause button, coins x the star multiplier (1 + 0.1 a star up to ×3, shown by the star) = payout (`Root.computePayout`), gems. |
 | `Tach`, `Fuel` | `hud_dial.gd` | bottom left | Tachometer with the gear (`car.gear`), and the fuel dial. |
 | `Speedo`, `Hull` | `hud_dial.gd` | bottom right | Speedometer and the hull (health) dial. |
 | `Systems` | `hud_systems.gd` | bottom center | One lamp per car system, each with a rating underline. |
 | `Items` (added in code) | `hud_items.gd` | bottom center, above the strip | The held gadget (charges, the Fire key) and the held boost beside it (charges, the Boost key), small counters left of them (star fragments, lottery tickets, a parcel, barricades), and a ring per timed power-up (right) that drains clockwise and blinks in its last 2 s. Groups `itemui`, `moveui`, `buffui`, and `clockui` (on `TopCenter`). |
 | `NowPlaying` (added in code) | `scene/ui/radio/now_playing.gd` | bottom left, above the tachometer | The radio: song, artist and station, sliding in for 5 s at each new song or station change (docs/RADIO.md). Hidden otherwise. |
-| `HudChance` (added in code) | `hud_chance.gd` | full screen, not HUD-scaled | Rare-pickup toasts under the clock, the Scratch Card and Double or Nothing under the payout, the Crush Combo under the crush pill, edge-of-screen beacons for events and supply drops, the Goon Nuke's flash. Redraws only while one shows. |
+| `HudChance` (added in code) | `hud_chance.gd` | full screen, not HUD-scaled | Rare-pickup toasts under the clock, the Scratch Card and Double or Nothing under the payout, the Crush Combo under the crush pill, edge-of-screen beacons for events and supply drops, the station pointer, the Goon Nuke's flash. Redraws only while one shows. |
+
+**The station** (Sprint, Marathon, Defense) has its own colour, `HudTheme.STATION` (sky blue; nothing else on the HUD is blue). `HudChance.drawStation`: off screen, a pill on the screen edge (clear of the top panels and the dials) with the mode's icon, "STATION" (Defense: "BASE"), the distance (`HudTheme.stationDistance`: one decimal under 10, in the Speed Units' mi or km) and an arrow; on screen, a tag over the driveway (`station.drivewayPoint`) that fades as the car arrives. With 15 s left on a race clock the pill pulses (Reduce Motion: no swelling; Reduce Flashing: a steady white rim). In Defense the pointer and the objective turn red for 1.2 s when a goon blows up at a pump (`HudTheme.stationHit`, `station.lastHitMsec`), and the pointer shakes unless Reduce Motion.
+
+**The briefing:** at GO on a run start (not resumes) a tape banner says the mode's goal (`Level.briefing`, e.g. "REACH THE STATION", "HOLD THE BASE"), and for a mode's first 3 runs (`Level.BRIEF_RUNS`, counted in `meta.hints.briefings`) a second one says how ("FOLLOW THE BLUE ARROW BEFORE TIME RUNS OUT").
+
+**Version label:** bottom-left corner, 11 px.
 
 **Name tags:** the held gadget and boost boxes carry their short names above them, and a power-up's ring for its first 3 s (`HudItems.tag`, `Pickups.shortName`; docs/PICKUPS.md, "Name tags").
 

@@ -7,9 +7,9 @@ class_name GiftBox extends CanvasLayer
 
 const GIFT_ICON := preload("res://texture/icon/gift.svg")
 const SIZE := 180.0
-const SHAKE_UNTIL := 0.7   #seconds: the box rattles harder until the lid pops
-const HOLD_UNTIL := 1.9    #then the game inside shows until here
-const SKIP_AFTER := 0.3
+const SHAKE_UNTIL := 0.4   #seconds: the box rattles harder until the lid pops
+const HOLD_UNTIL := 1.0    #then the game inside shows until here
+const SKIP_AFTER := 0.2
 
 var gameId := ""
 var tier := 0
@@ -80,8 +80,7 @@ func finish() -> void:
 	if CrushPrizes.pauses(gameId):
 		CrushPrizes.openGame(gameId, tier)
 	else:
-		if is_instance_valid(Root.playerCar): Root.playerCar.add_child(load("res://scene/player/countdown.tscn").instantiate())
-		else: get_tree().paused = false
+		PickupMenu.resumeRun()
 		CrushPrizes.openGame(gameId, tier)
 	queue_free()
 
@@ -99,14 +98,14 @@ func drawStage() -> void:
 	HudTheme.text(stage, c + Vector2(0, -SIZE * 0.78), "%s BOX" % CrushPrizes.tierName(tier).to_upper(), 30, col, HORIZONTAL_ALIGNMENT_CENTER, 8)
 	if not popped:
 		var k := clampf(t / SHAKE_UNTIL, 0.0, 1.0)
-		var wobble := 0.0 if calm else sin(t * 55.0) * 0.12 * k
-		var hop := 0.0 if calm else -absf(sin(t * 18.0)) * 10.0 * k
+		var wobble := 0.0 if calm else sin(t * 70.0) * 0.14 * k
+		var hop := 0.0 if calm else -absf(sin(t * 24.0)) * 10.0 * k
 		stage.draw_set_transform(c + Vector2(0, hop), wobble, Vector2.ONE)
 		stage.draw_texture_rect(GIFT_ICON, Rect2(Vector2(-SIZE, -SIZE) * 0.5, Vector2(SIZE, SIZE)), false)
 		stage.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 		return
 	#popped: the box falls away and the game rises out of it
-	var u := clampf((t - SHAKE_UNTIL) / 0.35, 0.0, 1.0)
+	var u := clampf((t - SHAKE_UNTIL) / 0.25, 0.0, 1.0)
 	var rise := 1.0 - pow(1.0 - u, 3.0)
 	stage.draw_set_transform(c + Vector2(0, SIZE * 0.35 * rise), 0.0, Vector2.ONE * (1.0 - 0.4 * rise))
 	stage.draw_texture_rect(GIFT_ICON, Rect2(Vector2(-SIZE, -SIZE) * 0.5, Vector2(SIZE, SIZE)), false, Color(1, 1, 1, 1.0 - u))

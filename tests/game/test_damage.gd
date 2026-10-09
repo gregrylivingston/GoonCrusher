@@ -101,7 +101,14 @@ func test_every_car_has_matching_baked_art():
 			assert_eq(sheet.get_size(), size, car + " sheets line up")
 		assert_eq(scene.get_node("sprite/body").texture, art.weathered[0], car + " shows its weathered paint")
 		var area = scene.get_node("carBodyArea/CollisionShape2D").shape.size
-		assert_between(area.x, 180.0, 290.0, car + " footprint length")
+		var trailer: CarTrailer = scene.trailer
+		assert_between(area.x, 120.0 if trailer else 180.0, 290.0, car + " footprint length (a semi's is its tractor)")
+		if trailer: #the trailer's own art (car_gen.js semiTrailer)
+			var tsize = trailer.art.weathered[0].get_size()
+			for sheet in trailer.art.weathered + trailer.art.showroom + [trailer.art.zoneMask, trailer.art.shadow]:
+				assert_eq(sheet.get_size(), tsize, car + " trailer sheets line up")
+			assert_eq(trailer.body.texture, trailer.art.weathered[0], car + " trailer shows its weathered paint")
+			assert_between(trailer.bodyRect.size.x, 250.0, 360.0, car + " trailer length")
 
 func test_car_paint_switches_live():
 	var car = makeCar("taxi")

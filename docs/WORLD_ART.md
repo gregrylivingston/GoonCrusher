@@ -15,7 +15,7 @@ The ground, edges, props, station textures and level posters are generated top-d
 | `shader/world_beacon.gdshader`, `shader/world_beacon.tres` | The landmarks' beacon: additive, unlit, a slow breath and a double flash, out of step per landmark; `gc_motion` (Reduce Motion) calms it. One shared material; its `night` parameter dims it to 15% by day, faded by `Level.fadeBeacons` with the day and night. |
 | `world/art/decor/` | One atlas per decor id (`<id>.png`, a row of 4 square cells). |
 | `world/art/props.json` | The prop manifest (below). |
-| `world/art/station/` | `station_lot`, `station_roof` (512² tiles), `station_wall` (strip), `station_lamp` and `station_pump` (sprites). |
+| `world/art/station/` | `station_lot`, `station_roof` (512² tiles), `station_wall` (strip; unused since the lot lost its walls), `station_lamp` and `station_pump` (sprites). |
 | `world/art/posters/` | The 8 level posters, `<level id>.png`, 1792×1024. |
 | `tests/game/test_world_art.gd` | Manifest vs. files and scenes, hull shape, occluders, level dressing ids, ground, edges, station and posters. |
 
@@ -162,7 +162,7 @@ The root is a `StaticBody2D`, so the car's wall-hit checks (`World.isWall`) trea
 
 ## Station
 
-`station_lot` (concrete slabs, 256 px joints, oil stains and tyre smears) and `station_roof` (worn shingles) are 512² seamless tiles; `station_wall` is a strip like the others (wall top above, AO below); `station_lamp` (lamp post with a lit fixture) and `station_pump` (a pump island) are sprites at 0.75 with the prop rim and shadow. `scene/level/station.tscn` is built from them: `lot` is a Sprite2D region over the LOT at scale 2, `walls` one tiled Line2D (width 142, so the 35-texel wall top covers the 52 px wall bodies and its shadow falls inside the lot) traced clockwise so the strip's top faces out, the house roof two Sprite2D halves at scale 2 (the south one flipped) with a ridge and eaves, two pumps on the driveway apron and a lamp over each post light, all at 1.3333. The collision (`wallNorth`/`South`/`West`/`East`, `house`) and lights keep the old layout; `tintWalls` reddens `walls`.
+`station_lot` (concrete slabs, 256 px joints, oil stains and tyre smears) and `station_roof` (worn shingles) are 512² seamless tiles; `station_wall` is a strip like the others (wall top above, AO below); `station_lamp` (lamp post with a lit fixture) and `station_pump` (a pump island) are sprites at 0.75 with the prop rim and shadow. `scene/level/station.tscn` is built from them: `lot` is a Sprite2D region over the LOT at scale 2 (open on every side: the walls are gone), the house roof two Sprite2D halves at scale 2 (the south one flipped) with a ridge and eaves, two pumps on the driveway apron and a lamp over each post light, all at 1.3333. The collision (`house`) and lights keep the old layout; `tintBarrier` reddens the house.
 
 ## Posters
 

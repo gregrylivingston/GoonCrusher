@@ -4,6 +4,8 @@
 (function(){
 "use strict";
 const BOX_W = 136, BOX_H = 292;
+/* a car's canvas in sheet units: BOX_W x BOX_H unless it sets box (the semi's tractor and trailer) */
+const boxOf=sp=>sp.box||[BOX_W,BOX_H];
 
 /* ---------- maths and noise ---------- */
 function rng(seed){ let s=(seed>>>0)||1; return ()=>{ s^=s<<13; s>>>=0; s^=s>>17; s^=s<<5; s>>>=0; return s/4294967296; }; }
@@ -81,12 +83,21 @@ pickup:{ name:'Pickup', driver:'Karen', cost:2500, seed:41, paint:'#2c5a94', cle
 		cabin:{wf:-38,rf:-26,rr:4,wr:8,gi:3,side:5,bowF:4,bowR:1,cp:0,bp:0},doors:[-24],hood:1,trunk:0,filler:[-1,40],bed:[14,103]}],
 	wheels:[[-68,38,11,27],[70,38,11,27]], lights:{f:'rect',r:'vert',grille:1}, bumper:{f:'chrome',r:'chrome',w:.95}, mirrors:-34,
 	feats:['bed']},
-semi:{ name:'Semi', driver:'Tiffany', cost:5000, seed:53, paint:'#d8d7d1', clean:'#f4f4f0', grime:{dirt:.5,rust:.3,fade:.15,moss:0},
-	parts:[{y0:-133,y1:-44,W:90,rim:6,rimF:5,rimR:1,pf:5,pr:30,tf:.93,tr:1,arches:[[-112,2,13]],front:1,rear:0,
-		cabin:{wf:-92,rf:-82,rr:-44,wr:-44,gi:3,side:5,bowF:4,bowR:0,cp:0,bp:-64},doors:[-74],hood:1,trunk:0,filler:[1,-63],sleeper:1},
-		{y0:-36,y1:138,W:96,rim:4,rimF:2.5,rimR:3,pf:30,pr:30,tf:1,tr:1,arches:[],front:0,rear:1,box:'trailer'}],
-	wheels:[[-112,39,11,26],[-58,40,12,22],[-42,40,12,22],[104,42,12,22],[122,42,12,22]], lights:{f:'rect',r:'vert',grille:1}, bumper:{f:'chrome',r:'black',w:.96}, mirrors:-90, truckMirrors:1,
-	feats:['fuelTanks','stacks','trailer']},
+/* The semi is two cars that bake apart: the tractor (semi) and its trailer (semiTrailer), which the game
+   hitches at the fifth wheel (CarTrailer). Each is authored centred on its own axles: the tractor between its
+   steer axle and drive tandem, the trailer on its box. The tractor's frame runs on behind the cab, under
+   where the trailer's nose sits: rails, the fifth-wheel plate (the kingpin at y 40), the drive tandem and
+   mud flaps, so the mount shows as the trailer swings. The trailer is a US-style 53 ft box, about 2.2 times
+   the tractor; its kingpin sits 18 behind its nose (y -137) and its tandem at the back. */
+semi:{ name:'Semi', driver:'Tiffany', cost:5000, seed:53, paint:'#d8d7d1', clean:'#f4f4f0', grime:{dirt:.5,rust:.3,fade:.15,moss:0}, box:[136,160], stacksY:27,
+	parts:[{y0:-66,y1:23,W:90,rim:6,rimF:5,rimR:1,pf:5,pr:30,tf:.93,tr:1,arches:[[-45,2,13]],front:1,rear:0,
+		cabin:{wf:-25,rf:-15,rr:23,wr:23,gi:3,side:5,bowF:4,bowR:0,cp:0,bp:3},doors:[-7],hood:1,trunk:0,filler:[1,4],sleeper:1}],
+	wheels:[[-45,39,11,26],[36,40,12,22],[54,40,12,22]], lights:{f:'rect',r:'none',grille:1}, bumper:{f:'chrome',r:'none',w:.96}, mirrors:-23, truckMirrors:1,
+	feats:['fifthWheel','fuelTanks','stacks']},
+semiTrailer:{ name:'Semi trailer', seed:59, paint:'#d8d7d1', clean:'#f4f4f0', grime:{dirt:.5,rust:.3,fade:.15,moss:0}, box:[136,330], zones:'trailer', mirrors:null,
+	parts:[{y0:-155,y1:155,W:100,rim:4,rimF:2.5,rimR:3,pf:30,pr:30,tf:1,tr:1,arches:[],front:0,rear:1,box:'trailer'}],
+	wheels:[[92,42,12,22],[110,42,12,22]], lights:{f:'none',r:'vert'}, bumper:{f:'none',r:'black',w:.9},
+	feats:['trailer']},
 audi:{ name:'Supercar', driver:'Snake', cost:10000, seed:67, paint:'#a8202c', clean:'#d4142a', grime:{dirt:.55,rust:.2,fade:.25,moss:0}, sideTint:'#2a2a2e',
 	parts:[{y0:-98,y1:98,W:92,rim:8,rimF:5,rimR:5,pf:4,pr:5.4,tf:.78,tr:.9,arches:[[-58,2.6,16],[56,4.2,17]],front:1,rear:1,
 		cabin:{wf:-24,rf:-9,rr:18,wr:30,gi:3.5,side:6,bowF:7,bowR:5,cp:9,bp:null},doors:[-6],hood:1,trunk:0,filler:[-1,26]}],
@@ -133,8 +144,8 @@ function makeDamage(sp,stage){
 /* ---------- noise layers (cached per car and resolution so every stage shares them) ---------- */
 const noiseCache={};
 function noiseLayers(sp,res){
-	const key=sp.seed+'@'+res; if(noiseCache[key]) return noiseCache[key];
-	const q=Math.max(.5,res/2), w=Math.round(BOX_W*q), h=Math.round(BOX_H*q);
+	const key=sp.seed+'@'+res+'@'+boxOf(sp).join('x'); if(noiseCache[key]) return noiseCache[key];
+	const q=Math.max(.5,res/2), w=Math.round(boxOf(sp)[0]*q), h=Math.round(boxOf(sp)[1]*q);
 	const mk=(fn)=>{ const cv=document.createElement('canvas'); cv.width=w; cv.height=h; const c=cv.getContext('2d'); const id=c.createImageData(w,h), d=id.data;
 		for(let j=0;j<h;j++) for(let i=0;i<w;i++){ const x=(i-w/2)/q, y=(j-h/2)/q, v=fn(x,y), k=(j*w+i)*4; d[k]=v[0]; d[k+1]=v[1]; d[k+2]=v[2]; d[k+3]=v[3]; }
 		c.putImageData(id,0,0); return cv; };
@@ -313,6 +324,7 @@ function drawLights(C){
 }
 function drawMirrors(C){
 	const sp=C.sp, ctx=C.ctx, p=sp.parts[0], y=sp.mirrors, L=C.look;
+	if(y==null) return;
 	for(const sd of [1,-1]){
 		if(C.stage===2&&sd===(C.dm.skew>0?1:-1)){ ctx.fillStyle='#2a2a2c'; ctx.fillRect(sd*hwAt(p,y,false)-1,y-1,2,2); continue; }
 		const x=sd*(hwAt(p,y,false)+(sp.truckMirrors?4.5:2.6));
@@ -365,13 +377,31 @@ bed:{layer:'paint',fn(C,s){ const p=s.p, ctx=C.ctx, [a,b]=p.bed, bb=b-(C.stage?C
 	ctx.strokeStyle='rgba(255,255,255,.08)'; ctx.lineWidth=.8; for(let x=-33;x<35;x+=7){ ctx.beginPath(); ctx.moveTo(x,a); ctx.lineTo(x,bb); ctx.stroke(); }
 	const g=ctx.createLinearGradient(0,a,0,a+10); g.addColorStop(0,'rgba(0,0,0,.55)'); g.addColorStop(1,'rgba(0,0,0,0)'); ctx.fillStyle=g; ctx.fillRect(-50,a,100,10); ctx.restore();
 	ctx.strokeStyle=css(shade(C.look.base,.12)); ctx.lineWidth=1; poly(ctx,pts); ctx.stroke(); seam(C,[[-30,bb-1],[30,bb-1]],.8); }},
-fuelTanks:{layer:'under',fn(C){ const ctx=C.ctx; for(const sd of [1,-1]){ const x=sd*46; rrect(ctx,x-5,-74,10,22,4.5); ctx.fillStyle=chromeGrad(ctx,x-5,0,x+5,0); ctx.fill(); ctx.strokeStyle='rgba(0,0,0,.4)'; ctx.lineWidth=.6; for(const y of [-70,-56]){ ctx.beginPath(); ctx.moveTo(x-5,y); ctx.lineTo(x+5,y); ctx.stroke(); } } }},
-stacks:{layer:'over',fn(C){ const ctx=C.ctx; for(const sd of [1,-1]){ const x=sd*36, y=-41; ctx.beginPath(); ctx.arc(x,y,3.2,0,7); ctx.fillStyle=chromeGrad(ctx,x-3,y-3,x+3,y+3); ctx.fill(); ctx.beginPath(); ctx.arc(x,y,1.8,0,7); ctx.fillStyle='#111'; ctx.fill(); } }},
-trailer:{layer:'paint',fn(C,s){ const p=C.sp.parts[1]; const sh=C.shells[1]; if(s!==sh) return; const ctx=C.ctx, y0=p.y0+p.rimF, y1=p.y1-p.rimR-(C.stage?C.dm.crushR:0), w=p.W/2-p.rim;
+fuelTanks:{layer:'under',fn(C){ const ctx=C.ctx; for(const sd of [1,-1]){ const x=sd*46; rrect(ctx,x-5,-22,10,22,4.5); ctx.fillStyle=chromeGrad(ctx,x-5,0,x+5,0); ctx.fill(); ctx.strokeStyle='rgba(0,0,0,.4)'; ctx.lineWidth=.6; for(const y of [-18,-4]){ ctx.beginPath(); ctx.moveTo(x-5,y); ctx.lineTo(x+5,y); ctx.stroke(); } } }},
+stacks:{layer:'over',fn(C){ const ctx=C.ctx; for(const sd of [1,-1]){ const x=sd*36, y=C.sp.stacksY; ctx.beginPath(); ctx.arc(x,y,3.2,0,7); ctx.fillStyle=chromeGrad(ctx,x-3,y-3,x+3,y+3); ctx.fill(); ctx.beginPath(); ctx.arc(x,y,1.8,0,7); ctx.fillStyle='#111'; ctx.fill(); } }},
+/* the tractor's chassis behind the cab: frame rails and cross members, air lines off the cab's back, the
+   fifth-wheel plate with its kingpin slot (y 40), the drive tandem's mud flaps */
+fifthWheel:{layer:'under',fn(C){ const ctx=C.ctx, L=C.look, y0=16, y1=72, flat=L.flat;
+	for(const sd of [1,-1]){ ctx.fillStyle=flat?'#232327':(()=>{ const g=ctx.createLinearGradient(sd*13,0,sd*21,0); g.addColorStop(0,'#3a3a40'); g.addColorStop(1,'#18181b'); return g; })(); ctx.fillRect(sd>0?13:-21,y0,8,y1-y0); }
+	ctx.fillStyle='#1d1d21'; for(const y of [30,50,68]) ctx.fillRect(-13,y,26,3);
+	for(const [x,c] of [[-5,'#b8261e'],[5,'#2f5fc4']]){ ctx.strokeStyle=c; ctx.lineWidth=1.3; ctx.beginPath(); ctx.moveTo(x,24); ctx.bezierCurveTo(x*2.4,29,x*.4,31,x*1.6,35); ctx.stroke(); }
+	ctx.save(); ctx.translate(0,40);
+	ctx.beginPath(); ctx.arc(0,0,19,0,Math.PI*2); ctx.fillStyle=flat?'#2b2c30':(()=>{ const g=ctx.createRadialGradient(-5,-6,2,0,0,19); g.addColorStop(0,'#55575d'); g.addColorStop(1,'#1f2023'); return g; })(); ctx.fill();
+	ctx.strokeStyle='rgba(0,0,0,.6)'; ctx.lineWidth=1; ctx.stroke();
+	ctx.fillStyle='#0d0d0f'; ctx.beginPath(); ctx.moveTo(-7,19); ctx.lineTo(-2.2,1); ctx.lineTo(2.2,1); ctx.lineTo(7,19); ctx.closePath(); ctx.fill();
+	ctx.beginPath(); ctx.arc(0,0,3.6,0,Math.PI*2); ctx.fill();
+	ctx.strokeStyle='rgba(255,255,255,.16)'; ctx.lineWidth=.7; ctx.beginPath(); ctx.arc(0,0,15,Math.PI*1.05,Math.PI*1.95); ctx.stroke();
+	ctx.restore();
+	for(const sd of [1,-1]){ rrect(ctx,sd*40-7,65,14,4,1); ctx.fillStyle='#141416'; ctx.fill(); }
+	if(L.ink){ ctx.strokeStyle=L.inkC; ctx.lineWidth=1; ctx.beginPath(); ctx.arc(0,40,19,0,Math.PI*2); ctx.stroke(); } }},
+/* the trailer's roof: ribs, side rails, amber markers down both sides and the rear doors' seam */
+trailer:{layer:'paint',fn(C,s){ const sh=C.shells.find(q=>q.p.box==='trailer'); if(s!==sh) return; const p=sh.p, ctx=C.ctx, y0=p.y0+p.rimF, y1=p.y1-p.rimR-(C.stage?C.dm.crushR:0), w=p.W/2-p.rim;
 	ctx.save(); poly(ctx,sh.top); ctx.clip();
 	for(let y=y0+4;y<y1;y+=6.5){ ctx.fillStyle='rgba(0,0,0,.13)'; ctx.fillRect(-w,y,w*2,1.1); ctx.fillStyle='rgba(255,255,255,.12)'; ctx.fillRect(-w,y+1.1,w*2,.8); }
-	ctx.fillStyle='rgba(0,0,0,.18)'; ctx.fillRect(-w,y0,2.4,y1-y0); ctx.fillRect(w-2.4,y0,2.4,y1-y0); ctx.restore();
-	ctx.fillStyle='#16171a'; ctx.fillRect(-14,-44,28,9); ctx.beginPath(); ctx.arc(0,-38,5,0,7); ctx.fillStyle='#2a2b2e'; ctx.fill(); }},
+	ctx.fillStyle='rgba(0,0,0,.18)'; ctx.fillRect(-w,y0,2.4,y1-y0); ctx.fillRect(w-2.4,y0,2.4,y1-y0);
+	ctx.fillStyle='rgba(0,0,0,.28)'; ctx.fillRect(-.5,y1-26,1,26); ctx.fillRect(-w,y1-27,w*2,1);
+	ctx.restore();
+	for(let y=y0+20;y<y1-30;y+=48) for(const sd of [1,-1]){ rrect(ctx,sd*(p.W/2-1.6)-1.2,y-2.2,2.4,4.4,1); ctx.fillStyle='#e0a11b'; ctx.fill(); } }},
 ambuBox:{layer:'paint',fn(C,s){ const p=C.sp.parts[1]; const sh=C.shells[1]; if(s!==sh) return; const ctx=C.ctx, y0=p.y0+p.rimF, y1=p.y1-p.rimR-(C.stage?C.dm.crushR:0), w=p.W/2-p.rim;
 	ctx.save(); ringPath(ctx,sh.outer,sh.top); ctx.clip('evenodd'); ctx.fillStyle='#b8231d'; ctx.fillRect(-60,y0+8,120,y1-y0-16); ctx.restore();
 	ctx.save(); poly(ctx,sh.top); ctx.clip(); ctx.strokeStyle='rgba(0,0,0,.16)'; ctx.lineWidth=.6; ctx.strokeRect(-w+4,y0+4,w*2-8,y1-y0-8); ctx.restore();
@@ -386,7 +416,7 @@ function runLayer(C,list,layer,s){ for(const n of list){ const F=FEATS[n]; if(F&
 
 /* ---------- weathering ---------- */
 function weather(C){
-	const ctx=C.ctx, N=noiseLayers(C.sp,C.res), st=C.style, g=C.sp.grime, W=BOX_W, H=BOX_H;
+	const ctx=C.ctx, N=noiseLayers(C.sp,C.res), st=C.style, g=C.sp.grime, W=boxOf(C.sp)[0], H=boxOf(C.sp)[1];
 	const bodyClip=()=>{ ctx.beginPath(); for(const s of C.shells) poly(ctx,s.outer,true); };
 	const paintClip=()=>{ ctx.beginPath(); for(const s of C.shells){ poly(ctx,s.outer,true); if(s.glass) poly(ctx,s.glass,true); if(s.roof) rrect(ctx,s.roof.x,s.roof.y,s.roof.w,s.roof.h,Math.min(9,s.roof.w*.22),true); } };
 	if(st==='A'){
@@ -428,7 +458,7 @@ function dentMark(C,x,y,len,amp,side){ const ctx=C.ctx; ctx.save(); ctx.translat
 	let g=ctx.createRadialGradient(0,0,0,0,0,2.5+amp); g.addColorStop(0,'rgba(0,0,0,'+(.18+amp*.06)+')'); g.addColorStop(1,'rgba(0,0,0,0)'); ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,0,2.5+amp,0,7); ctx.fill();
 	g=ctx.createRadialGradient(-side*.8,-1.4,0,-side*.8,-1.4,(2.5+amp)*.7); g.addColorStop(0,'rgba(255,255,255,'+(.08+amp*.025)+')'); g.addColorStop(1,'rgba(255,255,255,0)'); ctx.fillStyle=g; ctx.beginPath(); ctx.arc(-side*.8,-1.4,(2.5+amp)*.7,0,7); ctx.fill(); ctx.restore(); }
 function drawDamage(C){
-	const ctx=C.ctx, st=C.stage, sp=C.sp, dm=C.dm, r=rng(sp.seed*3+st), N=noiseLayers(sp,C.res), W=BOX_W, H=BOX_H, ink=C.look.ink;
+	const ctx=C.ctx, st=C.stage, sp=C.sp, dm=C.dm, r=rng(sp.seed*3+st), N=noiseLayers(sp,C.res), W=boxOf(sp)[0], H=boxOf(sp)[1], ink=C.look.ink;
 	const p=sp.parts[0], pl=sp.parts[sp.parts.length-1], main=C.shells[0];
 	const bodyClip=()=>{ ctx.beginPath(); for(const s of C.shells) poly(ctx,s.outer,true); ctx.clip(); };
 	ctx.save(); bodyClip();
@@ -445,8 +475,8 @@ function drawDamage(C){
 		const fy=p.y0+dm.crushF, ry=pl.y1-dm.crushR;
 		const soot=(x,y,rad,al)=>{ ctx.save(); const g=ctx.createRadialGradient(x,y,0,x,y,rad); g.addColorStop(0,'rgba(0,0,0,1)'); g.addColorStop(1,'rgba(0,0,0,0)'); ctx.fillStyle=g; ctx.globalAlpha=al; ctx.fillRect(x-rad,y-rad,rad*2,rad*2);
 			ctx.globalCompositeOperation='destination-out'; ctx.restore(); };
-		soot(0,fy+16,30,.55); soot(dm.skew*20,ry-10,22,.4); soot(-sd*20,(p.y0+pl.y1)/2,16,.3);
-		ctx.save(); ctx.beginPath(); ctx.ellipse(0,fy+14,40,34,0,0,7); ctx.ellipse(dm.skew*20,ry-6,36,26,0,0,7); ctx.clip(); ctx.globalCompositeOperation='multiply'; ctx.globalAlpha=.5; ctx.drawImage(N.soot,-W/2,-H/2,W,H); ctx.restore();
+		if(p.front) soot(0,fy+16,30,.55); soot(dm.skew*20,ry-10,22,.4); soot(-sd*20,(p.y0+pl.y1)/2,16,.3);
+		ctx.save(); ctx.beginPath(); if(p.front) ctx.ellipse(0,fy+14,40,34,0,0,7); ctx.ellipse(dm.skew*20,ry-6,36,26,0,0,7); ctx.clip(); ctx.globalCompositeOperation='multiply'; ctx.globalAlpha=.5; ctx.drawImage(N.soot,-W/2,-H/2,W,H); ctx.restore();
 		if(!p.box){ const hw=hwAt(p,fy+14,true); ctx.lineCap='round';
 			for(let k=0;k<2;k++){ const y=fy+13+k*12+r()*3; const pts=[]; let yy=y; for(let x=-hw*.9;x<=hw*.9;x+=hw/5){ yy=y+(r()-.5)*7*(1-k*.3)+(x<0?-x:x)*.06*(k?1:-1); pts.push([x,yy]); }
 				ctx.beginPath(); pts.forEach((q,i)=>i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])); ctx.strokeStyle='rgba(0,0,0,.5)'; ctx.lineWidth=1.6; ctx.stroke();
@@ -473,7 +503,7 @@ function drawDamage(C){
 	}
 	/* lamps */
 	const P=C.lightPos;
-	if(P){ if(st>=1){ const [x,y]=P.f[dm.skew>0?0:P.f.length-1]; ctx.strokeStyle='rgba(30,30,30,.7)'; ctx.lineWidth=.35; ctx.beginPath(); ctx.moveTo(x-2.5,y-1); ctx.lineTo(x+1,y+.5); ctx.lineTo(x+2,y-2); ctx.moveTo(x,y); ctx.lineTo(x-1,y+2.4); ctx.stroke(); }
+	if(P){ if(st>=1&&P.f.length){ const [x,y]=P.f[dm.skew>0?0:P.f.length-1]; ctx.strokeStyle='rgba(30,30,30,.7)'; ctx.lineWidth=.35; ctx.beginPath(); ctx.moveTo(x-2.5,y-1); ctx.lineTo(x+1,y+.5); ctx.lineTo(x+2,y-2); ctx.moveTo(x,y); ctx.lineTo(x-1,y+2.4); ctx.stroke(); }
 		if(st===2){ for(const [x,y] of P.f){ ctx.beginPath(); ctx.arc(x,y,3.4,0,7); ctx.fillStyle='#0b0b0c'; ctx.fill(); ctx.fillStyle='rgba(230,235,240,.7)'; for(let k=0;k<3;k++){ ctx.beginPath(); const a=r()*6.28; ctx.moveTo(x+Math.cos(a)*3,y+Math.sin(a)*3); ctx.lineTo(x+Math.cos(a+.4)*1,y+Math.sin(a+.4)*1); ctx.lineTo(x+Math.cos(a+.7)*3,y+Math.sin(a+.7)*3); ctx.fill(); } }
 			for(const [x,y] of P.r){ ctx.fillStyle='rgba(20,6,6,.85)'; ctx.fillRect(x-4,y-2,8,4); ctx.fillStyle='rgba(200,40,30,.8)'; ctx.fillRect(x-4,y-2,2.5,2); } } }
 	/* shredded tyres */
@@ -485,7 +515,7 @@ function drawDamage(C){
 /* ---------- main render ---------- */
 function render(key,o){
 	const sp=CARS[key], res=o.res||2, cv=document.createElement('canvas');
-	cv.width=Math.round(BOX_W*res); cv.height=Math.round(BOX_H*res);
+	cv.width=Math.round(boxOf(sp)[0]*res); cv.height=Math.round(boxOf(sp)[1]*res);
 	const ctx=cv.getContext('2d'); ctx.setTransform(res,0,0,res,cv.width/2,cv.height/2); ctx.lineJoin='round';
 	const stage=o.stage||0, dm=makeDamage(sp,stage);
 	const C={sp,res,ctx,stage,dm,style:o.style||'A',look:makeLook(sp,o.style||'A')};
@@ -502,12 +532,12 @@ function render(key,o){
 /* ---------- zone mask: which system each pixel belongs to and how far damage must spread to reach it ---------- */
 const ZONES=['hull','lights','engine','steering','tires','tank'];
 function zoneMask(key,res){
-	const sp=CARS[key], w=Math.round(BOX_W*res), h=Math.round(BOX_H*res), zone=new Uint8Array(w*h), prog=new Float32Array(w*h);
+	const sp=CARS[key], w=Math.round(boxOf(sp)[0]*res), h=Math.round(boxOf(sp)[1]*res), zone=new Uint8Array(w*h), prog=new Float32Array(w*h);
 	const y0=sp.parts[0].y0, y1=sp.parts[sp.parts.length-1].y1, yc=(y0+y1)/2, hl=(y1-y0)/2, W2=Math.max(...sp.parts.map(p=>p.W))/2;
 	for(let j=0;j<h;j++) for(let i=0;i<w;i++){
 		const x=(i-w/2)/res, y=(j-h/2)/res, u=x/W2, v=(y-yc)/hl, n1=(fbm(x*.07,y*.07,sp.seed+101,3)-.5)*.34, n2=(fbm(x*.25,y*.25,sp.seed+202,2)-.5)*.22;
 		const vv=v+n1, uu=Math.abs(u)+n1*.7, au=Math.abs(u); let z, pr;
-		if(sp.name==='Semi'&&vv>-.68&&vv<-.38&&uu>.55){ z=5; pr=Math.hypot(au-1,(v+.53)*2)/.7; }
+		if(sp.zones==='trailer') z=vv>.35&&uu>.55?4:0;
 		else if(vv<-.64) { z=uu>.4?1:2; }
 		else if(vv>.68) z=5;
 		else if(uu>.62) z=vv<.02?3:4;
@@ -537,7 +567,7 @@ function geom(key){ const sp=CARS[key], p=sp.parts[0], pl=sp.parts[sp.parts.leng
 	return {roof:r, front:p.y0, rear:pl.y1, filler, wheels:sp.wheels, f:L.f, r:L.r, W:Math.max(...sp.parts.map(q=>q.W)), box:sp.parts[1]&&sp.parts[1].box?sp.parts[1]:null}; }
 /* the soft shadow on its own: centred, so it reads right whichever way the car turns */
 function renderShadow(key,res){
-	const sp=CARS[key], cv=document.createElement('canvas'); cv.width=Math.round(BOX_W*res); cv.height=Math.round(BOX_H*res);
+	const sp=CARS[key], cv=document.createElement('canvas'); cv.width=Math.round(boxOf(sp)[0]*res); cv.height=Math.round(boxOf(sp)[1]*res);
 	const ctx=cv.getContext('2d'); ctx.setTransform(res,0,0,res,cv.width/2,cv.height/2);
 	const C={sp,res,ctx,stage:0,dm:makeDamage(sp,0)}; C.shells=sp.parts.map(p=>({p,outer:shellPoly(p,false,null)}));
 	const off=4000; ctx.shadowColor='rgba(0,0,0,.75)'; ctx.shadowBlur=8*res; ctx.shadowOffsetX=off*res; ctx.translate(-off,0); ctx.fillStyle='#000';
@@ -574,7 +604,7 @@ function sceneGeometry(key){
 	const frontPoly=round(simplifyClosed(clip(fp,kf),.8)), rearPoly=round(simplifyClosed(clip(rp,kr),.8));
 	/* where the damage FX come from, in car space */
 	const hood=[g.front*-1-26,0], tank=g.filler?toCar(g.filler):[-(g.rear-12),0], fw=sp.wheels[0];
-	return {front, rear, half, wheels, exhaust:sp.feats.includes('stacks')?[36,-41]:[-g.W*.22,g.rear+6], frontPoly, rearPoly, hood, tank, frontWheel:[-fw[0],fw[1]+fw[2]/2], box:[BOX_W,BOX_H]};
+	return {front, rear, half, wheels, exhaust:sp.feats.includes('stacks')?[36,sp.stacksY]:[-g.W*.22,g.rear+6], frontPoly, rearPoly, hood, tank, frontWheel:[-fw[0],fw[1]+fw[2]/2], box:boxOf(sp)};
 }
 window.CarArt={geom,renderShadow,maskCanvas,sceneGeometry,CARS,ORDER,ZONES,BOX_W,BOX_H,render,zoneMask,compose,lightPositions:(key,stage)=>{ const sp=CARS[key]; return lightPositions({sp,stage:stage||0,dm:makeDamage(sp,stage||0)}); },hwAt};
 })();

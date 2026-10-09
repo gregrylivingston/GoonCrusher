@@ -219,7 +219,7 @@ var gameModeDescription: Dictionary = {
 	},
 	Root.gameModes.DEFENSE:{
 		"name":"DEFENSE",
-		"description":"Hold the station until the clock runs out. Goons march on its walls: crush them before they break through.",
+		"description":"Hold the station until the clock runs out. Goons march on its pumps and blow up when they reach them: crush them before they get there.",
 	},
 	Root.gameModes.MARATHON:{
 		"name":"MARATHON",

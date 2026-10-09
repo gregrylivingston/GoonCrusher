@@ -67,41 +67,69 @@ func test_goonpocalypse_score_and_waves():
 
 #--- Defense ------------------------------------------------------------------------------------
 
-func test_station_barrier_and_wall_points():
+func test_station_barrier_and_lot_points():
 	var station = add_child_autofree(load("res://scene/level/station.tscn").instantiate())
 	station.global_position = Vector2(1000, 500)
-	station.damage(50)
+	station.damage(5)
 	assert_eq(station.barrier, station.BARRIER_MAX, "no barrier outside Defense")
 	station.startBarrier()
-	station.damage(50)
-	assert_almost_eq(station.barrier, station.BARRIER_MAX - 50 * station.SIEGE_DAMAGE, 0.01, "walls take SIEGE_DAMAGE of a blow")
-	assert_gt(1.0, station.get_node("walls").self_modulate.g, "the walls redden as the barrier wears down")
+	station.damage(5)
+	assert_almost_eq(station.barrier, station.BARRIER_MAX - 5 * station.BLAST_DAMAGE, 0.01, "a goon's blast does BLAST_DAMAGE times its attack")
+	assert_eq(station.blasts, 1, "and is counted")
+	assert_gt(1.0, station.get_node("house").modulate.g, "the house reddens as the barrier wears down")
 	var inside = station.global_position + Vector2(10, 10)
-	assert_eq(station.nearestWallPoint(inside), inside, "a goon inside the lot is already at the walls")
+	assert_eq(station.nearestLotPoint(inside), inside, "a goon inside the lot has already reached it")
 	var far = station.global_position + Vector2(5000, 0)
-	assert_almost_eq(station.nearestWallPoint(far).x, station.global_position.x + station.LOT.end.x, 0.01, "east of the lot: its east edge")
+	assert_almost_eq(station.nearestLotPoint(far).x, station.global_position.x + station.LOT.end.x, 0.01, "east of the lot: its east edge")
 	station.retire()
 	assert_false(station.active, "a retired Marathon station's driveway does nothing")
-	for wall in station.WALL_BODIES: assert_false(station.get_node(wall + "/LightOccluder2D").visible, "%s: a passed station's lot opens up (its walls stop blocking)" % wall)
 
-#the wall bodies trace the lot (LOT) with its one gap on the east side, where the driveway is
-func test_station_walls_leave_the_east_gap():
+#the lot is open on every side: the house is its only solid body
+func test_station_lot_has_no_walls():
 	var station = load("res://scene/level/station.tscn").instantiate()
-	var walls: Array[Rect2] = []
-	for body in station.get_children():
-		if body is StaticBody2D && body.name.begins_with("wall"):
-			var shape: CollisionShape2D = body.get_node("CollisionShape2D")
-			var size: Vector2 = shape.shape.size
-			walls.push_back(Rect2(body.position + shape.position - size / 2, size))
-	assert_eq(walls.size(), 4)
-	var lot: Rect2 = station.LOT
-	for wall in walls: assert_true(lot.grow(3).encloses(wall), "every wall lies on the lot's edge")
-	var blocked = func(p: Vector2) -> bool: return walls.any(func(w: Rect2): return w.has_point(p))
-	var drivewayY: float = station.get_node("driveway").position.y + station.get_node("driveway/CollisionShape2D").position.y
-	assert_false(blocked.call(Vector2(lot.end.x - 26, drivewayY)), "the east side is open level with the driveway")
-	assert_true(blocked.call(Vector2(lot.position.x + 26, drivewayY)), "the west side is walled")
-	assert_true(blocked.call(Vector2(0, lot.position.y + 26)) && blocked.call(Vector2(0, lot.end.y - 26)), "north and south are walled")
+	var bodies: Array = station.find_children("*", "StaticBody2D", true, false).map(func(b): return b.name)
+	assert_eq(bodies, [&"house"], "only the house blocks")
+	assert_null(station.get_node_or_null("walls"), "no wall strip")
 	station.free()
+
+#--- telling the player the goal ---------------------------------------------------------------
+
+func test_briefing_says_each_modes_goal_and_how_for_the_first_runs():
+	var level = Level.new()
+	for mode in Root.gameModes.values():
+		SaveManager.playerData.gameMode = mode
+		var lines: Array[String] = level.briefing()
+		assert_eq(lines.size(), 2, "mode %d: a goal and a how" % mode)
+		for line in lines: assert_eq(line, line.to_upper(), "banner text is upper case: %s" % line)
+	SaveManager.playerData.gameMode = Root.gameModes.MARATHON
+	assert_eq(level.briefing()[0], "REACH %d STATIONS" % level.legs(), "Marathon names its leg count")
+	SaveManager.playerData.gameMode = Root.gameModes.DEFENSE
+	for i in Level.BRIEF_RUNS + 2: level.postBriefing()
+	assert_eq(SaveManager.playerData.meta.hints.briefings[str(Root.gameModes.DEFENSE)], Level.BRIEF_RUNS, "the how stops after BRIEF_RUNS runs")
+	level.free()
+
+func test_station_distance_reads_in_tenths_and_flags_hits():
+	var savedCar = Root.playerCar if is_instance_valid(Root.playerCar) else null
+	var savedStation = Root.station
+	var savedUnits = Settings.get_value("gameplay/speed_units")
+	var station = add_child_autofree(load("res://scene/level/station.tscn").instantiate())
+	var car: OverheadCarBody2D = add_child_autofree(load("res://scene/car/sedan/sedan.tscn").instantiate())
+	Root.station = station
+	Root.playerCar = car
+	Settings.set_value("gameplay/speed_units", "mph", false)
+	car.global_position = station.drivewayPoint() + Vector2(23000, 0)
+	assert_eq(HudTheme.stationDistance(), "2.3 mi")
+	car.global_position = station.drivewayPoint() + Vector2(150, 0)
+	assert_eq(HudTheme.stationDistance(), "0.1 mi", "never 0.0 until you're there")
+	car.global_position = station.drivewayPoint() + Vector2(150000, 0)
+	assert_eq(HudTheme.stationDistance(), "15 mi", "whole numbers from 10 up")
+	assert_eq(HudTheme.stationHit(), 0.0, "no flash outside Defense")
+	station.startBarrier()
+	station.damage(5)
+	assert_gt(HudTheme.stationHit(), 0.5, "a blast on the lot flashes the HUD")
+	Settings.set_value("gameplay/speed_units", savedUnits, false)
+	Root.playerCar = savedCar if is_instance_valid(savedCar) else null
+	Root.station = savedStation
 
 #--- explosion pooling --------------------------------------------------------------------------
 

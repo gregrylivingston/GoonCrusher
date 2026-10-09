@@ -173,11 +173,13 @@ static func spawnLootTruck(car) -> Node2D:
 static func spawnStrongbox(pos: Vector2) -> Node2D:
 	return addToLevel(WorldProps.Strongbox.new(), pos)
 
-## Defense: the Sentry Turret sets up on the station wall nearest the car.
+## Defense: the Sentry Turret sets up by the pumps, where the goons march (station.turretSpot)
 static func spawnTurret() -> Node2D:
 	if not is_instance_valid(Root.station) || not is_instance_valid(Root.playerCar): return null
-	var wall: Vector2 = Root.station.nearestWallPoint(Root.playerCar.global_position)
-	return addToLevel(WorldProps.Turret.new(), wall)
+	var taken: Array = Root.station.get_tree().get_nodes_in_group("turret").map(func(t): return t.global_position)
+	var turret := WorldProps.Turret.new()
+	turret.add_to_group("turret")
+	return addToLevel(turret, Root.station.turretSpot(taken))
 
 ## A region wave was survived (Region.gd): an Uncommon-or-better pickup lands ahead of the car.
 static func waveChest() -> void:

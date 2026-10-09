@@ -6,7 +6,7 @@ class_name AIDriver extends Node2D
 #Every physics tick the controller calls think(), then reads isPressed(). Layers:
 #  goal      what to go for: the mode's objective, a pickup, a goon, or a region worth stars
 #  route     A* over the world's coarse map (AIRoute), string-pulled to the farthest waypoint in sight;
-#            near the station, a visibility graph that lines the car up with the lot's gap
+#            near the station, a visibility graph that lines the car up with the driveway
 #  control   candidate key plans are simulated 0.75 s ahead with the car's own physics, then swept on
 #            straight out to lookaheadPx
 #            (OverheadCarBody2D.integrate), swept against rocks, walls and water, and charged for
@@ -136,6 +136,12 @@ var exactShape := RectangleShape2D.new()  #the footprint itself, for overlap tes
 var startShape := RectangleShape2D.new()  #smaller, so a car touching a rock can still back away
 var halfSize := Vector2(80, 40)
 var excludes: Array[RID] = []
+
+#the car's own bodies, which no sweep should count as an obstacle: the car, and a semi's trailer (CarTrailer)
+func ownBodies() -> Array[RID]:
+	var own: Array[RID] = [car.get_rid()]
+	if car.trailer: own.push_back(car.trailer.get_rid())
+	return own
 var lastCosts := PackedStringArray() #every plan's cost at the last choice, for --trace
 var nearGoons := PackedVector2Array() #goons near the car, refreshed with every plan choice
 var nearGoonsLunging := PackedByteArray() #1 where that goon is winding up or making an attack
@@ -366,7 +372,7 @@ func objectiveGoal() -> Dictionary:
 		roamUntil = tick + 30 * Engine.physics_ticks_per_second
 	return {"kind":"roam", "pos":roamPoint, "value":4.0, "key":"roam"}
 
-#The station lot is walled with one gap. Around it the car keeps a small visibility graph: the
+#The station lot is open, but the house stands on it. Around it the car keeps a small visibility graph: the
 #driveway, two markers out in front of the gap (found once by probing outward from the driveway
 #for the most room) and four corners clear of the lot, joined wherever a car-wide sweep is clear of
 #walls. The inner marker and the driveway can only be entered from within STATION_CONE of the gap's
@@ -393,7 +399,7 @@ func buildStationGraph(driveway: Vector2) -> void:
 	var bestRoom = -1.0
 	for i in 32:
 		var direction = Vector2.from_angle(i * TAU / 32.0)
-		var hit = space.intersect_ray(PhysicsRayQueryParameters2D.create(driveway, driveway + direction * STATION_INNER_PX, 1, [car.get_rid()]))
+		var hit = space.intersect_ray(PhysicsRayQueryParameters2D.create(driveway, driveway + direction * STATION_INNER_PX, 1, ownBodies()))
 		var room = driveway.distance_to(hit.position) if hit else STATION_INNER_PX
 		room += direction.dot((car.global_position - driveway).normalized()) * 20.0 #ties: the side facing the car
 		if room > bestRoom:
@@ -456,7 +462,7 @@ static func firstHop(points: Array, edges: Array, carEdges: PackedFloat32Array) 
 #they move, and the planner deals with them)
 func clearOfWalls(a: Vector2, b: Vector2) -> bool:
 	var keep = excludes
-	excludes = [car.get_rid()]
+	excludes = ownBodies()
 	if is_instance_valid(Root.spawnManager):
 		for g in Root.spawnManager.goons:
 			if is_instance_valid(g): excludes.push_back(g.get_rid())
@@ -479,7 +485,7 @@ func rocksNear(point: Vector2, radius: float) -> bool:
 	around.shape = circle
 	around.transform = Transform2D(0.0, point)
 	around.collision_mask = 1
-	around.exclude = [car.get_rid()]
+	around.exclude = ownBodies()
 	for hit in space.intersect_shape(around, 8):
 		#a fence or hedge is smashed on the way in (carefulSpeed is too slow for some: then the planner treats it as a wall)
 		if World.isWall(hit.collider) && not (BreakableProp.isBreakable(hit.collider) && not hit.collider.get_meta(&"explosive", false)) && not PropReactions.isKnockable(hit.collider): return true
@@ -641,14 +647,16 @@ func raceProgressSpeed() -> float:
 	if legDistance < 0.0 || seconds < 10.0: return INF
 	return maxf((legDistance - raceDistance) / seconds, 1.0)
 
-#Defense: a goon is worth more the nearer it is to the base (defenseThreat times more at the walls than at
-#defenseRingPx), and double once it is at the walls; 0 beyond the ring, where it is no threat yet
+#Defense: a goon is worth more the nearer it is to the base (defenseThreat times more at the lot than at
+#defenseRingPx), and double once it is about to blow up at a pump; 0 beyond the ring, where it is no threat yet
+const DEFENSE_BLAST_PX = 500.0
 func defenseValue(g: Node, base: float) -> float:
 	if not is_instance_valid(Root.station): return base
 	var d: float = g.global_position.distance_to(Root.station.global_position)
 	if d > p.defenseRingPx: return 0.0
 	var value: float = base * lerpf(p.defenseThreat, 1.0, d / p.defenseRingPx)
-	return value * 2.0 if g.state == &"siege" else value
+	var toPump: float = g.global_position.distance_to(Root.station.nearestPump(g.global_position))
+	return value * 2.0 if toPump < DEFENSE_BLAST_PX else value
 
 #the car's top speed on the current ground: engine force against drag and friction
 func topSpeed() -> float:
@@ -692,7 +700,7 @@ func canSee(point: Vector2) -> bool:
 #floor it through, crush speed takes a third of a second, and scoreRollout charges for time spent
 #slow among them), except in protect mode, when the car steers around them like rocks.
 func refreshExcludes() -> void:
-	excludes = [car.get_rid()]
+	excludes = ownBodies()
 	nearGoons.clear()
 	nearGoonsLunging.clear()
 	nearGoonsNeed.clear()

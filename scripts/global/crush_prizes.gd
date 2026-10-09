@@ -163,11 +163,7 @@ static func openGame(id: String, tier: int) -> void:
 			if is_instance_valid(HudChance.current): HudChance.current.startScratch(tier)
 		"wheel": PrizeWheelMenu.open(tier)
 		"deal": PickupDeal.open(true, tier)
-		"slot":
-			var machine = preload("res://scene/player/slots/slotMachine.tscn").instantiate()
-			machine.isGoonCrushBonus = true
-			machine.prizeTier = tier
-			Root.levelRoot.add_child.call_deferred(machine)
+		"slot": SlotMachine.open(tier, true)
 		"vault": PrizeVault.open(tier)
 
 static func pauses(id: String) -> bool:

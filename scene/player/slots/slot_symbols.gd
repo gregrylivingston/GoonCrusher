@@ -2,15 +2,15 @@ class_name SlotSymbols extends RefCounted
 
 #What the slot reels show (docs/PICKUPS.md). Each icon is a pickup id, rolled by rarity tier like a
 #goon drop but with the reels' own odds, or STAR, the jackpot symbol. Dice tilts the tiers up, and so
-#does the machine's bet (run coins, BETS). Paylines are in slotMachine.gd.
+#does the machine's bet (run coins, BETS). Paylines are in slot_machine.gd.
 
 const STAR := "star"
 const TIER_WEIGHTS := [50.0, 30.0, 14.0, 5.0, 1.0]
 const BETS := [0, 25, 100, 250]     #coins per bet level
 const STAR_CHANCE := 0.06           #per icon, plus STAR_PER_BET per bet level
 const STAR_PER_BET := 0.02
-## Reels never show these: they pause the run themselves.
-const NEVER := ["slotmachine", "deal", "claw", "mystery"]
+## Reels never show another game (Pickups.NOT_IN_GAMES).
+const NEVER := Pickups.NOT_IN_GAMES
 ## The most times a pair or triple pays one item, by rarity (a triple of Blueprints pays one).
 const MAX_REPEAT := [5, 5, 3, 2, 1, 1]
 

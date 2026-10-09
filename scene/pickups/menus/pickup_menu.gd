@@ -1,32 +1,56 @@
 class_name PickupMenu extends CanvasLayer
 
-#Base for the pickup menus that pause a run (The Deal, the Claw Crane, the Pit Shop): a dimmed screen
-#with one card in the menu theme (docs/UI.md), driven by the driving keys as well as the menu keys.
-#Keys pressed in the first moments are ignored, so a held Accelerate can't pick something by accident.
-#Closing resumes the run through the usual 3-2-1 countdown.
+#The frame every pausing prize game is built on (docs/PICKUPS.md, "Prize games"): the Claw Crane, the Slot
+#Machine, the Prize Wheel, The Deal, The Vault and the Pit Shop. One card in the menu theme (docs/UI.md) over
+#a dimmed run, always the same size: a title and a subtitle, a STAGE-sized play area the game draws on (or
+#fills with controls), one status line and a row of key hints. Every game ends on the same winnings board,
+#which lists each prize and what it did (held on E, sold because a rarer one is held, +40 coins...).
+#Prizes are credited the moment they are won (award), never from an animation; the board only shows them.
+#
+#Driven by the driving keys as well as the menu keys. A key held when the game opens is ignored until it
+#is released, so a held Accelerate can't play something by accident. Closing resumes the run through a
+#quick 3-2-1 (resumeRun).
 
-const ARM_SECONDS := 0.6
+const STAGE := Vector2(640, 420)
+const ARM_SECONDS := 0.2   #at least this long before a key counts, and Accelerate must be up
+const BOARD_ROWS := 6      #rows the winnings board shows; more are summed into the last
+const ROW_STEP := 0.09     #seconds between rows appearing
 
 var root := Control.new()
 var centre: CenterContainer
 var card := PanelContainer.new()
 var body := VBoxContainer.new()
+var stage := Control.new()
+var info := Label.new()
+var hintRow: HBoxContainer
 var armed := 0.0
+var waitRelease := false
 var closed := false
+var shown := false         #past the queue (otherScreenUp) and on screen
 var hatch: GameHatch #the skid in, the hatch and the peel out (docs/UI.md, "Transitions")
 var hatchLabel := ""
+
+var winnings: Array = []   #{key, icon, name, line, color, count}, in the order won
+var board := Control.new()
+var boardUp := false
+var boardT := 0.0
 
 func _init() -> void:
 	layer = 20
 	process_mode = Node.PROCESS_MODE_ALWAYS
 
 func _ready() -> void:
+	add_to_group("pickupMenu")
+	#one game at a time: a pickup's game and a gift box landing together queue, and a game never opens
+	#under the 3-2-1 (which would unpause the run beneath it)
+	while not runOver() && otherScreenUp(): await get_tree().process_frame
+	shown = true
 	if runOver(): #opened (deferred) in the frame the run ended: never over the results ticket
 		queue_free()
 		return
 	add_to_group("slotMachine") #the playtest and bench harnesses tap Accelerate through anything in it
-	add_to_group("pickupMenu")
 	InputGlyphs.ensureMenuActions()
+	waitRelease = InputMap.has_action("Accelerate") && Input.is_action_pressed("Accelerate")
 	root.theme = MenuTheme.theme()
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(root)
@@ -39,27 +63,82 @@ func _ready() -> void:
 	root.add_child(centre)
 	card.theme_type_variation = "CardPanel"
 	centre.add_child(card)
-	body.add_theme_constant_override("separation", 14)
+	body.add_theme_constant_override("separation", 10)
 	card.add_child(body)
+	stage.custom_minimum_size = STAGE
+	stage.clip_contents = true
+	stage.focus_mode = Control.FOCUS_NONE
+	stage.draw.connect(drawStage)
+	stage.gui_input.connect(stageInput)
+	board.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	board.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	board.visible = false
+	board.draw.connect(drawBoard)
+	board.gui_input.connect(stageInput)
+	info.theme_type_variation = "MutedLabel"
+	info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	info.custom_minimum_size = Vector2(STAGE.x, 26)
+	info.clip_text = true
+	hintRow = KeyHint.bar([], 15, 22)
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	get_tree().paused = true
 	build()
+	if stage.get_parent() == null: addStage()
+	stage.add_child(board) #last, so it covers whatever the game put on the stage
+	body.add_child(info)
+	body.add_child(hintRow)
 	hatch = GameHatch.attach(self, centre, card, hatchLabel)
 	hatch.enter(0.0)
 
+## The game's setup: call title(), then fill the stage (addStage() is called for it if build doesn't).
 func build() -> void: pass
 
 func _process(delta: float) -> void:
-	if closed: return
+	if closed || not shown: return
 	armed += delta
-	if armed < ARM_SECONDS: return
+	if waitRelease && not Input.is_action_pressed("Accelerate"): waitRelease = false
+	if boardUp:
+		boardT += delta
+		board.queue_redraw()
+	if armed < ARM_SECONDS || waitRelease:
+		tick(delta)
+		stage.queue_redraw()
+		return
 	for action in ["Accelerate", "Brake", "TurnLeft", "TurnRight", "UseItem", "ui_accept", "ui_cancel"]:
-		if InputMap.has_action(action) && Input.is_action_just_pressed(action): onAction(action)
+		if InputMap.has_action(action) && Input.is_action_just_pressed(action):
+			if boardUp:
+				if action in ["Accelerate", "ui_accept", "ui_cancel"] && boardT > 0.25: close()
+			else: onAction(action)
 	tick(delta)
+	stage.queue_redraw()
 
+## Keys count now: armed, and nothing held over from before the game opened
+func live() -> bool:
+	return armed >= ARM_SECONDS && not waitRelease
+
+## A key went down (after arming): Accelerate, Brake, TurnLeft, TurnRight, UseItem, ui_accept or ui_cancel.
 func onAction(_action: String) -> void: pass
+## Every frame, armed or not (the tree is paused, so this is the game's clock).
 func tick(_delta: float) -> void: pass
+## Draws the game on the stage (STAGE-sized, clipped).
+func drawStage() -> void: pass
+## A mouse event on the stage (not on a button in it), in stage coordinates.
+func onStageMouse(_event: InputEvent) -> void: pass
 
+func stageInput(event: InputEvent) -> void:
+	if closed || armed < ARM_SECONDS: return
+	if boardUp:
+		if event is InputEventMouseButton && event.pressed && event.button_index == MOUSE_BUTTON_LEFT && boardT > 0.25: close()
+		return
+	onStageMouse(event)
+
+## True for a left click (press) on the stage
+static func isClick(event: InputEvent) -> bool:
+	return event is InputEventMouseButton && event.pressed && event.button_index == MOUSE_BUTTON_LEFT
+
+#---------- the frame ----------
+
+## The title strip: the game's name and one line under it (always there, so every card is the same size).
 func title(text: String, sub := "") -> void:
 	if hatchLabel == "": hatchLabel = text.to_upper()
 	var t = Label.new()
@@ -67,32 +146,153 @@ func title(text: String, sub := "") -> void:
 	t.theme_type_variation = "TitleLabel"
 	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	body.add_child(t)
-	if sub != "":
-		var s = Label.new()
-		s.text = sub
-		s.theme_type_variation = "MutedLabel"
-		s.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		body.add_child(s)
+	var s = Label.new()
+	s.text = sub
+	s.theme_type_variation = "MutedLabel"
+	s.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	s.custom_minimum_size = Vector2(STAGE.x, 0)
+	body.add_child(s)
 
-func hints(list: Array) -> HBoxContainer:
-	var row = KeyHint.bar(list)
-	body.add_child(row)
-	return row
+## Puts the stage under the title (build() may call it before adding controls to the stage).
+func addStage() -> void:
+	if stage.get_parent() == null: body.add_child(stage)
+
+## Replaces the key hints: [[actions], label] pairs, as KeyHint.bar.
+func hints(list: Array) -> void:
+	for child in hintRow.get_children():
+		hintRow.remove_child(child)
+		child.queue_free()
+	for h in list: hintRow.add_child(KeyHint.make(PackedStringArray(h[0]), h[1], 15, true))
+
+func say(text: String) -> void:
+	info.text = text
 
 ## The run has ended (the results ticket is up or about to be): no pausing screen opens any more.
 static func runOver() -> bool:
 	return is_instance_valid(Root.levelRoot) && Root.levelRoot.get("hasEnded") == true
 
+## Another prize game, a gift box or the countdown is showing
+func otherScreenUp() -> bool:
+	for menu in get_tree().get_nodes_in_group("pickupMenu"):
+		if menu != self && menu.shown && not menu.closed: return true
+	if not get_tree().root.find_children("*", "GiftBox", true, false).is_empty(): return true
+	if is_instance_valid(Root.playerCar):
+		for child in Root.playerCar.get_children():
+			if child.scene_file_path == "res://scene/player/countdown.tscn": return true
+	return false
+
 static func runCoins() -> int:
 	return Root.playerCar.coin if is_instance_valid(Root.playerCar) else 0
 
-## Leaves the menu. `countdown`: resume through 3-2-1 (false when another pausing screen follows).
+static func runGems() -> int:
+	return Root.playerCar.gem if is_instance_valid(Root.playerCar) else 0
+
+## Resumes a paused run through a quick 3-2-1 (or at once when there is no car).
+static func resumeRun() -> void:
+	var tree := Engine.get_main_loop() as SceneTree
+	if not is_instance_valid(Root.playerCar):
+		tree.paused = false
+		return
+	var countdown = load("res://scene/player/countdown.tscn").instantiate()
+	countdown.step = countdown.QUICK_STEP
+	Root.playerCar.add_child(countdown)
+
+## Leaves the game. `countdown`: resume through 3-2-1 (false when another pausing screen follows).
 func close(countdown := true) -> void:
 	if closed: return
 	closed = true
 	#another pausing screen follows at once (countdown false) only when this closes synchronously
 	if countdown && is_instance_valid(hatch): await hatch.leave()
 	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
-	if countdown && is_instance_valid(Root.playerCar): Root.playerCar.add_child(load("res://scene/player/countdown.tscn").instantiate())
-	elif not countdown: get_tree().paused = false
+	if countdown: resumeRun()
+	else: get_tree().paused = false
 	queue_free()
+
+#---------- prizes ----------
+
+## Credits pickup `id` (`times` over) now and lists it on the winnings board.
+func award(id: String, times := 1) -> void:
+	var car = Root.playerCar
+	if not is_instance_valid(car) || times <= 0: return
+	id = Pickups.openOr(id)
+	var line := outcome(car, id, times)
+	for i in times: PickupEffects.collect(car, id, car.global_position, true)
+	note(id, Pickups.texture(id), Pickups.displayName(id), line, Pickups.rarityColor(Pickups.rarity(id)), times)
+
+## Several pickups at once (the slot's reels): the rarest first, so a gadget only loses to a rarer one.
+func awardAll(pays: Dictionary) -> void:
+	var ids := pays.keys()
+	ids.sort_custom(func(a, b): return Pickups.rarity(a) > Pickups.rarity(b))
+	for id in ids: award(id, pays[id])
+
+func awardCoins(amount: int) -> void:
+	if not is_instance_valid(Root.playerCar) || amount <= 0: return
+	Root.playerCar.reward("coin", amount)
+	note("coin", HudTheme.COIN_ICON, "Coins", "+%d run coins" % amount, HudTheme.GOLD, amount)
+
+func awardGems(amount: int) -> void:
+	if not is_instance_valid(Root.playerCar) || amount <= 0: return
+	Root.playerCar.reward("gem", amount)
+	note("gem", HudTheme.GEM_ICON, "Gems", "+%d" % amount, Color("e83aa8"), amount)
+
+## Lists a prize (or a loss) that the game credited itself.
+func note(key: String, icon: Texture2D, label: String, line: String, color: Color, count := 1) -> void:
+	for w in winnings:
+		if w.key == key && key != "":
+			w.count += count
+			w.line = line if key != "coin" && key != "gem" else "+%d" % w.count + (" run coins" if key == "coin" else "")
+			return
+	winnings.push_back({"key": key, "icon": icon, "name": label, "line": line, "color": color, "count": count})
+
+## What collecting `id` will do for `car`, said before it is collected (PickupEffects.collect).
+static func outcome(car, id: String, times := 1) -> String:
+	var d := Pickups.def(id)
+	var kind: int = d.get("kind", -1)
+	if kind == Pickups.K.GADGET || kind == Pickups.K.MOVE:
+		var slot := "moveItem" if kind == Pickups.K.MOVE else "heldItem"
+		var key := InputGlyphs.label("UseMove" if kind == Pickups.K.MOVE else "UseItem")
+		var held: String = car.get(slot) if car.get(slot) != null else ""
+		var charges: int = d.get("charges", 1) * times
+		if held == id: return "+%d %s  -  fire with %s" % [charges, "charge" if charges == 1 else "charges", key]
+		if held == "" || Pickups.rarity(id) >= Pickups.rarity(held):
+			return "Ready  -  fire with %s" % key + ("  (replaces %s)" % Pickups.shortName(held) if held != "" else "")
+		return "Sold for %d coins: your %s is rarer" % [10 * (Pickups.rarity(id) + 1) * times, Pickups.shortName(held)]
+	if kind == Pickups.K.BOOST && d.has("secs"): return "On now for %d s" % int(d.secs)
+	var text: String = d.get("text", "")
+	var stop := text.find(". ")
+	return text.substr(0, stop + 1) if stop > 0 else text
+
+## Turns the stage into the winnings board; Accelerate (or a click) then leaves.
+func showWinnings(heading := "") -> void:
+	if boardUp: return
+	boardUp = true
+	boardT = 0.0
+	board.set_meta("heading", heading)
+	board.visible = true
+	board.mouse_filter = Control.MOUSE_FILTER_STOP #over any buttons the game put on the stage
+	hints([[["Accelerate"], "Back to the road"]])
+	say("")
+	Transition.sound("pop", -6.0, 1.1)
+
+func drawBoard() -> void:
+	var b := board
+	var fade := clampf(boardT / 0.15, 0.0, 1.0)
+	b.draw_rect(Rect2(Vector2.ZERO, STAGE), Color(0.035, 0.03, 0.027, 0.93 * fade))
+	var heading: String = b.get_meta("heading", "")
+	if heading == "": heading = "YOU WON" if not winnings.is_empty() else "NO PRIZE THIS TIME"
+	HudTheme.text(b, Vector2(STAGE.x * 0.5, 50), heading, 34, Color(HudTheme.GOLD, fade), HORIZONTAL_ALIGNMENT_CENTER, 8)
+	var rows := winnings.slice(0, BOARD_ROWS)
+	var rowH := 56.0
+	var top := 80.0 + (BOARD_ROWS - rows.size()) * rowH * 0.5
+	for i in rows.size():
+		var a := clampf((boardT - 0.12 - i * ROW_STEP) / 0.12, 0.0, 1.0)
+		if a <= 0.0: break
+		var w: Dictionary = rows[i]
+		var y := top + i * rowH
+		var x := 36.0 + (1.0 - a) * 30.0
+		HudTheme.panel(b, Rect2(x, y, STAGE.x - 72.0, rowH - 8.0), Color(w.color, 0.55 * a), 10)
+		if w.icon: HudTheme.icon(b, w.icon, Vector2(x + 30, y + 24), 40, Color(1, 1, 1, a))
+		var label: String = w.name.to_upper() + ("  x%d" % w.count if w.count > 1 && w.key != "coin" && w.key != "gem" else "")
+		if i == BOARD_ROWS - 1 && winnings.size() > BOARD_ROWS: label += "  +%d MORE" % (winnings.size() - BOARD_ROWS)
+		HudTheme.text(b, Vector2(x + 62, y + 21), label, 19, Color(w.color, a), HORIZONTAL_ALIGNMENT_LEFT, 5)
+		HudTheme.text(b, Vector2(x + 62, y + 41), w.line, 14, Color(HudTheme.TEXT, a), HORIZONTAL_ALIGNMENT_LEFT, 4, HudTheme.OUTLINE, HudTheme.BODY)

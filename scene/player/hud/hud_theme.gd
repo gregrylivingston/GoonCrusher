@@ -16,6 +16,7 @@ const OK := Color(0.384, 0.824, 0.435)
 const WARN := Color(0.949, 0.694, 0.204)
 const BAD := Color(1.0, 0.29, 0.239)
 const SKY := Color(0.498, 0.816, 1.0)
+const STATION := SKY                             #the station: its pointer, tag and distance (nothing else is blue)
 const START := Color(0.902, 0.863, 0.796)        #rating underline: what the run started with
 const GAIN := Color(1.0, 0.761, 0.227)           #rating underline: added by pickups this run
 
@@ -36,6 +37,22 @@ const MODE_ICONS := {
 }
 
 static var boxes := {}
+
+const STATION_HIT_SECONDS := 1.2
+
+## The car's distance to the station, "2.3 km" or "1.4 mi" (Settings' units, one decimal under 10),
+## or "" with no station
+static func stationDistance() -> String:
+	if not is_instance_valid(Root.station) || not is_instance_valid(Root.playerCar): return ""
+	var miles: float = Root.playerCar.global_position.distance_to(Root.station.drivewayPoint()) / 10000.0
+	if Settings.distance_unit() == "km": miles *= 1.609
+	var shown := "%.1f" % maxf(miles, 0.1) if miles < 10.0 else str(int(miles))
+	return "%s %s" % [shown, Settings.distance_unit()]
+
+## Defense: 1 the moment a goon blows up at a pump, fading to 0 over STATION_HIT_SECONDS
+static func stationHit() -> float:
+	if not is_instance_valid(Root.station) || not Root.station.hasBarrier: return 0.0
+	return clampf(1.0 - (Time.get_ticks_msec() - Root.station.lastHitMsec) / (STATION_HIT_SECONDS * 1000.0), 0.0, 1.0)
 
 #green, amber or red for a 0-100 amount (hull, system condition)
 static func conditionColor(value: float) -> Color:
@@ -70,11 +87,11 @@ static func textWidth(value: String, fontSize: int, font: Font = BOLD) -> float:
 	return font.get_string_size(value, HORIZONTAL_ALIGNMENT_LEFT, -1, fontSize).x
 
 #the smoked, rimmed backing every HUD panel shares
-static func panel(item: CanvasItem, rect: Rect2, rim := Color(RIM, 0.55), radius := 12) -> void:
-	var key = rim.to_html() + str(radius)
+static func panel(item: CanvasItem, rect: Rect2, rim := Color(RIM, 0.55), radius := 12, fill := PANEL) -> void:
+	var key = rim.to_html() + str(radius) + fill.to_html()
 	if not boxes.has(key):
 		var box = StyleBoxFlat.new()
-		box.bg_color = PANEL
+		box.bg_color = fill
 		box.border_color = rim
 		box.set_border_width_all(2)
 		box.set_corner_radius_all(radius)

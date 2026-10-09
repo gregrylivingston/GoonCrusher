@@ -284,47 +284,79 @@ func test_ai_charges_for_deep_water_ahead():
 
 #--- the station's contract ----------------------------------------------------------------------
 
-#every wall rect of the station (StaticBody2D children with rectangle shapes, the house excluded), in world px
-func stationWalls(station: Node2D) -> Array:
-	var rects := []
-	for body in station.find_children("*", "StaticBody2D", true, false):
-		if body.name == "house": continue
-		for shape in body.find_children("*", "CollisionShape2D", true, false):
-			if shape.shape is RectangleShape2D && not shape.disabled:
-				var size: Vector2 = shape.shape.size
-				var centre: Vector2 = shape.global_position
-				rects.push_back(Rect2(centre - size / 2.0, size))
-	return rects
-
-func segmentHits(rects: Array, a: Vector2, b: Vector2) -> bool:
-	var steps := ceili(a.distance_to(b) / 8.0)
-	for i in steps + 1:
-		var p := a.lerp(b, float(i) / steps)
-		for r in rects:
-			if r.has_point(p): return true
-	return false
-
-func test_station_keeps_its_lot_gap_and_driveway():
+func test_station_keeps_its_lot_and_driveway():
 	var station: Node2D = add_child_autofree(load("res://scene/level/station.tscn").instantiate())
 	var lot: Rect2 = station.LOT
 	assert_eq(lot, Rect2(-770, -539, 1518, 1104), "the lot rect is the contract")
-	var walls := stationWalls(station)
-	assert_true(walls.size() >= 3, "walled on three sides")
-	for r in walls: assert_true(lot.grow(2.0).encloses(r), "walls stay inside the lot: %s" % r)
 	var driveway = station.get_node_or_null("driveway/CollisionShape2D")
 	assert_true(driveway != null, "the AI and the run end read driveway/CollisionShape2D")
 	if driveway == null: return
 	var drive: Vector2 = driveway.global_position
 	assert_true(lot.has_point(drive), "the driveway is on the lot")
-	var centre := lot.get_center()
-	assert_true(segmentHits(walls, centre, centre + Vector2(-1000, 0)), "closed to the west")
-	assert_true(segmentHits(walls, centre, centre + Vector2(0, -800)), "closed to the north")
-	assert_true(segmentHits(walls, centre, centre + Vector2(0, 800)), "closed to the south")
-	assert_false(segmentHits(walls, drive, drive + Vector2(1000, 0)), "the gap is east of the driveway")
-	assert_eq(station.nearestWallPoint(drive), drive, "inside the lot a point is its own nearest wall point")
-	assert_eq(station.nearestWallPoint(Vector2(5000, 0)), Vector2(lot.end.x, 0), "outside it lands on the lot's edge")
-	for wall in station.find_children("*", "LightOccluder2D", true, false):
-		if wall.get_parent().name != "house": assert_true(wall.get_meta("gc_world", false), "%s stays on at Lighting Low" % wall.get_parent().name)
+	assert_eq(station.nearestLotPoint(drive), drive, "inside the lot a point is its own nearest lot point")
+	assert_eq(station.nearestLotPoint(Vector2(5000, 0)), Vector2(lot.end.x, 0), "outside it lands on the lot's edge")
+	assert_true(station.get_node("house/LightOccluder2D").get_meta("gc_world", false), "the house stays on at Lighting Low")
 	station.startBarrier()
-	station.damage(400.0)
-	assert_almost_eq(station.barrier, station.BARRIER_MAX - 400.0 * station.SIEGE_DAMAGE, 0.01, "goons wear the barrier down (walls take SIEGE_DAMAGE of a blow)")
+	station.damage(40.0)
+	assert_almost_eq(station.barrier, station.BARRIER_MAX - 40.0 * station.BLAST_DAMAGE, 0.01, "goons blowing up wear the barrier down")
+
+#Defense: a goon marches on the nearer pump and blows up when it gets there, hurting the barrier, with no crush credit
+func test_defense_goons_blow_up_at_the_pumps():
+	makeManager()
+	var car := makeStubCar(Vector2(-5000, 0)) #far away: the goons ignore it
+	var station: Node2D = add_child_autofree(load("res://scene/level/station.tscn").instantiate())
+	station.startBarrier()
+	var pump: Vector2 = station.get_node("pump").global_position
+	var walker := spawnGoon(&"grunt", pump + Vector2(1200.0, 0))
+	walker.siegeTarget = station
+	walker.rotation = PI #facing the pump, so its first step is toward it
+	assert_eq(station.nearestPump(walker.global_position), pump, "it picks the nearer pump")
+	assert_true(walker.sieging(car), "a goon far from the car marches on the station")
+	var before: float = walker.global_position.distance_to(pump)
+	walker.siege(0.1)
+	assert_gt(before, walker.global_position.distance_to(pump), "it walks toward the pump")
+	walker.global_position = pump + Vector2(300.0, 0) #on the lot, short of the pump
+	walker.siege(0.1)
+	assert_false(walker.dead, "the lot's edge isn't enough: it goes on to the pump")
+	assert_eq(station.barrier, station.BARRIER_MAX, "the barrier is untouched")
+	walker.global_position = pump + Vector2(20.0, 0)
+	walker.siege(0.1)
+	assert_true(walker.dead, "at the pump it blows up")
+	assert_almost_eq(station.barrier, station.BARRIER_MAX - walker.attackDamage * station.BLAST_DAMAGE, 0.01, "and damages the station")
+	assert_eq(car.currentGoonsCrushed, 0, "no crush for the car")
+	var near := spawnGoon(&"grunt", pump + Vector2(1200.0, 0))
+	near.siegeTarget = station
+	car.global_position = near.global_position + Vector2(100, 0)
+	assert_false(near.sieging(car), "with the car close, the goon's verb hunts it instead")
+
+#from behind the house a goon heads for a corner of it, never through it, and steps on until the pump is in sight
+func test_defense_goons_walk_round_the_house():
+	var station: Node2D = add_child_autofree(load("res://scene/level/station.tscn").instantiate())
+	station.global_position = Vector2(3000, 2000)
+	var house: Rect2 = station.houseRect()
+	var east: Vector2 = station.to_global(Vector2(1500, 175))
+	assert_eq(station.siegeStep(east), station.get_node("pump").global_position, "in the open: straight at the pump")
+	for start in [Vector2(-200, -1200), Vector2(-1400, -200), Vector2(-1400, -600)]: #north of, west of and behind the house
+		var at: Vector2 = station.to_global(start)
+		var reached := false
+		for hop in 6:
+			var next: Vector2 = station.siegeStep(at)
+			assert_false(station.segmentCrosses(house, station.to_local(at), station.to_local(next)), "from %s: never through the house" % start)
+			if next.distance_to(station.nearestPump(at)) < 1.0:
+				reached = true
+				break
+			at = next
+		assert_true(reached, "from %s: round the house to a pump in a few corners" % start)
+
+#Defense: Sentry Turrets set up by the pumps, a second one beside the first rather than on top of it
+func test_turrets_set_up_by_the_pumps():
+	var station: Node2D = add_child_autofree(load("res://scene/level/station.tscn").instantiate())
+	station.global_position = Vector2(3000, 2000)
+	var first: Vector2 = station.turretSpot([])
+	for pump in station.PUMPS: assert_gt(900.0 - 300.0, first.distance_to(station.get_node(pump).global_position), "%s is well inside its range" % pump)
+	assert_false(station.houseRect().has_point(station.to_local(first)), "not in the house")
+	var second: Vector2 = station.turretSpot([first])
+	assert_gt(second.distance_to(first), station.TURRET_SPACING, "a second one doesn't stack on the first")
+	var all: Array = []
+	for spot in station.TURRET_SPOTS: all.push_back(station.to_global(spot))
+	assert_eq(station.turretSpot(all), first, "every spot taken: back to the first")

@@ -5,14 +5,17 @@ extends CanvasLayer
 #puff off the car. At run start the rack drops in on its rail (playerRoot sets `dropIn`); on a resume
 #after a slot machine or pickup menu it is simply there. The run stays paused for the three steps, as
 #the old 3-2-1 did, and unpauses on GO. Reduce Motion fades the rack in and out with no drop or smoke.
+#Back from a prize game (PickupMenu.resumeRun) the lamps run at QUICK_STEP: about a second in all.
 
 const STEP := 1.0
+const QUICK_STEP := 0.25
 const DROP_SECONDS := 0.26
 const LIFT_SECONDS := 0.3
 const RACK_Y := 196.0
 const RACK_SIZE := Vector2(460, 150)
 
 var dropIn := false
+var step := STEP
 var rack := StartLamps.new()
 var fx := TransitionFx.new()
 
@@ -44,10 +47,11 @@ func run() -> void:
 		create_tween().tween_property(rack, "modulate:a", 1.0, 0.12)
 	for lamp in 3:
 		light(lamp + 1)
-		await get_tree().create_timer(STEP, true).timeout
+		await get_tree().create_timer(step, true).timeout
 	get_tree().paused = false #the run starts now; the green lamp shows over it without holding anything up
 	go(calm)
-	await get_tree().create_timer(LIFT_SECONDS, true).timeout
+	if dropIn && is_instance_valid(Root.levelRoot) && Root.levelRoot.has_method("postBriefing"): Root.levelRoot.postBriefing() #run start only, not resumes
+	await get_tree().create_timer(LIFT_SECONDS if step >= STEP else 0.1, true).timeout
 	var lift = create_tween()
 	if calm: lift.tween_property(rack, "modulate:a", 0.0, Transition.FADE_SECONDS)
 	else:

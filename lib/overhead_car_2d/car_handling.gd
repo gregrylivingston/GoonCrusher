@@ -63,6 +63,11 @@ var deflect := 0.25          #share of the angle to the wall's line the nose tur
 var deflectMaxAngle := 55.0  #...when it meets the wall within this many degrees of glancing
 var scrapeKeep := 0.995      #share of speed kept per tick sliding along a wall
 
+#--- a trailer (CarTrailer: the semi) ---
+var trailerGrip := 0.35      #share of the way the trailer's turn rate goes to the no-slide rate per tick (times the ground's grip)
+var trailerJackknife := 80.0 #degrees the trailer can fold against the tractor...
+var trailerFoldDrag := 0.03  #...where it drags this share of the tractor's speed off per tick
+
 #--- camera ---
 var lookAhead := 0.3         #seconds of travel the camera leads the car by...
 var lookAheadMax := 450.0    #...up to this many px

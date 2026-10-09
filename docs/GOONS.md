@@ -97,7 +97,7 @@ After a bake that adds new PNGs, run `Godot_console.exe --headless --path . --im
 - **LOD:** off screen, `advance` moves without collision queries, as before.
 - **Contact:** the car takes `damage(5)` at most once per goon every 30 ticks (`goonBumpReady` in the car). A goon that bumps the car outside an attack also steps back (`onTouch`), and riders peel off.
 - **Physics layer:** goons are on their own layer (layer 3 "Goon": `collision_layer` 4, mask 3; `savedLayers` defaults to `Vector2i(4, 3)` for `setSolid`), so they don't collide with each other. Kicked shells and blasts find goons by distance (`SpawnManager.goonsNear`), not by collision.
-- **Defense:** `walker.gd` has a siege block (`siegeTarget`, `sieging`, state `siege`). When the car is far away, a goon in `move` marches on the station and hits it. Verbs in `SIEGE_SKIP` (burrow, flyer, rider) don't siege. Keep this block when editing `walker.gd`.
+- **Defense:** `walker.gd` has a siege block (`siegeTarget`, `sieging`, `siege`). When the car is more than `SIEGE_AGGRO` away, a goon in `move` marches on the nearer pump island (`station.nearestPump`), rounding the house by its corners when it is in the way (`station.siegeStep`), and blows up when it reaches the pump: `station.damage(attackDamage)` takes `BLAST_DAMAGE` × that off the barrier, and the goon dies as `&"self"` (no crush credit). Verbs in `SIEGE_SKIP` (burrow, flyer, rider) don't siege. Keep this block when editing `walker.gd`.
 
 ## Crushing
 

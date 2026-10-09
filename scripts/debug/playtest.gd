@@ -273,22 +273,21 @@ func trace() -> void:
 		driver.plan.steer, mini(driver.plan.steerTicks, 99), driver.plan.throttle, minf(driver.speedCap, 9999.0), GameStats.goons(), driver.stats.stuck])
 	print("PLAYTEST_COSTS hop=%d " % driver.approachHop + " ".join(driver.lastCosts))
 
-#Defense, every 10 s: the barrier, and the goons marching on the station, at its walls, and wedged on the way
+#Defense, every 10 s: the barrier, the goons marching on the station and wedged on the way, and how many have
+#blown up at the pumps so far
 func traceDefense() -> void:
 	var station = Root.station
 	if not is_instance_valid(station) || not is_instance_valid(Root.spawnManager): return
 	var marching := 0
-	var atWalls := 0
 	var wedged := 0
 	var near := 0
 	for g in Root.spawnManager.goons:
 		if not is_instance_valid(g) || g.dead: continue
 		if g.global_position.distance_to(station.global_position) < 1500.0: near += 1
-		if g.state == &"siege": atWalls += 1
-		elif g.sieging(car): marching += 1
+		if g.sieging(car): marching += 1
 		if g.isStuck(): wedged += 1
-	print("PLAYTEST_DEFENSE t=%.0f barrier=%.0f goons=%d marching=%d at_walls=%d within_1500=%d wedged=%d car_to_station=%d" % [levelTime,
-		station.barrier, Root.spawnManager.goons.size(), marching, atWalls, near, wedged, car.global_position.distance_to(station.global_position)])
+	print("PLAYTEST_DEFENSE t=%.0f barrier=%.0f goons=%d marching=%d blown=%d within_1500=%d wedged=%d car_to_station=%d" % [levelTime,
+		station.barrier, Root.spawnManager.goons.size(), marching, station.blasts, near, wedged, car.global_position.distance_to(station.global_position)])
 
 #--trace: what the car's own collision polygons (the front bumper and the rear; the middle of the car has
 #none) overlap right now, "F"/"R" plus "*" for the one enabled: a car wedged inside a shape can't move

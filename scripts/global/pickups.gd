@@ -148,7 +148,7 @@ const DATA := {
 	"emp": {"parent":"horn", "needs":["crushed:scrap:150"], "name":"EMP", "kind":K.GADGET, "rarity":R.UNCOMMON, "w":5, "icon":"emp", "ui":"itemui", "charges":1, "radius":900.0, "fac":{F.SCRAP:2.5}, "ai":20,
 		"text":"Scrap Gang vehicles within 900 px stall for 5 s, harpoons and tow magnets let go, and riders fall off."},
 	"bait": {"parent":"horn", "name":"Goon Bait", "kind":K.GADGET, "rarity":R.UNCOMMON, "w":4, "icon":"bait", "ui":"itemui", "charges":1, "radius":1200.0, "secs":8.0, "fac":{F.WILD:2.0}, "ai":16,
-		"text":"Drops a steak. Goons within 1200 px go for it for 8 s. In Defense it pulls a siege off the walls."},
+		"text":"Drops a steak. Goons within 1200 px go for it for 8 s. In Defense it pulls goons off their march on the station."},
 	"hubcap": {"parent":"bait", "name":"Homing Hubcap", "kind":K.GADGET, "rarity":R.RARE, "w":8, "icon":"hubcap", "ui":"itemui", "charges":1, "bounces":6, "ai":28,
 		"text":"Throws a spinning hubcap that bounces between up to 6 goons, crushing each."},
 	"airstrike": {"parent":"mine", "name":"Airstrike", "kind":K.GADGET, "rarity":R.RARE, "w":8, "icon":"mortar", "ui":"itemui", "charges":1, "radius":230.0, "ai":30,
@@ -222,7 +222,7 @@ const DATA := {
 	"barricade": {"parent":"ffwd", "needs":["mode:defense"], "name":"Barricade Kit", "kind":K.MODE, "rarity":R.COMMON, "w":10, "icon":"barricade", "ui":"itemui", "modes":[M.DEFENSE], "barrier":150.0, "ai":25,
 		"text":"Bring it into the station's lot for +150 barrier. Defense."},
 	"turret": {"parent":"barricade", "name":"Sentry Turret", "kind":K.MODE, "rarity":R.RARE, "w":10, "icon":"turret", "ui":"buffui", "modes":[M.DEFENSE], "secs":30.0, "ai":40,
-		"text":"Sets up on the station's nearest wall and shoots goons for 30 s. Kills count. Defense."},
+		"text":"Sets up by the station's pumps and shoots goons for 30 s. Kills count. Defense."},
 	"compass": {"parent":"stopwatch", "name":"Shortcut Map", "kind":K.MODE, "rarity":R.UNCOMMON, "w":6, "icon":"compass", "ui":"buffui", "modes":[M.SPRINT, M.MARATHON], "secs":15.0, "ai":12,
 		"text":"For 15 s: arrows mark a route to the station around water and hills. Sprint and Marathon."},
 	"panic": {"parent":"ffwd", "needs":["survive:180"], "name":"Panic Button", "kind":K.MODE, "rarity":R.RARE, "w":10, "icon":"panic", "ui":"buffui", "modes":[M.POCALYPSE], "secs":30.0, "ai":30,
@@ -411,6 +411,10 @@ static func openLoadout(table: Dictionary) -> Dictionary:
 	for id in table:
 		if Unlocks.isPickupOpen(id): out[id] = table[id]
 	return out
+
+## Prize games (the slot reels, the Claw, the Deal, the Wheel, the Vault, the Pit Shop) never pay these: each
+## is a game of its own, or a box that could roll one. Every Casino pickup.
+const NOT_IN_GAMES := ["slotmachine", "deal", "claw", "mystery", "scratch", "double", "lottery", "wheel"]
 
 ## A menu's offer (The Deal, the Pit Shop, the Claw): a drop of at least `minTier` that isn't in `never` or
 ## `taken`. With few pickups unlocked the tiers may hold nothing new, so it settles for lower tiers, then

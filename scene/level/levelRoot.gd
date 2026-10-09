@@ -35,8 +35,8 @@ const REFERENCE_SPEED = 450.0
 const SPRINT_MAX_DISTANCE = 32000.0
 const SPRINT_Y_SPREAD = 0.25 #the station's y offset is up to this share of the distance, either way
 #The clock is set from the A* route on the coarse map (1280 px cells), which is shorter than the drive: the
-#fine walls, pools, props and fords inside passable cells, the corners, and the lot's single gap (east
-#side) that a car arriving from anywhere else has to drive round to. So the route gets a share on top per
+#fine walls, pools, props and fords inside passable cells, the corners, and the station house on the lot
+#(the lot itself is open on every side). So the route gets a share on top per
 #grammar (more where walls are dense) plus a fixed approach allowance (driveLengthFor).
 const ROUTE_FACTOR = {&"meadow": 1.08, &"bayou": 1.12, &"canyon": 1.15, &"quarry": 1.12, &"mountain": 1.15,
 	&"highway": 1.05, &"city": 1.12, &"yard": 1.15}
@@ -55,11 +55,11 @@ var legHeading := 0.0
 var targetReached := false
 
 #Defense: hold the station until the clock runs out (ModeTiers.DEFENSE_HOLD seconds). Goons spawn at the mouths of the straight lanes the
-#world generator cleared out from it (WorldGen.placeDefense) and march on its walls (Walker.siege); the
+#world generator cleared out from it (WorldGen.placeDefense) and march on its pumps, blowing up when they reach one (Walker.siege); the
 #station's barrier health is in station.gd. Without lanes (no world map) they ring it instead.
 const DEFENSE_RING = 4000.0
 const DEFENSE_SPAWNERS = 4
-const DEFENSE_START = Vector2(1250, 290) #outside the lot's gap (its east side), from the station's origin
+const DEFENSE_START = Vector2(1250, 290) #east of the lot, by the driveway, from the station's origin
 
 #Before any child is ready, so SpawnManager._ready (Goonpocalypse escalation) builds on the def's numbers,
 #and before the bench's node_added overrides, which come after this.
@@ -305,6 +305,33 @@ func onClockTick() -> void:
 		var host = TapeBanner.layer()
 		if host: Stamp.slam(host, "TARGET SMASHED", Vector2(get_viewport().get_visible_rect().size.x * 0.5, 320.0), HudTheme.GOLD, 72, 1.6)
 
+#--- the briefing -------------------------------------------------------------------------------
+
+#At GO (countdown.gd, run start only) a tape banner says the mode's goal; for a mode's first BRIEF_RUNS runs a
+#second one says how (meta.hints.briefings counts them per mode)
+const BRIEF_RUNS := 3
+
+## [goal, how] for the run's mode, banner-ready (upper case)
+func briefing() -> Array[String]:
+	match SaveManager.playerData.gameMode:
+		Root.gameModes.SPRINT: return ["REACH THE STATION", "FOLLOW THE BLUE ARROW BEFORE TIME RUNS OUT"]
+		Root.gameModes.MARATHON: return ["REACH %d STATIONS" % legs(), "EACH STATION REFUELS YOU AND ADDS TIME"]
+		Root.gameModes.DEFENSE: return ["HOLD THE BASE", "CRUSH GOONS BEFORE THEY REACH THE PUMPS"]
+		Root.gameModes.GOONPOCALYPSE:
+			var target := int(pocalypseTarget())
+			return ["SURVIVE %d:%02d FOR THE STAR" % [target / 60, target % 60], "THEN CHASE YOUR BEST SCORE"]
+	return ["SURVIVE THE CLOCK", "CRUSH GOONS FOR COINS AND STARS"]
+
+func postBriefing() -> void:
+	var lines := briefing()
+	TapeBanner.post(lines[0], 1.4)
+	var counts: Dictionary = SaveManager.playerData.meta.get_or_add("hints", {}).get_or_add("briefings", {})
+	var key := str(SaveManager.playerData.gameMode)
+	if counts.get(key, 0) >= BRIEF_RUNS: return
+	counts[key] = counts.get(key, 0) + 1
+	SaveManager.save_character_data()
+	TapeBanner.post(lines[1], 1.8)
+
 #--- Marathon -----------------------------------------------------------------------------------
 
 #the active station's driveway calls this in Marathon
@@ -337,7 +364,7 @@ func openPitShop() -> void:
 func openFreeSlotMachine() -> void:
 	if hasEnded || get_tree().paused: return
 	get_tree().paused = true
-	add_child(preload("res://scene/player/slots/slotMachine.tscn").instantiate())
+	SlotMachine.open()
 
 #--- Defense ------------------------------------------------------------------------------------
 
