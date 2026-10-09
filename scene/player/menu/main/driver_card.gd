@@ -60,6 +60,8 @@ var band := ColorRect.new()
 var nameLabel := Label.new()
 var infoLabel := Label.new()
 var priceLine := Control.new() #a locked driver's price, as numbers and symbols, under the car type
+var traitRow := HFlowContainer.new() #the car's signature features (CarTraits) as badges along the art's foot
+var traitRows := 1 #rows the badges take: a third badge wraps onto a second row above the first
 var stats := Control.new()       #holds both stat layouts
 var compact := GridContainer.new()
 var sheet := VBoxContainer.new()
@@ -87,6 +89,11 @@ func _ready() -> void:
 	art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 
+	traitRow.alignment = FlowContainer.ALIGNMENT_CENTER
+	traitRow.add_theme_constant_override("h_separation", 6)
+	traitRow.add_theme_constant_override("v_separation", 4)
+	traitRow.mouse_filter = MOUSE_FILTER_IGNORE
+	add_child(traitRow)
 	band.color = HudTheme.RIM
 	band.mouse_filter = MOUSE_FILTER_IGNORE
 	add_child(band)
@@ -243,7 +250,36 @@ func setup(entry: Dictionary, carInfo: CarInfo, carIndex: int) -> void:
 	demoLocked = Root.IS_DEMO && carIndex >= Root.DEMO_CAR_COUNT
 	art.texture = info.backgroundPic
 	portrait.texture = info.profilePic
+	for child in traitRow.get_children():
+		traitRow.remove_child(child)
+		child.queue_free()
+	for id in info.traits:
+		if CarTraits.has(id): traitRow.add_child(traitBadge(id))
+	traitRows = 2 if traitRow.get_child_count() > 2 else 1
+	applySheet(sheetAmount) #the badges' rows decide where they sit
 	refresh()
+
+## A trait's badge: its icon and name on a dark pill edged in its kind's colour (CarTraits.KIND_COLORS)
+static func traitBadge(id: StringName) -> PanelContainer:
+	var panel = PanelContainer.new()
+	var col := CarTraits.color(id)
+	panel.add_theme_stylebox_override("panel", MenuTheme.box(Color(0.055, 0.047, 0.043, 0.9), Color(col, 0.85), 8, 2, Vector4(6, 3, 10, 3)))
+	panel.mouse_filter = MOUSE_FILTER_IGNORE
+	var line = HBoxContainer.new()
+	line.add_theme_constant_override("separation", 5)
+	line.mouse_filter = MOUSE_FILTER_IGNORE
+	panel.add_child(line)
+	var icon := MenuTheme.iconRect(CarTraits.texture(id), 24)
+	icon.mouse_filter = MOUSE_FILTER_IGNORE
+	line.add_child(icon)
+	var label = Label.new()
+	label.text = CarTraits.displayName(id).to_upper()
+	label.add_theme_font_size_override("font_size", 15)
+	label.add_theme_color_override("font_color", col.lightened(0.45))
+	label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	label.mouse_filter = MOUSE_FILTER_IGNORE
+	line.add_child(label)
+	return panel
 
 func isLocked() -> bool:
 	return car.cost != 0 || demoLocked
@@ -451,6 +487,10 @@ func applySheet(amount: float) -> void:
 	portrait.size = Vector2(SIZE.x - 20, artHeight - portrait.position.y)
 	band.position = Vector2(0, artHeight)
 	band.size = Vector2(SIZE.x, BAND_HEIGHT)
+	traitRow.position = Vector2(8, artHeight - 6 - traitRows * 34 - (traitRows - 1) * 4)
+	traitRow.size = Vector2(SIZE.x - 16, traitRows * 34 + (traitRows - 1) * 4)
+	traitRow.modulate.a = clampf(1.0 - amount * 2.5, 0.0, 1.0)
+	traitRow.visible = traitRow.modulate.a > 0.0
 	nameLabel.position = band.position
 	nameLabel.size = band.size
 	compact.modulate.a = clampf(1.0 - amount * 2.5, 0.0, 1.0)

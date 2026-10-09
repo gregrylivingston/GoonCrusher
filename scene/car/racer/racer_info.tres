@@ -15,6 +15,7 @@
 [resource]
 script = ExtResource("11_gabta")
 carId = "racer"
+traits = Array[StringName]([&"drift_king", &"featherweight"])
 weight = 15
 charName = "Kim"
 profilePic = ExtResource("10_u8c0r")

@@ -18,6 +18,7 @@
 [resource]
 script = ExtResource("14_1r88j")
 carId = "van"
+traits = Array[StringName]([&"cargo_bay", &"top_heavy"])
 weight = 70
 charName = "Lester"
 profilePic = ExtResource("13_d8j14")

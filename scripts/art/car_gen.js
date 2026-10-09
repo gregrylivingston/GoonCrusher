@@ -86,13 +86,15 @@ pickup:{ name:'Pickup', driver:'Karen', cost:2500, seed:41, paint:'#2c5a94', cle
 /* The semi is two cars that bake apart: the tractor (semi) and its trailer (semiTrailer), which the game
    hitches at the fifth wheel (CarTrailer). Each is authored centred on its own axles: the tractor between its
    steer axle and drive tandem, the trailer on its box. The tractor's frame runs on behind the cab, under
-   where the trailer's nose sits: rails, the fifth-wheel plate (the kingpin at y 40), the drive tandem and
-   mud flaps, so the mount shows as the trailer swings. The trailer is a US-style 53 ft box, about 2.2 times
-   the tractor; its kingpin sits 18 behind its nose (y -137) and its tandem at the back. */
-semi:{ name:'Semi', driver:'Tiffany', cost:5000, seed:53, paint:'#d8d7d1', clean:'#f4f4f0', grime:{dirt:.5,rust:.3,fade:.15,moss:0}, box:[136,160], stacksY:27,
-	parts:[{y0:-66,y1:23,W:90,rim:6,rimF:5,rimR:1,pf:5,pr:30,tf:.93,tr:1,arches:[[-45,2,13]],front:1,rear:0,
-		cabin:{wf:-25,rf:-15,rr:23,wr:23,gi:3,side:5,bowF:4,bowR:0,cp:0,bp:3},doors:[-7],hood:1,trunk:0,filler:[1,4],sleeper:1}],
-	wheels:[[-45,39,11,26],[36,40,12,22],[54,40,12,22]], lights:{f:'rect',r:'none',grille:1}, bumper:{f:'chrome',r:'none',w:.96}, mirrors:-23, truckMirrors:1,
+   where the trailer's nose sits: rails, the fifth-wheel plate (the kingpin at y 59), the drive tandem and
+   mud flaps, so the mount shows as the trailer swings. The cab's back is 55 ahead of the kingpin: the
+   trailer's front corners sweep 51 round it (8 of nose, 50 of half width), so a folded trailer clears the
+   cab. The trailer is a US-style 53 ft box, about 2.2 times the tractor; its kingpin sits 8 behind its nose
+   (y -147) and its tandem at the back. */
+semi:{ name:'Semi', driver:'Tiffany', cost:5000, seed:53, paint:'#d8d7d1', clean:'#f4f4f0', grime:{dirt:.5,rust:.3,fade:.15,moss:0}, box:[136,190], stacksY:8,
+	parts:[{y0:-85,y1:4,W:90,rim:6,rimF:5,rimR:1,pf:5,pr:30,tf:.93,tr:1,arches:[[-64,2,13]],front:1,rear:0,
+		cabin:{wf:-44,rf:-34,rr:4,wr:4,gi:3,side:5,bowF:4,bowR:0,cp:0,bp:-16},doors:[-26],hood:1,trunk:0,filler:[1,-15],sleeper:1}],
+	wheels:[[-64,39,11,26],[55,40,12,22],[73,40,12,22]], lights:{f:'rect',r:'none',grille:1}, bumper:{f:'chrome',r:'none',w:.96}, mirrors:-42, truckMirrors:1,
 	feats:['fifthWheel','fuelTanks','stacks']},
 semiTrailer:{ name:'Semi trailer', seed:59, paint:'#d8d7d1', clean:'#f4f4f0', grime:{dirt:.5,rust:.3,fade:.15,moss:0}, box:[136,330], zones:'trailer', mirrors:null,
 	parts:[{y0:-155,y1:155,W:100,rim:4,rimF:2.5,rimR:3,pf:30,pr:30,tf:1,tr:1,arches:[],front:0,rear:1,box:'trailer'}],
@@ -377,23 +379,23 @@ bed:{layer:'paint',fn(C,s){ const p=s.p, ctx=C.ctx, [a,b]=p.bed, bb=b-(C.stage?C
 	ctx.strokeStyle='rgba(255,255,255,.08)'; ctx.lineWidth=.8; for(let x=-33;x<35;x+=7){ ctx.beginPath(); ctx.moveTo(x,a); ctx.lineTo(x,bb); ctx.stroke(); }
 	const g=ctx.createLinearGradient(0,a,0,a+10); g.addColorStop(0,'rgba(0,0,0,.55)'); g.addColorStop(1,'rgba(0,0,0,0)'); ctx.fillStyle=g; ctx.fillRect(-50,a,100,10); ctx.restore();
 	ctx.strokeStyle=css(shade(C.look.base,.12)); ctx.lineWidth=1; poly(ctx,pts); ctx.stroke(); seam(C,[[-30,bb-1],[30,bb-1]],.8); }},
-fuelTanks:{layer:'under',fn(C){ const ctx=C.ctx; for(const sd of [1,-1]){ const x=sd*46; rrect(ctx,x-5,-22,10,22,4.5); ctx.fillStyle=chromeGrad(ctx,x-5,0,x+5,0); ctx.fill(); ctx.strokeStyle='rgba(0,0,0,.4)'; ctx.lineWidth=.6; for(const y of [-18,-4]){ ctx.beginPath(); ctx.moveTo(x-5,y); ctx.lineTo(x+5,y); ctx.stroke(); } } }},
+fuelTanks:{layer:'under',fn(C){ const ctx=C.ctx; for(const sd of [1,-1]){ const x=sd*46; rrect(ctx,x-5,-41,10,22,4.5); ctx.fillStyle=chromeGrad(ctx,x-5,0,x+5,0); ctx.fill(); ctx.strokeStyle='rgba(0,0,0,.4)'; ctx.lineWidth=.6; for(const y of [-37,-23]){ ctx.beginPath(); ctx.moveTo(x-5,y); ctx.lineTo(x+5,y); ctx.stroke(); } } }},
 stacks:{layer:'over',fn(C){ const ctx=C.ctx; for(const sd of [1,-1]){ const x=sd*36, y=C.sp.stacksY; ctx.beginPath(); ctx.arc(x,y,3.2,0,7); ctx.fillStyle=chromeGrad(ctx,x-3,y-3,x+3,y+3); ctx.fill(); ctx.beginPath(); ctx.arc(x,y,1.8,0,7); ctx.fillStyle='#111'; ctx.fill(); } }},
 /* the tractor's chassis behind the cab: frame rails and cross members, air lines off the cab's back, the
-   fifth-wheel plate with its kingpin slot (y 40), the drive tandem's mud flaps */
-fifthWheel:{layer:'under',fn(C){ const ctx=C.ctx, L=C.look, y0=16, y1=72, flat=L.flat;
+   fifth-wheel plate with its kingpin slot (y 59), the drive tandem's mud flaps */
+fifthWheel:{layer:'under',fn(C){ const ctx=C.ctx, L=C.look, y0=0, y1=90, K=59, flat=L.flat;
 	for(const sd of [1,-1]){ ctx.fillStyle=flat?'#232327':(()=>{ const g=ctx.createLinearGradient(sd*13,0,sd*21,0); g.addColorStop(0,'#3a3a40'); g.addColorStop(1,'#18181b'); return g; })(); ctx.fillRect(sd>0?13:-21,y0,8,y1-y0); }
-	ctx.fillStyle='#1d1d21'; for(const y of [30,50,68]) ctx.fillRect(-13,y,26,3);
-	for(const [x,c] of [[-5,'#b8261e'],[5,'#2f5fc4']]){ ctx.strokeStyle=c; ctx.lineWidth=1.3; ctx.beginPath(); ctx.moveTo(x,24); ctx.bezierCurveTo(x*2.4,29,x*.4,31,x*1.6,35); ctx.stroke(); }
-	ctx.save(); ctx.translate(0,40);
+	ctx.fillStyle='#1d1d21'; for(const y of [16,34,86]) ctx.fillRect(-13,y,26,3);
+	for(const [x,c] of [[-5,'#b8261e'],[5,'#2f5fc4']]){ ctx.strokeStyle=c; ctx.lineWidth=1.3; ctx.beginPath(); ctx.moveTo(x,6); ctx.bezierCurveTo(x*2.4,16,x*.4,26,x*1.6,36); ctx.stroke(); }
+	ctx.save(); ctx.translate(0,K);
 	ctx.beginPath(); ctx.arc(0,0,19,0,Math.PI*2); ctx.fillStyle=flat?'#2b2c30':(()=>{ const g=ctx.createRadialGradient(-5,-6,2,0,0,19); g.addColorStop(0,'#55575d'); g.addColorStop(1,'#1f2023'); return g; })(); ctx.fill();
 	ctx.strokeStyle='rgba(0,0,0,.6)'; ctx.lineWidth=1; ctx.stroke();
 	ctx.fillStyle='#0d0d0f'; ctx.beginPath(); ctx.moveTo(-7,19); ctx.lineTo(-2.2,1); ctx.lineTo(2.2,1); ctx.lineTo(7,19); ctx.closePath(); ctx.fill();
 	ctx.beginPath(); ctx.arc(0,0,3.6,0,Math.PI*2); ctx.fill();
 	ctx.strokeStyle='rgba(255,255,255,.16)'; ctx.lineWidth=.7; ctx.beginPath(); ctx.arc(0,0,15,Math.PI*1.05,Math.PI*1.95); ctx.stroke();
 	ctx.restore();
-	for(const sd of [1,-1]){ rrect(ctx,sd*40-7,65,14,4,1); ctx.fillStyle='#141416'; ctx.fill(); }
-	if(L.ink){ ctx.strokeStyle=L.inkC; ctx.lineWidth=1; ctx.beginPath(); ctx.arc(0,40,19,0,Math.PI*2); ctx.stroke(); } }},
+	for(const sd of [1,-1]){ rrect(ctx,sd*40-7,85,14,4,1); ctx.fillStyle='#141416'; ctx.fill(); }
+	if(L.ink){ ctx.strokeStyle=L.inkC; ctx.lineWidth=1; ctx.beginPath(); ctx.arc(0,K,19,0,Math.PI*2); ctx.stroke(); } }},
 /* the trailer's roof: ribs, side rails, amber markers down both sides and the rear doors' seam */
 trailer:{layer:'paint',fn(C,s){ const sh=C.shells.find(q=>q.p.box==='trailer'); if(s!==sh) return; const p=sh.p, ctx=C.ctx, y0=p.y0+p.rimF, y1=p.y1-p.rimR-(C.stage?C.dm.crushR:0), w=p.W/2-p.rim;
 	ctx.save(); poly(ctx,sh.top); ctx.clip();

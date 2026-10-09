@@ -32,6 +32,48 @@ var clover: int = 1 #"Clover": more goons drop a pickup (walker.gd)
 var oil: int = 1
 var headlights: int = 1
 var weight: int = 50 #0-100, never upgraded: how the car carries its mass (CarHandling)
+var traits: Array[StringName] = [] #signature features (CarTraits), from `info`
+
+#Trait flags, cached in _ready because integrate() reads them every tick (CarTraits; docs/CAR_ART.md "Traits").
+#Rules that aren't handling live in traitRig (CarTraitRig), which also holds the state these read.
+var tSecondWind := false
+var tDuctTape := false
+var tCargoBay := false
+var tTopHeavy := false
+var tMeter := false
+var tCityTyres := false
+var tOffroad := false
+var tLoadedBed := false
+var tDownforce := false
+var tLowClearance := false
+var tDriftKing := false
+var tFeatherweight := false
+var tPit := false
+var tLightbar := false
+var tDefib := false
+var tBoxSway := false
+var tUnstoppable := false
+var tDropLoad := false
+var traitRig: CarTraitRig
+var twoWheels := false     #Top-Heavy: up on two wheels (CarTraitRig.tickTip); integrate() grips less while up
+var loadDropped := false   #Drop the Load: the trailer is empty, so the rig is lighter (effectiveWeight)
+var secondWindUsed := false
+var defibUsed := false
+var lastHurtTick := -100000 #physics frame of the last damage or system wear (Duct Tape waits on it)
+var spareItem := ""        #Cargo Bay: a second gadget, moved up when the first runs out
+var spareCharges := 0
+
+func hasTrait(id: StringName) -> bool:
+	return traits.has(id)
+
+func cacheTraits() -> void:
+	for id in traits:
+		var flag := "t" + "".join(PackedStringArray(Array(str(id).split("_")).map(func(w): return w.capitalize())))
+		if flag in self: set(flag, true)
+	if not traits.is_empty():
+		traitRig = CarTraitRig.new()
+		traitRig.car = self
+		add_child(traitRig)
 
 #stats that upgrades and powerups raise; powerups can't push them past STAT_CAP in a run
 const UPGRADEABLE_STATS = ["engine", "steering", "traction", "armor", "oil", "headlights", "clover", "luck"]
@@ -126,6 +168,7 @@ func _init():
 
 func _ready():
 	if trailer: trailer.attach(self)
+	cacheTraits()
 	purseAudio.append_array(powerupAudio)
 	$"AudioStream-Engine".stream = engineNoise
 	$"AudioStream-Engine".play()
@@ -156,6 +199,9 @@ func _ready():
 		Pickups.boostLoadout = ""
 		if heldItem != "" || moveItem != "": announceLoadout()
 
+	#the camera follows even while the run is paused: the start (the loading door, then the 3-2-1) is all paused,
+	#and a paused camera keeps a stale view, so the car started off centre until GO
+	if isPlayer: $Camera2D.process_mode = Node.PROCESS_MODE_ALWAYS
 	halfWidth = $carBodyArea/CollisionShape2D.shape.size.y / 2.0
 	var footprint: Vector2 = $carBodyArea/CollisionShape2D.shape.size
 	bodyRect = Rect2($carBodyArea/CollisionShape2D.position - footprint / 2.0, footprint)
@@ -232,6 +278,9 @@ func _physics_process(delta):
 	_car_input.steering = clamp(_car_input.steering, -1.0, 1.0)
 	_car_input.acceleration = clamp(_car_input.acceleration, -1.0, 1.0)
 	if isDestroyed: _car_input.acceleration = 0.0
+	if traitRig && traitRig.controlLock > 0: #Top-Heavy: rolled over, righting itself
+		_car_input.acceleration = 0.0
+		_car_input.steering = 0.0
 	if not zoneCooldown.is_empty(): tickZoneCooldowns()
 	if isPlayer: tickPickups()
 	if fuel <= 0 && not isDestroyed: outOfFuel()
@@ -261,7 +310,7 @@ func _physics_process(delta):
 		##colide with an unmovable static object like a rock
 		#a breakable (fence, hedge, crate...) hit fast enough is smashed, with no wall damage; an explosive
 		#(barrel) goes off. Baked props carry smashSpeed as metadata (BreakableProp), scripted ones as a property.
-		if (collider.has_method("smash") || BreakableProp.isBreakable(collider)) && hitVelocity.length() >= smashSpeedOf(collider):
+		if (collider.has_method("smash") || BreakableProp.isBreakable(collider)) && hitVelocity.length() >= smashThreshold(collider):
 			if collider.has_method("smash"): collider.smash(self)
 			else: BreakableProp.smashNode(collider, self)
 			velocity = hitVelocity * BreakableProp.SPEED_KEEP #the slide stopped the car; a smash barely slows it
@@ -275,9 +324,13 @@ func _physics_process(delta):
 			if goonBumpReady(collider): damage(GOON_CONTACT_DAMAGE)
 			#a crush never wears the car; a slow bump, or a goon that resists (shield, shell, heavy), scuffs it
 			#a plow, spikes, monster tires or a golden ride crush at any speed (crushOverride)
-			if not (velocity.length() > (0.0 if crushBuffActive() else 100.0) && crushGoon(collider)): wearSystem(hitZone(collision), GOON_SCUFF)
+			if not (velocity.length() > (0.0 if crushBuffActive() else 100.0) && crushGoon(collider)):
+				wearSystem(hitZone(collision), GOON_SCUFF)
+				#Featherweight: a goon it can't crush bounces it off rather than stopping it
+				if tFeatherweight && hitVelocity.length() > 60.0: velocity = hitVelocity.bounce(collision.get_normal()) * FEATHER_BOUNCE
 		#else: print(collider.get_class())
 	if trailer: trailer.follow(delta)
+	if traitRig: traitRig.tick(delta)
 	if isPlayer && (velocity.length() > SLAM_MIN_SPEED || absf(spinRate) > 1.5): slamGoons()
 	if isPlayer && trailer && (trailer.axleVel.length() > SLAM_MIN_SPEED || absf(trailer.spin) > 1.5): trailer.slamGoons()
 
@@ -298,10 +351,10 @@ func integrate(pos: Vector2, forward: Vector2, vel: Vector2, input: CarInput, de
 	var steer_stat = steering * conditionFactor("steering")
 	var engine_stat = engine * conditionFactor("engine")
 	var traction_stat = traction * conditionFactor("tires")
-	var w := CarHandling.weightShare(weight)
+	var w := CarHandling.weightShare(effectiveWeight())
 	var speed := vel.length()
 	#the wheel: at full input it turns the car at CarHandling.yawAt for this speed, or at full lock when slow
-	var steer_angle = input.steering * h.wheelAngle(speed, steer_stat, w, wheel_base)
+	var steer_angle = input.steering * h.wheelAngle(speed, steer_stat, w, wheel_base) * traitSteer(speed, input)
 	#the handbrake at speed: the wheel bites harder and the rear lets go (handbrakeGrip, below)
 	var sliding := input.handbrake && speed > HANDBRAKE_MIN_SPEED
 	if sliding: steer_angle *= HANDBRAKE_STEER
@@ -343,9 +396,9 @@ func integrate(pos: Vector2, forward: Vector2, vel: Vector2, input: CarInput, de
 	var rear_wheel = pos - forward * wheel_base / 2.0 + steer_vel * delta
 	var front_wheel = pos + forward * wheel_base / 2.0 + steer_vel.rotated(steer_angle) * delta
 	var new_heading = (front_wheel - rear_wheel).normalized()
-	var grip := h.grip(speed, traction_stat, w) * World.grip(surface) #ice and oil stay slippery whatever the traction
+	var grip := h.grip(speed, traction_stat, w) * surfaceGrip(surface) * traitGrip(speed, input) #ice and oil stay slippery whatever the traction
 	var d = new_heading.dot(vel.normalized())
-	if sliding && d > HANDBRAKE_CATCH_DOT: grip *= handbrakeGrip() #past the catch angle the tires bite again, so a held slide doesn't spin
+	if sliding && d > (DRIFT_KING_CATCH_DOT if tDriftKing else HANDBRAKE_CATCH_DOT): grip *= handbrakeGrip() #past the catch angle the tires bite again, so a held slide doesn't spin
 	if d >= 0: #the travel swings toward the nose keeping its length; only the scrub (CarHandling.turnScrub) costs speed
 		var turned: Vector2 = vel.slerp(new_heading * speed, grip)
 		vel = turned if sliding else turned * (1.0 - h.turnScrub * absf(vel.angle_to(turned)))
@@ -369,6 +422,63 @@ const HANDBRAKE_GRIP_LIGHT := 0.16  #share of the usual grip kept while sliding,
 const HANDBRAKE_GRIP_HEAVY := 0.07  #...and at weight 100: heavy cars slide longer
 const HANDBRAKE_CATCH_DOT := 0.34   #cos(70 degrees): the widest slide angle before the tires catch
 
+#--- handling traits (CarTraits): read inside integrate(), so the AI's predictions follow them ---
+const CITY_GRIP := 1.15         #City Tyres: on paved ground...
+const CITY_DIRT_GRIP := 0.85    #...and on dirt and rough ground
+const OFFROAD_FRICTION := 0.3   #Off-Road: share of rough ground's extra friction it feels...
+const OFFROAD_GRIP := 0.6       #...and share of its lost grip it gets back
+const LOW_CLEARANCE_FRICTION := 1.6 #Low Clearance: rough ground's extra friction, times this
+const DOWNFORCE_LOW := 0.8      #Downforce: grip at a crawl...
+const DOWNFORCE_HIGH := 1.6     #...and from DOWNFORCE_FULL px/s
+const DOWNFORCE_FROM := 300.0
+const DOWNFORCE_FULL := 1100.0
+const TWO_WHEEL_GRIP := 0.6     #Top-Heavy: grip while up on two wheels...
+const TWO_WHEEL_STEER := 0.85   #...and wheel
+const SWAY_BRAKE_STEER := 1.2   #Box Sway: braking dips the nose: more wheel...
+const SWAY_BRAKE_GRIP := 1.1    #...and more bite
+const SWAY_POWER_GRIP := 0.8    #power through a hard corner (|steering| above 0.6, over 400 px/s) and the tail steps out
+const DRIFT_KING_GRIP := 0.75   #Drift King: share of the handbrake's grip...
+const DRIFT_KING_CATCH_DOT := 0.21 #...and the catch at 78 degrees
+const LOAD_WEIGHT := 25         #Drop the Load: the weight an empty trailer sheds
+const FEATHER_BOUNCE := 0.45    #Featherweight: share of its speed it keeps bouncing off a goon
+const PAVED := [Root.terrain.ASPHALT, Root.terrain.LOT, Root.terrain.BRIDGE, Root.terrain.WASH]
+
+func effectiveWeight() -> int:
+	return weight - LOAD_WEIGHT if loadDropped else weight
+
+## Rough ground: anything that drags more than grass (sand, mud, snow, shallows)
+static func isRough(surface: int) -> bool:
+	return surface != World.UNKNOWN && World.friction(surface) > World.GRASS_FRICTION
+
+## the ground's grip for this car (World.grip, with City Tyres and Off-Road)
+func surfaceGrip(surface: int) -> float:
+	var g := World.grip(surface)
+	if tCityTyres:
+		if PAVED.has(surface): g *= CITY_GRIP
+		elif surface == Root.terrain.DIRT || isRough(surface): g *= CITY_DIRT_GRIP
+	if tOffroad && isRough(surface) && g < 1.0: g = lerpf(g, 1.0, OFFROAD_GRIP)
+	return g
+
+func traitGrip(speed: float, input: CarInput) -> float:
+	var k := 1.0
+	if tDownforce: k *= lerpf(DOWNFORCE_LOW, DOWNFORCE_HIGH, smoothstep(DOWNFORCE_FROM, DOWNFORCE_FULL, speed))
+	if tTopHeavy && twoWheels: k *= TWO_WHEEL_GRIP
+	if tBoxSway && speed > 200.0:
+		if input.braking: k *= SWAY_BRAKE_GRIP
+		elif input.acceleration > 0.0 && absf(input.steering) > 0.6 && speed > 400.0: k *= SWAY_POWER_GRIP
+	return k
+
+func traitSteer(speed: float, input: CarInput) -> float:
+	var k := 1.0
+	if tTopHeavy && twoWheels: k *= TWO_WHEEL_STEER
+	if tBoxSway && input.braking && speed > 200.0: k *= SWAY_BRAKE_STEER
+	return k
+
+## The speed that smashes a breakable for this car: Unstoppable smashes anything but explosives at any speed
+func smashThreshold(breakable: Object) -> float:
+	if tUnstoppable && not breakable.get_meta(&"explosive", false): return 0.0
+	return smashSpeedOf(breakable)
+
 #this car's numbers from CarHandling, with damage: for the controller, the AI driver and CarJuice
 func steerRate() -> float:
 	return CarHandling.tune.steerRate(steering * conditionFactor("steering"), CarHandling.weightShare(weight))
@@ -386,13 +496,17 @@ func turnRadius(speed: float) -> float:
 	return maxf(wheel_base / sin(h.wheelMax(steerStat)), speed / h.yawAt(speed, steerStat, CarHandling.weightShare(weight)))
 
 func handbrakeGrip() -> float:
-	return lerpf(HANDBRAKE_GRIP_LIGHT, HANDBRAKE_GRIP_HEAVY, CarHandling.weightShare(weight))
+	return lerpf(HANDBRAKE_GRIP_LIGHT, HANDBRAKE_GRIP_HEAVY, CarHandling.weightShare(weight)) * (DRIFT_KING_GRIP if tDriftKing else 1.0)
 
 #friction on a surface for this car: the table's value with the off-road rule (armor ploughs through
 #soft ground); the car's own `friction` when no map is loaded. Read only, so integrate() stays pure.
 func groundFriction(surface: int) -> float:
 	if surface == World.UNKNOWN: return friction
-	return World.effectiveFriction(World.friction(surface), armor)
+	var f := World.friction(surface)
+	if f > World.GRASS_FRICTION: #rough ground: Off-Road barely feels it, Low Clearance feels it more
+		if tOffroad: f = World.GRASS_FRICTION + (f - World.GRASS_FRICTION) * OFFROAD_FRICTION
+		elif tLowClearance: f = World.GRASS_FRICTION + (f - World.GRASS_FRICTION) * LOW_CLEARANCE_FRICTION
+	return World.effectiveFriction(f, armor)
 
 #a conveyor pulls the velocity along the belt toward the belt speed (CONVEYOR_PULL per second of the
 #shortfall); a car already going faster that way is left alone
@@ -451,6 +565,7 @@ func collideWithFixedObject( collision, hitVelocity = null, respond := true, zon
 		else: spark.queue_free()
 	var moving: Vector2 = hitVelocity if hitVelocity != null else velocity
 	var hurt := wallTick(collision.get_normal(), moving, Engine.get_physics_frames())
+	if traitRig: traitRig.onWall(absf(collision.get_normal().dot(moving)), lastWallHitTick == lastWallTick)
 	if is_instance_valid(juice): juice.onWall(collision.get_position(), collision.get_normal(), moving, lastWallHitTick == lastWallTick)
 	#a fresh hit on a prop: trees shake, bushes squash, signs wobble... (show only)
 	if lastWallHitTick == lastWallTick: PropReactions.hit(collision.get_collider(), moving, collision.get_position())
@@ -545,6 +660,7 @@ func hitZone(collision: KinematicCollision2D) -> String:
 
 #wears a system, at most once per ZONE_COOLDOWN_TICKS so scraping along a wall can't empty it at once
 func wearSystem(system: String, amount: float) -> void:
+	lastHurtTick = Engine.get_physics_frames()
 	if amount <= 0.0 || zoneCooldown.get(system, 0) > 0: return
 	if buffs.has("shield") || buffs.has("golden") || (system == "tires" && buffs.has("spikes")): return
 	zoneCooldown[system] = ZONE_COOLDOWN_TICKS
@@ -624,6 +740,7 @@ func isStyleCrush(speed: float) -> bool:
 #tail that the car is moving into at SLAM_MIN_SPEED or more, counting the swing of a slide (spinRate:
 #a tail-out drift swats goons with the back of the car), is crushed at that point's speed.
 const SLAM_MIN_SPEED := 150.0
+const PIT_FLING := 1.5
 var spinRate := 0.0          #rad/s the car turned this tick
 var crushHitVel := Vector2.ZERO #during a slam: the velocity of the car where it hit (GoonFx, CrushFeel read it)
 var bodyRect := Rect2(-85, -41, 170, 82) #the footprint in car space, from carBodyArea in _ready
@@ -646,8 +763,8 @@ func slamGoons() -> void:
 		var pointVel := velocity + Vector2(-arm.y, arm.x) * spinRate
 		var into := pointVel.dot(normal.rotated(rotation))
 		if into < SLAM_MIN_SPEED: continue
-		if goonBumpReady(goon): damage(GOON_CONTACT_DAMAGE)
-		crushHitVel = pointVel
+		if goonBumpReady(goon) && not tPit: damage(GOON_CONTACT_DAMAGE) #PIT Maneuver: flank hits cost nothing...
+		crushHitVel = pointVel * (PIT_FLING if tPit else 1.0) #...and throw goons further
 		if not crushGoon(goon, pointVel.length()): wearSystem(zoneForHit(-normal, local + centre, halfWidth), GOON_SCUFF)
 		crushHitVel = Vector2.ZERO
 
@@ -658,6 +775,15 @@ func slamGoons() -> void:
 const DRIFT_CHARGE_SLIP := 0.3   #rad between the nose and the travel
 const DRIFT_TIERS := [[40, 120.0, Color(0.45, 0.75, 1.0)], [100, 240.0, Color(1.0, 0.55, 0.15)]] #[ticks, boost px/s, spark colour]
 var driftCharge := 0             #ticks of the current slide
+
+const DRIFT_KING_TIER := [160, 380.0, Color(0.72, 0.42, 1.0)] #Drift King's third tier
+
+## This car's tier for a slide of `ticks`: DRIFT_TIERS, and DRIFT_KING_TIER for a Drift King
+func tierFor(ticks: int) -> int:
+	return DRIFT_TIERS.size() if tDriftKing && ticks >= DRIFT_KING_TIER[0] else driftTier(ticks)
+
+func tierData(tier: int) -> Array:
+	return DRIFT_KING_TIER if tier >= DRIFT_TIERS.size() else DRIFT_TIERS[tier]
 
 ## The boost a slide of `ticks` earns when released (0 below the first tier) and its tier (-1 for none)
 static func driftTier(ticks: int) -> int:
@@ -672,22 +798,22 @@ func tickDriftCharge() -> void:
 	if _car_input.handbrake:
 		if speed < HANDBRAKE_MIN_SPEED: driftCharge = 0 #slowed to a stop: the charge is lost
 		elif slip > DRIFT_CHARGE_SLIP && slip < PI - 0.6:
-			driftCharge += 1
-			var tier := driftTier(driftCharge)
-			if tier >= 0 && driftCharge % 5 == 0: driftSpark(DRIFT_TIERS[tier][2])
+			driftCharge += 2 if tDriftKing && Engine.get_physics_frames() % 5 < 2 else 1 #Drift King charges 40% faster
+			var tier := tierFor(driftCharge)
+			if tier >= 0 && driftCharge % 5 == 0: driftSpark(tierData(tier)[2])
 		return
 	if driftCharge == 0: return
-	var tier := driftTier(driftCharge)
+	var tier := tierFor(driftCharge)
 	driftCharge = 0
 	if tier < 0 || isDestroyed: return
-	var boost: float = DRIFT_TIERS[tier][1]
+	var boost: float = tierData(tier)[1]
 	velocity += transform.x * boost
 	Transition.sound("rev", -6.0, 1.15 + 0.15 * tier)
 	Settings.vibrate(0.3, 0.5, 0.15)
 	if is_instance_valid(crushFeel): crushFeel.kick -= transform.x * 10.0 * (tier + 1)
-	if is_instance_valid(juice): juice.driftBoost(tier, DRIFT_TIERS[tier][2])
+	if is_instance_valid(juice): juice.driftBoost(tier, tierData(tier)[2])
 	if is_instance_valid(Root.spawnManager) && Root.spawnManager.fx:
-		Root.spawnManager.fx.label(global_position, "DRIFT BOOST" if tier == 0 else "SUPER BOOST", 20 + 6 * tier, DRIFT_TIERS[tier][2])
+		Root.spawnManager.fx.label(global_position, ["DRIFT BOOST", "SUPER BOOST", "KING BOOST"][tier], 20 + 6 * tier, tierData(tier)[2])
 
 func driftSpark(color: Color) -> void:
 	if not is_instance_valid(Root.levelRoot): return
@@ -925,10 +1051,26 @@ func spendGems(numOfGems: int):
 
 func damage(damage: float):
 	if blockedByPickup(damage): return
+	lastHurtTick = Engine.get_physics_frames()
 	health -= (damage * 7) / ( armor + 100)
 	updateDamageLook()
-	if health <= 0:
+	if health <= 0 && not defibrillate():
 		destroy()
+
+const SECOND_WIND_FUEL := 10.0
+const DEFIB_HEALTH := 30.0
+## Defibrillator: the first time health reaches 0, back to DEFIB_HEALTH instead of wrecked. Drowning calls
+## destroy() directly, so water still wins.
+func defibrillate() -> bool:
+	if not tDefib || defibUsed || isDestroyed: return false
+	defibUsed = true
+	health = DEFIB_HEALTH
+	updateDamageLook()
+	if isPlayer:
+		Settings.vibrate(1.0, 0.4, 0.3)
+		if is_instance_valid(crushFeel): crushFeel.kick += Vector2(0, -12)
+		if is_instance_valid(Root.spawnManager) && Root.spawnManager.fx: Root.spawnManager.fx.label(global_position + Vector2(0, -90), "CLEAR!", 28, HudTheme.SKY)
+	return true
 
 
 func destroy():
@@ -987,6 +1129,14 @@ func turnOnHeadlights(status: bool):
 	myLights.visible = status
 	
 func outOfFuel():
+	if tSecondWind && not secondWindUsed: #Second Wind: it coughs back to life, once a run
+		secondWindUsed = true
+		fuel = SECOND_WIND_FUEL
+		gasWarningGiven = false
+		Transition.sound("rev", -4.0, 0.7)
+		if is_instance_valid(juice): juice.backfire()
+		if isPlayer && is_instance_valid(Root.spawnManager) && Root.spawnManager.fx: Root.spawnManager.fx.label(global_position + Vector2(0, -90), "SECOND WIND", 22, HudTheme.GOLD)
+		return
 	isDestroyed = true
 	_car_input.acceleration = 0.0
 	await get_tree().create_timer(2.5).timeout
@@ -1089,6 +1239,16 @@ func giveItem(id: String) -> bool:
 	if self[slot] == id:
 		self[count] += charges
 		return true
+	if tCargoBay && slot == "heldItem" && self[slot] != "": #Cargo Bay: a second gadget waits behind the first
+		if spareItem == id || spareItem == "":
+			spareCharges = spareCharges + charges if spareItem == id else charges
+			spareItem = id
+			return true
+		if Pickups.rarity(id) >= Pickups.rarity(spareItem):
+			spareItem = id
+			spareCharges = charges
+			return true
+		return false
 	if self[slot] == "" || Pickups.rarity(id) >= Pickups.rarity(self[slot]):
 		self[slot] = id
 		self[count] = charges
@@ -1108,8 +1268,10 @@ func useItem() -> void:
 	if not Gadgets.use(self, heldItem): return
 	heldCharges -= 1
 	if heldCharges <= 0:
-		heldItem = ""
-		heldCharges = 0
+		heldItem = spareItem #Cargo Bay: the second gadget moves up
+		heldCharges = spareCharges
+		spareItem = ""
+		spareCharges = 0
 
 func useMove() -> void:
 	if not Gadgets.use(self, moveItem): return
@@ -1144,5 +1306,6 @@ func blockedByPickup(amount: float) -> bool:
 ## Damage that ignores armour and shields (a Hot Potato going off on the roof).
 func loseHealth(amount: float) -> void:
 	health -= amount
+	lastHurtTick = Engine.get_physics_frames()
 	updateDamageLook()
-	if health <= 0: destroy()
+	if health <= 0 && not defibrillate(): destroy()

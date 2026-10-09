@@ -2,6 +2,6 @@
 
 [ext_resource type="Script" path="res://tests/prize_lab/prize_lab.gd" id="1_lab"]
 
-[node name="PitShopLab" type="Node"]
+[node name="PitShopLab" type="Node2D"]
 script = ExtResource("1_lab")
 game = "pitshop"

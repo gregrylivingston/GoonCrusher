@@ -16,8 +16,8 @@ class_name CarTrailer extends CharacterBody2D
 #under the cab's shadow and over the cab itself, so a folded trailer's nose covers the tractor's frame.
 
 @export var art: CarArtSet                  #the trailer's sheets, mask and shadow
-@export var kingpin := Vector2(-40.0, 0.0)  #the fifth wheel, in the tractor's space
-@export var length := 238.0                 #kingpin to the middle of the rear axles
+@export var kingpin := Vector2(-59.0, 0.0)  #the fifth wheel, in the tractor's space
+@export var length := 248.0                 #kingpin to the middle of the rear axles (8 of nose ahead of it)
 @export var axleY := 101.0                  #the axles' place on the trailer's sheet (sheet units back from its middle)
 @export var tailLamps := Vector2(55.0, 0.0) #where the car's taillamps node sits, in trailer space
 
@@ -32,7 +32,6 @@ var lastHitch := Vector2.ZERO
 var folded := false         #at the jackknife stop this tick
 var pushed := Vector2.ZERO #this tick's push toward its place behind the kingpin
 const MAX_SPIN := 5.0 #rad/s: the most the trailer swings
-const MAX_TUG := 8.0  #px a tick a snagged trailer pulls the tractor back
 var snap := true            #place it straight behind the tractor on the next tick (spawn, teleports)
 var bodyRect := Rect2()     #the footprint in trailer space, for slams
 
@@ -40,6 +39,10 @@ var bodyRect := Rect2()     #the footprint in trailer space, for slams
 func attach(owner: OverheadCarBody2D) -> void:
 	car = owner
 	top_level = true
+	#top_level also leaves the car's z ordering, so set it outright: the box over the tractor's frame and
+	#fifth wheel (and over the cab when it folds), its shadow under the tractor
+	z_as_relative = false
+	z_index = car.z_index + 1
 	motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
 	add_collision_exception_with(car)
 	car.add_collision_exception_with(self)
@@ -52,7 +55,7 @@ func attach(owner: OverheadCarBody2D) -> void:
 		s.position = Vector2(0.0, -axleY)
 		sprite.add_child(s)
 	shadow.self_modulate = car.get_node("sprite/shadow").self_modulate
-	shadow.z_index = -1 #under the cab; the box itself draws over the cab when it folds
+	shadow.z_index = -2 #one under the tractor
 	body.material = cab.material.duplicate()
 	var shape := get_node_or_null("shape") as CollisionPolygon2D
 	if shape:
@@ -129,15 +132,24 @@ func follow(delta: float) -> void:
 	if get_slide_collision_count() > 0:
 		spin = 0.0 #blocked: it stops swinging into whatever it met
 		hitThings(was.limit_length(car.velocity.length() + 100.0))
-	#a trailer held back by a wall holds the tractor back: no pulling away from it, and the gap closes
-	var gap := global_position.distance_to(hitch) - length
-	if gap > 1.0:
-		var u := (hitch - global_position).normalized()
-		var away := car.velocity.dot(u)
-		if away > 0.0: car.velocity -= u * away
-		car.global_position -= u * minf(gap, MAX_TUG)
+	hold()
 	lastHitch = car.to_global(kingpin) #after the tug, so the trailer never reads its own pull as the tractor moving
 	syncLights()
+
+## The hitch is rigid. Where the trailer ended up (a wall, a log or a rock may have stopped it), the kingpin
+## has to be `length` ahead of its axles; the tractor is moved there, as a body, so it can't be pushed into
+## anything either, and loses the speed that would pull it away again. If even that is blocked, the trailer
+## goes to the kingpin. Either way the two never come apart, so nothing can get between them.
+func hold() -> void:
+	var want := global_position + Vector2.from_angle(global_rotation) * length
+	var off := want - car.to_global(kingpin)
+	if off.length() < 0.5: return
+	var u := off.normalized()
+	var away := car.velocity.dot(-u)
+	if away > 0.0: car.velocity += u * away
+	car.move_and_collide(off)
+	var still := car.to_global(kingpin) - want
+	if still.length() > 0.5: global_position += still
 
 ## What the trailer ran into this tick, met at `moving` (its real speed, never the correction it was pushed by)
 func hitThings(moving: Vector2) -> void:
@@ -145,7 +157,7 @@ func hitThings(moving: Vector2) -> void:
 		var collision := get_slide_collision(i)
 		var collider := collision.get_collider()
 		if collider == null: continue
-		if (collider.has_method("smash") || BreakableProp.isBreakable(collider)) && moving.length() >= OverheadCarBody2D.smashSpeedOf(collider):
+		if (collider.has_method("smash") || BreakableProp.isBreakable(collider)) && moving.length() >= car.smashThreshold(collider):
 			if collider.has_method("smash"): collider.smash(car)
 			else: BreakableProp.smashNode(collider, car)
 		elif PropReactions.knocks(collider, moving):

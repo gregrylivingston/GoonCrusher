@@ -837,6 +837,7 @@ func carDetail(entry: Dictionary) -> void:
 	titleRow((info.charName if info else str(car.name)).to_upper(), [[str(car.name).capitalize().to_upper(), HudTheme.SKY], status])
 	if info == null: return
 	paragraph(carTraits(info))
+	signatureRows(info)
 	if locked && not (Root.IS_DEMO && index >= Root.DEMO_CAR_COUNT):
 		unlockButton(Unlocks.price("car:" + str(car.name)), buyCar.bind(index))
 	var rows = []
@@ -853,6 +854,44 @@ func carDetail(entry: Dictionary) -> void:
 	if records.get("goonsCrushed", 0) > 0:
 		bestLine += "     Best run: %d crushed, %s paid" % [records.goonsCrushed, DriverCard.formatCoins(records.coin)]
 	paragraph(bestLine, "MutedLabel")
+
+#the car's signature features (CarTraits): icon, name, what kind of feature it is, and what it does
+func signatureRows(info: CarInfo) -> void:
+	var ids := info.traits.filter(func(id): return CarTraits.has(id))
+	if ids.is_empty(): return
+	var head = Label.new()
+	head.text = "SIGNATURE"
+	head.theme_type_variation = "MutedLabel"
+	head.add_theme_font_size_override("font_size", 15)
+	into.add_child(head)
+	for id in ids:
+		var row = HBoxContainer.new()
+		row.add_theme_constant_override("separation", 14)
+		var icon := MenuTheme.iconRect(CarTraits.texture(id), 44)
+		icon.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+		row.add_child(icon)
+		var column = VBoxContainer.new()
+		column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		column.add_theme_constant_override("separation", 2)
+		var title = HBoxContainer.new()
+		title.add_theme_constant_override("separation", 10)
+		var name = Label.new()
+		name.text = CarTraits.displayName(id)
+		name.theme_type_variation = "GoldLabel"
+		name.add_theme_font_size_override("font_size", 21)
+		title.add_child(name)
+		var kind = chip(CarTraits.KIND_NAMES[CarTraits.kind(id)], CarTraits.color(id))
+		title.add_child(kind)
+		if CarTraits.kind(id) == CarTraits.Kind.ABILITY: title.add_child(chip(InputGlyphs.label("Ability"), HudTheme.GOLD))
+		column.add_child(title)
+		var text = Label.new()
+		text.text = CarTraits.DATA[id].text
+		text.theme_type_variation = "BodyLabel"
+		text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		text.custom_minimum_size.x = 200
+		column.add_child(text)
+		row.add_child(column)
+		into.add_child(row)
 
 #"Strong engine and armor. Weak headlights." against the average of every car whose info has loaded
 func carTraits(info: CarInfo) -> String:

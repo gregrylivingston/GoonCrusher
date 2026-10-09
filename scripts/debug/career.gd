@@ -645,17 +645,14 @@ func answerClaw(crane: ClawCrane) -> void:
 	await think(PickupMenu.ARM_SECONDS + 0.3)
 	var extra: bool = persona.runs == "coverage" && Root.playerCar.coin >= ClawCrane.EXTRA_GRAB + 200
 	for grab in 4: #a gift box's claw can have up to 3 free grabs
+		#the claw runs back and forth by itself: drop as it passes over the prize the persona wants
 		var target := Personas.clawTarget(persona, crane.prizes, crane.tipX(), rng)
 		if target >= 0:
-			var x: float = crane.prizes[target].pos.x
-			var key := "TurnRight" if x > crane.clawX else "TurnLeft"
-			Input.action_press(key)
-			await waitFor(func(): return absf(crane.clawX - x) < 10.0 || (key == "TurnRight") != (x > crane.clawX), 4.0, "the claw to move", crane)
-			Input.action_release(key)
+			var prize: Dictionary = crane.prizes[target]
+			await waitFor(func(): return crane.phase == "patrol" && absf(crane.tipX() - prize.pos.x) < 12.0, 10.0, "the claw to pass over its prize", crane)
 			if not is_instance_valid(crane): return
-			await waitFor(func(): return crane.settled(), 4.0, "the claw to stop swinging", crane)
-		await press("Accelerate")
-		if not await waitFor(func(): return crane.boardUp || crane.phase == "done" || (crane.phase == "aim" && crane.grabs > 0), 10.0, "the claw to come back", crane): return
+		await press("Accelerate", 0.1)
+		if not await waitFor(func(): return crane.boardUp || crane.phase == "done" || (crane.phase == "patrol" && crane.grabs > 0), 10.0, "the claw to come back", crane): return
 		if not is_instance_valid(crane) || crane.boardUp: break
 		if crane.grabs > 0: continue #free grabs left
 		if grab >= 1 || not extra: break

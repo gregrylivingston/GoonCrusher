@@ -40,17 +40,49 @@ func test_the_board_says_what_a_prize_did():
 	assert_true(PickupMenu.outcome(car, legendary).contains("replaces"), "a rarer one replaces it")
 	assert_true(PickupMenu.outcome(car, "jerry") != "", "a supply says what it does")
 
-func test_claw_grip():
-	var r: float = ClawCrane.RADIUS[Pickups.R.COMMON]
-	assert_gt(ClawCrane.gripFor(0.0, r, 0, 0), ClawCrane.gripFor(15.0, r, 0, 0), "centred grips harder")
-	assert_gt(ClawCrane.gripFor(15.0, r, 0, 3), ClawCrane.gripFor(15.0, r, 0, 0), "a better box grips harder")
-	#a typical trip: about a second up and a second over to the chute, with a little swing
-	var trip := 2.2
-	for rarity in [Pickups.R.COMMON, Pickups.R.LEGENDARY]:
-		var held: float = ClawCrane.gripFor(0.0, ClawCrane.RADIUS[rarity], 0, 0) - ClawCrane.GRIP_DRAIN * ClawCrane.WEIGHT[rarity] * trip
-		assert_gt(held, ClawCrane.LET_GO, "a centred grab holds a %s prize all the way" % Pickups.RARITY_NAMES[rarity])
-	var sloppy: float = ClawCrane.gripFor(ClawCrane.RADIUS[Pickups.R.LEGENDARY], ClawCrane.RADIUS[Pickups.R.LEGENDARY], 0, 0) - ClawCrane.GRIP_DRAIN * ClawCrane.WEIGHT[Pickups.R.LEGENDARY] * trip
-	assert_true(sloppy < ClawCrane.LET_GO, "an edge grab on a heavy prize slips")
+func freeMenu(menu: PickupMenu) -> void:
+	for node in [menu.root, menu.card, menu.body, menu.stage, menu.info, menu.board]: node.free()
+	menu.free()
+
+func test_claw_heap_settles():
+	var claw := ClawCrane.new()
+	for i in 14: claw.addPrize("coinstack" if i % 2 else "jerry", Vector2(150 + (i % 7) * 60.0, 220 + (i / 7) * 60.0))
+	claw.settle(2.0)
+	for p in claw.prizes:
+		assert_true(p.pos.y <= ClawCrane.FLOOR_Y - p.r + 0.5 && p.pos.x >= ClawCrane.CHUTE_X, "a prize rests on the floor or the heap, not through it")
+	for i in claw.prizes.size():
+		for j in range(i + 1, claw.prizes.size()):
+			var a: Dictionary = claw.prizes[i]
+			var b: Dictionary = claw.prizes[j]
+			assert_gt(a.pos.distance_to(b.pos), a.r + b.r - 3.0, "prizes barely overlap")
+	freeMenu(claw)
+
+## Lifts the claw with a prize between its prongs, held at `angle`; true if the prize came up with it
+func lifted(angle: float, id: String) -> bool:
+	var claw := ClawCrane.new()
+	claw.clawX = 320.0
+	claw.cable = 300.0
+	claw.prong = angle
+	var tip: Vector2 = claw.clawXform() * Vector2(0, 52 * ClawCrane.CLAW_SCALE)
+	var p := claw.addPrize(id, tip)
+	for i in 120: #half a second up at lift speed
+		claw.cable -= ClawCrane.LIFT_SPEED * ClawCrane.STEP
+		claw.stepPhysics(ClawCrane.STEP)
+	var up: bool = p.pos.y < tip.y - 80.0
+	freeMenu(claw)
+	return up
+
+func test_claw_holds_by_strength():
+	var common := "coinstack"
+	assert_true(lifted(ClawCrane.SHUT_ANGLE, common), "a shut claw lifts a prize")
+	assert_false(lifted(ClawCrane.WEAK_ANGLE, common), "the weakest claw lets it drop")
+	assert_true(ClawCrane.rollStrength(0, 4) > ClawCrane.rollStrength(0, 0) - 0.3, "a better box makes a stronger claw")
+
+func test_claw_junk_costs():
+	assert_true(ClawCrane.isJunk("junk:bomb") && not ClawCrane.isJunk("coinstack"))
+	for id in ClawCrane.JUNK:
+		assert_true(ClawCrane.textureOf(id) != null, "%s has an icon" % id)
+		assert_false(Pickups.has(id), "junk is not a pickup")
 
 func test_slot_pays_what_the_line_shows():
 	var machine := SlotMachine.new()
@@ -62,8 +94,7 @@ func test_slot_pays_what_the_line_shows():
 	machine.target = [-1, -1, -1]
 	machine.pos = [3.6, 0.2, 9.4]
 	assert_eq(machine.line(), ["coin", "coin", "gem"], "a spinning reel shows the nearest symbol")
-	for node in [machine.root, machine.card, machine.body, machine.stage, machine.info, machine.board]: node.free()
-	machine.free()
+	freeMenu(machine)
 
 func test_wheel_power():
 	assert_eq(PrizeWheelMenu.powerAt(0.0), 0.0)

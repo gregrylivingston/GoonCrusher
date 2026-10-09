@@ -100,17 +100,52 @@ Stock cars on grass after the first fit (2026-10-09). Before, the stock sedan to
 | audi | 1,417 | 9 | 2.11 / 2.05 / 1.85 | 1.03 s, 89% | 1.2 s | 409 |
 | racer | 1,553 | 9 | 2.11 / 2.02 / 1.77 | 1.08 s, 89% | 1.4 s | 417 |
 
+## Traits
+
+Every car has signature features beyond its stats (`scripts/global/car_traits.gd`, `CarTraits`). A car lists them in its `CarInfo` (`traits`, edited in `<car>_info.tres`). The garage card shows them as badges along the foot of its art (`DriverCard.traitBadge`; a third wraps onto a second row), and the Goonopedia's Cars tab explains each under **Signature** (`signatureRows`). Each has an icon, `texture/icon/trait_<id>.svg`, drawn by `scripts/art/pickup_icons.js`.
+
+Each trait has a kind, and its kind decides where it lives:
+- **Physics** changes handling inside `integrate()`, so the AI driver's predictions follow it. The car caches one flag per trait in `_ready` (`cacheTraits`: `second_wind` becomes `tSecondWind`), and `integrate()` reads them through `surfaceGrip`, `traitGrip`, `traitSteer`, `groundFriction`, `handbrakeGrip` and `effectiveWeight`.
+- **Mechanic** and **Ability** are rules on top. They live in `CarTraitRig` (`lib/overhead_car_2d/car_trait_rig.gd`), a child the car makes when it has any trait and ticks after its own move. The rig also holds the state the physics flags read (`twoWheels`, `loadDropped`).
+- **Ability** has its own button: the **Ability** action (Q, pad Y), rebindable in Settings.
+
+| Car | Trait | Kind | What it does | Where |
+|---|---|---|---|---|
+| Sedan | Second Wind | Mechanic | Once a run, an empty tank restarts with 10% fuel | `outOfFuel` |
+| Sedan | Duct Tape | Mechanic | After 3 s with no damage or wear, systems patch back up to 60% (+2 a second) | `CarTraitRig.tickTape` |
+| Van | Cargo Bay | Mechanic | A second gadget slot (`spareItem`); it moves up when the first runs out | `giveItem`, `useItem` |
+| Van | Top-Heavy | Physics | Turning at 85% of its limit above 450 px/s for 0.2 s lifts it onto two wheels: grip ×0.6, wheel ×0.85. Up for 1.25 s, or a wall hit while up, rolls it (speed ×0.35, 6 health, steering wear, 0.75 s without control) | `CarTraitRig.tickTip`, `roll` |
+| Taxi | The Meter | Mechanic | Above 300 px/s, a coin per 450 px, one more per 10 s of clean running (up to 3); a wall hit or dropping under 120 px/s resets it | `CarTraitRig.tickMeter` |
+| Taxi | City Tyres | Physics | Grip ×1.15 on asphalt, lots, bridges and wash; ×0.85 on dirt and rough ground | `surfaceGrip` |
+| Pickup | Off-Road Suspension | Physics | Feels 30% of rough ground's extra friction and gets back 60% of its lost grip | `groundFriction`, `surfaceGrip` |
+| Pickup | Loaded Bed | Mechanic | Each pickup collected loads a crate (up to 5, drawn in the bed), each +5% payout (`Level.runPayout`); a hit at 300 px/s spills one | `CarTraitRig.onRewarded`, `payoutBonus` |
+| Supercar | Downforce | Physics | Grip ×0.8 below 300 px/s rising to ×1.6 by 1,100 | `traitGrip` |
+| Supercar | Low Clearance | Physics | Feels rough ground's extra friction ×1.6, and loses 1.5 engine condition every half second on it above 250 px/s | `groundFriction`, `CarTraitRig.tickScrape` |
+| Racer | Drift King | Physics | Handbrake grip ×0.75, catches at 78°, charges 40% faster, and a third, purple tier at 160 ticks (+380 px/s) | `handbrakeGrip`, `tierFor` |
+| Racer | Featherweight | Physics | A goon it fails to crush bounces it off (45% of its speed) | `_physics_process` |
+| Police | PIT Maneuver | Mechanic | Flank and tail slams cost no health and fling ×1.5 | `slamGoons` |
+| Police | Lightbar | Mechanic | At night a red and a blue light, 900 px, flash round the car | `CarTraitRig.buildLightbar` |
+| Ambulance | Defibrillator | Mechanic | Once a run, 0 health comes back to 30 (not drowning) | `defibrillate` |
+| Ambulance | Box Sway | Physics | Braking above 200 px/s: wheel ×1.2, grip ×1.1; full power through a hard corner above 400: grip ×0.8 | `traitGrip`, `traitSteer` |
+| Semi | Fifth Wheel | Physics | The trailer (below) | `CarTrailer` |
+| Semi | Unstoppable | Physics | Smashes every breakable but explosives at any speed, the trailer too | `smashThreshold` |
+| Semi | Drop the Load | Ability | 7 crates out the back: goons under them are crushed, the rest stand as a barrier for 25 s and spill no coins. Empty, the rig is 25 weight lighter until it restocks in 40 s | `CarTraitRig.dropLoad` |
+
+The numbers are first guesses. The handling ones are constants on the car (`CITY_GRIP`, `DOWNFORCE_*`, `TWO_WHEEL_*`, `SWAY_*`, `DRIFT_KING_*`, `LOAD_WEIGHT`, `FEATHER_BOUNCE`), the rules' are on `CarTraitRig`. `tests/game/test_traits.gd` covers every trait.
+
+**Adding a trait:** add it to `CarTraits.DATA` and to a car's `traits`, draw its icon in `pickup_icons.js` (`trait_<id>`) and run it, then add the `t<Name>` flag to the car (`cacheTraits` sets any flag named after the id). Put handling in the integrate helpers and rules in `CarTraitRig`, and give it a test.
+
 ## Trailer
 
 The semi pulls a trailer on a fifth wheel (`lib/overhead_car_2d/car_trailer.gd`, `CarTrailer`, the `trailer` node in `semi.tscn`). The car is the tractor; the trailer is its own `CharacterBody2D` (top level, layer 1) that the car moves once a physics tick, after its own move (`follow()`). It is not part of `integrate()`, so the AI driver's predictions drive the tractor alone.
 
-**Art.** `car_gen.js` draws the semi as two cars on their own canvases (`box`): `semi`, the tractor (136 × 160, centred between its steer axle and drive tandem, its frame, fifth-wheel plate and mud flaps running on behind the cab), and `semiTrailer`, a US-style 53 ft box (136 × 330: 310 long, about 2.2 times the tractor, ribs, amber side markers, rear doors). The trailer draws its shadow under the cab and its body over it, so a folded trailer's nose covers the tractor's frame. Its zone mask is hull, with tyres by its tandem; its hits wear the truck's tyres. The car's taillamps and a copy of its night silhouette light ride on the trailer (`syncLights`).
+**Art.** `car_gen.js` draws the semi as two cars on their own canvases (`box`): `semi`, the tractor (136 × 190, centred between its steer axle and drive tandem, its frame, fifth-wheel plate, air lines and mud flaps running on behind the cab), and `semiTrailer`, a US-style 53 ft box (136 × 330: 310 long, about 2.2 times the tractor, ribs, amber side markers, rear doors). Being top level, it leaves the car's z ordering, so it sets its own (`z_as_relative` off): its body one above the car, over the tractor's frame, fifth wheel and drive tyres (and the cab when it folds), its shadow one below. Its zone mask is hull, with tyres by its tandem; its hits wear the truck's tyres. The car's taillamps and a copy of its night silhouette light ride on the trailer (`syncLights`).
 
-**Geometry** (tractor space, x forward): kingpin `(-40, 0)` (the plate), trailer axles `length` 238 behind it, the trailer's box 306 × 96 from 18 ahead of the kingpin. The tractor's wheelbase is 90.
+**Geometry** (tractor space, x forward): kingpin `(-59, 0)` (the plate), trailer axles `length` 248 behind it, the trailer's box 306 × 96 from 8 ahead of the kingpin. The cab's back is 55 ahead of the kingpin and the trailer's front corners sweep 51 round it (8 of nose, 48 of half width), so a folded trailer clears the cab at any angle up to the stop (`test_a_folded_trailer_clears_the_cab` checks it against the baked geometry). The tractor's drawn axles are 128 apart, but its `wheel_base` (the handling's) is 90: at 128 its tightest turn grew about 40% and the AI semi got stuck half as often again (91 stuck events in 8 runs against 42).
 
 **Motion.** The trailer pivots on the kingpin with its own turn rate, `spin`. The rate at which its axles wouldn't slide sideways is the kingpin's sideways speed over `length`; each tick the tyres pull `spin` toward it by `CarHandling.trailerGrip` (0.35, times the ground's grip), capped at `MAX_SPIN` 5 rad/s. So it cuts inside corners, lags into a flick and swings past it after, swings wide on ice, and reversing straight it folds (about 2.6 s from 3° to the stop at 200 px/s) unless the driver steers it straight. The fold stops at `trailerJackknife` 80°, where it turns with the tractor and takes `trailerFoldDrag` 3% of the tractor's speed a tick.
 
-**Contact.** Walls stop it (`move_and_slide`), and a hit damages the truck through `collideWithFixedObject(..., respond = false, zone = "tires")`, judged by the trailer's real speed coming in (never the push that corrects it; that fed back into its swing and wrecked a semi in seconds). Blocked, it stops swinging. A snagged trailer holds the tractor back: no pulling away from it, and the gap closes at `MAX_TUG` 8 px a tick. Breakables smash and cones fly as for the car. Its sides and tail swat goons like the car's flanks (`slamGoons`, counting its swing); its nose, under the cab, doesn't.
+**Contact.** Walls stop it (`move_and_slide`), and a hit damages the truck through `collideWithFixedObject(..., respond = false, zone = "tires")`, judged by the trailer's real speed coming in (never the push that corrects it; that fed back into its swing and wrecked a semi in seconds). Blocked, it stops swinging. The hitch is rigid (`hold()`): wherever the trailer ended up, the tractor is moved (as a body, `move_and_collide`) to keep the kingpin exactly `length` ahead of its axles and loses the speed that would pull it away; if the tractor can't move either, the trailer goes to the kingpin. So the two never part, and nothing can get between them: a log or rock stops the whole rig instead. Breakables smash and cones fly as for the car. Its sides and tail swat goons like the car's flanks (`slamGoons`, counting its swing); its nose, under the cab, doesn't.
 
 **Spawn and teleports.** It is placed straight behind the tractor once the car is placed (`placeBehind`, deferred from `attach`), and again whenever the kingpin is more than two trailer lengths away.
 

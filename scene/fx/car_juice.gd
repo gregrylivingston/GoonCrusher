@@ -187,7 +187,7 @@ func _physics_process(delta: float) -> void:
 		limit = maxLateral(top)
 	var leanTo := 0.0 if dead || airborne else leanTarget(accel.y, limit)
 	var pitchTo := 0.0 if dead || airborne else pitchTarget(accel.x)
-	var step := twoWheelStep(twoWheels, twoWheelHeld, absf(accel.y) / limit, speed / top)
+	var step := [car.twoWheels, 0] if car.tTopHeavy else twoWheelStep(twoWheels, twoWheelHeld, absf(accel.y) / limit, speed / top)
 	if twoWheels && not step[0]: landTwoWheels()
 	twoWheels = step[0]
 	twoWheelHeld = step[1]

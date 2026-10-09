@@ -1,59 +1,91 @@
 class_name ClawCrane extends PickupMenu
 
-#The Claw Crane (docs/PICKUPS.md, "Prize games"): a side view of an arcade crane over a heap of prizes. Steer
-#moves the gantry and the claw swings on its cable as it starts and stops, so a good drop waits for the swing
-#or times it. Accelerate drops the claw; it stops on the first prize under it and closes. The grip is set
-#by how centred the claw is on the prize, and drains on the way up and over to the chute, faster for heavy
-#(rarer, smaller) prizes and while the claw swings: a weak grip wobbles, then lets go. A prize dropped over
-#the chute still counts. One grab is free; run coins buy more. In a gift box (CrushPrizes) a higher tier
-#gives more free grabs (Silver 2, Diamond 3) and a firmer grip, and from Gold up fills the heap with Rare or
-#better.
+#The Claw Crane (docs/PICKUPS.md, "Prize games"): a side view of an arcade crane over a heap of prizes.
+#The gantry runs back and forth on its own; Accelerate (or a click) drops the claw where it is. Stopping
+#swings the claw on its cable, so a good drop allows for the swing. The prizes are loose objects (a small
+#physics sim, `stepPhysics`): the open prongs shove them aside on the way down, closing scoops up whatever
+#is between them, one prize or several, and on the way up the claw goes weak to this grab's strength
+#(`rollStrength`: luck of the draw, Dice and the box tier), so prizes can slip out between the prong tips or
+#be shaken loose by the swing. Rarer prizes are smaller and slip through more easily. Whatever drops into the
+#chute is won, held or not, and that includes the bit of junk mixed into the heap (JUNK: a dud bomb, an
+#oil leak, a pickpocket), which costs something instead. One grab is free; run coins buy more. In a gift box (CrushPrizes) a higher tier
+#gives more free grabs (Silver 2, Diamond 3) and a stronger claw, and from Gold up fills the heap with Rare
+#or better.
 
 const W := 640.0
 const H := 420.0
 const RAIL_Y := 34.0
 const FLOOR_Y := 404.0
 const CHUTE_X := 96.0      #the chute is the strip left of this; its glass wall stands GLASS_H high
-const GLASS_H := 120.0
+const GLASS_H := 110.0
 const HOME_X := 48.0       #over the chute
-const MIN_X := 70.0        #the gantry's travel while aiming
-const MAX_X := W - 34.0
-const GANTRY_ACCEL := 900.0
-const GANTRY_MAX := 300.0
-const GANTRY_FRICTION := 6.0
-const CABLE_REST := 70.0
-const GRAVITY := 900.0     #px/s², for the swing
-const SWING_DAMP := 1.1
-const DROP_SPEED := 420.0
-const LIFT_SPEED := 300.0
-const CARRY_SPEED := 340.0
-const CLOSE_TIME := 0.28
-const SPAN := 26.0         #half the open claw's reach
+const MIN_X := 140.0       #the patrol
+const MAX_X := W - 70.0
+const PATROL_SPEED := 190.0
+const PATROL_ACCEL := 700.0
+const BRAKE := 900.0       #the gantry stops about 20 px after a drop
+const CARRY_SPEED := 300.0
+const CABLE_REST := 60.0
+const CABLE_MAX := FLOOR_Y - RAIL_Y - 30.0
+const GRAVITY := 2500.0    #px/s², for the swing: stiff, so it sways rather than flails
+const SWING_DAMP := 3.0
+const DROP_SPEED := 380.0
+const LIFT_SPEED := 240.0
+const CLOSE_TIME := 0.35
+const RELAX_TIME := 0.5
+const OPEN_TIME := 0.25
 const EXTRA_GRAB := 150
-const PRIZES := 14
+const PRIZES := 24          #prizes in the heap, plus JUNK_COUNT junk
+const GOOD := 15           #of them rolled Uncommon or better; the rest are coin stacks
+## the prongs turn about their hinges from OPEN_ANGLE (out) to SHUT_ANGLE (tips crossed); after closing, a
+## grab relaxes to between WEAK_ANGLE and SHUT_ANGLE by its strength
+const OPEN_ANGLE := -0.55
+const SHUT_ANGLE := 0.12
+const WEAK_ANGLE := -0.32
+const CLAW_SCALE := 1.3    #the claw's size: the head, hinges and prongs
+const HINGE := Vector2(11, 8) * CLAW_SCALE
+const PRONG := [Vector2(0, 0), Vector2(24, 30) * CLAW_SCALE, Vector2(6, 60) * CLAW_SCALE] #the right prong from its hinge, at angle 0
+const PRONG_W := 3.5
+const HEAD := Rect2(Vector2(-18, -8) * CLAW_SCALE, Vector2(36, 20) * CLAW_SCALE)
 ## by rarity, Common to Legendary: rarer prizes are smaller and heavier
-const RADIUS := [31.0, 29.0, 26.0, 23.0, 21.0, 21.0]
-const WEIGHT := [1.0, 1.15, 1.35, 1.6, 1.85, 1.85]
-const GRIP_DRAIN := 0.07   #per second per unit of weight, while held
-const SWING_DRAIN := 0.05  #per second per radian/s of swing, while held
-const LET_GO := 0.28       #the grip below which the prize slips
+const RADIUS := [22.0, 21.0, 19.0, 17.0, 16.0, 16.0]
+const MASS := [1.0, 1.1, 1.3, 1.5, 1.7, 1.7]
+## the physics
+const STEP := 1.0 / 240.0
+const FALL := 1500.0       #px/s²
+const ITERATIONS := 5
+const FRICTION := 0.35     #share of sliding taken off at a contact
+const DAMP := 0.999
+const MAX_MOVE := 8.0      #px per step at most, so a squeeze never launches a prize
+const REST := 0.04         #px per step: slower than this a prize comes to rest (no jitter on the heap)
+## Junk mixed into the heap: drop it down the chute and it costs you. {name, icon, what it does}
+const JUNK := {
+	"junk:bomb": {"name": "Dud Bomb", "icon": "res://texture/icon/bomb.svg", "line": "-15 health"},
+	"junk:leak": {"name": "Oil Leak", "icon": "res://texture/icon/oilslick.svg", "line": "-20 fuel"},
+	"junk:pickpocket": {"name": "Pickpocket", "icon": "res://texture/icon/purse.svg", "line": "-50 run coins"},
+}
+const JUNK_COUNT := 4
+const JUNK_TINT := Color(1.0, 0.55, 0.5)
 
-var prizes: Array = []     #{id, pos, r, w, vy} on the heap; pos is the centre
-var falling: Array = []    #{id, pos, r, w, vy, chute} dropping back or into the chute
-var clawX := W * 0.5       #the gantry
+var prizes: Array = []     #{id, pos, prev, r, m, rot}
+var clawX := (MIN_X + MAX_X) * 0.5
 var vx := 0.0
+var patrolDir := 1.0
 var theta := 0.0           #the cable's swing, radians from straight down
 var omega := 0.0
 var cable := CABLE_REST
-var phase := "aim"         #aim, drop, close, lift, carry, open, done
+var prong := OPEN_ANGLE    #the prongs' angle now
+var segs: Array = []       #the claw's colliders at the last step
+var phase := "patrol"      #patrol, drop, close, lift, carry, open, done
 var t := 0.0
-var held: Array = []       #prizes in the claw
-var grip := 1.0
+var strength := 1.0        #this grab's claw, 0..1
+var holdAngle := SHUT_ANGLE
 var grabs := 1
 var won: Array = []
 var boxTier := 0
 var fromBox := false
-var mouseX := -1.0         #the mouse steers the gantry towards here while it is over the stage
+var leftover := 0.0        #frame time not yet stepped
+var settling := false
 
 static func open(tier := 0, isGiftBox := false) -> void:
 	if not is_instance_valid(Root.levelRoot): return
@@ -63,45 +95,56 @@ static func open(tier := 0, isGiftBox := false) -> void:
 	claw.grabs = 1 + int(tier / 2.0)
 	Root.levelRoot.add_child.call_deferred(claw)
 
-## The grip a grab starts with: 1 when dead centre on the prize, falling off to the edge of its reach;
-## Dice and the box tier firm it up.
-static func gripFor(dx: float, radius: float, dice: float, tier: int) -> float:
-	var centred := clampf(1.0 - absf(dx) / (radius + SPAN * 0.4), 0.0, 1.0)
-	return clampf(0.3 + 0.7 * centred + dice * 0.001 + tier * 0.05, 0.0, 1.2)
+## A grab's strength: luck of the draw, plus Dice and the box tier
+static func rollStrength(dice: float, tier: int) -> float:
+	return clampf(0.45 + tier * 0.07 + dice * 0.001 + randf_range(-0.15, 0.15), 0.15, 1.0)
 
 func build() -> void:
-	title("CLAW CRANE", ("Gift box: " if fromBox else "") + "Line up the claw, wait for the swing, drop it.")
+	title("CLAW CRANE", ("Gift box: " if fromBox else "") + "Drop the claw at the right moment.")
 	var heapTier := Pickups.R.RARE if boxTier >= 3 else Pickups.R.UNCOMMON
 	var ids := []
 	for i in PRIZES: #mostly Uncommon or better, padded with coin stacks
-		var id := Pickups.rollOffer(heapTier, Pickups.NOT_IN_GAMES, []) if i < 10 else Pickups.openOr("coinstack")
-		ids.push_back(id)
+		ids.push_back(Pickups.rollOffer(heapTier, Pickups.NOT_IN_GAMES, []) if i < GOOD else Pickups.openOr("coinstack"))
+	for i in JUNK_COUNT: ids.push_back(JUNK.keys().pick_random())
 	ids.shuffle()
-	for id in ids: drop(makePrize(id, randf_range(CHUTE_X + 40.0, W - 40.0)), true)
-	updateHints()
+	for id in ids: addPrize(id, freeSpot(radiusOf(id)))
+	settle(1.5)
+	hints([[["Accelerate"], "Drop"]])
 	updateInfo()
 
-func makePrize(id: String, x: float) -> Dictionary:
-	var r := Pickups.rarity(id)
-	return {"id": id, "pos": Vector2(x, RAIL_Y), "r": RADIUS[r], "w": WEIGHT[r], "vy": 0.0}
+static func isJunk(id: String) -> bool:
+	return JUNK.has(id)
 
-## Settles a prize onto the heap straight below it (at once when `instant`, else it falls).
-func drop(p: Dictionary, instant := false) -> void:
-	if instant:
-		p.pos.y = restY(p)
-		prizes.push_back(p)
-	else:
-		p["chute"] = p.pos.x < CHUTE_X
-		falling.push_back(p)
+static func radiusOf(id: String) -> float:
+	return 20.0 if isJunk(id) else RADIUS[Pickups.rarity(id)]
 
-## Where a prize at its x would come to rest on the floor or on top of the heap.
-func restY(p: Dictionary) -> float:
-	var y: float = FLOOR_Y - p.r
-	for q in prizes:
-		var dx: float = absf(q.pos.x - p.pos.x)
-		var reach: float = q.r + p.r - 4.0
-		if dx < reach: y = minf(y, q.pos.y - sqrt(reach * reach - dx * dx))
-	return y
+static func textureOf(id: String) -> Texture2D:
+	return load(JUNK[id].icon) if isJunk(id) else Pickups.texture(id)
+
+static func nameOf(id: String) -> String:
+	return JUNK[id].name if isJunk(id) else Pickups.shortName(id)
+
+static func colorOf(id: String) -> Color:
+	return HudTheme.BAD if isJunk(id) else Pickups.rarityColor(Pickups.rarity(id))
+
+func addPrize(id: String, at: Vector2) -> Dictionary:
+	var p := {"id": id, "pos": at, "prev": at, "r": radiusOf(id), "m": 1.2 if isJunk(id) else MASS[Pickups.rarity(id)], "rot": randf_range(-0.4, 0.4)}
+	prizes.push_back(p)
+	return p
+
+## A place to drop a new prize in from, clear of the others
+func freeSpot(r: float) -> Vector2:
+	var at := Vector2.ZERO
+	for attempt in 40:
+		at = Vector2(randf_range(CHUTE_X + 30.0, W - 30.0), randf_range(200.0, FLOOR_Y - r))
+		if prizes.all(func(p): return p.pos.distance_to(at) >= p.r + r): break
+	return at
+
+## Runs the heap for `seconds` without the frame clock (the heap settling before the game shows)
+func settle(seconds: float) -> void:
+	settling = true
+	for i in int(seconds / STEP): stepPhysics(STEP)
+	settling = false
 
 func tipX() -> float:
 	return clawX + sin(theta) * cable
@@ -109,47 +152,39 @@ func tipX() -> float:
 func tipY() -> float:
 	return RAIL_Y + cos(theta) * cable
 
-## Steady enough to drop where it points (the career harness waits for this)
-func settled() -> bool:
-	return absf(theta) < 0.04 && absf(omega) < 0.15 && absf(vx) < 10.0
+## The claw hangs along its cable
+func clawXform() -> Transform2D:
+	return Transform2D(-theta, Vector2(tipX(), tipY()))
 
 func updateInfo() -> void:
 	match phase:
-		"aim": say("Grabs left %d   -   Run coins %d" % [grabs, runCoins()])
+		"patrol": say("Grabs left %d   -   Run coins %d" % [grabs, runCoins()])
 		"done": say("Out of grabs." + ("   Brake: one more for %d coins" % EXTRA_GRAB if runCoins() >= EXTRA_GRAB else ""))
-
-func updateHints() -> void:
-	if phase == "done":
-		var list := [[["Accelerate"], "Collect"]]
-		if runCoins() >= EXTRA_GRAB: list.push_back([["Brake"], "Another grab  (%d coins)" % EXTRA_GRAB])
-		hints(list)
-	else: hints([[["TurnLeft", "TurnRight"], "Move"], [["Accelerate"], "Drop"]])
 
 func onAction(action: String) -> void:
 	match action:
 		"Accelerate", "ui_accept":
-			if phase == "aim": startDrop()
+			if phase == "patrol": startDrop()
 			elif phase == "done": showWinnings()
 		"Brake":
 			if phase == "done" && runCoins() >= EXTRA_GRAB:
 				Root.playerCar.coin -= EXTRA_GRAB
 				grabs += 1
-				phase = "aim"
-				updateHints()
+				phase = "patrol"
+				hints([[["Accelerate"], "Drop"]])
 				updateInfo()
 		"ui_cancel":
 			if phase == "done": showWinnings()
 
 func onStageMouse(event: InputEvent) -> void:
-	if event is InputEventMouseMotion: mouseX = event.position.x
-	elif isClick(event) && phase == "aim": startDrop()
-	elif isClick(event) && phase == "done": showWinnings()
+	if not isClick(event): return
+	if phase == "patrol": startDrop()
+	elif phase == "done": showWinnings()
 
 func startDrop() -> void:
 	grabs -= 1
 	phase = "drop"
 	t = 0.0
-	mouseX = -1.0
 	Transition.sound("whoosh", -14.0, 1.3)
 	updateInfo()
 
@@ -157,197 +192,219 @@ func tick(delta: float) -> void:
 	t += delta
 	var accel := 0.0
 	match phase:
-		"aim":
-			var dir := 0.0
-			if Input.is_action_pressed("TurnLeft") || Input.is_action_pressed("ui_left"): dir -= 1.0
-			if Input.is_action_pressed("TurnRight") || Input.is_action_pressed("ui_right"): dir += 1.0
-			if dir != 0.0: mouseX = -1.0
-			elif mouseX >= 0.0 && absf(mouseX - clawX) > 6.0: dir = clampf((mouseX - clawX) / 60.0, -1.0, 1.0)
-			accel = gantry(dir, delta)
+		"patrol":
+			if clawX >= MAX_X: patrolDir = -1.0
+			elif clawX <= MIN_X: patrolDir = 1.0
+			accel = gantry(patrolDir * PATROL_SPEED, PATROL_ACCEL, delta)
 		"drop":
-			accel = gantry(0.0, delta)
-			cable += DROP_SPEED * delta
-			var floorAt := contactY()
-			if tipY() + 40.0 >= floorAt:
-				cable = maxf(CABLE_REST, (floorAt - 40.0 - RAIL_Y) / maxf(cos(theta), 0.3))
+			accel = gantry(0.0, BRAKE, delta)
+			cable = minf(cable + DROP_SPEED * delta, CABLE_MAX)
+			if landed() || cable >= CABLE_MAX:
 				phase = "close"
 				t = 0.0
 		"close":
-			accel = gantry(0.0, delta)
+			accel = gantry(0.0, BRAKE, delta)
+			prong = lerpf(OPEN_ANGLE, SHUT_ANGLE, minf(t / CLOSE_TIME, 1.0))
 			if t >= CLOSE_TIME:
-				grab()
+				var dice: float = Root.playerCar.luck if is_instance_valid(Root.playerCar) else 0.0
+				strength = rollStrength(dice, boxTier)
+				holdAngle = lerpf(WEAK_ANGLE, SHUT_ANGLE, strength)
 				phase = "lift"
 				t = 0.0
+				Transition.sound("clank", -8.0, 1.2)
 		"lift":
-			accel = gantry(0.0, delta)
+			accel = gantry(0.0, BRAKE, delta)
+			prong = lerpf(SHUT_ANGLE, holdAngle, minf(t / RELAX_TIME, 1.0))
 			cable = maxf(CABLE_REST, cable - LIFT_SPEED * delta)
-			drain(delta)
-			if cable <= CABLE_REST:
+			if cable <= CABLE_REST && t >= RELAX_TIME:
 				phase = "carry"
 				t = 0.0
 		"carry":
-			accel = gantry(clampf((HOME_X - clawX) / 50.0, -1.0, 1.0), delta, CARRY_SPEED)
-			drain(delta)
-			if absf(clawX - HOME_X) < 4.0 && absf(vx) < 30.0:
+			accel = gantry(clampf((HOME_X - clawX) * 4.0, -CARRY_SPEED, CARRY_SPEED), PATROL_ACCEL, delta)
+			if absf(clawX - HOME_X) < 3.0 && absf(vx) < 20.0:
 				phase = "open"
 				t = 0.0
-				release(true)
 		"open":
-			accel = gantry(0.0, delta)
-			if t >= 0.35 && falling.is_empty():
-				phase = "aim" if grabs > 0 else "done"
-				if phase == "done" && runCoins() < EXTRA_GRAB:
-					showWinnings()
-				updateHints()
-				updateInfo()
+			accel = gantry(0.0, BRAKE, delta)
+			prong = lerpf(holdAngle, OPEN_ANGLE, minf(t / OPEN_TIME, 1.0))
+			if t >= OPEN_TIME + 0.7: afterGrab()
 	swing(accel, delta)
-	for p in held:
-		p.pos = Vector2(tipX(), tipY() + 30.0 + p.r * 0.5)
-	fall(delta)
+	leftover = minf(leftover + delta, 0.1)
+	while leftover >= STEP:
+		leftover -= STEP
+		stepPhysics(STEP)
 
-## Moves the gantry towards `dir` (-1..1); returns its acceleration for the swing.
-func gantry(dir: float, delta: float, topSpeed := GANTRY_MAX) -> float:
+func afterGrab() -> void:
+	phase = "patrol" if grabs > 0 else "done"
+	patrolDir = 1.0
+	if phase == "done":
+		if runCoins() >= EXTRA_GRAB: hints([[["Accelerate"], "Collect"], [["Brake"], "Another grab  (%d coins)" % EXTRA_GRAB]])
+		else: showWinnings()
+	updateInfo()
+
+## Drives the gantry toward `speed` at `rate`; returns its acceleration, for the swing.
+func gantry(speed: float, rate: float, delta: float) -> float:
 	var before := vx
-	if dir != 0.0: vx = clampf(vx + dir * GANTRY_ACCEL * delta, -topSpeed * absf(dir), topSpeed * absf(dir))
-	else: vx = move_toward(vx, 0.0, absf(vx) * GANTRY_FRICTION * delta + GANTRY_ACCEL * 0.5 * delta)
-	var lo := HOME_X if phase in ["carry", "open"] else MIN_X
-	var x := clampf(clawX + vx * delta, lo, MAX_X)
-	if x != clawX + vx * delta: vx = 0.0
-	clawX = x
+	vx = move_toward(vx, speed, rate * delta)
+	clawX = clampf(clawX + vx * delta, HOME_X, W - 40.0)
 	return (vx - before) / maxf(delta, 0.0001)
 
 ## The cable as a pendulum hung from the moving gantry
 func swing(accel: float, delta: float) -> void:
-	var damp := SWING_DAMP * (2.0 if phase == "drop" else 1.0)
-	var alpha := -(GRAVITY / cable) * sin(theta) - (accel / cable) * cos(theta) - damp * omega
+	var alpha := -(GRAVITY / cable) * sin(theta) - (accel / cable) * cos(theta) - SWING_DAMP * omega
 	omega += alpha * delta
-	theta = clampf(theta + omega * delta, -0.9, 0.9)
+	theta = clampf(theta + omega * delta, -0.8, 0.8)
 
-## The highest point under the claw it would come down on: a prize within its reach, or the floor.
-func contactY() -> float:
-	var y := FLOOR_Y
-	var x := tipX()
+## The claw's head has come down onto the heap, or its prong tips onto the floor
+func landed() -> bool:
+	var x := clawXform()
+	var head: Vector2 = x * Vector2(0, HEAD.end.y + 2.0)
 	for p in prizes:
-		if absf(p.pos.x - x) < p.r + SPAN * 0.5: y = minf(y, p.pos.y - p.r * 0.6)
-	return y
+		if absf(p.pos.x - head.x) < HEAD.size.x * 0.45 + p.r * 0.6 && p.pos.y - p.r <= head.y + 2.0 && p.pos.y > head.y - p.r: return true
+	for side in [-1.0, 1.0]:
+		if (x * prongPoint(side, 2)).y >= FLOOR_Y - 4.0: return true
+	return false
 
-## The claw closes on the prize under it, most centred first. A second one right beside it can come too.
-func grab() -> void:
-	var x := tipX()
-	var near := prizes.filter(func(p): return absf(p.pos.x - x) < p.r + SPAN * 0.4 && p.pos.y - p.r <= tipY() + 60.0)
-	if near.is_empty():
-		grip = 0.0
-		Transition.sound("clank", -12.0, 1.4)
+## A prong's point `i` (0 hinge, 1 knee, 2 tip) in the claw's frame; `side` -1 left, 1 right
+func prongPoint(side: float, i: int) -> Vector2:
+	var p: Vector2 = PRONG[i].rotated(prong)
+	return Vector2(side * (HINGE.x + p.x), HINGE.y + p.y)
+
+## The claw's colliders in stage space: the head's underside and each prong's two segments
+func clawSegments() -> Array:
+	var x := clawXform()
+	var out := [[x * Vector2(HEAD.position.x, HEAD.end.y), x * HEAD.end]]
+	for side in [-1.0, 1.0]:
+		for i in 2: out.push_back([x * prongPoint(side, i), x * prongPoint(side, i + 1)])
+	return out
+
+#---------- the physics: position-based circles against the cabinet and the claw ----------
+
+func stepPhysics(dt: float) -> void:
+	var now := clawSegments()
+	var claw := []
+	for i in now.size():
+		var was: Array = now[i]
+		if segs.size() == now.size(): was = segs[i]
+		claw.push_back([now[i][0], now[i][1], now[i][0] - was[0], now[i][1] - was[1]])
+	segs = now
+	for p in prizes:
+		var v: Vector2 = ((p.pos - p.prev) * DAMP).limit_length(MAX_MOVE)
+		p.prev = p.pos
+		p.pos += v + Vector2(0, FALL * dt * dt)
+	for k in ITERATIONS:
+		for i in prizes.size():
+			for j in range(i + 1, prizes.size()): pair(prizes[i], prizes[j])
+		for p in prizes:
+			for s in claw: pushOut(p, s[0], s[1], s[2], s[3])
+			cabinet(p)
+	for p in prizes.duplicate():
+		var moved: Vector2 = p.pos - p.prev
+		if moved.length() < REST: p.prev = p.pos #at rest: no creeping or buzzing in the heap
+		elif absf(moved.x) > REST * 4.0: p.rot = clampf(p.rot + moved.x / p.r * 0.25, -0.6, 0.6) #tips a little as it rolls
+		if p.pos.x < CHUTE_X && p.pos.y > FLOOR_Y + p.r + 8.0: inChute(p)
+
+func pair(a: Dictionary, b: Dictionary) -> void:
+	var d: Vector2 = b.pos - a.pos
+	var reach: float = a.r + b.r
+	var dist := d.length()
+	if dist >= reach || dist < 0.0001: return
+	var n := d / dist
+	var total: float = a.m + b.m
+	a.pos -= n * (reach - dist) * b.m / total
+	b.pos += n * (reach - dist) * a.m / total
+
+## Pushes a prize out of a segment of the claw that moved by `ma` and `mb` this step, and drags it along
+## with the segment a little (friction)
+func pushOut(p: Dictionary, a: Vector2, b: Vector2, ma: Vector2, mb: Vector2) -> void:
+	var ab := b - a
+	var u := clampf((p.pos - a).dot(ab) / maxf(ab.length_squared(), 0.0001), 0.0, 1.0)
+	var d: Vector2 = p.pos - (a + ab * u)
+	var dist := d.length()
+	var reach: float = p.r + PRONG_W
+	if dist >= reach: return
+	var n := d / dist if dist > 0.0001 else Vector2(-ab.y, ab.x).normalized()
+	p.pos += n * (reach - dist)
+	var slide: Vector2 = (p.pos - p.prev) - ma.lerp(mb, u)
+	slide -= n * slide.dot(n)
+	p.pos -= slide * FRICTION
+
+## The floor (open over the chute), the cabinet's sides and the chute's glass
+func cabinet(p: Dictionary) -> void:
+	var r: float = p.r
+	if p.pos.x >= CHUTE_X && p.pos.y > FLOOR_Y - r:
+		p.pos.y = FLOOR_Y - r
+		p.pos.x = lerpf(p.pos.x, p.prev.x, FRICTION)
+	p.pos.x = clampf(p.pos.x, r, W - r)
+	#the glass: a wall at CHUTE_X from its top to the floor, with a rounded top
+	var top := Vector2(CHUTE_X, FLOOR_Y - GLASS_H)
+	if p.pos.y >= top.y && absf(p.pos.x - CHUTE_X) < r:
+		p.pos.x = CHUTE_X + (r if p.prev.x >= CHUTE_X else -r)
+	elif p.pos.y < top.y && p.pos.distance_to(top) < r:
+		p.pos = top + (p.pos - top).normalized() * r
+
+## A prize fell down the chute: won, credited now (the fall was the show)
+func inChute(p: Dictionary) -> void:
+	if settling: #not played for: back onto the heap
+		p.pos = Vector2(W * 0.6, 200.0)
+		p.prev = p.pos
 		return
-	near.sort_custom(func(a, b): return absf(a.pos.x - x) < absf(b.pos.x - x))
-	var first: Dictionary = near[0]
-	var dice: float = Root.playerCar.luck if is_instance_valid(Root.playerCar) else 0.0
-	grip = gripFor(first.pos.x - x, first.r, dice, boxTier)
-	held = [first]
-	prizes.erase(first)
-	if near.size() > 1 && grip > 0.85 && randf() < 0.3: #a lucky double: a small prize wedged in beside
-		held.push_back(near[1])
-		prizes.erase(near[1])
-	Transition.sound("clank", -8.0, 1.2)
-	settleHeap()
+	prizes.erase(p)
+	if isJunk(p.id):
+		junk(p.id)
+		return
+	won.push_back(p.id)
+	award(p.id)
+	Transition.sound("pop", -4.0)
 
-func drain(delta: float) -> void:
-	if held.is_empty(): return
-	var weight := 0.0
-	for p in held: weight += p.w
-	grip -= (GRIP_DRAIN * weight + SWING_DRAIN * absf(omega)) * delta
-	if grip < LET_GO:
-		say("It slipped!" if clawX >= CHUTE_X else "It slipped... into the chute!")
-		release(false)
+## Junk down the chute: it costs now, and the board lists it (never fatal)
+func junk(id: String) -> void:
+	var car = Root.playerCar
+	if is_instance_valid(car):
+		match id:
+			"junk:bomb": car.health = maxf(1.0, car.health - 15.0)
+			"junk:leak": car.fuel = maxf(0.0, car.fuel - 20.0)
+			"junk:pickpocket": car.coin = maxi(0, car.coin - 50)
+	note(id, textureOf(id), JUNK[id].name, JUNK[id].line, HudTheme.BAD)
+	say("Junk! %s: %s" % [JUNK[id].name, JUNK[id].line])
+	Transition.sound("thud", -6.0, 0.8)
 
-## Lets go of what the claw holds: over the chute it is won now (credited at once; the fall is the look).
-func release(intended: bool) -> void:
-	for p in held:
-		p.vy = 0.0
-		drop(p)
-		if p.pos.x < CHUTE_X:
-			won.push_back(p.id)
-			award(p.id)
-			Transition.sound("pop", -4.0)
-	held.clear()
-	if not intended: Transition.sound("thud", -10.0, 1.3)
-
-func fall(delta: float) -> void:
-	for p in falling.duplicate():
-		p.vy += 1600.0 * delta
-		p.pos.y += p.vy * delta
-		var stop: float = (FLOOR_Y + 60.0) if p.chute else float(restY(p))
-		if p.pos.y >= stop:
-			falling.erase(p)
-			if not p.chute:
-				p.pos.y = stop
-				prizes.push_back(p)
-
-## After a grab the prizes that lost their support drop onto what is under them.
-func settleHeap() -> void:
-	prizes.sort_custom(func(a, b): return a.pos.y > b.pos.y)
-	var placed := []
-	for p in prizes:
-		var y: float = FLOOR_Y - p.r
-		for q in placed:
-			var dx: float = absf(q.pos.x - p.pos.x)
-			var reach: float = q.r + p.r - 4.0
-			if dx < reach: y = minf(y, q.pos.y - sqrt(reach * reach - dx * dx))
-		p.pos.y = y
-		placed.push_back(p)
+#---------- drawing ----------
 
 func drawStage() -> void:
 	var m := stage
 	m.draw_rect(Rect2(Vector2.ZERO, Vector2(W, H)), Color(0.07, 0.055, 0.05))
 	for i in 6: m.draw_rect(Rect2(0, RAIL_Y + i * 64.0, W, 32.0), Color(1, 0.9, 0.7, 0.015))
-	m.draw_rect(Rect2(0, FLOOR_Y, W, H - FLOOR_Y), Color(0.13, 0.1, 0.08))
+	m.draw_rect(Rect2(CHUTE_X, FLOOR_Y, W - CHUTE_X, H - FLOOR_Y), Color(0.13, 0.1, 0.08))
 	#the chute: a dark hole behind a glass wall
 	m.draw_rect(Rect2(0, FLOOR_Y - GLASS_H, CHUTE_X, GLASS_H + 20.0), Color(0.02, 0.015, 0.012))
-	m.draw_rect(Rect2(CHUTE_X - 5.0, FLOOR_Y - GLASS_H, 5.0, GLASS_H), Color(0.6, 0.8, 1.0, 0.35))
+	m.draw_rect(Rect2(CHUTE_X - 4.0, FLOOR_Y - GLASS_H, 4.0, GLASS_H), Color(0.6, 0.8, 1.0, 0.4))
 	HudTheme.text(m, Vector2(CHUTE_X * 0.5, FLOOR_Y - GLASS_H - 10.0), "PRIZE", 15, HudTheme.GOLD, HORIZONTAL_ALIGNMENT_CENTER, 4)
 	HudTheme.text(m, Vector2(CHUTE_X * 0.5, FLOOR_Y - GLASS_H + 28.0), "▼", 22, Color(HudTheme.GOLD, 0.6 + 0.4 * sin(t * 6.0)), HORIZONTAL_ALIGNMENT_CENTER, 3)
-	for p in prizes + falling: drawPrize(m, p)
-	#the gantry rail and carriage
-	m.draw_rect(Rect2(0, RAIL_Y - 14.0, W, 8.0), Color(0.35, 0.33, 0.32))
-	m.draw_rect(Rect2(clawX - 26.0, RAIL_Y - 20.0, 52.0, 18.0), HudTheme.RIM)
-	var tip := Vector2(tipX(), tipY())
-	m.draw_line(Vector2(clawX, RAIL_Y - 4.0), tip, Color(0.7, 0.72, 0.76), 3.0)
-	if phase == "aim": #where it would come down, and the name of the prize there
+	for p in prizes:
+		var s: float = p.r * 2.3
+		m.draw_set_transform(p.pos, p.rot, Vector2.ONE)
+		m.draw_texture_rect(textureOf(p.id), Rect2(-Vector2(s, s) * 0.5, Vector2(s, s)), false, JUNK_TINT if isJunk(p.id) else Color.WHITE)
+	m.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	if phase == "patrol": #the name of the prize the claw is over
 		var x := tipX()
-		m.draw_dashed_line(tip + Vector2(0, 40), Vector2(x, contactY()), Color(1, 1, 1, 0.18), 2.0, 8.0)
 		var under = null
 		for p in prizes:
-			if absf(p.pos.x - x) < p.r + SPAN * 0.4 && (under == null || p.pos.y < under.pos.y): under = p
-		if under != null: HudTheme.text(m, Vector2(clampf(under.pos.x, 60.0, W - 60.0), under.pos.y - under.r - 10.0), Pickups.shortName(under.id), Pickups.TAG_SIZE + 3, HudTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER, 4, HudTheme.OUTLINE, HudTheme.BODY)
-	for p in held: drawPrize(m, p, (0.5 - grip) * 10.0 * sin(t * 40.0) if grip < 0.5 else 0.0)
-	drawClaw(m, tip)
-	if not held.is_empty(): #the grip gauge
+			if absf(p.pos.x - x) < p.r + 6.0 && (under == null || p.pos.y < under.pos.y): under = p
+		if under != null: HudTheme.text(m, Vector2(clampf(under.pos.x, 60.0, W - 60.0), under.pos.y - under.r - 8.0), nameOf(under.id), Pickups.TAG_SIZE + 3, colorOf(under.id), HORIZONTAL_ALIGNMENT_CENTER, 4, HudTheme.OUTLINE, HudTheme.BODY)
+	#the gantry rail, carriage and cable, then the claw along it
+	m.draw_rect(Rect2(0, RAIL_Y - 14.0, W, 8.0), Color(0.35, 0.33, 0.32))
+	m.draw_rect(Rect2(clawX - 26.0, RAIL_Y - 20.0, 52.0, 18.0), HudTheme.RIM)
+	m.draw_line(Vector2(clawX, RAIL_Y - 4.0), Vector2(tipX(), tipY()), Color(0.7, 0.72, 0.76), 3.0)
+	m.draw_set_transform_matrix(clawXform())
+	m.draw_rect(HEAD, Color(0.66, 0.69, 0.74))
+	m.draw_rect(HEAD, HudTheme.OUTLINE, false, 2.0)
+	for side in [-1.0, 1.0]:
+		m.draw_polyline(PackedVector2Array([prongPoint(side, 0), prongPoint(side, 1), prongPoint(side, 2)]), Color(0.78, 0.8, 0.84), PRONG_W * 2.0, true)
+	m.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	if phase in ["lift", "carry", "open"]: #this grab's strength
 		var r := Rect2(W - 30.0, RAIL_Y + 20.0, 14.0, 150.0)
 		m.draw_rect(r, HudTheme.TRACK)
-		var f := clampf(grip, 0.0, 1.0)
-		var col := HudTheme.OK if grip > 0.6 else (HudTheme.WARN if grip > 0.4 else HudTheme.BAD)
-		m.draw_rect(Rect2(r.position.x, r.end.y - r.size.y * f, r.size.x, r.size.y * f), col)
-		m.draw_line(Vector2(r.position.x - 4, r.end.y - r.size.y * LET_GO), Vector2(r.end.x + 4, r.end.y - r.size.y * LET_GO), HudTheme.BAD, 2.0)
+		var col := HudTheme.OK if strength > 0.6 else (HudTheme.WARN if strength > 0.35 else HudTheme.BAD)
+		m.draw_rect(Rect2(r.position.x, r.end.y - r.size.y * strength, r.size.x, r.size.y * strength), col)
 		HudTheme.text(m, Vector2(r.get_center().x, r.end.y + 18.0), "GRIP", 12, HudTheme.MUTED, HORIZONTAL_ALIGNMENT_CENTER, 3)
-
-func drawPrize(m: Control, p: Dictionary, jitter := 0.0) -> void:
-	var c: Vector2 = p.pos + Vector2(jitter, 0)
-	var col := Pickups.rarityColor(Pickups.rarity(p.id))
-	m.draw_circle(c, p.r, Color(col, 0.22))
-	m.draw_arc(c, p.r, 0.0, TAU, 24, Color(col, 0.7), 2.0, true)
-	var s: float = p.r * 1.6
-	m.draw_texture_rect(Pickups.texture(p.id), Rect2(c - Vector2(s, s) * 0.5, Vector2(s, s)), false)
-
-func drawClaw(m: Control, tip: Vector2) -> void:
-	var closing := 0.0
-	match phase:
-		"close": closing = clampf(t / CLOSE_TIME, 0.0, 1.0)
-		"lift", "carry": closing = 1.0
-		"open": closing = 1.0 - clampf(t / 0.2, 0.0, 1.0)
-	var spread := lerpf(SPAN, 8.0 if held.is_empty() else 16.0, closing)
-	m.draw_set_transform(tip, -theta, Vector2.ONE)
-	m.draw_rect(Rect2(-18, -10, 36, 18), Color(0.66, 0.69, 0.74))
-	m.draw_rect(Rect2(-18, -10, 36, 18), HudTheme.OUTLINE, false, 2.0)
-	for side in [-1.0, 1.0]:
-		m.draw_polyline(PackedVector2Array([Vector2(side * 12, 6), Vector2(side * (spread + 8.0), 24), Vector2(side * spread * 0.55, 44)]), Color(0.78, 0.8, 0.84), 6.0, true)
-	m.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)

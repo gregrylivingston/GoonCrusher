@@ -77,7 +77,7 @@ static func smashNode(node: Node2D, car: Node2D = null) -> void:
 	var pos := node.global_position
 	breakVisual(node)
 	debris(node)
-	spillCoins(propId(node), pos, car)
+	if not node.get_meta(&"dropped", false): spillCoins(propId(node), pos, car) #the semi's dropped cargo (Drop the Load) pays nothing
 	markTaken(node)
 	#a log pile, water tower, billboard or hive lets its contents loose (Spill), along the car's travel or
 	#the direction a goon or a blast gave it

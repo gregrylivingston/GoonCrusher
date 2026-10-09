@@ -83,4 +83,4 @@ func buy(index: int) -> void:
 
 func leaveShop() -> void:
 	close(false)
-	if is_instance_valid(Root.levelRoot): Root.levelRoot.openFreeSlotMachine()
+	if is_instance_valid(Root.levelRoot) && Root.levelRoot.has_method("openFreeSlotMachine"): Root.levelRoot.openFreeSlotMachine()

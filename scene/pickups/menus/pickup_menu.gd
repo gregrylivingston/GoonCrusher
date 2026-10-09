@@ -16,6 +16,9 @@ const ARM_SECONDS := 0.2   #at least this long before a key counts, and Accelera
 const BOARD_ROWS := 6      #rows the winnings board shows; more are summed into the last
 const ROW_STEP := 0.09     #seconds between rows appearing
 
+## The prize lab (tests/prize_lab): the games open and close at once, with no hatch and no 3-2-1
+static var lab := false
+
 var root := Control.new()
 var centre: CenterContainer
 var card := PanelContainer.new()
@@ -87,8 +90,9 @@ func _ready() -> void:
 	stage.add_child(board) #last, so it covers whatever the game put on the stage
 	body.add_child(info)
 	body.add_child(hintRow)
-	hatch = GameHatch.attach(self, centre, card, hatchLabel)
-	hatch.enter(0.0)
+	if not lab:
+		hatch = GameHatch.attach(self, centre, card, hatchLabel)
+		hatch.enter(0.0)
 
 ## The game's setup: call title(), then fill the stage (addStage() is called for it if build doesn't).
 func build() -> void: pass
@@ -190,7 +194,7 @@ static func runGems() -> int:
 ## Resumes a paused run through a quick 3-2-1 (or at once when there is no car).
 static func resumeRun() -> void:
 	var tree := Engine.get_main_loop() as SceneTree
-	if not is_instance_valid(Root.playerCar):
+	if lab || not is_instance_valid(Root.playerCar):
 		tree.paused = false
 		return
 	var countdown = load("res://scene/player/countdown.tscn").instantiate()

@@ -93,13 +93,45 @@ func test_a_snagged_trailer_stays_calm():
 	add_child_autofree(rock)
 	await get_tree().physics_frame
 	var fastest := 0.0
+	var apart := 0.0
 	for t in 120:
 		c.rotation -= 1.5 * DT #a tight left turn (radius 167 px); the trailer, longer than that, cuts across the inside
 		c.velocity = c.transform.x * 250.0
 		c.global_position += c.velocity * DT
 		c.trailer.follow(DT)
 		fastest = maxf(fastest, c.trailer.axleVel.length())
+		apart = maxf(apart, absf(c.trailer.global_position.distance_to(c.to_global(c.trailer.kingpin)) - c.trailer.length))
+	assert_gt(1.0, apart, "the hitch never gives: the trailer stays on the kingpin every tick (at most %.1f px off)" % apart)
 	assert_gt(c.wallHealthLost, 0.0, "the trailer did meet the rock")
 	assert_gt(c.health, 60.0, "the truck survives scraping a rock (health %.0f)" % c.health)
 	assert_gt(1500.0, fastest, "the trailer never flies (fastest %.0f px/s)" % fastest)
 	assert_true(absf(c.trailer.spin) <= CarTrailer.MAX_SPIN, "its swing stays capped")
+
+func test_the_trailer_draws_over_its_mount():
+	var c := semi()
+	var cab: CanvasItem = c.get_node("sprite/body")
+	var absolute := func(item: CanvasItem) -> int: #z with every relative parent added up
+		var z := 0
+		var n: Node = item
+		while n is CanvasItem:
+			z += n.z_index
+			if not n.z_as_relative: break
+			n = n.get_parent()
+		return z
+	assert_gt(absolute.call(c.trailer.body), absolute.call(cab), "the box covers the tractor's frame and fifth wheel")
+	assert_gt(absolute.call(cab), absolute.call(c.trailer.shadow), "and its shadow falls under the tractor")
+
+#the trailer's front corners sweep a circle round the kingpin as it folds; at every fold up to the jackknife
+#stop they must stay behind the cab's back (the baked tractor's rear, scene/car/semi/art/geometry.json)
+func test_a_folded_trailer_clears_the_cab():
+	var c := semi()
+	var geo = JSON.parse_string(FileAccess.get_file_as_string("res://scene/car/semi/art/geometry.json"))
+	var cabBack: float = geo.rear + 3.0 #sceneGeometry pads the outline by 3
+	var nose: float = c.trailer.bodyRect.end.x - c.trailer.length #box ahead of the kingpin
+	var half: float = c.trailer.bodyRect.size.y / 2.0
+	var stop := deg_to_rad(CarHandling.tune.trailerJackknife)
+	for i in 41:
+		var fold := lerpf(-stop, stop, i / 40.0)
+		for side in [-1.0, 1.0]:
+			var corner: Vector2 = c.trailer.kingpin + Vector2(nose, side * half).rotated(fold)
+			assert_gt(cabBack, corner.x, "folded %d deg, a front corner stays behind the cab (%.1f vs %.1f)" % [rad_to_deg(fold), corner.x, cabBack])
