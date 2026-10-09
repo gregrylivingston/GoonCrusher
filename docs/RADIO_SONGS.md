@@ -38,6 +38,7 @@ Fast, chaotic 2000s-style punk rock, aggressive distorted electric guitars, punc
 | She Left Me at the Truck Stop | `sound/radio/gooncrusher/songs/She Left Me at the Truck Stop.ogg` | 2:31 | country-punk heartbreak, 155 BPM |
 | No Brakes | `sound/radio/gooncrusher/songs/No Brakes.ogg` | 3:12 | punk-metal rage, 175 BPM |
 | Check Engine Light | `sound/radio/gooncrusher/songs/Check Engine Light.ogg` | 3:32 | Southern blues-punk, 150 BPM |
+| There's a Goon on My Hood | `sound/radio/gooncrusher/songs/There's a Goon on My Hood.ogg` | 2:51 | Southern punk with rockabilly swing, 180 BPM |
 
 ### Crush Hour
 
@@ -943,11 +944,80 @@ Check engine light's on, but I don't mind
 
 **Note:** clean.
 
+### There's a Goon on My Hood
+
+Between categories 1 and 2: a goon song, told with small-town everyday details. He tapped the brakes, so the goon climbed onto the hood instead of getting crushed (a real game mechanic: hit a goon too slowly and it rides along), and nothing shakes him off. Written together in this session, with the author's edits.
+
+**Style** (as drafted; the take may have used a tweaked version):
+
+```
+Fast Southern punk rock with a rockabilly swing, 180 BPM, twangy overdriven guitars with slapback echo, driving upright-style bass, snare-heavy train beat, raspy panicked but good-humored male vocal, huge simple shout-along chorus with gang vocals, comedic road-trip chaos, short wild twangy guitar solo, polished video game soundtrack production with garage grit. No emo, no metal ballad, no modern pop, no country ballad.
+```
+
+**Lyrics:**
+
+```
+[Intro: tires squeal, a thump on the hood]
+
+[Verse 1]
+I tapped the brakes, I took it slow
+I shoulda floored it, now I know
+He hopped right up on top of my hood
+I should have crushed him like I thought I would
+
+[Chorus]
+There's a goon on my hood
+There's a goon on my hood
+I'm doin' ninety and he's holding on good
+There's a goon on my hood!
+
+[Verse 2]
+Swerved to the left and I swerved to the right
+He just hunkered on down and held on tight
+I hit the wipers and I laid on the horn
+He just grinned at me like I'd just been born
+
+[Chorus]
+There's a goon on my hood
+There's a goon on my hood
+I'm doin' ninety and he's holding on good
+There's a goon on my hood!
+
+[Verse 3]
+Stopped for gas at the Gas N Go
+He hopped down and grabbed a hot dog to go
+Tipped his hat and said "thanks for the ride"
+Then he climbed right back up and he's still outside
+
+[Bridge]
+Took him through the car wash, took him through the snow
+Took him through a cornfield, he still won't let go
+Ninety on the highway, a hundred on the hill
+He's been up there so long he's hanging on still
+
+[Guitar Solo]
+
+[Final Chorus]
+There's a goon on my hood
+There's a goon on my hood
+I'm doin' ninety and he's holding on good
+There's a goon on my hood!
+
+There's a goon on my hood
+There's a goon on my hood
+I'm doin' ninety and he's holding on good
+There's a goon, goon, goon on my hood!
+```
+
+**Processing:** −16.3 → −16.1 LUFS (true peak −4.4 dBTP), 0.6 s of tail silence trimmed.
+
+**Note:** clean. Verse 3's Gas N Go is the gas station from the station's Gas N Go ad.
+
 ## Song categories
 
 The station's songs fall into three kinds (the author's breakdown). Keep new songs in one of them:
 
-1. **Goon-crushing driving rage, metal and punk:** Crush Hour, Gooncrusher, No Brakes.
+1. **Goon-crushing driving rage, metal and punk:** Crush Hour, Gooncrusher, No Brakes (and There's a Goon on My Hood, between this and 2).
 2. **Small-town and country life with a big dose of driving,** metal-tinged country, blues or punk: Full Tank, Empty Head, Cheap Beer, Premium Gas, Trailer Park Superstar, My Baby Loves My Truck, Check Engine Light.
 3. **Highway romance and small towns are great,** the softest and most country: Welcome to Nowhere, Gas Station Romance, She Left Me at the Truck Stop.
 
