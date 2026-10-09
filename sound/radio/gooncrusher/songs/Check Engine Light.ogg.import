@@ -1,0 +1,19 @@
+[remap]
+
+importer="oggvorbisstr"
+type="AudioStreamOggVorbis"
+uid="uid://ko7r64od2wk3"
+path="res://.godot/imported/Check Engine Light.ogg-21366e17d3ab16cc40d972c956b5b97f.oggvorbisstr"
+
+[deps]
+
+source_file="res://sound/radio/gooncrusher/songs/Check Engine Light.ogg"
+dest_files=["res://.godot/imported/Check Engine Light.ogg-21366e17d3ab16cc40d972c956b5b97f.oggvorbisstr"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

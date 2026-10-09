@@ -37,6 +37,7 @@ Fast, chaotic 2000s-style punk rock, aggressive distorted electric guitars, punc
 | Gas Station Romance | `sound/radio/gooncrusher/songs/Gas Station Romance.ogg` | 3:16 | Southern punk / garage rock love song, 145 BPM |
 | She Left Me at the Truck Stop | `sound/radio/gooncrusher/songs/She Left Me at the Truck Stop.ogg` | 2:31 | country-punk heartbreak, 155 BPM |
 | No Brakes | `sound/radio/gooncrusher/songs/No Brakes.ogg` | 3:12 | punk-metal rage, 175 BPM |
+| Check Engine Light | `sound/radio/gooncrusher/songs/Check Engine Light.ogg` | 3:32 | Southern blues-punk, 150 BPM |
 
 ### Crush Hour
 
@@ -873,12 +874,81 @@ We're going full speed ahead! NO BRAKES!
 
 **Note:** clean. Running red lights and outrunning the sheriff are played as cartoon bravado, in the same spirit as the game.
 
+### Check Engine Light
+
+Category 2: a truck with two hundred thousand miles that everybody says should be dead, and the man who loves it anyway. The warning light has been on so long it's a friend. Written together in this session, with the author's edits.
+
+**Style** (as drafted; the take may have used a tweaked version):
+
+```
+Gritty Southern blues-punk and garage rock, 150 BPM, crunchy fuzz guitar with slide guitar licks, stomping live drums, driving bass, harmonica fills, raspy good-humored male vocal, catchy shout-along chorus, gang vocal chant on the bridge, working-class small-town humor about an old rusty truck that won't die, short harmonica and slide guitar solo, engine sputter intro and deadpan spoken outro, polished video game soundtrack production with garage grit. No emo, no modern pop, no country ballad.
+```
+
+**Lyrics:**
+
+```
+[Intro: engine cranks, coughs, catches]
+
+[Verse 1]
+Two hundred thousand miles and a cracked dashboard
+Passenger door's tied shut with a bungee cord
+Heater only works when it's ninety outside
+But she starts every morning and she's mine all mine
+
+[Chorus]
+Check engine light's been on since oh-nine
+Mechanic says it's bad, I say it's fine
+She rattles and she smokes but I make her shine
+Check engine light's on, but I don't mind
+
+[Verse 2]
+Coat hanger antenna and a tape stuck in the deck
+Same old song on repeat and I ain't sick of it yet
+Got a dog in the back and a dent in the side
+As far as I'm concerned it's the perfect ride
+
+[Chorus]
+Check engine light's been on since oh-nine
+Mechanic says it's bad, I say it's fine
+She rattles and she smokes but I make her shine
+Check engine light's on, but I don't mind
+
+[Verse 3]
+Fellas at the diner tell me trade her in
+Get somethin' with a warranty and shiny rims
+I said a new one's just a new monthly bill
+Besides I love my baby and she's runnin' still
+
+[Bridge]
+Mechanic gave her one more week back in ninety-nine
+His shop's now a laundromat and she's still doing fine
+
+[Harmonica and Slide Guitar Solo]
+
+[Final Chorus]
+Check engine light's been on since oh-nine
+Mechanic says it's bad, I say it's fine
+She rattles and she smokes but I make her shine
+Check engine light's on, but I don't mind
+
+Check engine light's been on since oh-nine
+Mechanic says it's bad, I say it's fine
+She rattles and she smokes but I make her shine
+Check engine light's on, but I don't mind
+
+[Outro: engine sputters and dies, then catches again]
+```
+
+**Processing:** already at −16.1 LUFS (true peak −4.0 dBTP), no tail silence to trim. Suno's download was named "No Brakes (1).mp3" by mistake; the file in the game is "Check Engine Light".
+
+**Note:** clean.
+
 ## Song categories
 
 The station's songs fall into three kinds (the author's breakdown). Keep new songs in one of them:
 
 1. **Goon-crushing driving rage, metal and punk:** Crush Hour, Gooncrusher, No Brakes.
-2. **Small-town and country life with a big dose of driving,** metal-tinged country, blues or punk: Full Tank, Empty Head, Cheap Beer, Premium Gas, Trailer Park Superstar, My Baby Loves My Truck.
+2. **Small-town and country life with a big dose of driving,** metal-tinged country, blues or punk: Full Tank, Empty Head, Cheap Beer, Premium Gas, Trailer Park Superstar, My Baby Loves My Truck, Check Engine Light.
 3. **Highway romance and small towns are great,** the softest and most country: Welcome to Nowhere, Gas Station Romance, She Left Me at the Truck Stop.
 
 The voice in all three: a first-person working-class guy and his car, concrete everyday details (twenty bucks, a cracked windshield, the county line), the title as the chorus hook, and a deadpan punchline at the end of a verse. Goons are something he drives through, not the point of view.
