@@ -53,6 +53,8 @@ static func ensureMenuActions() -> void:
 	addIfMissing("ui_records", key(KEY_R), pad(JOY_BUTTON_X))
 	addIfMissing("ui_codex", key(KEY_G), pad(JOY_BUTTON_BACK)) #the Goonopedia
 	addIfMissing("ui_boost", key(KEY_V), pad(JOY_BUTTON_RIGHT_STICK)) #run setup's Boost slot
+	addIfMissing("ui_region_prev", key(KEY_Z), trigger(JOY_AXIS_TRIGGER_LEFT)) #run setup's region tabs
+	addIfMissing("ui_region_next", key(KEY_C), trigger(JOY_AXIS_TRIGGER_RIGHT))
 	#hints show an action's first key, so the left-hand keys go first: Space (Enter still accepts), WASD
 	for pair in [["ui_accept", KEY_SPACE], ["ui_up", KEY_W], ["ui_left", KEY_A], ["ui_down", KEY_S], ["ui_right", KEY_D]]:
 		keyFirst(pair[0], pair[1])
@@ -89,6 +91,12 @@ static func addEvent(action: String, event: InputEvent) -> void:
 static func key(code: int) -> InputEventKey:
 	var event = InputEventKey.new()
 	event.physical_keycode = code
+	return event
+
+static func trigger(axis: int) -> InputEventJoypadMotion:
+	var event = InputEventJoypadMotion.new()
+	event.axis = axis
+	event.axis_value = 1.0
 	return event
 
 static func pad(button: int) -> InputEventJoypadButton:
