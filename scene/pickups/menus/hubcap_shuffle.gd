@@ -164,7 +164,7 @@ func drawStage() -> void:
 		drawCap(m, c, phase == "pick" && slotOf(cap) == cursor)
 	if phase == "pick":
 		HudTheme.text(m, SLOTS[cursor] + Vector2(0, 70), "▲", 22, HudTheme.SKY, HORIZONTAL_ALIGNMENT_CENTER, 4)
-	#the level ladder
+	#the round ladder
 	for r in ROUNDS:
 		var col := Pickups.rarityColor(roundTier(r, tier))
 		var box := Rect2(20 + r * 150, 24, 136, 30)
