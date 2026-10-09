@@ -444,9 +444,11 @@ func dropLater(pos: Vector2, table: Dictionary) -> void:
 func dropAt(pos: Vector2, scenePath: String) -> void:
 	drops.push_back({"pos": pos, "t": 0.0, "table": {}, "scene": scenePath})
 
-func shoot(pos: Vector2, dir: Vector2, speed: float, life: float, dmg: float, sys: String, kind: String) -> void:
+## `shooter`: the goon that fired it, which its own quills never hit (quillsHitGoons)
+func shoot(pos: Vector2, dir: Vector2, speed: float, life: float, dmg: float, sys: String, kind: String, shooter: Node = null) -> void:
 	if projectiles.size() >= MAX_PROJECTILES: return
-	projectiles.push_back({"kind": kind, "pos": pos, "vel": dir * speed, "t": 0.0, "life": life, "dmg": dmg, "sys": sys})
+	projectiles.push_back({"kind": kind, "pos": pos, "vel": dir * speed, "t": 0.0, "life": life, "dmg": dmg, "sys": sys,
+		"shooter": shooter.get_instance_id() if shooter else 0})
 
 ## An arc: lands at `to` after `T` seconds and becomes fire, slime or a bomb blast.
 func lob(from: Vector2, to: Vector2, T: float, payload: String) -> void:
@@ -470,24 +472,30 @@ func tether(owner: Walker, T: float, kind: String) -> void:
 	label(owner.global_position, "HOOKED" if kind == "harpoon" else "MAGNET")
 
 ## Hurts the car and flattens goons inside `r`; walls (wall cells: WorldHooks.lineClear) shelter what's
-## behind them. Goons it kills count as crushes. Explosive props in reach go off in turn (BreakableProp).
-func blast(pos: Vector2, r: float, dmg: float) -> void:
+## behind them. Goons it kills count as crushes near the car (SpawnManager.creditCrush; `source` &"gadget" for
+## the player's own: they count anywhere). Herds within SPOOK_PAD past the edge stampede away from it.
+## Explosive props in reach go off in turn (BreakableProp).
+const SPOOK_PAD := 450.0
+func blast(pos: Vector2, r: float, dmg: float, source: StringName = &"blast") -> void:
 	blasts.push_back({"pos": pos, "r": r, "age": 0.0})
 	label(pos, "BOOM")
 	var car = Root.playerCar
 	if is_instance_valid(car) && car.global_position.distance_to(pos) < r + 40.0 && WorldHooks.lineClear(pos, car.global_position):
 		car.damage(dmg)
 		if car.has_method("wearSystem"): car.wearSystem("engine", dmg * 2.0)
-	for o in Root.spawnManager.goonsNear(pos, r):
-		if not o.dead && WorldHooks.lineClear(pos, o.global_position):
-			o.killedFrom = pos #flung away from the blast
-			o.destroy(&"boom")
-			Root.spawnManager.creditCrush(o.global_position, o)
+	for o in Root.spawnManager.goonsNear(pos, r + SPOOK_PAD):
+		if o.dead: continue
+		if o.global_position.distance_to(pos) > r || not WorldHooks.lineClear(pos, o.global_position):
+			if o.verb is GoonVerbs.Herd: o.verb.spook(pos)
+			continue
+		o.killedFrom = pos #flung away from the blast
+		o.destroy(&"boom")
+		Root.spawnManager.creditCrush(o.global_position, o, source)
 	if is_instance_valid(Root.levelRoot) && Root.levelRoot.has_method("explode"): Root.levelRoot.explode(pos) #pooled, at most 16 live
 	if is_inside_tree(): BreakableProp.blastAt(get_tree(), pos, r) #barrels and tanks: a hop per CHAIN_DELAY, each once
 
-func blastLater(pos: Vector2, delay: float, r: float, dmg: float) -> void:
-	pendingBlasts.push_back({"pos": pos, "t": delay, "r": r, "dmg": dmg})
+func blastLater(pos: Vector2, delay: float, r: float, dmg: float, source: StringName = &"blast") -> void:
+	pendingBlasts.push_back({"pos": pos, "t": delay, "r": r, "dmg": dmg, "source": source})
 
 #--- simulation -------------------------------------------------------------------------------------
 
@@ -498,6 +506,44 @@ func insideCar(car: Node2D, p: Vector2, pad := 0.0) -> bool:
 func hurtCar(car: Node2D, dmg: float, sys: String) -> void:
 	car.damage(dmg)
 	if sys != "hull" && car.has_method("wearSystem"): car.wearSystem(sys, dmg * 3.0)
+
+## Quill friendly fire (G-10): a Quill's volley flattens fodder (rank QUILL_KILL_RANK or less, solid) it flies
+## through, credited near the car like any kill the player set up ("quill"). Only while quills fly: one pass over
+## the goons a tick, skipping those outside the volley's bounds, and no allocation.
+const QUILL_KILL_RANK := 1
+const QUILL_HIT := 8.0 #px added to a goon's radius
+func quillsHitGoons() -> void:
+	var bounds := Rect2()
+	var any := false
+	for p in projectiles:
+		if p.kind != "quill": continue
+		bounds = bounds.expand(p.pos) if any else Rect2(p.pos, Vector2.ZERO)
+		any = true
+	if not any || not is_instance_valid(Root.spawnManager): return
+	bounds = bounds.grow(60.0)
+	for o in Root.spawnManager.goons:
+		if not is_instance_valid(o) || o.dead || o.collision_layer == 0 || not bounds.has_point(o.global_position): continue
+		if int(o.def.get("rank", 1)) > QUILL_KILL_RANK: continue
+		var reach: float = o.bodyRadius * o.scale.x + QUILL_HIT
+		var id := o.get_instance_id()
+		for p in projectiles:
+			if p.kind != "quill" || p.shooter == id || p.pos.distance_squared_to(o.global_position) > reach * reach: continue
+			projectiles.erase(p)
+			Spill.flatten(o, p.pos - p.vel.normalized() * 30.0, &"boom", &"quill")
+			break
+
+## Spitter slime slows goons too (G-9): every SLIME_EVERY ticks, solid goons in a puddle run at SLIME_SLOW of
+## their speed for a moment (the buff scale the Foreman's aura uses; GoonBody.speedNow)
+const SLIME_EVERY := 4
+const SLIME_SLOW := 0.5
+const SLIME_HOLD := 0.25 #s the slow lasts after the last check that found the goon in it
+func slowGoons(h: Dictionary) -> void:
+	if not is_instance_valid(Root.spawnManager): return
+	var until := GoonVerbs.now() + SLIME_HOLD
+	for o in Root.spawnManager.goonsNear(h.pos, h.r):
+		if o.dead || o.collision_layer == 0: continue #flying, buried or mid-hop: over it
+		o.buffScale = SLIME_SLOW
+		o.buffUntil = until
 
 func _physics_process(delta: float) -> void:
 	var car = Root.playerCar
@@ -530,12 +576,15 @@ func _physics_process(delta: float) -> void:
 				if o && not o.dead: tether(o, 3.0, "harpoon")
 			else: hurtCar(car, p.dmg, p.sys)
 		elif p.t > p.life: projectiles.erase(p)
+	quillsHitGoons()
+	var slimeTick := Engine.get_physics_frames() % SLIME_EVERY == 0
 	for h in hazards.duplicate():
 		h.age += delta
 		h.cd = maxf(0.0, h.cd - delta)
 		if h.age > h.life:
 			hazards.erase(h)
 			continue
+		if slimeTick && h.kind == "slime": slowGoons(h)
 		if not hasCar: continue
 		var on := false
 		if h.kind == "spikes":
@@ -580,7 +629,7 @@ func _physics_process(delta: float) -> void:
 		b.t -= delta
 		if b.t <= 0.0:
 			pendingBlasts.erase(b)
-			blast(b.pos, b.r, b.dmg)
+			blast(b.pos, b.r, b.dmg, b.source)
 	for d in drops.duplicate():
 		d.t -= delta
 		if d.t > 0.0: continue
@@ -717,12 +766,26 @@ func drawGround() -> void:
 		var carPos: Vector2 = Root.playerCar.global_position
 		for o in Root.spawnManager.goons:
 			if not is_instance_valid(o) || o.dead: continue
-			if o.isBuffed(): g.draw_circle(o.global_position, o.bodyRadius * 1.3, Color(ORANGE, 0.28))
+			if o.isBuffed(): g.draw_circle(o.global_position, o.bodyRadius * 1.3, Color(ORANGE, 0.28) if o.buffScale > 1.0 else SLIMED)
 			if o.def.get("shield", false) && (o.state == &"move" || o.state == &"windup") && o.facing(Root.playerCar):
 				var a: float = o.rotation
 				g.draw_arc(o.global_position + Vector2.from_angle(a) * o.bodyRadius * 1.1, 14.0, a - 1.1, a + 1.1, 8, Color(1, 1, 0.94, 0.45 + 0.35 * sin(Time.get_ticks_msec() / 125.0)), 3.0)
-			if o.state == &"buried" && o.global_position.distance_to(carPos) < 260.0:
-				g.draw_arc(o.global_position, 26.0, 0.0, TAU, 24, tele(0.45), 2.0)
+			if o.state == &"buried":
+				var d2: float = o.global_position.distance_squared_to(carPos)
+				if d2 < 260.0 * 260.0: g.draw_arc(o.global_position, 26.0, 0.0, TAU, 24, tele(0.45), 2.0)
+				if d2 < BUBBLE_PX * BUBBLE_PX && o.def.get("log", false): bubbles(g, o)
+
+const SLIMED := Color(0.55, 0.7, 0.25, 0.3)
+## Snapper's tell (G-8): a log that is really a Snapper blows bubbles while the car is within BUBBLE_PX, drawn
+## unshaded like every telegraph, so a careful driver can tell it from the real logs, day or night
+const BUBBLE_PX := 400.0
+func bubbles(g: Node2D, o: Node2D) -> void:
+	var tt := Time.get_ticks_msec() / 1000.0
+	var phase := float(o.get_instance_id() % 997)
+	for i in 4:
+		var u := fmod(tt * 0.9 + i * 0.25 + phase * 0.13, 1.0) #each bubble rises, swells and pops
+		var at: Vector2 = o.global_position + Vector2(sin(phase + i * 2.1) * 18.0, -u * 26.0 + 6.0)
+		g.draw_arc(at, 2.0 + 4.0 * u, 0.0, TAU, 10, Color(0.82, 0.93, 1.0, 0.85 * (1.0 - u * u)), 1.5)
 
 func drawTop() -> void:
 	var g := top

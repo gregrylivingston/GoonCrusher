@@ -93,15 +93,32 @@ class Strongbox extends RamTarget:
 		draw_texture_rect(tex, Rect2(-56, -56, 112, 112), false)
 		for i in rams: draw_circle(Vector2(-16 + i * 16, -66), 6.0, HudTheme.GOLD)
 
-## The Golden Goon: runs from the car; crush it for coins and a Star Fragment.
+## Whether the run is in The Wilds (Region 1): the level's region (a LevelDef `region`, else rules "region"), or,
+## for a level without one, whether the district the car is in belongs to the Wild Things
+static func inWilds() -> bool:
+	var def := Levels.current()
+	if def:
+		var region = def.get("region")
+		if (region is String || region is StringName) && String(region) != "": return StringName(region) == &"wilds"
+		var rules = def.get("rules")
+		if rules is Dictionary && rules.has("region"): return StringName(rules["region"]) == &"wilds"
+	return Region.currentRegion.get("faction", -1) == Goons.faction.WILD
+
+## The Golden Goon: runs from the car; crush it for coins and a Star Fragment. In The Wilds it is a Golden
+## Jackalope (R-14): the Jackalope's art in gold, bounding along in hops (drawn only: the rules are the same).
 class GoldenGoon extends RamTarget:
+	const HOP := 0.55       #s a bound takes
+	const LIFT := 30.0      #px the art rises at the top of a bound
+	const GOLD := Color(1.0, 0.84, 0.32)
 	var light: PointLight2D
+	var jackalope: SpriteFrames #set in The Wilds
 	func _init() -> void:
 		super()
 		radius = 30.0
 		life = Pickups.DATA["goldgoon"]["secs"]
 	func _ready() -> void:
 		super()
+		if WorldProps.inWilds(): jackalope = load("res://scene/enemy/goons/jackalope/jackalope_frames.tres")
 		light = PointLight2D.new()
 		light.texture = preload("res://texture/fx/circle_05.png")
 		light.texture_scale = 4.0
@@ -123,8 +140,24 @@ class GoldenGoon extends RamTarget:
 		WorldProps.say(global_position, "GOT AWAY")
 		super()
 	func _draw() -> void:
+		if jackalope:
+			drawJackalope()
+			return
 		draw_set_transform(Vector2.ZERO, -rotation + sin(age * 14.0) * 0.12, Vector2.ONE)
 		draw_texture_rect(Pickups.texture("goldgoon"), Rect2(-48, -48, 96, 96), false)
+	## Bounding along like a Jackalope's hop (GoonVerbs.Hopper.drawHop): up and down on a sine, bigger at the top,
+	## its shadow left on the ground. The art faces +x, the way it runs.
+	func drawJackalope() -> void:
+		var u := fmod(age, HOP) / HOP
+		var h := sin(PI * u)
+		var anim := &"special" if jackalope.has_animation(&"special") else &"walk"
+		var tex := jackalope.get_frame_texture(anim, int(u * jackalope.get_frame_count(anim)) % maxi(jackalope.get_frame_count(anim), 1))
+		if tex == null: return
+		var size := tex.get_size() / Goons.ART_RES * 1.5 * (1.0 + 0.3 * h)
+		draw_set_transform(Vector2(3, 4), 0.0, Vector2(1.0, 0.7))
+		draw_circle(Vector2.ZERO, size.y * 0.32 * (1.0 - 0.3 * h), Color(0, 0, 0, 0.4 - 0.15 * h))
+		draw_set_transform(Vector2(0, -LIFT * h).rotated(-rotation), 0.0, Vector2.ONE)
+		draw_texture_rect(tex, Rect2(-size * 0.5, size), false, GOLD)
 
 ## The Loot Truck: every ram spills coins; five burst it for a Rare pickup.
 class LootTruck extends RamTarget:

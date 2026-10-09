@@ -167,18 +167,31 @@ static func mode(car, id: String, d: Dictionary) -> void:
 
 #--- hooks --------------------------------------------------------------------------------------
 
-## The car crushed a goon at `pos`: Crush Combo, Coin Frenzy and Golden Ride pay here.
-static func onCrush(car, pos: Vector2) -> void:
+## Critter Chain: what each kill source is called in the combo readout. Sources with the same name count once.
+const CHAIN_NAMES := {&"car": "CRUSH", &"logs": "LOGS", &"bees": "BEES", &"splash": "SPLASH", &"drown": "SPLASH",
+	&"fall": "FALL", &"drop": "DROP", &"blast": "BOOM", &"gadget": "BOOM", &"trample": "TRAMPLE", &"quill": "QUILLS",
+	&"shell": "SHELL"}
+
+## The car crushed a goon at `pos`, by its bumper (`source` car) or with something it set off near it
+## (SpawnManager.creditCrush): Crush Combo, Coin Frenzy and Golden Ride pay here. The chain remembers its
+## distinct sources (car.chainSources, cleared when the chain breaks) for the readout and the variety XP
+## (CrushPrizes.varietyBonus).
+static func onCrush(car, pos: Vector2, source: StringName = &"car") -> void:
 	var now := Engine.get_physics_frames()
 	var gap := int(Pickups.DATA["combo"]["gap"] * Pickups.TICKS)
-	car.comboCount = car.comboCount + 1 if now - car.comboTick <= gap else 1
+	var chained: bool = now - car.comboTick <= gap
+	car.comboCount = car.comboCount + 1 if chained else 1
 	car.comboTick = now
 	car.bestCombo = maxi(car.bestCombo, car.comboCount)
+	var sources: Array = car.chainSources
+	if not chained: sources.clear()
+	var chainName: String = CHAIN_NAMES.get(source, "CRUSH")
+	if not chainName in sources: sources.push_back(chainName)
 	var mult := comboCoins(car.comboCount)
 	if mult > 0:
 		Pickups.discover("combo")
 		car.reward("coin", mult)
-		if is_instance_valid(HudChance.current): HudChance.current.showCombo(car.comboCount, mult)
+	if (mult > 0 || sources.size() > 1) && is_instance_valid(HudChance.current): HudChance.current.showCombo(car.comboCount, mult, sources)
 	if car.hasBuff("golden"): car.reward("coin", Pickups.DATA["golden"]["coins"])
 	if car.hasBuff("frenzy") && is_instance_valid(Root.spawnManager) && Root.spawnManager.fx:
 		Root.spawnManager.fx.dropAt(pos, "res://scene/powerup/coin.tscn")

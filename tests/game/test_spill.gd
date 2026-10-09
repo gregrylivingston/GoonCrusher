@@ -2,7 +2,7 @@ extends GameTest
 
 #Interactive props (package 14, P-4; docs/WORLD.md "Interactive props"): log piles roll logs that flatten goons
 #and settle as props, water towers flood goons flat, billboards topple away from the car, hives let a swarm
-#loose, cranes drop their container once, goons with "releases" cut a pile loose at the car, blasts set spills
+#loose, cranes drop their container once, goons whose seeks say so cut a pile loose at the car, blasts set spills
 #off, and the TileManager remembers what spilled.
 
 class UiStub extends RefCounted:
@@ -67,7 +67,7 @@ func test_spilling_props_are_baked_and_tagged():
 	assert_true(Spill.productScene(&"log") != null && Spill.productScene(&"container") != null, "what spills is loadable")
 
 func test_a_log_pile_rolls_logs_that_flatten_goons_and_settle():
-	var car := makeCar(Vector2(-4000, 0))
+	var car := makeCar(Vector2(0, -600)) #within SpawnManager.CRITTER_CREDIT_PX of the kill, so it is credited
 	var pile := prop("logpile")
 	var victim := goon(&"grunt", Vector2(300, 0))
 	var bystander := goon(&"grunt", Vector2(0, 900))
@@ -136,20 +136,20 @@ func test_releasing_goons_cut_a_pile_loose_at_the_car():
 	var car := makeCar(Vector2(0, 600))
 	var pile := prop("logpile")
 	var g := goon(&"grunt", Vector2(300, 0))
-	assert_true(Goons.DATA[&"grunt"].get("releases", false), "grunts release piles")
+	assert_true(Goons.DATA[&"grunt"].get("seeks", []).any(func(row): return row[1] == &"release"), "grunts release piles")
 	var verb = g.verb
 	for i in 120:
 		if pile.get_meta(&"smashed", false): break
-		verb.seekRelease(1.0 / 60.0, car)
+		verb.seekProp(1.0 / 60.0, car)
 		await get_tree().physics_frame
 	assert_true(pile.get_meta(&"smashed", false), "it walked over and cut it loose")
 	assert_true(pile.get_meta(&"spillDir", Vector2.ZERO).dot(Vector2.DOWN) > 0.5, "aimed at the car")
 	var far := makeCar(Vector2(0, 5000))
 	var pile2 := prop("logpile", Vector2(3000, 0))
 	var g2 := goon(&"grunt", Vector2(3300, 0))
-	assert_false(g2.verb.seekRelease(0.6, far), "no car about: it does its own thing")
+	assert_false(g2.verb.seekProp(0.6, far), "no car about: it does its own thing")
 	assert_false(pile2.get_meta(&"smashed", false))
-	assert_false(goon(&"tusker", Vector2(-300, 0)).verb.seekRelease(0.6, car), "only goons with releases do it")
+	assert_false(goon(&"tusker", Vector2(-300, 0)).verb.seekProp(0.6, car), "only goons whose seeks say so do it")
 
 func test_blasts_set_spills_off():
 	makeCar(Vector2(-4000, 0))

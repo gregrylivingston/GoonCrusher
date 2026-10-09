@@ -43,7 +43,16 @@ const COMBO_MAX := 1.0
 const STYLE_BONUS := 0.5
 const NIGHT_BONUS := 0.5
 
+## Critter Chain: a chain that mixes kill sources (the bumper, logs, bees, a flood...) pays VARIETY_STEP more XP
+## per source past the first, at most VARIETY_MAX (5 sources)
+const VARIETY_STEP := 0.1
+const VARIETY_MAX := 0.4
+
 static var textures := {}
+
+## The XP multiplier for a chain with `sources` distinct kill sources
+static func varietyBonus(sources: int) -> float:
+	return 1.0 + minf(maxi(sources - 1, 0) * VARIETY_STEP, VARIETY_MAX)
 
 #--- XP ------------------------------------------------------------------------------------------
 

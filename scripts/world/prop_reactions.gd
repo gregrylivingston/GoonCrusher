@@ -74,6 +74,7 @@ var sprays: Array = []   #[world position, seconds left]
 var flights: Array = []  #[sprite, from, to, spin, age] knocked cones in the air
 var bits: Bits
 var dust: CarJuice.Particles
+var tags: SmashTags #hero props and their MPH smash tags (R-12)
 var particleScale := 1.0
 var calm := false
 
@@ -91,6 +92,8 @@ func _ready() -> void:
 	dust = CarJuice.Particles.new(false, DUST_Z)
 	dust.resize(96)
 	add_child(dust)
+	tags = SmashTags.new()
+	add_child(tags)
 	readSettings()
 	Settings.changed.connect(onSettingChanged)
 
@@ -117,6 +120,10 @@ func addCanopy(prop: Node2D, canopy: Sprite2D) -> void:
 	reach = maxf(reach, maxf(absf(rect.position.y), absf(rect.end.y)) * canopy.scale.y)
 	canopy.modulate.a = 1.0
 	canopies.push_back([prop, canopy, rect, BreakableProp.propId(prop) in SQUARE_CANOPIES, reach])
+
+## A prop joined the world (ChunkView): an interactive one (SmashTags.HEROES) gets a smash tag
+func addHero(prop: Node2D) -> void:
+	if is_instance_valid(tags): tags.add(prop)
 
 static var rectCache := {} #texture path -> its opaque rect in texels
 ## The opaque part of a canopy texture (texels), once per texture; the whole texture without image data
@@ -197,7 +204,7 @@ func react(prop: Node2D, moving: Vector2, point: Vector2) -> void:
 			var canopy: Node2D = prop.get_node_or_null("Canopy")
 			if canopy: spring(prop, canopy, CANOPY, k, dir)
 			dropLeaves(prop, roundi(lerpf(LEAVES.x, LEAVES.y, k)), dir)
-			if Spill.DEFS.has(BreakableProp.propId(prop)): Spill.ramCrane(prop, speed) #a hard ram drops the crane's container
+			Spill.ram(prop, speed) #a hard ram drops the crane's container, or a roost's Buzzards
 		THUD: pass
 		KNOCK:
 			if speed >= KNOCK_SPEED:
@@ -321,6 +328,7 @@ func forget(prop: Node2D) -> void:
 			flights.remove_at(i)
 	for i in range(canopies.size() - 1, -1, -1):
 		if canopies[i][0] == prop: canopies.remove_at(i)
+	if is_instance_valid(tags): tags.forget(prop)
 
 ## A blast at `pos` shakes the canopies within `radius` (BreakableProp.blastAt)
 static func blast(pos: Vector2, radius: float) -> void:

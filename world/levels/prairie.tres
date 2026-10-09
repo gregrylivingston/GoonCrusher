@@ -19,6 +19,10 @@ giantOdds = -20
 escalationSpeed = 0.12
 sprintSlack = 1.5
 modes = []
+rules = {
+"dazeHeavies": true,
+"region": &"wilds"
+}
 factionBand = Vector2(0.0, 1.4)
 roster = {
 0: [&"jackalope", &"bandit", &"tusker", &"thunderhoof"],

@@ -25,7 +25,7 @@ class Mine extends Timed:
 	func step(_delta: float) -> void:
 		if age < 0.5 || Engine.get_physics_frames() % 4 != 0: return
 		if not goons(70.0).is_empty():
-			Root.spawnManager.fx.blast(global_position, Pickups.DATA["mine"]["radius"], 0.0)
+			Root.spawnManager.fx.blast(global_position, Pickups.DATA["mine"]["radius"], 0.0, &"gadget")
 			queue_free()
 	func _draw() -> void:
 		draw_circle(Vector2.ZERO, 22.0, Color(0.18, 0.18, 0.21))
@@ -75,7 +75,7 @@ class Bait extends Timed:
 	func _ready() -> void:
 		Pickups.lures.push_back({"pos": global_position, "until": Time.get_ticks_msec() + int(life * 1000.0), "radius": Pickups.DATA["bait"]["radius"], "only": &""})
 	func _exit_tree() -> void:
-		if is_instance_valid(Root.spawnManager) && age >= life - 0.05: Root.spawnManager.fx.blast(global_position, 150.0, 0.0)
+		if is_instance_valid(Root.spawnManager) && age >= life - 0.05: Root.spawnManager.fx.blast(global_position, 150.0, 0.0, &"gadget")
 	func _draw() -> void:
 		draw_circle(Vector2.ZERO, 20.0, Color(0.85, 0.25, 0.2))
 		draw_circle(Vector2(-5, -5), 7.0, Color(1.0, 0.75, 0.68))

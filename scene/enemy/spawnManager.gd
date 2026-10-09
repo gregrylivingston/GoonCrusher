@@ -163,7 +163,9 @@ func getGoon() -> Walker:
 func spawnAt(coordinates: Vector2) -> void:
 	var id := pickGoonId()
 	var count: int = Goons.DATA.get(id, {}).get("pack", 1)
-	coordinates = preferredSpot(id, coordinates)
+	var spot := preferredSpot(id, coordinates)
+	var byProp := spot != coordinates #by its prop: some start in a prop state (a Rattler sunning on its rock)
+	coordinates = spot
 	var pack := 0
 	if count > 1:
 		pack = nextPack
@@ -176,12 +178,17 @@ func spawnAt(coordinates: Vector2) -> void:
 		goon.packId = pack
 		goon.position = coordinates + (Vector2.from_angle(i * 2.4) * 40.0 * sqrt(i) if count > 1 else Vector2.ZERO)
 		if not World.spawnableAt(goon.position): goon.position = coordinates #a pack never starts in the water
+		if byProp && SPAWN_STATE.has(id): goon.set_meta(&"spawnState", SPAWN_STATE[id])
 		registerGoon(goon)
 		Root.levelRoot.add_child(goon)
 
 ## Some goons spawn by a prop when one is near the spot and out of sight: Snappers by logs, the Rat Pack
-## from manholes (BreakableProp.tag groups them). Anything else, or no such prop, keeps the spot.
-const SPAWN_PROPS := {&"snapper": &"prop_log", &"rat": &"prop_manhole"}
+## from manholes, Rattlers sunning on red rocks (BreakableProp.tag groups them). Anything else, or no such
+## prop, keeps the spot. SPAWN_OFFSET puts the goon beside the prop instead of on it; SPAWN_STATE is the
+## state it starts in there (Walker._ready reads the spawnState meta).
+const SPAWN_PROPS := {&"snapper": &"prop_log", &"rat": &"prop_manhole", &"rattler": &"prop_rock"}
+const SPAWN_OFFSET := {&"snapper": 70.0, &"rattler": 130.0} #a red rock is about 75 px across: room to crush it without the rock
+const SPAWN_STATE := {&"rattler": &"sun"}
 const PROP_SEARCH_PX := 1500.0
 const PROP_HIDDEN_PX := 1600.0 #the prop must be at least this far from the car
 func preferredSpot(id: StringName, coordinates: Vector2) -> Vector2:
@@ -189,8 +196,29 @@ func preferredSpot(id: StringName, coordinates: Vector2) -> Vector2:
 	if group == &"" || not is_instance_valid(Root.playerCar): return coordinates
 	var prop := WorldHooks.nearestInGroup(get_tree(), group, coordinates, PROP_SEARCH_PX)
 	if prop == null || prop.global_position.distance_to(Root.playerCar.global_position) < PROP_HIDDEN_PX: return coordinates
-	var spot := prop.global_position + Vector2.from_angle(prop.global_rotation + PI / 2.0) * (70.0 if id == &"snapper" else 0.0)
+	var spot := prop.global_position + Vector2.from_angle(prop.global_rotation + PI / 2.0) * float(SPAWN_OFFSET.get(id, 0.0))
 	return spot if World.spawnableAt(spot) || World.terrainAt(spot) == World.UNKNOWN else coordinates
+
+## Spawns `count` goons of `id` at `pos` as one pack (a herd for an event or a set piece), starting in `state`
+## (&"" for their verb's own; a Herd takes &"graze"). Returns them; the cap still holds.
+func spawnGroup(id: StringName, pos: Vector2, count: int, state: StringName = &"") -> Array:
+	var out := []
+	if not is_instance_valid(Root.levelRoot): return out
+	var pack := 0
+	if count > 1:
+		pack = nextPack
+		nextPack += 1
+	for i in count:
+		if not canSpawn(): break
+		var goon := makeGoon(id)
+		goon.packId = pack
+		goon.position = pos + (Vector2.from_angle(i * 2.4) * 46.0 * sqrt(i) if count > 1 else Vector2.ZERO)
+		if not World.spawnableAt(goon.position): goon.position = pos
+		if state != &"": goon.set_meta(&"spawnState", state)
+		registerGoon(goon)
+		Root.levelRoot.add_child(goon)
+		out.push_back(goon)
+	return out
 
 ## Goons that burst out of another (Splitter): thrown outward, briefly dazed.
 func spawnBurst(id: StringName, pos: Vector2, count: int) -> void:
@@ -223,8 +251,18 @@ func goonsNear(pos: Vector2, radius: float) -> Array:
 
 ## A goon killed by something the player set off (a blast, a kicked shell, a drowning) counts as a crush.
 ## Pass the goon so it also counts for the Goonopedia (crushedById), as a bumper crush does.
-func creditCrush(pos: Vector2, goon: Object = null) -> void:
-	if not is_instance_valid(Root.playerCar): return
+## Critter Chain (docs/GOONS.md): `source` names the kill (logs, bees, splash, fall, drop, blast, trample, quill,
+## shell, drown, gadget). A kill within CRITTER_CREDIT_PX of the car joins the Crush Combo like a bumper crush,
+## before its XP, so the XP sees the chain. Farther off it credits nothing, unless the player aimed it
+## (FAR_CREDIT: gadgets, and a drowning the car pushed), which still counts without joining the chain.
+## True when it credited the player.
+const CRITTER_CREDIT_PX := 900.0
+const FAR_CREDIT := [&"gadget", &"drown"]
+func creditCrush(pos: Vector2, goon: Object = null, source: StringName = &"blast") -> bool:
+	if not is_instance_valid(Root.playerCar): return false
+	var near: bool = Root.playerCar.global_position.distance_squared_to(pos) <= CRITTER_CREDIT_PX * CRITTER_CREDIT_PX
+	if not near && not source in FAR_CREDIT: return false
+	if near && Root.playerCar.get("isPlayer"): PickupEffects.onCrush(Root.playerCar, pos, source)
 	if goon != null && Root.playerCar.has_method("creditGoon"):
 		Root.playerCar.creditGoon(goon)
 		announceNewGoon(goon)
@@ -233,6 +271,7 @@ func creditCrush(pos: Vector2, goon: Object = null) -> void:
 	RewardFlyers.flyUpgrade(Root.upgrade.CURRENTGOONSCRUSHED, pos)
 	var feel = Root.playerCar.get("crushFeel")
 	if is_instance_valid(feel): feel.onIndirect(pos) #a blast through a crowd is a multi-crush too
+	return true
 
 #the first crush ever of a kind of goon unlocks its Goonopedia page: say so with a tape banner
 func announceNewGoon(goon: Object) -> void:

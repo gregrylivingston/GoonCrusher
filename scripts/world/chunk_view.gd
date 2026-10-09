@@ -175,6 +175,7 @@ func applyProp(skin: WorldSkin, tm: Node) -> bool:
 	objects.add_child(node)
 	props.push_back([id, node, not stateful])
 	if canopy && PropReactions.current: PropReactions.current.addCanopy(node, canopy)
+	if PropReactions.current: PropReactions.current.addHero(node) #interactive ones get a smash tag (SmashTags)
 	return false
 
 ## One pickup (a coin line's coins one each); true when there are no more

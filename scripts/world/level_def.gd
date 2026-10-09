@@ -30,6 +30,9 @@ class_name LevelDef extends Resource
 @export var modes: Array = []
 ## Modes to beat here before the next level opens (Root.modesToOpenNext; the demo asks for its 2)
 @export_range(1, 5) var unlockModes: int = 3
+## Level rules, String keys, all optional: "dazeHeavies" (bool: a Bullmoose lunging into a wall is dazed and
+## easier to crush, Walker.daze), "region" (&"wilds": The Wilds' flavour, e.g. the Golden Jackalope)
+@export var rules: Dictionary = {}
 
 @export_group("Goons")
 ## Districts score their faction as Goons.factionFor does (distance from the start), clamped to this band

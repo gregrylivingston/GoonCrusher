@@ -67,7 +67,7 @@ class Verb extends RefCounted:
 
 	func tick(delta: float, car: Node2D) -> void:
 		match g.state:
-			&"move": if not seekRelease(delta, car): move(delta, car)
+			&"move": if not seekProp(delta, car): move(delta, car)
 			&"windup": windup(delta, car)
 			&"attack": attack(delta, car)
 			&"recover":
@@ -80,27 +80,67 @@ class Verb extends RefCounted:
 		g.chase(car.global_position, g.speedNow(), delta)
 		if g.cooldown <= 0.0 && g.distTo(car) < g.windDist: startWindup(car)
 
-	## Goons with "releases" (Goons.DATA): with the car near a log pile, run to the pile and cut it loose so the
-	## logs roll at the car (Spill). True while it is doing that instead of its own move.
-	var releaseT := 0.0
-	var releaseAt: Node2D = null
-	func seekRelease(delta: float, car: Node2D) -> bool:
-		if not g.def.get("releases", false): return false
-		releaseT -= delta
-		if releaseT <= 0.0:
-			releaseT = 0.5
-			releaseAt = null
-			if g.distTo(car) < Spill.LURE_CAR:
-				var pile := WorldHooks.nearestInGroup(g.get_tree(), Spill.PILE_GROUP, g.global_position, Spill.LURE_GOON, &"smashed")
-				if pile && pile.global_position.distance_to(car.global_position) < Spill.LURE_CAR: releaseAt = pile
-		if not is_instance_valid(releaseAt) || releaseAt.get_meta(&"smashed", false):
-			releaseAt = null
+	## Wild instincts (Goons.DATA "seeks", one row per kind of prop; the actions are listed there): every
+	## Goons.SEEK_EVERY seconds it looks for the nearest prop a row allows, rows in order, and goes for it instead
+	## of its own move. True while it is doing that. Verbs with a better use for the moment say no first
+	## (Thief: a pickup to steal; Flyer: a fresh crush to feed on).
+	var seekT := 0.0
+	var seekAt: Node2D = null
+	var seekRow: Array = []
+	func seekProp(delta: float, car: Node2D) -> bool:
+		var rows: Array = g.def.get("seeks", [])
+		if rows.is_empty(): return false
+		seekT -= delta
+		if seekT <= 0.0:
+			seekT = Goons.SEEK_EVERY
+			seekAt = null
+			for row in rows:
+				var prop := findSeek(row, car)
+				if prop:
+					seekAt = prop
+					seekRow = row
+					break
+		if not is_instance_valid(seekAt) || seekAt.get_meta(&"smashed", false):
+			seekAt = null
 			return false
-		g.chase(releaseAt.global_position, g.speedNow() * 1.15, delta)
-		if g.global_position.distance_to(releaseAt.global_position) < g.bodyRadius + Spill.REACH:
-			Spill.goonRelease(releaseAt, g, car)
-			releaseAt = null
-			releaseT = 3.0
+		var carRange: float = seekRow[2]
+		if carRange < 0.0 && g.distTo(car) <= -carRange: #it only does this while the car keeps away
+			seekAt = null
+			return false
+		return doSeek(seekRow[1], delta, car)
+
+	## The prop one seeks row allows now, or null
+	func findSeek(row: Array, car: Node2D) -> Node2D:
+		var carRange: float = row[2]
+		var action: StringName = row[1]
+		if (action == &"perch" || action == &"roost") && g.cooldown > 0.0: return null
+		if carRange > 0.0 && g.distTo(car) >= carRange: return null
+		if carRange < 0.0 && g.distTo(car) <= -carRange: return null
+		var prop := WorldHooks.nearestInGroup(g.get_tree(), row[0], g.global_position, row[3], &"smashed")
+		if prop == null || (carRange > 0.0 && prop.global_position.distance_to(car.global_position) >= carRange): return null
+		if action == &"roost":
+			var others := Spill.roosting(prop).size() - (1 if get("roostAt") == prop else 0)
+			if others >= int(Spill.ROOSTS.get(BreakableProp.propId(prop), {}).get("perches", 0)): return null
+		return prop
+
+	## One tick of going for seekAt: true while it still is
+	func doSeek(action: StringName, delta: float, car: Node2D) -> bool:
+		var at := seekAt.global_position
+		match action:
+			&"release", &"knock": #cut a pile loose, kick a hive over, at the car
+				g.chase(at, g.speedNow() * 1.15, delta)
+				if g.global_position.distance_to(at) < g.bodyRadius + Spill.REACH:
+					Spill.goonRelease(seekAt, g, car)
+					seekAt = null
+					seekT = 3.0
+			&"raid": #break it open, then steal what spills (Thief)
+				g.chase(at, g.speedNow(), delta)
+				if g.global_position.distance_to(at) < g.bodyRadius + 60.0:
+					seekAt.set_meta(&"spillDir", at - g.global_position)
+					BreakableProp.smashNode(seekAt)
+					seekAt = null
+					seekT = 0.3
+			_: return false #perch and roost are the Flyer's
 		return true
 
 	func startWindup(car: Node2D, lead := 0.25) -> void:
@@ -121,6 +161,8 @@ class Verb extends RefCounted:
 
 	func attack(delta: float, car: Node2D) -> void:
 		g.lungeStep(car, g.speedNow() * g.lunge, delta)
+		g.trample() #heavies with "tramples" (Snapper, Bullmoose) flatten fodder in the way
+		if g.state != &"attack": return #a lunge into a wall dazed it (Walker.lungeStep)
 		if g.stateTime >= g.atkT: endAttack()
 
 	func endAttack() -> void:
@@ -385,7 +427,7 @@ class Turtle extends Verb:
 				for o in Root.spawnManager.goonsNear(g.global_position, g.bodyRadius * 2.2):
 					if o != g && not o.dead:
 						o.destroy(&"crush")
-						Root.spawnManager.creditCrush(o.global_position, o)
+						Root.spawnManager.creditCrush(o.global_position, o, &"shell")
 				if g.drift.length() < 40.0:
 					g.invulnerable = false
 					stunFor(1.4)
@@ -411,7 +453,9 @@ class Boss extends Verb:
 			auraT = 0.25
 			var until := GoonVerbs.now() + 0.35
 			for o in Root.spawnManager.goonsNear(g.global_position, g.def.get("aura", 260.0)):
-				if o != g: o.buffUntil = until
+				if o == g || (o.buffScale < 1.0 && o.isBuffed()): continue #slime (GoonFx.slowGoons) beats a pep talk
+				o.buffScale = g.def.get("buff", 1.35)
+				o.buffUntil = until
 		if g.cooldown <= 0.0:
 			g.setState(&"shout")
 			g.play(&"special", 0.6)
@@ -567,15 +611,21 @@ class Charger extends Verb:
 		super.startWindup(car, lead)
 	func telegraphRadius() -> float: return g.speed * g.lunge * g.atkT
 	const WALL_STUN := 2.0 #a charge that ends on a wall stuns it this many times longer: lure it into a rock
+	## A charge bursts through breakables it is fast enough for ("smashes", R-3: a fence, hay, a hive, a log pile
+	## whose logs roll on along the charge, a barrel that blows) and keeps going; anything else is a BONK.
 	func attack(delta: float, car: Node2D) -> void:
-		g.velocity = g.lockDir * g.speedNow() * g.lunge
+		var spd := g.speedNow() * g.lunge
+		g.velocity = g.lockDir * spd
 		g.move_and_slide()
-		g.walkAnim(g.speedNow() * g.lunge)
+		g.walkAnim(spd)
+		g.trample()
 		for i in g.get_slide_collision_count():
 			var c = g.get_slide_collision(i).get_collider()
 			if c == car && not g.hitDone:
 				g.hitDone = true
 				g.hitCar(car, g.attackDamage, g.sys)
+			elif c is Object && c.get_meta(&"smashed", false): continue #broken this tick: its collision goes off next frame
+			elif g.def.get("smashes", false) && BreakableProp.smashedByGoon(c, spd, g.lockDir): continue
 			elif World.isWall(c) && g.stateTime > 0.05:
 				g.fx().label(g.global_position, "BONK")
 				g.fx().dust(g.global_position)
@@ -673,7 +723,10 @@ class Thief extends Verb:
 	var target: Node2D = null
 	var stolen: Array = []
 	var lookT := 0.0
-	func move(delta: float, car: Node2D) -> void:
+	## A pickup to steal comes first; with none in reach, its seeks rows send it to raid a crate or a hive
+	## (Goons.DATA; a raided hive's swarm usually gets the Bandit first). A den to stash loot in (R-6) is the
+	## next row to add.
+	func seekProp(delta: float, car: Node2D) -> bool:
 		lookT -= delta
 		if lookT <= 0.0:
 			lookT = 0.5
@@ -684,15 +737,11 @@ class Thief extends Verb:
 				if d < best && not p.is_queued_for_deletion():
 					best = d
 					target = p
-			if target == null: target = WorldHooks.nearestInGroup(g.get_tree(), BreakableProp.GROUPS[&"crate"], g.global_position, 600.0, &"smashed") #bait
+		if is_instance_valid(target): return false
+		return super.seekProp(delta, car)
+	func move(delta: float, car: Node2D) -> void:
 		if is_instance_valid(target):
 			g.chase(target.global_position, g.speedNow(), delta)
-			if target.has_meta(&"propId"): #a supply crate: break it open, then steal what spills
-				if g.global_position.distance_to(target.global_position) < g.bodyRadius + 60.0:
-					BreakableProp.smashNode(target)
-					target = null
-					lookT = 0.3
-				return
 			if g.global_position.distance_to(target.global_position) < 24.0:
 				stolen.push_back({"scene": target.scene_file_path})
 				target.queue_free()
@@ -722,7 +771,15 @@ class Thief extends Verb:
 #==================================================================================================
 ## Stops at its reach and strikes; a ring shows the reach (Stinger, Rattler).
 class Striker extends Verb:
+	const SUN_WAKE := 520.0 #a Rattler sunning on its rock (SpawnManager.SPAWN_STATE) lies still until the car is this close
 	func telegraphRadius() -> float: return g.windDist
+	func other(_delta: float, car: Node2D) -> void:
+		if g.state != &"sun": return
+		g.play(&"idle")
+		g.sprite.speed_scale = 0.5
+		if g.distTo(car) < SUN_WAKE:
+			g.sprite.speed_scale = 1.0
+			g.setState(&"move")
 	func move(delta: float, car: Node2D) -> void:
 		if g.distTo(car) > g.windDist * 0.9: g.chase(car.global_position, g.speedNow(), delta)
 		else: g.faceTo((car.global_position - g.global_position).angle(), delta)
@@ -741,7 +798,7 @@ class Spiky extends Verb:
 		if g.stateTime >= g.windT:
 			for i in 8:
 				var dir := Vector2.from_angle(i * TAU / 8.0 + g.rotation)
-				g.fx().shoot(g.global_position + dir * g.bodyRadius, dir, 420.0, 0.6, g.attackDamage, g.sys, "quill")
+				g.fx().shoot(g.global_position + dir * g.bodyRadius, dir, 420.0, 0.6, g.attackDamage, g.sys, "quill", g) #they hit goons too (GoonFx.quillsHitGoons)
 			g.setState(&"recover")
 			g.cooldown = 3.0
 	func beforeCrush(car: Node2D, speed: float) -> void:
@@ -764,21 +821,71 @@ class Flyer extends Verb:
 		shadow.top_level = true
 		shadow.z_index = -1
 		g.add_child(shadow)
-	func flying() -> bool: return g.state != &"feed" && g.state != &"dive"
+	func flying() -> bool: return g.state != &"feed" && g.state != &"dive" && g.state != &"stun"
 	func tick(delta: float, car: Node2D) -> void:
 		super.tick(delta, car)
 		if is_instance_valid(shadow): shadow.global_position = g.global_position + (Vector2(16, 24) if flying() else Vector2(3, 4))
+	## A fresh crush decal comes first (move lands on it); with none, the seeks rows: a carcass prop to perch on,
+	## or a roost's crown (Spill.ROOSTS)
+	var decalAt = null
+	func seekProp(delta: float, car: Node2D) -> bool:
+		decalAt = g.fx().nearestDecal(g.global_position, 500.0) if g.cooldown <= 0.0 else null
+		if decalAt != null: return false
+		return super.seekProp(delta, car)
+	func doSeek(action: StringName, delta: float, car: Node2D) -> bool:
+		if g.cooldown > 0.0: #just took off: not straight back down
+			seekAt = null
+			return false
+		match action:
+			&"perch":
+				landOn(seekAt.global_position, delta)
+				if g.state == &"feed": seekAt = null
+				return true
+			&"roost":
+				if roostAt != seekAt:
+					roostAt = seekAt
+					roostSlot = Spill.roosting(seekAt).size() - 1 #it counts itself now
+				var spot := Spill.roostSpot(roostAt, roostSlot)
+				g.chase(spot, g.speedNow(), delta, 4.0)
+				g.play(&"walk")
+				if g.global_position.distance_to(spot) < 12.0:
+					g.global_position = spot
+					g.setState(&"roost")
+					g.z_index = PropReactions.CANOPY_Z + 1 #in the crown, over the canopy
+					roostT = randf_range(Spill.ROOST_SECONDS.x, Spill.ROOST_SECONDS.y)
+					seekAt = null
+				return true
+		return super.doSeek(action, delta, car)
+	## Down to feed on something (a crush decal, a carcass): solid and crushable while it eats
+	func landOn(at: Vector2, delta: float) -> void:
+		g.chase(at, g.speedNow(), delta, 4.0)
+		if g.global_position.distance_to(at) < 12.0:
+			g.setState(&"feed")
+			g.setSolid(true)
+			g.invulnerable = false
+	var roostAt: Node2D = null #the roost it sits in or flies to (Spill.roosting counts these)
+	var roostSlot := 0
+	var roostT := 0.0
+	## A ram on the trunk (Spill.knockRoost): it falls out of the crown, stunned and crushable
+	func dropFromRoost(stun: float) -> void:
+		leaveRoost()
+		g.setSolid(true)
+		g.invulnerable = false
+		g.fx().dust(g.global_position)
+		stunFor(stun, Vector2.from_angle(randf() * TAU) * 60.0)
+	func leaveRoost() -> void:
+		roostAt = null
+		g.z_index = 0
+	func stun(delta: float, car: Node2D) -> void:
+		super.stun(delta, car)
+		if g.state == &"move": #back up into the air
+			g.setSolid(false)
+			g.invulnerable = true
+	func onDeath(_cause: StringName) -> void: leaveRoost()
 	func move(delta: float, car: Node2D) -> void:
-		var decal = g.fx().nearestDecal(g.global_position, 500.0) if g.cooldown <= 0.0 else null
-		if decal == null && g.cooldown <= 0.0: #a carcass prop is a perch too
-			var carcass := WorldHooks.nearestInGroup(g.get_tree(), BreakableProp.GROUPS[&"carcass"], g.global_position, 500.0)
-			if carcass: decal = carcass.global_position
-		if decal != null && g.distTo(car) > 260.0:
-			g.chase(decal, g.speedNow(), delta, 4.0)
-			if g.global_position.distance_to(decal) < 12.0:
-				g.setState(&"feed")
-				g.setSolid(true)
-				g.invulnerable = false
+		if roostAt != null: leaveRoost() #lost its roost (smashed, or the car came close)
+		if decalAt != null && g.distTo(car) > 260.0:
+			landOn(decalAt, delta)
 			return
 		orbit += delta * 0.8
 		g.chase(car.global_position + Vector2.from_angle(orbit) * 260.0, g.speedNow(), delta, 3.0)
@@ -807,16 +914,31 @@ class Flyer extends Verb:
 					g.invulnerable = true
 					g.setState(&"move")
 					g.cooldown = 2.0
+			&"roost": #sits in the crown, out of reach, until it has had enough or the tree is gone
+				g.play(&"idle")
+				if not is_instance_valid(roostAt) || not roostAt.is_inside_tree() || g.stateTime > roostT:
+					leaveRoost()
+					g.setState(&"move")
+					g.cooldown = 4.0
 
 #==================================================================================================
 ## A herd that stampedes across your path, ignoring you; heavy, so hit it fast (Thunderhoof).
+## R-8: a herd can also graze (heads down, still: a set piece or an event spawns it so, SpawnManager.spawnGroup)
+## until something spooks it (spook: the Air Horn, a blast, the car passing close and fast). Then the whole herd
+## is driven DRIVE_SECONDS the way the scare pushed it, faster, trampling fodder, and grazes again after.
 class Herd extends Verb:
+	const DRIVE_SECONDS := 6.0
+	const DRIVE_SPEED := 1.35   #× its speed while driven
+	const SPOOK_PASS := 250.0   #a car passing a grazing herd this close...
+	const SPOOK_SPEED := 300.0  #...this fast (30 MPH) spooks it
 	var dir := Vector2.RIGHT
 	var hitT := 0.0
+	var calm := &"move"         #what it goes back to after a drive
 	func setup() -> void:
 		Root.spawnManager.joinPack(g)
 		var car = Root.playerCar
 		if is_instance_valid(car): dir = herdDirection(car)
+		if g.get_meta(&"spawnState", &"") == &"graze": calm = &"graze"
 	func herdDirection(car: Node2D) -> Vector2:
 		#the first of a herd picks the line; the rest follow it
 		for o in Root.spawnManager.packMates(g):
@@ -824,16 +946,47 @@ class Herd extends Verb:
 		var cross: Vector2 = car.global_position + car.velocity * 1.5 - g.global_position
 		return cross.normalized() if cross.length() > 1.0 else Vector2.RIGHT
 	func move(delta: float, car: Node2D) -> void:
-		hitT = maxf(0.0, hitT - delta)
-		g.faceTo(dir.angle(), delta, 3.0)
-		g.advance(Vector2.from_angle(g.rotation) * g.speedNow() + dir.orthogonal() * sin(g.stateTime * 3.0 + g.packId) * 20.0, delta)
-		g.walkAnim(g.speedNow())
-		for i in g.get_slide_collision_count():
-			if g.get_slide_collision(i).get_collider() == car && hitT <= 0.0:
-				hitT = 0.6
-				g.hitCar(car, g.attackDamage, g.sys)
+		run(g.speedNow(), delta, car)
 		if g.distTo(car) > 1600.0 && dir.dot(car.global_position - g.global_position) < 0.0:
 			dir = (car.global_position + car.velocity * 1.5 - g.global_position).normalized()
+	func run(spd: float, delta: float, car: Node2D) -> void:
+		hitT = maxf(0.0, hitT - delta)
+		g.faceTo(dir.angle(), delta, 3.0)
+		g.advance(Vector2.from_angle(g.rotation) * spd + dir.orthogonal() * sin(g.stateTime * 3.0 + g.packId) * 20.0, delta)
+		g.walkAnim(spd)
+		g.trample()
+		for i in g.get_slide_collision_count():
+			var c = g.get_slide_collision(i).get_collider()
+			if c == car && hitT <= 0.0:
+				hitT = 0.6
+				g.hitCar(car, g.attackDamage, g.sys)
+			elif c is Object && not c.get_meta(&"smashed", false) && spd > g.speed: #a driven herd bursts fences (R-3)
+				BreakableProp.smashedByGoon(c, spd, dir)
+	func other(delta: float, car: Node2D) -> void:
+		match g.state:
+			&"graze":
+				g.play(&"idle")
+				g.sprite.speed_scale = 0.35
+				if g.distTo(car) < SPOOK_PASS && car.velocity.length() > SPOOK_SPEED: spook(car.global_position)
+			&"drive":
+				run(g.speedNow() * DRIVE_SPEED, delta, car)
+				if g.stateTime >= DRIVE_SECONDS: g.setState(calm)
+	## Something scared the herd at `from`: every member runs the way the scare pushes the herd
+	func spook(from: Vector2) -> void:
+		if g.dead || g.state == &"stun" || (g.state == &"drive" && g.stateTime < 0.5): return
+		var mates: Array = Root.spawnManager.packMates(g)
+		var centre := Vector2.ZERO
+		for o in mates: centre += o.global_position
+		centre /= maxf(mates.size(), 1.0)
+		var away := centre - from
+		var to: Vector2 = away.normalized() if away.length() > 1.0 else Vector2.from_angle(randf() * TAU)
+		for o in mates:
+			if not is_instance_valid(o) || o.dead || not o.verb is Herd: continue
+			o.verb.dir = to
+			o.sprite.speed_scale = 1.0
+			o.setState(&"drive")
+		g.fx().dust(centre)
+		g.fx().label(centre, "STAMPEDE!", 24)
 	func onResist(car: Node2D, _speed: float) -> void:
 		g.bounceCar(car, g.attackDamage, g.sys, "STAMPEDE")
 	func onTouch(_car: Node2D) -> void: pass #a stampede doesn't stop for you

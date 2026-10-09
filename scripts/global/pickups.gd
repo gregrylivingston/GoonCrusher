@@ -256,16 +256,19 @@ static func resetRun() -> void:
 static func goonTickSkipped() -> bool:
 	return timeWarp && Engine.get_physics_frames() % 5 >= 2
 
-## The lure a goon at `pos` with this verb should walk to, or Vector2.INF.
+## The lure a goon at `pos` with this verb should walk to, or Vector2.INF. The newest lure in reach wins.
+## Every goon asks every tick while a lure is out, so it walks the list backwards, dropping spent lures as it
+## goes, and allocates nothing (it used to copy the list per call).
 static func lureFor(pos: Vector2, verb: StringName) -> Vector2:
 	if lures.is_empty(): return Vector2.INF
 	var now := Time.get_ticks_msec()
-	for l in lures.duplicate():
+	for i in range(lures.size() - 1, -1, -1):
+		var l: Dictionary = lures[i]
 		if now > l.until:
-			lures.erase(l)
+			lures.remove_at(i)
 			continue
 		if l.only != &"" && l.only != verb: continue
-		if pos.distance_to(l.pos) < l.radius: return l.pos
+		if pos.distance_squared_to(l.pos) < l.radius * l.radius: return l.pos
 	return Vector2.INF
 
 #--- lookups ------------------------------------------------------------------------------------
