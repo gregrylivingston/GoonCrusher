@@ -62,6 +62,11 @@ class_name LevelDef extends Resource
 @export var dressing: Dictionary = {}
 ## The same for set pieces: {motif id: weight} (WorldSkin.MOTIFS: camps, groves, wreck piles...)
 @export var motifs: Dictionary = {}
+## Heroes (R-2, docs/WORLD.md "Heroes"): interactive props and set pieces placed first in each chunk, on a
+## layout anchor: {prop or motif id: [weight, anchor, variant]} (anchor ford, bank, track, pass, clearing, edge or
+## any; variant optional), over the region's (Territories heroes). features "heroes" sets how many a fully open
+## chunk gets (1 by default).
+@export var heroes: Dictionary = {}
 ## pickup kind -> weight, rolled pickupsPerChunk times per chunk: coinline (a line of 7 coins), fuel, health,
 ## purse, slot, or none (nothing, so later levels can lean out the coins)
 @export var pickupTable: Dictionary = {}

@@ -32,15 +32,23 @@ features = {
 "mesaAbove": 0.42,
 "passWidth": 1400.0,
 "washFrequency": 4e-05,
-"washWidth": 700.0,
+"washWidth": 900.0,
 "duneAbove": 0.35,
 "barrierCap": 0.35,
-"props": 13
+"props": 13,
+"slotShare": 0.3,
+"slotWidth": 600.0,
+"heroes": 2.5
 }
 baseTerrain = [6, 1, 6, 1, 6]
 accents = [12, 1]
 dressing = {}
 motifs = {}
+heroes = {
+&"saguaro": [3.0, "any"],
+&"rockpile": [2.0, "pass"],
+&"tnt": [1.5, "pass"]
+}
 pickupTable = {
 &"coinline": 41,
 &"fuel": 49,

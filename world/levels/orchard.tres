@@ -11,8 +11,8 @@ region = &"wilds"
 stop = 2
 order = 1
 blurb = "Farm country: a dense hedge and fence lattice with gates, orchards and beehives. Yipper packs flank down the lanes."
-barrier = "A creek with deep pools winds through the meadow. Ford it where the shallows are."
-surfaces = "Grass and moss, fast dirt tracks, shallows that slow you down, deep pools that drown. Hedgerows, fences and hay bales smash at speed."
+barrier = "Dark hedgerows on dry-stone bases wall the lanes and never break. Smash through the farm gates or turn at the open ends; narrow creeks cut across."
+surfaces = "Grass and moss, fast farm tracks down the lanes, shallows that slow you down, deep pools that drown. Gates, fences, pumpkins and hay bales smash at speed."
 startPosition = Vector2(2866, 1583)
 seconds = 250
 spawnTimer = 4.9
@@ -24,8 +24,41 @@ rules = {
 }
 lineup = Array[StringName]([&"jackalope", &"yipper", &"bandit", &"buzzard"])
 landscape = &"meadow"
-dressing = {}
-motifs = {}
+features = {
+"creekFrequency": 4e-05,
+"creekWidth": 700.0,
+"poolThreshold": 0.5,
+"poolWidth": 360.0,
+"fordWidth": 1200.0,
+"trackWidth": 500.0,
+"barrierCap": 0.15,
+"hedgeDensity": 0.45,
+"fenceDensity": 0.25,
+"fieldSpacing": 1200.0,
+"fieldAngle": 0.12,
+"hedgeWalls": true,
+"routeFactor": 1.2,
+"heroes": 1.5,
+"bitProps": ["oak"]
+}
+dressing = {
+&"scarecrow": 1.5,
+&"watertower": 0.3
+}
+motifs = {
+&"orchard": 2,
+&"pumpkinpatch": 1,
+&"warren": 0.4
+}
+heroes = {
+&"apiary": [1.5, "any"],
+&"farmyard": [1.0, "any"],
+&"pumpkinpatch": [1.0, "track"],
+&"scarecrow": [1.0, "any"],
+&"bell": [0.5, "track"],
+&"den": [0.3, "any"],
+&"watertower": [0.5, "ford"]
+}
 pickupTable = {
 &"coinline": 42,
 &"fuel": 50,

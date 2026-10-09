@@ -81,8 +81,22 @@ var waterCrossing := SHALLOWS
 var fordHalf := 600.0
 var bridgeHalf := 450.0
 var passHalf := 700.0
+## Mixed crossings (features "fordShare", L-6): this share of the water crossings of a bridging grammar are
+## fords instead (WorldGen.mixCrossings)
+var fordShare := 0.0
+## Slot canyons (features "slotShare", "slotWidth"): this share of the passes cut through walls are narrow,
+## slotHalf either side of the way through (WorldGen.isSlot; the fine raster narrows them)
+var slotShare := 0.0
+var slotHalf := 300.0
 ## Hard barriers may cover at most this share of any 3x3-chunk window
 var barrierCap := 0.2
+## Meadow thickets (features "standFrequency", "standAbove"): dense stands where a noise is high are walls
+var standOn := false
+## The Home Paddock's track (features "homePaddock"): a dirt track past the opener's paddock
+var paddockTrack := false
+## Whether the last meadow sample was on a dirt track (not a dirt patch of the base ground): the fine raster
+## keeps a mask of them for the recipe (track anchors, hedgerows keeping off the lanes)
+var onTrack := false
 
 var nBase: FastNoiseLite
 var nAcc: FastNoiseLite
@@ -115,6 +129,7 @@ var chance := PackedFloat32Array()
 var g1 := 1.0
 var g2 := 1.0
 var g4 := 1.0
+var g5 := 1.0
 #lattice grammars: street / fence flags per global coarse column and row
 var colFlag := PackedByteArray()
 var rowFlag := PackedByteArray()
@@ -161,6 +176,13 @@ func setup(mapSeed: int, def: Dictionary) -> void:
 			threshA = feat("poolThreshold", 0.45)
 			fordHalf = feat("fordWidth", 1200.0) / 2.0
 			waterCrossing = SHALLOWS
+			#thickets (the forest's pine stands as walls): where n5 rises above threshB, cut by the tracks (trails)
+			f5 = feat("standFrequency", 0.0)
+			if f5 > 0.0:
+				standOn = true
+				n5 = noise(14, f5)
+				threshB = feat("standAbove", 0.3)
+			paddockTrack = feat("homePaddock", 0.0) > 0.0
 		Grammar.BAYOU:
 			f1 = feat("lakeFrequency", 1.0 / 12000.0); n1 = noise(20, f1, 3)
 			f2 = feat("channelFrequency", 1.1e-4); n2 = noise(21, f2)
@@ -169,6 +191,7 @@ func setup(mapSeed: int, def: Dictionary) -> void:
 			halfA = feat("channelWidth", 560.0) / 2.0
 			threshB = feat("channelGap", 0.2)
 			bridgeHalf = feat("bridgeWidth", 900.0) / 2.0
+			fordHalf = feat("fordWidth", 1200.0) / 2.0
 			waterCrossing = BRIDGE
 		Grammar.CANYON:
 			f1 = feat("ridgeFrequency", 7e-5); n1 = noise(30, f1)
@@ -243,9 +266,13 @@ func setup(mapSeed: int, def: Dictionary) -> void:
 			passHalf = 640.0
 			barrierCap = float(features.get("barrierCap", 0.35))
 
+	fordShare = clampf(feat("fordShare", 0.0), 0.0, 1.0)
+	slotShare = clampf(feat("slotShare", 0.0), 0.0, 1.0)
+	slotHalf = feat("slotWidth", 600.0) / 2.0
 	g1 = G_PLAIN * f1
 	g2 = G_PLAIN * f2
 	g4 = G_PLAIN * f4
+	g5 = G_PLAIN * f5
 
 func feat(key: String, fallback: float) -> float:
 	return float(features.get(key, fallback))
@@ -313,14 +340,34 @@ static func lineDistance(n: FastNoiseLite, f: float, x: float, y: float, shift :
 #Prairie: creeks along the zero lines of n1 (where the n2 mask lets them run), widening into pools where
 #n3 is high; dirt tracks along n4's zero lines. Creeks are deep water with a shallows band; the coarse map
 #cuts fords through them.
+#Thickets (Moose Woods): dense stands where n5 rises above threshB are walls (HILLS, drawn as pine crowns),
+#the tracks running through them as trails. The Home Paddock's track runs past the opener's paddock.
 func meadow(x: float, y: float) -> Vector3:
-	var s := DIRT if absf(n4.get_noise_2d(x, y)) / g4 < halfB else surfaceBase(x, y)
+	var track := absf(n4.get_noise_2d(x, y)) / g4
+	onTrack = track < halfB
+	var s := DIRT if onTrack else surfaceBase(x, y)
+	if paddockTrack && not onTrack:
+		var py := start.y + PADDOCK_TRACK_Y
+		if absf(y - py) < halfB && x > start.x + PADDOCK_TRACK_X.x && x < start.x + PADDOCK_TRACK_X.y:
+			s = DIRT
+			onTrack = true
 	var fw := BIG
 	var strength := smoothstep(-0.45, -0.15, n2.get_noise_2d(x, y))
 	if strength > 0.05:
 		var hw := halfA * strength + halfC * smoothstep(threshA, threshA + 0.15, n3.get_noise_2d(x, y)) * strength
 		fw = (absf(n1.get_noise_2d(x, y)) / g1 - hw) / UNIT
-	return Vector3(fw, BIG, s)
+	var fh := BIG
+	if standOn:
+		fh = (threshB - n5.get_noise_2d(x, y)) / g5 / UNIT
+		fh = minf(maxf(fh, (halfB + TRAIL_MARGIN - track) / UNIT), BIG) #the trails stay open
+	return Vector3(fw, fh, s)
+
+## The Home Paddock's track (Prairie Run's opener, ChunkRecipe.placeHomePaddock): px from the start, along y
+## and the x span along +x
+const PADDOCK_TRACK_Y := -1000.0
+const PADDOCK_TRACK_X := Vector2(1500.0, 5600.0)
+## Thickets keep this far (px) off a track's edge, so trails through them are the track and a verge
+const TRAIL_MARGIN := 160.0
 
 #Snapper Bayou: lakes where the fbm n1 rises above threshA, plus two braided channels either side of n2's
 #zero line (each strand masked by its own noise). The coarse map bridges them.

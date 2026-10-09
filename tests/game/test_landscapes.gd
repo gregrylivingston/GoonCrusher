@@ -5,6 +5,9 @@ extends GameTest
 #(material layers, wall and water layers, tints, borders, strips, roof decor); a landscape whose art is missing
 #borrows its fallback's skin but keeps its own generator; lava glows; a region's props rise with distance.
 
+## New levels that tune their landscape's world for their own layout (Orchard Lanes' hedgerow lanes, Moose Woods' thickets)
+const OWN_WORLD := [&"orchard", &"moosewoods"]
+
 #what WorldSkin built for the eight kept levels before the landscapes existed (commit e03a6cad): layers, water
 #layer, wall layer, wall tint, organic, wall strip, roof decor, layerOf by terrain id
 const BEFORE := {
@@ -129,7 +132,8 @@ func test_new_levels_take_their_landscapes_world():
 		assert_false(def.features.is_empty() || def.baseTerrain.is_empty(), "%s: a resolved world" % id)
 		if not id in BEFORE:
 			assert_eq(def.grammar, land.grammar, "%s: its landscape's generator" % id)
-			assert_eq(def.features, land.features, "%s: and its features" % id)
+			#Region 1's levels with a layout of their own (docs/WORLD.md "Region 1 levels") tune their landscape's world
+			if not id in OWN_WORLD: assert_eq(def.features, land.features, "%s: and its features" % id)
 	var forest := Levels.get_def(&"moosewoods")
 	assert_false(forest.features.has("fenceDensity"), "Moose Woods has no field lines")
 

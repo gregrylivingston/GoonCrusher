@@ -25,11 +25,11 @@ terrains = [6, 11]
 materials = {
 0: "needles"
 }
-roofMaterial = "rock"
-wallStrip = "cliff_lip"
-wallTint = Color(1, 1, 1, 1)
+roofMaterial = "needles"
+wallStrip = "treeline"
+wallTint = Color(0.62, 0.72, 0.6, 1)
 organic = 1
-roofDecor = &""
+roofDecor = &"pine_crown"
 waterLook = &"water"
 waterGlow = Color(0, 0, 0, 0)
 waterFoam = Color(1, 1, 1, 1)

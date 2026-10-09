@@ -38,10 +38,13 @@ const ROAD_PROPS := [&"cone", &"jersey", &"wreck", &"manhole", &"barricade", &"s
 const CHAIN_PROPS := [&"fence", &"hedge", &"jersey", &"fortwall"]
 ## Props laid only as field lines (ChunkRecipe.placeFieldLines), by the features key giving the chance per lattice edge
 const FIELD_PROPS := {&"fence": "fenceDensity", &"hedge": "hedgeDensity"}
-## Set pieces (ChunkRecipe.placeMotifs), chosen per zone from the landscape's, the region's and the level's motifs. members: [prop id, count, radius px,
-## shape]: "centre", "ring" (evenly round the radius), "disc" (scattered inside it), "grid" or "line" (turned to the
-## field lattice, `radius` apart). min: fewer members than this that fit and the motif is skipped. Members are
-## loaded with the level whether its dressing names them or not.
+## Set pieces (ChunkRecipe.placeMotifs; heroes too, placeHeroes), chosen per zone from the landscape's, the
+## region's and the level's motifs. members: [prop id, count (or [low, high]), radius px, shape, options]: shapes
+## "centre", "ring" (evenly round the radius), "disc" (scattered inside it), "grid" or "line" (turned to the field
+## lattice, `radius` apart), "pen" (count pieces round a square of half side `radius`, one gap); options
+## (optional) {"variants": [variant indices], "offset": px a line stands off the centre}. min: fewer members than
+## this that fit and the motif is skipped. Members are loaded with the level whether its dressing names them
+## or not. All members of one placed motif share a group key (metadata `group`).
 const MOTIFS := {
 	&"camp": {"min": 3, "members": [["firepit", 1, 0.0, "centre"], ["tent", 3, 300.0, "ring"], ["totem", 1, 470.0, "ring"], ["crate", 1, 430.0, "disc"]]},
 	&"cabincamp": {"min": 2, "members": [["cabin", 1, 0.0, "centre"], ["firepit", 1, 340.0, "ring"], ["pine", 2, 560.0, "ring"]]},
@@ -55,7 +58,33 @@ const MOTIFS := {
 	&"boneyard": {"min": 3, "members": [["deadtree", 1, 0.0, "centre"], ["carcass", 2, 340.0, "disc"], ["rock_red", 2, 400.0, "disc"]]},
 	&"roadblock": {"min": 3, "members": [["barricade", 3, 300.0, "line"], ["cone", 2, 360.0, "disc"], ["tyres", 1, 380.0, "disc"]]},
 	&"pileup": {"min": 3, "members": [["wreck", 3, 300.0, "disc"], ["cone", 4, 420.0, "disc"], ["sign", 1, 420.0, "disc"]]},
+	#Region 1 (The Wilds): set pieces with jobs (docs/WORLD.md "Heroes")
+	&"cratestash": {"min": 2, "members": [["crate", 3, 115.0, "ring"]]},
+	&"warren": {"min": 3, "members": [["burrow", [3, 6], 420.0, "disc"]]},
+	&"apiary": {"min": 3, "members": [["honeyshed", 1, 0.0, "centre"], ["beehive", [3, 5], 175.0, "line", {"variants": [2, 3], "offset": 300.0}]]},
+	&"ranch": {"min": 5, "members": [["fence", 8, 330.0, "pen"], ["haybale", 2, 150.0, "disc"], ["bell", 1, 480.0, "ring"]]},
+	&"farmyard": {"min": 3, "members": [["den", 1, 0.0, "centre"], ["bell", 1, 380.0, "ring"], ["crate", 3, 340.0, "disc"]]},
+	&"pumpkinpatch": {"min": 5, "members": [["pumpkin", [6, 8], 150.0, "grid"]]},
+	&"loglanding": {"min": 3, "members": [["logpile", [3, 4], 300.0, "line"]]},
+	&"hivegrove": {"min": 3, "members": [["cypress", 4, 470.0, "disc"], ["beehive", 1, 330.0, "disc", {"variants": [0, 1]}]]},
 }
+## Field props laid as unbreakable walls on a level with features "hedgeWalls" (ChunkRecipe.placeWallEdge, L-8):
+## the decor drawing the run (docs/WORLD_ART.md "Hedgerow"), the breakable gate in its gap and how often a gap
+## has one
+const WALL_FIELD_PROPS := {&"hedge": {"decor": &"hedgerow", "gate": &"farmgate", "gateChance": 0.75}}
+## Roof decor laid on wall tops (ChunkRecipe.placeRoofs): the city's rooftops square to the grid, Moose Woods' pine
+## crowns over its thickets any way round and denser
+const ROOF_STYLE := {
+	&"rooftop": {"square": true, "inset": 0.3, "gap": 190.0, "max": 48, "scale": Vector2(1.15, 1.6)},
+	&"pine_crown": {"square": false, "inset": 0.1, "gap": 150.0, "max": 110, "scale": Vector2(0.95, 1.3), "tries": 2},
+}
+## Props that break only when the hero pass placed them (they get a taken-set bit and metadata `hero`; the
+## scattered ones stay scenery): Red Canyon's toppling saguaros
+const HERO_BREAKABLE := [&"saguaro"]
+## Breakables that pay (coins, a spill, a stash) beyond BreakableProp.COIN_SPILL and Spill.DEFS: one without a
+## taken-set bit is left out of a chunk (ChunkRecipe.lacksBit), so nothing pays twice
+const PAYING_PROPS := [&"crate", &"fence", &"haybale", &"den", &"burrow", &"beehive", &"pumpkin", &"farmgate",
+	&"logpile", &"watertower", &"still", &"sluice", &"rockpile", &"tnt", &"ranger_tower", &"fallen_trunk"]
 ## Where decor goes: "road" (asphalt, oil, lots), "wet" (shallows and banks), "any"; others off roads
 ## Decor that bends away from the car (world_decor.gdshader `bend`: world px a corner moves right under it)
 const BEND_DECOR := {&"tufts": 14.0, &"reeds": 18.0, &"tumbleweed": 12.0}
@@ -271,7 +300,22 @@ func zoneTables(zone: int) -> Dictionary:
 			table[StringName(id)] = float(own[id])
 		for id in table.keys(): if table[id] <= 0.0: table.erase(id)
 		out[key] = table
+	#heroes (R-2): {id: [weight, anchor, variant]}, the region's for the zone, then the level's (LevelDef.heroes)
+	var heroes := {}
+	var heroOverlay: Array = region.get("heroes", [])
+	if zone < heroOverlay.size():
+		for id in heroOverlay[zone]: heroes[StringName(id)] = heroSpec(heroOverlay[zone][id])
+	for id in def.heroes: heroes[StringName(id)] = heroSpec(def.heroes[id])
+	for id in heroes.keys(): if heroes[id][0] <= 0.0: heroes.erase(id)
+	out.heroes = heroes
 	return out
+
+## A hero table entry as [weight, anchor, variant]: from [weight, anchor(, variant)] or a bare weight ("any")
+static func heroSpec(value) -> Array:
+	if value is Array:
+		var a: Array = value
+		return [float(a[0]) if a.size() > 0 else 0.0, String(a[1]) if a.size() > 1 else "any", int(a[2]) if a.size() > 2 else -1]
+	return [float(value), "any", -1]
 
 #--- props and decor ---------------------------------------------------------------------------------
 
@@ -287,10 +331,20 @@ func dressingIds() -> Dictionary:
 			if entry.is_empty(): continue
 			var list := decor if entry.get("class", "") == "DECOR" else props
 			if not StringName(id) in list: list.push_back(StringName(id))
-		for motif in tables.motifs:
-			for m in MOTIFS.get(StringName(motif), {}).get("members", []):
-				var mid := StringName(m[0])
-				if manifest.get(String(mid), {}).get("class", "DECOR") != "DECOR" && not mid in props: props.push_back(mid)
+		var sets: Array = tables.motifs.keys()
+		for hero in tables.heroes:
+			if MOTIFS.has(StringName(hero)): sets.push_back(hero)
+			else: addProp(props, StringName(hero))
+		for motif in sets:
+			for m in MOTIFS.get(StringName(motif), {}).get("members", []): addProp(props, StringName(m[0]))
+	#what the level's layout features lay: hedgerow walls (their decor and gates), edge props, the Home Paddock
+	for id in fieldWalls():
+		var spec: Dictionary = WALL_FIELD_PROPS[id]
+		if manifest.has(String(spec.decor)) && not spec.decor in decor: decor.push_back(spec.decor)
+		addProp(props, spec.gate)
+	for id in def.features.get("edgeProps", {}): addProp(props, StringName(id))
+	if def.features.get("homePaddock", 0.0):
+		for m in ChunkRecipe.PADDOCK: addProp(props, StringName(m[0]))
 	var roof: StringName = look.roofDecor
 	if roof != &"" && manifest.has(String(roof)) && not roof in decor: decor.push_back(roof)
 	var landmark := Territories.landmark(def.region)
@@ -300,6 +354,14 @@ func dressingIds() -> Dictionary:
 		for product in Spill.PRODUCTS.get(id, []):
 			if manifest.has(String(product)) && not product in props: props.push_back(product)
 	return {"decor": decor, "props": props}
+
+## Adds a baked, non-decor prop id to a list once
+func addProp(list: Array, id: StringName) -> void:
+	if manifest.get(String(id), {}).get("class", "DECOR") != "DECOR" && not id in list: list.push_back(id)
+
+## The field props this level lays as unbreakable walls (features "hedgeWalls": WALL_FIELD_PROPS)
+func fieldWalls() -> Array:
+	return WALL_FIELD_PROPS.keys() if def.features.get("hedgeWalls", false) else []
 
 func setupProps() -> void:
 	var ids := dressingIds()
@@ -342,15 +404,18 @@ func recipeContext(lots: Array, lanes: Array) -> Dictionary:
 		var entry: Dictionary = manifest[String(id)]
 		var size: Array = entry.get("sizePx", [100, 100])
 		var occluder: bool = entry.get("occluder", false)
+		var breakable: bool = entry.get("breakable") != null
 		props[String(id)] = {"w": float(size[0]), "h": float(size[1]), "radius": maxf(size[0], size[1]) * 0.5,
 			"nodes": 3 + (1 if occluder else 0) + (1 if entry.get("beacon") else 0) + (1 if entry.get("canopy") else 0), "occluder": occluder,
-			"chain": id in CHAIN_PROPS, "breakable": entry.get("breakable") != null, "variants": entry.variants.size(),
-			"road": id in ROAD_PROPS}
+			"chain": id in CHAIN_PROPS, "breakable": breakable, "variants": entry.variants.size(),
+			"road": id in ROAD_PROPS,
+			"paying": breakable && (id in PAYING_PROPS || BreakableProp.COIN_SPILL.has(id) || Spill.DEFS.has(id))}
 	var decor := {}
 	for id in decorMeshes: decor[String(id)] = {"place": DECOR_PLACE.get(id, "")}
 	var propTables := {}
 	var decorTables := {}
 	var motifTables := {}
+	var heroTables := {}
 	for zone in ZONES:
 		var tables := zoneTables(zone)
 		var pt := {}
@@ -365,6 +430,10 @@ func recipeContext(lots: Array, lanes: Array) -> Dictionary:
 		for motif in tables.motifs:
 			if MOTIFS.has(StringName(motif)): mt[String(motif)] = float(tables.motifs[motif])
 		motifTables[zone] = mt
+		var ht := {}
+		for hero in tables.heroes:
+			if MOTIFS.has(StringName(hero)) || props.has(String(hero)): ht[String(hero)] = tables.heroes[hero].duplicate()
+		heroTables[zone] = ht
 	var motifDefs := {}
 	for motif in MOTIFS: motifDefs[String(motif)] = MOTIFS[motif].duplicate(true)
 	var fieldDensity := {}
@@ -373,7 +442,29 @@ func recipeContext(lots: Array, lanes: Array) -> Dictionary:
 		if chance > 0.0 && props.has(String(id)): fieldDensity[String(id)] = chance
 	var pickupTable := {}
 	for kind in def.pickupTable: pickupTable[String(kind)] = float(def.pickupTable[kind])
+	#the level's layout features (docs/WORLD.md "Heroes", "Field walls")
+	var walls := {}
+	for id in fieldWalls():
+		var spec: Dictionary = WALL_FIELD_PROPS[id]
+		if decorMeshes.has(spec.decor) && fieldDensity.has(String(id)):
+			walls[String(id)] = {"decor": String(spec.decor), "gate": String(spec.gate) if props.has(String(spec.gate)) else "", "gateChance": float(spec.gateChance)}
+	var edgeProps := {}
+	var edgeSpec: Dictionary = def.features.get("edgeProps", {})
+	for id in edgeSpec:
+		if props.has(String(id)): edgeProps[String(id)] = int(edgeSpec[id])
+	var bitProps := {}
+	for id in def.features.get("bitProps", []):
+		if props.has(String(id)): bitProps[String(id)] = true
+	var heroBreakable := {}
+	for id in HERO_BREAKABLE: heroBreakable[String(id)] = true
+	var roofDecor: StringName = look.roofDecor if decorMeshes.has(look.roofDecor) else &""
+	var roofStyle: Dictionary = ROOF_STYLE.get(roofDecor, {}).duplicate()
 	return {
+		"heroTables": heroTables, "heroesPerChunk": float(def.features.get("heroes", 1.0)),
+		"fieldAngle": float(def.features.get("fieldAngle", ChunkRecipe.FIELD_ANGLE)), "fieldWalls": walls,
+		"homePaddock": float(def.features.get("homePaddock", 0.0)) > 0.0, "edgeProps": edgeProps,
+		"bitProps": bitProps, "heroBreakable": heroBreakable, "roofStyle": roofStyle,
+		"roofTerrain": Root.terrain.BUILDING if grammar == &"city" else Root.terrain.HILLS,
 		"layerOf": layerOf, "mainLayer": 0, "blocked": blocked, "spawnable": spawnable,
 		"wallStrip": stripNames.find(look.wallStrip if look.wallStrip in stripNames else "cliff_lip"), "waterStrip": stripNames.find("shore_foam"),
 		"props": props, "decor": decor, "propTables": propTables, "decorTables": decorTables,

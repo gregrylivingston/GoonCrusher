@@ -40,7 +40,7 @@ func test_recipes_keep_their_budgets_and_rules():
 	var worst := {}
 	var timing := PackedStringArray()
 	for id in worldLevels():
-		var maxima := {"nodes": 0, "occluders": 0, "pieces": 0, "props": 0, "pickups": 0, "decor": 0, "lines": 0}
+		var maxima := {"nodes": 0, "occluders": 0, "pieces": 0, "props": 0, "pickups": 0, "decor": 0, "lines": 0, "heroes": 0, "bits": 0, "fieldWalls": 0, "dropped": 0}
 		var usec := 0
 		var count := 0
 		var slowest := 0
@@ -68,8 +68,11 @@ func checkBudgets(recipe: Dictionary, label: String) -> void:
 	var c: Dictionary = recipe.counts
 	assert_true(c.nodes <= ChunkRecipe.MAX_NODES, "%s: nodes %d" % [label, c.nodes])
 	assert_true(c.occluders <= ChunkRecipe.MAX_OCCLUDERS, "%s: occluders %d" % [label, c.occluders])
-	assert_true(c.pieces <= ChunkRecipe.MAX_PIECES, "%s: static pieces %d" % [label, c.pieces])
+	assert_true(c.pieces + c.fieldWalls <= ChunkRecipe.MAX_PIECES, "%s: static pieces %d (+%d field walls)" % [label, c.pieces, c.fieldWalls])
 	assert_eq(c.pieces, recipe.pieces.size(), label + ": piece count")
+	assert_eq(c.fieldWalls, recipe.fieldWalls.size(), label + ": field wall count")
+	assert_eq(c.heroesDropped, 0, label + ": the node budget kept every hero")
+	assert_true(c.bits <= 31, "%s: breakable bits %d" % [label, c.bits])
 	for poly in recipe.occluders:
 		var box := ChunkRecipe.bounds(poly)
 		assert_true(box.size.x <= ChunkRecipe.SPAN + 0.5 && box.size.y <= ChunkRecipe.SPAN + 0.5, "%s: occluder within %d px (%s)" % [label, ChunkRecipe.SPAN, box.size])
@@ -149,7 +152,7 @@ func test_the_same_input_gives_the_same_recipe():
 			var a := recipeFor(map, chunk)
 			var b := recipeFor(other, chunk)
 			var label := "%s %s" % [id, chunk]
-			for key in ["control", "pieces", "occluders", "lines", "props", "pickups", "decor", "spots", "counts"]:
+			for key in ["control", "pieces", "occluders", "lines", "props", "pickups", "decor", "spots", "counts", "fieldWalls"]:
 				assert_eq(var_to_str(a[key]), var_to_str(b[key]), "%s: %s repeats" % [label, key])
 
 #a stand-in for the TileManager's side of ChunkView
@@ -335,14 +338,14 @@ func test_recipe_profile():
 				var got := map.recipeOf(chunk)
 				if got.is_empty(): break
 				if not r.is_empty():
-					for key in ["control", "pieces", "occluders", "lines", "props", "pickups", "decor", "spots"]:
+					for key in ["control", "pieces", "occluders", "lines", "props", "pickups", "decor", "spots", "fieldWalls"]:
 						assert_eq(var_to_str(got[key]).md5_text(), var_to_str(r[key]).md5_text(), "%s %s: a rebuild repeats %s" % [id, chunk, key])
 				if r.is_empty() || got.usec + map.rasters[chunk].usec < r.usec + rr.usec:
 					r = got
 					rr = map.rasters[chunk]
 			if r.is_empty(): continue
 			print_.push_back(var_to_str([rr.terrain, rr.water, rr.wall]).md5_text())
-			for key in ["control", "pieces", "occluders", "lines", "props", "pickups", "decor", "spots"]: print_.push_back(var_to_str(r[key]).md5_text())
+			for key in ["control", "pieces", "occluders", "lines", "props", "pickups", "decor", "spots", "fieldWalls"]: print_.push_back(var_to_str(r[key]).md5_text())
 			raster += rr.usec
 			recipe += r.usec
 			worst = maxi(worst, r.usec + rr.usec)
