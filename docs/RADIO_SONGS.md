@@ -36,6 +36,8 @@ Fast, chaotic 2000s-style punk rock, aggressive distorted electric guitars, punc
 | Welcome to Nowhere | `sound/radio/gooncrusher/songs/Welcome to Nowhere.ogg` | 3:23 | heartland punk, 135 BPM: the slower song |
 | Gas Station Romance | `sound/radio/gooncrusher/songs/Gas Station Romance.ogg` | 3:16 | Southern punk / garage rock love song, 145 BPM |
 | She Left Me at the Truck Stop | `sound/radio/gooncrusher/songs/She Left Me at the Truck Stop.ogg` | 2:31 | country-punk heartbreak, 155 BPM |
+| No Brakes | `sound/radio/gooncrusher/songs/No Brakes.ogg` | 3:12 | punk-metal rage, 175 BPM |
+| Check Engine Light | `sound/radio/gooncrusher/songs/Check Engine Light.ogg` | 3:32 | Southern blues-punk, 150 BPM |
 
 ### Crush Hour
 
@@ -790,7 +792,170 @@ Tryna to make it through the night
 
 **Note:** clean: bad coffee is the strongest drink in it.
 
+### No Brakes
+
+A goon-crushing rage song: his mechanic says the brakes are shot, so he rips them out and never stops again. The station's third anthem after Crush Hour and Gooncrusher. Written together in this session, with the author's edits.
+
+**Style** (as drafted; the take may have used a tweaked version):
+
+```
+Aggressive 2000s punk-metal crossover, 175 BPM, down-tuned chugging distorted guitars, pounding double-kick drums, driving bass, gritty shouted male vocals with a screamed chorus, gang vocal chants on the bridge, revving engine and tire screech intro, comedic over-the-top rage, short shredding guitar solo, spoken deadpan outro, polished video game soundtrack production, ridiculous and fun. No emo, no ballad, no modern pop.
+```
+
+**Lyrics:**
+
+```
+[Intro: engine revving, tire screech]
+
+[Verse 1]
+Mechanic said son, your pads are shot
+I said good, that's just what I thought
+You can rip out what's left and throw it in the bed
+I never stop, not even on red
+
+[Chorus]
+No brakes!
+Nothin' to slow me down
+No brakes!
+Can't turn this thing around
+No brakes!
+Foot on the floor and the needle in the red
+We're going full speed ahead! No brakes!
+
+[Verse 2]
+There's a goon in the crosswalk wavin' his arms
+Yellin' "slow down mister, we don't mean no harm"
+I'd love to oblige but I'm sorry my friend
+The brakes are gone and I'm seein' red
+
+[Chorus]
+No brakes!
+Nothin' to slow me down
+No brakes!
+Can't turn this thing around
+No brakes!
+Foot on the floor and the needle in the red
+We're going full speed ahead! No brakes!
+
+[Verse 3]
+Hit the drive-through doin' sixty-five
+Grabbed a burger through the window without saying hi
+Rolled through the car wash, got a free rinse
+Ain't nobody seen my taillights since
+
+[Bridge]
+Mama said son, you better slow it down
+Before that Sheriff chases you down
+I said mama don't you worry but I can't stop
+Don't matter if it's the preacher or a cop
+
+[Chorus]
+No brakes!
+Nothin' to slow me down
+No brakes!
+Can't turn this thing around
+No brakes!
+Foot on the floor and the needle in the red
+We're going full speed ahead!
+
+[Guitar Solo]
+
+[Chorus]
+No brakes!
+Nothin' to slow me down
+No brakes!
+Can't turn this thing around
+No brakes!
+Foot on the floor and the needle in the red
+We're going full speed ahead! NO BRAKES!
+```
+
+**Processing:** −15.8 → −16.2 LUFS (true peak −4.5 dBTP), no tail silence to trim.
+
+**Note:** clean. Running red lights and outrunning the sheriff are played as cartoon bravado, in the same spirit as the game.
+
+### Check Engine Light
+
+Category 2: a truck with two hundred thousand miles that everybody says should be dead, and the man who loves it anyway. The warning light has been on so long it's a friend. Written together in this session, with the author's edits.
+
+**Style** (as drafted; the take may have used a tweaked version):
+
+```
+Gritty Southern blues-punk and garage rock, 150 BPM, crunchy fuzz guitar with slide guitar licks, stomping live drums, driving bass, harmonica fills, raspy good-humored male vocal, catchy shout-along chorus, gang vocal chant on the bridge, working-class small-town humor about an old rusty truck that won't die, short harmonica and slide guitar solo, engine sputter intro and deadpan spoken outro, polished video game soundtrack production with garage grit. No emo, no modern pop, no country ballad.
+```
+
+**Lyrics:**
+
+```
+[Intro: engine cranks, coughs, catches]
+
+[Verse 1]
+Two hundred thousand miles and a cracked dashboard
+Passenger door's tied shut with a bungee cord
+Heater only works when it's ninety outside
+But she starts every morning and she's mine all mine
+
+[Chorus]
+Check engine light's been on since oh-nine
+Mechanic says it's bad, I say it's fine
+She rattles and she smokes but I make her shine
+Check engine light's on, but I don't mind
+
+[Verse 2]
+Coat hanger antenna and a tape stuck in the deck
+Same old song on repeat and I ain't sick of it yet
+Got a dog in the back and a dent in the side
+As far as I'm concerned it's the perfect ride
+
+[Chorus]
+Check engine light's been on since oh-nine
+Mechanic says it's bad, I say it's fine
+She rattles and she smokes but I make her shine
+Check engine light's on, but I don't mind
+
+[Verse 3]
+Fellas at the diner tell me trade her in
+Get somethin' with a warranty and shiny rims
+I said a new one's just a new monthly bill
+Besides I love my baby and she's runnin' still
+
+[Bridge]
+Mechanic gave her one more week back in ninety-nine
+His shop's now a laundromat and she's still doing fine
+
+[Harmonica and Slide Guitar Solo]
+
+[Final Chorus]
+Check engine light's been on since oh-nine
+Mechanic says it's bad, I say it's fine
+She rattles and she smokes but I make her shine
+Check engine light's on, but I don't mind
+
+Check engine light's been on since oh-nine
+Mechanic says it's bad, I say it's fine
+She rattles and she smokes but I make her shine
+Check engine light's on, but I don't mind
+
+[Outro: engine sputters and dies, then catches again]
+```
+
+**Processing:** already at −16.1 LUFS (true peak −4.0 dBTP), no tail silence to trim. Suno's download was named "No Brakes (1).mp3" by mistake; the file in the game is "Check Engine Light".
+
+**Note:** clean.
+
+## Song categories
+
+The station's songs fall into three kinds (the author's breakdown). Keep new songs in one of them:
+
+1. **Goon-crushing driving rage, metal and punk:** Crush Hour, Gooncrusher, No Brakes.
+2. **Small-town and country life with a big dose of driving,** metal-tinged country, blues or punk: Full Tank, Empty Head, Cheap Beer, Premium Gas, Trailer Park Superstar, My Baby Loves My Truck, Check Engine Light.
+3. **Highway romance and small towns are great,** the softest and most country: Welcome to Nowhere, Gas Station Romance, She Left Me at the Truck Stop.
+
+The voice in all three: a first-person working-class guy and his car, concrete everyday details (twenty bucks, a cracked windshield, the county line), the title as the chorus hook, and a deadpan punchline at the end of a verse. Goons are something he drives through, not the point of view.
+
 ## Ideas for the next songs
+
+Older brainstorm, written before the three categories above; several (surf, ska, the goon lullaby) fall outside them, so check an idea against the categories before making it.
 
 Each needs lyrics, then a style prompt from the template above.
 

@@ -14,6 +14,7 @@
 [ext_resource type="AudioStream" path="res://scene/car/sedan/audio/sedan_intro_11.mp3" id="12_bqii5"]
 [ext_resource type="Texture2D" path="res://scene/car/sedan/char_sedan_transparent.png" id="13_mjohb"]
 [ext_resource type="Script" path="res://scene/car/car_info.gd" id="14_ap600"]
+[ext_resource type="Texture2D" path="res://scene/car/sedan/art/sedan_side.png" id="side_pic"]
 
 [resource]
 script = ExtResource("14_ap600")
@@ -23,6 +24,7 @@ weight = 35
 charName = "Anthony"
 profilePic = ExtResource("13_mjohb")
 backgroundPic = ExtResource("1_kcfml")
+sidePic = ExtResource("side_pic")
 introAudio = Array[AudioStreamMP3]([ExtResource("2_unbsa"), ExtResource("3_em4hn"), ExtResource("4_ht1l1"), ExtResource("5_ijmkr"), ExtResource("6_bf6qe"), ExtResource("7_ouree"), ExtResource("8_yo07a"), ExtResource("9_jwauf"), ExtResource("10_43wyo"), ExtResource("11_t64cr"), ExtResource("12_bqii5")])
 engine = 3
 steering = 4

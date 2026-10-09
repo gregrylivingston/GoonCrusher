@@ -154,6 +154,47 @@
    "solid": true,
    "scene": "res://world/art/props/barricade.tscn"
   },
+  "beach_hut": {
+   "class": "TALL",
+   "sizePx": [
+    211,
+    200
+   ],
+   "variants": [
+    "res://world/art/props/beach_hut.png",
+    "res://world/art/props/beach_hut_v1.png"
+   ],
+   "hull": [
+    [
+     -104,
+     -84
+    ],
+    [
+     104,
+     -84
+    ],
+    [
+     104,
+     84
+    ],
+    [
+     -104,
+     84
+    ]
+   ],
+   "occluder": true,
+   "breakable": null,
+   "explosive": false,
+   "tags": {
+    "landscape": [
+     "coast"
+    ],
+    "levels": [],
+    "faction": []
+   },
+   "solid": true,
+   "scene": "res://world/art/props/beach_hut.tscn"
+  },
   "beehive": {
    "class": "STATEFUL",
    "sizePx": [
@@ -1118,6 +1159,72 @@
    "solid": true,
    "scene": "res://world/art/props/dumpster.tscn"
   },
+  "fallen_trunk": {
+   "class": "LOW",
+   "sizePx": [
+    405,
+    183
+   ],
+   "variants": [
+    "res://world/art/props/fallen_trunk.png",
+    "res://world/art/props/fallen_trunk_v1.png"
+   ],
+   "hull": [
+    [
+     -222.7,
+     -49.3
+    ],
+    [
+     -206.7,
+     -86.7
+    ],
+    [
+     -193.3,
+     -93.3
+    ],
+    [
+     144,
+     -62.7
+    ],
+    [
+     180,
+     -17.3
+    ],
+    [
+     182.7,
+     9.3
+    ],
+    [
+     180,
+     17.3
+    ],
+    [
+     104,
+     54.7
+    ],
+    [
+     -181.3,
+     89.3
+    ],
+    [
+     -218.7,
+     70.7
+    ]
+   ],
+   "occluder": false,
+   "breakable": null,
+   "explosive": false,
+   "tags": {
+    "landscape": [
+     "forest",
+     "forest_snow"
+    ],
+    "levels": [],
+    "faction": []
+   },
+   "solid": true,
+   "scene": "res://world/art/props/fallen_trunk.tscn"
+  },
   "fence": {
    "class": "STATEFUL",
    "sizePx": [
@@ -1532,6 +1639,47 @@
    "solid": true,
    "scene": "res://world/art/props/hedge.tscn"
   },
+  "hunting_stand": {
+   "class": "TALL",
+   "sizePx": [
+    165,
+    189
+   ],
+   "variants": [
+    "res://world/art/props/hunting_stand.png",
+    "res://world/art/props/hunting_stand_v1.png"
+   ],
+   "hull": [
+    [
+     -60,
+     -60
+    ],
+    [
+     60,
+     -60
+    ],
+    [
+     60,
+     60
+    ],
+    [
+     -60,
+     60
+    ]
+   ],
+   "occluder": true,
+   "breakable": null,
+   "explosive": false,
+   "tags": {
+    "region": [
+     "hunting"
+    ],
+    "levels": [],
+    "faction": []
+   },
+   "solid": true,
+   "scene": "res://world/art/props/hunting_stand.tscn"
+  },
   "hydrant": {
    "class": "LOW",
    "sizePx": [
@@ -1664,6 +1812,71 @@
    "solid": true,
    "scene": "res://world/art/props/jersey.tscn"
   },
+  "landmark_big": {
+   "class": "TALL",
+   "sizePx": [
+    364,
+    365
+   ],
+   "variants": [
+    "res://world/art/props/landmark_big.png"
+   ],
+   "hull": [
+    [
+     -100,
+     -81.3
+    ],
+    [
+     -58.7,
+     -114.7
+    ],
+    [
+     12,
+     -128
+    ],
+    [
+     82.7,
+     -98.7
+    ],
+    [
+     122.7,
+     -38.7
+    ],
+    [
+     106.7,
+     72
+    ],
+    [
+     46.7,
+     120
+    ],
+    [
+     -14.7,
+     128
+    ],
+    [
+     -98.7,
+     82.7
+    ],
+    [
+     -128,
+     12
+    ]
+   ],
+   "occluder": true,
+   "breakable": null,
+   "explosive": false,
+   "tags": {
+    "region": [
+     "hunting"
+    ],
+    "levels": [],
+    "faction": []
+   },
+   "solid": true,
+   "beacon": "res://world/art/props/landmark_big_beacon.png",
+   "scene": "res://world/art/props/landmark_big.tscn"
+  },
   "landmark_scrap": {
    "class": "TALL",
    "sizePx": [
@@ -1727,6 +1940,71 @@
    "solid": true,
    "beacon": "res://world/art/props/landmark_scrap_beacon.png",
    "scene": "res://world/art/props/landmark_scrap.tscn"
+  },
+  "landmark_swarm": {
+   "class": "TALL",
+   "sizePx": [
+    412,
+    399
+   ],
+   "variants": [
+    "res://world/art/props/landmark_swarm.png"
+   ],
+   "hull": [
+    [
+     -120,
+     -33.3
+    ],
+    [
+     -93.3,
+     -82.7
+    ],
+    [
+     -49.3,
+     -114.7
+    ],
+    [
+     10.7,
+     -124
+    ],
+    [
+     93.3,
+     -82.7
+    ],
+    [
+     124,
+     12
+    ],
+    [
+     82.7,
+     93.3
+    ],
+    [
+     33.3,
+     120
+    ],
+    [
+     -57.3,
+     110.7
+    ],
+    [
+     -109.3,
+     60
+    ]
+   ],
+   "occluder": true,
+   "breakable": null,
+   "explosive": false,
+   "tags": {
+    "region": [
+     "sprawl"
+    ],
+    "levels": [],
+    "faction": []
+   },
+   "solid": true,
+   "beacon": "res://world/art/props/landmark_swarm_beacon.png",
+   "scene": "res://world/art/props/landmark_swarm.tscn"
   },
   "landmark_tribe": {
    "class": "TALL",
@@ -1792,6 +2070,71 @@
    "beacon": "res://world/art/props/landmark_tribe_beacon.png",
    "scene": "res://world/art/props/landmark_tribe.tscn"
   },
+  "landmark_war": {
+   "class": "TALL",
+   "sizePx": [
+    403,
+    403
+   ],
+   "variants": [
+    "res://world/art/props/landmark_war.png"
+   ],
+   "hull": [
+    [
+     -114.7,
+     -21.3
+    ],
+    [
+     -53.3,
+     -104
+    ],
+    [
+     53.3,
+     -104
+    ],
+    [
+     108,
+     -44
+    ],
+    [
+     116,
+     12
+    ],
+    [
+     90.7,
+     73.3
+    ],
+    [
+     37.3,
+     110.7
+    ],
+    [
+     -10.7,
+     116
+    ],
+    [
+     -73.3,
+     90.7
+    ],
+    [
+     -108,
+     44
+    ]
+   ],
+   "occluder": true,
+   "breakable": null,
+   "explosive": false,
+   "tags": {
+    "region": [
+     "works"
+    ],
+    "levels": [],
+    "faction": []
+   },
+   "solid": true,
+   "beacon": "res://world/art/props/landmark_war_beacon.png",
+   "scene": "res://world/art/props/landmark_war.tscn"
+  },
   "landmark_wild": {
    "class": "TALL",
    "sizePx": [
@@ -1855,6 +2198,47 @@
    "solid": true,
    "beacon": "res://world/art/props/landmark_wild_beacon.png",
    "scene": "res://world/art/props/landmark_wild.tscn"
+  },
+  "lifeguard_tower": {
+   "class": "TALL",
+   "sizePx": [
+    139,
+    252
+   ],
+   "variants": [
+    "res://world/art/props/lifeguard_tower.png",
+    "res://world/art/props/lifeguard_tower_v1.png"
+   ],
+   "hull": [
+    [
+     -69.3,
+     -80
+    ],
+    [
+     69.3,
+     -80
+    ],
+    [
+     69.3,
+     60
+    ],
+    [
+     -69.3,
+     60
+    ]
+   ],
+   "occluder": true,
+   "breakable": null,
+   "explosive": false,
+   "tags": {
+    "landscape": [
+     "coast"
+    ],
+    "levels": [],
+    "faction": []
+   },
+   "solid": true,
+   "scene": "res://world/art/props/lifeguard_tower.tscn"
   },
   "log": {
    "class": "LOW",
@@ -1997,6 +2381,77 @@
    "solid": true,
    "scene": "res://world/art/props/logpile.tscn"
   },
+  "mailbox": {
+   "class": "STATEFUL",
+   "sizePx": [
+    60,
+    35
+   ],
+   "variants": [
+    "res://world/art/props/mailbox.png",
+    "res://world/art/props/mailbox_v1.png",
+    "res://world/art/props/mailbox_v2.png"
+   ],
+   "hull": [
+    [
+     -29.3,
+     -10.7
+    ],
+    [
+     -28,
+     -12
+    ],
+    [
+     -8,
+     -22.7
+    ],
+    [
+     1.3,
+     -22.7
+    ],
+    [
+     29.3,
+     -12
+    ],
+    [
+     30.7,
+     -9.3
+    ],
+    [
+     30.7,
+     9.3
+    ],
+    [
+     29.3,
+     12
+    ],
+    [
+     -28,
+     12
+    ],
+    [
+     -29.3,
+     10.7
+    ]
+   ],
+   "occluder": false,
+   "breakable": {
+    "smashSpeed": 260,
+    "broken": "res://world/art/props/mailbox_broken.png",
+    "debris": "res://world/art/props/mailbox_debris.png",
+    "debrisCells": 4
+   },
+   "explosive": false,
+   "tags": {
+    "landscape": [
+     "suburbs"
+    ],
+    "levels": [],
+    "faction": []
+   },
+   "solid": true,
+   "scene": "res://world/art/props/mailbox.tscn"
+  },
   "manhole": {
    "class": "STATEFUL",
    "sizePx": [
@@ -2062,6 +2517,63 @@
    },
    "solid": false,
    "scene": "res://world/art/props/manhole.tscn"
+  },
+  "mile_marker": {
+   "class": "LOW",
+   "sizePx": [
+    40,
+    51
+   ],
+   "variants": [
+    "res://world/art/props/mile_marker.png",
+    "res://world/art/props/mile_marker_v1.png"
+   ],
+   "hull": [
+    [
+     -20,
+     -18.7
+    ],
+    [
+     -18.7,
+     -20
+    ],
+    [
+     18.7,
+     -20
+    ],
+    [
+     20,
+     -18.7
+    ],
+    [
+     20,
+     20
+    ],
+    [
+     10.7,
+     30.7
+    ],
+    [
+     -12,
+     30.7
+    ],
+    [
+     -20,
+     20
+    ]
+   ],
+   "occluder": false,
+   "breakable": null,
+   "explosive": false,
+   "tags": {
+    "landscape": [
+     "saltflats"
+    ],
+    "levels": [],
+    "faction": []
+   },
+   "solid": true,
+   "scene": "res://world/art/props/mile_marker.tscn"
   },
   "oak": {
    "class": "TALL",
@@ -2204,6 +2716,78 @@
     "blend": "mix"
    }
   },
+  "palm": {
+   "class": "TALL",
+   "sizePx": [
+    237,
+    261
+   ],
+   "variants": [
+    "res://world/art/props/palm.png",
+    "res://world/art/props/palm_v1.png",
+    "res://world/art/props/palm_v2.png"
+   ],
+   "hull": [
+    [
+     -21.3,
+     -6.7
+    ],
+    [
+     -13.3,
+     -18.7
+    ],
+    [
+     6.7,
+     -21.3
+    ],
+    [
+     13.3,
+     -18.7
+    ],
+    [
+     21.3,
+     -6.7
+    ],
+    [
+     21.3,
+     6.7
+    ],
+    [
+     14.7,
+     17.3
+    ],
+    [
+     -6.7,
+     21.3
+    ],
+    [
+     -17.3,
+     14.7
+    ],
+    [
+     -21.3,
+     6.7
+    ]
+   ],
+   "occluder": true,
+   "breakable": null,
+   "explosive": false,
+   "tags": {
+    "landscape": [
+     "coast"
+    ],
+    "levels": [],
+    "faction": []
+   },
+   "solid": true,
+   "canopy": [
+    "res://world/art/props/palm_canopy.png",
+    "res://world/art/props/palm_canopy_v1.png",
+    "res://world/art/props/palm_canopy_v2.png"
+   ],
+   "leaves": "res://world/art/props/palm_leaves.png",
+   "scene": "res://world/art/props/palm.tscn"
+  },
   "pebbles": {
    "class": "DECOR",
    "sizePx": [
@@ -2312,6 +2896,120 @@
    "leaves": "res://world/art/props/pine_leaves.png",
    "scene": "res://world/art/props/pine.tscn"
   },
+  "pine_snow": {
+   "class": "TALL",
+   "sizePx": [
+    177,
+    176
+   ],
+   "variants": [
+    "res://world/art/props/pine_snow.png",
+    "res://world/art/props/pine_snow_v1.png",
+    "res://world/art/props/pine_snow_v2.png"
+   ],
+   "hull": [
+    [
+     -30.7,
+     -20
+    ],
+    [
+     -20,
+     -30.7
+    ],
+    [
+     6.7,
+     -36
+    ],
+    [
+     30.7,
+     -20
+    ],
+    [
+     36,
+     6.7
+    ],
+    [
+     20,
+     30.7
+    ],
+    [
+     -6.7,
+     36
+    ],
+    [
+     -20,
+     30.7
+    ],
+    [
+     -30.7,
+     20
+    ],
+    [
+     -36,
+     6.7
+    ]
+   ],
+   "occluder": true,
+   "breakable": null,
+   "explosive": false,
+   "tags": {
+    "landscape": [
+     "forest_snow"
+    ],
+    "levels": [],
+    "faction": []
+   },
+   "solid": true,
+   "canopy": [
+    "res://world/art/props/pine_snow_canopy.png",
+    "res://world/art/props/pine_snow_canopy_v1.png",
+    "res://world/art/props/pine_snow_canopy_v2.png"
+   ],
+   "leaves": "res://world/art/props/pine_snow_leaves.png",
+   "scene": "res://world/art/props/pine_snow.tscn"
+  },
+  "ranger_tower": {
+   "class": "TALL",
+   "sizePx": [
+    251,
+    251
+   ],
+   "variants": [
+    "res://world/art/props/ranger_tower.png",
+    "res://world/art/props/ranger_tower_v1.png"
+   ],
+   "hull": [
+    [
+     -112,
+     -112
+    ],
+    [
+     112,
+     -112
+    ],
+    [
+     112,
+     112
+    ],
+    [
+     -112,
+     112
+    ]
+   ],
+   "occluder": true,
+   "breakable": null,
+   "explosive": false,
+   "tags": {
+    "landscape": [
+     "forest",
+     "forest_snow"
+    ],
+    "levels": [],
+    "faction": []
+   },
+   "solid": true,
+   "scene": "res://world/art/props/ranger_tower.tscn"
+  },
   "reeds": {
    "class": "DECOR",
    "sizePx": [
@@ -2415,6 +3113,72 @@
    },
    "solid": true,
    "scene": "res://world/art/props/rock.tscn"
+  },
+  "rock_black": {
+   "class": "TALL",
+   "sizePx": [
+    143,
+    121
+   ],
+   "variants": [
+    "res://world/art/props/rock_black.png",
+    "res://world/art/props/rock_black_v1.png",
+    "res://world/art/props/rock_black_v2.png"
+   ],
+   "hull": [
+    [
+     -60,
+     -29.3
+    ],
+    [
+     -30.7,
+     -58.7
+    ],
+    [
+     21.3,
+     -64
+    ],
+    [
+     50.7,
+     -37.3
+    ],
+    [
+     64,
+     -1.3
+    ],
+    [
+     54.7,
+     45.3
+    ],
+    [
+     42.7,
+     48
+    ],
+    [
+     -41.3,
+     57.3
+    ],
+    [
+     -50.7,
+     53.3
+    ],
+    [
+     -78.7,
+     14.7
+    ]
+   ],
+   "occluder": true,
+   "breakable": null,
+   "explosive": false,
+   "tags": {
+    "landscape": [
+     "volcano"
+    ],
+    "levels": [],
+    "faction": []
+   },
+   "solid": true,
+   "scene": "res://world/art/props/rock_black.tscn"
   },
   "rock_ice": {
    "class": "TALL",
@@ -2716,6 +3480,72 @@
    "solid": true,
    "scene": "res://world/art/props/saguaro.tscn"
   },
+  "salt_mound": {
+   "class": "TALL",
+   "sizePx": [
+    201,
+    184
+   ],
+   "variants": [
+    "res://world/art/props/salt_mound.png",
+    "res://world/art/props/salt_mound_v1.png",
+    "res://world/art/props/salt_mound_v2.png"
+   ],
+   "hull": [
+    [
+     -80,
+     -53.3
+    ],
+    [
+     1.3,
+     -93.3
+    ],
+    [
+     62.7,
+     -72
+    ],
+    [
+     92,
+     -42.7
+    ],
+    [
+     104,
+     5.3
+    ],
+    [
+     93.3,
+     42.7
+    ],
+    [
+     24,
+     88
+    ],
+    [
+     -24,
+     90.7
+    ],
+    [
+     -58.7,
+     73.3
+    ],
+    [
+     -96,
+     20
+    ]
+   ],
+   "occluder": true,
+   "breakable": null,
+   "explosive": false,
+   "tags": {
+    "landscape": [
+     "saltflats"
+    ],
+    "levels": [],
+    "faction": []
+   },
+   "solid": true,
+   "scene": "res://world/art/props/salt_mound.tscn"
+  },
   "scrapheap": {
    "class": "TALL",
    "sizePx": [
@@ -2989,6 +3819,37 @@
    "solid": true,
    "scene": "res://world/art/props/snowcat.tscn"
   },
+  "steam_vent": {
+   "class": "DECOR",
+   "sizePx": [
+    160,
+    160
+   ],
+   "variants": [
+    "res://world/art/decor/steam_vent.png"
+   ],
+   "hull": [],
+   "occluder": false,
+   "breakable": null,
+   "explosive": false,
+   "tags": {
+    "landscape": [
+     "volcano"
+    ],
+    "levels": [],
+    "faction": []
+   },
+   "solid": false,
+   "atlas": {
+    "cells": 4,
+    "cellPx": [
+     160,
+     160
+    ],
+    "cellTexels": 120,
+    "blend": "mix"
+   }
+  },
   "streetglow": {
    "class": "DECOR",
    "sizePx": [
@@ -3089,6 +3950,63 @@
    },
    "solid": true,
    "scene": "res://world/art/props/stump.tscn"
+  },
+  "swingset": {
+   "class": "LOW",
+   "sizePx": [
+    315,
+    149
+   ],
+   "variants": [
+    "res://world/art/props/swingset.png",
+    "res://world/art/props/swingset_v1.png"
+   ],
+   "hull": [
+    [
+     -157.3,
+     -72
+    ],
+    [
+     -154.7,
+     -74.7
+    ],
+    [
+     154.7,
+     -74.7
+    ],
+    [
+     157.3,
+     -72
+    ],
+    [
+     157.3,
+     72
+    ],
+    [
+     154.7,
+     74.7
+    ],
+    [
+     -154.7,
+     74.7
+    ],
+    [
+     -157.3,
+     72
+    ]
+   ],
+   "occluder": false,
+   "breakable": null,
+   "explosive": false,
+   "tags": {
+    "landscape": [
+     "suburbs"
+    ],
+    "levels": [],
+    "faction": []
+   },
+   "solid": true,
+   "scene": "res://world/art/props/swingset.tscn"
   },
   "tank": {
    "class": "STATEFUL",
@@ -3298,6 +4216,142 @@
    "solid": true,
    "scene": "res://world/art/props/totem.tscn"
   },
+  "trampoline": {
+   "class": "LOW",
+   "sizePx": [
+    219,
+    219
+   ],
+   "variants": [
+    "res://world/art/props/trampoline.png",
+    "res://world/art/props/trampoline_v1.png"
+   ],
+   "hull": [
+    [
+     -97.3,
+     -50.7
+    ],
+    [
+     -60,
+     -92
+    ],
+    [
+     8,
+     -109.3
+    ],
+    [
+     60,
+     -92
+    ],
+    [
+     97.3,
+     -50.7
+    ],
+    [
+     105.3,
+     30.7
+    ],
+    [
+     57.3,
+     93.3
+    ],
+    [
+     -8,
+     109.3
+    ],
+    [
+     -57.3,
+     93.3
+    ],
+    [
+     -105.3,
+     30.7
+    ]
+   ],
+   "occluder": false,
+   "breakable": null,
+   "explosive": false,
+   "tags": {
+    "landscape": [
+     "suburbs"
+    ],
+    "levels": [],
+    "faction": []
+   },
+   "solid": true,
+   "scene": "res://world/art/props/trampoline.tscn"
+  },
+  "trashbags": {
+   "class": "STATEFUL",
+   "sizePx": [
+    103,
+    95
+   ],
+   "variants": [
+    "res://world/art/props/trashbags.png",
+    "res://world/art/props/trashbags_v1.png",
+    "res://world/art/props/trashbags_v2.png"
+   ],
+   "hull": [
+    [
+     -37.3,
+     -44
+    ],
+    [
+     34.7,
+     -38.7
+    ],
+    [
+     45.3,
+     -32
+    ],
+    [
+     44,
+     -14.7
+    ],
+    [
+     30.7,
+     26.7
+    ],
+    [
+     21.3,
+     42.7
+    ],
+    [
+     8,
+     50.7
+    ],
+    [
+     -8,
+     44
+    ],
+    [
+     -49.3,
+     6.7
+    ],
+    [
+     -57.3,
+     -10.7
+    ]
+   ],
+   "occluder": false,
+   "breakable": {
+    "smashSpeed": 140,
+    "broken": "res://world/art/props/trashbags_broken.png",
+    "debris": "res://world/art/props/trashbags_debris.png",
+    "debrisCells": 4
+   },
+   "explosive": false,
+   "tags": {
+    "region": [
+     "sprawl"
+    ],
+    "levels": [],
+    "faction": []
+   },
+   "solid": true,
+   "scene": "res://world/art/props/trashbags.tscn"
+  },
   "tufts": {
    "class": "DECOR",
    "sizePx": [
@@ -3332,6 +4386,38 @@
      72
     ],
     "cellTexels": 54,
+    "blend": "mix"
+   }
+  },
+  "tumbleweed": {
+   "class": "DECOR",
+   "sizePx": [
+    112,
+    112
+   ],
+   "variants": [
+    "res://world/art/decor/tumbleweed.png"
+   ],
+   "hull": [],
+   "occluder": false,
+   "breakable": null,
+   "explosive": false,
+   "tags": {
+    "landscape": [
+     "ghosttown",
+     "saltflats"
+    ],
+    "levels": [],
+    "faction": []
+   },
+   "solid": false,
+   "atlas": {
+    "cells": 4,
+    "cellPx": [
+     112,
+     112
+    ],
+    "cellTexels": 84,
     "blend": "mix"
    }
   },
@@ -3408,6 +4494,114 @@
    },
    "solid": true,
    "scene": "res://world/art/props/tyres.tscn"
+  },
+  "wagon": {
+   "class": "STATEFUL",
+   "sizePx": [
+    147,
+    291
+   ],
+   "variants": [
+    "res://world/art/props/wagon.png",
+    "res://world/art/props/wagon_v1.png"
+   ],
+   "hull": [
+    [
+     -72,
+     -112
+    ],
+    [
+     72,
+     -112
+    ],
+    [
+     72,
+     124
+    ],
+    [
+     -72,
+     124
+    ]
+   ],
+   "occluder": true,
+   "breakable": {
+    "smashSpeed": 380,
+    "broken": "res://world/art/props/wagon_broken.png",
+    "debris": "res://world/art/props/wagon_debris.png",
+    "debrisCells": 4
+   },
+   "explosive": false,
+   "tags": {
+    "landscape": [
+     "ghosttown"
+    ],
+    "levels": [],
+    "faction": []
+   },
+   "solid": true,
+   "scene": "res://world/art/props/wagon.tscn"
+  },
+  "water_trough": {
+   "class": "STATEFUL",
+   "sizePx": [
+    173,
+    69
+   ],
+   "variants": [
+    "res://world/art/props/water_trough.png",
+    "res://world/art/props/water_trough_v1.png"
+   ],
+   "hull": [
+    [
+     -86.7,
+     -32
+    ],
+    [
+     -85.3,
+     -34.7
+    ],
+    [
+     85.3,
+     -34.7
+    ],
+    [
+     86.7,
+     -32
+    ],
+    [
+     86.7,
+     32
+    ],
+    [
+     85.3,
+     34.7
+    ],
+    [
+     -85.3,
+     34.7
+    ],
+    [
+     -86.7,
+     32
+    ]
+   ],
+   "occluder": false,
+   "breakable": {
+    "smashSpeed": 220,
+    "broken": "res://world/art/props/water_trough_broken.png",
+    "debris": "res://world/art/props/water_trough_debris.png",
+    "debrisCells": 4
+   },
+   "explosive": false,
+   "tags": {
+    "landscape": [
+     "ghosttown"
+    ],
+    "levels": [],
+    "faction": []
+   },
+   "solid": true,
+   "scene": "res://world/art/props/water_trough.tscn"
   },
   "watertower": {
    "class": "STATEFUL",
