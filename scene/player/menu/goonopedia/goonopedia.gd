@@ -103,9 +103,9 @@ const MODE_RULES := {
 const MODE_UNLOCK := {
 	Root.gameModes.GOONCRUSHER: "Open on every unlocked level.",
 	Root.gameModes.SPRINT: "Beat Countdown on a level to unlock it there.",
-	Root.gameModes.MARATHON: "Beat Sprint on a level to unlock it there.",
-	Root.gameModes.DEFENSE: "Beat Sprint on a level to unlock it there.",
-	Root.gameModes.GOONPOCALYPSE: "Beat Countdown and Sprint on a level to unlock it there.",
+	Root.gameModes.MARATHON: "Beat Sprint on a level to unlock it there. Winning it opens the next level (on Medium at a region's finale).",
+	Root.gameModes.DEFENSE: "Win the Marathon on a level to unlock it there.",
+	Root.gameModes.GOONPOCALYPSE: "Win the Marathon on a level to unlock it there.",
 }
 
 #system -> [icon, what wear does]. The car's CONDITION_FLOOR supplies the numbers.
@@ -918,8 +918,8 @@ func levelDetail(entry: Dictionary) -> void:
 	if not isLevelOpen(index) && level.unlocked == false: paragraph(Root.openRuleText(SaveManager.playerData.levels[index - 1] if index > 0 else {}) + ".", "MutedLabel")
 	if def:
 		if def.blurb != "": paragraph(def.blurb)
-		var grammar: String = Levels.GRAMMAR_TEXT.get(def.grammar, "")
-		if grammar != "": paragraph(grammar, "MutedLabel")
+		var land := Landscapes.get_def(def.landscape)
+		if land && land.text != "": paragraph("%s: %s" % [land.displayName, land.text], "MutedLabel")
 		factRow("BARRIER", def.barrier, HudTheme.RIM)
 		factRow("SURFACES", def.surfaces, HudTheme.RIM)
 	var beatRow = HBoxContainer.new()

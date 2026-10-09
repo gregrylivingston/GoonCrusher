@@ -22,59 +22,8 @@ sprintSlack = 1.35
 rules = {}
 lineup = Array[StringName]([&"chainer", &"torcher", &"boostjack", &"turret"])
 landscape = &"canyon"
-grammar = &"canyon"
-features = {
-"ridgeFrequency": 4.5e-05,
-"wallWidth": 1400.0,
-"mesaFrequency": 8.3e-05,
-"mesaAbove": 0.42,
-"passWidth": 1400.0,
-"washFrequency": 4e-05,
-"washWidth": 700.0,
-"duneAbove": 0.35,
-"barrierCap": 0.35,
-"props": 13
-}
-baseTerrain = [6, 1, 6, 1, 6]
-accents = [12, 1]
-dressing = {
-0: {
-&"saguaro": 5,
-&"rock_red": 4,
-&"boulder_red": 2,
-&"deadtree": 2,
-&"bones": 3,
-&"carcass": 2,
-&"pebbles": 6
-},
-1: {
-&"rock_red": 3,
-&"totem": 2,
-&"tent": 2,
-&"firepit": 2,
-&"saguaro": 3,
-&"barrel": 1,
-&"watertower": 1
-},
-2: {
-&"rock_red": 3,
-&"wreck": 2,
-&"tyres": 2,
-&"barrel": 2,
-&"saguaro": 2
-}
-}
-motifs = {
-0: {
-&"boneyard": 2
-},
-1: {
-&"camp": 2
-},
-2: {
-&"wreckpile": 2
-}
-}
+dressing = {}
+motifs = {}
 pickupTable = {
 &"coinline": 33,
 &"fuel": 44,

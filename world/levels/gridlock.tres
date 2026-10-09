@@ -29,62 +29,8 @@ rules = {
 }
 lineup = Array[StringName]([&"karter", &"spoke", &"dasher", &"sawbot"])
 landscape = &"highway"
-grammar = &"highway"
-features = {
-"warpFrequency": 4e-05,
-"warpAmplitude": 3000.0,
-"roadWidth": 1600.0,
-"highwaySpacing": 23040.0,
-"branchEvery": 3,
-"branchChance": 0.7,
-"branchWidth": 1000.0,
-"oilAbove": 0.6,
-"rockAbove": 0.4,
-"gasStationEvery": 6,
-"motifs": 1.2,
-"props": 13
-}
-baseTerrain = [1, 6, 1, 6, 1]
-accents = [8, 10]
-dressing = {
-0: {
-&"saguaro": 3,
-&"rock": 3,
-&"carcass": 2,
-&"bones": 2,
-&"pebbles": 4
-},
-1: {
-&"barricade": 3,
-&"tyres": 3,
-&"cone": 3,
-&"sign": 2,
-&"barrel": 1,
-&"watertower": 1
-},
-2: {
-&"jersey": 5,
-&"wreck": 4,
-&"cone": 4,
-&"gaspump": 1,
-&"sign": 2,
-&"billboard": 1,
-&"oilstain": 4,
-&"tyres": 2,
-&"watertower": 1
-}
-}
-motifs = {
-0: {
-&"boneyard": 1
-},
-1: {
-&"roadblock": 2
-},
-2: {
-&"pileup": 3
-}
-}
+dressing = {}
+motifs = {}
 pickupTable = {
 &"coinline": 26,
 &"fuel": 39,

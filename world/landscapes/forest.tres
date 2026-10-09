@@ -1,0 +1,50 @@
+[gd_resource type="Resource" script_class="Landscape" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/landscape.gd" id="1_land"]
+
+[resource]
+script = ExtResource("1_land")
+id = &"forest"
+displayName = "Pine Forest"
+grammar = &"meadow"
+text = "Dense pine stands broken by clearings, and a creek to ford. No fences out here."
+features = {
+"creekFrequency": 4e-05,
+"creekWidth": 1100.0,
+"poolThreshold": 0.45,
+"poolWidth": 520.0,
+"fordWidth": 1200.0,
+"trackWidth": 420.0,
+"barrierCap": 0.15,
+"props": 20,
+"motifs": 1.5
+}
+baseTerrain = [0, 5, 0, 6, 5]
+accents = [5, 6, 11]
+terrains = [6, 11]
+materials = {
+0: "needles"
+}
+roofMaterial = "rock"
+wallStrip = "cliff_lip"
+wallTint = Color(1, 1, 1, 1)
+organic = 1
+roofDecor = &""
+waterLook = &"water"
+waterGlow = Color(0, 0, 0, 0)
+waterFoam = Color(1, 1, 1, 1)
+dressing = {
+&"pine": 9,
+&"stump": 3,
+&"logpile": 2,
+&"log": 2,
+&"rock": 2,
+&"tufts": 4,
+&"cabin": 1
+}
+motifs = {
+&"pinestand": 4,
+&"cabincamp": 1
+}
+nameSecond = Array[String](["Pines", "Woods", "Timber", "Hollow", "Clearing", "Grove", "Thicket", "Stand", "Ridge", "Glade"])
+fallback = &"meadow"

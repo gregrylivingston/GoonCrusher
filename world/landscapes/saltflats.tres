@@ -1,0 +1,53 @@
+[gd_resource type="Resource" script_class="Landscape" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/landscape.gd" id="1_land"]
+
+[resource]
+script = ExtResource("1_land")
+id = &"saltflats"
+displayName = "Salt Flats"
+grammar = &"highway"
+text = "White salt to the horizon, a few roads and almost no rocks. Top speed all the way."
+features = {
+"warpFrequency": 4e-05,
+"warpAmplitude": 3000.0,
+"roadWidth": 1600.0,
+"highwaySpacing": 40000.0,
+"branchEvery": 3,
+"branchChance": 0.3,
+"branchWidth": 1000.0,
+"oilAbove": 0.95,
+"rockAbove": 0.9,
+"gasStationEvery": 8,
+"motifs": 1.2,
+"props": 13
+}
+baseTerrain = [1, 6, 1, 6, 1]
+accents = [8]
+terrains = [8, 10, 6, 16, 4]
+materials = {
+1: "salt",
+6: "salt"
+}
+roofMaterial = "rock"
+wallStrip = "canyon_rim"
+wallTint = Color(1.08, 1.05, 1, 1)
+organic = 0.8
+roofDecor = &""
+waterLook = &"water"
+waterGlow = Color(0, 0, 0, 0)
+waterFoam = Color(1, 1, 1, 1)
+dressing = {
+&"pebbles": 6,
+&"rock_white": 2,
+&"sign": 2,
+&"wreck": 1,
+&"cone": 1,
+&"bones": 1,
+&"oilstain": 1
+}
+motifs = {
+&"pileup": 1
+}
+nameSecond = Array[String](["Flats", "Pan", "Basin", "Mile", "Crust", "Mirage", "Strip", "Playa", "Shimmer", "Speedway"])
+fallback = &"canyon"

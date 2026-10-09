@@ -27,18 +27,6 @@ const CHUNK_Y := 2560.0
 const WATER := 3
 const HILLS := 4
 
-## Name halves for districts: a region word (Territories nameFirst), then a grammar word ("Tusker Flats",
-## "Rust Junction")
-const NAME_SECOND := {
-	&"meadow": ["Flats", "Meadow", "Fields", "Hollow", "Creekside", "Downs", "Pasture", "Commons", "Green", "Bottoms"],
-	&"bayou": ["Bog", "Marsh", "Bayou", "Slough", "Backwater", "Mire", "Landing", "Swamp", "Fen", "Shallows"],
-	&"canyon": ["Gulch", "Mesa", "Canyon", "Wash", "Butte", "Gorge", "Bluffs", "Draw", "Arroyo", "Narrows"],
-	&"quarry": ["Pit", "Diggings", "Quarry", "Cut", "Spoil", "Workings", "Tailings", "Dig", "Shaft", "Benches"],
-	&"mountain": ["Pass", "Ridge", "Peaks", "Col", "Drift", "Summit", "Glacier", "Saddle", "Notch", "Crags"],
-	&"highway": ["Junction", "Overpass", "Exit", "Turnpike", "Truckstop", "Mile", "Interchange", "Strip", "Bypass", "Rest Stop"],
-	&"city": ["Heights", "Blocks", "Plaza", "Row", "Square", "Quarter", "Projects", "Downtown", "Avenue", "Docks"],
-	&"yard": ["Yard", "Heap", "Lot", "Stacks", "Pile", "Compound", "Depot", "Crusher", "Pens", "Scrapline"],
-}
 const CENTRE_FIRST: Array[int] = [1, 2, 5, 6, 0, 3, 4, 7] #a chunk's 8 coarse cells (row-major, 4 x 2), middle ones first
 
 var worldSeed := 0
@@ -142,7 +130,10 @@ func setupDistricts(table: Array) -> void:
 	landmarks.clear()
 	tintCodes.clear()
 	var usedNames := {}
-	var seconds: Array = NAME_SECOND.get(grammar, NAME_SECOND[&"meadow"])
+	#names: a region word (Territories nameFirst), then a landscape word (Landscape.nameSecond): "Tusker Flats"
+	var land := Landscapes.get_def(def.landscape if def else &"meadow")
+	var seconds: Array = ["Flats"]
+	if land && not land.nameSecond.is_empty(): seconds.assign(land.nameSecond)
 	var region: StringName = def.region if def else &"tribe"
 	var firsts: Array = Territories.get_def(region).get("nameFirst", Territories.DATA[&"tribe"].nameFirst)
 	var landmarkId := String(Territories.landmark(region, WorldSkin.loadManifest()))

@@ -69,8 +69,7 @@ func test_level_tables_name_real_motifs_and_props():
 	for id in Levels.ORDER:
 		var def := Levels.get_def(id)
 		for key in ["reedDensity", "pineDensity", "pileupDensity"]: assert_false(def.features.has(key), "%s: %s is gone (nothing read it)" % [id, key])
-		for faction in def.motifs:
-			for motif in def.motifs[faction]: assert_true(WorldSkin.MOTIFS.has(StringName(motif)), "%s: motif %s exists" % [id, motif])
+		for motif in def.motifs: assert_true(WorldSkin.MOTIFS.has(StringName(motif)), "%s: motif %s exists" % [id, motif])
 	for motif in WorldSkin.MOTIFS:
 		for m in WorldSkin.MOTIFS[motif].members: assert_true(WorldSkin.loadManifest().has(m[0]), "%s: %s is baked" % [motif, m[0]])
 	var prairie := Levels.get_def(&"prairie")
@@ -78,7 +77,8 @@ func test_level_tables_name_real_motifs_and_props():
 
 func test_the_skin_loads_motif_members_and_spill_leftovers():
 	var skin := WorldSkin.new(Levels.get_def(&"prairie"))
-	for id in [&"tent", &"firepit", &"wreck", &"log", &"logpile", &"watertower", &"beehive"]: assert_true(skin.propScenes.has(id), "Prairie loads %s" % id)
+	for id in [&"log", &"logpile", &"watertower", &"beehive", &"carcass", &"deadtree", &"landmark_wild"]: assert_true(skin.propScenes.has(id), "Prairie loads %s" % id)
+	assert_false(skin.propScenes.has(&"tent"), "no Tribe camps in The Wilds")
 	var ctx := skin.recipeContext([], [])
 	assert_true(ctx.fieldDensity.has("fence") && ctx.fieldDensity.has("hedge"), "field props for the workers")
 	assert_true(ctx.motifs.size() > 0 && ctx.motifDefs.has("orchard"), "motifs for the workers")

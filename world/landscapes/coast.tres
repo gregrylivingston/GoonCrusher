@@ -1,0 +1,44 @@
+[gd_resource type="Resource" script_class="Landscape" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/landscape.gd" id="1_land"]
+
+[resource]
+script = ExtResource("1_land")
+id = &"coast"
+displayName = "Coast"
+grammar = &"bayou"
+text = "Lagoons, inlets and sandbars along the shore. Piers and boardwalks cross the deep water."
+features = {
+"lakeFrequency": 8.3e-05,
+"lakeThreshold": 0.38,
+"channelFrequency": 4.5e-05,
+"channelWidth": 1000.0,
+"channelGap": 0.25,
+"bridgeWidth": 900.0,
+"props": 18
+}
+baseTerrain = [1, 0, 1, 5, 1]
+accents = [11, 1]
+terrains = [11, 18, 1]
+materials = {
+1: "beach"
+}
+roofMaterial = "rock"
+wallStrip = "cliff_lip"
+wallTint = Color(1, 1, 1, 1)
+organic = 1
+roofDecor = &""
+waterLook = &"water"
+waterGlow = Color(0, 0, 0, 0)
+waterFoam = Color(1, 1, 1, 1)
+dressing = {
+&"tufts": 4,
+&"reeds": 4,
+&"log": 2,
+&"shack": 2,
+&"crate": 1,
+&"rock": 1
+}
+motifs = {}
+nameSecond = Array[String](["Beach", "Lagoon", "Pier", "Inlet", "Cove", "Sandbar", "Shore", "Bay", "Dunes", "Stilts"])
+fallback = &"bayou"

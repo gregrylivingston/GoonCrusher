@@ -22,58 +22,8 @@ sprintSlack = 1.45
 rules = {}
 lineup = Array[StringName]([&"grunt", &"splitter", &"shellback"])
 landscape = &"bayou"
-grammar = &"bayou"
-features = {
-"lakeFrequency": 8.3e-05,
-"lakeThreshold": 0.42,
-"channelFrequency": 4.5e-05,
-"channelWidth": 1000.0,
-"channelGap": 0.25,
-"bridgeWidth": 900.0,
-"props": 18
-}
-baseTerrain = [2, 5, 0, 5, 2]
-accents = [11, 5]
-dressing = {
-0: {
-&"cypress": 6,
-&"log": 4,
-&"reeds": 8,
-&"stump": 3,
-&"tufts": 4,
-&"carcass": 1,
-&"beehive": 1,
-&"logpile": 1
-},
-1: {
-&"cypress": 4,
-&"shack": 2,
-&"log": 3,
-&"reeds": 6,
-&"totem": 1,
-&"crate": 2,
-&"logpile": 1
-},
-2: {
-&"cypress": 3,
-&"wreck": 2,
-&"barrel": 2,
-&"reeds": 5,
-&"tyres": 1
-}
-}
-motifs = {
-0: {
-&"cypressgrove": 3
-},
-1: {
-&"camp": 1,
-&"cypressgrove": 1
-},
-2: {
-&"wreckpile": 2
-}
-}
+dressing = {}
+motifs = {}
 pickupTable = {
 &"coinline": 39,
 &"fuel": 48,

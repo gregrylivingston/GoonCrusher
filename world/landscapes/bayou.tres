@@ -1,0 +1,45 @@
+[gd_resource type="Resource" script_class="Landscape" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/landscape.gd" id="1_land"]
+
+[resource]
+script = ExtResource("1_land")
+id = &"bayou"
+displayName = "Bayou"
+grammar = &"bayou"
+text = "Lakes and braided channels. Boardwalks cross the deep water."
+features = {
+"lakeFrequency": 8.3e-05,
+"lakeThreshold": 0.42,
+"channelFrequency": 4.5e-05,
+"channelWidth": 1000.0,
+"channelGap": 0.25,
+"bridgeWidth": 900.0,
+"props": 18
+}
+baseTerrain = [2, 5, 0, 5, 2]
+accents = [11, 5]
+terrains = [11, 18]
+materials = {}
+roofMaterial = "rock"
+wallStrip = "cliff_lip"
+wallTint = Color(1, 1, 1, 1)
+organic = 1
+roofDecor = &""
+waterLook = &"water"
+waterGlow = Color(0, 0, 0, 0)
+waterFoam = Color(1, 1, 1, 1)
+dressing = {
+&"cypress": 6,
+&"log": 4,
+&"reeds": 8,
+&"stump": 3,
+&"tufts": 4,
+&"logpile": 1,
+&"shack": 1
+}
+motifs = {
+&"cypressgrove": 2
+}
+nameSecond = Array[String](["Bog", "Marsh", "Bayou", "Slough", "Backwater", "Mire", "Landing", "Swamp", "Fen", "Shallows"])
+fallback = &""

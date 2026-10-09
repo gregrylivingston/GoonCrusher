@@ -17,18 +17,6 @@ const ORDER := [
 const DEF_DIR := "res://world/levels/"
 const SCENE_DIR := "res://scene/level/levels/"
 
-## What each grammar means for the player, for the Goonopedia
-const GRAMMAR_TEXT := {
-	&"meadow": "Open meadow cut by a creek. Ford it at the shallows; the deep pools drown.",
-	&"bayou": "Lakes and braided channels. Boardwalks cross the deep water.",
-	&"canyon": "Canyon walls and mesas. Passes open every chunk; wash lanes run fast.",
-	&"quarry": "Haul roads between the pit, the junk fort and the tyre camps. Mind the mud pits.",
-	&"mountain": "Ranges with passes, frozen lakes and deep snow. Ice gives no grip.",
-	&"highway": "A highway runs east. Fast asphalt, oil slicks, barriers and pile-ups.",
-	&"city": "A street grid between buildings, parks, lots and canals. Bridges cross at the streets.",
-	&"yard": "Scrap yard plots walled by scrap mountains, container rows and conveyor lanes.",
-}
-
 static func count() -> int:
 	return ORDER.size()
 
@@ -47,10 +35,11 @@ static func defPath(id: StringName) -> String:
 static func scenePath(id: StringName) -> String:
 	return SCENE_DIR + "level_" + String(id) + ".tscn"
 
-## The def for a level id, or null for an unknown id
+## The def for a level id (its world filled in from its landscape: LevelDef.resolve), or null for an unknown id
 static func get_def(id: StringName) -> LevelDef:
 	if indexOf(id) < 0: return null
-	return load(defPath(id)) as LevelDef
+	var def := load(defPath(id)) as LevelDef
+	return def.resolve() if def else null
 
 ## The def at an index in ORDER, or null when out of range
 static func defAt(index: int) -> LevelDef:

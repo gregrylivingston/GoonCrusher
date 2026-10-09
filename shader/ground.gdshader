@@ -24,6 +24,9 @@ uniform float water_layer = 0.0;
 uniform float wall_layer = 0.0;
 uniform vec4 wall_tint : source_color = vec4(1.0);
 uniform float organic = 1.0; // how far the borders wander: less on built-up levels (streets, yards)
+// lava (Landscape.waterLook "lava", WorldSkin): the water layer glows in rgb, mixed in by a (0: plain water). Its
+// texture stays as relief; the glow is hotter away from the shore and pulses slowly above gc_ground_quality 0.
+uniform vec4 water_glow : source_color = vec4(0.0);
 
 const float CELL = 128.0;
 const float TILE = 1024.0; // world px one 512 texel material tile covers
@@ -118,6 +121,11 @@ void fragment() {
 		if (gc_ground_quality > 0) wuv += vec2(sin(TIME * 0.4 + uv.y * 5.0), cos(TIME * 0.33 + uv.x * 4.0)) * 0.006 + vec2(TIME * 0.004, 0.0);
 		vec3 deep = texture(materials, vec3(wuv, water_layer)).rgb;
 		deep *= mix(1.06, 0.7, clamp(-water / 0.6, 0.0, 1.0));
+		if (water_glow.a > 0.0) {
+			float pulse = gc_ground_quality > 0 ? 0.88 + 0.12 * sin(TIME * 1.3 + (uv.x + uv.y) * 6.0) : 1.0;
+			float heat = mix(0.75, 1.2, clamp(-water / 0.6, 0.0, 1.0)) * pulse;
+			deep = mix(deep, water_glow.rgb * heat + deep * 0.2, water_glow.a);
+		}
 		col = mix(col, deep, smoothstep(aaWater, -aaWater, water));
 	}
 	COLOR = vec4(col, 1.0);

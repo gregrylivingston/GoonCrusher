@@ -82,6 +82,7 @@ func readRun() -> void:
 func applyDef() -> void:
 	if defApplied || def == null: return
 	defApplied = true
+	def.resolve() #the world fields it leaves to its landscape
 	readRun()
 	seconds = def.seconds
 	strength = Territories.step(def.region)

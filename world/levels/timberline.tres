@@ -22,57 +22,8 @@ sprintSlack = 1.3
 rules = {}
 lineup = Array[StringName]([&"wrecker", &"rammer", &"thunderhoof", &"yeti"])
 landscape = &"forest_snow"
-grammar = &"meadow"
-features = {
-"creekFrequency": 4e-05,
-"creekWidth": 1100.0,
-"poolThreshold": 0.45,
-"poolWidth": 520.0,
-"fordWidth": 1200.0,
-"trackWidth": 420.0,
-"barrierCap": 0.15,
-"hedgeDensity": 0.18,
-"fenceDensity": 0.15,
-"fieldSpacing": 1600.0
-}
-baseTerrain = [7, 7, 6, 7, 15]
-accents = [9, 15]
-dressing = {
-0: {
-&"pine": 7,
-&"rock_ice": 3,
-&"rock_white": 3,
-&"stump": 2,
-&"carcass": 1,
-&"logpile": 2
-},
-1: {
-&"pine": 5,
-&"cabin": 2,
-&"totem": 1,
-&"firepit": 2,
-&"rock_white": 2,
-&"logpile": 1
-},
-2: {
-&"pine": 4,
-&"snowcat": 1,
-&"wreck": 1,
-&"barrel": 1,
-&"rock_ice": 2
-}
-}
-motifs = {
-0: {
-&"pinestand": 3
-},
-1: {
-&"cabincamp": 2
-},
-2: {
-&"wreckpile": 1
-}
-}
+dressing = {}
+motifs = {}
 pickupTable = {
 &"coinline": 30,
 &"fuel": 42,

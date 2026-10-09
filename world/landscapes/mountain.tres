@@ -1,0 +1,47 @@
+[gd_resource type="Resource" script_class="Landscape" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/landscape.gd" id="1_land"]
+
+[resource]
+script = ExtResource("1_land")
+id = &"mountain"
+displayName = "Mountain"
+grammar = &"mountain"
+text = "Ranges with passes, frozen lakes and deep snow. Ice gives no grip."
+features = {
+"ridgeFrequency": 4e-05,
+"rangeWidth": 1700.0,
+"peakFrequency": 0.000125,
+"peakAbove": 0.5,
+"passWidth": 1800.0,
+"iceFrequency": 0.000143,
+"iceLakeThreshold": 0.3,
+"deepSnowAbove": 0.3,
+"props": 18
+}
+baseTerrain = [7, 7, 15, 7, 9]
+accents = [9, 15]
+terrains = [9, 15, 7, 4]
+materials = {}
+roofMaterial = "rock"
+wallStrip = "snow_ridge"
+wallTint = Color(1.12, 1.14, 1.2, 1)
+organic = 1
+roofDecor = &""
+waterLook = &"water"
+waterGlow = Color(0, 0, 0, 0)
+waterFoam = Color(1, 1, 1, 1)
+dressing = {
+&"pine": 7,
+&"rock_ice": 3,
+&"rock_white": 3,
+&"stump": 2,
+&"logpile": 2,
+&"cabin": 1
+}
+motifs = {
+&"pinestand": 3,
+&"cabincamp": 1
+}
+nameSecond = Array[String](["Pass", "Ridge", "Peaks", "Col", "Drift", "Summit", "Glacier", "Saddle", "Notch", "Crags"])
+fallback = &""

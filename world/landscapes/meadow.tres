@@ -1,0 +1,50 @@
+[gd_resource type="Resource" script_class="Landscape" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/landscape.gd" id="1_land"]
+
+[resource]
+script = ExtResource("1_land")
+id = &"meadow"
+displayName = "Meadow"
+grammar = &"meadow"
+text = "Open meadow cut by a creek. Ford it at the shallows; the deep pools drown."
+features = {
+"creekFrequency": 4e-05,
+"creekWidth": 1100.0,
+"poolThreshold": 0.45,
+"poolWidth": 520.0,
+"fordWidth": 1200.0,
+"trackWidth": 420.0,
+"barrierCap": 0.15,
+"hedgeDensity": 0.18,
+"fenceDensity": 0.15,
+"fieldSpacing": 1600.0
+}
+baseTerrain = [0, 0, 5, 0, 6]
+accents = [5, 6, 11]
+terrains = [6, 11]
+materials = {}
+roofMaterial = "rock"
+wallStrip = "cliff_lip"
+wallTint = Color(1, 1, 1, 1)
+organic = 1
+roofDecor = &""
+waterLook = &"water"
+waterGlow = Color(0, 0, 0, 0)
+waterFoam = Color(1, 1, 1, 1)
+dressing = {
+&"oak": 6,
+&"haybale": 4,
+&"hedge": 3,
+&"fence": 3,
+&"tufts": 8,
+&"rock": 2,
+&"stump": 2,
+&"logpile": 1,
+&"watertower": 1
+}
+motifs = {
+&"orchard": 2
+}
+nameSecond = Array[String](["Flats", "Meadow", "Fields", "Hollow", "Creekside", "Downs", "Pasture", "Commons", "Green", "Bottoms"])
+fallback = &""

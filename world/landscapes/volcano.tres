@@ -1,0 +1,55 @@
+[gd_resource type="Resource" script_class="Landscape" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/landscape.gd" id="1_land"]
+
+[resource]
+script = ExtResource("1_land")
+id = &"volcano"
+displayName = "Volcano"
+grammar = &"canyon"
+text = "Ash plains and basalt walls. Tar pools bog you down; the lava kills like deep water."
+features = {
+"ridgeFrequency": 4.5e-05,
+"wallWidth": 1400.0,
+"mesaFrequency": 8.3e-05,
+"mesaAbove": 0.42,
+"passWidth": 1400.0,
+"washFrequency": 4e-05,
+"washWidth": 700.0,
+"duneAbove": 0.35,
+"barrierCap": 0.35,
+"props": 13
+}
+baseTerrain = [6, 2, 6, 1, 6]
+accents = [12, 2]
+terrains = [12, 1, 6, 4, 2]
+materials = {
+1: "ash",
+6: "ash",
+12: "ash",
+2: "tar",
+11: "tar",
+3: "lava",
+4: "basalt"
+}
+roofMaterial = "basalt"
+wallStrip = "basalt_lip"
+wallTint = Color(0.9, 0.85, 0.85, 1)
+organic = 1
+roofDecor = &""
+waterLook = &"lava"
+waterGlow = Color(1, 0.36, 0.06, 0.85)
+waterFoam = Color(1, 0.62, 0.2, 1)
+dressing = {
+&"rock_red": 3,
+&"boulder_red": 2,
+&"deadtree": 2,
+&"pebbles": 5,
+&"bones": 2,
+&"oilstain": 2
+}
+motifs = {
+&"boneyard": 1
+}
+nameSecond = Array[String](["Caldera", "Vent", "Flow", "Crater", "Cinders", "Ashfield", "Fissure", "Slag", "Burn", "Smoke"])
+fallback = &"canyon"

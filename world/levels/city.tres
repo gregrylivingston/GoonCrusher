@@ -37,38 +37,8 @@ features = {
 }
 baseTerrain = [16, 8, 16, 0, 16]
 accents = [8, 16, 0]
-dressing = {
-0: {
-&"oak": 3,
-&"tufts": 4,
-&"dumpster": 2,
-&"busstop": 1,
-&"sign": 1
-},
-1: {
-&"dumpster": 3,
-&"manhole": 3,
-&"barricade": 2,
-&"crate": 2,
-&"hydrant": 2
-},
-2: {
-&"streetglow": 3,
-&"hydrant": 3,
-&"dumpster": 3,
-&"busstop": 2,
-&"manhole": 2,
-&"cone": 3,
-&"wreck": 2,
-&"billboard": 1,
-&"paint": 3
-}
-}
-motifs = {
-2: {
-&"pileup": 1
-}
-}
+dressing = {}
+motifs = {}
 pickupTable = {
 &"coinline": 28,
 &"fuel": 40,

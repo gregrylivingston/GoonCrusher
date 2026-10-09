@@ -30,6 +30,7 @@ const REACT := {
 	&"shack": SHAKE, &"tent": SHAKE, &"cabin": SHAKE, &"container": SHAKE, &"snowcat": SHAKE, &"scrapheap": SHAKE,
 	&"crate": SHAKE, &"barricade": SHAKE, &"fortwall": SHAKE, &"jersey": SHAKE, &"wreck": SHAKE, &"firepit": SHAKE,
 	&"tank": SHAKE, &"landmark_wild": SHAKE, &"landmark_tribe": SHAKE, &"landmark_scrap": SHAKE,
+	&"landmark_big": SHAKE, &"landmark_swarm": SHAKE, &"landmark_war": SHAKE,
 	&"rock": THUD, &"boulder": THUD, &"rock_white": THUD, &"rock_ice": THUD, &"rock_red": THUD, &"boulder_red": THUD,
 	&"stump": THUD, &"log": THUD, &"carcass": THUD,
 	&"hedge": SQUASH, &"haybale": SQUASH, &"tyres": SQUASH,

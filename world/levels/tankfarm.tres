@@ -22,55 +22,8 @@ sprintSlack = 1.2
 rules = {}
 lineup = Array[StringName]([&"torch", &"torcher", &"spitter"])
 landscape = &"scrapyard"
-grammar = &"yard"
-features = {
-"plotSize": 3,
-"scrapMountainShare": 0.25,
-"containerRows": 0.3,
-"gapChance": 0.6,
-"tankFarmChance": 0.15,
-"conveyorEvery": 4,
-"conveyorWidth": 640.0,
-"oilAbove": 0.55,
-"scrapWidth": 860.0,
-"containerWidth": 600.0,
-"barrierCap": 0.35,
-"motifs": 1.2
-}
-baseTerrain = [6, 16, 6, 16, 6]
-accents = [10, 13, 16]
-dressing = {
-0: {
-&"scrapheap": 3,
-&"tyres": 2
-},
-1: {
-&"tyres": 3,
-&"barricade": 2,
-&"crate": 2,
-&"barrel": 2,
-&"scrapheap": 2
-},
-2: {
-&"scrapheap": 5,
-&"container": 4,
-&"tank": 2,
-&"crane": 2,
-&"wreck": 3,
-&"barrel": 3,
-&"tyres": 3,
-&"oilstain": 3
-}
-}
-motifs = {
-1: {
-&"wreckpile": 1
-},
-2: {
-&"junkyard": 3,
-&"wreckpile": 2
-}
-}
+dressing = {}
+motifs = {}
 pickupTable = {
 &"coinline": 23,
 &"fuel": 37,

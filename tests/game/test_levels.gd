@@ -249,6 +249,16 @@ func test_elite_regions_step_goons_up():
 	assert_eq(walker.frontArmor, 99999.0, "an uncrushable front stays uncrushable")
 	walker.free()
 
+func test_level_rules_weigh_events_and_night():
+	var open := ["goldgoon", "truck", "bowling", "rings"]
+	for i in 20: assert_eq(PickupWorld.pickEvent(open, {"rings": 3}), "rings", "only the weighted event")
+	assert_eq(PickupWorld.pickEvent(["truck"], {"rings": 3}), "", "an open event weighing 0 never starts")
+	assert_true(PickupWorld.pickEvent(open, {}) in open, "no weights: any open event")
+	assert_eq(PickupWorld.pickEvent([], {}), "")
+	assert_eq(Levels.get_def(&"saltflats").rules.events.rings, 3, "Salt Flats favour Ring Runs")
+	assert_eq(Levels.get_def(&"culdesac").rules.nightShare, 0.75, "Cul-de-Sac is mostly night")
+	assert_false(Levels.get_def(&"prairie").rules.has("nightShare"), "Prairie keeps the old cycle")
+
 func test_resolve_level_arguments():
 	assert_eq(Levels.resolve("prairie"), &"prairie")
 	assert_eq(Levels.resolve("0"), &"prairie", "0-based index")

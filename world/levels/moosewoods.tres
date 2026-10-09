@@ -22,65 +22,8 @@ sprintSlack = 1.44
 rules = {}
 lineup = Array[StringName]([&"bullmoose", &"thunderhoof", &"tusker", &"yipper"])
 landscape = &"forest"
-grammar = &"meadow"
-features = {
-"creekFrequency": 4e-05,
-"creekWidth": 1100.0,
-"poolThreshold": 0.45,
-"poolWidth": 520.0,
-"fordWidth": 1200.0,
-"trackWidth": 420.0,
-"barrierCap": 0.15,
-"hedgeDensity": 0.18,
-"fenceDensity": 0.15,
-"fieldSpacing": 1600.0
-}
-baseTerrain = [0, 5, 0, 6, 5]
-accents = [5, 6, 11]
-dressing = {
-0: {
-&"oak": 6,
-&"haybale": 4,
-&"hedge": 3,
-&"fence": 3,
-&"tufts": 8,
-&"rock": 2,
-&"stump": 2,
-&"carcass": 1,
-&"logpile": 1,
-&"beehive": 1,
-&"watertower": 1
-},
-1: {
-&"oak": 4,
-&"hedge": 2,
-&"tent": 2,
-&"totem": 1,
-&"firepit": 1,
-&"tufts": 6,
-&"crate": 2,
-&"logpile": 1
-},
-2: {
-&"oak": 3,
-&"tyres": 2,
-&"wreck": 1,
-&"barrel": 1,
-&"tufts": 5,
-&"scrapheap": 1
-}
-}
-motifs = {
-0: {
-&"orchard": 2
-},
-1: {
-&"camp": 3
-},
-2: {
-&"wreckpile": 2
-}
-}
+dressing = {}
+motifs = {}
 pickupTable = {
 &"coinline": 40,
 &"fuel": 48,

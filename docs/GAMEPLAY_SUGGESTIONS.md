@@ -39,6 +39,7 @@ Suggestions to discuss, not a spec; the author runs gameplay as a separate proje
 - **R-1 (code)** Radio: three stations scanned from `sound/radio/` (shuffle bags, crossfades, idents, talk and ads between songs, lazy threaded loads), picked in the pause menu and Settings, a now-playing card in the HUD and menu, music ducking under the Voice bus (docs/RADIO.md). Songs in: *Crush Hour*, *Gooncrusher*, *Full Tank, Empty Head*, *My Baby Loves My Truck*, *Cheap Beer, Premium Gas*, *Trailer Park Superstar*, *Welcome to Nowhere*, *Gas Station Romance*, *She Left Me at the Truck Stop* (docs/RADIO_SONGS.md); seven ads, twelve Dee Jay Crush talk segments and nine idents (docs/RADIO_SEGMENTS.md).
 - **Polish (2026-10-08)** An icon per game mode on the run setup medallions and Goonopedia tiles (`HudTheme.MODE_ICONS`). A mix pass: every sound effect on the FX or UI bus, the goon crush far quieter and only for crushes and blasts near the car (drownings and self-destructs anywhere on the map used to play it), the music 2 dB up and a gentler duck under the Voice bus. Removed: the level-start bell, the win jingle, all slot machine sounds but the reel clank, and 20 unused sound files (the slot machine set and ten never referenced). The results ticket wraps its Unlocked names and footer note instead of running off the screen (docs/RADIO.md "Mix", docs/UI.md).
 - **Tier 3** Shallows, fords and bridges; most of a daily seeded run (the map and its contents come from the world seed).
+- **Road atlas P1, P2 and the car-clear data (2026-10-09)** 30 levels in 6 regions of 5 stops (`Levels.ORDER`, `Territories`), six goon classes (`Goons.CLASSES`) with a line-up per level, elite strength steps, the Marathon road (Goonpocalypse and Defense open behind it, finales on Medium), a 10-level demo, save version 8, car clears and Full Garages (`meta.carClears`, unlock conditions `carclears:` and `garages:`), and 15 landscapes as data (`Landscape`, `Landscapes`) with fallback skins, lava and region overlays by zone; today's eight levels draw as before (docs/WORLD.md "The levels", "Landscapes", "Regions"; docs/GOONS.md "Classes").
 
 ## Work packages, in order
 
@@ -46,6 +47,7 @@ Package numbers are IDs (other docs link to them); the table is in the suggested
 
 | # | Package | Items | Effort | Needs |
 |---|---|---|---|---|
+| 17 | Road atlas: road map select, car strip art, new landscapes, level content | P3 to P7 below | L + art + play time | — |
 | 1 | Balance pass (absorbs the package 2 follow-ups and packages 6, 12 and 16) | B-1 to B-7 below | L + play time | — |
 | 13 | Driving juice (what's left) | feel pass, benchmark | S + play time | — |
 | 6 | Driver perks | T2-13 | M–L | 1 |
@@ -59,6 +61,14 @@ Package numbers are IDs (other docs link to them); the table is in the suggested
 | 10 | Post-launch | Tier 3 | — | 7 |
 
 Re-run the crowd benchmarks (S3, S4 in `PERFORMANCE.md`) after packages 1, 3, 9, 13 and 14.
+
+### Package 17: Road atlas (what's left)
+P1 (registry, classes, progression), P2 (landscapes and regions as data) and P4's data side (car clears, rewards, the results ticket rows, the `cars` console command) are built ("Done" above). Left, in the plan's order:
+- **P3. Road map level select.** Region tabs (with a `ui_region_prev` / `ui_region_next` input pair), five stops on a road per region, the run panel with the car strip under the goal; keys and mouse; the career harness's menu driving; docs/TEST_SCOPE_TRANSITIONS.md. Until then run setup is the old carousel over all 30 posters. The data it needs is in place: `Levels.stopText`, `Territories.levelsOf`, `color`, `Root.openRuleText`, `SaveManager.carClearTier` / `carsCleared` / `isFullGarage`.
+- **P4 art.** Weathered car side views (`CarInfo.sidePic`) for the strip.
+- **P5. New landscapes in three waves** (art: materials, strips, props). Each switches over by itself once its art is baked (`Landscapes.skinOf`); wire the props in `TODO_PROPS.md`.
+- **P6. Level content** for the 22 new levels (posters, twists as data, line-up checks, AI playtests), regions 1 and 2 first for the demo.
+- **P7. Pacing pass:** the level curve, `ModeTiers.LEVEL_STEP` (0.085), Sprint distance by region (20,000 to 34,000 px), the elite steps and the car-clear prices; careers against 15 hours; S3 and S4 on The Sprawl and The Works. `Pickups.DATA`'s Blueprint still opens on `open:quarry`, which is now the 10th level instead of the 4th.
 
 ### Package 1: Balance pass
 One pass that connects and balances what is built. It absorbs the package 2 follow-ups, the economy (old package 6, minus driver perks), the unlock pace (old 12) and the gift-box curve (old 16). **Targets (the author, 2026-10-08):** about **15+ hours** to finish (all levels open, every mode seen, most cars owned), with maxing out taking longer; every mode earns a similar number of coins per minute; all five modes ship in 1.0, so Defense must be winnable.

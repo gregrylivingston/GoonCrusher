@@ -1,0 +1,47 @@
+[gd_resource type="Resource" script_class="Landscape" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/landscape.gd" id="1_land"]
+
+[resource]
+script = ExtResource("1_land")
+id = &"canyon"
+displayName = "Canyon"
+grammar = &"canyon"
+text = "Canyon walls and mesas. Passes open every chunk; wash lanes run fast."
+features = {
+"ridgeFrequency": 4.5e-05,
+"wallWidth": 1400.0,
+"mesaFrequency": 8.3e-05,
+"mesaAbove": 0.42,
+"passWidth": 1400.0,
+"washFrequency": 4e-05,
+"washWidth": 700.0,
+"duneAbove": 0.35,
+"barrierCap": 0.35,
+"props": 13
+}
+baseTerrain = [6, 1, 6, 1, 6]
+accents = [12, 1]
+terrains = [12, 1, 6, 4]
+materials = {}
+roofMaterial = "rock"
+wallStrip = "mesa_lip"
+wallTint = Color(1.16, 0.84, 0.7, 1)
+organic = 1
+roofDecor = &""
+waterLook = &"water"
+waterGlow = Color(0, 0, 0, 0)
+waterFoam = Color(1, 1, 1, 1)
+dressing = {
+&"saguaro": 5,
+&"rock_red": 4,
+&"boulder_red": 2,
+&"deadtree": 2,
+&"pebbles": 6,
+&"bones": 1
+}
+motifs = {
+&"boneyard": 1
+}
+nameSecond = Array[String](["Gulch", "Mesa", "Canyon", "Wash", "Butte", "Gorge", "Bluffs", "Draw", "Arroyo", "Narrows"])
+fallback = &""

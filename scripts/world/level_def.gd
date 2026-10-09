@@ -40,24 +40,26 @@ class_name LevelDef extends Resource
 @export var lineup: Array[StringName] = []
 
 @export_group("World")
-## Its landscape (road_atlas_ids: meadow, bayou, canyon, quarry, mountain, highway, city, scrapyard, forest,
-## forest_snow, coast, ghosttown, saltflats, volcano, suburbs)
+## Its landscape (Landscapes, world/landscapes/<id>.tres): the generator, ground materials, walls, water,
+## natural props and district name words. grammar, features, baseTerrain and accents left empty here come
+## from it (resolve()).
 @export var landscape: StringName = &"meadow"
-## &"meadow", &"bayou", &"canyon", &"quarry", &"mountain", &"highway", &"city" or &"yard"
-@export var grammar: StringName = &"meadow"
+## &"meadow", &"bayou", &"canyon", &"quarry", &"mountain", &"highway", &"city" or &"yard"; empty: the landscape's
+@export var grammar: StringName = &""
 ## Generator parameters for the grammar (WorldField.setup reads them, with defaults): frequencies (1/px),
 ## widths (px), thresholds as raw noise values, chances, and "barrierCap" (the most of any 3x3-chunk window
-## hard barriers may cover: 0.2 by default, 0.35 on canyon, city and yard)
+## hard barriers may cover: 0.2 by default, 0.35 on canyon, city and yard). features "props", "decor" and
+## "motifs" set how many props, decor and set pieces a fully open chunk gets (16, 110 and 1 by default).
+## Empty: the landscape's.
 @export var features: Dictionary = {}
-## Root.terrain ids by noise band, low to high
+## Root.terrain ids by noise band, low to high. Empty: the landscape's.
 @export var baseTerrain: Array = []
-## Root.terrain ids sprinkled over the base as surface accents
+## Root.terrain ids sprinkled over the base as surface accents. Empty: the landscape's.
 @export var accents: Array = []
-## Zone (0 near the start, 1, 2 far out) -> {prop id: weight}: props.json ids, DECOR ones as MultiMesh decor
-## (ChunkRecipe). features "props" and "decor" set how many of each a fully open chunk gets (16 and 110 by default).
+## The level's own dressing over its landscape's and region's (WorldSkin.zoneTables): {prop id: weight}
+## (props.json ids, DECOR ones as MultiMesh decor) on every zone, replacing the weight; 0 takes a prop out
 @export var dressing: Dictionary = {}
-## Zone -> {motif id: weight}: set pieces from WorldSkin.MOTIFS (camps, groves, wreck piles...) placed
-## before the scattered dressing. features "motifs" sets how many a fully open chunk gets (1 by default).
+## The same for set pieces: {motif id: weight} (WorldSkin.MOTIFS: camps, groves, wreck piles...)
 @export var motifs: Dictionary = {}
 ## pickup kind -> weight, rolled pickupsPerChunk times per chunk: coinline (a line of 7 coins), fuel, health,
 ## purse, slot, or none (nothing, so later levels can lean out the coins)
@@ -78,8 +80,33 @@ func scenePath() -> String:
 func isFinale() -> bool:
 	return stop >= Territories.STOPS
 
+## Fills grammar, features, baseTerrain and accents the def leaves empty from its landscape, once. A forced
+## landscape (`-- --landscape=<id>`, Landscapes.forcedId) replaces the level's own world with the landscape's.
+## Levels.get_def, Level.applyDef, snapshot() and WorldSkin call it; it is idempotent.
+var resolvedLandscape := false
+func resolve() -> LevelDef:
+	if resolvedLandscape: return self
+	resolvedLandscape = true
+	var forced := Landscapes.forcedId()
+	if forced != &"" && forced != landscape:
+		landscape = forced
+		grammar = &""
+		features = {}
+		baseTerrain = []
+		accents = []
+	var land := Landscapes.get_def(landscape)
+	if land == null:
+		if grammar == &"": grammar = &"meadow"
+		return self
+	if grammar == &"": grammar = land.grammar
+	if features.is_empty(): features = land.features.duplicate(true)
+	if baseTerrain.is_empty(): baseTerrain = land.baseTerrain.duplicate()
+	if accents.is_empty(): accents = land.accents.duplicate()
+	return self
+
 ## A plain, deep-copied Dictionary of every field, for worker threads (resources aren't thread-safe to share)
 func snapshot() -> Dictionary:
+	resolve()
 	var out := {}
 	for p in get_property_list():
 		if p.usage & PROPERTY_USAGE_SCRIPT_VARIABLE:
