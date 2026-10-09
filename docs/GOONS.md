@@ -14,7 +14,7 @@
 | `scene/enemy/goon_verbs.gd` | `GoonVerbs`, the 21 behaviours as small state machines. |
 | `scene/enemy/goon_fx.gd` | `GoonFx`: telegraphs, projectiles, hazards, blasts, tethers, crush decals, bits, labels and delayed drops. |
 | `scene/enemy/spawnManager.gd` | Spawning (single goons, packs, bursts), scene loading, the night flag, crush credit. |
-| `scripts/world/level_roster.gd` | `LevelRoster`: who holds the land on a level (`LevelDef.factionBand`, `LevelDef.roster`) and a district's three goons. |
+| `scripts/world/level_roster.gd` | `LevelRoster`: a level's line-up (`LevelDef.lineup`, validated) and a district's three goons. |
 | `scripts/global/Region.gd` | The run's regions, one per world district (`WorldMap.districts`): faction, goons, name, tint and the wave timer. |
 | `scripts/world/world_hooks.gd` | `WorldHooks`: how goons read the world (walls, deep water, banks, line of sight). See "The world" below. |
 | `tests/game/test_goons.gd` | Registry vs. baked art, faction coverage, faction and wave rules, crush rules. |
@@ -29,17 +29,15 @@ After a bake that adds new PNGs, run `Godot_console.exe --headless --path . --im
 | Goon Tribe | 2 | One mutant species with tools and tricks | Violet skin, pointed ears, an orange rag, car-junk kit |
 | Scrap Gang | 3 | Anything with an engine or wheels: human raiders, goon drivers, junk machines | Gang teal on every vehicle |
 
-- **Regions are the world map's districts** (docs/WORLD.md, "Districts"): each district's faction, three goons, name and landmark are decided once, seeded per district. The faction comes from the distance to the start, clamped to the level's `factionBand` (`LevelRoster.factionAt`; below `Goons.WILD_BELOW` 1.0 Wild, below `TRIBE_BELOW` 2.2 Tribe, else Scrap). `Goons.factionFor` is only the fallback with no level def.
-- **A district's three goons** (`LevelRoster.pickGoons`) come from the level's roster for that faction: goon 1 the lowest rank (fodder), goons 2 and 3 specials or heavies.
+- **Regions are the world map's districts** (docs/WORLD.md, "Districts"): each district's three goons, name and landmark are decided once, seeded per district, from the level's line-up (see Classes below). The district's faction is its first goon's.
 - **Wave mix** (`WAVE_MIX`): in wave 1 the district spawns goon 1 95% of the time; goons 2 and 3 grow more common over waves 2 to 4. The wave is the run's (one clock wherever the car drives, `Region.wave`), and the spawner's escalation adds a wave every 2 minutes on top (`SpawnManager.pickGoonId`).
 - **Region data:** `Region.currentRegion` (`faction`, `name`, `giantism`, `goon` = goon ids) and `Region.factionName()`. The wave is the run's (`Region.wave`), not the district's.
 - **Crush XP:** each crush earns gift box XP by rank (1 / 3 / 8), ×4 for a giant, ×10 for a boss (docs/PICKUPS.md, "Gift boxes").
 - **Goonopedia:** a goon shows once crushed; the console's `unlock goons` / `lock goons` override that.
-- **Testing:** `-- --faction=wild|tribe|scrap` forces every district's faction, and `-- --goons=a,b,c` forces its three goons. Both work with `--playtest` and `--bench`.
 
 ## Classes
 
-The road atlas (docs/WORLD.md, "The levels", "Regions") replaces the faction band, the per-level rosters and `--faction=` above. A goon keeps its faction: its colours, goo, drop weights, the EMP's target and the `crushed:<faction>` unlock counters are unchanged. A **class** is only a list of the goons a region may field (`Goons.CLASSES`, `CLASS_ORDER`, `classMembers`, `className`, `isElite`, `classesOf`):
+The road atlas (docs/WORLD.md, "The levels", "Regions") picks goons by class, not faction. A goon keeps its faction: its colours, goo, drop weights, the EMP's target and the `crushed:<faction>` unlock counters are unchanged. A **class** is only a list of the goons a region may field (`Goons.CLASSES`, `CLASS_ORDER`, `classMembers`, `className`, `isElite`, `classesOf`):
 
 | Class | Kind | Region | Members |
 |---|---|---|---|

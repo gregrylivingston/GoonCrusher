@@ -14,12 +14,12 @@ The Region 1 design (props, systems, ids R-/G-/L-) is in the session study, summ
 
 | # | Task | Where | Done when |
 |---|---|---|---|
-| Q1 | **Salt lick lure cost.** Its permanent lure makes every goon read `Pickups.lures` every tick on Moose Woods. Only heavies should check it, throttled (every 8 ticks). | `scripts/global/pickups.gd` `lureFor`, `walker.gd` lure read | Test: a non-heavy goon never reads the salt lick; no per-tick allocation |
-| Q2 | **Stale docs.** docs/WORLD.md "Interactive props" doesn't list the Region 1 spills (still, sluice, rockslide, TNT, topples, deadfall, pumpkins, apples, dens, burrows, bell, salt lick). | docs/WORLD.md; source of truth `scripts/world/spill.gd`, `breakable.gd` | Docs only |
-| Q3 | **Stale comments.** bench.gd/playtest.gd still mention "faction band and roster"; GOONS.md lines about `--faction=` and the faction band (now classes and `--class=`). | those files | Text only |
-| Q4 | **Elite escort goon** (pending author OK: recommended). Add one rank-1 goon to line-ups with none: Goon Quarry + Grunt; War Machine levels (blastpits, tankfarm, slagfields, theline, crusher) + Grunt; Big Game levels + Yipper. | `world/levels/*.tres` `lineup` | test_levels passes; AI playtest on crusher survives longer than 25 s |
-| Q5 | **Ambulance emblem** (pending author OK). Replace the red cross (a protected emblem) with a Star of Life on the top-down sheets and the side view. | `scripts/art/car_gen.js`, re-bake `python scripts/art/bake_cars.py ambulance` | Contact sheet looks right; no PNG hand edits |
-| Q6 | **Blueprint unlock** fires on `open:quarry`, now the 10th level (was 4th). Move it to `open:canyon` (4th). | `scripts/global/pickups.gd` / unlocks data | test_unlocks passes |
+| Q1 | (Done: `Pickups.lureCheckDue`) **Salt lick lure cost.** Its permanent lure makes every goon read `Pickups.lures` every tick on Moose Woods. Only heavies should check it, throttled (every 8 ticks). | `scripts/global/pickups.gd` `lureFor`, `walker.gd` lure read | Test: a non-heavy goon never reads the salt lick; no per-tick allocation |
+| Q2 | (Done) **Stale docs.** docs/WORLD.md "Interactive props" doesn't list the Region 1 spills (still, sluice, rockslide, TNT, topples, deadfall, pumpkins, apples, dens, burrows, bell, salt lick). | docs/WORLD.md; source of truth `scripts/world/spill.gd`, `breakable.gd` | Docs only |
+| Q3 | (Done) **Stale comments.** bench.gd/playtest.gd still mention "faction band and roster"; GOONS.md lines about `--faction=` and the faction band (now classes and `--class=`). | those files | Text only |
+| Q4 | (Deferred: moved to GAMEPLAY_SUGGESTIONS.md "Maybe") **Elite escort goon** (pending author OK: recommended). Add one rank-1 goon to line-ups with none: Goon Quarry + Grunt; War Machine levels (blastpits, tankfarm, slagfields, theline, crusher) + Grunt; Big Game levels + Yipper. | `world/levels/*.tres` `lineup` | test_levels passes; AI playtest on crusher survives longer than 25 s |
+| Q5 | (Done: blue Star of Life) **Ambulance emblem** (pending author OK). Replace the red cross (a protected emblem) with a Star of Life on the top-down sheets and the side view. | `scripts/art/car_gen.js`, re-bake `python scripts/art/bake_cars.py ambulance` | Contact sheet looks right; no PNG hand edits |
+| Q6 | (Done) **Blueprint unlock** fires on `open:quarry`, now the 10th level (was 4th). Move it to `open:canyon` (4th). | `scripts/global/pickups.gd` / unlocks data | test_unlocks passes |
 
 ## Medium (worth it; a mid-tier model with care)
 

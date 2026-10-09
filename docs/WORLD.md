@@ -469,6 +469,27 @@ Baked STATEFUL props carry their state as metadata on the root (`smashSpeed`, `b
 | `beehive` | Prairie, Bayou (Wild) | 100 px/s or a blast | a swarm hunts the nearest goon within 700 px for 12 s, flattening up to 8, and stings the car (1.5 every 0.4 s) when it is close |
 | `crane` | Quarry, Crusher | rammed at `DROP_SPEED` (320 px/s) or a blast, once | the container falls off the jib's tip over 0.7 s, flattens goons under it, hits the car for 10 if it is there, and stays as a `container` prop |
 
+
+**Region 1 (The Wilds).** The same hook, plus `arm`/`disarm` (called by `PropReactions.addHero` when a prop streams in and when its chunk goes, to restore per-prop state):
+
+| Prop | Where | What it does |
+|---|---|---|
+| `rockpile` | Red Canyon (`pass`) | a rockslide: `ROCKS` (4) spinning `rock_roll` boulders, rolled like logs and credited as rocks ("ROCKSLIDE!") |
+| `tnt` | Red Canyon (`pass`) | an explosive (`BreakableProp.BLAST`, 190 px, 8 damage) |
+| `still` | Snapper Bayou (`bank`) | an explosive (220 px) that leaves fire behind (`BreakableProp.BURNS`, 90 px for 6 s) |
+| `saguaro` (hero ones) | Red Canyon | topples at `SAGUARO_SMASH` (380 px/s) away from what broke it, 6 damage; its spines flatten rank-1 goons (`SPINE_RANK`) |
+| `ranger_tower` | Moose Woods (`track`) | topples across the track, 10 damage ("TIMBER!") |
+| `fallen_trunk` (variant 2, leaning) | Moose Woods (`track`) | a deadfall: drops flat across the trail, 8 damage ("DEADFALL!"); the other variants just break |
+| `sluice` | Snapper Bayou (`ford`) | a flood capsule `FLOOD_LENGTH` (900 px) × `FLOOD_RADIUS` (170 px) along the nearest channel flattens goons in the shallows and on bridges ("SPLASH") |
+| `pumpkin` | Orchard Lanes | bursts in orange bits and keeps the car's speed |
+| `oak` (apples) | Orchard Lanes (`rules.oakCoins`) | its first hit at `OAK_SHAKE` (200 px/s) drops that many coins, once a run |
+| `den` | Prairie, Orchard (rare) | Bandits carry stolen pickups home to it; smashing it bursts them all out ("LOOT RECOVERED"); the stash survives a chunk reload |
+| `burrow` | warrens (a motif) | caves in: the hiding Jackalope is thrown out stunned and spawns no more; the last burrow of its warren: "WARREN CLEARED" |
+| `bell` (Dinner Bell) | Prairie, Orchard (`track`) | rammed at `BELL_RAM` (150 px/s) it calls every goon within `BELL_LURE` (1200 px) for `BELL_SECONDS` (6 s), once a run |
+| `saltlick` | Moose Woods (`clearing`) | a permanent lure (`SALT_LURE` 900 px) for heavies only (`SALT_RANK` 3) while its chunk is loaded; a heavy lets go once the car is within `SALT_LOOSE` (500 px). Goons below a lure's rank never read it, and with only permanent lures out a heavy looks every `Pickups.LURE_POLL` (8) ticks (`Pickups.lureCheckDue`) |
+
+Roosts (`Spill.ROOSTS`): dead trees and scarecrows hold Buzzards; a ram on the trunk knocks them down stunned.
+
 - **Goons cut log piles loose.** Goons with `"releases": true` in `Goons.DATA` (Grunt, Yipper, Splitter) check every 0.5 s in their move state (`GoonVerbs.Verb.seekRelease`): with the car within `LURE_CAR` (900 px) of a pile that is within `LURE_GOON` (650 px) of the goon, it runs to the pile and, within `REACH`, cuts it loose aimed at the car ("TIMBER!"), then goes back to its own business.
 - **Blasts** (`BreakableProp.blastAt`) set off spilling props in their radius with a clear line: piles burst away from the blast, cranes drop their container.
 - **Groups:** `prop_logpile` (goons look for piles), `prop_spill` (blasts).

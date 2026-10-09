@@ -184,6 +184,17 @@ function seam(C,pts,w){ const ctx=C.ctx, L=C.look; ctx.beginPath(); ctx.moveTo(p
 	if(!L.flat){ ctx.save(); ctx.translate(.45,.45); ctx.strokeStyle='rgba(255,255,255,.13)'; ctx.lineWidth=.45; ctx.stroke(); ctx.restore(); } }
 function chromeGrad(ctx,x0,y0,x1,y1){ const g=ctx.createLinearGradient(x0,y0,x1,y1); g.addColorStop(0,'#f2f2ee'); g.addColorStop(.45,'#9a9c9f'); g.addColorStop(.6,'#5f6265'); g.addColorStop(1,'#d5d6d4'); return g; }
 function ringPath(ctx,outer,inner){ ctx.beginPath(); poly(ctx,outer,true); poly(ctx,inner,true); }
+/* the ambulance's emblem: a blue Star of Life (three bars at 60°, a white edge) with a white staff and snake
+ down the middle; the red cross is a protected emblem, so the game never draws it */
+function starOfLife(ctx,cx,cy,r){ const t=r*.36;
+	ctx.save(); ctx.translate(cx,cy);
+	for(const pass of [0,1]) for(let k=0;k<3;k++){ ctx.save(); ctx.rotate(k*Math.PI/3); const e=pass?0:1.1;
+		ctx.fillStyle=pass?'#2a5fc4':'#f6f5f1'; ctx.fillRect(-t-e,-r-e,(t+e)*2,(r+e)*2); ctx.restore(); }
+	ctx.strokeStyle='#f6f5f1'; ctx.lineCap='round'; ctx.lineWidth=Math.max(.8,r*.1);
+	ctx.beginPath(); ctx.moveTo(0,-r*.72); ctx.lineTo(0,r*.72); ctx.stroke();
+	ctx.lineWidth=Math.max(.6,r*.07); ctx.beginPath(); ctx.moveTo(-r*.18,r*.5);
+	ctx.bezierCurveTo(r*.3,r*.3,-r*.3,0,r*.05,-r*.2); ctx.bezierCurveTo(r*.3,-r*.35,r*.15,-r*.55,-r*.12,-r*.5); ctx.stroke();
+	ctx.restore(); }
 
 function drawShadow(C){
 	const ctx=C.ctx, res=C.res, off=4000;
@@ -419,7 +430,7 @@ trailer:{layer:'paint',fn(C,s){ const sh=C.shells.find(q=>q.p.box==='trailer'); 
 ambuBox:{layer:'paint',fn(C,s){ const p=C.sp.parts[1]; const sh=C.shells[1]; if(s!==sh) return; const ctx=C.ctx, y0=p.y0+p.rimF, y1=p.y1-p.rimR-(C.stage?C.dm.crushR:0), w=p.W/2-p.rim;
 	ctx.save(); ringPath(ctx,sh.outer,sh.top); ctx.clip('evenodd'); ctx.fillStyle='#b8231d'; ctx.fillRect(-60,y0+8,120,y1-y0-16); ctx.restore();
 	ctx.save(); poly(ctx,sh.top); ctx.clip(); ctx.strokeStyle='rgba(0,0,0,.16)'; ctx.lineWidth=.6; ctx.strokeRect(-w+4,y0+4,w*2-8,y1-y0-8); ctx.restore();
-	const cy=(y0+y1)/2+10; ctx.fillStyle='#b8231d'; ctx.fillRect(-4.5,cy-15,9,30); ctx.fillRect(-15,cy-4.5,30,9);
+	const cy=(y0+y1)/2+10; starOfLife(ctx,0,cy,15);
 	rrect(ctx,-13,y0+10,26,18,2); ctx.fillStyle=css(shade(C.look.base,-.12)); ctx.fill(); ctx.strokeStyle='rgba(0,0,0,.35)'; ctx.lineWidth=.6; ctx.stroke(); ctx.beginPath(); ctx.arc(0,y0+19,6,0,7); ctx.fillStyle='#2b2c2f'; ctx.fill(); ctx.strokeStyle='#55575b'; ctx.beginPath(); ctx.moveTo(-6,y0+19); ctx.lineTo(6,y0+19); ctx.moveTo(0,y0+13); ctx.lineTo(0,y0+25); ctx.stroke();
 	rrect(ctx,-9,y1-30,18,14,1.5); ctx.fillStyle=css(shade(C.look.base,-.06)); ctx.fill(); ctx.strokeStyle='rgba(0,0,0,.3)'; ctx.stroke();
 	const lamp=(x,y,c)=>{ rrect(ctx,x-3.5,y-2,7,4,1.4); ctx.fillStyle=c; ctx.fill(); ctx.fillStyle='rgba(255,255,255,.55)'; ctx.fillRect(x-2.5,y-1.4,3,1); };
@@ -752,7 +763,7 @@ function drawSide(C){
 			for(let x=g.xr+6;x<g.xf-3;x+=9){ ctx.fillStyle='rgba(0,0,0,.14)'; ctx.fillRect(x,g.lo,1.1,g.hi-g.lo); ctx.fillStyle='rgba(255,255,255,.14)'; ctx.fillRect(x+1.1,g.lo,.8,g.hi-g.lo); }
 			ctx.fillStyle='#2a2b2e'; ctx.fillRect(B.x0,g.lo,B.x1-B.x0,4.5); for(let x=g.xr+2,k=0;x<g.xf-2;x+=6,k++){ ctx.fillStyle=k%2?'#e8e6df':'#b8231d'; ctx.fillRect(x,g.lo+4.5,6,2.2); }
 			sideSeam(C,g.xr+3.4,g.lo+4.5,g.xr+3.4,g.hi-1.5,.7); }
-		if(g.box&&has('ambuBox')){ const cx=(g.xf+g.xr)/2-8, cz=66; ctx.fillStyle='#b8231d'; ctx.fillRect(cx-4,cz-12,8,24); ctx.fillRect(cx-12,cz-4,24,8);
+		if(g.box&&has('ambuBox')){ const cx=(g.xf+g.xr)/2-8, cz=66; starOfLife(ctx,cx,cz,12);
 			ctx.strokeStyle='rgba(0,0,0,.3)'; ctx.lineWidth=.6; ctx.strokeRect(g.xf-30,g.lo+4,22,g.hi-g.lo-12);
 			rpoly(ctx,[[g.xf-26,g.hi-30,1.5],[g.xf-26,g.hi-14,1.5],[g.xf-12,g.hi-14,1.5],[g.xf-12,g.hi-30,1.5]]); const gg=ctx.createLinearGradient(0,g.hi-14,0,g.hi-30); gg.addColorStop(0,css(L.glassTop)); gg.addColorStop(1,css(L.glassBot)); ctx.fillStyle=gg; ctx.fill(); }
 		if(g.p.sleeper){ ctx.strokeStyle='rgba(0,0,0,.4)'; ctx.lineWidth=.8; for(let z=80;z<93;z+=2.6){ ctx.beginPath(); ctx.moveTo(49,z); ctx.lineTo(60,z); ctx.stroke(); } }

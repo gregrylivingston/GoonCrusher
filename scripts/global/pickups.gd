@@ -107,7 +107,7 @@ const DATA := {
 		"text":"+2 to all eight stats for the run."},
 	"turbo": {"parent":"overhaul", "name":"Turbo Kit", "kind":K.TUNE, "rarity":R.EPIC, "w":10, "icon":"turbo", "ui":"engineui", "amount":12, "ai":60,
 		"text":"+12 Engine for the run, and exhaust flames at full throttle."},
-	"blueprint": {"parent":"overhaul", "needs":["open:quarry"], "name":"Blueprint", "kind":K.TUNE, "rarity":R.LEGENDARY, "w":10, "icon":"blueprint", "ui":"starui", "ai":90,
+	"blueprint": {"parent":"overhaul", "needs":["open:canyon"], "name":"Blueprint", "kind":K.TUNE, "rarity":R.LEGENDARY, "w":10, "icon":"blueprint", "ui":"starui", "ai":90,
 		"text":"Kept after the run: a free garage upgrade for this car's lowest stat, credited on the results ticket however the run ends."},
 
 	#---------------------------------------------------------------- power-ups (timed)
@@ -254,10 +254,32 @@ static func resetRun() -> void:
 	dropsSinceRare = 0
 	timeWarp = false
 	lures.clear()
+	_lureFrame = -1
 
 ## Time Warp: goons act on 2 physics ticks of every 5.
 static func goonTickSkipped() -> bool:
 	return timeWarp && Engine.get_physics_frames() % 5 >= 2
+
+## Which goons need ask about lures this physics tick (Walker): the lowest rank any lure takes, and whether
+## any lure is timed. Worked out once per tick, not per goon, so a permanent rank-gated lure (a Salt Lick) costs
+## the fodder nothing and the heavies one look every LURE_POLL ticks.
+const LURE_POLL := 8
+static var _lureFrame := -1
+static var _lureMinRank := 0
+static var _lureTimed := false
+
+static func lureCheckDue(rank: int, lured: bool, phase: int) -> bool:
+	if lures.is_empty(): return false
+	var frame := Engine.get_physics_frames()
+	if frame != _lureFrame:
+		_lureFrame = frame
+		_lureMinRank = 1 << 30
+		_lureTimed = false
+		for l in lures:
+			_lureMinRank = mini(_lureMinRank, int(l.get("rank", 0)))
+			if int(l.until) != FOREVER: _lureTimed = true
+	if rank < _lureMinRank: return false
+	return lured || _lureTimed || (frame + phase) % LURE_POLL == 0
 
 ## The lure a goon at `pos` with this verb and rank, `carDist` from the car, should walk to, or Vector2.INF. The
 ## newest lure in reach wins. Every goon asks every tick while a lure is out, so it walks the list backwards,
@@ -279,10 +301,12 @@ static func lureFor(pos: Vector2, verb: StringName, rank := 0, carDist := INF) -
 static func addLure(pos: Vector2, radius: float, seconds: float, only := &"", rank := 0, loose := 0.0, key := 0) -> void:
 	var until := FOREVER if seconds == INF else Time.get_ticks_msec() + int(seconds * 1000.0)
 	lures.push_back({"pos": pos, "until": until, "radius": radius, "only": only, "rank": rank, "loose": loose, "key": key})
+	_lureFrame = -1
 
 static func removeLure(key: int) -> void:
 	for i in range(lures.size() - 1, -1, -1):
 		if int(lures[i].get("key", 0)) == key: lures.remove_at(i)
+	_lureFrame = -1
 
 #--- lookups ------------------------------------------------------------------------------------
 

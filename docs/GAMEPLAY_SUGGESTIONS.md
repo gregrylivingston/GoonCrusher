@@ -72,7 +72,7 @@ P1 (registry, classes, progression), P2 (landscapes and regions as data) and P4'
 - **P4 art.** Weathered car side views (`CarInfo.sidePic`) for the strip.
 - **P5. New landscapes in three waves** (art: materials, strips, props). Done: the art is baked, every landscape draws its own skin, and the new props, landmarks and posters are wired. Left: the dressing weights are first guesses; `mountain` keeps the plain `pine` (snowy pines there are the author's call); `steam_vent` doesn't glow at night (it would need `"blend": "add"` in the generator's atlas entry).
 - **P6. Level content** for the 22 new levels (posters, twists as data, line-up checks, AI playtests), regions 1 and 2 first for the demo.
-- **P7. Pacing pass:** the level curve, `ModeTiers.LEVEL_STEP` (0.085), Sprint distance by region (20,000 to 34,000 px), the elite steps and the car-clear prices; careers against 15 hours; S3 and S4 on The Sprawl and The Works. `Pickups.DATA`'s Blueprint still opens on `open:quarry`, which is now the 10th level instead of the 4th.
+- **P7. Pacing pass:** the level curve, `ModeTiers.LEVEL_STEP` (0.085), Sprint distance by region (20,000 to 34,000 px), the elite steps and the car-clear prices; careers against 15 hours; S3 and S4 on The Sprawl and The Works.
 
 ### Package 1: Balance pass
 One pass that connects and balances what is built. It absorbs the package 2 follow-ups, the economy (old package 6, minus driver perks), the unlock pace (old 12) and the gift-box curve (old 16). **Targets (the author, 2026-10-08):** about **15+ hours** to finish (all levels open, every mode seen, most cars owned), with maxing out taking longer; every mode earns a similar number of coins per minute; all five modes ship in 1.0, so Defense must be winnable.
@@ -196,6 +196,8 @@ Built (2026-10-08, "Done" above; docs/WORLD.md "Props and decor", "Interactive p
 - Training Grounds; custom seed entry (`TileManager.worldSeed` exists, no UI).
 
 ## Maybe
+
+- **Elite escort goon.** Line-ups with no rank-1 goon have no fodder to crush between heavies. Add one weak escort: Goon Quarry + Grunt; the War Machine levels (blastpits, tankfarm, slagfields, theline, crusher) + Grunt; the Big Game levels + Yipper (`world/levels/*.tres` `lineup`; `test_levels.gd` wants every line-up inside its class, so add the escort to `Goons.CLASSES` too). Check an AI playtest on crusher survives past 25 s. Deferred by the author (2026-10-09).
 
 **Curses** (on hold: they add ways to lose a run). They would be a `K.CURSE` kind in `Pickups.DATA`; icons exist in `scripts/art/pickup_icons.js` (skipped by the generator): Cursed Idol, Glass Cannon, Blood Moon, Devil's Bargain, Gremlin Sack.
 
