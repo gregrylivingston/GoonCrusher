@@ -41,7 +41,7 @@ func test_low_gears_pull_harder_and_a_high_gear_bogs_at_low_speed():
 	var slow := c.gearSpan * 0.5
 	assert_gt(c.gearThrust(1, slow), c.gearThrust(c.gears, c.gearSpan * c.gears * 0.8), "first pulls harder than top")
 	assert_gt(c.gearThrust(1, slow), c.gearThrust(4, slow), "fourth at a crawl bogs")
-	assert_almost_eq(c.gearThrust(4, 0.0), OverheadCarBody2D.bogFloor(4) * (1.0 + OverheadCarBody2D.LOW_GEAR_PULL * 3.0 / 6.0), 0.001, "down to its bog floor at a standstill")
+	assert_almost_eq(c.gearThrust(4, 0.0), OverheadCarBody2D.POWER_BAND.x * OverheadCarBody2D.bogFloor(4) * (1.0 + OverheadCarBody2D.LOW_GEAR_PULL * 3.0 / 6.0), 0.001, "down to its bog floor at a standstill")
 	assert_gt(c.gearThrust(1, 0.0), c.gearThrust(2, 0.0) * 3.0, "first is by far the best start")
 	assert_gt(0.05, c.gearThrust(5, 0.0), "fifth from a standstill barely moves")
 

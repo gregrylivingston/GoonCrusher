@@ -176,9 +176,10 @@ var shiftCut := 0           #ticks left of the clutch's cut after a shift betwee
 var shiftKick := 0          #ticks left of a well-timed shift's push
 signal shifted(gear: int, kicked: bool)
 const GEAR_FOR_SPEED := 99 #CarInput.gear left unset: whichever gear suits the speed (bestGear)
-const SHIFT_CUT_TICKS := 6
-const SHIFT_KICK_TICKS := 30
-const SHIFT_KICK := 1.3
+const SHIFT_CUT_TICKS := 12     #a sloppy shift: a fifth of a second with no push
+const SHIFT_KICK_TICKS := 45    #a well-timed one: three quarters of a second...
+const SHIFT_KICK := 1.5         #...of half again the push
+const POWER_BAND := Vector2(0.8, 1.15) #the push at the bottom and at the top of each gear: keep the revs up
 const SHIFT_KICK_FROM := 0.88  #share of a gear's range from which a shift up earns the kick
 const LOW_GEAR_PULL := 0.6     #first gear pulls this much harder than the top gear
 const BOG_BELOW := 0.55        #under this share of a gear's range (any gear but first) the engine bogs...
@@ -427,7 +428,7 @@ func integrate(pos: Vector2, forward: Vector2, vel: Vector2, input: CarInput, de
 		friction_force *= 3
 	acceleration += drag_force + friction_force
 	acceleration += conveyorPull(vel, World.pushAt(pos, surface))
-	acceleration *= h.inertia(w) #weight: the same top speed, reached (and lost) more slowly when heavy
+	acceleration *= h.inertia(w) * h.pickup(speed) #weight: the same top speed, reached (and lost) more slowly when heavy; pickup: slower near the top
 	if input.handbrake && speed > 0.0:
 		acceleration -= vel.normalized() * HANDBRAKE_DECEL * World.brake(surface)
 
@@ -984,12 +985,12 @@ func updateLookAhead(delta: float) -> void:
 
 var defaultZoomLevel:float = 0.45
 var cameraAdjustmentSpeed: float = 0.0008
-const SPEED_ZOOM_FLOOR := 0.8 #the furthest the speed zoom goes: 0.8 of the default zoom, a quarter more view
+const SPEED_ZOOM_FLOOR := 0.5 #the furthest the speed zoom goes: half the default zoom
 func updateCameraZoom():
 	var targetZoomFactor: float
 	if velocity.length() > 450.0 && isPlayer && is_instance_valid(camera):
 		#pulls back with speed, but never past SPEED_ZOOM_FLOOR of the default: further out, the car and goons got too small to read
-		targetZoomFactor = maxf(defaultZoomLevel + 0.06 - velocity.length() / 7500.0, defaultZoomLevel * SPEED_ZOOM_FLOOR)
+		targetZoomFactor = maxf(defaultZoomLevel + 0.08 - velocity.length() / 5500.0, defaultZoomLevel * SPEED_ZOOM_FLOOR)
 	else:
 		targetZoomFactor = defaultZoomLevel
 	if camera.zoom.x > targetZoomFactor:
@@ -1262,6 +1263,7 @@ func gearThrust(g: int, speed: float) -> float:
 	var r := speed / (gearSpan * g)
 	if g < gears && r >= 1.0: return 0.0 #the rev limiter
 	var thrust := 1.0 + LOW_GEAR_PULL * float(gears - g) / maxf(gears - 1, 1)
+	if g < gears: thrust *= lerpf(POWER_BAND.x, POWER_BAND.y, clampf(r, 0.0, 1.0)) #the top gear stays flat, so the top speed matches an automatic's
 	if g > 1: thrust *= lerpf(bogFloor(g), 1.0, clampf(r / BOG_BELOW, 0.0, 1.0))
 	if shiftKick > 0: thrust *= SHIFT_KICK
 	return thrust
