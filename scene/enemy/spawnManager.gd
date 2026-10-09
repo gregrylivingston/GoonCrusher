@@ -284,12 +284,67 @@ func announceNewGoon(goon: Object) -> void:
 func warmupScene() -> PackedScene:
 	return sceneFor(basicGoons[0] if not basicGoons.is_empty() else &"grunt")
 
+#--- the nearby floor ---------------------------------------------------------------------------
+#The spawners sit ~4000 px out and a round comes every few seconds, so early on (Easy, the first levels) the
+#screen stayed empty for 10 s and a car driving straight (Sprint) left its goons behind. The run opens with a
+#ring of goons just off screen, and whenever fewer than NEARBY_FLOOR live goons are within NEARBY_PX of the
+#car, a few more come in just past the edge of the view, mostly ahead of it. Crowds above the floor are
+#untouched, so escalation still sets how busy a run gets. Defense keeps its siege on the station.
+const OPENING_GOONS := 8
+const NEARBY_FLOOR := 10
+const NEARBY_PX := 3000.0
+const TOP_UP_PER_SWEEP := 2      #at most this many spawns (a pack counts as one) per SWEEP_SECONDS
+const OFFSCREEN_PX := Vector2(150.0, 700.0) #how far past the view's edge (min, max)
+const AHEAD_SPREAD := 1.2        #radians either side of the car's heading
+var opened := false
+var floorOn := true #Bench turns it off so its scenarios stay comparable with older numbers
+
+func floorActive() -> bool:
+	return floorOn && spawnScale == 1.0 && is_instance_valid(Root.playerCar) && is_instance_valid(Root.levelRoot)
+
+func goonsNearCar() -> int:
+	var pos: Vector2 = Root.playerCar.global_position
+	var r2 := NEARBY_PX * NEARBY_PX
+	var n := 0
+	for goon in goons:
+		if is_instance_valid(goon) && not goon.dead && goon.global_position.distance_squared_to(pos) < r2: n += 1
+	return n
+
+## One goon (or pack) just outside the view: ahead of the car when it is moving, anywhere around it otherwise.
+func spawnOffscreen(anyDirection: bool) -> void:
+	var car := Root.playerCar
+	var view := physicsView.grow(-LOD_MARGIN)
+	var edge := view.size.length() * 0.5 if view.has_area() else 1800.0
+	var heading: float = car.velocity.angle() if car.velocity.length() > 150.0 else car.global_rotation
+	for i in 4:
+		var angle := randf() * TAU if anyDirection else heading + randf_range(-AHEAD_SPREAD, AHEAD_SPREAD)
+		var spot: Vector2 = car.global_position + Vector2.from_angle(angle) * (edge + randf_range(OFFSCREEN_PX.x, OFFSCREEN_PX.y))
+		if World.spawnableAt(spot):
+			spawnAt(spot)
+			return
+
+func topUp() -> void:
+	if not floorActive(): return
+	var missing := NEARBY_FLOOR - goonsNearCar()
+	for i in mini(missing, TOP_UP_PER_SWEEP):
+		if not canSpawn(): return
+		spawnOffscreen(false)
+
+func openRun() -> void:
+	opened = true
+	timeCount = spawnTimer * spawnScale #the first round now, not a round's wait in
+	if not floorActive(): return
+	for i in OPENING_GOONS:
+		if not canSpawn(): return
+		spawnOffscreen(true)
+
 var timeCount: float = 0
 var mySpawners
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
 	if is_instance_valid(Root.levelRoot) && not Root.levelRoot.get("clockReady"): return #escalation starts with the run clock (the world map builds first)
+	if not opened: openRun()
 	giantTimer += delta
 	if giantTimer > 10:
 		increaseGiantOdds()
@@ -307,3 +362,4 @@ func _process(delta):
 		sweepTimer = SWEEP_SECONDS
 		despawnSweep()
 		nightSweep()
+		topUp()

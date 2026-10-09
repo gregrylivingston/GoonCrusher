@@ -276,10 +276,17 @@ func trace() -> void:
 	var aimText = "-"
 	if driver.aim != Vector2.INF:
 		aimText = "%d@%+.0fdeg" % [car.global_position.distance_to(driver.aim), rad_to_deg(car.global_transform.x.angle_to(driver.aim - car.global_position))]
-	print("PLAYTEST_TRACE t=%.0f pos=(%d,%d) v=%d hp=%.0f fuel=%.0f goal=%s aim=%s plan=%d/%d/%d cap=%.0f goons=%d stuck=%d" % [levelTime,
+	print("PLAYTEST_TRACE t=%.0f pos=(%d,%d) v=%d hp=%.0f fuel=%.0f goal=%s aim=%s plan=%d/%d/%d cap=%.0f goons=%d seen=%d stuck=%d" % [levelTime,
 		car.global_position.x, car.global_position.y, car.velocity.length(), car.health, car.fuel, goalText, aimText,
-		driver.plan.steer, mini(driver.plan.steerTicks, 99), driver.plan.throttle, minf(driver.speedCap, 9999.0), GameStats.goons(), driver.stats.stuck])
+		driver.plan.steer, mini(driver.plan.steerTicks, 99), driver.plan.throttle, minf(driver.speedCap, 9999.0), GameStats.goons(), goonsSeen(), driver.stats.stuck])
 	print("PLAYTEST_COSTS hop=%d " % driver.approachHop + " ".join(driver.lastCosts))
+
+#live goons inside the view and its LOD margin (SpawnManager.physicsView): what the player can see or about to
+func goonsSeen() -> int:
+	var n := 0
+	for g in Root.spawnManager.goons:
+		if is_instance_valid(g) && not g.dead && Root.spawnManager.physicsView.has_point(g.global_position): n += 1
+	return n
 
 #Defense, every 10 s: the barrier, the goons marching on the station and wedged on the way, and how many have
 #blown up at the pumps so far
