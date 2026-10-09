@@ -7,8 +7,9 @@ The 9 cars use generated top-down art that follows each driver's menu painting, 
 | Path | What |
 |---|---|
 | `scripts/art/car_gen.js` | The generator: each car is about 60 numbers (body outline, cabin, wheels, lights, livery). Change a car here. |
-| `scripts/art/bake.html`, `scripts/art/bake_cars.py` | The bake: `python scripts/art/bake_cars.py [car ...]` opens `bake.html#<car>` in headless Edge and writes the car's files. Takes about 5 s per car. |
-| `scene/car/<car>/art/` | Baked output: `<car>_a0..a2.png` (weathered), `<car>_c0..c2.png` (showroom), `<car>_mask.png`, `<car>_shadow.png`, `<car>_art.tres` and `geometry.json`. |
+| `scripts/art/bake.html`, `scripts/art/bake_cars.py` | The bake: `python scripts/art/bake_cars.py [--job sheets\|side] [car ...]` opens `bake.html#<car>` in headless Edge and writes the car's files. Takes about 5 s per car. With no `--job` it runs both jobs. |
+| `scene/car/<car>/art/` | Baked output: `<car>_a0..a2.png` (weathered), `<car>_c0..c2.png` (showroom), `<car>_mask.png`, `<car>_shadow.png`, `<car>_art.tres` and `geometry.json` (the `sheets` job), and `<car>_side.png` with its `.import` (the `side` job). |
+| `tests/game/test_car_side.gd` | Every `CarInfo` has a `sidePic` of the baked size, with alpha, standing on the bottom pad. |
 | `scene/car/car_art_set.gd` | `CarArtSet`, the resource each car scene points at through `art`. |
 | `shader/car_damage.gdshader` | Blends the three sheets per system. |
 | `scene/car/damage_fx.gd` | Smoke, flames, fuel drips, wheel sparks and headlight flicker (node `damageFx` on `car.tscn`). |
@@ -23,6 +24,16 @@ After a bake that adds new PNGs, run `Godot_console.exe --headless --path . --im
 - **Stages:** like new, dented and wrecked. All three come from the same geometry and seed, so they line up pixel for pixel. The wrecked silhouette is smaller, so crushed corners disappear.
 - **Shadow:** a separate sprite (`sprite/shadow`). It is centred, so it reads right whichever way the car faces. It is not part of the sheets, because `carhighlight` uses the sheet as its light texture at night.
 - **Geometry:** the scenes' bumper collision polygons, footprint (`carBodyArea`), tyre-mark points, exhaust and lamp offsets were set from `geometry.json`. If a car's outline changes, update those by hand from the new `geometry.json`.
+
+## Side views
+
+Each car also has a "rust and dust" side profile in the weathered paint (look A), for the menu. The level select's car strip draws it at about 45×18 (the current car a little bigger), and later it may go on the driver cards and the results ticket. The menu also draws a dark silhouette of it through a modulate, so its alpha edge has no soft shadow.
+
+- **Generator:** `CarArt.renderSide(key, opts)` in `car_gen.js`. It reads the same parts, cabin, doors, filler, wheels, lights, bumpers, mirrors, paint, grime and feats as the sheets, so it is the same car. Each car's `side` entry adds the heights: `sill`, `nose`, `hood`, `belt`, `roof`, `deck`, `tail`, the corner radii, `winR` (where the side glass ends on a car with no back glass), `box` (a trailer or box part's bottom and top) and `rim` (steel, white or dark). The car faces right: side x is the top-down's -y, so a feature at top-down y sits at x = -y.
+- **Look:** faded paint, bleached more on top; dust thickening toward the ground and sprayed around the wheels; rust at the arches and sills; rain streaks; dark glass, dusty along the bottom; tyres with a hint of tread and a dusty rim. The light is from above: the top surfaces (hood, roof, deck) carry a lighter band, and the flank darkens toward the sill. Features: the sedan's primer hood, the taxi's checker band and roof sign, the police two-tone and light bar, the racer's stripes on the top band and its hood scoop, the supercar's side intake, splitter and wing, the pickup's bed, the semi's stacks, fuel tank, chassis and trailer, and the ambulance's box, stripe, cross and lamps. A filler cap shows only if it is on the car's left, the side the view shows.
+- **Size:** 256×96 (`SIDE.W`, `SIDE.H`), with 2 px clear on every side (`SIDE.PAD`). Each car is fitted to that frame on its own, tyres on the bottom pad and centred across, so the semi and the ambulance are height-limited and the cars are width-limited. It is drawn 4× larger (`SIDE.SS`) and halved twice, which keeps thin details and the edge clean. `opts.w`, `h`, `pad`, `ss` and `style` render it at other sizes for larger uses; re-bake if the menu needs a bigger file. The canvas's `frame` gives the scale in px per game unit and where x = 0 and the ground land.
+- **Bake:** `python scripts/art/bake_cars.py --job side [car ...]`. It writes `<car>_side.png` and its `.import` (lossless, mipmaps on; an existing `.import` keeps its uid), then run `--import`. It never touches the sheets.
+- **Use:** `CarInfo.sidePic` (`scene/car/car_info.gd`), set in each `<car>_info.tres`. It is not in `CarInfo.FIELDS`, because the car itself doesn't need it.
 
 ## Systems and zones
 
@@ -91,7 +102,7 @@ Godot_console.exe --path . -- --bench=S2 --seconds=14 --shot=6;12 --car=taxi --d
 
 ## Adding a car
 
-1. Add an entry to `CARS` and `ORDER` in `car_gen.js`, and the name to `CARS` in `bake_cars.py`.
-2. Bake it and import.
+1. Add an entry to `CARS` and `ORDER` in `car_gen.js` (with its `side` heights), and the name to `CARS` in `bake_cars.py`.
+2. Bake it and import. Set `sidePic` in its `<car>_info.tres` to `<car>_side.png`.
 3. Point the car scene's `art` at `<car>_art.tres`, and set its collision and footprint from `geometry.json`.
 4. Add the car to `CARS` in `test_damage.gd`.

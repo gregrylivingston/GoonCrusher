@@ -18,6 +18,7 @@
 [ext_resource type="AudioStream" path="res://scene/car/taxi/audio/taxi_intro_15.mp3" id="16_x0pil"]
 [ext_resource type="Texture2D" path="res://scene/car/taxi/char_taxi_transparent.png" id="17_8s0cw"]
 [ext_resource type="Script" path="res://scene/car/car_info.gd" id="18_m31ly"]
+[ext_resource type="Texture2D" path="res://scene/car/taxi/art/taxi_side.png" id="side_pic"]
 
 [resource]
 script = ExtResource("18_m31ly")
@@ -25,6 +26,7 @@ carId = "taxi"
 charName = "Andrew"
 profilePic = ExtResource("17_8s0cw")
 backgroundPic = ExtResource("1_rpxwd")
+sidePic = ExtResource("side_pic")
 introAudio = Array[AudioStreamMP3]([ExtResource("2_urphv"), ExtResource("3_55uw0"), ExtResource("4_nu4w2"), ExtResource("5_1evi0"), ExtResource("6_hfvq3"), ExtResource("7_rvobb"), ExtResource("8_lp2lc"), ExtResource("9_jecfm"), ExtResource("10_tpf54"), ExtResource("11_dtjtf"), ExtResource("12_qd0g8"), ExtResource("13_5rjmo"), ExtResource("14_ujbxe"), ExtResource("15_m1ecr"), ExtResource("16_x0pil")])
 engine = 10
 steering = 8

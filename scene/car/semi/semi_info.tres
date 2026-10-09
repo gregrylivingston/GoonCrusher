@@ -13,6 +13,7 @@
 [ext_resource type="AudioStream" path="res://scene/car/semi/audio/semi_joy_3.mp3" id="11_t28jd"]
 [ext_resource type="Texture2D" path="res://scene/car/semi/char_semi_transparent.png" id="12_ka7te"]
 [ext_resource type="Script" path="res://scene/car/car_info.gd" id="13_cy27o"]
+[ext_resource type="Texture2D" path="res://scene/car/semi/art/semi_side.png" id="side_pic"]
 
 [resource]
 script = ExtResource("13_cy27o")
@@ -20,6 +21,7 @@ carId = "semi"
 charName = "Tiffany"
 profilePic = ExtResource("12_ka7te")
 backgroundPic = ExtResource("1_1x7yo")
+sidePic = ExtResource("side_pic")
 introAudio = Array[AudioStreamMP3]([ExtResource("2_6l3i0"), ExtResource("3_elmvp"), ExtResource("4_l055v"), ExtResource("5_j834e"), ExtResource("6_kjblj"), ExtResource("7_eqjqc"), ExtResource("8_66cbi"), ExtResource("9_7ljo1"), ExtResource("10_6m2s8"), ExtResource("11_t28jd")])
 engine = 10
 steering = 6

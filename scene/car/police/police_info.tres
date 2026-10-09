@@ -11,6 +11,7 @@
 [ext_resource type="AudioStream" path="res://scene/car/police/audio/police_intro_8.mp3" id="9_htne8"]
 [ext_resource type="Texture2D" path="res://scene/car/police/char_police.png" id="10_dwov1"]
 [ext_resource type="Script" path="res://scene/car/car_info.gd" id="11_41jgc"]
+[ext_resource type="Texture2D" path="res://scene/car/police/art/police_side.png" id="side_pic"]
 
 [resource]
 script = ExtResource("11_41jgc")
@@ -18,6 +19,7 @@ carId = "police"
 charName = "Nikita"
 profilePic = ExtResource("10_dwov1")
 backgroundPic = ExtResource("1_dx0n6")
+sidePic = ExtResource("side_pic")
 introAudio = Array[AudioStreamMP3]([ExtResource("2_o8ejl"), ExtResource("3_ke1vx"), ExtResource("4_8owcm"), ExtResource("5_8cpwb"), ExtResource("6_6quvk"), ExtResource("7_14wes"), ExtResource("8_13j3e"), ExtResource("9_htne8")])
 engine = 35
 steering = 25

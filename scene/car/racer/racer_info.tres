@@ -11,6 +11,7 @@
 [ext_resource type="AudioStream" path="res://scene/car/racer/audio/Racer_Intro_8.mp3" id="9_ebf3c"]
 [ext_resource type="Texture2D" path="res://scene/car/racer/char_racer.png" id="10_u8c0r"]
 [ext_resource type="Script" path="res://scene/car/car_info.gd" id="11_gabta"]
+[ext_resource type="Texture2D" path="res://scene/car/racer/art/racer_side.png" id="side_pic"]
 
 [resource]
 script = ExtResource("11_gabta")
@@ -18,6 +19,7 @@ carId = "racer"
 charName = "Kim"
 profilePic = ExtResource("10_u8c0r")
 backgroundPic = ExtResource("1_fmok2")
+sidePic = ExtResource("side_pic")
 introAudio = Array[AudioStreamMP3]([ExtResource("2_mi6a7"), ExtResource("3_7nfbt"), ExtResource("4_ltavh"), ExtResource("5_rarws"), ExtResource("6_1pht5"), ExtResource("7_25kdu"), ExtResource("8_ijmqm"), ExtResource("9_ebf3c")])
 engine = 50
 steering = 10

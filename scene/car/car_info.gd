@@ -9,6 +9,9 @@ class_name CarInfo extends Resource
 @export var charName: String = "Hi"
 @export var profilePic: Texture2D
 @export var backgroundPic: Texture2D
+#The weathered side view (art/<car>_side.png, 256×96, facing right), baked by scripts/art/bake_cars.py --job side.
+#The menu's car strips draw it small, and a dark modulate of it as the car's silhouette. docs/CAR_ART.md, "Side views".
+@export var sidePic: Texture2D
 @export var introAudio: Array[AudioStreamMP3] = []
 
 @export_group("Base stats")
