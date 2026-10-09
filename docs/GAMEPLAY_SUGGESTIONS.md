@@ -43,6 +43,7 @@ Suggestions to discuss, not a spec; the author runs gameplay as a separate proje
 - **Tier 3** Shallows, fords and bridges; most of a daily seeded run (the map and its contents come from the world seed).
 - **Road atlas P1, P2 and the car-clear data (2026-10-09)** 30 levels in 6 regions of 5 stops (`Levels.ORDER`, `Territories`), six goon classes (`Goons.CLASSES`) with a line-up per level, elite strength steps, the Marathon road (Goonpocalypse and Defense open behind it, finales on Medium), a 10-level demo, save version 8, car clears and Full Garages (`meta.carClears`, unlock conditions `carclears:` and `garages:`), and 15 landscapes as data (`Landscape`, `Landscapes`) with fallback skins, lava and region overlays by zone; today's eight levels draw as before (docs/WORLD.md "The levels", "Landscapes", "Regions"; docs/GOONS.md "Classes").
 - **Region 1 lane A (code, untuned)** Wild instincts (docs/GOONS.md "Wild instincts"): the Critter Chain (kills set up within 900 px of the car join the Crush Combo, +10% XP per extra source up to +40%, a gold CRITTER CHAIN readout), charges and lunges break what they can beat, heavies trample fodder, one `seeks` table (piles, hives, crates, carcasses, roosts), herds that graze and stampede when spooked, the Bullmoose daze (`LevelDef.rules.dazeHeavies`), Snapper bubbles, slime that slows goons, Quill friendly fire, Rattlers sunning on red rocks, Buzzard roosts in dead trees, MPH smash tags with first-meeting hints (docs/HUD.md), the Golden Jackalope, and `lureFor` without a per-goon copy.
+- **Water rework (2026-10-09, untuned)** Deep water no longer wrecks the car on contact: a wading band (WADE, the outer 224 px of deep water) is slow, slippery and costs 2 health a second; deep water costs 33 a second with heavy drag, so a flat-out sedan crosses 300 px for about 16 and drowns in about 3 s parked; goons still drown in deep water and wade at 60% speed; a sinking look, a DEEP WATER warning (docs/WORLD.md "Water").
 
 ## Work packages, in order
 
@@ -165,7 +166,7 @@ Built (2026-10-08, "Done" above; docs/WORLD.md "Props and decor", "Interactive p
 - **T2-13.** Driver perks and affinity (hooks: `awardBase` in `playerRoot.gd`, the purse's `MIN_COINS`/`MAX_COINS`). The economy that was here is in package 1 (B-4). M–L.
 
 ### Package 7: Goals and teaching
-- **T1-15. First-run hints.** Nothing teaches crush speed, the slot controls, where stars come from, gadget Use, that deep water wrecks the car, or that breakables smash and rocks don't. One-time toasts via `HudChance.toast`, flags in `meta.hints`. S–M.
+- **T1-15. First-run hints.** Nothing teaches crush speed, the slot controls, where stars come from, gadget Use, that deep water hurts the car fast, or that breakables smash and rocks don't. One-time toasts via `HudChance.toast`, flags in `meta.hints`. S–M.
 - **T2-12.** Medals (now package 1, B-1) and per-level records for every mode (the Goonpocalypse shape in `meta.records`), a "Next up" panel. M.
 - **T1-16.** A `SteamService` autoload guarded by `Engine.has_singleton("Steam")`, achievements mirrored into `meta.achievements`, lifetime totals in `meta.lifetime`, `steam_appid.txt` only in dev builds. M.
 - **T2-14.** Three date-seeded contracts, reroll for a gem. M. Needs T1-16.

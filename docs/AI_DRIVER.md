@@ -96,10 +96,11 @@ To iterate: copy the winner into a new profile, change one or two values, and pl
 ### What a row records
 
 - **Run:** `level`, `mode`, `car`, `profile`, `seed`, `upgrades`, `sight` and `score`.
-- **Ending:** `reason` is `SUCCESS`, `NOHEALTH`, `NOGAS`, `NOTIME`, `ABANDONED`, `WATER` (drowned: a `NOHEALTH` with health left) or `TIMEOUT`. Also `won`, `level_time`, the starting `clock`, `time_left`, and for races `station_px`, `station_left_px` (how far from the station it ended) `route_reached` (false when the station is cut off by water) and `legs` (stations reached: 0 or 1 in Sprint, one per leg in Marathon).
+- **Ending:** `reason` is `SUCCESS`, `NOHEALTH`, `NOGAS`, `NOTIME`, `ABANDONED`, `WATER` (drowned: a `NOHEALTH` with the car's centre over deep water, `car.drowned`) or `TIMEOUT`. Also `won`, `level_time`, the starting `clock`, `time_left`, and for races `station_px`, `station_left_px` (how far from the station it ended) `route_reached` (false when the station is cut off by water) and `legs` (stations reached: 0 or 1 in Sprint, one per leg in Marathon).
 - **Score:** `crushed`, `coin`, `star`, `payout`, `gem`, `slot_machines`, and pickups by kind (`fuel_pickups`, `health_pickups`, `purses`, `coins_picked`, `gems_picked`, `stat_pickups`). Slot machine prizes count as pickups.
 - **Damage**, as health lost, split by what the car was touching at the time:
   - `damage_rocks`: rocks, walls, hills and props, exactly what the car's wall hits and scrapes took (`wallHealthLost`); a car pinned to a wall by goons counts their attacks as goon damage.
+  - `damage_water`: what wading depth and deep water took (`waterHealthLost`); the last column, after `first_clear_gem`.
   - `damage_goon_contact`: the car ran into a goon. Every crush costs the car health too.
   - `damage_goon_attacks`: a goon lunged into the car's body.
   - `crush_misses`: goons the car hit at over 200 px/s that survived.
@@ -221,7 +222,7 @@ The car's controller calls `AIDriver.think()` every physics tick, then reads the
 ### How it reads the world
 
 - **Route:** `AIRoute.forWorld` shares the `WorldMap`'s own `AStarGrid2D` (1280 px coarse cells, built with the map on a worker): water and walls are solid, the rest weighted by the terrain table's `routeWeight` (sand and mud 1.4, mud pits 2), and the map's fords, bridges and passes are open cells, so routes use them. Diagonals never cut a blocked corner.
-- **Ground:** `World.terrainAt` reads the 128 px fine raster where the chunk is loaded, else the coarse cell. `footprintTerrain` takes the worst ground under the car's centre and four corners (plus 40 px): deep water first, then a wall, then shallows.
+- **Ground:** `World.terrainAt` reads the 128 px fine raster where the chunk is loaded, else the coarse cell. `footprintTerrain` takes the worst ground under the car's centre and four corners (plus 40 px): deep water first, then a wall, then wading depth, then shallows.
 - **Handling:** the prediction runs `integrate()`, which reads the surface under each predicted position, so ice, oil, conveyors and the off-road rule are in every plan without extra rules.
 - **Water:** see "Deep water" in the goal rules and the sweeps below; the lookups are `WorldHooks.nearLethal` and `lethalAhead`, plain grid reads.
 - **Breakables:** fences, hedges, hay bales, crates and barricades are walls to the physics but passable to the planner at speed (below).
@@ -282,8 +283,8 @@ Every candidate is scored **value ÷ (seconds to get there + 1)**. The current g
 - **Sweeps:** the predicted path is swept in 0.1 s segments with the car's footprint against everything solid on layer 1: the chunks' wall pieces, props and the station.
   - Godot's `cast_motion` ignores anything the shape already overlaps, so each segment first tests for overlap with the exact footprint.
   - **Breakable props** (fence, hedge, hay bale, crate, barricade) are passable when the predicted speed at that point is at least `smashMargin` (1.15) × the prop's smash speed: the sweep looks up what it touched (`get_rest_info`), leaves the prop out and sweeps on, and the plan pays `smashCost` (0.25 s) per prop. Slower, it is a wall. Explosives (barrel, tank) are always walls. Standing cones count the same way at `smashMargin` × `PropReactions.KNOCK_SPEED` (they knock over and the car keeps its speed; `PropReactions.isKnockable`). Pickups among breakables don't count as "among rocks".
-  - Deep water under the car's centre (the car dies two ticks after its centre is over it) ends the plan with a death cost; under a corner of its footprint (with a 40 px margin) it costs 300 s per second, so when every plan is wet the one that keeps the centre dry wins.
-  - **Deep water ahead** (`waterAheadCost`): at each 0.1 s point of a plan, deep water along the direction of travel within 0.9 s of travel (`waterLookSeconds`) costs up to 8 s per second (`waterNearCost`), more the closer and the faster. The end-of-plan probe charges for deep water like a wall, twice over. At 700 px/s on shallows the car can't stop in the 256 px band, so this is what makes it brake or turn while it still can.
+  - Deep water under the car's centre ends the plan with a death cost (`LETHAL_COST`): the car survives a short swim now (about 33 health a second, docs/WORLD.md "Water"), but the driver never plans through deep water. A car already in it (shoved in by goons, or slid in) pays 600 s per second its centre stays wet instead, so the plan that gets it out soonest wins. Under a corner of its footprint (with a 40 px margin) it costs 300 s per second, so when every plan is wet the one that keeps the centre dry wins. Wading depth (WADE, the outer 224 px of deep water on most levels) is driveable: a plan with a wheel in it pays `WADE_COST` (0.8 s per second; shallows `SHALLOWS_COST`, 0.3), and the prediction feels its drag and lost grip through `integrate()`.
+  - **Deep water ahead** (`waterAheadCost`): at each 0.1 s point of a plan, deep water along the direction of travel within 0.9 s of travel (`waterLookSeconds`) costs up to 8 s per second (`waterNearCost`), more the closer and the faster. The end-of-plan probe charges for deep water like a wall, twice over. At 700 px/s on shallows the car can't stop in the 256 px band (and the wading band after it), so this is what makes it brake or turn while it still can.
 - **A plan's cost** is its estimated seconds to the goal:
   - Time used, plus the rest of the way at cruise speed, plus the time lost getting back up to cruise speed, (c − v)² / (2ac).
   - Plus 0.6 s per radian still to turn.

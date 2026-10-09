@@ -53,50 +53,54 @@ The map is pure data built from the seed and the def; the scene only ever sees r
 | Coarse cell | 1280 px square; 4 × 2 per chunk; 384 × 192 for the map; cell (0,0)'s corner at (−245760, −122880) | `WorldGen.CELL`, `W`, `H`, `ORIGIN` |
 | Fine cell | 128 px; 40 × 20 per chunk (800 bytes); fields 42 × 22 with a one-cell apron | `WorldGen.FINE`, `FINE_W/H`, `FIELD_W/H` |
 | Field unit | 640 px (field values are distance-like: 1.0 ≈ 640 px) | `WorldField.UNIT` |
-| Map edge | the outer 2 coarse cells (2560 px) are ocean (lethal water) | `WorldGen.EDGE_CELLS`, `WorldField.EDGE_PX` |
+| Map edge | the outer 2 coarse cells (2560 px) are ocean (deep water) | `WorldGen.EDGE_CELLS`, `WorldField.EDGE_PX` |
 | Objectives | stay within 45 chunks of the centre on each axis | `WorldGen.CHUNK_LIMIT` |
 | Keep radius | chunks more than 2 away (Chebyshev) unload, except pinned ones | `TileManager.KEEP_RADIUS` |
 | Prefetch | views for what the camera sees plus 1 s of travel; rasters and recipes 1.5 s ahead | `PREFETCH_SECONDS`, `RASTER_PREFETCH_SECONDS` |
 | Raster/recipe cache | 24 chunks (the car's 3 × 3 is never evicted) | `WorldMap.LRU`, `setKeep` |
 | Start bubble | no barrier within 2500 px of the start; the start's coarse cells are cleared and reserved within 2500 + 1920 px | `WorldField.START_CLEAR`, `WorldGen.startBubble` |
 | Shallows band | 256 px (field 0.4) round deep water | `WorldGen.BAND` |
+| Wading band | the outer 224 px (field 0 to −0.35) of deep water is wading depth (WADE), where the level has shallows and its landscape doesn't opt out | `WorldGen.WADE_DEPTH`, `WorldField.hasWade` |
 | District seeds | every 32 coarse cells (about 41,000 px), jittered by up to 8 cells | `DISTRICT_STEP`, `DISTRICT_JITTER` |
 
 ## The terrain table
 
-`Root.terrain` is append-only, and `World.TERRAIN` has one row per value in the same order (`Goons.T` mirrors the enum too; `test_world.gd` and `test_goons.gd` check all three agree). Friction is on the car's scale; grip multiplies the car's grip (`CarHandling.grip`); brake multiplies the brake force; push is a conveyor's speed in px/s.
+`Root.terrain` is append-only, and `World.TERRAIN` has one row per value in the same order (`Goons.T` mirrors the enum too; `test_world.gd` and `test_goons.gd` check all three agree). Friction is on the car's scale; grip multiplies the car's grip (`CarHandling.grip`); brake multiplies the brake force; push is a conveyor's speed in px/s; hurt is the health per second the car loses there before armor (see "Water").
 
-| id | Name | Letter | Friction | Grip | Brake | Push | Passable | Lethal | Wall | Route weight | Spawnable |
-|---|---|---|---|---|---|---|---|---|---|---|---|
-| 0 | GRASS | g | 0.13 | 1.0 | 1.0 | | yes | | | 1.0 | yes |
-| 1 | SAND | s | 0.5 | 0.9 | 1.0 | | yes | | | 1.4 | yes |
-| 2 | MUD | m | 0.6 | 0.8 | 1.0 | | yes | | | 1.4 | yes |
-| 3 | WATER (deep) | ~ | | | | | no | yes | | 0 | no |
-| 4 | HILLS (rock, cliff, mountain, scrap) | ^ | | | | | no | | yes | 0 | no |
-| 5 | MOSS | o | 0.08 | 1.0 | 1.0 | | yes | | | 1.0 | yes |
-| 6 | DIRT | d | 0.03 | 1.0 | 1.0 | | yes | | | 1.0 | yes |
-| 7 | SNOW | * | 0.3 | 0.85 | 1.0 | | yes | | | 1.2 | yes |
-| 8 | ASPHALT | = | 0.02 | 1.1 | 1.0 | | yes | | | 1.0 | yes |
-| 9 | ICE | i | 0.05 | 0.35 | 0.5 | | yes | | | 1.3 | yes |
-| 10 | OIL | % | 0.03 | 0.25 | 0.4 | | yes | | | 1.3 | yes |
-| 11 | SHALLOWS | - | 0.45 | 0.7 | 1.0 | | yes | | | 1.4 | **no** |
-| 12 | WASH | w | 0.02 | 0.9 | 1.0 | | yes | | | 1.0 | yes |
-| 13 | CONVEYOR | > | 0.03 | 1.0 | 1.0 | 250 | yes | | | 1.0 | yes |
-| 14 | MUDPIT | @ | 1.0 | 0.7 | 1.0 | | yes | | | 2.0 | yes |
-| 15 | DEEPSNOW | # | 0.6 | 0.8 | 1.0 | | yes | | | 1.4 | yes |
-| 16 | LOT | l | 0.03 | 1.0 | 1.0 | | yes | | | 1.0 | yes |
-| 17 | BUILDING | B | | | | | no | | yes | 0 | no |
-| 18 | BRIDGE (deck over water) | b | 0.03 | 1.0 | 1.0 | | yes | | | 1.0 | yes |
+| id | Name | Letter | Friction | Grip | Brake | Push | Passable | Lethal | Wall | Route weight | Spawnable | Hurt |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 0 | GRASS | g | 0.13 | 1.0 | 1.0 | | yes | | | 1.0 | yes | |
+| 1 | SAND | s | 0.5 | 0.9 | 1.0 | | yes | | | 1.4 | yes | |
+| 2 | MUD | m | 0.6 | 0.8 | 1.0 | | yes | | | 1.4 | yes | |
+| 3 | WATER (deep) | ~ | 0.9 | 0.3 | 0.5 | | no | yes | | 0 | no | 33 |
+| 4 | HILLS (rock, cliff, mountain, scrap) | ^ | | | | | no | | yes | 0 | no | |
+| 5 | MOSS | o | 0.08 | 1.0 | 1.0 | | yes | | | 1.0 | yes | |
+| 6 | DIRT | d | 0.03 | 1.0 | 1.0 | | yes | | | 1.0 | yes | |
+| 7 | SNOW | * | 0.3 | 0.85 | 1.0 | | yes | | | 1.2 | yes | |
+| 8 | ASPHALT | = | 0.02 | 1.1 | 1.0 | | yes | | | 1.0 | yes | |
+| 9 | ICE | i | 0.05 | 0.35 | 0.5 | | yes | | | 1.3 | yes | |
+| 10 | OIL | % | 0.03 | 0.25 | 0.4 | | yes | | | 1.3 | yes | |
+| 11 | SHALLOWS | - | 0.45 | 0.7 | 1.0 | | yes | | | 1.4 | **no** | |
+| 12 | WASH | w | 0.02 | 0.9 | 1.0 | | yes | | | 1.0 | yes | |
+| 13 | CONVEYOR | > | 0.03 | 1.0 | 1.0 | 250 | yes | | | 1.0 | yes | |
+| 14 | MUDPIT | @ | 1.0 | 0.7 | 1.0 | | yes | | | 2.0 | yes | |
+| 15 | DEEPSNOW | # | 0.6 | 0.8 | 1.0 | | yes | | | 1.4 | yes | |
+| 16 | LOT | l | 0.03 | 1.0 | 1.0 | | yes | | | 1.0 | yes | |
+| 17 | BUILDING | B | | | | | no | | yes | 0 | no | |
+| 18 | BRIDGE (deck over water) | b | 0.03 | 1.0 | 1.0 | | yes | | | 1.0 | yes | |
+| 19 | WADE (wading depth: deep water's outer band) | v | 0.75 | 0.45 | 0.6 | | yes | | | 2.5 | **no** | 2 |
+
+WATER's friction, grip and brake only matter to the car (and the AI's `integrate()` predictions): for everything else it is solid and lethal. `lethal` means "goons drown here, nothing spawns near it, the AI never plans through it, tethers break by it"; the car survives a short swim.
 
 **Off-road rule** (`World.effectiveFriction`): friction above grass is softened by armor, so heavy cars plough through: `f_eff = 0.13 + (f − 0.13) × (1 − clamp(armor / 200, 0, 0.35))`.
 
 ### The World API
 
-Table lookups: `count()`, `def(t)`, `isPassable(t)`, `isLethal(t)`, `isWallTerrain(t)`, `isSpawnable(t)`, `isBlocked(t)` (not passable: water or wall), `friction(t)`, `grip(t)`, `brake(t)`, `push(t)`, `routeWeight(t)`, `letter(t)`, `effectiveFriction(f, armor)`, `isWall(collider)` (`is StaticBody2D || is TileMap`: chunk wall bodies, props and the station are all `StaticBody2D`).
+Table lookups: `count()`, `def(t)`, `isPassable(t)`, `isLethal(t)`, `isWallTerrain(t)`, `isSpawnable(t)`, `isBlocked(t)` (not passable: water or wall), `friction(t)`, `grip(t)`, `brake(t)`, `push(t)`, `hurt(t)`, `routeWeight(t)`, `letter(t)`, `effectiveFriction(f, armor)`, `isWall(collider)` (`is StaticBody2D || is TileMap`: chunk wall bodies, props and the station are all `StaticBody2D`).
 
 Runtime queries, delegated to `Root.worldMap`: `terrainAt(pos)`, `surfaceAt(pos)` (the ground the car drives on; the same as `terrainAt` today), `lethalAt(pos)`, `blockedAt(pos)`, `spawnableAt(pos)`, `pushAt(pos, t)` (the conveyor push as a vector, `WorldMap.beltDirAt`).
 
-- **Hot path, allocation-free:** the runtime queries and the flag/friction/grip/brake/push lookups. The car calls them every physics tick and the AI ~900 times per plan through `integrate()`. The flag and number columns are flat packed arrays built once in `_static_init`. A real map answers them natively: `WorldMap.grid` (a `WorldGrid`, docs/NATIVE.md) mirrors the coarse map and every stored raster (`store`, eviction and `forget` keep it in step), and Root's `worldMap` setter makes it `World.grid`, so `World.terrainAt` is one native call. The GDScript `WorldMap.terrainAt` is the same rule (the last chunk's raster cached in `_cx/_cy/_fine`, else the coarse cell), kept for tools and the parity test; stand-in maps in tests go through it.
+- **Hot path, allocation-free:** the runtime queries and the flag/friction/grip/brake/push/hurt lookups. The car calls them every physics tick and the AI ~900 times per plan through `integrate()`. The flag and number columns are flat packed arrays built once in `_static_init`. A real map answers them natively: `WorldMap.grid` (a `WorldGrid`, docs/NATIVE.md) mirrors the coarse map and every stored raster (`store`, eviction and `forget` keep it in step), and Root's `worldMap` setter makes it `World.grid`, so `World.terrainAt` is one native call. The GDScript `WorldMap.terrainAt` is the same rule (the last chunk's raster cached in `_cx/_cy/_fine`, else the coarse cell), kept for tools and the parity test; stand-in maps in tests go through it.
 - **Not hot:** `def(t)`, `routeWeight(t)` and `letter(t)` return or read a Dictionary row. Use them in setup code and tools only.
 - **No map** (`Root.worldMap == null`: the menu, most tests, the first frames of a run): the queries answer `UNKNOWN` (−1); nothing is lethal or blocked, nothing is spawnable, and the car keeps its own `friction`. Tests can put a stand-in object in `Root.worldMap` that provides `terrainAt`, `surfaceAt`, `lethalAt`, `blockedAt`, `spawnableAt` and optionally `beltDirAt`.
 
@@ -155,7 +159,7 @@ Each level is a `LevelDef` in `world/levels/<id>.tres`, listed in road order by 
 
 ## Landscapes
 
-A `Landscape` (`world/landscapes/<id>.tres`, registry `Landscapes`) is where a level is: a generator grammar with its default world (`features`, `baseTerrain`, `accents`), the terrains the generator adds (`terrains`, the old `GRAMMAR_TERRAIN`), the skin (`materials`: terrain id → ground material over `WorldSkin.MATERIAL_OF`; `roofMaterial`, the wall top; `wallStrip`; `wallTint`; `organic`; `roofDecor`), the water look (`waterLook` water or lava, `waterGlow`, `waterFoam`), natural `dressing` and `motifs`, district `nameSecond` words, the Goonopedia `text`, `snowy` (prop hits throw snow dust and pines drop snow: `mountain` and `forest_snow`) and a `fallback`. A new landscape re-skins an existing generator: needles drive like grass, salt like dirt, tar like mud and lava kills like deep water, so no new terrain physics or native `WorldGrid` changes are needed.
+A `Landscape` (`world/landscapes/<id>.tres`, registry `Landscapes`) is where a level is: a generator grammar with its default world (`features`, `baseTerrain`, `accents`), the terrains the generator adds (`terrains`, the old `GRAMMAR_TERRAIN`), the skin (`materials`: terrain id → ground material over `WorldSkin.MATERIAL_OF`; `roofMaterial`, the wall top; `wallStrip`; `wallTint`; `organic`; `roofDecor`), the water look (`waterLook` water or lava, `waterGlow`, `waterFoam`, and `wade`: false keeps deep water's edge sheer, no wading band, as on the volcano's lava), natural `dressing` and `motifs`, district `nameSecond` words, the Goonopedia `text`, `snowy` (prop hits throw snow dust and pines drop snow: `mountain` and `forest_snow`) and a `fallback`. A new landscape re-skins an existing generator: needles drive like grass, salt like dirt, tar like mud and lava hurts like deep water, so no new terrain physics or native `WorldGrid` changes are needed.
 
 | id | Name | Generator | Its own new art | Fallback | Levels |
 |---|---|---|---|---|---|
@@ -210,13 +214,13 @@ Thresholds in `features` are raw noise values: plain simplex noise spans about �
 
 | Grammar | What the fields do | `features` keys (defaults in `WorldField.setup`) | Barrier terrain, crossing |
 |---|---|---|---|
-| meadow | creeks along the zero lines of one noise, where a slower mask lets them run; pools where a third noise is high widen them; dirt tracks along a fourth noise's zero lines | `creekFrequency` 6e-5, `creekWidth` 640, `poolThreshold` 0.45, `poolWidth` 520, `trackWidth` 420, `fordWidth` 1200 | water with shallows; fords (SHALLOWS) |
-| bayou | lakes where an fbm rises above `lakeThreshold`; two braided channels either side of a noise's zero line, each strand masked by its own noise | `lakeFrequency` 1/12000, `lakeThreshold` 0.3, `channelFrequency` 1.1e-4, `channelWidth` 560, `channelGap` 0.2, `bridgeWidth` 900 | water with shallows; bridges (BRIDGE) |
+| meadow | creeks along the zero lines of one noise, where a slower mask lets them run; pools where a third noise is high widen them; dirt tracks along a fourth noise's zero lines | `creekFrequency` 6e-5, `creekWidth` 640, `poolThreshold` 0.45, `poolWidth` 520, `trackWidth` 420, `fordWidth` 1200 | water with a wading band and shallows; fords (SHALLOWS) |
+| bayou | lakes where an fbm rises above `lakeThreshold`; two braided channels either side of a noise's zero line, each strand masked by its own noise | `lakeFrequency` 1/12000, `lakeThreshold` 0.3, `channelFrequency` 1.1e-4, `channelWidth` 560, `channelGap` 0.2, `bridgeWidth` 900 | water with a wading band and shallows; bridges (BRIDGE) |
 | canyon | canyon walls along ridged zero lines (masked); mesas where an fbm rises above `mesaAbove`; wash lanes along another noise's zero lines; sand dunes where a fifth noise is above `duneAbove` | `ridgeFrequency` 7e-5, `wallWidth` 900, `mesaFrequency` 1/9000, `mesaAbove` 0.38, `washFrequency` 4e-5, `washWidth` 700, `duneAbove` 0.35, `passWidth` 1400 | HILLS; passes |
 | quarry | noise ground and dirt haul roads; one set-piece slot per `pieceCells` coarse cells: a terraced pit (ring wall with `pitRamps` ramps, mud in the middle), a junk fort (ring wall with `fortGates` gates, a lot inside) or a tyre camp (open dirt, reserved for props); mud pits (radius `mudPitRadius`, at most one per 2560 px lattice cell, 14% chance, never on a haul road) | `haulFrequency` 4.5e-5, `haulRoadWidth` 900, `pieceCells` 10, `pitChance` 0.3, `pitRadius` 3200, `pitRamps` 2, `fortChance` 0.25, `fortRadius` 2200, `fortGates` 3, `tyreCamps` 0.25, `campRadius` 1500, `rampWidth` 1000, `mudPitRadius` 200, `passWidth` 1300 | HILLS; ramps and gates are crossings |
 | mountain | ranges along zero lines (masked) and massifs where an fbm peaks above `peakAbove`; ice lakes where another fbm is above `iceLakeThreshold`; deep snow where a fifth noise is above `deepSnowAbove` | `ridgeFrequency` 6e-5, `rangeWidth` 1800, `peakFrequency` 1/8000, `peakAbove` 0.42, `iceFrequency` 1/7000, `iceLakeThreshold` 0.3, `deepSnowAbove` 0.3, `passWidth` 1500 (Frostbite 1800) | HILLS; passes |
 | highway | highways along +x every `highwaySpacing` px of y (highway 0 through the start), warped by up to `warpAmplitude`; branch roads along y every `branchEvery` chunks (each with `branchChance`); oil on the asphalt where a noise is above `oilAbove`; a dirt verge; gas station lots beside the highways every `gasStationEvery` chunks; rock outcrops (the only walls) where an fbm is above `rockAbove`, at least 1600 px off any road | `warpFrequency` 4e-5, `roadWidth` 1600, `branchWidth` 1000, `warpAmplitude` 3000, `highwaySpacing` 23040, `branchEvery` 3, `branchChance` 0.7, `gasStationEvery` 6, `oilAbove` 0.6, `rockAbove` 0.4 | HILLS; passes |
-| city | a street lattice on the coarse grid: in every group of 5 columns (and rows) a street at offset 0 and at 2 or 3 (hashed); street cells are asphalt; blocks between streets are buildings (inset by a `sidewalk`, lot underneath), parks (grass, moss) or lots, by share; some street rows are canals (never within 6000 px of the start's row), bridged at every street column | `buildingShare` 0.45, `parkShare` 0.2, `lotShare` 0.25, `canalShare` 0.1, `canalWidth` 1040, `sidewalk` 110 | BUILDING; bridges at the full street width; no shallows |
+| city | a street lattice on the coarse grid: in every group of 5 columns (and rows) a street at offset 0 and at 2 or 3 (hashed); street cells are asphalt; blocks between streets are buildings (inset by a `sidewalk`, lot underneath), parks (grass, moss) or lots, by share; some street rows are canals (never within 6000 px of the start's row), bridged at every street column | `buildingShare` 0.45, `parkShare` 0.2, `lotShare` 0.25, `canalShare` 0.1, `canalWidth` 1040, `sidewalk` 110 | BUILDING; bridges at the full street width; no shallows or wading band |
 | yard | plots of `plotSize` + 1 coarse cells, the last row and column of each being its fence line; each fence segment is a scrap mountain, a container row or open, and a walled one has a gap cell with `gapChance`; corners are always open; some plots are tank farms (lot, reserved for props); every `conveyorEvery`-th plot row has a conveyor along its middle, running +x or −x (hashed per plot row); oil spills where a noise is above `oilAbove` | `plotSize` 3, `scrapMountainShare` 0.25 (+0.35), `containerRows` 0.3 (×0.5), `tankFarmChance` 0.15, `gapChance` 0.6, `conveyorEvery` 4, `conveyorWidth` 640, `oilAbove` 0.55, `scrapWidth` 860, `containerWidth` 600 | HILLS; the gaps and corners |
 
 `WorldGen.grammarPost` adds what the fields alone don't say: city bridges (crossings at every street column of a canal row, reserved), yard belt directions (the coarse `aux` byte: 1 +x, 2 −x, 3 +y, 4 −y) and reserved tank farms, quarry set pieces (reserved, with their ramps and gates opened as crossings), and reserved gas station lots near the middle of the highway map.
@@ -253,9 +257,9 @@ The result also lists every district (`id`, `cells`, `centroid`, `firstCell`, `n
 `WorldGen.fineRaster(job)` samples the same fields at the centres of a chunk's 40 × 20 fine cells (plus a one-cell apron, so neighbouring chunks agree) and clamps them to the coarse map so the two never disagree about passability:
 
 - Between the centres of two 4-adjacent passable coarse cells the fine map is always open: the fine fields stay above (the bilinear coarse envelope − `A_LO`), a corridor at least 2 × 448 px wide.
-- A blocked coarse cell is always blocked within `PILLAR_PX` (160 px) of its centre.
-- Filled pockets are filled; crossings in a cell or its 4-neighbours open their full width (`fordHalf`, `bridgeHalf`, `passHalf` across the way through). Inside a pass, deep snow and ice become plain snow, so heavy cars don't stick there.
-- The fine terrain is the wall terrain where the wall field is below 0; BRIDGE where a bridge crossing covers water; WATER where the water field is below 0; SHALLOWS where the water field is below `BAND` (256 px) on grammars with shallows (all but the city) or at a ford; else the surface.
+- A blocked coarse cell is always blocked within `PILLAR_PX` (160 px) of its centre (on levels with a wading band the water pillar falls `WADE_STEEP` (2) times as fast below 0, so the same edge is deep water round the centre and wading depth only near the edge).
+- Filled pockets are filled (their water steepened the same way, so they are deep inside); crossings in a cell or its 4-neighbours open their full width (`fordHalf`, `bridgeHalf`, `passHalf` across the way through). Inside a pass, deep snow and ice become plain snow, so heavy cars don't stick there.
+- The fine terrain is the wall terrain where the wall field is below 0; BRIDGE where a bridge crossing covers water; WATER where the water field is below −`WADE_DEPTH` (−0.35, 224 px in) where the level has a wading band, else below 0; WADE between that and 0; SHALLOWS where the water field is below `BAND` (256 px) on grammars with shallows (all but the city) or at a ford; else the surface. The wading band is on where `WorldField.wade`: the grammar has shallows (`WorldField.hasShallows`: all but the city, whose canals keep sheer edges) and the landscape doesn't opt out (`Landscape.wade`, passed to the worker as the def's `_wade` by `WorldMap.jobFor`; the volcano's lava opts out). Fords keep their field above 0, so they stay shallows; bridge decks stay bridges.
 
 The output is the 40 × 20 terrain bytes plus the `water` and `wall` fields at 42 × 22 (under a bridge the water field stays negative, for the art).
 
@@ -362,14 +366,14 @@ Draw order is the TileManager's layers: `groundLayer`, `edgeLayer`, `decorLayer`
   - R: the material layer of the cell's surface (`WorldSkin.layerOf`). Water and wall cells take a passable neighbour's layer by a few dilation passes, else the main ground.
   - G: the water field, B: the wall field, encoded `(f × 0.5 + 0.5) × 255` (`FIELD_RANGE` = 1 field unit either way of 0.5).
   - A: low 4 bits flags (1 bridge deck, 2 rotate the material 90°, 4 conveyor belt, 8 belt reversed); high 4 bits the district's tint code (0–15).
-- **Materials** (`materials`): a `Texture2DArray` of the level's ground materials only: the main ground first, then base, accents, the landscape's own terrains (`Landscape.terrains`), water, shallows and the wall top (the skin's `roofMaterial`: `rock`, `roof` in the city). Each terrain's material is the skin's (`Landscape.materialOf`: its `materials` map over `WorldSkin.MATERIAL_OF`). A tile covers 1024 world px. Without image data (headless) or with mismatched formats, flat placeholder colours are used.
-- **Other uniforms:** `macro_noise`, `water_layer`, `wall_layer`, `wall_tint` (the skin's `wallTint`), `ctl_size`, `organic` (the skin's: how far borders wander: 0.2 city, 0.5 scrapyard, 0.7 highway, else 1), `water_glow` (lava: the landscape's `waterGlow` when its `waterLook` is `lava`, else 0; the deep water is mixed toward the glow colour by its alpha, hotter away from the shore, pulsing slowly above `gc_ground_quality` 0). Lava is the WATER terrain, so it kills like deep water; its shore foam strip takes the landscape's `waterFoam` colour (`WorldSkin.stripColors`). No new shader globals.
-- **Drawing:** the fields are interpolated between cell centres, so water and wall edges are smooth and match the collision contours (the same values went through marching squares). Wall tops get a lighter lip and a contact shadow at their foot; deep water darkens with depth; a bridge deck hides the water.
+- **Materials** (`materials`): a `Texture2DArray` of the level's ground materials only: the main ground first, then base, accents, the landscape's own terrains (`Landscape.terrains`), water, shallows and the wall top (the skin's `roofMaterial`: `rock`, `roof` in the city), then wading depth (`wade`) last where the level has the band. Each terrain's material is the skin's (`Landscape.materialOf`: its `materials` map over `WorldSkin.MATERIAL_OF`). A tile covers 1024 world px. Without image data (headless) or with mismatched formats, flat placeholder colours are used.
+- **Other uniforms:** `macro_noise`, `water_layer`, `wall_layer`, `wall_tint` (the skin's `wallTint`), `ctl_size`, `organic` (the skin's: how far borders wander: 0.2 city, 0.5 scrapyard, 0.7 highway, else 1), `water_glow` (lava: the landscape's `waterGlow` when its `waterLook` is `lava`, else 0; the deep water is mixed toward the glow colour by its alpha, hotter away from the shore, pulsing slowly above `gc_ground_quality` 0). `wade_layer` and `wade_depth` (`WorldGen.WADE_DEPTH` where the level has a wading band, else 0): water above −`wade_depth` is drawn with the `wade` material on a quicker, crossing chop, darkening slightly with depth, and blends into the deep water over ±0.05 field units at −`wade_depth` (still one water texture read a pixel, two only across that step). Lava is the WATER terrain, so it hurts like deep water; its shore foam strip takes the landscape's `waterFoam` colour (`WorldSkin.stripColors`). No new shader globals.
+- **Drawing:** the fields are interpolated between cell centres, so water and wall edges are smooth and match the collision contours (the same values went through marching squares). Wall tops get a lighter lip and a contact shadow at their foot; deep water darkens with depth; the wading band is lighter and choppier, with the shore foam on its outer edge (the old water line) and no line where it turns deep; a bridge deck hides the water.
 - **`gc_ground_quality`** (a global in `project.godot [shader_globals]`, set from the Ground Detail setting `gfx/ground`: Potato 0, others 1): 0 draws the nearest cell's material with no macro noise and no water or belt animation; 1 blends four cells with the blend warped by the macro noise (organic borders), adds macro brightness variation, moves the water and runs the belts at 250 px/s. `ShaderWarmup` compiles the ground, decor and beacon shaders behind the countdown.
 
 ## Collision, occluders and lines
 
-- **Walls:** one `StaticBody2D` per chunk on layer 1 with convex pieces (from the wall field's contour, so it matches the drawn edge). Water has no collision: it is lethal by grid check instead (below).
+- **Walls:** one `StaticBody2D` per chunk on layer 1 with convex pieces (from the wall field's contour, so it matches the drawn edge). Water has no collision: it hurts and drags by grid check instead (below).
 - **Props** are `StaticBody2D` scenes on layer 1 with a convex hull (docs/WORLD_ART.md). `World.isWall` treats bodies, props and the station alike.
 - **Occluders** run along wall edges facing open ground, solid on the right, one-sided. They carry `gc_world = true`, so at Lighting Low (`Settings.occluderVisible`) world occluders stay on while goon occluders go off.
 - **Lines:** shore foam (`shore_foam`) on water edges, and the skin's wall strip (`Landscape.wallStrip`) on wall edges: `mesa_lip` (canyon), `snow_ridge` (mountain), `roof_edge` (city), `scrapwall` (scrapyard), else `cliff_lip`.
@@ -429,13 +433,17 @@ Baked STATEFUL props carry their state as metadata on the root (`smashSpeed`, `b
 
 ## Water
 
-- **Deep water is lethal.** The car (`checkGround`, every physics tick) is wrecked through `destroy()` once its centre has been over a lethal cell for 2 ticks in a row (`LETHAL_TICKS`). There is no water `Area2D`. The playtest records this as `WATER`.
-- **Shallows** ring every deep-water body for 256 px (except the city's canals, which have sheer edges): passable, slow (friction 0.45, grip 0.7), not spawnable. Fords cut through creeks are shallows too.
+From the bank in: **shallows** (256 px, field 0.4 to 0), **wading depth** (WADE, 224 px, field 0 to −0.35), then **deep water** (WATER). The city's canals and the volcano's lava have neither band: deep water starts at the edge.
+
+- **Shallows** ring every deep-water body (except the city's canals): passable, slow (friction 0.45, grip 0.7), not spawnable, harmless. Fords cut through creeks are shallows too.
+- **Wading depth** (WADE) is deep water's outer band where the level has one (`WorldField.wade`, "The fine raster"): passable, very draggy and slippery (friction 0.75, grip 0.45, brake 0.6), not spawnable, route weight 2.5. It costs the car about 2 health a second before armor (`hurt`). The car throws spray from all four tyres and a bow wave off the nose at speed (CarJuice, docs/CAR_ART.md "Driving feel", Water).
+- **Water and the car.** Deep water no longer wrecks the car on contact. Once a physics tick `OverheadCarBody2D.checkGround` takes `World.hurt(surface)` health per second (WATER 33, WADE 2) through `damage()` (`soak`), so armor counts once; shields and golden rides don't keep the water out (they block hits, not the river), but an airborne car (Hop, Jump Jets) is out of it. The drag and lost grip come from the same rows inside `integrate()` (WATER: friction 0.9, grip 0.3, brake 0.5), so the AI's predictions see them; Off-Road and Low Clearance don't change deep water (`groundFriction`, `surfaceGrip`). Measured on a stock sedan (armor 0) flat out from grass: 300 px of deep water costs about 16 health, 400 px 22, 500 px 29 (it goes in at about 745 px/s); with a 224 px wading band either side, 300 px costs about 20; parked in deep water it is wrecked in about 3.0 s (`test_water.gd` prints these). A wreck with the car's centre over deep water (`deepTicks` > 0) is a drowning (`drowned`): the results say WRECKED as before, the playtest `WATER`. The Defibrillator can save a drowning car once (back to 30 health: about a second to get out). The HUD shows "DEEP WATER" and a red edge while the car's centre is over it (docs/HUD.md), and the car settles in (docs/CAR_ART.md "Driving feel", Water). The playtest counts the water's damage as `damage_water`.
 - **Bridges** are BRIDGE cells over water (bayou boardwalks, city streets over canals): passable, fast, not lethal; the shader hides the water and shore foam stops at the deck.
-- **The ocean** fills the map's outer 2 coarse cells.
-- **Goons:** a solid goon over a lethal cell drowns (checked every 4 ticks, staggered by instance id; buried, hopping, flying and riding goons are immune until they land). A drowning within 3 s of the car touching the goon counts as a crush with a "SPLASH" label (`WorldHooks.drownCredited`, `SpawnManager.creditCrush`, also counted per goon for the Goonopedia). A drowned Bandit's loot washes up on the nearest dry cell (`WorldHooks.bankNear`). Off-screen goons treat water as blocked (`slideStep`), so none drowns unseen.
-- **Tethers:** harpoon and magnet tethers snap when the car is within 400 px of deep water (`WorldHooks.tetherMustBreak`). Oil and slime are never laid on shallows or within a fine cell of deep water (`hazardAllowed`).
-- **The AI** treats deep water as death in its plans and keeps goals away from it (docs/AI_DRIVER.md).
+- **The ocean** fills the map's outer 2 coarse cells (with a wading band inside its edge, like any deep water).
+- **Goons:** a solid goon over a lethal cell (deep water, not wading depth) drowns (checked every 4 ticks, staggered by instance id; buried, hopping, flying and riding goons are immune until they land). A drowning within 3 s of the car touching the goon counts as a crush with a "SPLASH" label (`WorldHooks.drownCredited`, `SpawnManager.creditCrush`, also counted per goon for the Goonopedia). A drowned Bandit's loot washes up on the nearest dry cell past the wading band (`WorldHooks.bankNear`). Off-screen goons treat water as blocked (`slideStep`), so none drowns unseen. In wading depth a solid goon is slowed to `WorldHooks.WADE_SLOW` (0.6) of its speed through the buff scale, like slime (`Walker.checkWade` every `WADE_EVERY` ticks, held `WADE_HOLD` s; a stronger slow is kept), and never drowns.
+- **Tethers:** harpoon and magnet tethers snap when the car is within 400 px of deep water (`WorldHooks.tetherMustBreak`; wading depth doesn't count). Oil and slime are never laid on shallows, wading depth or within a fine cell of deep water (`hazardAllowed`).
+- **The AI** never plans through deep water (its centre over it ends a plan at `LETHAL_COST`) and keeps goals away from it; it may drive through wading depth, at its route weight and `WADE_COST` (docs/AI_DRIVER.md).
+- **Lava** (the volcano) is the WATER terrain, so it hurts like deep water; its landscape opts out of the wading band.
 
 ## The wall contact model
 
@@ -454,10 +462,11 @@ In `overhead_car_body_2d.gd` (`wallTick`, `wallContact`, `wallDamage`):
 |---|---|---|
 | `slideStep(pos, step)` | `GoonBody.advance` off screen | the whole step if open, else along the open axis, else hold; a goon already on blocked ground may step anywhere |
 | `drownCredited(now, lastTouch)` | `Walker.drown` | within 3 s of the car's touch |
-| `bankNear(pos)` | the Bandit's loot | the nearest dry, open point within 6 fine cells |
+| `bankNear(pos)` | the Bandit's loot | the nearest dry, open point within 6 fine cells, past the wading band |
+| `wadeScaleAt(pos)` | `Walker.checkWade` | `WADE_SLOW` (0.6) in wading depth, else 1 |
 | `nearLethal(pos, r)`, `lethalAhead(pos, dir, dist)` | tethers, the AI | 17 samples round a point; samples every 128 px along a heading |
 | `tetherMustBreak(carPos)` | `GoonFx` tethers | deep water within 400 px |
-| `hazardAllowed(pos)` | `GoonFx.hazard` | not shallows, water or wall, and no deep water within a fine cell |
+| `hazardAllowed(pos)` | `GoonFx.hazard` | not shallows, wading depth, water or wall, and no deep water within a fine cell |
 | `wallAt(pos)`, `lineClear(a, b)` | shots, lobs, blasts, chains | wall cells stop shots and shelter from blasts (samples every 64 px); water stops nothing |
 | `bounce(pos, vel, delta)` | the kicked shell | reflects the blocked axis |
 | `nearestInGroup(tree, group, pos, maxDist)` | spawns, Bandit, Buzzard | the nearest tagged prop |
@@ -480,7 +489,7 @@ Spawning, props and FX rules for goons are in docs/GOONS.md ("The world").
   ```
   Prints each map's build timings (sample, rules, districts, A*), blocked and reachable shares, district and crossing counts, the station and its route, the start district's zone, faction and goons, and an ASCII crop (`--w=80 --h=30` coarse cells) using `World.TERRAIN` letters, `+` for a pass, `S` start, `X` station, `M` a Defense lane mouth, `.` the route. `--level=all`, `--objective=defense`, `--fine=N` times N fine rasters round the start. `--probe=x,y` prints the coarse cells (letter and flag byte) and the fine map round a world point. `-- --landscape=<id>` (with any harness) builds every level in that landscape (`Landscapes.forcedId`): its generator, default world and skin, on the level's own numbers and region.
 - **Bench** (`scripts/debug/bench.gd`): `--level=<id|index|old name|path>`, `--seed=N`, `--pattern=none|sine|circle|route`, `--at=water|wall|x,y` (moves the car beside the nearest deep water or wall, or to a point, once the world is ready), `--zoom=0.4` (holds the camera zoom), with `--shot` to look at edges. The CSV has `chunk_ms` (main-thread apply time per frame) and `occluders` columns.
-- **Playtest** (`--trace`): `PLAYTEST_MAP` (the coarse map round the start and the station), `PLAYTEST_HIT` (wall hits with what was hit: the body's name and parent, its layer and the point), `PLAYTEST_STUCK` (stuck events with `near=` (prop ids or `wall` within 320 px), `water=` (deep water within 400 px), `ground=` (the terrain letter under the car), keys, acceleration, slide count, forward speed, buffs and `overlap=` (what the car's front and rear polygons overlap)). Every drowning prints `PLAYTEST_WATER` and a 9 × 9 `PLAYTEST_WATER_MAP` of fine cells round the car. Defense runs print `PLAYTEST_DEFENSE` every 10 s (barrier, goons marching, blown up at the pumps so far, near and wedged).
+- **Playtest** (`--trace`): `PLAYTEST_MAP` (the coarse map round the start and the station), `PLAYTEST_HIT` (wall hits with what was hit: the body's name and parent, its layer and the point), `PLAYTEST_STUCK` (stuck events with `near=` (prop ids or `wall` within 320 px), `water=` (deep water within 400 px), `ground=` (the terrain letter under the car), keys, acceleration, slide count, forward speed, buffs and `overlap=` (what the car's front and rear polygons overlap)). Every drowning (a wreck over deep water, `car.drowned`) prints `PLAYTEST_WATER` and a 9 × 9 `PLAYTEST_WATER_MAP` of fine cells round the car. Defense runs print `PLAYTEST_DEFENSE` every 10 s (barrier, goons marching, blown up at the pumps so far, near and wedged).
 - **Logs:** `WORLD_BUILD` and `WORLD_CHUNKS` (above).
 
 ## How to add a level
@@ -527,15 +536,18 @@ Spawning, props and FX rules for goons are in docs/GOONS.md ("The world").
 
 `test_world.gd` and `test_goons.gd` fail when the enum, the table and `Goons.T` disagree.
 
+The native `WorldGrid` (native/src/world_grid.cpp) needs no change for a new value: it answers from the terrain ids it mirrors and `World._flags`, which `WorldMap.setupGrid` hands it. Only a change to a query's rule goes in both. WADE (19, the last added) followed these steps; the raster's rule for it is in `WorldGen.fineRaster` ("The fine raster").
+
 ## Tests
 
 | File | Covers |
 |---|---|
-| `test_world.gd` | the terrain table and mirrors, the queries' delegation, surface handling in `integrate()`, the off-road rule, wall impacts and the contact model, the two-tick water death, `gc_world` occluders at Lighting Low |
+| `test_world.gd` | the terrain table and mirrors, the queries' delegation, surface handling in `integrate()`, the off-road rule, wall impacts and the contact model, deep water hurting the car per tick, `gc_world` occluders at Lighting Low |
 | `test_terrain.gd` | the map's shape: 96 × 96 chunks, the coarse grid, districts per passable cell, fine rasters, chunk summaries |
 | `test_world_gen.gd` | every distinct world (`GameTest.worldLevels`: levels that share a world are built once) over 5 seeds: determinism, the start bubble and a non-lethal start, reachable stations, routes never shorter than the straight line, crossing spacing, fine/coarse agreement, district zones, line-up goons and exits, names from the region and landscape, share caps, Defense lanes |
 | `test_world_recipe.gd` | every distinct world over 3 seeds and a sample of chunks: budgets, convex in-chunk pieces that agree with the wall field, short occluders and lines, props and pickups on open ground away from the start and the lot, same input same recipe, the applied node budget, collected pickups staying gone |
 | `test_world_hooks.gd` | `slideStep`, drowning and its credit, tethers and hazards near water, shells and shots against walls, breakables and explosives, prop groups, the AI's water margin |
+| `test_water.gd` | water and the car: the WADE and WATER rows, a stock sedan crossing 300-500 px of deep water flat out (survives; prints the health lost), the wading band's extra cost, a parked car drowning in about 3 s, shields vs hops, the Defibrillator, armor, drag and traits, `integrate()` staying pure, wading damage and grip, goons drowning and wading, hazards and loot off the band, the raster's band on prairie and bayou and none on city canals or lava, and native/GDScript parity on WADE |
 | `test_levels.gd` | the registry (30 levels, 6 regions of 5 stops), defs, thin scenes, the curve by region, line-ups within their class and covering it, the classes, the strength step, Sprint distance by region |
 | `test_landscapes.gd` | the 15 landscapes and their data, today's eight drawn exactly as before the move (layers, water and wall layers, tints, borders, strips, roof decor), the fallback skin for missing art, lava, forced landscapes, region props rising with distance, region landmarks and district names |
 | `test_world_art.gd` | the baked art and manifest (docs/WORLD_ART.md) |
