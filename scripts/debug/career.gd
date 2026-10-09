@@ -406,19 +406,24 @@ func openSetup() -> bool:
 	await activate(card.mainButton, "ui_accept")
 	return await waitFor(func(): return menu() != null && menu().screen == SETUP && not Transition.busy(), 5.0, "Drive to open run setup")
 
+## Run setup's road map: the region's tab (a click, or Z / C), then the stop (a click, or Q / E)
 func selectLevel(index: int) -> bool:
 	var m := menu()
 	var data := SaveManager.playerData
-	for step in data.levels.size() + 2:
+	var region := index / Territories.STOPS
+	for step in Territories.ORDER.size() + data.levels.size() + 2:
 		if data.selectedLevel == index: return true
-		var count := data.levels.size()
-		var offset := wrapi(index - data.selectedLevel + count / 2, 0, count) - count / 2
 		var before := data.selectedLevel
-		var side: Control = m.posters[wrapi(before + signi(offset), 0, count)].get_node("catcher")
-		if useMouse() && side.is_visible_in_tree(): await click(side)
-		else: await press("ui_tab_next" if offset > 0 else "ui_tab_prev")
+		var at: int = before / Territories.STOPS
+		if at != region:
+			if useMouse(): await click(m.regionTabs[region])
+			else: await press("ui_region_next" if wrapi(region - at, 0, Territories.ORDER.size()) <= Territories.ORDER.size() / 2 else "ui_region_prev")
+		else:
+			var stop: Control = m.posters[index].get_node("catcher")
+			if useMouse() && stop.is_visible_in_tree(): await click(stop)
+			else: await press("ui_tab_next" if index > before else "ui_tab_prev")
 		if data.selectedLevel == before:
-			issue("block", "run setup didn't move to the next level poster")
+			issue("block", "run setup didn't move along the road map")
 			return false
 	return data.selectedLevel == index
 

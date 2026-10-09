@@ -66,7 +66,10 @@ Run flows 1 to 6 under each of these:
   - Drive and Upgrades sit at the bottom right and follow the selected card.
   - Unlock flashes.
 - The mouse wheel scrolls the carousels.
-- Clicking a side poster selects that level.
+- Run setup's road map:
+  - Clicking a region tab opens that region at its furthest open stop; Z/C (LT/RT) step regions, and a held trigger steps once.
+  - Clicking another stop selects it; Q/E (LB/RB) walk the road and cross into the next region at either end; 1-5 pick a stop.
+  - The car strip: cleared cars in colour, owned-but-not-cleared dark, unowned as outlines, the driver bigger over an orange bar. It updates with the mode and tier. "FULL GARAGE" shows in gold when all 9 have won. Clicking an owned car makes it the driver; clicking an unowned one does nothing.
 - The medallions have hover states.
 - Check that a synthetic action fired by a click never leaves an action stuck "pressed" (`KeyHint.fire`).
 
