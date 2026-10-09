@@ -63,6 +63,9 @@ var invulnerable := false
 var packId := 0
 var drift := Vector2.ZERO
 var dead := false
+var tramples := false   #Goons.DATA "tramples": its attacks flatten fodder in the way (trample)
+var dazes := false      #Goons.DATA "daze" on a level whose rules say dazeHeavies: a lunge into a wall dazes it
+var dazedUntil := 0.0   #GoonVerbs.now() seconds; while dazed it crushes at DAZE_CRUSH of its crush speed
 var savedLayers := Vector2i(4, 3) #layer 3 (Goon) only, so goons never collide with each other; mask: world and car
 #the world (WorldHooks): water drowns a solid goon (checked every 4 ticks, staggered: GoonBody.beginTick), a
 #drowning within DROWN_CREDIT_SECONDS of the car's touch (lastCarTouch, GoonVerbs.now seconds) counts as a
@@ -102,8 +105,11 @@ func _ready():
 	sprite.frame = randi() % 8
 	if SaveManager.playerData.gameMode == Root.gameModes.DEFENSE && is_instance_valid(Root.station) && def.get("verb", &"lunge") not in SIEGE_SKIP:
 		siegeTarget = Root.station
+	tramples = def.get("tramples", false)
+	dazes = def.get("daze", false) && Walker.levelRule("dazeHeavies")
 	verb = GoonVerbs.make(def.get("verb", &"lunge"), self)
 	verb.setup()
+	if has_meta(&"spawnState"): setState(get_meta(&"spawnState")) #a herd grazing, a Rattler sunning (SpawnManager)
 	if is_instance_valid(Root.spawnManager) && Root.spawnManager.isNight: setNight(true)
 
 ## The region's elite strength step (Territories.step, Level.strength): faster, harder-hitting goons that need
@@ -113,6 +119,12 @@ func applyStrength(step: Dictionary) -> void:
 	attackDamage *= float(step.get("damage", 1.0))
 	crushSpeed *= float(step.get("crush", 1.0))
 	if frontArmor > 0.0 && frontArmor < 9999.0: frontArmor *= float(step.get("crush", 1.0))
+
+## A flag from the level's rules (LevelDef.rules), false without one
+static func levelRule(key: String) -> bool:
+	var level := Levels.current()
+	var rules = level.get("rules") if level else null
+	return rules is Dictionary && bool(rules.get(key, false))
 
 const RING_TEXTURE = preload("res://texture/fx/circle_05.png")
 
@@ -190,18 +202,56 @@ func _worldLethalAt(pos: Vector2) -> bool:
 func _worldSlideStep(pos: Vector2, step: Vector2) -> Vector2:
 	return WorldHooks.slideStep(pos, step)
 
-## Moves along lockDir at attack speed and hits the car once if it touches it.
+## Moves along lockDir at attack speed and hits the car once if it touches it. A goon that "smashes" bursts
+## through breakables it is fast enough for (R-3); one that dazes stops on a wall with a BONK, dazed (G-2).
 func lungeStep(car: Node2D, moveSpeed: float, delta: float) -> void:
 	faceTo(lockDir.angle(), delta, 14.0)
 	velocity = lockDir * moveSpeed
 	move_and_slide()
-	if hitDone: return
 	for i in get_slide_collision_count():
-		if get_slide_collision(i).get_collider() == car:
+		var c = get_slide_collision(i).get_collider()
+		if c == car:
+			if hitDone: continue
 			touchedByCar()
 			hitCar(car, attackDamage, sys)
 			hitDone = true
 			return
+		if not c is Object || c.get_meta(&"smashed", false): continue
+		if def.get("smashes", false) && BreakableProp.smashedByGoon(c, moveSpeed, lockDir): continue
+		if dazes && stateTime > 0.05 && World.isWall(c):
+			daze()
+			return
+
+## G-2: BONK, and dazed for DAZE_SECONDS: stunned, and easier to crush (DAZE_CRUSH × its crush speed)
+const DAZE_SECONDS := 1.2
+const DAZE_CRUSH := 0.75
+func daze() -> void:
+	dazedUntil = GoonVerbs.now() + DAZE_SECONDS
+	var f = fx()
+	if f:
+		f.label(global_position, "BONK")
+		f.dust(global_position)
+	verb.stunFor(DAZE_SECONDS)
+
+func isDazed() -> bool:
+	return dazedUntil > GoonVerbs.now()
+
+## R-4: during an attack, a goon that "tramples" flattens the fodder (rank 1) it runs into, every
+## TRAMPLE_EVERY ticks (staggered by goon). Credited to the player only near the car (creditCrush, "trample").
+const TRAMPLE_EVERY := 3
+const TRAMPLE_PAD := 26.0
+func trample() -> void:
+	if not tramples || not is_instance_valid(Root.spawnManager): return
+	if (Engine.get_physics_frames() + get_instance_id()) % TRAMPLE_EVERY != 0: return
+	if collision_layer == 0: return #buried or flying: not on the ground yet
+	var reach := bodyRadius * scale.x + TRAMPLE_PAD
+	var flattened := 0
+	for o in Root.spawnManager.goonsNear(global_position, reach + 20.0):
+		if o == self || o.dead || o.collision_layer == 0 || int(o.def.get("rank", 1)) != 1: continue
+		if o.global_position.distance_to(global_position) > reach + o.bodyRadius * o.scale.x: continue
+		Spill.flatten(o, global_position, &"boom", &"trample")
+		flattened += 1
+	if flattened > 0 && fx(): fx().label(global_position, "TRAMPLED" if flattened == 1 else "TRAMPLED x%d" % flattened)
 
 ## Damage to the car: health always, plus wear on one system when the goon targets one.
 func hitCar(car: Node2D, dmg: float, system: String) -> void:
@@ -237,7 +287,7 @@ func drown() -> void:
 		f.ring(global_position, bodyRadius * scale.x * 1.6)
 		if credited: f.label(global_position, "SPLASH")
 	destroy(&"drown")
-	if credited && is_instance_valid(Root.spawnManager): Root.spawnManager.creditCrush(global_position, self)
+	if credited && is_instance_valid(Root.spawnManager): Root.spawnManager.creditCrush(global_position, self, &"drown")
 
 ## Pressed against a wall long enough that it will never get through (SpawnManager.despawnSweep)
 func isStuck() -> bool:
@@ -257,7 +307,7 @@ func tryCrush(car: Node2D, carSpeed: float) -> bool:
 		verb.beforeCrush(car, carSpeed)
 		destroy(&"crush")
 		return true
-	var resisted: bool = invulnerable || carSpeed < crushSpeed
+	var resisted: bool = invulnerable || carSpeed < crushSpeed * (DAZE_CRUSH if isDazed() else 1.0)
 	if not resisted && frontArmor > 0.0 && carSpeed < frontArmor && verb.frontArmorActive() && facing(car): resisted = true
 	if not resisted && not verb.allowCrush(car, carSpeed): resisted = true
 	if resisted:

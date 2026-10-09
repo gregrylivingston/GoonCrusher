@@ -31,8 +31,9 @@ class_name LevelDef extends Resource
 ## Sprint and Marathon: time allowed per second of reference driving (Level.sprintSeconds)
 @export var sprintSlack: float = 1.3
 ## The level's rules: "nightShare" (0..1, the share of each day cycle that is night; missing keeps the
-## clock's old 60 s day, 60 s night) and "events" ({world event id: weight}, PickupWorld.EVENTS; missing
-## weighs every event the same)
+## clock's old 60 s day, 60 s night), "events" ({world event id: weight}, PickupWorld.EVENTS; missing
+## weighs every event the same) and "dazeHeavies" (bool: a Bullmoose lunging into a wall is dazed and easier
+## to crush, Walker.daze)
 @export var rules: Dictionary = {}
 
 @export_group("Goons")

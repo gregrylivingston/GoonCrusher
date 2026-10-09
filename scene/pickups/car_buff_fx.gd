@@ -124,7 +124,7 @@ func checkPotato() -> void:
 	var r: float = Pickups.DATA["potato"]["radius"]
 	if Root.spawnManager.goonsNear(car.global_position, r).size() < Pickups.DATA["potato"]["need"]: return
 	car.endBuff("potato")
-	Root.spawnManager.fx.blast(car.global_position, r, 0.0) #flattens the crowd and credits it; no damage to the car
+	Root.spawnManager.fx.blast(car.global_position, r, 0.0, &"gadget") #flattens the crowd and credits it; no damage to the car
 	PickupEffects.label(car.global_position, "HOT POTATO!")
 
 func planRoute() -> void:
@@ -138,7 +138,7 @@ func planRoute() -> void:
 static func kill(goon) -> void:
 	if not is_instance_valid(goon) || goon.dead: return
 	goon.destroy(&"boom")
-	Root.spawnManager.creditCrush(goon.global_position, goon)
+	Root.spawnManager.creditCrush(goon.global_position, goon, &"gadget") #the player's own: credited however far
 
 #--- drawing --------------------------------------------------------------------------------------
 

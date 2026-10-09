@@ -19,7 +19,9 @@ spawnTimer = 4.6
 giantOdds = -12
 escalationSpeed = 0.132
 sprintSlack = 1.44
-rules = {}
+rules = {
+"dazeHeavies": true
+}
 lineup = Array[StringName]([&"bullmoose", &"thunderhoof", &"tusker", &"yipper"])
 landscape = &"forest"
 dressing = {}

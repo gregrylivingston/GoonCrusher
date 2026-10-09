@@ -19,7 +19,9 @@ spawnTimer = 5
 giantOdds = -20
 escalationSpeed = 0.12
 sprintSlack = 1.5
-rules = {}
+rules = {
+"dazeHeavies": true
+}
 lineup = Array[StringName]([&"jackalope", &"bandit", &"tusker"])
 landscape = &"meadow"
 grammar = &"meadow"

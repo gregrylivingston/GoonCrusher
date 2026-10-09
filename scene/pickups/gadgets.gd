@@ -18,7 +18,9 @@ static func use(car, id: String) -> bool:
 	var rear: Vector2 = car.to_global(Vector2(-130, 0))
 	match id:
 		"horn":
-			for goon in sm.goonsNear(car.global_position, d.radius): stun(goon, d.stun, (goon.global_position - car.global_position).normalized() * 320.0)
+			for goon in sm.goonsNear(car.global_position, d.radius):
+				if goon.verb is GoonVerbs.Herd: goon.verb.spook(car.global_position) #a herd stampedes away from the horn (R-8)
+				else: stun(goon, d.stun, (goon.global_position - car.global_position).normalized() * 320.0)
 			sm.fx.ring(car.global_position, d.radius)
 			PickupEffects.label(car.global_position, "HONK")
 		"oilslick": addNode(PickupNodes.OilSlick.new(), rear)
@@ -47,7 +49,7 @@ static func use(car, id: String) -> bool:
 			cap.heading = Vector2.from_angle(car.rotation)
 			addNode(cap, car.to_global(Vector2(80, 0)))
 		"airstrike":
-			for i in 3: sm.fx.blastLater(car.to_global(Vector2(400 + i * 220, 0)), 0.35 + i * 0.3, d.radius, 0.0)
+			for i in 3: sm.fx.blastLater(car.to_global(Vector2(400 + i * 220, 0)), 0.35 + i * 0.3, d.radius, 0.0, &"gadget")
 			PickupEffects.label(car.global_position, "INCOMING")
 		"pocket":
 			PickupEffects.supply(car, "service", {})

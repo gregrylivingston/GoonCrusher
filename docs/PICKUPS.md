@@ -84,7 +84,11 @@ The Goonopedia, the HUD flyers and the tests pick the new pickup up from the reg
 
 **Time Warp** makes goons act on 2 physics ticks of every 5 (`Pickups.goonTickSkipped`, checked at the top of `Walker._physics_process`). It never touches `physics_ticks_per_second`.
 
-**Lures.** Goon Bait (all goons within 1200 px) and the Flare (Buzzards only) add an entry to `Pickups.lures`. A goon in `move` walks to the lure instead (state `lured`), so Bait pulls Defense goons off their march on the station.
+**Lures.** Goon Bait (all goons within 1200 px) and the Flare (Buzzards only) add an entry to `Pickups.lures`. A goon in `move` walks to the lure instead (state `lured`), so Bait pulls Defense goons off their march on the station. `Pickups.lureFor` walks the list backwards and drops spent lures as it goes, without copying it (every goon asks every tick), so the newest lure in reach wins; long-lived world lures (the Dinner Bell, the Salt Lick) can use the same list.
+
+**Critter Chain.** The Crush Combo counts every kill the player sets up within 900 px of the car (`SpawnManager.CRITTER_CREDIT_PX`), not only bumper crushes: logs, bees, floods, falls, blasts, trampling, quills and drownings (docs/GOONS.md, "Wild instincts"). So combo coins, Coin Frenzy and Golden Ride pay for those too. A kill farther off credits nothing, except the player's own gadgets (blasts with source `gadget`: the Airstrike, Land Mine, Goon Bait, Hot Potato, and `CarBuffFx.kill`: the Nuke, Hubcap, Jets) and a drowning the car pushed, which count anywhere but join the chain only near the car. A chain that mixes sources shows in gold as "CRITTER CHAIN x9: LOGS + BEES + SPLASH" and pays more crush XP (below).
+
+**Air Horn and herds.** The horn stuns goons in its radius, but a Thunderhoof herd stampedes away from it instead (`GoonVerbs.Herd.spook`).
 
 ## The slot machine
 
@@ -104,7 +108,7 @@ The Goonopedia, the HUD flyers and the tests pick the new pickup up from the reg
 
 Crushing earns **crush XP** toward the next **gift box**; each box holds one prize game. `CrushPrizes` (`scripts/global/crush_prizes.gd`) holds the rules, `GameUI` (`playerRoot.gd`) counts and opens the boxes, `GiftBox` (`scene/player/slots/gift_box.gd`) is the reveal and `HudCrush` the HUD pill. Roadmap package 16.
 
-- **Crush XP** (`CrushPrizes.crushXp`, credited by `car.addCrushXp` at the crush, also for blasts and drownings): by goon rank, 1 / 3 / 8 (fodder, special, heavy), ×4 for a giant, ×10 for a boss. On top: +5% per crush in the combo chain (up to +100%), +50% for a slam or drift crush, +50% at night, times `car.crushXpMult` (for pickups and perks). XP is kept per run in `car.crushXp`.
+- **Crush XP** (`CrushPrizes.crushXp`, credited by `car.addCrushXp` at the crush, also for blasts and drownings): by goon rank, 1 / 3 / 8 (fodder, special, heavy), ×4 for a giant, ×10 for a boss. On top: +5% per crush in the combo chain (up to +100%), +50% for a slam or drift crush, +50% at night, times `car.crushXpMult` (for pickups and perks), times the Critter Chain's variety bonus: +10% per distinct kill source in the live chain past the first, at most +40% (`CrushPrizes.varietyBonus`, `VARIETY_STEP`, `VARIETY_MAX`). XP is kept per run in `car.crushXp`.
 - **The curve:** box *n* needs `50 × n²` XP on its own (50, 200, 450, 800, 1250...), and leftover XP carries on (`boxXp`, `boxAt`). AI playtests of 3-4 minutes made 150-1300 XP (2-7.5 per crush as giants and combos pile up): 1-3 boxes, fewer than the old crush goals (12, 39, 79, 131 crushes) gave the same runs. Boxes no longer pay a star; waves do.
 - **Tiers:** box 1 is Cardboard, then Bronze, Silver, Gold, and Diamond from box 5. The tier picks the game and its version.
 - **The games, weakest first**, measured with each game's own rolls (no bet, no Dice, every pickup open; rarity points per play, Common 1 to Legendary 16):

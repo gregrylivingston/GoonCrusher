@@ -28,19 +28,37 @@ enum T { GRASS, SAND, MUD, WATER, HILLS, MOSS, DIRT, SNOW, ASPHALT, ICE, OIL, SH
 ## lunge (speed multiplier while attacking), dmg (health its attack takes from a car with no armor; docs/CAR_ART.md), sys (car system the attack wears),
 ## crush (crush speed px/s), front (head-on crush speed; 0 = none), arc (half-width of the front in radians, default 1.05), turn (rad/s), pack (spawn group size),
 ## tele (telegraph: arrow, ring, land, aim, crack, none). rank: 1 fodder, 2 special, 3 heavy.
+## Wild instincts (docs/GOONS.md, "Wild instincts"): seeks (props it goes for, SEEK_* below), smashes (its attack
+## breaks breakables it is fast enough for), tramples (its attack flattens rank-1 goons in its way), daze (a lunge
+## into a wall dazes it, on levels whose LevelDef rules has dazeHeavies).
 ## Tiers: Scrap Gang hits hardest per hit (they hit less often, since they peel off), then Tribe, then Wild.
 ## A stock sedan tops out near 433 px/s, so crush thresholds stay at or under 400: heavies need near-top speed, not upgrades.
+## seeks rows: [group, action, carRange, goonRange]. Every SEEK_EVERY seconds the goon looks for the nearest prop
+## of the group (BreakableProp.GROUPS) within goonRange of it, rows in order. carRange > 0: the car must be within
+## carRange of the goon and of the prop (it acts where the player sees it); < 0: the car must be farther than
+## -carRange from the goon (it acts while the car keeps away); 0: anywhere. Actions (GoonVerbs.Verb.seekProp):
+##   release  run to a log pile and cut it loose at the car (Spill.goonRelease)
+##   knock    break a hive near the car; its swarm hunts the nearest goons, often the goon's own pack
+##   raid     break it open (a crate, a hive) and steal what spills (the Thief takes pickups first)
+##   perch    land on it and feed until the car comes at it (a carcass, like a crush decal)
+##   roost    sit in its crown out of reach until rammed down (Spill.ROOSTS: dead trees; scarecrows later)
+## Extension points: a den's "stash" (R-6) and a burrow's "hide" (R-7) come in as new actions here.
+const SEEKS_RELEASE := [[&"prop_logpile", &"release", 900.0, 650.0]]
+const SEEK_EVERY := 0.5
+
 const DATA := {
 	#---------------------------------------------------------------- Wild Things (tier 1)
 	&"jackalope": {"name":"Jackalope", "faction":faction.WILD, "rank":1, "biomes":[T.GRASS, T.MOSS, T.SNOW], "verb":&"hopper",
 		"speed":170, "windDist":120, "windT":0.35, "atkT":0.3, "lunge":2.6, "dmg":2, "sys":"tires"},
 	&"tusker": {"name":"Tusker", "faction":faction.WILD, "rank":2, "biomes":[T.GRASS, T.MUD], "verb":&"charger",
-		"speed":110, "windDist":380, "windT":0.7, "atkT":1.1, "lunge":3.6, "dmg":6, "sys":"engine", "front":280},
-	&"bandit": {"name":"Bandit", "faction":faction.WILD, "rank":1, "biomes":[T.GRASS, T.DIRT], "verb":&"thief", "speed":150},
+		"speed":110, "windDist":380, "windT":0.7, "atkT":1.1, "lunge":3.6, "dmg":6, "sys":"engine", "front":280, "smashes":true, "tramples":true},
+	&"bandit": {"name":"Bandit", "faction":faction.WILD, "rank":1, "biomes":[T.GRASS, T.DIRT], "verb":&"thief", "speed":150,
+		"seeks":[[&"prop_crate", &"raid", 0.0, 600.0], [&"prop_hive", &"raid", 0.0, 600.0]]},
 	&"stinger": {"name":"Stinger", "faction":faction.WILD, "rank":2, "biomes":[T.SAND], "verb":&"striker",
 		"speed":100, "windDist":130, "windT":0.6, "atkT":0.35, "dmg":4, "sys":"steering", "tele":"ring"},
 	&"buzzard": {"name":"Buzzard", "faction":faction.WILD, "rank":1, "biomes":[T.SAND, T.DIRT], "verb":&"flyer",
-		"speed":240, "windDist":380, "windT":0.7, "atkT":0.6, "lunge":2.4, "dmg":2, "sys":"lights"},
+		"speed":240, "windDist":380, "windT":0.7, "atkT":0.6, "lunge":2.4, "dmg":2, "sys":"lights",
+		"seeks":[[&"prop_carcass", &"perch", -260.0, 500.0], [&"prop_roost", &"roost", -260.0, 900.0]]},
 	&"rattler": {"name":"Rattler", "faction":faction.WILD, "rank":1, "biomes":[T.SAND, T.DIRT], "verb":&"striker",
 		"speed":90, "windDist":115, "windT":0.5, "atkT":0.3, "dmg":3, "sys":"tires", "tele":"ring"},
 	&"quill": {"name":"Quill", "faction":faction.WILD, "rank":2, "biomes":[T.SAND, T.DIRT], "verb":&"spiky",
@@ -48,17 +66,19 @@ const DATA := {
 	&"spitter": {"name":"Spitter", "faction":faction.WILD, "rank":2, "biomes":[T.MOSS, T.MUD], "verb":&"lobber",
 		"speed":80, "range":[260, 340], "windT":0.7, "cd":2.6, "hazard":"slime", "sys":"tires", "tele":"land"},
 	&"snapper": {"name":"Snapper", "faction":faction.WILD, "rank":3, "biomes":[T.MUD, T.MOSS], "verb":&"burrow",
-		"speed":60, "atkT":0.35, "lunge":4.5, "dmg":6, "sys":"tires", "log":true},
+		"speed":60, "atkT":0.35, "lunge":4.5, "dmg":6, "sys":"tires", "log":true, "tramples":true},
 	&"yipper": {"name":"Yipper", "faction":faction.WILD, "rank":1, "biomes":[T.DIRT, T.SNOW], "verb":&"pack",
-		"speed":175, "windDist":70, "windT":0.25, "atkT":0.25, "lunge":2.5, "recT":0.5, "dmg":2, "sys":"tank", "pack":4, "flank":true, "releases":true},
+		"speed":175, "windDist":70, "windT":0.25, "atkT":0.25, "lunge":2.5, "recT":0.5, "dmg":2, "sys":"tank", "pack":4, "flank":true,
+		"seeks":[[&"prop_logpile", &"release", 900.0, 650.0], [&"prop_hive", &"knock", 900.0, 650.0]]},
 	&"bullmoose": {"name":"Bullmoose", "faction":faction.WILD, "rank":3, "biomes":[T.SNOW], "verb":&"lunge",
-		"speed":70, "windDist":220, "windT":0.9, "atkT":0.7, "lunge":3.4, "dmg":8, "sys":"engine", "crush":400, "tele":"ring", "wander":true},
+		"speed":70, "windDist":220, "windT":0.9, "atkT":0.7, "lunge":3.4, "dmg":8, "sys":"engine", "crush":400, "tele":"ring", "wander":true,
+		"smashes":true, "tramples":true, "daze":true},
 	&"thunderhoof": {"name":"Thunderhoof", "faction":faction.WILD, "rank":3, "biomes":[T.GRASS, T.DIRT], "verb":&"herd",
-		"speed":150, "dmg":5, "sys":"engine", "crush":300, "pack":5},
+		"speed":150, "dmg":5, "sys":"engine", "crush":300, "pack":5, "tramples":true},
 
 	#---------------------------------------------------------------- Goon Tribe (tier 2)
 	&"grunt": {"name":"Grunt", "faction":faction.TRIBE, "rank":1, "biomes":[T.GRASS], "verb":&"lunge",
-		"speed":110, "windDist":150, "windT":0.55, "atkT":0.38, "lunge":3.4, "recT":0.7, "dmg":3, "releases":true},
+		"speed":110, "windDist":150, "windT":0.55, "atkT":0.38, "lunge":3.4, "recT":0.7, "dmg":3, "seeks":SEEKS_RELEASE},
 	&"goonling": {"name":"Goonling", "faction":faction.TRIBE, "rank":0, "biomes":[], "verb":&"lunge",
 		"speed":150, "windDist":110, "windT":0.4, "atkT":0.3, "lunge":3.0, "recT":0.5, "dmg":1},
 	&"hubcap": {"name":"Hubcap", "faction":faction.TRIBE, "rank":2, "biomes":[T.GRASS, T.MUD], "verb":&"lunge",
@@ -87,9 +107,9 @@ const DATA := {
 	&"slinger": {"name":"Slinger", "faction":faction.TRIBE, "rank":2, "biomes":[T.GRASS, T.MUD], "verb":&"shooter",
 		"speed":100, "range":[320, 420], "windT":0.6, "cd":1.8, "dmg":2, "sys":"lights", "tele":"aim"},
 	&"rammer": {"name":"Rammer", "faction":faction.TRIBE, "rank":3, "biomes":[T.MUD], "verb":&"charger",
-		"speed":90, "windDist":440, "windT":0.7, "atkT":1.4, "lunge":4.2, "recT":1.2, "dmg":8, "sys":"engine", "front":320},
+		"speed":90, "windDist":440, "windT":0.7, "atkT":1.4, "lunge":4.2, "recT":1.2, "dmg":8, "sys":"engine", "front":320, "smashes":true},
 	&"splitter": {"name":"Splitter", "faction":faction.TRIBE, "rank":1, "biomes":[T.MUD], "verb":&"lunge",
-		"speed":80, "windDist":140, "windT":0.6, "atkT":0.4, "lunge":3.0, "recT":0.8, "dmg":3, "split":&"goonling", "releases":true},
+		"speed":80, "windDist":140, "windT":0.6, "atkT":0.4, "lunge":3.0, "recT":0.8, "dmg":3, "split":&"goonling", "seeks":SEEKS_RELEASE},
 
 	#---------------------------------------------------------------- Scrap Gang (tier 3): anything with an engine or wheels
 	&"spoke": {"name":"Spoke", "faction":faction.SCRAP, "rank":1, "biomes":[T.GRASS, T.SAND, T.DIRT, T.MUD], "verb":&"rider",

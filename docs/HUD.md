@@ -67,6 +67,14 @@ There are five systems, each paired with the stat it scales (`OverheadCarBody2D.
 
   A gold "+N" by the lamp counts the pickups for that stat. A stat over 100 gets a "+" at the end of its line.
 
+## Critter Chain readout
+
+The Crush Combo readout (`HudChance.showCombo(count, coins, sources)`) counts every kill the player sets up near the car, not only bumper crushes (docs/PICKUPS.md, "Critter Chain"). While the chain has one kind of kill it reads "COMBO n +coins" and heats from gold to red as before. Once it mixes kinds it reads "CRITTER CHAIN xn: LOGS + BEES + SPLASH +coins" in gold (`HudChance.comboText`; at most 4 names, then "+n"), at a fixed 24 px so the longer line stays clear of the dials. It shows from the first mixed kill, before the combo pays coins.
+
+## Smash tags
+
+`SmashTags` (`scripts/world/smash_tags.gd`, a child of `PropReactions`) draws a small tag in the world over an interactive prop (`SmashTags.HEROES`: log pile, water tower, hive, crate, barrel, billboard, crane, fence, hay bale, hedge) when the car is heading at it (within about 35°) within 700 px: the speed that smashes it, in the player's units (`Settings.speed_text`, 100 px/s = 10 MPH). White, gold once the car is fast enough. At most the 3 nearest show, fading in and out; walls and rocks never get one. It is unshaded, so it shows at night. The first tag of each kind a save ever shows toasts a one-line hint ("Smash log piles at 35 MPH: the logs roll on"), flagged `smash_<id>` in `meta.hints`. ChunkView registers the props as they stream in (`PropReactions.addHero`) and they leave with their chunk. There is no setting for it yet (the settings menu belongs to another work package); `HEROES` is the one place to add or drop a kind.
+
 ## Later
 
 - **Per-car skins:** colors, dial faces and speedometer scale via a `HudSkin` resource on `CarInfo`.

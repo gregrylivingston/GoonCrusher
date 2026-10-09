@@ -222,7 +222,7 @@ func test_explosives_chain_once_each():
 func test_blasts_kill_goons_in_the_open_only():
 	var manager := makeManager()
 	useRule(func(p: Vector2) -> int: return Root.terrain.HILLS if p.x > 100.0 && p.x < 200.0 else Root.terrain.GRASS)
-	var car := makeStubCar(Vector2(9000, 0))
+	var car := makeStubCar(Vector2(-80, 600)) #near enough to be credited (SpawnManager.CRITTER_CREDIT_PX)
 	var open := spawnGoon(&"grunt", Vector2(-80, 0))
 	var sheltered := spawnGoon(&"grunt", Vector2(260, 0))
 	manager.registerGoon(open)

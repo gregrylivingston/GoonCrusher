@@ -771,7 +771,9 @@ func addCrushXp(goon: Object, style := false) -> void:
 	if not isPlayer || not is_instance_valid(goon): return
 	var goonDef = goon.get("def")
 	var night: bool = is_instance_valid(Root.spawnManager) && Root.spawnManager.isNight
-	crushXp += CrushPrizes.crushXp(goonDef if goonDef is Dictionary else {}, goon.get("isGiant") == true, comboCount, style, night, crushXpMult)
+	var chainLive := Engine.get_physics_frames() - comboTick <= int(Pickups.DATA["combo"]["gap"] * Pickups.TICKS)
+	var bonus := crushXpMult * CrushPrizes.varietyBonus(chainSources.size() if chainLive else 0) #a Critter Chain pays for mixing sources
+	crushXp += CrushPrizes.crushXp(goonDef if goonDef is Dictionary else {}, goon.get("isGiant") == true, comboCount, style, night, bonus)
 
 #a slam with the flank or tail, or a crush in a slide (CrushFeel pays the same moments a coin bonus)
 func isStyleCrush(speed: float) -> bool:
@@ -1220,6 +1222,7 @@ var landingBlast := false #Jump Jets come down with a blast; a Hop doesn't
 var comboCount := 0       #Crush Combo: crushes in the current chain
 var comboTick := -100000  #physics frame of the chain's last crush
 var bestCombo := 0
+var chainSources: Array = [] #Critter Chain: the chain's distinct kill sources (PickupEffects.onCrush)
 var coinsSinceBet := 0    #Double or Nothing's stake
 var turboKit := false     #Turbo Kit: exhaust flames at full throttle
 var buffFx: CarBuffFx

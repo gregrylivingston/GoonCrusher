@@ -45,10 +45,21 @@ func startToast() -> void:
 		var tw := HudTheme.textWidth(t[0].to_upper(), 24)
 		Stamp.slam(self, "LEGENDARY", Vector2(size.x * 0.5 + tw * 0.5 + 110.0, 166.0), HudTheme.GOLD, 20, TOAST_SECONDS - 0.7, -0.12)
 
-func showCombo(count: int, coins: int) -> void:
-	combo = {"text": "COMBO %d   +%d" % [count, coins], "t": 1.2, "count": count, "pop": COMBO_POP}
+## `sources`: the chain's distinct kill sources (PickupEffects.CHAIN_NAMES). Mixed, it reads as a Critter Chain
+## in gold: "CRITTER CHAIN x9: LOGS + BEES + SPLASH".
+func showCombo(count: int, coins: int, sources: Array = []) -> void:
+	combo = {"text": comboText(count, coins, sources), "t": 1.2, "count": count, "pop": COMBO_POP, "mixed": sources.size() > 1}
 
-#the combo readout pops on every crush and heats from gold through orange to red as the chain grows
+const CHAIN_SHOWN := 4 #source names shown at most; the rest are "+n"
+static func comboText(count: int, coins: int, sources: Array) -> String:
+	var pay := "   +%d" % coins if coins > 0 else ""
+	if sources.size() < 2: return "COMBO %d%s" % [count, pay]
+	var names := " + ".join(PackedStringArray(sources.slice(0, CHAIN_SHOWN)))
+	if sources.size() > CHAIN_SHOWN: names += " +%d" % (sources.size() - CHAIN_SHOWN)
+	return "CRITTER CHAIN x%d: %s%s" % [count, names, pay]
+
+#the combo readout pops on every crush and heats from gold through orange to red as the chain grows (a
+#Critter Chain stays gold)
 const COMBO_POP := 0.16
 static func comboColor(count: int) -> Color:
 	if count >= 20: return HudTheme.BAD
@@ -172,7 +183,9 @@ func _draw() -> void:
 		var a := clampf(combo.t / 0.3, 0.0, 1.0)
 		var grow: float = 0.0 if Settings.reduce_motion() else combo.pop / COMBO_POP
 		var fontSize := int(26.0 + mini(combo.count, 30) * 0.3 + 10.0 * grow * grow)
-		HudTheme.text(self, Vector2(34.0, 190.0 + (fontSize - 26) * 0.5), combo.text, fontSize, Color(comboColor(combo.count), a), HORIZONTAL_ALIGNMENT_LEFT, 7, Color(HudTheme.DEEP, a))
+		var col: Color = HudTheme.GOLD if combo.get("mixed", false) else comboColor(combo.count)
+		if combo.get("mixed", false): fontSize = int(24.0 + 8.0 * grow * grow) #a long line: it doesn't grow with the count
+		HudTheme.text(self, Vector2(34.0, 190.0 + (fontSize - 26) * 0.5), combo.text, fontSize, Color(col, a), HORIZONTAL_ALIGNMENT_LEFT, 7, Color(HudTheme.DEEP, a))
 	drawBeacons()
 	if stationShown: drawStation()
 	if flashT > 0.0: drawShockwave(1.0 - flashT / SHOCK_SECONDS)

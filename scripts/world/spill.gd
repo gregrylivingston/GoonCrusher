@@ -10,9 +10,12 @@ class_name Spill extends RefCounted
 ##          flattens whatever is under it
 ##   swarm  the beehive: a swarm that hunts the nearest goons for SWARM_SECONDS and stings the car if it is close
 ##   drop   the crane: its container falls off the jib's tip onto whatever is below, then stays as a prop
-## Goons with "releases" in Goons.DATA walk to a log pile near the car and cut it loose, aimed at the car
-## (GoonVerbs.Verb.seekRelease). What spilled is recorded per chunk on the TileManager (addSpilled), so a
+## Goons whose Goons.DATA "seeks" says so walk to a log pile near the car and cut it loose, aimed at the car,
+## or knock a hive (GoonVerbs.Verb.seekProp). What spilled is recorded per chunk on the TileManager (addSpilled), so a
 ## reloaded chunk shows the logs and containers where they came to rest and a crane drops only once.
+## Every kill here goes through flatten with its source (logs, splash, fall, bees, drop), which SpawnManager.creditCrush
+## credits to the player, Critter Chain included, when it happens within CRITTER_CREDIT_PX of the car.
+## Roosts (ROOSTS): crowns Buzzards sit in (Goons.DATA seeks "roost"); a ram on the trunk (ram) knocks them down.
 
 const DEFS := {
 	&"logpile": {"kind": "logs"}, &"watertower": {"kind": "wave"}, &"billboard": {"kind": "fall"},
@@ -43,10 +46,15 @@ const DROP_TIP := Vector2(265.0, -16.0)     #the jib's tip, crane-local px (worl
 const DROP_SECONDS := 0.7
 const DROP_BOX := Rect2(-240.0, -94.0, 480.0, 188.0) #the container, container-local px
 const DROP_CAR_DAMAGE := 10.0
-## Goons with "releases": the car must be this close to the pile, the goon this close to it, to try
+## Goons that release piles: the car must be this close to the pile, the goon this close to it, to try (the
+## "release" rows in Goons.DATA seeks carry the same numbers)
 const LURE_CAR := 900.0
 const LURE_GOON := 650.0
 const REACH := 150.0                        #px from the pile's centre where a goon can cut it loose
+## Roosts by prop id: how many Buzzards a crown holds, the ram (px/s into the trunk) that knocks them down, how
+## long they lie stunned, and how far from the trunk they sit. Scarecrows (Orchard Lanes) join with a row here.
+const ROOSTS := {&"deadtree": {"perches": 3, "knock": 250.0, "stun": 1.5, "ring": 46.0}}
+const ROOST_SECONDS := Vector2(9.0, 14.0)  #how long a Buzzard sits before it flies off again
 
 ## A spilling prop broke: let its contents loose. `dir` is where they go (the car's travel, or toward the car
 ## when a goon cut it loose); `byPlayer` whether the player gets the crushes (always, today: the chaos is theirs).
@@ -75,23 +83,59 @@ static func productScene(id: StringName) -> PackedScene:
 static func tileManager() -> Node:
 	return Root.levelRoot.get_node_or_null("TileManager") if is_instance_valid(Root.levelRoot) else null
 
-## Kills a goon with crush credit (a spill counts as the player's, like a blast)
-static func flatten(goon: Node2D, from: Vector2, cause: StringName = &"crush") -> void:
+## Kills a goon with crush credit: a spill counts as the player's, like a blast, near the car (creditCrush).
+## `source` names the kill in the Critter Chain (PickupEffects.CHAIN_NAMES).
+static func flatten(goon: Node2D, from: Vector2, cause: StringName = &"crush", source: StringName = &"logs") -> void:
 	if goon.get("dead"): return
 	goon.set("killedFrom", from)
 	goon.destroy(cause)
-	if is_instance_valid(Root.spawnManager): Root.spawnManager.creditCrush(goon.global_position, goon)
+	if is_instance_valid(Root.spawnManager): Root.spawnManager.creditCrush(goon.global_position, goon, source)
 
 static func goonsNear(pos: Vector2, radius: float) -> Array:
 	return Root.spawnManager.goonsNear(pos, radius) if is_instance_valid(Root.spawnManager) else []
 
-## A goon cut a log pile loose: it spills toward the car
+## A goon cut a log pile loose (or knocked a hive over): it spills toward the car
 static func goonRelease(pile: Node2D, goon: Node2D, car: Node2D) -> void:
 	if pile.get_meta(&"smashed", false): return
 	var to: Vector2 = (car.global_position - pile.global_position) if is_instance_valid(car) else Vector2.ZERO
 	pile.set_meta(&"spillDir", to)
 	BreakableProp.smashNode(pile, null)
-	if fx(): fx().label(goon.global_position, "TIMBER!")
+	if fx() && BreakableProp.propId(pile) == &"logpile": fx().label(goon.global_position, "TIMBER!")
+
+#--- roosts -----------------------------------------------------------------------------------------
+
+## The car rammed a prop at `speed` (PropReactions, a crown's hit): a crane drops its container, a roost drops
+## its Buzzards
+static func ram(prop: Node2D, speed: float) -> void:
+	var id := BreakableProp.propId(prop)
+	if DEFS.get(id, {}).get("kind", "") == "drop": ramCrane(prop, speed)
+	if ROOSTS.has(id): knockRoost(prop, speed)
+
+## Where perch `slot` of a roost is
+static func roostSpot(prop: Node2D, slot: int) -> Vector2:
+	var def: Dictionary = ROOSTS.get(BreakableProp.propId(prop), {})
+	return prop.global_position + Vector2.from_angle(prop.global_rotation + 0.5 + slot * TAU / maxi(int(def.get("perches", 3)), 1)) * float(def.get("ring", 46.0))
+
+## The goons roosting on (or flying in to) a prop
+static func roosting(prop: Node2D) -> Array:
+	var out := []
+	if not is_instance_valid(Root.spawnManager): return out
+	for goon in Root.spawnManager.goons:
+		if is_instance_valid(goon) && not goon.dead && goon.verb != null && goon.verb.get("roostAt") == prop: out.push_back(goon)
+	return out
+
+## A ram on a roost's trunk at its knock speed: every Buzzard in the crown drops, stunned and crushable.
+## Returns how many fell.
+static func knockRoost(prop: Node2D, speed: float) -> int:
+	var def: Dictionary = ROOSTS.get(BreakableProp.propId(prop), {})
+	if def.is_empty() || speed < float(def.knock): return 0
+	var n := 0
+	for goon in roosting(prop):
+		if goon.state != &"roost": continue
+		goon.verb.dropFromRoost(float(def.stun))
+		n += 1
+	if n > 0 && fx(): fx().label(prop.global_position, "KNOCKED DOWN" if n == 1 else "KNOCKED DOWN x%d" % n, 20)
+	return n
 
 #--- logs --------------------------------------------------------------------------------------------
 
@@ -137,7 +181,7 @@ class Roller extends Node2D:
 		if sprite: sprite.scale.y = 1.3333 * (1.0 + 0.08 * sin(along * 0.08)) #the bark turning over
 		for goon in Spill.goonsNear(global_position, Spill.LOG_CRUSH + 140.0):
 			var off: Vector2 = goon.global_position - global_position
-			if absf(off.dot(dir)) < Spill.LOG_CRUSH && absf(off.dot(dir.orthogonal())) < 140.0: Spill.flatten(goon, global_position - dir * 40.0)
+			if absf(off.dot(dir)) < Spill.LOG_CRUSH && absf(off.dot(dir.orthogonal())) < 140.0: Spill.flatten(goon, global_position - dir * 40.0, &"crush", &"logs")
 		var car = Root.playerCar
 		if not hitCar && is_instance_valid(car) && car.global_position.distance_to(global_position) < 110.0 && t < 0.9:
 			hitCar = true
@@ -167,7 +211,7 @@ class Roller extends Node2D:
 
 static func wave(pos: Vector2) -> void:
 	for goon in goonsNear(pos, WAVE_RADIUS):
-		if WorldHooks.lineClear(pos, goon.global_position): flatten(goon, pos, &"boom")
+		if WorldHooks.lineClear(pos, goon.global_position): flatten(goon, pos, &"boom", &"splash")
 	if PropReactions.current: PropReactions.current.splash(pos, WAVE_RADIUS)
 	if fx(): fx().label(pos, "SPLASH!", 24)
 
@@ -182,7 +226,7 @@ static func fall(board: Node2D) -> void:
 	var box := FALL_BOX
 	if side < 0.0: box = Rect2(box.position.x, -box.end.y, box.size.x, box.size.y)
 	for goon in goonsNear(board.global_position, box.size.length()):
-		if box.has_point(board.to_local(goon.global_position)): flatten(goon, board.global_position)
+		if box.has_point(board.to_local(goon.global_position)): flatten(goon, board.global_position, &"crush", &"fall")
 	if is_instance_valid(car) && box.has_point(board.to_local(car.global_position)): car.damage(FALL_CAR_DAMAGE)
 	if PropReactions.current: PropReactions.current.puff(board.to_global(box.get_center()), Vector2.from_angle(board.global_rotation + PI * 0.5 * side), 1.0, true)
 	if fx(): fx().label(board.global_position, "FLATTENED", 22)
@@ -234,7 +278,7 @@ class Swarm extends Node2D:
 		for goon in Spill.goonsNear(global_position, 40.0):
 			if not goon.get("dead") && kills < Spill.SWARM_KILLS:
 				kills += 1
-				Spill.flatten(goon, global_position)
+				Spill.flatten(goon, global_position, &"crush", &"bees")
 		stingT -= delta
 		if is_instance_valid(car) && car.global_position.distance_to(global_position) < 70.0 && stingT <= 0.0:
 			stingT = Spill.STING_GAP
@@ -289,7 +333,7 @@ class Drop extends Node2D:
 		set_physics_process(false)
 		box.scale = Vector2.ONE
 		for goon in Spill.goonsNear(global_position, Spill.DROP_BOX.size.length() * 0.5):
-			if Spill.DROP_BOX.has_point(box.to_local(goon.global_position)): Spill.flatten(goon, global_position)
+			if Spill.DROP_BOX.has_point(box.to_local(goon.global_position)): Spill.flatten(goon, global_position, &"crush", &"drop")
 		var car = Root.playerCar
 		if is_instance_valid(car) && Spill.DROP_BOX.grow(30.0).has_point(box.to_local(car.global_position)): car.damage(Spill.DROP_CAR_DAMAGE)
 		var at := global_position
