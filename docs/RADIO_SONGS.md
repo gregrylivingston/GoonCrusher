@@ -36,6 +36,7 @@ Fast, chaotic 2000s-style punk rock, aggressive distorted electric guitars, punc
 | Welcome to Nowhere | `sound/radio/gooncrusher/songs/Welcome to Nowhere.ogg` | 3:23 | heartland punk, 135 BPM: the slower song |
 | Gas Station Romance | `sound/radio/gooncrusher/songs/Gas Station Romance.ogg` | 3:16 | Southern punk / garage rock love song, 145 BPM |
 | She Left Me at the Truck Stop | `sound/radio/gooncrusher/songs/She Left Me at the Truck Stop.ogg` | 2:31 | country-punk heartbreak, 155 BPM |
+| No Brakes | `sound/radio/gooncrusher/songs/No Brakes.ogg` | 3:12 | punk-metal rage, 175 BPM |
 
 ### Crush Hour
 
@@ -790,7 +791,101 @@ Tryna to make it through the night
 
 **Note:** clean: bad coffee is the strongest drink in it.
 
+### No Brakes
+
+A goon-crushing rage song: his mechanic says the brakes are shot, so he rips them out and never stops again. The station's third anthem after Crush Hour and Gooncrusher. Written together in this session, with the author's edits.
+
+**Style** (as drafted; the take may have used a tweaked version):
+
+```
+Aggressive 2000s punk-metal crossover, 175 BPM, down-tuned chugging distorted guitars, pounding double-kick drums, driving bass, gritty shouted male vocals with a screamed chorus, gang vocal chants on the bridge, revving engine and tire screech intro, comedic over-the-top rage, short shredding guitar solo, spoken deadpan outro, polished video game soundtrack production, ridiculous and fun. No emo, no ballad, no modern pop.
+```
+
+**Lyrics:**
+
+```
+[Intro: engine revving, tire screech]
+
+[Verse 1]
+Mechanic said son, your pads are shot
+I said good, that's just what I thought
+You can rip out what's left and throw it in the bed
+I never stop, not even on red
+
+[Chorus]
+No brakes!
+Nothin' to slow me down
+No brakes!
+Can't turn this thing around
+No brakes!
+Foot on the floor and the needle in the red
+We're going full speed ahead! No brakes!
+
+[Verse 2]
+There's a goon in the crosswalk wavin' his arms
+Yellin' "slow down mister, we don't mean no harm"
+I'd love to oblige but I'm sorry my friend
+The brakes are gone and I'm seein' red
+
+[Chorus]
+No brakes!
+Nothin' to slow me down
+No brakes!
+Can't turn this thing around
+No brakes!
+Foot on the floor and the needle in the red
+We're going full speed ahead! No brakes!
+
+[Verse 3]
+Hit the drive-through doin' sixty-five
+Grabbed a burger through the window without saying hi
+Rolled through the car wash, got a free rinse
+Ain't nobody seen my taillights since
+
+[Bridge]
+Mama said son, you better slow it down
+Before that Sheriff chases you down
+I said mama don't you worry but I can't stop
+Don't matter if it's the preacher or a cop
+
+[Chorus]
+No brakes!
+Nothin' to slow me down
+No brakes!
+Can't turn this thing around
+No brakes!
+Foot on the floor and the needle in the red
+We're going full speed ahead!
+
+[Guitar Solo]
+
+[Chorus]
+No brakes!
+Nothin' to slow me down
+No brakes!
+Can't turn this thing around
+No brakes!
+Foot on the floor and the needle in the red
+We're going full speed ahead! NO BRAKES!
+```
+
+**Processing:** −15.8 → −16.2 LUFS (true peak −4.5 dBTP), no tail silence to trim.
+
+**Note:** clean. Running red lights and outrunning the sheriff are played as cartoon bravado, in the same spirit as the game.
+
+## Song categories
+
+The station's songs fall into three kinds (the author's breakdown). Keep new songs in one of them:
+
+1. **Goon-crushing driving rage, metal and punk:** Crush Hour, Gooncrusher, No Brakes.
+2. **Small-town and country life with a big dose of driving,** metal-tinged country, blues or punk: Full Tank, Empty Head, Cheap Beer, Premium Gas, Trailer Park Superstar, My Baby Loves My Truck.
+3. **Highway romance and small towns are great,** the softest and most country: Welcome to Nowhere, Gas Station Romance, She Left Me at the Truck Stop.
+
+The voice in all three: a first-person working-class guy and his car, concrete everyday details (twenty bucks, a cracked windshield, the county line), the title as the chorus hook, and a deadpan punchline at the end of a verse. Goons are something he drives through, not the point of view.
+
 ## Ideas for the next songs
+
+Older brainstorm, written before the three categories above; several (surf, ska, the goon lullaby) fall outside them, so check an idea against the categories before making it.
 
 Each needs lyrics, then a style prompt from the template above.
 
