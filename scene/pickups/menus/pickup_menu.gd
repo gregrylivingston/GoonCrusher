@@ -23,6 +23,16 @@ const ROW_STEP := 0.09     #seconds between rows appearing
 ## The prize lab (tests/prize_lab): the games open and close at once, with no hatch and no 3-2-1
 static var lab := false
 
+## Junk some games mix in with the prizes (the Claw's heap, the Coin Pusher's pile, the Goon Press's bombs):
+## win it and it costs you. Never fatal. {name, icon, what it does}
+const JUNK := {
+	"junk:bomb": {"name": "Dud Bomb", "icon": "res://texture/icon/bomb.svg", "line": "-15 health"},
+	"junk:leak": {"name": "Oil Leak", "icon": "res://texture/icon/oilslick.svg", "line": "-20 fuel"},
+	"junk:pickpocket": {"name": "Pickpocket", "icon": "res://texture/icon/purse.svg", "line": "-50 run coins"},
+}
+const JUNK_TINT := Color(1.0, 0.55, 0.5)
+static var junkTextures := {}
+
 var root := Control.new()
 var centre: CenterContainer
 var card := PanelContainer.new()
@@ -243,6 +253,24 @@ func awardGems(amount: int) -> void:
 	if not is_instance_valid(Root.playerCar) || amount <= 0: return
 	Root.playerCar.reward("gem", amount)
 	note("gem", HudTheme.GEM_ICON, "Gems", "+%d" % amount, Color("e83aa8"), amount)
+
+static func isJunk(id: String) -> bool:
+	return JUNK.has(id)
+
+static func junkTexture(id: String) -> Texture2D:
+	if not junkTextures.has(id): junkTextures[id] = load(JUNK[id].icon)
+	return junkTextures[id]
+
+## Junk was won: it costs now, and the board lists it
+func awardJunk(id: String) -> void:
+	var car = Root.playerCar
+	if is_instance_valid(car):
+		match id:
+			"junk:bomb": car.health = maxf(1.0, car.health - 15.0)
+			"junk:leak": car.fuel = maxf(0.0, car.fuel - 20.0)
+			"junk:pickpocket": car.coin = maxi(0, car.coin - 50)
+	note(id, junkTexture(id), JUNK[id].name, JUNK[id].line, HudTheme.BAD)
+	Transition.sound("thud", -6.0, 0.8)
 
 ## Lists a prize (or a loss) that the game credited itself.
 func note(key: String, icon: Texture2D, label: String, line: String, color: Color, count := 1) -> void:

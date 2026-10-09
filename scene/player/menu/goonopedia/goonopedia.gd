@@ -1023,9 +1023,13 @@ func buildPickups() -> void:
 #The gift box games (CrushPrizes.GAMES), weakest first, as a ladder that opens in order. They are bought
 #here like pickups ("prize:<id>" through Unlocks).
 const PRIZE_TEXT := {
-	"claw": "Steer the claw over the prize pile and drop it. One grab is free; run coins buy more.",
+	"claw": "The claw runs back and forth on its own: drop it at the right moment and hope it holds. Watch for junk.",
+	"shuffle": "A prize goes under a hubcap and they shuffle. Find it, then keep it or go again for a better one.",
 	"scratch": "Three cells scratch open one by one. Two alike pay once, three alike pay three times.",
-	"deal": "Three cards face up. Take one, raise the hand with run coins, or pay a gem for a new one.",
+	"press": "Slam the press on the conveyor: crush goons, crack prize crates, miss the bombs.",
+	"deal": "Keep the card you're dealt or redraw, three times. The backs show what kind of card comes next.",
+	"pachinko": "Aim the dropper and let the ball rattle through the pegs. The outer cups pay best.",
+	"pusher": "Drop coins on the pile and push prizes over the ledge. Can pay several things at once.",
 	"slot": "Three reels of prizes, with bets and paylines. A spin can pay three things.",
 }
 

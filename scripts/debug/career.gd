@@ -576,11 +576,16 @@ func answer(screen: Node) -> void:
 	elif screen is PickupDeal: name = "The Deal"
 	elif screen is ClawCrane: name = "Claw Crane"
 	elif screen is PitShop: name = "Pit Shop"
+	elif screen is HubcapShuffle: name = "Hubcap Shuffle"
+	elif screen is GoonPress: name = "Goon Press"
+	elif screen is PachinkoDrop: name = "Pachinko Drop"
+	elif screen is CoinPusher: name = "Coin Pusher"
 	note("CAREER_SCREEN session=%d t=%.0f %s" % [session, runTime, name])
 	if screen is SlotMachine: await answerSlots(screen)
 	elif screen is PickupDeal: await answerDeal(screen)
 	elif screen is ClawCrane: await answerClaw(screen)
 	elif screen is PitShop: await answerPit(screen)
+	elif screen is PickupMenu: await answerTapping(screen, name)
 	else: issue("ui", "an unknown screen in group slotMachine: %s" % screen.name)
 	if not await waitFor(func(): return screen.is_queued_for_deletion(), 12.0, "the %s to close" % name, screen):
 		if is_instance_valid(screen): screen.queue_free() #the harness takes it away so the run can go on
@@ -656,6 +661,15 @@ func answerClaw(crane: ClawCrane) -> void:
 		if crane.grabs == 0: break
 	if is_instance_valid(crane) && not crane.boardUp: await press(PickupMenu.ACT) #collect
 	if is_instance_valid(crane): await leaveBoard(crane, "the Claw Crane")
+
+## A game with no plan of its own yet (the drafts): tap the action key every 0.4 s until its board is up
+func answerTapping(game: PickupMenu, name: String) -> void:
+	await think(PickupMenu.ARM_SECONDS + 0.4)
+	var started := Time.get_ticks_msec()
+	while is_instance_valid(game) && not game.boardUp && Time.get_ticks_msec() - started < 40000:
+		await press(PickupMenu.ACT, 0.4)
+	if is_instance_valid(game) && not game.boardUp: issue("ui", "%s never reached its winnings board" % name)
+	await leaveBoard(game, name)
 
 func answerPit(shop: PitShop) -> void:
 	await think(PickupMenu.ARM_SECONDS + 0.3)

@@ -14,7 +14,7 @@ extends Node2D
 #`-- --lab-shots` plays by itself (tapping the action key, as the playtest harness does), saves a screenshot of
 #each play when it opens and on its winnings board to user://prize_lab/, and quits after SHOT_PLAYS.
 
-@export_enum("claw", "slot", "deal", "pitshop") var game := "claw"
+@export_enum("claw", "shuffle", "press", "deal", "pachinko", "slot", "pusher", "pitshop") var game := "claw"
 @export_range(0, 4) var tier := 0
 
 const SCRATCH_SAVE := "user://prize_lab/lab_save.tres"

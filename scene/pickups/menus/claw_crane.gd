@@ -57,15 +57,8 @@ const ITERATIONS := 5
 const FRICTION := 0.35     #share of sliding taken off at a contact
 const DAMP := 0.999
 const MAX_MOVE := 8.0      #px per step at most, so a squeeze never launches a prize
-const REST := 0.04         #px per step: slower than this a prize comes to rest (no jitter on the heap)
-## Junk mixed into the heap: drop it down the chute and it costs you. {name, icon, what it does}
-const JUNK := {
-	"junk:bomb": {"name": "Dud Bomb", "icon": "res://texture/icon/bomb.svg", "line": "-15 health"},
-	"junk:leak": {"name": "Oil Leak", "icon": "res://texture/icon/oilslick.svg", "line": "-20 fuel"},
-	"junk:pickpocket": {"name": "Pickpocket", "icon": "res://texture/icon/purse.svg", "line": "-50 run coins"},
-}
-const JUNK_COUNT := 4
-const JUNK_TINT := Color(1.0, 0.55, 0.5)
+const REST := 0.06         #px per step: a supported prize slower than this comes to rest (no jitter on the heap)
+const JUNK_COUNT := 4      #junk in the heap (PickupMenu.JUNK)
 
 var prizes: Array = []     #{id, pos, prev, r, m, rot}
 var clawX := (MIN_X + MAX_X) * 0.5
@@ -112,14 +105,11 @@ func build() -> void:
 	hints([[[ACT], "Drop"]])
 	updateInfo()
 
-static func isJunk(id: String) -> bool:
-	return JUNK.has(id)
-
 static func radiusOf(id: String) -> float:
 	return 20.0 if isJunk(id) else RADIUS[Pickups.rarity(id)]
 
 static func textureOf(id: String) -> Texture2D:
-	return load(JUNK[id].icon) if isJunk(id) else Pickups.texture(id)
+	return junkTexture(id) if isJunk(id) else Pickups.texture(id)
 
 static func nameOf(id: String) -> String:
 	return JUNK[id].name if isJunk(id) else Pickups.shortName(id)
@@ -292,6 +282,7 @@ func stepPhysics(dt: float) -> void:
 	for seg in now: near = near.expand(seg[0]).expand(seg[1])
 	near = near.grow(PRONG_W + 24.0)
 	for p in prizes:
+		p["held"] = false #set when the floor, another prize or the claw holds it up this step
 		var v: Vector2 = ((p.pos - p.prev) * DAMP).limit_length(MAX_MOVE)
 		p.prev = p.pos
 		p.pos += v + Vector2(0, FALL * dt * dt)
@@ -308,7 +299,7 @@ func stepPhysics(dt: float) -> void:
 			cabinet(p)
 	for p in prizes.duplicate():
 		var moved: Vector2 = p.pos - p.prev
-		if moved.length() < REST: p.prev = p.pos #at rest: no creeping or buzzing in the heap
+		if p.held && moved.length() < REST: p.prev = p.pos #resting on something: no creeping or buzzing in the heap
 		elif absf(moved.x) > REST * 4.0: p.rot = clampf(p.rot + moved.x / p.r * 0.25, -0.6, 0.6) #tips a little as it rolls
 		if p.pos.x < CHUTE_X && p.pos.y > FLOOR_Y + p.r + 8.0: inChute(p)
 
@@ -319,6 +310,8 @@ func pair(a: Dictionary, b: Dictionary) -> void:
 	if dist >= reach || dist < 0.0001: return
 	var n := d / dist
 	var total: float = a.m + b.m
+	if n.y > 0.4: a.held = true #b is under a
+	elif n.y < -0.4: b.held = true
 	a.pos -= n * (reach - dist) * b.m / total
 	b.pos += n * (reach - dist) * a.m / total
 
@@ -334,6 +327,7 @@ func pushOut(p: Dictionary, a: Vector2, b: Vector2, ma: Vector2, mb: Vector2, si
 	if dist >= reach: return
 	var n := d / dist if dist > 0.0001 else Vector2(-ab.y, ab.x).normalized()
 	p.pos += n * (reach - dist)
+	if n.y < -0.4: p.held = true
 	if side != 0.0 && clawXform().basis_xform_inv(n).x * side > 0.2: return #the outside of a prong
 	var slide: Vector2 = (p.pos - p.prev) - ma.lerp(mb, u)
 	slide -= n * slide.dot(n)
@@ -342,8 +336,9 @@ func pushOut(p: Dictionary, a: Vector2, b: Vector2, ma: Vector2, mb: Vector2, si
 ## The floor (open over the chute), the cabinet's sides and the chute's glass
 func cabinet(p: Dictionary) -> void:
 	var r: float = p.r
-	if p.pos.x >= CHUTE_X && p.pos.y > FLOOR_Y - r:
-		p.pos.y = FLOOR_Y - r
+	if p.pos.x >= CHUTE_X && p.pos.y > FLOOR_Y - r - 0.5:
+		p.held = true
+		p.pos.y = minf(p.pos.y, FLOOR_Y - r)
 		p.pos.x = lerpf(p.pos.x, p.prev.x, FRICTION)
 	p.pos.x = clampf(p.pos.x, r, W - r)
 	#the glass: a wall at CHUTE_X from its top to the floor, with a rounded top
@@ -361,23 +356,12 @@ func inChute(p: Dictionary) -> void:
 		return
 	prizes.erase(p)
 	if isJunk(p.id):
-		junk(p.id)
+		awardJunk(p.id)
+		say("Junk! %s: %s" % [JUNK[p.id].name, JUNK[p.id].line])
 		return
 	won.push_back(p.id)
 	award(p.id)
 	Transition.sound("pop", -4.0)
-
-## Junk down the chute: it costs now, and the board lists it (never fatal)
-func junk(id: String) -> void:
-	var car = Root.playerCar
-	if is_instance_valid(car):
-		match id:
-			"junk:bomb": car.health = maxf(1.0, car.health - 15.0)
-			"junk:leak": car.fuel = maxf(0.0, car.fuel - 20.0)
-			"junk:pickpocket": car.coin = maxi(0, car.coin - 50)
-	note(id, textureOf(id), JUNK[id].name, JUNK[id].line, HudTheme.BAD)
-	say("Junk! %s: %s" % [JUNK[id].name, JUNK[id].line])
-	Transition.sound("thud", -6.0, 0.8)
 
 #---------- drawing ----------
 
