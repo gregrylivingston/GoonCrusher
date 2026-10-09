@@ -15,6 +15,16 @@ class LevelStub extends Node2D:
 	var hasEnded := false
 	func explode(_pos: Vector2) -> void: pass
 
+## A stand-in TileManager: the once-only record (Spill.markUsed / isUsed), chunk-local like the real one
+class TmStub extends Node:
+	var used := []
+	func chunkOf(at: Vector2) -> Vector2i: return Vector2i(floori(at.x / ChunkRecipe.CHUNK.x), floori(at.y / ChunkRecipe.CHUNK.y))
+	func markSpillUsed(at: Vector2) -> void: used.push_back([chunkOf(at), at - Vector2(chunkOf(at)) * ChunkRecipe.CHUNK])
+	func spillUsed(chunk: Vector2i, local: Vector2) -> bool:
+		for u in used:
+			if u[0] == chunk && u[1].distance_to(local) < 8.0: return true
+		return false
+
 ## A stand-in WorldMap: terrain from a rule over world px
 class RuleMap extends RefCounted:
 	var rule: Callable
@@ -58,7 +68,7 @@ func after_each():
 func level(id: StringName) -> LevelStub:
 	var s := LevelStub.new()
 	s.def = Levels.defAt(Levels.indexOf(id))
-	var tm := Node.new()
+	var tm := TmStub.new()
 	tm.name = "TileManager"
 	s.add_child(tm)
 	add_child_autofree(s)
@@ -332,3 +342,32 @@ func test_buzzards_roost_on_scarecrows_and_a_ram_drops_them():
 	assert_true(crow.get_node("Sprite2D").has_meta(&"spinning"), "the scarecrow spins")
 	BreakableProp.smashNode(crow, car)
 	assert_false(crow.is_in_group(BreakableProp.ROOST_GROUP), "a smashed one is no roost")
+
+#--- one crate ---------------------------------------------------------------------------------------------
+
+func test_chunk_crates_are_the_baked_crate_and_pay_once():
+	var car := makeCar(Vector2(0, 3000))
+	var objects: Node2D = add_child_autofree(Node2D.new())
+	var rng := RandomNumberGenerator.new()
+	for s in 400:
+		rng.seed = s
+		PickupWorld.decorateChunk(objects, rng)
+		if objects.get_children().any(func(n): return BreakableProp.propId(n) == &"crate"): break
+		for n in objects.get_children(): n.free()
+	var crates := objects.get_children().filter(func(n): return BreakableProp.propId(n) == &"crate")
+	assert_true(crates.size() >= 2, "a chunk's crates")
+	var crate: StaticBody2D = crates[0]
+	assert_true(crate.is_in_group(&"prop_crate"), "Bandits know them")
+	assert_true(BreakableProp.isBreakable(crate) && crate.get_meta(&"oneShot", false), "a baked breakable, remembered by position")
+	assert_eq(BreakableProp.PICKUP_SPILL[&"crate"], 0.35)
+	assert_eq(BreakableProp.spillPickup(&"crate", Vector2.ZERO, Vector2.RIGHT, 0.99), "", "most crates pay coins only")
+	assert_ne(BreakableProp.spillPickup(&"crate", Vector2.ZERO, Vector2.RIGHT, 0.0), "", "some pay a pickup too")
+	var at := crate.global_position
+	BreakableProp.smashNode(crate, car)
+	assert_true(Spill.isUsed(at), "a smashed one is remembered")
+	var again: Node2D = Spill.productScene(&"crate").instantiate()
+	BreakableProp.makeOneShot(again)
+	again.position = at
+	add_child(again)
+	await get_tree().process_frame
+	assert_false(is_instance_valid(again), "so a reloaded chunk doesn't bring it back")

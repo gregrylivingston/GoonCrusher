@@ -124,7 +124,10 @@ func screenshots(ids: PackedStringArray) -> void:
 			"bowling": addToLevel(WorldProps.BowlingLane.new(), beside)
 			"strongbox": addToLevel(WorldProps.Strongbox.new(), beside)
 			"crate":
-				for i in 3: addToLevel(WorldProps.Crate.new(), beside + Vector2(i * 95.0, 0))
+				for i in 3:
+					var crate: Node2D = Spill.productScene(&"crate").instantiate()
+					BreakableProp.makeOneShot(crate)
+					addToLevel(crate, beside + Vector2(i * 95.0, 0))
 			"truck", "goldgoon": startEvent(id, car)
 			"supply": spawnSupplyDrop(car)
 			"double":
@@ -219,10 +222,14 @@ static func decorateChunk(objects: Node2D, rng: RandomNumberGenerator) -> void:
 		if prop[1] != "crates" && not Unlocks.isPickupOpen(prop[1]): continue #a locked challenge isn't placed
 		var offset := Vector2(rng.randf_range(-1400.0, 1400.0), rng.randf_range(-600.0, 600.0))
 		match prop[1]:
-			"crates":
+			"crates": #the baked crate prop, so Bandits know these too (BreakableProp; one-shot: no taken-set bit)
+				var scene := Spill.productScene(&"crate")
+				if scene == null: continue
 				for i in rng.randi_range(2, 4):
-					var crate = WorldProps.Crate.new()
+					var crate: Node2D = scene.instantiate()
+					BreakableProp.makeOneShot(crate)
 					crate.position = offset + Vector2(i * 95.0, rng.randf_range(-30.0, 30.0))
+					crate.rotation = rng.randf_range(-0.3, 0.3)
 					objects.add_child(crate)
 			"speedtrap": addProp(objects, WorldProps.SpeedTrap.new(), offset)
 			"donut": addProp(objects, WorldProps.DonutZone.new(), offset)

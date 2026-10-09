@@ -13,7 +13,7 @@
 | `scene/pickups/car_buff_fx.gd` (`CarBuffFx`) | A child of the player's car. It draws the timed power-ups (plow blade, bubble, flames, spikes, the bomb on the roof) and runs the ones that act every tick: Magnet, Fire Trail, Wrecking Ball, Hot Potato and the Shortcut Map's arrows. |
 | `scene/pickups/gadgets.gd` (`Gadgets`) | What the Fire and Boost buttons do with each gadget and boost, Jump Jets and Hop landing, and when the AI driver fires one (`aiWantsUse`, `aiWantsMove`). |
 | `scene/pickups/pickup_nodes.gd` (`PickupNodes`) | Things gadgets leave in the world: Mine, OilSlick, Flare, Bait, Hubcap. |
-| `scene/pickups/world_props.gd` (`WorldProps`) | Skill challenges, events and crates: Strongbox, Golden Goon, Loot Truck, bowling lane and pins, Ring Run, Speed Trap, Donut Zone, Bullseye, Prize Wheel, Crate, Supply Drop, Turret. |
+| `scene/pickups/world_props.gd` (`WorldProps`) | Skill challenges, events and crates: Strongbox, Golden Goon, Loot Truck, bowling lane and pins, Ring Run, Speed Trap, Donut Zone, Bullseye, Prize Wheel, Supply Drop, Turret. |
 | `scene/pickups/pickup_world.gd` (`PickupWorld`) | The level's director: supply drops and events on timers, chunk props, the wave chest, beacons and Speed Trap records. |
 | `scene/pickups/menus/*`, `scene/player/slots/slot_machine.gd` | The prize games on one frame (`PickupMenu`, "Prize games" below): `ClawCrane`, `HubcapShuffle`, `GoonPress`, `PickupDeal` (The Deal), `PachinkoDrop`, `SlotMachine`, `CoinPusher`, and the `PitShop`; `PrizePhysics` (loose objects for Pachinko and the Coin Pusher) and `CardArt` (The Deal's painted card backs). |
 | `scripts/global/crush_prizes.gd` (`CrushPrizes`), `scene/player/slots/gift_box.gd` (`GiftBox`) | Gift boxes: crush XP, the box curve and tiers, the prize game ladder and its unlocks; the box reveal. |
@@ -181,7 +181,7 @@ Hubcap Shuffle, Goon Press, Pachinko Drop and Coin Pusher are first drafts (2026
 - **The wave chest:** each wave survived (`Region._process`, one clock for the whole run) also drops an Uncommon-or-better pickup ahead of the car.
 - **Records:** the Speed Trap keeps a record per level in `meta.records.speedtrap`.
 
-`WorldProps.RamTarget` (Strongbox, Golden Goon, Loot Truck, pins) is a `CharacterBody2D` on the goon layer with `isDying` and `tryCrush`, so the car's crush code treats it like a goon. The Strongbox and the Loot Truck always resist (the car scuffs and keeps the contact bump); the Golden Goon and pins crush and count. Crates are `Area2D`s that break above 200 px/s.
+`WorldProps.RamTarget` (Strongbox, Golden Goon, Loot Truck, pins) is a `CharacterBody2D` on the goon layer with `isDying` and `tryCrush`, so the car's crush code treats it like a goon. The Strongbox and the Loot Truck always resist (the car scuffs and keeps the contact bump); the Golden Goon and pins crush and count. Crates are the baked `crate` prop (`BreakableProp`, 150 px/s), the one crate the game has, so Bandits raid every crate: a smash throws its 3 coins and, 35% of the time (`BreakableProp.PICKUP_SPILL`), a Common or Uncommon pickup (a Coin Stack past that) that is collected the usual way. `decorateChunk`'s crates have no taken-set bit, so they are one-shot (`BreakableProp.makeOneShot`): a smashed one is remembered by position (`Spill.markUsed`) and a reloaded chunk leaves it out.
 
 ## Unlocks
 

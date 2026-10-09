@@ -31,6 +31,10 @@ const BLAST := {&"barrel": Vector2(170.0, 8.0), &"tank": Vector2(320.0, 16.0)} #
 const DEFAULT_BLAST := Vector2(170.0, 8.0)
 const CHAIN_DELAY := 0.12
 const COIN_SCENE := "res://scene/powerup/coin.tscn"
+## Chance a smash also throws out a Common or Uncommon pickup (a Coin Stack past that): the crate, the one crate
+## the game has (Bandits raid it; PickupWorld.decorateChunk's crates are the same baked prop)
+const PICKUP_SPILL := {&"crate": 0.35}
+const SCRIPT_PATH := "res://scripts/world/breakable.gd"
 const GROUPS := {&"log": &"prop_log", &"manhole": &"prop_manhole", &"crate": &"prop_crate", &"carcass": &"prop_carcass", &"logpile": &"prop_logpile",
 	&"beehive": &"prop_hive", &"rock_red": &"prop_rock", &"den": &"prop_den", &"burrow": &"prop_burrow"}
 const ROOST_GROUP := &"prop_roost" #crowns Buzzards roost in (Spill.ROOSTS)
@@ -49,6 +53,20 @@ var smashSpeed: float:
 
 func smash(car: Node2D) -> void:
 	BreakableProp.smashNode(self, car)
+
+## A one-shot prop (makeOneShot) already smashed this run doesn't come back; one that stays joins the smash tags
+func _ready() -> void:
+	if not get_meta(&"oneShot", false): return
+	if Spill.isUsed(global_position):
+		queue_free()
+		return
+	if PropReactions.current: PropReactions.current.addHero(self)
+
+## A breakable placed outside the recipe (decorateChunk's crates) has no taken-set bit: it is remembered by its
+## position instead (Spill.markUsed), so a reloaded chunk doesn't bring a smashed one back to pay again
+static func makeOneShot(node: Node) -> void:
+	node.set_script(load(SCRIPT_PATH))
+	node.set_meta(&"oneShot", true)
 
 #--- queries -----------------------------------------------------------------------------------------
 
@@ -101,8 +119,11 @@ static func smashNode(node: Node2D, car: Node2D = null) -> void:
 	var dir: Vector2 = node.get_meta(&"spillDir", car.velocity if is_instance_valid(car) else Vector2.ZERO)
 	breakVisual(node)
 	debris(node)
-	if not node.get_meta(&"dropped", false): spillCoins(propId(node), pos, dir) #the semi's dropped cargo (Drop the Load) pays nothing
+	if not node.get_meta(&"dropped", false): #the semi's dropped cargo (Drop the Load) pays nothing
+		spillCoins(propId(node), pos, dir)
+		spillPickup(propId(node), pos, dir)
 	markTaken(node)
+	if node.get_meta(&"oneShot", false): Spill.markUsed(pos)
 	#a log pile, water tower, billboard or hive lets its contents loose (Spill)
 	Spill.release(node, dir)
 	if Spill.ROOSTS.has(propId(node)): Spill.knockRoost(node, INF) #a smashed scarecrow drops its Buzzards
@@ -125,6 +146,16 @@ static func breakVisual(node: Node) -> void:
 ## Coin pickups thrown out along `dir` (the car's travel, or a charge's); the car collects them like any other
 static func spillCoins(id: StringName, pos: Vector2, dir: Vector2) -> int:
 	return throwCoins(COIN_SPILL.get(id, 0), pos, dir)
+
+## Sometimes a pickup too (PICKUP_SPILL), collected the usual way; its id, or "" for none
+static func spillPickup(id: StringName, pos: Vector2, dir: Vector2, roll := -1.0) -> String:
+	if roll < 0.0: roll = randf()
+	if roll >= float(PICKUP_SPILL.get(id, 0.0)) || not is_instance_valid(Root.levelRoot): return ""
+	var pick := Pickups.rollAtLeast(Pickups.R.COMMON)
+	if Pickups.rarity(pick) > Pickups.R.UNCOMMON: pick = "coinstack"
+	var ahead: Vector2 = dir.normalized() if dir.length() > 1.0 else Vector2.RIGHT
+	PickupEffects.spawnPickup(pick, pos + ahead * 70.0) #spawnPickup goes through Pickups.openOr
+	return pick
 
 ## `count` coin pickups thrown out along `dir` from `pos` (spillCoins; an orchard oak's apples, a cleared warren)
 static func throwCoins(count: int, pos: Vector2, dir: Vector2) -> int:

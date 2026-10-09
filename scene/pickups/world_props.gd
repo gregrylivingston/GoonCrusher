@@ -1,6 +1,7 @@
 class_name WorldProps extends RefCounted
 
-#Pickup things that live in the world: skill challenges, events, crates and supply drops
+#Pickup things that live in the world: skill challenges, events and supply drops (crates are the baked
+#crate prop: BreakableProp, PickupWorld.decorateChunk)
 #(docs/PICKUPS.md). Chunk props are children of their chunk's object node, so they unload with it;
 #events are children of the level. Every class draws itself; none needs a scene file.
 
@@ -462,31 +463,6 @@ class PrizeWheel extends Node2D:
 		draw_set_transform(Vector2.ZERO, -global_rotation, Vector2.ONE) #the pointer stays at the top
 		draw_colored_polygon(PackedVector2Array([Vector2(0, -R + 18), Vector2(-14, -R - 16), Vector2(14, -R - 16)]), Color(1.0, 0.95, 0.86))
 		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-
-## A breakable crate: smash it above 200 px/s for a Common or Uncommon pickup.
-class Crate extends Area2D:
-	const SMASH := 200.0
-	func _ready() -> void:
-		collision_layer = 0
-		collision_mask = 1
-		var shape = CollisionShape2D.new()
-		var box = RectangleShape2D.new()
-		box.size = Vector2(70, 70)
-		shape.shape = box
-		add_child(shape)
-		body_entered.connect(onBody)
-	func onBody(body) -> void:
-		if not body.has_method("getIsPlayer") || body.velocity.length() < SMASH: return
-		set_deferred("monitoring", false)
-		if is_instance_valid(Root.spawnManager): Root.spawnManager.fx.bits(global_position, 0)
-		var id := Pickups.rollAtLeast(Pickups.R.COMMON)
-		if Pickups.rarity(id) > Pickups.R.UNCOMMON: id = Pickups.openOr("coinstack")
-		PickupEffects.collect(body, id, global_position)
-		var flyers = RewardFlyers.instance()
-		if flyers: flyers.launch(Pickups.texture(id), get_global_transform_with_canvas(), Pickups.uiGroup(id))
-		queue_free()
-	func _draw() -> void:
-		draw_texture_rect(Pickups.texture("crate"), Rect2(-40, -40, 80, 80), false)
 
 ## A Supply Drop: a crate on a parachute that becomes a Rare-or-better pickup when it lands.
 class SupplyDrop extends Node2D:
