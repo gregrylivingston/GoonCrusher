@@ -1105,6 +1105,15 @@ const PW=1792, PH=1024, PSC=.75, WW=PW/PSC, WH=PH/PSC;   /* poster px per world 
 const FOAM=[216,214,200], AOC=[18,13,16];
 function n1(x,s){ return fbm(x,0,s,4); }
 function bandDist(Y,yc,hw){ return Math.abs(Y-yc)-hw; }
+/* a rutted dirt track d px from its centre line: half width hw, wheel ruts ro px out (Road Atlas posters) */
+function rutsAt(o,d,hw,ro,X,Y,seed){ if(d<hw){ o.a='dirt'; o.b=fbm(X*.008,Y*.008,seed,2)>.62?'mud':null; o.t=.6; o.tint=[1.02,1,.95]; o.lip=0; if(Math.abs(d-ro)<9) o.tint=[.84,.82,.78]; }
+	else if(d<hw+14) o.ao=Math.max(o.ao,.12*(1-(d-hw)/14)); }
+/* signed distance into an axis-aligned rect (negative outside) */
+function rectE(X,Y,x0,y0,x1,y1){ const e=Math.min(X-x0,x1-X,Y-y0,y1-Y); if(e>=0) return e; const dx=Math.max(x0-X,0,X-x1), dy=Math.max(y0-Y,0,Y-y1); return -Math.hypot(dx,dy); }
+/* a building e px inside its outline: roof material, a lit eave and the roof's own shade inside it; AO on the ground
+   around it. true when the point is on the roof */
+function bldg(o,e,mat){ if(e>=0){ o.a=mat; o.b=null; o.t=0; o.tint=null; o.paint=null; o.foam=0; o.wet=0; o.ao=0; o.lip=0; if(e<5) o.lip=.35*(1-e/5); else if(e<16) o.ao=.22*(1-(e-5)/11); return true; }
+	if(e>-18) o.ao=Math.max(o.ao,.55*(1+e/18)); return false; }
 const POSTER={
 prairie:{mats:['grass','moss','dirt','shallows','water','mud'],seed:11,
 	creek(X){ return 700+160*Math.sin(X*.0024+.6)+120*(n1(X*.0015,701)-.5); },
@@ -1284,7 +1293,374 @@ crusher:{mats:['dirt','lot','gravel','conveyor','oil'],seed:83,
 		for(let X=560;X<WW;X+=160) for(const cy of [760,980]) for(const s of [-1,1]) p.dot(X,cy+s*64,6,'#3a3836');
 		p.car('semi',1150,980,0,1); const trk=[]; for(let X=700;X<1080;X+=20) trk.push([X,980]); p.tracks(trk,10,.14,30);
 		p.scatterDecor('oilstain',14,(X,Y)=>p.ground(X,Y).a==='dirt'); p.scatterDecor('pebbles',20,(X,Y)=>p.ground(X,Y).a==='dirt');
-		p.goon('plowboss',1700,860,Math.PI,2); p.goon('magnet',2200,620,2.4,1); p.goon('shredder',900,620,.6,3); p.goon('sawbot',1250,1150,-.5,2); p.goon('harpooner',600,1100,-.2,4); p.goon('wrecker',1450,700,2,1); }}
+		p.goon('plowboss',1700,860,Math.PI,2); p.goon('magnet',2200,620,2.4,1); p.goon('shredder',900,620,.6,3); p.goon('sawbot',1250,1150,-.5,2); p.goon('harpooner',600,1100,-.2,4); p.goon('wrecker',1450,700,2,1); }},
+/* ---- Road Atlas posters: one per new level (docs/WORLD_ART.md "Posters"). Shared pieces: rutted tracks (rutsAt),
+   water bands (wetBand), building blocks (blockAt) and the api's spaced/pack/line helpers ---- */
+orchard:{mats:['grass','dirt','mud','moss','gravel'],seed:101,
+	laneY(X){ return 700+35*Math.sin(X*.0021+.3); }, laneX(Y){ return 1240+30*Math.sin(Y*.003+1); },
+	ground(X,Y,o){ o.a='grass'; const n=fbm(X*.003,Y*.003,1011,3); if(n>.6){ o.b='moss'; o.t=smooth(.6,.7,n)*.6; }
+		if(X<1120&&Y>840){ const f=Math.sin((Y+X*.08)*.085)*.5+.5; o.b='dirt'; o.t=.8; o.tint=[1-.1*f,1-.1*f,1-.09*f]; }
+		if(X<1120&&Y<580){ const r=Math.abs(((X-40)%150+150)%150-75); if(r>40){ o.tint=[1.05,1.05,.98]; } }
+		const d=Math.min(Math.abs(Y-this.laneY(X)),Math.abs(X-this.laneX(Y))); rutsAt(o,d,64,24,X,Y,1012);
+		if(d>=64&&d<80) o.ao=.12*(1-(d-64)/16); },
+	dress(p){ const R=p.rng, LY=X=>this.laneY(X), LX=Y=>this.laneX(Y), lx=LX(700);
+		for(const s of [-1,1]){ for(let X=40;X<WW;X+=300){ if(Math.abs(X+150-lx)<260) continue; if(s>0&&Math.abs(X-400)<160) continue; if(s<0&&Math.abs(X-1700)<160) continue; p.prop('hedge',X+150,LY(X+150)+s*112,Math.atan2(LY(X+160)-LY(X+140),20),(X/300|0)%2,.75); }
+			for(let Y=0;Y<WH;Y+=300){ if(Math.abs(Y+150-700)<260) continue; if(s<0&&Math.abs(Y-1100)<160) continue; p.prop('hedge',LX(Y+150)+s*112,Y+150,Math.PI/2,(Y/300|0)%2,.75); } }
+		for(let k=0;k<3;k++) for(let j=0;j<7;j++){ const X=115+j*150+(R()-.5)*20, Y=110+k*170+(R()-.5)*20; if(X>1060) continue; p.prop('oak',X,Y,R()*6,(j+k)%3,.45+R()*.06); }
+		p.line('fence',1400,180,2300,180,330,.8); p.line('fence',1400,180,1400,520,330,.8); p.line('fence',1400,520,2300,520,330,.8,null,t=>t>.4&&t<.62);
+		for(let i=0;i<6;i++) p.prop('beehive',1560+(i%3)*150,280+((i/3)|0)*130,(R()-.5)*.3,i%2,.9);
+		p.prop('beehive',1860,420,0,0,1,'broken');
+		for(const [X,Y,v] of [[1700,860,0],[1780,900,1],[1730,960,2]]) p.prop('crate',X,Y,R(),v,.9); p.prop('crate',1880,880,0,0,1,'broken');
+		for(const b of [[300,980],[560,1120],[860,1000],[420,1260]]) p.prop('haybale',b[0],b[1],R()*3,(b[0]/100|0)%2,.85);
+		p.prop('stump',1500,1150,0,1,.9); p.prop('carcass',2050,1180,.6,1,.9); p.prop('oak',2200,1000,1,1,.8); p.prop('oak',1650,1280,2,0,.7);
+		p.scatterDecor('tufts',90,(X,Y)=>p.ground(X,Y).a==='grass'&&Math.min(Math.abs(Y-LY(X)),Math.abs(X-LX(Y)))>130);
+		const trk=[]; for(let X=200;X<=760;X+=20) trk.push([X,LY(X)+14]); p.tracks(trk,9,.28,22); p.dust(250,LY(250)+14,110);
+		p.car('pickup',800,LY(800)+14,Math.atan2(LY(810)-LY(790),20),1);
+		for(let i=0;i<5;i++) p.goon('yipper',LX(240+i*70)+(i%2?-30:30),240+i*70+(R()-.5)*20,Math.PI/2+(R()-.5)*.3,i*2);
+		p.goon('bandit',1810,830,-2.2,3); p.goon('bandit',1950,960,2.6,5); p.goon('jackalope',520,1000,.4,2); p.goon('jackalope',700,1180,-.6,6); p.goon('jackalope',1060,840,2.4,1);
+		p.goon('buzzard',2060,1160,1.2,2); p.goon('buzzard',1500,320,-.4,4); }},
+moosewoods:{mats:['needles','grass','moss','dirt','mud'],seed:113,
+	clear(X,Y){ return 1-Math.hypot((X-1320)/600,(Y-700)/330)+(fbm(X*.004,Y*.004,1131,3)-.5)*.45; },
+	trail(X){ return 1000-X*.24+60*Math.sin(X*.003); },
+	ground(X,Y,o){ o.a='needles'; const m=fbm(X*.004,Y*.004,1132,3); if(m>.62){ o.b='moss'; o.t=smooth(.62,.72,m)*.6; }
+		const c=this.clear(X,Y); if(c>0){ o.a='grass'; o.b=null; o.t=0; const g=fbm(X*.005,Y*.005,1133,3); if(g>.56){ o.b='moss'; o.t=.5; } } else if(c>-.12){ o.b='grass'; o.t=smooth(-.12,0,c); }
+		rutsAt(o,Math.abs(Y-this.trail(X)),50,20,X,Y,1134); },
+	dress(p){ const R=p.rng, T=X=>this.trail(X), ang=X=>Math.atan2(T(X+10)-T(X),10);
+		p.reserve(1880,420,150); p.reserve(640,930,160);
+		p.reserve(1900,700,110); p.spaced('pine',70,(X,Y)=>this.clear(X,Y)<-.06&&Math.abs(Y-T(X))>120,150,(X,Y)=>[R()*6,(R()*2)|0,.85+R()*.3]);
+		p.prop('ranger_tower',1880,420,.1,0,.8); p.prop('fallen_trunk',640,930,.5,0,.9); p.prop('fallen_trunk',2150,1200,-.3,1,.8);
+		for(const [X,Y] of [[1000,560],[1640,930],[1150,880],[1700,520]]) p.prop('stump',X,Y,R()*3,(X|0)%2,.8); p.prop('log',1450,960,.2,0,.8); p.prop('deadtree',980,420,1,0,.8);
+		p.scatterDecor('tufts',60,(X,Y)=>this.clear(X,Y)>.05); p.scatterDecor('pebbles',20,(X,Y)=>Math.abs(Y-T(X))<60);
+		const trk=[]; for(let X=380;X<=1060;X+=20) trk.push([X,T(X)]); p.tracks(trk,9,.26,22); p.car('van',1100,T(1100),ang(1100),1);
+		for(let i=0;i<6;i++){ const X=1250+i*95+(R()-.5)*40, Y=760+(i%3)*70+(R()-.5)*30; p.goon('thunderhoof',X,Y,Math.PI+.25+(R()-.5)*.2,i); p.dust(X+70,Y+10,80,[150,128,90,.4]); }
+		p.goon('bullmoose',1870,700,Math.PI+.15,2); p.dust(1950,690,120,[120,100,72,.45]); for(let i=0;i<5;i++) p.decor('pebbles',1910+R()*60,650+R()*90,R()*6,(R()*4)|0,1);
+		p.goon('tusker',900,700,.2,3); p.goon('yipper',1480,460,1.9,1); p.goon('yipper',1550,430,2.1,5); }},
+mudlick:{mats:['mud','mudpit','moss','shallows','water','dirt'],seed:127,
+	wet(X,Y){ return fbm(X*.0016,Y*.002,1271,5)+(.5-Math.abs(fbm(X*.001,Y*.0013,1272,3)-.5))*.2; },
+	track(X){ return 700+120*Math.sin(X*.0018+2)+40*(n1(X*.003,1273)-.5); },
+	ground(X,Y,o){ const cd=Math.hypot(X-330,(Y-260)*1.2), W=this.wet(X,Y)-.3*smooth(460,280,cd); o.a='moss'; o.b='mud'; o.t=smooth(.36,.48,W);
+		if(W>.5){ o.a='mud'; o.b='mudpit'; o.t=smooth(.52,.58,W)*.9; o.wet=.2; }
+		if(W>.61){ o.a='shallows'; o.b='water'; o.t=smooth(.63,.72,W); o.wet=0; }
+		if(Math.abs(W-.61)<.004) o.foam=.35*smooth(.3,.6,fbm(X*.04,Y*.04,1274,2));
+		if(cd<330&&W<.61){ const k=smooth(330,250,cd); if(k>=1){ o.a='dirt'; o.b='mud'; o.t=.3*fbm(X*.01,Y*.01,1275,2); } else { o.b='dirt'; o.t=k; } o.wet*=1-k; }
+		const dt=Math.abs(Y-this.track(X)); if(dt<54){ if(W>.61){ o.a='shallows'; o.b=null; o.t=0; } else { o.a='mud'; o.b='mudpit'; o.t=.4; const rut=Math.abs(dt-22); if(rut<9) o.tint=[.78,.76,.72]; } } },
+	dress(p){ const R=p.rng, T=X=>this.track(X), ang=X=>Math.atan2(T(X+10)-T(X),10), dry=(X,Y)=>this.wet(X,Y)<.46&&Math.abs(Y-T(X))>90&&Math.hypot(X-330,Y-260)>330, bank=(X,Y)=>{ const W=this.wet(X,Y); return W>.55&&W<.6; };
+		p.prop('tent',220,170,.3,0,.8); p.prop('tent',470,330,1.2,1,.75); p.prop('totem',360,90,0,0); p.prop('firepit',330,280,0,0); p.prop('tyres',140,380,0,1,.9); p.prop('crate',560,170,.4,1,.9);
+		for(let i=0;i<9;i++){ const a=.6+i*.32; if(i===4) continue; p.prop('fortwall',330+Math.cos(a)*330,260+Math.sin(a)*300,a+Math.PI/2,i%2,.55); }
+		p.spaced('cypress',10,bank,170,(X,Y,i)=>[i*1.7,i%2,.75+R()*.3]); p.scatterProp('deadtree',2,dry,()=>[R()*6,(R()*2)|0,.8]); p.scatterProp('log',3,(X,Y)=>this.wet(X,Y)>.66,()=>[R()*3,(R()*2)|0,.7]);
+		p.scatterDecor('reeds',60,(X,Y)=>{ const W=this.wet(X,Y); return W>.57&&W<.65; }); for(let i=0;i<30;i++){ const X=R()*WW, Y=R()*WH; if(this.wet(X,Y)>.68) p.lily(X,Y,10+R()*10); }
+		const trk=[]; for(let X=700;X<=1240;X+=20) trk.push([X,T(X)]); p.tracks(trk,11,.35,24); p.car('pickup',1290,T(1290),ang(1290),2);
+		for(let i=0;i<4;i++) p.dust(1210-i*30,T(1210-i*30)+(i%2?30:-30),50,[70,56,40,.55]);
+		p.goon('splitter',1560,T(1560)-20,Math.PI+.2,2); p.goon('goonling',1610,T(1610)+30,Math.PI,1); p.goon('goonling',1650,T(1650)-50,Math.PI-.4,5); p.goon('goonling',1680,T(1680)+10,Math.PI+.3,3);
+		p.goon('splitter',900,T(900)+110,-.4,4); p.goon('shellback',1900,560,2.8,2); p.goon('shellback',2150,980,3.6,6);
+		p.goon('grunt',420,200,2.4,1); p.goon('grunt',260,330,.4,3); p.goon('grunt',600,420,-.8,5); p.goon('grunt',760,300,.2,0); }},
+stilttown:{mats:['beach','shallows','water','bridge','grass'],seed:131,
+	bar(X){ return 980-X*.2+50*Math.sin(X*.0025)+30*(n1(X*.003,1311)-.5); },
+	decks:[[220,520,700,560,'h'],[640,250,680,580,'v'],[520,140,780,300,'p'],[1500,220,1540,700,'v'],[1360,90,1680,260,'p'],[1900,140,2389,180,'h'],[2000,40,2200,140,'p']],
+	onDeck(X,Y){ for(const [x0,y0,x1,y1] of this.decks){ const ex=Math.min(X-x0,x1-X), ey=Math.min(Y-y0,y1-Y); if(ex>=0&&ey>=0) return Math.min(ex,ey); } return -1; },
+	ground(X,Y,o){ const b=this.bar(X), d=Math.abs(Y-b)-(110+50*fbm(X*.004,1,1312,3));
+		o.a='shallows'; o.b='water'; o.t=smooth(30,240,d)*.95;
+		if(d<0){ o.a='beach'; o.b=null; o.t=0; if(d>-34) o.wet=.4*(1+d/34); if(d<-70&&fbm(X*.006,Y*.006,1313,3)>.55){ o.b='grass'; o.t=.45; } }
+		if(Math.abs(d)<6) o.foam=.55*(1-Math.abs(d)/6)*smooth(.3,.6,fbm(X*.05,Y*.05,1314,2)); else if(d>6&&d<22) o.foam=.18*smooth(.6,.75,fbm(X*.03,Y*.03,1315,2))*(1-(d-6)/16);
+		const e=this.onDeck(X,Y); if(e>=0){ o.a='bridge'; o.b=null; o.t=0; o.foam=0; o.wet=0; if(e<4) o.ao=.35; } else if(d>0){ let near=1e9; for(const [x0,y0,x1,y1] of this.decks){ const dx=Math.max(x0-X,0,X-x1), dy=Math.max(y0-Y,0,Y-y1); near=Math.min(near,Math.hypot(dx,dy)); } if(near<14) o.ao=.4*(1-near/14); } },
+	dress(p){ const R=p.rng, B=X=>this.bar(X), ang=X=>Math.atan2(B(X+10)-B(X),10);
+		for(const [x0,y0,x1,y1] of this.decks){ for(let X=x0+8;X<=x1;X+=60) for(const Y of [y0-4,y1+4]) p.dot(X,Y,5,'#4a3c30'); }
+		p.prop('beach_hut',650,220,0,0,.75); p.prop('beach_hut',1520,170,Math.PI/2,1,.8); p.prop('beach_hut',2100,90,0,0,.6); p.prop('barrel',560,540,0,1,.9); p.prop('crate',760,280,.3,0,.8); p.prop('crate',1440,240,1,1,.8);
+		p.prop('lifeguard_tower',1180,B(1180)-40,-.2,0,.9);
+		p.reserve(880,this.bar(880)+10,130); p.reserve(1180,this.bar(1180)-40,100); p.spaced('palm',9,(X,Y)=>Math.abs(Y-B(X))<70&&Math.abs(X-1000)>220,200,(X,Y,i)=>[R()*6,i%3,.75+R()*.2]);
+		p.scatterDecor('pebbles',16,(X,Y)=>Math.abs(Y-B(X))<90);
+		const trk=[]; for(let X=200;X<=820;X+=20) trk.push([X,B(X)+10]); p.tracks(trk,9,.22,22); p.car('van',880,B(880)+10,ang(880),0); p.dust(260,B(260)+10,90,[190,180,150,.4]);
+		p.goon('hubcap',1080,B(1080)+16,Math.PI+ang(1080),2); p.goon('grunt',1150,B(1150)+60,Math.PI,4); p.goon('dasher',1400,B(1400)-20,Math.PI+.3,1); p.goon('dasher',1460,B(1460)+40,Math.PI-.2,5);
+		p.goon('slinger',690,330,1.6,3); p.goon('slinger',1520,300,2.2,2); p.goon('grunt',400,540,.1,6); p.goon('grunt',1520,560,-1.5,0); }},
+lantern:{mats:['moss','mud','shallows','water','bridge','grass'],seed:137,grade:'night',
+	walk:[[0,900],[380,820],[700,640],[1050,600],[1300,420],[1700,380],[2000,250],[2389,220]],
+	lake(X,Y){ return fbm(X*.0014,Y*.0017,1371,5)+(.5-Math.abs(fbm(X*.0009,Y*.0012,1372,3)-.5))*.25; },
+	walkDist(X,Y){ let best=1e9; const w=this.walk; for(let i=1;i<w.length;i++){ const [ax,ay]=w[i-1], [bx,by]=w[i], dx=bx-ax, dy=by-ay, t=Math.max(0,Math.min(1,((X-ax)*dx+(Y-ay)*dy)/(dx*dx+dy*dy))); best=Math.min(best,Math.hypot(X-ax-dx*t,Y-ay-dy*t)); } return best; },
+	ground(X,Y,o){ const L=this.lake(X,Y); o.a='moss'; const m=fbm(X*.004,Y*.004,1373,3); if(m>.55){ o.b='grass'; o.t=smooth(.55,.66,m)*.6; }
+		if(L>.5){ o.b='mud'; o.t=smooth(.5,.56,L)*.85; o.wet=smooth(.52,.58,L)*.4; }
+		if(L>.57){ o.a='shallows'; o.b='water'; o.t=smooth(.59,.66,L); o.wet=0; }
+		if(Math.abs(L-.57)<.004) o.foam=.35*smooth(.3,.6,fbm(X*.04,Y*.04,1374,2));
+		const wd=this.walkDist(X,Y); if(wd<40){ o.a='bridge'; o.b=null; o.t=0; o.wet=0; o.foam=0; if(wd>35) o.ao=.5; } else if(wd<56&&L>.57) o.ao=.35*smooth(56,40,wd); },
+	dress(p){ const R=p.rng, w=this.walk, at=t=>{ const k=Math.min(w.length-2,Math.floor(t)), f=t-k; return [w[k][0]+(w[k+1][0]-w[k][0])*f,w[k][1]+(w[k+1][1]-w[k][1])*f,Math.atan2(w[k+1][1]-w[k][1],w[k+1][0]-w[k][0])]; };
+		for(let t=.3;t<w.length-1;t+=.55){ const [X,Y,a]=at(t), s=(Math.round(t/.55)%2)?1:-1; p.lantern(X-Math.sin(a)*s*58,Y+Math.cos(a)*s*58); }
+		const bank=(X,Y)=>{ const L=this.lake(X,Y); return L>.5&&L<.58&&this.walkDist(X,Y)>120; };
+		p.spaced('cypress',16,bank,190,(X,Y,i)=>[i*1.7,i%2,.8+R()*.4]); p.scatterDecor('reeds',70,(X,Y)=>{ const L=this.lake(X,Y); return L>.55&&L<.63&&this.walkDist(X,Y)>60; });
+		for(let i=0;i<40;i++){ const X=R()*WW, Y=R()*WH; if(this.lake(X,Y)>.63&&this.walkDist(X,Y)>60) p.lily(X,Y,10+R()*12); }
+		const sh=p.find((X,Y)=>bank(X,Y)&&X>1500&&Y>700,R); if(sh){ p.prop('shack',sh[0],sh[1],.3,1,.75); p.glowAdd(sh[0]+40,sh[1]-20,160,[255,200,120],.35); }
+		p.scatterProp('log',3,(X,Y)=>this.lake(X,Y)>.63,()=>[R()*3,(R()*2)|0,.7]); p.scatterProp('stump',4,bank,()=>[R()*3,0,.9]);
+		const [cx,cy,ca]=at(2.55); p.car('sedan',cx,cy,ca,1); p.headlights(cx,cy,ca); const trk=[]; for(let t=1.4;t<2.5;t+=.05){ const q=at(t); trk.push([q[0],q[1]]); } p.tracks(trk,8,.2,22);
+		p.goon('gremlin',cx-30,cy+18,ca+.4,2);
+		const [lx,ly]=at(3.3); p.goon('nightcrawler',lx+30,ly+90,-1.8,1); p.goon('nightcrawler',lx+200,ly+60,-2.6,4);
+		p.goon('skink',cx+330,cy-40,Math.PI+.2,3); p.goon('skink',900,900,-.6,1);
+		p.pack('rat',cx+560,cy-150,4,Math.PI+.5,70); p.pack('rat',520,1050,3,-1,60); }},
+sawmill:{mats:['needles','dirt','gravel','mud','grass'],seed:149,
+	yard(X,Y){ return 1-Math.hypot((X-1000)/680,(Y-640)/390)+(fbm(X*.004,Y*.004,1491,3)-.5)*.4; },
+	haul(X){ return 1180-X*.32+40*Math.sin(X*.004); },
+	ground(X,Y,o){ o.a='needles'; const m=fbm(X*.004,Y*.004,1492,3); if(m>.62){ o.b='grass'; o.t=.4; }
+		const yd=this.yard(X,Y); if(yd>0){ o.a='dirt'; o.b='gravel'; o.t=smooth(.5,.7,fbm(X*.005,Y*.005,1493,3))*.7; const sd=Math.hypot(X-620,Y-430); if(sd<240){ o.tint=[1.12,1.06,.92]; o.b=null; } } else if(yd>-.08){ o.b='dirt'; o.t=smooth(-.08,0,yd); }
+		rutsAt(o,Math.abs(Y-this.haul(X)),56,24,X,Y,1494); },
+	dress(p){ const R=p.rng, H=X=>this.haul(X), ang=X=>Math.atan2(H(X+10)-H(X),10);
+		p.spaced('pine',50,(X,Y)=>this.yard(X,Y)<-.1&&Math.abs(Y-H(X))>120,150,(X,Y)=>[R()*6,(R()*2)|0,.85+R()*.3]);
+		p.prop('shack',620,380,.05,1,.85); p.dust(700,520,130,[214,190,130,.5]); p.prop('crane',1300,330,Math.PI*.1,0,.7);
+		p.prop('logpile',1000,330,.1,0,.85); p.prop('logpile',1560,560,-.2,1,.85); p.prop('logpile',1120,880,.05,0,.85,'broken');
+		for(let i=0;i<5;i++) p.prop('log',1150+i*60+(R()-.5)*30,H(1150+i*60)-30+(R()-.5)*70,(R()-.5)*.6+1.4,i%2,.6);
+		for(let i=0;i<16;i++){ const c=p.find((X,Y)=>{ const yd=this.yard(X,Y); return yd>.0&&yd<.35&&Math.abs(Y-H(X))>90; },R); if(c) p.prop('stump',c[0],c[1],R()*3,i%2,.6+R()*.25); }
+		p.prop('fallen_trunk',1800,1050,.3,1,.8); p.prop('firepit',780,680,0,0,.8); p.fire(780,680,16);
+		const trk=[]; for(let X=200;X<=820;X+=20) trk.push([X,H(X)]); p.tracks(trk,10,.3,24); p.car('pickup',870,H(870),ang(870),1);
+		p.goon('spiker',1330,H(1330)+20,Math.PI-.3,2); p.goon('rammer',1700,H(1700)-10,Math.PI+ang(1700),1); p.dust(1770,H(1770)-10,90);
+		p.goon('grunt',1060,420,1.4,1); p.goon('grunt',950,250,.8,4); p.goon('splitter',1600,660,2.2,3); p.goon('splitter',1490,460,-2.5,5); p.goon('torch',760,620,.4,2); p.goon('grunt',1180,960,2.8,6); }},
+ghosttown:{mats:['dirt','sand','roof_timber','oil','bridge','gravel'],seed:151,
+	MY:690, SX:1470,
+	lots:[[60,250,420,540],[470,250,790,540],[850,230,1160,540],[1620,240,1920,540],[1980,250,2389,540],[100,860,500,1140],[560,860,900,1160],[960,860,1300,1120],[1640,860,2010,1150],[2070,860,2389,1140]],
+	ground(X,Y,o){ o.a='sand'; o.b='dirt'; o.t=.55*smooth(.4,.62,fbm(X*.003,Y*.003,1511,3));
+		const dm=Math.abs(Y-this.MY), ds=Math.abs(X-this.SX);
+		if(dm<150||ds<110){ o.a='dirt'; o.b='sand'; o.t=.35*smooth(.45,.65,fbm(X*.006,Y*.006,1512,2)); o.tint=[1.04,1.01,.95]; for(const r of [30,70,110]) if(Math.abs(dm-r)<7&&dm<150) o.tint=[.88,.86,.82];
+			if(dm<90&&X>1380&&X<2240){ const s=fbm(X*.004,Y*.012,1513,3)+(1-Math.abs(Y-this.MY-10)/90)*.3; if(s>.62){ o.b='oil'; o.t=smooth(.62,.7,s)*.9; o.tint=null; } } }
+		for(const [x0,y0,x1,y1] of this.lots){ const north=y1<this.MY, wy0=north?y1:y0-46, wy1=north?y1+46:y0;
+			if(X>=x0&&X<=x1&&Y>=wy0&&Y<=wy1){ o.a='bridge'; o.b=null; o.t=0; o.tint=[.92,.9,.88]; const e=Math.min(X-x0,x1-X,north?wy1-Y:Y-wy0); if(e<5) o.ao=.3; }
+			if(bldg(o,rectE(X,Y,x0,y0,x1,y1),'roof_timber')){ const my=(y0+y1)/2; if(Y>my) o.tint=[.9,.9,.9]; if(Math.abs(Y-my)<4){ o.lip=.35; o.tint=[.85,.82,.78]; } return; } } },
+	dress(p){ const R=p.rng, MY=this.MY;
+		for(const [x0,y0,x1,y1] of this.lots){ const north=y1<MY, y=north?y1+52:y0-52; for(let X=x0+40;X<x1;X+=120) p.dot(X,y,6,'#5c4632'); }
+		p.prop('water_trough',640,MY-122,0,0,.85); p.prop('water_trough',1760,MY+128,0,1,.85); p.prop('water_trough',1120,MY+125,0,0,.85,'broken');
+		p.prop('wagon',300,MY+60,Math.PI/2+.1,0,.9); p.prop('wagon',2060,MY-40,Math.PI/2-.4,1,.9,'broken'); p.prop('barrel',820,MY-120,0,0,.9); p.prop('barrel',850,MY-112,0,2,.9); p.prop('crate',1880,MY-118,.3,0,.8);
+		for(let i=0;i<12;i++){ const X=R()*WW, Y=MY+(R()-.5)*260; p.decor('tumbleweed',X,Y,R()*6,(R()*4)|0,.9+R()*.3); }
+		p.scatterDecor('tumbleweed',8,(X,Y)=>Math.abs(X-this.SX)<100); p.scatterDecor('pebbles',20,(X,Y)=>Math.abs(Y-MY)<140);
+		const trk=[]; for(let X=200;X<=860;X+=20) trk.push([X,MY+30]); p.tracks(trk,9,.25,22); p.car('racer',900,MY+30,0,1); p.dust(260,MY+30,120);
+		p.goon('slick',1600,MY-10,Math.PI,2); p.goon('karter',1300,MY+80,Math.PI+.15,1); p.goon('karter',1180,MY-70,Math.PI-.2,4); p.goon('sidecar',1960,MY+40,Math.PI,3);
+		p.goon('torcher',1440,MY-180,Math.PI/2,2); p.fire(1400,MY-210,22); p.fire(1700,560,14); }},
+saltflats:{mats:['salt','asphalt','sand','gravel'],seed:157,
+	road(X){ return 300+X*.1; },
+	ground(X,Y,o){ o.a='salt'; const s=fbm(X*.002,Y*.002,1571,3); if(s>.64){ o.b='sand'; o.t=smooth(.64,.74,s)*.35; }
+		const d=Math.abs(Y-this.road(X)), ed=95+18*fbm(X*.01,1,1573,2); if(d<ed){ o.a='asphalt'; o.b='salt'; o.t=Math.min(1,smooth(.58,.72,fbm(X*.005,Y*.005,1572,3))*.55+smooth(ed-30,ed,d)*.8); o.tint=[1.1,1.08,1.05]; if(d<4&&(X%160)<90) o.paint=[216,197,138,.55*(1-o.t)]; if(Math.abs(d-84)<3) o.paint=[214,210,198,.4*(1-o.t)]; }
+		else if(d<130) o.ao=.06; },
+	dress(p){ const R=p.rng, RD=X=>this.road(X);
+		for(let X=150;X<WW;X+=560) p.prop('mile_marker',X,RD(X)+140,0,(X/560|0)%2,1);
+		const mounds=[[300,1050,0],[470,1180,1],[230,1250,2],[620,1050,1],[2100,180,0],[2250,320,2]]; mounds.forEach(m=>p.prop('salt_mound',m[0],m[1],R()*6,m[2],.85));
+		p.prop('wreck',1950,1120,.4,2,1); p.prop('tyres',2050,1040,1,2,.8); p.decor('tumbleweed',1500,1200,0,1,1); p.decor('tumbleweed',800,260,0,2,1);
+		const cy=X=>820-X*.12; const trk=[]; for(let X=0;X<=1060;X+=20) trk.push([X,cy(X)]); p.tracks(trk,8,.18,22);
+		for(let k=0;k<7;k++){ const X=980-k*150; p.dust(X,cy(X),90+k*20,[176,166,148,.42-k*.04]); }
+		p.car('audi',1100,cy(1100),-.12,0);
+		const sp=[]; for(let X=500;X<=1180;X+=20) sp.push([X,cy(X)-150]); p.tracks(sp,4,.14,0); p.goon('spoke',1200,cy(1200)-150,-.12,2);
+		p.goon('shredder',1650,cy(1650)+10,Math.PI-.1,1); p.goon('sawbot',700,cy(700)+120,-.1,3); p.goon('sawbot',780,cy(780)+200,-.2,6);
+		p.goon('harpooner',1500,cy(1500)+330,-2.3,2); p.rope(1490,cy(1490)+320,1050,cy(1050)+16,60); }},
+raiderpass:{mats:['dirt','sand','rock','gravel','wash'],seed:163,
+	red:[1.13,.9,.8],
+	cY(X){ return 700+150*Math.sin(X*.0017+.4)+40*(n1(X*.003,1631)-.5); }, hw(X){ return 170+40*fbm(X*.004,3,1632,3); },
+	ground(X,Y,o){ o.a='dirt'; o.tint=this.red; const s=fbm(X*.003,Y*.003,1633,3); if(s>.55){ o.b='sand'; o.t=smooth(.55,.65,s)*.6; }
+		const d=Math.abs(Y-this.cY(X))-this.hw(X);
+		if(d<0){ o.b='wash'; o.t=smooth(-40,-120,d)*.6; if(d>-36) o.ao=.6*(1+d/36); o.tint=[1.06,.88,.8]; }
+		else if(d<56){ const band=Math.floor((d+6*fbm(X*.01,Y*.01,1634,2))/9)%3; o.a='rock'; o.b=null; o.t=0; o.tint=[[1.08,.8,.66],[.96,.7,.58],[1.14,.86,.7]][band]; o.ao=.15+.4*(1-d/56); }
+		else { o.a='rock'; o.b='sand'; o.t=.3; o.tint=[1.18,.9,.78]; if(d<72) o.lip=.6*(1-(d-56)/16); } },
+	dress(p){ const R=p.rng, C=X=>this.cY(X), ang=X=>Math.atan2(C(X+10)-C(X),10), up=(X,Y)=>Math.abs(Y-C(X))-this.hw(X)>110;
+		const bx=1450; p.prop('barricade',bx,C(bx)-90,Math.PI/2+.2,0,.8); p.prop('jersey',bx+40,C(bx+40)+40,Math.PI/2-.1,1,.8); p.prop('wreck',bx+150,C(bx+150)-20,.8,1,1); p.prop('wreck',bx+230,C(bx+230)+90,2.2,3,1); p.prop('wreck',bx+120,C(bx+120)+130,1.4,0,1);
+		p.prop('tyres',bx-40,C(bx-40)+130,0,1,.8); p.prop('cone',bx-90,C(bx-90)+60,0,0); p.prop('cone',bx-100,C(bx-100)+100,0,1); p.prop('barrel',bx+60,C(bx+60)-140,0,0,.9);
+		p.scatterProp('rock_red',6,up,()=>[R()*6,(R()*3)|0,.6+R()*.3]); p.scatterProp('saguaro',5,up,(X,Y,i)=>[R()*6,i%2,.8]); p.scatterDecor('bones',10,(X,Y)=>!up(X,Y)); p.scatterDecor('pebbles',30,(X,Y)=>!up(X,Y));
+		const trk=[]; for(let X=250;X<=830;X+=20) trk.push([X,C(X)+20]); p.tracks(trk,9,.24,22); p.car('police',880,C(880)+20,ang(880),1); p.dust(300,C(300)+20,100);
+		const tx=2030; for(const s of [-1,1]) p.goon('turret',tx+s*40,C(tx)+s*(this.hw(tx)+90),s>0?-Math.PI/2-.4:Math.PI/2+.4,2);
+		p.goon('chainer',bx-120,C(bx-120)-40,Math.PI,1); p.goon('torcher',bx+20,C(bx+20)-180,Math.PI/2,3); p.fire(bx+10,C(bx+10)-120,16);
+		p.goon('boostjack',1180,C(1180)+60,Math.PI+ang(1180),2); p.dust(1260,C(1260)+60,80); p.goon('chainer',1700,C(1700)-60,Math.PI,5); }},
+thunderroad:{mats:['asphalt','sand','dirt','gravel','oil'],seed:167,
+	hy(X){ return 600+60*Math.sin(X*.0012+.5); },
+	ground(X,Y,o){ o.a='sand'; o.tint=[1.04,1,.96]; const s=fbm(X*.003,Y*.003,1671,3); if(s<.42){ o.b='dirt'; o.t=smooth(.42,.34,s)*.7; }
+		const L=Y-this.hy(X), d=Math.abs(L);
+		if(d<240){ o.a='asphalt'; o.b=null; o.t=0; o.tint=null; if(Math.abs(d-6)<3) o.paint=[216,197,138,.85]; if(Math.abs(d-228)<4) o.paint=[214,210,198,.8]; if(Math.abs(d-118)<3&&(X%120)<64) o.paint=[214,210,198,.75];
+			const oi=fbm(X*.006,Y*.006,1672,3); if(oi>.68){ o.b='oil'; o.t=smooth(.68,.74,oi)*.85; } }
+		else if(d<300){ o.a='gravel'; o.ao=.15*smooth(300,240,d); } },
+	dress(p){ const R=p.rng, H=X=>this.hy(X), ang=X=>Math.atan2(H(X+10)-H(X),10);
+		p.prop('billboard',1560,H(1560)-170,ang(1560),0,1,'broken'); p.prop('billboard',600,H(600)-330,ang(600),1); p.prop('billboard',2150,H(2150)+330,ang(2150)+Math.PI,0);
+		p.prop('tank',380,H(380)+440,0,0,.7); p.prop('tank',1200,H(1200)+450,0,0,.7,'broken'); p.flash(1200,H(1200)+450,150); p.fire(1150,H(1150)+430,24); p.fire(1260,H(1260)+470,18); p.prop('tank',1950,H(1950)-450,0,0,.7);
+		for(let i=0;i<4;i++) p.prop('barrel',1330+i*50,H(1330)+330+(i%2)*30,R()*3,(R()*3)|0,.9);
+		p.scatterProp('saguaro',6,(X,Y)=>Math.abs(Y-H(X))>380&&Math.hypot(X-1200,Y-H(1200)-450)>260,(X,Y,i)=>[R()*6,i%2,.85]); p.scatterDecor('oilstain',8,(X,Y)=>Math.abs(Y-H(X))<200);
+		const trk=[]; for(let X=200;X<=860;X+=20) trk.push([X,H(X)+60]); p.tracks(trk,9,.25,22); p.car('audi',900,H(900)+60,ang(900),1);
+		p.goon('plowboss',1250,H(1250)+50,Math.PI+ang(1250),2); p.goon('magnet',1900,H(1900)-120,Math.PI,1); p.goon('spoke',1100,H(1100)-60,ang(1100),3); p.goon('spoke',1700,H(1700)+150,Math.PI,5);
+		p.goon('sidecar',2050,H(2050)+60,Math.PI,2); p.goon('slick',2250,H(2250)-60,Math.PI,4); }},
+frozenlake:{mats:['ice','snow','deepsnow','rock','water'],seed:173,
+	lake(X,Y){ return 1-Math.hypot((X-1200)/1180,(Y-700)/560)+(fbm(X*.003,Y*.003,1731,3)-.5)*.3; },
+	ground(X,Y,o){ o.a='snow'; const ds=fbm(X*.003,Y*.003,1732,3); if(ds>.55){ o.b='deepsnow'; o.t=smooth(.55,.65,ds); }
+		const L=this.lake(X,Y); if(L>0){ o.a='ice'; o.b='snow'; o.t=.35*smooth(.6,.75,fbm(X*.004,Y*.004,1733,3)); if(L<.03) o.lip=.4; }
+		else if(L>-.06){ o.ao=.3*(1+L/.06); }
+		const hd=Math.hypot(X-1640,Y-420); if(hd<70){ o.a='water'; o.b=null; o.t=0; if(hd>58) o.foam=.5; } else if(hd<80){ o.a='ice'; o.b=null; o.lip=.5; }
+ },
+	dress(p){ const R=p.rng, shore=(X,Y)=>{ const L=this.lake(X,Y); return L<-.04&&L>-.4; };
+		p.spaced('pine_snow',12,(X,Y)=>this.lake(X,Y)<-.12,170,(X,Y)=>[R()*6,(R()*3)|0,.8+R()*.25]); p.scatterProp('rock_ice',6,shore,()=>[R()*6,(R()*2)|0,.6+R()*.3]); p.prop('boulder',180,220,.3,0,.6);
+		const loop=[]; for(let t=0;t<=1;t+=.02){ const a=-1.2+t*5.2, r=260-t*80; loop.push([1050+Math.cos(a)*r*1.4,760+Math.sin(a)*r]); } p.tracks(loop,9,.2,22);
+		const straight=[]; for(let X=150;X<=780;X+=20) straight.push([X,980-X*.2]); p.tracks(straight,9,.18,22);
+		const end=loop[loop.length-1]; p.car('pickup',end[0],end[1],-.9,1); p.dust(end[0]-50,end[1]+30,90,[230,236,242,.45]);
+		p.goon('snapper',1590,410,.3,2); p.goon('harpooner',1900,1080,-2.6,3); p.rope(1890,1070,end[0]+20,end[1]+10,40); p.goon('tusker',1350,980,-.6,1); p.goon('tusker',700,520,.8,5); p.goon('plowboss',1950,560,Math.PI+.4,2); }},
+timberline:{mats:['snow','deepsnow','needles','dirt','ice'],seed:179,
+	road(X){ return 1000-X*.2+50*Math.sin(X*.003); },
+	ground(X,Y,o){ o.a='snow'; const ds=fbm(X*.003,Y*.003,1791,3); if(ds>.55){ o.b='deepsnow'; o.t=smooth(.55,.65,ds); }
+		const tr=fbm(X*.004,Y*.004,1792,3); if(tr>.58){ o.b='needles'; o.t=smooth(.58,.68,tr)*.55; }
+		const cm=Math.hypot((X-1300)/430,(Y-420)/250); if(cm<1){ o.b='dirt'; o.t=.25*(1-cm); }
+		const d=Math.abs(Y-this.road(X)); if(d<60){ o.a='snow'; o.b='dirt'; o.t=.18; o.tint=[.93,.94,.96]; if(Math.abs(d-24)<8){ o.b='dirt'; o.t=.55; } } else if(d<74) o.lip=.3*(1-(d-60)/14); },
+	dress(p){ const R=p.rng, RD=X=>this.road(X), ang=X=>Math.atan2(RD(X+10)-RD(X),10);
+		p.reserve(1150,380,180); p.reserve(1500,470,150); p.reserve(1700,780,140);
+		p.spaced('pine_snow',55,(X,Y)=>Math.abs(Y-RD(X))>120&&Math.hypot((X-1300)/430,(Y-420)/250)>1.05,150,(X,Y)=>[R()*6,(R()*3)|0,.8+R()*.3]);
+		p.prop('cabin',1150,380,.08,0,.7); p.prop('cabin',1500,470,-.1,1,.6); p.prop('snowcat',1700,780,.3,0,.75); p.prop('logpile',1000,600,.2,0,.75); p.prop('logpile',1600,260,-.3,1,.7); p.prop('firepit',1350,560,0,0,.8); p.fire(1350,560,15);
+		const trk=[]; for(let X=200;X<=820;X+=20) trk.push([X,RD(X)]); p.tracks(trk,10,.22,24); p.car('van',870,RD(870),ang(870),1); p.dust(840,RD(840),70,[232,236,242,.4]);
+		for(let i=0;i<4;i++){ const X=1250+i*90, Y=RD(1250+i*90)-60+i*40; p.goon('thunderhoof',X,Y,Math.PI/2+.3,i*2); p.dust(X,Y-60,60,[232,236,242,.35]); }
+		p.goon('wrecker',1450,640,2.4,1); p.goon('rammer',1050,RD(1050)-120,1.2,3); p.goon('yeti',2000,700,Math.PI+.3,2); p.goon('yeti',600,450,.4,5); }},
+tarpits:{mats:['ash','tar','lava','basalt','gravel'],seed:181,
+	lavaY(X){ return 1100-X*.18+70*Math.sin(X*.0025+1); },
+	pit(X,Y){ return fbm(X*.0024,Y*.0024,1811,4)+(.5-Math.abs(fbm(X*.0012,Y*.0015,1812,3)-.5))*.18; },
+	hi(X,Y){ return 1-Math.hypot((X-2150)/520,(Y-150)/360)+(fbm(X*.004,Y*.004,1813,3)-.5)*.3; },
+	ground(X,Y,o){ o.a='ash'; const g=fbm(X*.004,Y*.004,1814,3); if(g>.6){ o.b='gravel'; o.t=smooth(.6,.7,g)*.4; o.tint=[.8,.78,.78]; }
+		const T=this.pit(X,Y); if(T>.62){ o.a='tar'; o.b=null; o.t=0; o.tint=null; if(T<.64) o.ao=.4; } else if(T>.58) o.ao=.3*smooth(.58,.62,T);
+		const d=Math.abs(Y-this.lavaY(X))-(44+24*fbm(X*.004,2,1815,3)); if(d<0){ o.a='lava'; o.b=null; o.t=0; o.tint=null; o.ao=0; } else if(d<40){ o.tint=[1-.3*(1-d/40),1-.34*(1-d/40),1-.36*(1-d/40)]; if(d<8) o.lip=.15; }
+		const h=this.hi(X,Y); if(h>.08){ o.a='basalt'; o.b=null; o.t=0; o.tint=null; if(h<.12) o.lip=.5*(1-(h-.08)/.04); } else if(h>-.05){ o.ao=Math.max(o.ao,.65*smooth(-.05,.08,h)); } },
+	dress(p){ const R=p.rng, LY=X=>this.lavaY(X), ash=(X,Y)=>this.pit(X,Y)<.56&&Math.abs(Y-LY(X))>150&&this.hi(X,Y)<-.08;
+		for(let X=0;X<WW;X+=110) p.glowAdd(X,LY(X),150,[255,120,50],.28);
+		p.scatterProp('rock_black',7,ash,()=>[R()*6,(R()*3)|0,.6+R()*.3]); p.scatterDecor('steam_vent',10,ash); p.scatterDecor('bones',12,ash); p.prop('carcass',700,300,.4,0,.9); p.prop('deadtree',420,560,1,1,.8);
+		const pits=[]; for(let t=0;t<600&&pits.length<3;t++){ const X=300+R()*1700, Y=150+R()*900; if(this.pit(X,Y)>.69&&pits.every(q=>Math.hypot(q[0]-X,q[1]-Y)>350)&&Math.abs(Y-LY(X))>200) pits.push([X,Y]); }
+		const heavy=['bullmoose','thunderhoof','thunderhoof']; pits.forEach((q,i)=>{ p.goon(heavy[i],q[0],q[1],R()*6,i*2); p.dust(q[0],q[1],60,[20,18,16,.5]); });
+		const c=[1000,620]; let cx=c[0], cyy=c[1]; for(let t=0;t<200;t++){ const X=600+R()*1000, Y=300+R()*700; if(ash(X,Y)&&ash(X-150,Y)&&ash(X+150,Y)){ cx=X; cyy=Y; break; } }
+		const trk=[]; for(let k=0;k<26;k++) trk.push([cx-520+k*20,cyy+Math.sin(k*.2)*20]); p.tracks(trk,9,.25,22); p.car('pickup',cx,cyy,0,2); p.dust(cx-480,cyy,100,[120,114,108,.4]);
+		p.goon('rammer',cx+330,cyy-30,Math.PI,3); p.goon('boulder',1900,560,2.6,1); p.goon('boulder',2080,640,3,4); }},
+summit:{mats:['snow','deepsnow','rock','ice'],seed:191,
+	path(X){ return 1250-X*.42+80*Math.sin(X*.004); },
+	plateau(X,Y){ return 1-Math.hypot((X-1760)/620,(Y-330)/300)+(fbm(X*.004,Y*.004,1911,3)-.5)*.25; },
+	ground(X,Y,o){ const P=this.plateau(X,Y), d=Math.abs(Y-this.path(X))-(120+30*fbm(X*.005,1,1912,3));
+		if(P>0){ o.a='deepsnow'; o.b='snow'; o.t=.3*fbm(X*.005,Y*.005,1913,2); if(P<.05) o.lip=.4*(1-P/.05); return; }
+		if(P>-.06&&d>0){ o.ao=.5*(1+P/.06); }
+		if(d<0){ o.a='snow'; o.b='deepsnow'; o.t=smooth(-30,-100,d)*.5; if(d>-30) o.ao=.45*(1+d/30); return; }
+		const r=fbm(X*.002,Y*.002,1914,3), STEP=.16, q=(r+d/1400)/STEP, k=Math.floor(q), u=q-k; o.a='rock'; o.b='snow'; o.t=.3+.55*smooth(.4,.7,fbm(X*.006,Y*.006,1915,3)); o.tint=[1+k*.03,1+k*.03,1+k*.035];
+		if(u>.86) o.ao=.45*(u-.86)/.14; if(u<.08) o.lip=.45*(1-u/.08); if(d<26) o.lip=Math.max(o.lip,.5*(1-d/26)); },
+	dress(p){ const R=p.rng, PT=X=>this.path(X), ang=X=>Math.atan2(PT(X+10)-PT(X),10), rocky=(X,Y)=>Math.abs(Y-PT(X))>230&&this.plateau(X,Y)<-.1;
+		for(let X=60;X<1400;X+=150){ for(const s of [-1,1]){ const Y=PT(X)+s*(190+R()*40); if(this.plateau(X,Y)<-.05) p.prop(R()<.4?'boulder':'rock_white',X+(R()-.5)*40,Y,R()*6,(R()*2)|0,.45+R()*.2); } }
+		p.scatterProp('rock_ice',4,rocky,()=>[R()*6,(R()*2)|0,.6]); p.prop('landmark_big',1820,300,0,0,.75); p.glowAdd(1800,290,120,[255,140,60],.25);
+		p.scatterProp('pine_snow',5,rocky,()=>[R()*6,(R()*3)|0,.8]);
+		const trk=[]; for(let X=150;X<=880;X+=20) trk.push([X,PT(X)]); p.tracks(trk,10,.2,24); p.car('semi',930,PT(930),ang(930),1);
+		p.goon('yeti',1400,640,Math.PI+.4,2); p.goon('yeti',1500,400,2.6,6); p.goon('bullmoose',1150,PT(1150)+30,Math.PI+ang(1150),1); p.goon('boulder',1240,PT(1240)-140,2.2,3); p.goon('plowboss',1650,560,Math.PI+.6,2); p.goon('wrecker',2050,520,-2.6,4); }},
+manhole:{mats:['asphalt','lot','roof','water','bridge'],seed:193,
+	SX:[480,1300,2080], SY:[360,1040], CX:[890,1690],
+	ground(X,Y,o){ let st=1e9, sy=1e9, cn=1e9; for(const q of this.SX) st=Math.min(st,Math.abs(X-q)); for(const q of this.SY) sy=Math.min(sy,Math.abs(Y-q)); for(const q of this.CX) cn=Math.min(cn,Math.abs(X-q)); const s=Math.min(st,sy);
+		if(s<96){ o.a='asphalt'; if(cn<96&&sy<96){ o.a='bridge'; o.tint=[.95,.95,.95]; if(cn>88) o.ao=.6; return; } if(s>86) o.ao=.4*(s-86)/10;
+			if(st<3&&sy>=96&&(Y%110)<60) o.paint=[216,197,138,.7]; if(sy<3&&st>=96&&(X%110)<60) o.paint=[216,197,138,.7]; return; }
+		if(s<136){ o.a='lot'; o.tint=[1.04,1.03,1]; if(s<103) o.lip=.35; return; }
+		if(cn<80){ o.a='water'; if(cn>72) o.foam=.25; else if(cn>58) o.ao=.35*(cn-58)/14; return; } if(cn<96){ o.a='lot'; o.tint=[.86,.84,.82]; o.ao=.5*(1-(cn-80)/16); return; }
+		o.a='lot'; o.tint=[.9,.9,.9]; if(bldg(o,Math.min(s-150,cn-110),'roof')) o.tint=[.88,.88,.9]; },
+	dress(p){ const R=p.rng, SX=this.SX, SY=this.SY;
+		const holes=[]; for(const X of SX) for(let Y=120;Y<WH;Y+=300){ if(SY.some(q=>Math.abs(Y-q)<150)) continue; holes.push([X+(R()-.5)*40,Y]); } for(const Y of SY) for(let X=200;X<WW;X+=330){ if(SX.some(q=>Math.abs(X-q)<150)||this.CX.some(q=>Math.abs(X-q)<110)) continue; holes.push([X,Y+(R()-.5)*40]); }
+		holes.forEach(h=>p.prop('manhole',h[0],h[1],R()*6,0));
+		holes.filter((h,i)=>i%3===1).slice(0,5).forEach((h,k)=>{ for(let i=0;i<11;i++){ const a=R()*TAU, d=26+i*13+R()*16; p.goon('rat',h[0]+Math.cos(a)*d,h[1]+Math.sin(a)*d,a+(R()-.5)*.6,(i+k)%8); } });
+		for(const X of this.CX) for(const Y of SY) for(const s of [-1,1]) for(let k=-1;k<=1;k+=2) p.dot(X+k*90,Y+s*90,5,'#55585a');
+		const blocks=[[0,480,0,360],[480,1300,0,360],[1300,2080,0,360],[2080,WW,0,360],[0,480,360,1040],[480,1300,360,1040],[1300,2080,360,1040],[2080,WW,360,1040],[0,480,1040,WH],[480,1300,1040,WH],[1300,2080,1040,WH]];
+		const roofs=[]; for(const [x0,x1,y0,y1] of blocks){ for(const half of [[x0,Math.min(x1,(x0+x1)/2)],[Math.max(x0,(x0+x1)/2),x1]]){ const cx=(half[0]+half[1])/2, cy=(y0+y1)/2; if(this.CX.some(q=>Math.abs(cx-q)<200)) continue; roofs.push([cx,cy,(half[1]-half[0])/2-180,(y1-y0)/2-180]); } }
+		p.roofStuff(roofs.filter(r=>r[2]>20&&r[3]>20),R);
+		p.prop('dumpster',600,230,0,0,.9); p.prop('trashbags',700,235,0,1,.9); p.prop('trashbags',1450,1175,0,2,.9); p.prop('hydrant',1160,470,0,0); p.prop('dumpster',1950,1180,.1,1,.9); p.prop('trashbags',1880,240,1,0,.9);
+		const trk=[]; for(let X=200;X<=820;X+=20) trk.push([X,SY[1]+40]); p.tracks(trk,9,.16,24); p.car('taxi',870,SY[1]+40,0,1); p.goon('gremlin',890,SY[1]+30,.3,2);
+		p.goon('splitter',1500,SY[1]-30,Math.PI,3); p.goon('goonling',1560,SY[1]+30,Math.PI+.3,1); p.goon('goonling',1600,SY[1]-60,Math.PI-.3,4); p.goon('splitter',1300,640,1.7,6); p.goon('gremlin',2000,700,2.4,5); }},
+culdesac:{mats:['lawn','asphalt','lot','roof_shingle','water','grass'],seed:197,grade:'night',
+	B:[1380,690], BR:230,
+	houses(){ if(this._h) return this._h; const out=[], [bx,by]=this.B; for(const a of [-2.25,-1.4,-.5,.45,1.35,2.2]) out.push({cx:bx+Math.cos(a)*540,cy:by+Math.sin(a)*500,a,d:540-this.BR,w:300,h:220,pool:out.length%2===0});
+		for(const [X,s] of [[260,-1],[680,-1],[260,1],[680,1]]) out.push({cx:X,cy:by+s*380,a:s*Math.PI/2,d:300,w:300,h:220,pool:X<400}); return this._h=out; },
+	local(H,X,Y){ const dx=X-H.cx, dy=Y-H.cy, c=Math.cos(H.a), s=Math.sin(H.a); return [-dx*s+dy*c, dx*c+dy*s]; },
+	ground(X,Y,o){ o.a='lawn'; const g=fbm(X*.004,Y*.004,1971,3); if(g>.62){ o.b='grass'; o.t=.4; }
+		const [bx,by]=this.B, rb=Math.hypot(X-bx,Y-by), dr=X<bx?Math.abs(Y-by):1e9, road=Math.min(rb-this.BR,dr-80);
+		if(road<0){ o.a='asphalt'; o.b=null; o.t=0; if(road>-8) o.ao=.3; if(Math.abs(Y-by)<3&&X<bx-this.BR&&(X%110)<60) o.paint=[216,197,138,.6]; return; }
+		if(road<12){ o.a='lot'; o.b=null; o.t=0; o.lip=.3; return; }
+		for(const H of this.houses()){ const [lx,ly]=this.local(H,X,Y);
+			if(lx>30&&lx<110&&ly<-H.h/2&&ly>-(H.d+40)){ o.a='lot'; o.b=null; o.t=0; o.tint=[.96,.95,.93]; if(lx<36||lx>104) o.ao=.2; }
+			if(H.pool&&lx>-110&&lx<40&&ly>H.h/2+50&&ly<H.h/2+200){ const e=Math.min(lx+110,40-lx,ly-H.h/2-50,H.h/2+200-ly); o.b=null; o.t=0; if(e<14){ o.a='lot'; o.tint=[1.05,1.04,1.02]; } else { o.a='water'; o.tint=[.9,1.08,1.12]; if(e<20) o.ao=.4*(1-(e-14)/6); } }
+			const e=Math.min(H.w/2-Math.abs(lx),H.h/2-Math.abs(ly)); if(e>-18&&Math.abs(lx)<H.w/2+18&&Math.abs(ly)<H.h/2+18){ if(bldg(o,e>=0?e:-Math.hypot(Math.max(0,Math.abs(lx)-H.w/2),Math.max(0,Math.abs(ly)-H.h/2)),'roof_shingle')){ o.u=lx+4000; o.v=ly+4000; const rx=H.w/2-H.h/2, ax=Math.abs(lx)-rx;
+					if(ax<Math.abs(ly)){ if(ly>0) o.tint=[.92,.92,.94]; } else o.tint=[.97,.97,.99]; if((Math.abs(ly)<2.5&&Math.abs(lx)<rx)||(ax>0&&Math.abs(ax-Math.abs(ly))<2.5)) o.lip=Math.max(o.lip,.3); return; } } } },
+	dress(p){ const R=p.rng, [bx,by]=this.B, W=(H,lx,ly)=>{ const c=Math.cos(H.a), s=Math.sin(H.a); return [H.cx-lx*s+ly*c, H.cy+lx*c+ly*s]; };
+		this.houses().forEach((H,i)=>{ const [mx,my]=W(H,120,-H.d+10); p.prop('mailbox',mx,my,H.a+Math.PI/2,i%3,1); if(i%2){ const [tx,ty]=W(H,150,-H.d+30); p.prop('trashbags',tx,ty,R()*3,i%3,.8); }
+			const [gx,gy]=W(H,-60,-H.h/2-30); if(i%3!==1) p.glowAdd(gx,gy,90,[255,200,130],.32);
+			if(i===1){ const [qx,qy]=W(H,-20,H.h/2+150); p.prop('trampoline',qx,qy,0,0,.85); } if(i===3){ const [qx,qy]=W(H,40,H.h/2+150); p.prop('swingset',qx,qy,H.a,1,.8); } if(i===5){ const [qx,qy]=W(H,60,H.h/2+150); p.prop('trampoline',qx,qy,0,1,.8); } if(i===7){ const [qx,qy]=W(H,60,H.h/2+150); p.prop('swingset',qx,qy,H.a,0,.8); }
+			const [ax,ay]=W(H,H.w/2+40,0), [cx2,cy2]=W(H,H.w/2+40,H.h/2+260); p.line(i%2?'hedge':'fence',ax,ay,cx2,cy2,i%2?400:330,.7,i); });
+		for(const a of [-1.85,0,1.85]) p.lamp(bx+Math.cos(a)*(this.BR+30),by+Math.sin(a)*(this.BR+30),a+Math.PI); p.lamp(560,by-110,Math.PI/2); p.lamp(900,by+110,-Math.PI/2);
+		p.car('sedan',1000,by+30,0,0); p.headlights(1000,by+30,0); const trk=[]; for(let X=300;X<960;X+=20) trk.push([X,by+30]); p.tracks(trk,8,.14,22);
+		const H1=this.houses()[1]; const [yx,yy]=W(H1,120,H1.h/2+110); p.pack('yipper',yx,yy,5,H1.a+Math.PI,70);
+		p.goon('jackalope',1300,1100,-1.2,2); p.goon('jackalope',1720,980,-2.2,5); const H4=this.houses()[4]; const [bx2,by2]=W(H4,150,-H4.d+50); p.goon('bandit',bx2+20,by2,2.4,3);
+		p.goon('splitter',1300,by+60,Math.PI,2); p.goon('splitter',1500,by-90,Math.PI+.4,6); }},
+gridlock:{mats:['asphalt','sand','gravel','dirt','lot'],seed:199,
+	N:[250,630], S:[730,1110],
+	ground(X,Y,o){ o.a='sand'; o.tint=[1.04,1,.96]; const s=fbm(X*.003,Y*.003,1991,3); if(s<.44){ o.b='dirt'; o.t=.6*smooth(.44,.36,s); }
+		for(const [y0,y1] of [this.N,this.S]){ if(Y>=y0&&Y<=y1){ o.a='asphalt'; o.b=null; o.t=0; o.tint=null; const k=Y-y0; if(k<6||y1-Y<6) o.paint=[214,210,198,.75]; else if(((k%95)<3||(k%95)>92)&&(X%130)<70) o.paint=[214,210,198,.7]; return; } if(Y>y0-60&&Y<y0) o.ao=Math.max(o.ao,.15*(1-(y0-Y)/60)); if(Y>y1&&Y<y1+60){ o.a='gravel'; o.ao=.12*(1-(Y-y1)/60); } }
+		if(Y>this.N[1]&&Y<this.S[0]){ o.a='gravel'; o.b='dirt'; o.t=.3; o.ao=.25; } },
+	dress(p){ const R=p.rng, keys=['sedan','van','taxi','pickup','semi','audi','sedan','van','ambulance'];
+		for(let X=150;X<WW;X+=330) p.prop('jersey',X,680,0,(X/330|0)%2,.8);
+		const lanes=[[297,Math.PI],[392,Math.PI],[487,Math.PI],[582,Math.PI],[777,0],[872,0],[967,0],[1062,0]]; let k=0;
+		lanes.forEach(([Y,a],li)=>{ let X=60+R()*120; while(X<WW+100){ const key=keys[(k++)%keys.length], L=key==='semi'?400:260;
+			const skip=(li===5||li===6)&&X>700&&X<1150||(li>=4&&X>1480&&X<1900);
+			if(!skip) p.car(key,X+L/2,Y+(R()-.5)*14,a+(R()-.5)*.08,(R()*3)|0); X+=L+40+R()*120; } });
+		p.prop('wreck',1560,820,.9,0,1); p.prop('wreck',1700,930,2.4,2,1); p.prop('wreck',1800,800,-.4,4,1); p.prop('wreck',1640,1040,1.6,1,1); p.dust(1700,900,160,[90,84,76,.4]); p.fire(1720,880,14);
+		for(let i=0;i<5;i++) p.prop('cone',1430,780+i*70,R()*3,i%2); p.prop('barrel',1880,1050,0,0,.9); p.prop('tyres',1500,1060,1,0,.8);
+		const trk=[]; for(let X=300;X<=880;X+=20) trk.push([X,920]); p.tracks(trk,8,.16,20); p.car('racer',930,920,0,0);
+		p.goon('karter',1250,440,Math.PI+.1,2); p.goon('karter',1100,535,Math.PI-.1,5); p.goon('spoke',1300,920,Math.PI,1); p.goon('spoke',600,440,Math.PI,4); p.goon('dasher',2000,820,Math.PI+.3,2); p.goon('sawbot',1750,1000,2.6,3); p.goon('sawbot',1900,700,-2.6,6); }},
+blockparty:{mats:['lot','asphalt','roof','grass'],seed:211,grade:'dusk',
+	P:[420,200,1970,1160], C:[1200,680],
+	ground(X,Y,o){ const [x0,y0,x1,y1]=this.P, e=rectE(X,Y,x0,y0,x1,y1), [cx,cy]=this.C;
+		if(e>=0){ o.a='lot'; const r=Math.hypot(X-cx,Y-cy), band=Math.floor(r/90)%2, ang=Math.atan2(Y-cy,X-cx); o.tint=band?[1.06,1.04,1.0]:[.96,.95,.93]; if(r%90<3||(r>120&&Math.abs(((ang*16/TAU)%1+1)%1-.5)>.49)) o.tint=[.82,.8,.78];
+			for(const [px,py] of [[x0+120,y0+120],[x1-120,y0+120],[x0+120,y1-120],[x1-120,y1-120]]){ const d=Math.hypot(X-px,Y-py); if(d<70){ o.a='grass'; o.tint=null; if(d>62) o.lip=.4; } else if(d<80) o.ao=.3; }
+			if(e<10) o.lip=.3; return; }
+		if(e>-120){ o.a='asphalt'; if(e>-10) o.ao=.3; if(Math.abs(e+60)<3&&((X+Y)%110)<60) o.paint=[216,197,138,.6]; return; }
+		o.a='lot'; o.tint=[.9,.9,.9]; const ax=Math.abs(((X-x0)%520+520)%520-260), ay=Math.abs(((Y-y0)%520+520)%520-260); if(bldg(o,Math.min(-e-140,Math.max(ax,ay)>240?-1:99),'roof')) o.tint=[.88,.88,.9]; },
+	dress(p){ const R=p.rng, [x0,y0,x1,y1]=this.P, [cx,cy]=this.C;
+		p.prop('landmark_swarm',cx,cy,0,0,.85); p.glowAdd(cx,cy,140,[255,210,130],.35);
+		for(const [px,py] of [[x0+120,y0+120],[x1-120,y0+120],[x0+120,y1-120],[x1-120,y1-120]]){ p.prop('oak',px,py,R()*6,(R()*3)|0,.55); for(let t=.1;t<1;t+=.1){ const X=px+(cx-px)*t, Y=py+(cy-py)*t+Math.sin(t*Math.PI)*40; p.glowAdd(X,Y,40,[[255,200,120],[200,150,255],[150,230,200]][(t*10|0)%3],.6); } }
+		for(const [X,Y,a] of [[x0+40,cy,0],[x1-40,cy,Math.PI],[cx,y0+40,Math.PI/2],[cx,y1-40,-Math.PI/2]]) p.lamp(X,Y,a);
+		p.prop('dumpster',x0+260,y0+50,0,0,.9); p.prop('trashbags',x0+380,y0+50,0,1,.9); p.prop('trashbags',x1-300,y1-50,1,2,.9); p.prop('dumpster',x1-180,y1-50,0,1,.9); p.prop('trashbags',x1-60,y0+300,2,0,.9);
+		const crowd=['rat','rat','rat','yipper','yipper','karter','spoke','dasher','gremlin','rat']; let n=0;
+		for(let t=0;t<900&&n<60;t++){ const X=x0+60+R()*(x1-x0-120), Y=y0+60+R()*(y1-y0-120); if(Math.hypot(X-cx,Y-cy)<210||Math.hypot(X-600,Y-cy)<170) continue; const id=crowd[n%crowd.length]; p.goon(id,X,Y,Math.atan2(cy-Y,cx-X)+(R()-.5)*1.6,n%8); n++; }
+		const trk=[]; for(let X=0;X<=500;X+=20) trk.push([X,cy+20]); p.tracks(trk,9,.2,24); p.car('police',560,cy+20,0,1); p.headlights(560,cy+20,0); p.siren(560,cy+20); }},
+blastpits:{mats:['dirt','gravel','rock','mud','lot'],seed:223,
+	pits:[[600,430,[360,250,140]],[1850,960,[400,280,160]]],
+	road(X){ return 1100-X*.356+30*Math.sin(X*.004); },
+	pr(X,Y,P){ const a=Math.atan2(Y-P[1],X-P[0]), r=Math.hypot(X-P[0],(Y-P[1])*1.2); return r*(1+(fbm(Math.cos(a)*2+5,Math.sin(a)*2+5,2231+P[0],3)-.5)*.28); },
+	ground(X,Y,o){ o.a='dirt'; o.tint=[.97,.95,.93]; const g=fbm(X*.003,Y*.003,2232,3); if(g>.55){ o.b='gravel'; o.t=smooth(.55,.66,g)*.8; }
+		for(const P of this.pits){ const r=this.pr(X,Y,P), rings=P[2]; if(r<rings[0]){ o.a='gravel'; o.b='rock'; o.t=.45; let lvl=0; for(const q of rings) if(r<q) lvl++; o.ao=.12*lvl; if(lvl>=3){ o.a='mud'; o.b='gravel'; o.t=.3; o.ao=.32; }
+			for(const q of rings){ const e=r-q; if(e>-34&&e<0) o.ao=Math.max(o.ao,.75*(1+e/34)); if(e>=0&&e<14) o.lip=.55*(1-e/14); } } }
+		rutsAt(o,Math.abs(Y-this.road(X)),58,24,X,Y,2233); },
+	dress(p){ const R=p.rng, RD=X=>this.road(X), ang=X=>Math.atan2(RD(X+10)-RD(X),10), [P1,P2]=this.pits;
+		for(let i=0;i<14;i++){ const a=R()*TAU, d=R()*200; p.prop('barrel',P2[0]+Math.cos(a)*d,P2[1]+Math.sin(a)*d/1.2,R()*3,(R()*3)|0,.9); }
+		for(let i=0;i<8;i++){ const a=R()*TAU; p.prop('barrel',P1[0]+Math.cos(a)*(380+R()*40),P1[1]+Math.sin(a)*(380+R()*40)/1.2,R()*3,(R()*3)|0,.9); }
+		p.prop('tank',2200,560,0,0,.6); p.prop('tank',1500,1240,0,0,.55); p.prop('crate',1300,300,.3,1,.9); p.prop('crate',1380,330,1,2,.9);
+		for(let i=0;i<4;i++){ const a=i*1.6; p.prop('barrel',P1[0]+60+Math.cos(a)*70,P1[1]+40+Math.sin(a)*60,0,0,1,'broken'); } p.flash(P1[0]+60,P1[1]+40,190); p.fire(P1[0]+30,P1[1]+20,22); p.fire(P1[0]+110,P1[1]+70,16); p.dust(P1[0]+60,P1[1]+40,260,[70,62,54,.45]);
+		p.scatterDecor('pebbles',40,(X,Y)=>this.pr(X,Y,P2)<400); p.scatterDecor('cracks',10,(X,Y)=>Math.abs(Y-RD(X))>100);
+		const trk=[]; for(let X=500;X<=1080;X+=20) trk.push([X,RD(X)]); p.tracks(trk,10,.26,24); p.car('pickup',1130,RD(1130),ang(1130),2);
+		p.goon('doomcart',1450,RD(1450)+20,Math.PI+ang(1450),2); p.goon('sidecar',1700,RD(1700)-40,Math.PI+ang(1700),1); p.goon('boostjack',900,RD(900)-160,.2,3); p.goon('slinger',1720,620,1.4,2); p.goon('slinger',2050,820,2.6,5); p.goon('doomcart',1900,980,-2.6,4); }},
+tankfarm:{mats:['dirt','lot','gravel','oil'],seed:227,
+	pads:[[420,330],[1200,330],[1980,330],[420,1040],[1200,1040],[1980,1040]],
+	ground(X,Y,o){ o.a='dirt'; o.tint=[.94,.92,.9]; const g=fbm(X*.003,Y*.003,2271,3); if(g>.56){ o.b='gravel'; o.t=smooth(.56,.66,g)*.7; }
+		for(const [px,py] of this.pads){ const e=rectE(X,Y,px-270,py-200,px+270,py+200); if(e>=0){ o.a='lot'; o.b=null; o.t=0; o.tint=[.96,.95,.94]; if(e<14) o.ao=.25*(1-e/14); } }
+		const oi=fbm(X*.004,Y*.004,2272,4); if(oi>.6&&o.a==='dirt'){ o.b='oil'; o.t=smooth(.6,.66,oi)*.9; }
+		rutsAt(o,Math.abs(Y-690),70,26,X,Y,2273); if(o.a==='dirt'&&o.b==='mud') o.b=null; },
+	dress(p){ const R=p.rng;
+		this.pads.forEach(([px,py],i)=>{ const broken=i===1; p.prop('tank',px,py,R()*6,0,.72,broken?'broken':undefined);
+			for(const [x0,y0,x1,y1] of [[px-260,py-190,px+260,py-190],[px-260,py+190,px+260,py+190],[px-260,py-190,px-260,py+190],[px+260,py-190,px+260,py+190]]) p.line('jersey',x0,y0,x1,y1,330,.75,i,(t,k)=>y0===y1&&((py<690&&y0>py)||(py>690&&y0<py))&&t>.35&&t<.65); });
+		p.pipe([[0,560],[600,560],[620,600],[1800,600],[1820,560],[WW,560]],8,'#6d6f72'); p.pipe([[0,820],[WW,820]],6,'#7a5a46');
+		p.flash(1200,330,260); p.fire(1150,300,26); p.fire(1260,360,22); p.fire(1990,300,18); p.dust(1200,330,320,[50,44,40,.45]);
+		for(let i=0;i<5;i++) p.prop('barrel',700+i*44,760+(i%2)*26,R()*3,(R()*3)|0,.9); p.scatterDecor('oilstain',12,(X,Y)=>Math.abs(Y-690)<140);
+		const trk=[]; for(let X=200;X<=840;X+=20) trk.push([X,700]); p.tracks(trk,10,.28,24); p.car('semi',900,700,0,1);
+		p.goon('torch',1100,560,1.6,2); p.goon('torch',1350,520,2.4,5); p.goon('torcher',1600,700,Math.PI,1); p.fire(1540,700,12); p.goon('spitter',1900,760,Math.PI+.4,3); p.goon('spitter',1300,860,-2.4,6); }},
+slagfields:{mats:['ash','lava','basalt','gravel','tar'],seed:229,
+	ch1(Y){ return 640+120*Math.sin(Y*.003+.5); }, ch2(Y){ return 1460+150*Math.sin(Y*.0025+2); },
+	hi(X,Y){ return X-1960-90*fbm(Y*.004,3,2291,3); },
+	ground(X,Y,o){ o.a='ash'; o.tint=[.94,.92,.92]; const g=fbm(X*.004,Y*.004,2292,3); if(g>.55){ o.b='gravel'; o.t=smooth(.55,.65,g)*.7; }
+		const s=fbm(X*.006,Y*.006,2293,3); if(s>.66){ o.b='tar'; o.t=smooth(.66,.72,s)*.6; }
+		for(const [d,w] of [[Math.abs(X-this.ch1(Y)),46],[Math.abs(X-this.ch2(Y)),Y>300?54:0]]){ const e=d-w-14*fbm(X*.01,Y*.01,2294,2); if(e<0){ o.a='lava'; o.b=null; o.t=0; o.tint=null; return; } if(e<36){ const k=1-e/36; o.tint=[.94-.3*k,.92-.36*k,.92-.38*k]; } }
+		const h=this.hi(X,Y); if(h>0){ o.a='basalt'; o.b=null; o.t=0; o.tint=null; if(h<14) o.lip=.5*(1-h/14); } else if(h>-60) o.ao=Math.max(o.ao,.6*(1+h/60)); },
+	dress(p){ const R=p.rng, flat=(X,Y)=>Math.abs(X-this.ch1(Y))>140&&Math.abs(X-this.ch2(Y))>150&&this.hi(X,Y)<-80;
+		for(let Y=0;Y<WH;Y+=110){ p.glowAdd(this.ch1(Y),Y,150,[255,120,50],.3); if(Y>300) p.glowAdd(this.ch2(Y),Y,160,[255,120,50],.3); }
+		p.prop('landmark_war',230,200,0,0,.7); p.reserve(230,200,180);
+		p.spaced('rock_black',12,flat,140,()=>[R()*6,(R()*3)|0,.6+R()*.4]); p.scatterDecor('steam_vent',12,flat); p.scatterProp('scrapheap',2,flat,()=>[R()*6,(R()*3)|0,.6]);
+		for(let Y=250;Y<WH;Y+=330) p.goon('turret',1990+90*fbm(Y*.004,3,2291,3),Y,Math.PI,(Y/330|0)%8);
+		const trk=[]; for(let k=0;k<30;k++){ const Y=1300-k*22; trk.push([(this.ch1(Y)+this.ch2(Y))/2+Math.sin(k*.3)*30,Y]); } p.tracks(trk,9,.24,22);
+		const cy=640, cx=(this.ch1(cy)+this.ch2(cy))/2; p.car('racer',cx,cy,-Math.PI/2+.1,1);
+		p.goon('doomcart',cx+40,cy-330,Math.PI/2,2); p.goon('torcher',cx-200,cy-120,0,3); p.fire(cx-160,cy-120,14); p.goon('spitter',cx+260,cy+120,Math.PI,1); p.goon('spitter',700,1150,-1,5); p.goon('doomcart',1700,200,2,6); }},
+theline:{mats:['conveyor','lot','dirt','oil','gravel'],seed:233,
+	belts:[230,560,890,1220],
+	ground(X,Y,o){ o.a='lot'; o.tint=[.84,.83,.82]; const oi=fbm(X*.004,Y*.004,2331,3); if(oi>.62){ o.b='oil'; o.t=smooth(.62,.7,oi)*.7; }
+		for(const b of this.belts){ const d=Math.abs(Y-b); if(d<92){ o.a='conveyor'; o.b=null; o.t=0; o.tint=null; return; } if(d<104){ o.a='lot'; o.b=null; o.tint=[.55,.55,.56]; o.lip=d<98?.35:0; o.ao=d>=98?.4:0; return; } } },
+	dress(p){ const R=p.rng, B=this.belts;
+		for(let X=40;X<WW;X+=160) for(const b of B) for(const s of [-1,1]) p.dot(X,b+s*98,5,'#3a3836');
+		p.prop('container',600,B[0],0,0,.42); p.prop('container',1700,B[0],0,1,.42); p.prop('container',2150,B[2],0,2,.42); p.prop('crate',1500,B[2],.1,1,.8); p.prop('crate',300,B[3],.3,2,.8); p.prop('barrel',900,B[3],0,1,.9); p.prop('scrapheap',1900,B[3],0,1,.5);
+		p.prop('crane',1300,395,Math.PI*.98,0,.7); for(let i=0;i<4;i++) p.prop('barrel',200+i*40,395+(i%2)*30,R()*3,(R()*3)|0,.9); p.prop('tyres',2100,725,0,1,.8);
+		const cx=1050, cy=B[1]+30; p.car('van',cx,cy,.12,1); p.field(cx+40,cy+40,1150,725);
+		p.goon('magnet',1150,735,-Math.PI/2-.3,2); p.goon('turret',500,725,-Math.PI/2,1); p.goon('turret',1700,395,Math.PI/2,3); p.goon('turret',2200,1055,-Math.PI/2,5);
+		p.goon('slinger',800,1055,-1.4,2); p.goon('slinger',1900,725,-2,6); p.goon('magnet',2000,395,2.4,4); }}
 };
 /* the drawing API a poster's dress() uses; everything is queued by layer, then drawn in order */
 function posterApi(P,x,ground){ const q=[], R=rng(P.seed*977+5), cache={}, S=PSC;
@@ -1301,7 +1677,7 @@ function posterApi(P,x,ground){ const q=[], R=rng(P.seed*977+5), cache={}, S=PSC
 			push(3,Y,()=>{ x.save(); x.translate(X*S,Y*S); x.rotate(ang+Math.PI/2); x.drawImage(f,-f.width/2,-f.height/2); x.restore(); }); },
 		tracks(pts,w,a,gap){ push(0,0,()=>{ x.save(); x.lineCap='round'; x.lineJoin='round'; for(const s of [-1,1]){ x.beginPath(); pts.forEach((p2,i)=>{ const nx=pts[Math.min(i+1,pts.length-1)], pv=pts[Math.max(i-1,0)], dx=nx[0]-pv[0], dy=nx[1]-pv[1], l=Math.hypot(dx,dy)||1, ox=-dy/l*(gap||24)*s, oy=dx/l*(gap||24)*s;
 			const px=(p2[0]+ox)*S, py=(p2[1]+oy)*S; i?x.lineTo(px,py):x.moveTo(px,py); }); x.lineWidth=w*S; x.strokeStyle='rgba(22,18,14,'+a+')'; x.stroke(); } x.restore(); }); },
-		dust(X,Y,r){ push(3.5,Y,()=>{ const g=x.createRadialGradient(X*S,Y*S,0,X*S,Y*S,r*S); g.addColorStop(0,'rgba(200,170,130,.45)'); g.addColorStop(1,'rgba(200,170,130,0)'); x.fillStyle=g; x.fillRect((X-r)*S,(Y-r)*S,r*2*S,r*2*S); }); },
+		dust(X,Y,r,col){ const c0=col||[200,170,130]; push(3.5,Y,()=>{ const g=x.createRadialGradient(X*S,Y*S,0,X*S,Y*S,r*S); g.addColorStop(0,css(c0,c0[3]==null?.45:c0[3])); g.addColorStop(1,css(c0,0)); x.fillStyle=g; x.fillRect((X-r)*S,(Y-r)*S,r*2*S,r*2*S); }); },
 		dot(X,Y,r,col){ push(1,Y,()=>{ vol(x,X*S,Y*S,r*S,r*S,col,{hi:.25}); }); },
 		lily(X,Y,r){ push(1,Y,()=>{ x.save(); x.translate(X*S,Y*S); x.rotate(X); x.beginPath(); x.moveTo(0,0); x.arc(0,0,r*S,.35,TAU-.05); x.closePath(); x.fillStyle='#55683a'; x.fill(); x.strokeStyle='rgba(20,30,12,.5)'; x.lineWidth=1; x.stroke(); x.restore(); }); },
 		lamp(X,Y,rot){ const cv=cache.lamp||(cache.lamp=STATION.station_lamp()); push(4,Y,()=>{ x.save(); x.translate(X*S,Y*S); x.rotate(rot||0); const k=S/PROP_RES*.8; x.scale(k,k); x.drawImage(cv,-cv.width/2,-cv.height/2); x.restore(); });
@@ -1319,17 +1695,31 @@ function posterApi(P,x,ground){ const q=[], R=rng(P.seed*977+5), cache={}, S=PSC
 		scatterProp(id,n,test,fn){ for(let i=0;i<n;i++){ const c=api.find(test,R); if(!c) continue; const [rot,v,s]=fn(c[0],c[1],i); api.prop(id,c[0],c[1],rot,v,s); } },
 		scatterDecor(id,n,test){ for(let i=0;i<n;i++){ const c=api.find(test,R); if(!c) continue; api.decor(id,c[0],c[1],R()*TAU,(R()*4)|0,.8+R()*.4); } },
 		scatterGoon(id,n,test){ for(let i=0;i<n;i++){ const c=api.find(test,R); if(c) api.goon(id,c[0],c[1],R()*TAU,i*3); } },
+		/* Road Atlas helpers: props kept apart, a pack of goons, ropes, fires, lanterns, pipes and lines of props */
+		taken:[],
+		spaced(id,n,test,minD,fn){ let k=0; for(let t=0;t<n*30&&k<n;t++){ const X=R()*WW, Y=R()*WH; if(!test(X,Y)) continue; if(api.taken.some(q=>Math.hypot(q[0]-X,q[1]-Y)<(minD+q[2])*.5)) continue;
+			api.taken.push([X,Y,minD]); const [rot,v,s]=fn(X,Y,k); api.prop(id,X,Y,rot,v,s); k++; } },
+		reserve(X,Y,r){ api.taken.push([X,Y,r*2]); },
+		pack(id,X,Y,n,ang,spread,R2){ R2=R2||R; for(let i=0;i<n;i++){ const a=R2()*TAU, d=spread*Math.sqrt(R2()); api.goon(id,X+Math.cos(a)*d,Y+Math.sin(a)*d,ang+(R2()-.5)*.5,(i*3+1)%8); } },
+		rope(X1,Y1,X2,Y2,sag){ push(3.6,Math.max(Y1,Y2),()=>{ x.save(); x.beginPath(); x.moveTo(X1*S,Y1*S); x.quadraticCurveTo((X1+X2)/2*S,((Y1+Y2)/2+(sag||30))*S,X2*S,Y2*S); x.lineWidth=2.6; x.strokeStyle='rgba(30,24,18,.85)'; x.stroke(); x.lineWidth=1; x.strokeStyle='rgba(190,170,130,.8)'; x.stroke(); x.restore(); }); },
+		fire(X,Y,r){ push(3.4,Y,()=>{ for(let i=0;i<9;i++){ const a=i*2.4, d=r*.4*(i%3)/2; vol(x,(X+Math.cos(a)*d)*S,(Y+Math.sin(a)*d)*S,r*(.45-.03*i)*S,r*(.4-.03*i)*S,i%2?'#d2702a':'#e8a050',{hi:.4,lo:-.2}); } }); api.glowAdd(X,Y,r*5,[255,150,70],.5); },
+		lantern(X,Y){ push(4,Y,()=>{ vol(x,X*S,Y*S,6*S,6*S,'#5c4632',{hi:.3}); x.save(); x.translate(X*S,Y*S); x.fillStyle='#2a2420'; x.fillRect(4*S,-5*S,16*S,10*S); vol(x,14*S,0,7*S,7*S,'#f0c070',{hi:.5,lo:-.1}); x.restore(); }); api.glowAdd(X+14,Y,190,[255,196,120],.42); },
+		pipe(pts,w,col){ push(2,pts[0][1],()=>{ x.save(); x.scale(S,S); for(let i=1;i<pts.length;i++) limb(x,pts[i-1],pts[i],w,col||'#6d6f72'); x.restore(); }); },
+		line(id,X0,Y0,X1,Y1,len,s,v,skip){ const L=Math.hypot(X1-X0,Y1-Y0), a=Math.atan2(Y1-Y0,X1-X0), n=Math.max(1,Math.round(L/(len*s))); for(let i=0;i<n;i++){ const t=(i+.5)/n; if(skip&&skip(t,i)) continue; api.prop(id,X0+(X1-X0)*t,Y0+(Y1-Y0)*t,a,(v==null?i:v)%2,s); } },
+		field(X1,Y1,X2,Y2){ push(3.6,Math.max(Y1,Y2),()=>{ x.save(); x.setLineDash([6,5]); x.lineCap='round'; for(let k=-2;k<=2;k++){ x.beginPath(); x.moveTo(X1*S,Y1*S); const mx=(X1+X2)/2, my=(Y1+Y2)/2, nx=-(Y2-Y1), ny=X2-X1, l=Math.hypot(nx,ny)||1;
+			x.quadraticCurveTo((mx+nx/l*k*28)*S,(my+ny/l*k*28)*S,X2*S,Y2*S); x.lineWidth=2.2; x.strokeStyle='rgba(150,200,255,'+(.75-Math.abs(k)*.18)+')'; x.stroke(); } x.restore(); }); api.glowAdd(X2,Y2,90,[140,190,255],.45); },
+		flash(X,Y,r){ push(3.7,Y,()=>{ const g=x.createRadialGradient(X*S,Y*S,0,X*S,Y*S,r*S); g.addColorStop(0,'rgba(255,236,190,.9)'); g.addColorStop(.3,'rgba(255,170,80,.7)'); g.addColorStop(.7,'rgba(200,80,30,.25)'); g.addColorStop(1,'rgba(120,40,20,0)'); x.fillStyle=g; x.fillRect((X-r)*S,(Y-r)*S,r*2*S,r*2*S); }); api.glowAdd(X,Y,r*2.2,[255,160,80],.55); },
 		flush(f){ q.sort((a,b)=>a.layer-b.layer||a.Y-b.Y); for(const it of q) if(!f||f(it.layer)) it.fn(); }};
 	return api; }
 function renderPoster(id){ const P=POSTER[id], S=PSC, mats={}, offs={};
 	for(const m of P.mats){ mats[m]=GROUND[m](GROUND_TEXELS).getContext('2d').getImageData(0,0,GROUND_TEXELS,GROUND_TEXELS).data; offs[m]=[(hash2(m.length,m.charCodeAt(0),801)*512)|0,(hash2(m.charCodeAt(1),7,802)*512)|0]; }
-	const o={}; const reset=()=>{ o.a=P.mats[0]; o.b=null; o.t=0; o.tint=null; o.ao=0; o.lip=0; o.foam=0; o.wet=0; o.paint=null; };
+	const o={}; const reset=()=>{ o.a=P.mats[0]; o.b=null; o.t=0; o.tint=null; o.ao=0; o.lip=0; o.foam=0; o.wet=0; o.paint=null; o.u=null; o.v=null; };
 	const ground=(X,Y)=>{ reset(); P.ground(X,Y,o); return o; };
 	const samp=(m,tx,ty,out)=>{ const D=mats[m]; if(!D) throw new Error(id+': material '+m+' not in mats'); tx+=offs[m][0]; ty+=offs[m][1]; const x0=Math.floor(tx), y0=Math.floor(ty), fx=tx-x0, fy=ty-y0, M=511;
 		const i00=(((y0&M)<<9)|(x0&M))<<2, i10=(((y0&M)<<9)|((x0+1)&M))<<2, i01=((((y0+1)&M)<<9)|(x0&M))<<2, i11=((((y0+1)&M)<<9)|((x0+1)&M))<<2;
 		for(let k=0;k<3;k++) out[k]=(D[i00+k]*(1-fx)+D[i10+k]*fx)*(1-fy)+(D[i01+k]*(1-fx)+D[i11+k]*fx)*fy; };
 	const cv=canvas(PW,PH), x=cv.getContext('2d'), im=x.createImageData(PW,PH), d=im.data, ca=[0,0,0], cb=[0,0,0];
-	for(let j=0;j<PH;j++) for(let i=0;i<PW;i++){ const X=i/S, Y=j/S; ground(X,Y); samp(o.a,X*GROUND_DENSITY,Y*GROUND_DENSITY,ca);
+	for(let j=0;j<PH;j++) for(let i=0;i<PW;i++){ const X=i/S, Y=j/S; ground(X,Y); const U=o.u!=null?o.u:X, V=o.v!=null?o.v:Y; samp(o.a,U*GROUND_DENSITY,V*GROUND_DENSITY,ca);
 		if(o.b&&o.t>0){ samp(o.b,X*GROUND_DENSITY,Y*GROUND_DENSITY,cb); for(let k=0;k<3;k++) ca[k]+=(cb[k]-ca[k])*o.t; }
 		if(o.tint) for(let k=0;k<3;k++) ca[k]*=o.tint[k];
 		if(o.wet) for(let k=0;k<3;k++) ca[k]*=1-.35*o.wet;
@@ -1342,6 +1732,7 @@ function renderPoster(id){ const P=POSTER[id], S=PSC, mats={}, offs={};
 	const api=posterApi(P,x,ground); P.dress(api);
 	api.flush(l=>l<9);
 	if(P.grade==='dusk'){ x.save(); x.globalCompositeOperation='multiply'; x.fillStyle='#77749c'; x.fillRect(0,0,PW,PH); x.restore(); }
+	if(P.grade==='night'){ x.save(); x.globalCompositeOperation='multiply'; x.fillStyle='#5c648a'; x.fillRect(0,0,PW,PH); x.restore(); }
 	api.flush(l=>l>=9);
 	const v=x.createRadialGradient(PW/2,PH/2,PH*.35,PW/2,PH/2,PW*.62); v.addColorStop(0,'rgba(10,8,6,0)'); v.addColorStop(1,'rgba(10,8,6,.42)'); x.fillStyle=v; x.fillRect(0,0,PW,PH);
 	return cv; }

@@ -16,7 +16,7 @@ The ground, edges, props, station textures and level posters are generated top-d
 | `world/art/decor/` | One atlas per decor id (`<id>.png`, a row of 4 square cells). |
 | `world/art/props.json` | The prop manifest (below). |
 | `world/art/station/` | `station_lot`, `station_roof` (512² tiles), `station_wall` (strip), `station_lamp` and `station_pump` (sprites). |
-| `world/art/posters/` | The 8 level posters, `<level id>.png`, 1792×1024. |
+| `world/art/posters/` | The 30 level posters (the 8 levels in `Levels.ORDER` and the Road Atlas's 22 new ones), `<level id>.png`, 1792×1024. |
 | `tests/game/test_world_art.gd` | Manifest vs. files and scenes, hull shape, occluders, level dressing ids, ground, edges, station and posters. |
 
 **Never edit the baked files by hand; change the generator and re-bake.** That includes the `.tscn` files and `props.json`.
@@ -24,7 +24,7 @@ The ground, edges, props, station textures and level posters are generated top-d
 ## Re-baking
 
 ```
-python scripts/art/bake_world.py                          # everything: about 1.5 minutes
+python scripts/art/bake_world.py                          # everything: about 10 minutes (the 30 posters are most of it)
 python scripts/art/bake_world.py ground edge              # jobs: ground edge prop decor station poster
 python scripts/art/bake_world.py prop --only oak,crate    # a few props (props.json keeps the others)
 python scripts/art/bake_world.py poster --only city
@@ -201,11 +201,15 @@ The root is a `StaticBody2D`, so the car's wall-hit checks (`World.isWall`) trea
 
 ## Posters
 
-`world/art/posters/<id>.png`, 1792×1024, one per level in `Levels.ORDER`: a top-down vignette of the level's signature barrier and surfaces at 0.75 poster px per world px, built from the same ground materials, props, cars (`CarArt`) and goons (`GoonArt`). Each `POSTER` entry is a `ground(X, Y, o)` per-pixel function and a `dress(p)` function that queues props, decor, tracks, the car and goons. No text. `LevelDef.poster` points here.
+`world/art/posters/<id>.png`, 1792×1024, one per level: a top-down vignette of the level's signature barrier and surfaces at 0.75 poster px per world px, built from the same ground materials, props, cars (`CarArt`) and goons (`GoonArt`). Each `POSTER` entry is a `ground(X, Y, o)` per-pixel function and a `dress(p)` function that queues props, decor, tracks, the car and goons. No text. `LevelDef.poster` points here.
+
+There are 30: the 8 levels in `Levels.ORDER` and one for each of the Road Atlas's 22 new level ids (`orchard`, `moosewoods`, `mudlick`, `stilttown`, `lantern`, `sawmill`, `ghosttown`, `saltflats`, `raiderpass`, `thunderroad`, `frozenlake`, `timberline`, `tarpits`, `summit`, `manhole`, `culdesac`, `gridlock`, `blockparty`, `blastpits`, `tankfarm`, `slagfields`, `theline`), baked ahead of their `LevelDef`s. Each shows its landscape, its twist (the yipper pack down the orchard lanes, the herd and the bull moose in the clearing, the harpoon line on the salt, the toppled billboard on Thunder Road, the rats pouring out of the manholes, the jam, the crowd round the junk throne, the chained tank blasts, the magnet pulling the car off its belt...), its hero goons from the line-up and a car. `tests/game/test_world_art.gd` checks them by a list of their own (`ROAD_ATLAS_POSTERS`) until they are in `Levels.ORDER`.
+
+Shared pieces for posters (in `world_gen.js`): `rutsAt` (a rutted dirt track), `rectE` and `bldg` (a building's roof, eave lip and ground AO from its signed edge distance), `grade: 'night'` (a darker multiply than `'dusk'`, lights added after it), and `o.u`/`o.v` in `ground` to sample a material in a building's own axes (rotated suburb roofs). The `dress` api adds `spaced` (props kept apart, with `reserve` to keep a spot clear), `pack` (a group of goons), `rope` (a harpoon line), `fire`, `flash` (a blast), `lantern`, `field` (a magnet's pull), `pipe` and `line` (a row of props such as hedges or fences along a segment).
 
 ## Budget
 
-About 44 MB on disk (posters 27 MB, ground 10 MB, props 5 MB). A level loads only its own materials (4–6), the props its dressing names and the three landmarks, about 17 MB of VRAM, inside the 48 MB budget. If props ever need trimming, switch `props/*` to VRAM compression in `VRAM` in `bake_world.py`.
+About 122 MB on disk (posters 97 MB, ground 16 MB, props 9 MB). Only the menu shows posters, one at a time. A level loads only its own materials (4–6), the props its dressing names and the three landmarks, about 17 MB of VRAM, inside the 48 MB budget. If props ever need trimming, switch `props/*` to VRAM compression in `VRAM` in `bake_world.py`.
 
 ## Adding a prop
 

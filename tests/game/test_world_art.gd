@@ -14,6 +14,10 @@ const EDGES := ["shore_foam", "cliff_lip", "canyon_rim", "mesa_lip", "kerb", "he
 	"basalt_lip", "timber_edge", "shingle_edge"]
 const STATION := ["station_lot", "station_wall", "station_roof", "station_lamp", "station_pump"]
 const POSTERS := ["prairie", "bayou", "canyon", "quarry", "frostbite", "highway", "city", "crusher"]
+#the Road Atlas's new levels (baked ahead of their LevelDefs, so not read from Levels.ORDER)
+const ROAD_ATLAS_POSTERS := ["orchard", "moosewoods", "mudlick", "stilttown", "lantern", "sawmill", "ghosttown", "saltflats",
+	"raiderpass", "thunderroad", "frozenlake", "timberline", "tarpits", "summit", "manhole", "culdesac", "gridlock", "blockparty",
+	"blastpits", "tankfarm", "slagfields", "theline"]
 #the prop catalog of the world spec (section 6)
 const CATALOG := ["rock", "boulder", "rock_white", "rock_ice", "oak", "pine", "cypress", "log", "stump", "saguaro", "deadtree",
 	"carcass", "haybale", "fence", "hedge", "crate", "shack", "tent", "totem", "firepit", "tyres", "barricade", "barrel", "crane",
@@ -157,6 +161,14 @@ func test_ground_edges_station_and_posters_exist():
 		if tex: assert_eq(tex.get_height(), 96, "edge strip %s is 96 texels across" % name)
 	for name in STATION: assert_true(ResourceLoader.exists(ART + "station/%s.png" % name), "station %s" % name)
 	for id in POSTERS:
+		var path := ART + "posters/%s.png" % id
+		assert_true(ResourceLoader.exists(path), "poster %s" % id)
+		var tex: Texture2D = load(path) if ResourceLoader.exists(path) else null
+		if tex: assert_eq(Vector2i(tex.get_width(), tex.get_height()), Vector2i(1792, 1024), "poster %s size" % id)
+
+func test_road_atlas_posters_exist():
+	assert_eq(ROAD_ATLAS_POSTERS.size(), 22, "one poster per new level")
+	for id in ROAD_ATLAS_POSTERS:
 		var path := ART + "posters/%s.png" % id
 		assert_true(ResourceLoader.exists(path), "poster %s" % id)
 		var tex: Texture2D = load(path) if ResourceLoader.exists(path) else null
