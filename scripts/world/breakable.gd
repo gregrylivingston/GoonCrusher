@@ -26,8 +26,12 @@ const SPEED_KEEP := 0.85 #share of the car's speed kept through a smash
 ## Props that barely slow the car (speedKeep): a burrow mound caves in, a pumpkin splats
 const SPEED_KEEPS := {&"burrow": 0.95, &"pumpkin": 0.98}
 ## Coins a smash throws out, once (every paying prop has a taken-set bit, or Spill.markUsed for one without)
-const COIN_SPILL := {&"haybale": 2, &"fence": 1, &"crate": 3, &"den": 4, &"burrow": 1, &"beehive": 2}
-const BLAST := {&"barrel": Vector2(170.0, 8.0), &"tank": Vector2(320.0, 16.0)} #radius px, car damage
+const COIN_SPILL := {&"haybale": 2, &"fence": 1, &"crate": 3, &"den": 4, &"burrow": 1, &"beehive": 2,
+	&"farmgate": 2, &"pumpkin": 1}
+const BLAST := {&"barrel": Vector2(170.0, 8.0), &"tank": Vector2(320.0, 16.0), &"still": Vector2(220.0, 8.0),
+	&"tnt": Vector2(190.0, 8.0)} #radius px, car damage
+## Explosives that leave fire behind: [radius px, seconds] (the moonshine still)
+const BURNS := {&"still": Vector2(90.0, 6.0)}
 const DEFAULT_BLAST := Vector2(170.0, 8.0)
 const CHAIN_DELAY := 0.12
 const COIN_SCENE := "res://scene/powerup/coin.tscn"
@@ -100,7 +104,7 @@ static func tag(node: Node) -> void:
 	var group: StringName = GROUPS.get(propId(node), &"")
 	if group != &"": node.add_to_group(group)
 	if node.get_meta(&"explosive", false): node.add_to_group(EXPLOSIVE_GROUP)
-	if Spill.DEFS.has(propId(node)): node.add_to_group(Spill.SPILL_GROUP)
+	if Spill.DEFS.has(propId(node)) && (isBreakable(node) || propId(node) == &"crane"): node.add_to_group(Spill.SPILL_GROUP) #a hero saguaro joins when armed
 	if Spill.ROOSTS.has(propId(node)): node.add_to_group(ROOST_GROUP)
 	if propId(node) == &"burrow": node.add_to_group(Spill.WARREN_GROUP) #kept when it caves in: the warren count
 
@@ -142,6 +146,15 @@ static func breakVisual(node: Node) -> void:
 			child.visible = false
 	for group in [GROUPS.get(propId(node), &""), EXPLOSIVE_GROUP, Spill.SPILL_GROUP, ROOST_GROUP]:
 		if group != &"" && node.is_in_group(group): node.remove_from_group(group)
+
+## A pooled prop that was smashed comes back whole (Spill.armSaguaro: a hero saguaro without a taken-set bit)
+static func unsmash(node: Node) -> void:
+	node.remove_meta(&"smashed")
+	for child in node.get_children():
+		if child is CollisionShape2D || child is CollisionPolygon2D: child.set_deferred("disabled", false)
+		elif child is LightOccluder2D:
+			child.set_meta("gc_vis", true)
+			child.visible = true
 
 ## Coin pickups thrown out along `dir` (the car's travel, or a charge's); the car collects them like any other
 static func spillCoins(id: StringName, pos: Vector2, dir: Vector2) -> int:
@@ -209,6 +222,7 @@ static func explode(node: Node2D) -> void:
 	debris(node)
 	markTaken(node)
 	var fx = Root.spawnManager.fx if is_instance_valid(Root.spawnManager) else null
+	if fx && BURNS.has(propId(node)): fx.addHazard("fire", pos, BURNS[propId(node)].x, BURNS[propId(node)].y)
 	if fx: fx.blast(pos, blast.x, blast.y) #car damage, goons with crush credit, the pooled explosion, chains
 	else:
 		if is_instance_valid(Root.levelRoot) && Root.levelRoot.has_method("explode"): Root.levelRoot.explode(pos)
@@ -224,7 +238,7 @@ static func blastAt(tree: SceneTree, pos: Vector2, radius: float) -> int:
 		if not node is Node2D || node.get_meta(&"smashed", false) || node.get_meta(&"spilled", false): continue
 		if node.global_position.distance_to(pos) > radius + 60.0 || not WorldHooks.lineClear(pos, node.global_position): continue
 		if propId(node) == &"crane": Spill.ramCrane.call_deferred(node, Spill.DROP_SPEED)
-		else:
+		elif isBreakable(node):
 			node.set_meta(&"spillDir", node.global_position - pos)
 			smashNode.call_deferred(node, null)
 	var count := 0

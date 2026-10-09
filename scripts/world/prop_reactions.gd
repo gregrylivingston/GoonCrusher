@@ -68,6 +68,7 @@ const BIT_POOL := 72
 const DUST := Color(0.72, 0.64, 0.52, 0.5)
 const SNOW_DUST := Color(0.94, 0.96, 1.0, 0.65)
 const WATER := Color(0.72, 0.84, 0.95, 0.75)
+const PUMPKIN := Color(0.95, 0.52, 0.1, 0.95)
 const SPRAY_SECONDS := 2.2
 const SPRAY_RATE := 70.0   #droplets a second at Full
 const KNOCK_SPEED := 120.0 #a cone hit this fast flies off...
@@ -386,6 +387,12 @@ func splash(at: Vector2, radius: float) -> void:
 		var v := Vector2.from_angle(TAU * i / maxi(n, 1) + randf_range(-0.1, 0.1)) * radius * randf_range(1.2, 2.0)
 		dust.spawn(at, v, randf_range(0.5, 0.9), randf_range(3.0, 6.0), WATER, CarJuice.Kind.SPRAY)
 	for i in roundi(10 * particleScale): dust.spawn(at + Vector2.from_angle(randf() * TAU) * radius * 0.5, Vector2.ZERO, 0.9, 30.0, Color(WATER, 0.35), CarJuice.Kind.PUFF)
+
+## A burst of wet bits thrown along `dir` (a pumpkin splat, Spill)
+func splatter(at: Vector2, dir: Vector2, col: Color) -> void:
+	for i in roundi(16.0 * particleScale):
+		var v := (dir * randf_range(40.0, 180.0)).rotated(randf_range(-1.1, 1.1)) + Vector2.from_angle(randf() * TAU) * 30.0
+		dust.spawn(at, v, randf_range(0.4, 0.8), randf_range(4.0, 9.0), col, CarJuice.Kind.SPRAY)
 
 func puff(at: Vector2, dir: Vector2, k: float, heavy: bool) -> void:
 	var n := roundi((5.0 if heavy else 3.0) * (0.5 + k) * particleScale)

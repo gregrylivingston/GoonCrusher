@@ -22,6 +22,15 @@ const HEROES := {
 	&"burrow": "Burrows cave in at %s: flush the Jackalopes out",
 	&"bell": "Ring the Dinner Bell at %s: every goon near comes running",
 	&"scarecrow": "Ram scarecrows at %s: the Buzzards drop",
+	&"farmgate": "Farm gates smash at %s",
+	&"pumpkin": "Pumpkins splat at %s and barely slow you",
+	&"still": "Stills blow up at %s and burn: mind the blast",
+	&"tnt": "TNT blows up at %s: mind the blast",
+	&"sluice": "Ram sluice gates at %s: the flood sweeps the shallows",
+	&"rockpile": "Smash rock piles at %s: a rockslide rolls on",
+	&"saguaro": "Big saguaros topple at %s onto the goons behind",
+	&"ranger_tower": "Ranger towers topple at %s onto the goons behind",
+	&"fallen_trunk": "Leaning trunks drop across the trail at %s",
 }
 const SHOW_PX := 700.0
 const HEADING_DOT := 0.82  #the car's travel within about 35 degrees of the prop

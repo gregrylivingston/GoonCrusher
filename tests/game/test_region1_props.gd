@@ -371,3 +371,144 @@ func test_chunk_crates_are_the_baked_crate_and_pay_once():
 	add_child(again)
 	await get_tree().process_frame
 	assert_false(is_instance_valid(again), "so a reloaded chunk doesn't bring it back")
+
+#--- spills and breakables ---------------------------------------------------------------------------------
+
+func test_every_hero_tag_is_a_prop_that_does_something():
+	var m := WorldSkin.loadManifest()
+	for id in SmashTags.HEROES:
+		var e: Dictionary = m.get(String(id), {})
+		assert_false(e.is_empty(), "%s is a baked prop" % id)
+		var acts: bool = e.get("breakable") is Dictionary || e.get("explosive", false) || id in [&"crane", &"bell", &"saguaro"]
+		assert_true(acts, "%s breaks, blows or answers a ram" % id)
+	for id in [&"den", &"burrow", &"farmgate", &"pumpkin", &"still", &"sluice", &"rockpile", &"tnt", &"saguaro", &"ranger_tower", &"fallen_trunk", &"bell", &"scarecrow"]:
+		assert_true(SmashTags.HEROES.has(id), "%s has a smash tag and a first-meeting hint" % id)
+
+func test_a_still_blows_up_burns_and_chains():
+	makeCar(Vector2(0, 4000))
+	var still := prop("still", Vector2(0, 0))
+	var barrel := prop("barrel", Vector2(BreakableProp.BLAST[&"still"].x - 40.0, 0))
+	var g := goon(&"grunt", Vector2(0, BreakableProp.BLAST[&"still"].x - 30.0))
+	var out := goon(&"grunt", Vector2(0, BreakableProp.BLAST[&"still"].x + 120.0))
+	BreakableProp.smashNode(still, null)
+	await get_tree().process_frame
+	assert_true(flattened(g), "inside the blast")
+	assert_false(flattened(out), "outside it")
+	assert_true(manager.fx.hazards.any(func(h): return h.kind == "fire"), "it leaves fire behind")
+	await frames(int(BreakableProp.CHAIN_DELAY * 60) + 6)
+	assert_true(barrel.get_meta(&"smashed", false), "and sets the barrel off")
+
+func test_tnt_is_an_explosive_with_its_own_blast():
+	makeCar(Vector2(0, 4000))
+	var tnt := prop("tnt", Vector2(0, 0))
+	assert_true(tnt.is_in_group(BreakableProp.EXPLOSIVE_GROUP), "TNT chains")
+	var g := goon(&"grunt", Vector2(BreakableProp.BLAST[&"tnt"].x - 30.0, 0))
+	BreakableProp.smashNode(tnt, null)
+	await get_tree().process_frame
+	assert_true(flattened(g), "BOOM")
+	assert_false(manager.fx.hazards.any(func(h): return h.kind == "fire"), "no fire from TNT")
+
+func test_a_rock_pile_sets_off_a_rockslide():
+	var car := makeCar(Vector2(0, -600))
+	var pile := prop("rockpile", Vector2(0, 0))
+	var victim := goon(&"grunt", Vector2(320, 0))
+	pile.set_meta(&"spillDir", Vector2.RIGHT)
+	BreakableProp.smashNode(pile, null)
+	var rollers := get_children().filter(func(n): return n is Spill.Roller)
+	assert_eq(rollers.size(), Spill.DEFS[&"rockpile"].count, "the boulders roll out")
+	assert_true(rollers.all(func(r): return r.id == &"rock_roll" && r.spin), "as tumbling boulders")
+	await frames(int(Spill.LOG_SECONDS * 60) + 10)
+	assert_true(flattened(victim), "flattening what is in the way")
+	assert_true("ROCKS" in car.chainSources, "named ROCKS in the chain")
+	var rocks := get_children().filter(func(n): return n is StaticBody2D && n.get_meta(&"propId", &"") == &"rock_roll")
+	assert_eq(rocks.size(), Spill.DEFS[&"rockpile"].count, "and lying where they stop")
+
+func waterRule(p: Vector2) -> int:
+	if absf(p.y) < 120.0: return Root.terrain.WATER
+	if absf(p.y) < 260.0: return Root.terrain.SHALLOWS
+	return Root.terrain.GRASS
+
+func test_a_sluice_floods_the_shallows_along_its_channel():
+	makeCar(Vector2(0, 3000))
+	var map := RuleMap.new()
+	map.rule = waterRule
+	Root.worldMap = map
+	assert_eq(Spill.channelAxis(Vector2(0, 0), Vector2.DOWN).abs(), Vector2.RIGHT, "the channel runs along x")
+	var sluice := prop("sluice", Vector2(0, -200), PI / 2.0)
+	var wading := goon(&"grunt", Vector2(380, -190), true)
+	var other := goon(&"grunt", Vector2(-300, -240), true)
+	var dry := goon(&"grunt", Vector2(100, -330), true)
+	var beyond := goon(&"grunt", Vector2(Spill.FLOOD_LENGTH * 0.5 + 250.0, -200), true)
+	BreakableProp.smashNode(sluice, null)
+	assert_true(flattened(wading), "a goon wading in the flood's path is swept away")
+	assert_true(flattened(other), "on either bank's shallows")
+	assert_false(flattened(dry), "one on the grass is not")
+	assert_false(flattened(beyond), "nor one past the flood's reach")
+
+func test_only_hero_saguaros_topple():
+	var car := makeCar(Vector2(0, -400))
+	var plain := prop("saguaro", Vector2(3000, 0))
+	assert_false(BreakableProp.isBreakable(plain), "a scattered saguaro is scenery")
+	assert_false(plain.is_in_group(Spill.SPILL_GROUP), "and no blast topples it")
+	var hero: StaticBody2D = load("res://world/art/props/saguaro.tscn").instantiate()
+	hero.set_meta(&"hero", true)
+	add_child_autofree(hero)
+	Spill.arm(hero)
+	assert_eq(BreakableProp.speedOf(hero), Spill.SAGUARO_SMASH, "a hero one topples at 38 MPH")
+	var under := goon(&"grunt", Vector2(0, 150), true)
+	var spiked := goon(&"grunt", Vector2(110, Spill.SAGUARO_BOX.end.y + 60.0), true)
+	var heavy := goon(&"tusker", Vector2(-110, Spill.SAGUARO_BOX.end.y + 60.0), true)
+	var behind := goon(&"grunt", Vector2(0, -150), true)
+	BreakableProp.smashNode(hero, car)
+	assert_true(flattened(under), "it falls away from the car onto what is there")
+	assert_true(flattened(spiked), "its spines flatten fodder round the crown")
+	assert_false(flattened(heavy), "not a heavy")
+	assert_false(flattened(behind), "the car's side is clear")
+	assert_true("SPINES" in car.chainSources)
+
+func test_a_charge_topples_a_ranger_tower_along_it_and_a_deadfall_drops():
+	makeCar(Vector2(0, 5000))
+	var tower := prop("ranger_tower", Vector2(0, 0))
+	assert_true(BreakableProp.speedOf(tower) > 110.0 * 3.6, "too much for a Tusker's charge")
+	var g := goon(&"grunt", Vector2(0, -200), true)
+	tower.set_meta(&"spillDir", Vector2.UP)
+	BreakableProp.smashNode(tower, null)
+	assert_true(flattened(g), "it falls the way it was pushed")
+	var trunk := prop("fallen_trunk", Vector2(3000, 0))
+	var plainVictim := goon(&"grunt", Vector2(3100, 0), true)
+	BreakableProp.smashNode(trunk, null)
+	assert_false(flattened(plainVictim), "a plain fallen trunk just breaks")
+	var lean := prop("fallen_trunk", Vector2(6000, 0))
+	lean.get_node("Sprite2D").texture = load("res://world/art/props/fallen_trunk_v2.png")
+	Spill.arm(lean) #ChunkView gives it its variant before PropReactions.addHero arms it
+	assert_true(Spill.isDeadfall(lean), "the leaning one is the deadfall")
+	var victim := goon(&"grunt", Vector2(6100, 30), true)
+	BreakableProp.smashNode(lean, null)
+	assert_true(flattened(victim), "it drops across the trail")
+
+func test_pumpkins_and_gates_pay_and_barely_slow_the_car():
+	makeCar(Vector2(0, 5000))
+	var pumpkin := prop("pumpkin", Vector2(0, 0))
+	assert_almost_eq(BreakableProp.speedKeep(pumpkin), 0.98, 0.001)
+	assert_eq(BreakableProp.speedOf(pumpkin), 40.0, "4 MPH")
+	var gate := prop("farmgate", Vector2(0, 1500))
+	BreakableProp.smashNode(pumpkin, null)
+	BreakableProp.smashNode(gate, null)
+	await get_tree().process_frame
+	assert_eq(coinsOnLevel(), BreakableProp.COIN_SPILL[&"pumpkin"] + BreakableProp.COIN_SPILL[&"farmgate"], "a coin and two")
+
+func test_an_orchard_oak_drops_apples_once():
+	makeCar(Vector2(0, 5000))
+	var oak := prop("oak", Vector2(0, 0))
+	assert_false(Spill.shakeOak(oak, 9999.0), "not on Prairie Run")
+	stub.def = stub.def.duplicate()
+	stub.def.rules = {"oakCoins": 2}
+	assert_false(Spill.shakeOak(oak, Spill.OAK_SHAKE - 50.0), "a tap does nothing")
+	var reactions: PropReactions = add_child_autofree(PropReactions.new())
+	PropReactions.hit(oak, Vector2(Spill.OAK_SHAKE + 100.0, 0))
+	await get_tree().process_frame
+	assert_eq(coinsOnLevel(), 2, "a hard hit shakes the apples down")
+	assert_false(Spill.shakeOak(oak, 9999.0), "once")
+	var again := prop("oak", Vector2(0, 0))
+	assert_true(again.get_meta(&"spilled", false), "even after its chunk reloads")
+	reactions.queue_free()
