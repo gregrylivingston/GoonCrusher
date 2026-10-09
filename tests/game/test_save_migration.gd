@@ -57,15 +57,16 @@ func test_migrate_adds_and_updates_without_losing_progress():
 	assert_eq(data.saveVersion, SaveManager.SAVE_VERSION)
 
 func test_saves_from_before_the_road_atlas_start_over():
-	assert_eq(SaveManager.SAVE_VERSION, 8)
+	assert_eq(SaveManager.SAVE_VERSION, 9)
 	assert_eq(SaveManager.FIRST_KEPT_VERSION, 8)
 	for version in [0, 4, 5, 6, 7]:
 		var data = PlayerData.new()
 		data.saveVersion = version
 		assert_true(SaveManager.isObsolete(data), "a version %d save is replaced by a new one" % version)
-	var current = PlayerData.new()
-	current.saveVersion = SaveManager.SAVE_VERSION
-	assert_false(SaveManager.isObsolete(current), "a current save is kept")
+	for version in [8, SaveManager.SAVE_VERSION]:
+		var kept = PlayerData.new()
+		kept.saveVersion = version
+		assert_false(SaveManager.isObsolete(kept), "a version %d save is kept" % version)
 
 func test_registry_saves_keep_progress_by_id():
 	var data = PlayerData.new()
@@ -132,3 +133,33 @@ func test_car_clears_credit_the_tier_and_below_and_pay_once():
 	assert_true(Unlocks.isValidNeed("carclears:20") && Unlocks.isValidNeed("garages:1"))
 	assert_eq(Unlocks.progressOf("carclears:20").have, data.cars.size())
 	assert_true(Unlocks.needsMet(["garages:1"]))
+
+#version 9 renamed the "audi" to the "supercar": its garage entry, unlock and clears follow it, in place
+func test_a_renamed_car_keeps_its_progress():
+	var data = PlayerData.new()
+	data.saveVersion = 8
+	var at := -1
+	for i in data.cars.size():
+		if data.cars[i].name == "supercar":
+			at = i
+			data.cars[i].name = "audi"
+			data.cars[i].scene = "res://scene/car/audi/audi.tscn"
+			data.cars[i].cost = 0
+			data.cars[i].upgrades = {Root.upgrade.ENGINE: 4}
+	assert_gt(at, -1, "the supercar is in the defaults")
+	data.selectedCar = at
+	var key := SaveManager.levelKey(data.levels[0])
+	data.meta["unlocks"] = {"car:audi": true}
+	data.meta["carClears"] = {key: {Root.gameModes.SPRINT: {"audi": ModeTiers.MEDIUM, "van": ModeTiers.EASY}}}
+	SaveManager.playerData = data
+	SaveManager.migrate()
+	assert_eq(data.cars.filter(func(c): return c.name == "audi").size(), 0, "no audi left")
+	assert_eq(data.cars.filter(func(c): return c.name == "supercar").size(), 1, "one supercar, not a second fresh one")
+	assert_eq(data.cars[at].name, "supercar", "renamed in place")
+	assert_eq(data.cars[at].scene, "res://scene/car/supercar/supercar.tscn")
+	assert_eq(data.cars[at].upgrades.get(Root.upgrade.ENGINE, 0), 4, "upgrades kept")
+	assert_eq(data.cars[at].cost, 0, "still owned")
+	assert_eq(data.selectedCar, at, "still selected")
+	assert_true(data.meta.unlocks.has("car:supercar") && not data.meta.unlocks.has("car:audi"), "the unlock moves")
+	assert_eq(data.meta.carClears[key][Root.gameModes.SPRINT], {"supercar": ModeTiers.MEDIUM, "van": ModeTiers.EASY}, "the clears move")
+	assert_eq(data.saveVersion, SaveManager.SAVE_VERSION)

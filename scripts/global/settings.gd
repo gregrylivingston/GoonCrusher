@@ -90,6 +90,7 @@ const DEFAULTS := {
 	"gameplay/speed_units": "mph",
 	"gameplay/show_timer": true,
 	"gameplay/confirm_quit": true,
+	"gameplay/auto_gearbox": false, #the manual cars (CarInfo.gears) shift themselves
 	"gameplay/car_paint": "weathered", #cosmetic: "weathered" or "showroom" sheets (docs/CAR_ART.md)
 
 	"controls/deadzone": 0.5,
@@ -730,7 +731,7 @@ func applyLighting() -> void:
 #--- key and button bindings ----------------------------------------------------------------
 #Each rebindable action has two keyboard slots and one controller slot. Only actions the player
 #changed are stored in controls/bindings; the rest keep the project defaults.
-const REBINDABLE := {"Accelerate":"Accelerate", "Brake":"Brake", "TurnLeft":"Steer Left", "TurnRight":"Steer Right", "Handbrake":"Handbrake", "UseItem":"Fire Gadget", "UseMove":"Boost / Hop", "Horn":"Horn", "Ability":"Car Ability", "ui_menu":"Pause"}
+const REBINDABLE := {"Accelerate":"Accelerate", "Brake":"Brake", "TurnLeft":"Steer Left", "TurnRight":"Steer Right", "Handbrake":"Handbrake", "UseItem":"Fire Gadget", "UseMove":"Boost / Hop", "Horn":"Horn", "Ability":"Car Ability", "ShiftUp":"Shift Up", "ShiftDown":"Shift Down", "ui_menu":"Pause"}
 const JOY_BUTTON_NAMES := ["A", "B", "X", "Y", "Back", "Guide", "Start", "L3", "R3", "LB", "RB", "D-Up", "D-Down", "D-Left", "D-Right"]
 const JOY_AXIS_NAMES := ["LS", "LS", "RS", "RS", "LT", "RT"]
 var defaultBindings := {}

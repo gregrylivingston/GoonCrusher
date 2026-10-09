@@ -159,9 +159,34 @@ class CarInput:
 	var acceleration := 0.0  # -1.0 (reverse) to 1.0 (accelerate)
 	var braking := false     # True if brakes are engaged
 	var handbrake := false   # the parking brake: locks the rear for a powerslide (handbrakeGrip)
+	var gear := GEAR_FOR_SPEED # a geared car's gear (-1 R, 0 N, 1 up); unset, the right one for the speed. Automatics ignore it
 
-var gear: int = 0
-var maxGears: int = 3
+var gear: int = 0 #-1 R, 0 N, 1 up. An automatic's is only for show (the HUD and the engine note, from speed)
+
+#--- the gearbox (CarInfo.gears; docs/CAR_ART.md, "Gearbox") ---
+#A geared car has `gears` forward gears, each covering gearSpan px/s more than the one below. Low gears pull
+#harder; at the top of any gear but the last the rev limiter cuts the push, and a gear far too high for the
+#speed bogs. Changing between forward gears cuts the push for a moment (the clutch); a shift up near the
+#redline (from SHIFT_KICK_FROM of the gear) earns a short push instead. Who shifts: the player by hand
+#(ShiftUp / ShiftDown, down past N into R) unless the Automatic Gearbox setting is on; the AI and that
+#setting use autoGear. gearThrust() is read inside integrate(), so the AI's predictions follow it.
+var gears: int = 0          #forward gears; 0 is an automatic, as before gearboxes
+var gearSpan := 300.0       #px/s each gear covers (setupGearbox)
+var shiftCut := 0           #ticks left of the clutch's cut after a shift between forward gears
+var shiftKick := 0          #ticks left of a well-timed shift's push
+signal shifted(gear: int, kicked: bool)
+const GEAR_FOR_SPEED := 99 #CarInput.gear left unset: whichever gear suits the speed (bestGear)
+const SHIFT_CUT_TICKS := 6
+const SHIFT_KICK_TICKS := 30
+const SHIFT_KICK := 1.3
+const SHIFT_KICK_FROM := 0.88  #share of a gear's range from which a shift up earns the kick
+const LOW_GEAR_PULL := 0.35    #first gear pulls this much harder than the top gear
+const BOG_BELOW := 0.4         #under this share of a gear's range (any gear but first) the engine bogs...
+const BOG_THRUST := 0.45       #...down to this share of its push at a standstill
+const TOP_GEAR_REACH := 0.6    #gearSpan = cruising top speed / (gears - this): the last gear runs past it
+const AUTO_UP := 0.97          #autoGear shifts up at this share of the gear's range...
+const AUTO_DOWN := 0.7         #...and down below this share of the gear under it
+const REVERSE_SHIFT_SPEED := 40.0 #R only goes in below this px/s forward; faster, the lever stops at N
 var _car_input := CarInput.new()
 var _path_follow: OverheadCarPathFollow2D = null
 @onready var myController = $CarController
@@ -196,6 +221,7 @@ func _ready():
 		clover += SaveManager.getUpgradeLevel(Root.upgrade.CLOVER)
 		luck += SaveManager.getUpgradeLevel(Root.upgrade.LUCK)
 	for stat in UPGRADEABLE_STATS: runStartStats[stat] = self[stat]
+	setupGearbox()
 	if isPlayer:
 		buffFx = CarBuffFx.new()
 		add_child(buffFx)
@@ -208,6 +234,7 @@ func _ready():
 		Pickups.loadout = ""
 		Pickups.boostLoadout = ""
 		if heldItem != "" || moveItem != "": announceLoadout()
+		if isManual(): announceGearbox()
 
 	#the camera follows even while the run is paused: the start (the loading door, then the 3-2-1) is all paused,
 	#and a paused camera keeps a stale view, so the car started off centre until GO
@@ -309,6 +336,8 @@ func _physics_process(delta):
 	rotation = next[0].angle()
 	spinRate = angle_difference(lastRotation, rotation) / delta if delta > 0.0 else 0.0
 	velocity = next[1]
+	if shiftCut > 0: shiftCut -= 1
+	if shiftKick > 0: shiftKick -= 1
 	if isPlayer: tickDriftCharge()
 	var hitVelocity = velocity #before the slide, for a wall hit's impact angle and a breakable's speed
 	move_and_slide()
@@ -379,6 +408,7 @@ func integrate(pos: Vector2, forward: Vector2, vel: Vector2, input: CarInput, de
 
 	var acceleration = input.acceleration * forward * ( engine_stat + 14 ) * 10 * 2.2 * (1.0 - h.thrustSteerCut * absf(input.steering)) * thrust
 	if input.handbrake: acceleration *= HANDBRAKE_THROTTLE #the locked rear eats part of the throttle
+	if gears > 0: acceleration *= gearThrust(input.gear if input.gear != GEAR_FOR_SPEED else bestGear(speed), speed)
 	#reverse tops out well below forward (CarHandling.reverseTop)
 	if input.acceleration < 0.0 && vel.dot(forward) < 0.0 && speed >= h.reverseTop(engine_stat): acceleration = Vector2.ZERO
 
@@ -1210,6 +1240,75 @@ func outOfFuel():
 		return
 	Root.levelRoot.endLevel(false, Root.endCondition.NOGAS)
 	
+## Gear spacing from the car's cruising top speed (its engine, with upgrades, against drag on grass), once
+## the run's stats are in. Pickups and Nitro can push past it: the last gear has no limiter.
+func setupGearbox() -> void:
+	if gears <= 0: return
+	gearSpan = cruiseTop(engine) / (gears - TOP_GEAR_REACH)
+	gear = 1
+
+## Top speed on grass for an engine stat: thrust against drag and ground friction
+func cruiseTop(engineStat: float) -> float:
+	var force := (engineStat + 14.0) * 10.0 * 2.2
+	var f := World.GRASS_FRICTION
+	return (-f + sqrt(f * f + 4.0 * drag * force)) / (2.0 * drag) if drag > 0.0 else 2000.0
+
+## The gearbox's share of the engine's push in gear `g` at `speed` (read only: integrate() calls it)
+func gearThrust(g: int, speed: float) -> float:
+	if g < 0: return 1.0 #reverse keeps its own cap (CarHandling.reverseTop)
+	if g == 0 || shiftCut > 0: return 0.0
+	var r := speed / (gearSpan * g)
+	if g < gears && r >= 1.0: return 0.0 #the rev limiter
+	var thrust := 1.0 + LOW_GEAR_PULL * float(gears - g) / maxf(gears - 1, 1)
+	if g > 1: thrust *= lerpf(BOG_THRUST, 1.0, clampf(r / BOG_BELOW, 0.0, 1.0))
+	if shiftKick > 0: thrust *= SHIFT_KICK
+	return thrust
+
+## The gear that suits `speed`: the lowest one still under its limiter
+func bestGear(speed: float) -> int:
+	return clampi(int(speed / gearSpan) + 1, 1, gears)
+
+## How far through its gear the engine is: 0 at the bottom, 1 at the limiter (R and N count from gear 1's span)
+func rpmShare() -> float:
+	var speed := velocity.length()
+	if gear <= 0: return speed / gearSpan
+	return speed / (gearSpan * gear)
+
+## The gear autoGear would choose from `g` at `speed`: one step up near the limiter, one down when bogging
+func autoGear(g: int, speed: float) -> int:
+	if g < 1: return 1
+	if g < gears && speed >= gearSpan * g * AUTO_UP: return g + 1
+	if g > 1 && speed < gearSpan * (g - 1) * AUTO_DOWN: return g - 1
+	return g
+
+## Shifted by the player: a geared car with the Automatic Gearbox setting off, and no AI at the wheel
+func isManual() -> bool:
+	return gears > 0 && not Settings.get_value("gameplay/auto_gearbox") && (myController == null || myController.driver == null)
+
+## One step of the lever (+1 up, -1 down; down past N is R). Returns whether the gear changed.
+func shift(step: int) -> bool:
+	var to := clampi(gear + step, -1, gears)
+	if to == -1 && velocity.dot(transform.x) > REVERSE_SHIFT_SPEED: return false #it won't go into R rolling forward
+	if to == gear: return false
+	var from := gear
+	var kicked := step > 0 && from >= 1 && rpmShare() >= SHIFT_KICK_FROM
+	setGear(to)
+	shiftCut = SHIFT_CUT_TICKS if from >= 1 && to >= 1 && not kicked else 0
+	shiftKick = SHIFT_KICK_TICKS if kicked else 0
+	shifted.emit(gear, kicked)
+	return true
+
+## Puts the car in gear `g`, swapping which bumper collides when it goes into or out of reverse
+func setGear(g: int) -> void:
+	if g == gear: return
+	if (g == -1) != (gear == -1): setForwardCollisionMode(g != -1)
+	gear = g
+
+## A second into a manual car's run: which keys shift
+func announceGearbox() -> void:
+	await get_tree().create_timer(2.2, false).timeout
+	PickupEffects.toast("MANUAL GEARBOX  -  %s UP, %s DOWN" % [InputGlyphs.label("ShiftUp"), InputGlyphs.label("ShiftDown")], HudTheme.SKY)
+
 func setForwardCollisionMode(setting: bool):#activate or deactive bumper collision based on gear
 	$CollisionShape2D.disabled = not setting
 	$CollisionShape2D_rear.disabled = setting

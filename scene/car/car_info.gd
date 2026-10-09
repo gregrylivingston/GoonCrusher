@@ -25,9 +25,10 @@ class_name CarInfo extends Resource
 @export var headlights: int = 1
 @export var traits: Array[StringName] = [] #the car's signature features (CarTraits), shown on its garage card
 @export var weight: int = 50 #0-100, never upgraded: heavy cars turn in slower, slide wider, brake longer (CarHandling)
+@export var gears: int = 0 #forward gears of a manual gearbox (OverheadCarBody2D, "the gearbox"); 0 is an automatic
 
 #res://scene/car/sedan/sedan.tscn -> res://scene/car/sedan/sedan_info.tres
 static func pathFor(carScene: String) -> String:
 	return carScene.get_basename() + "_info.tres"
 
-const FIELDS =["carId", "charName", "profilePic", "backgroundPic", "introAudio", "engine", "steering", "traction", "armor", "luck", "clover", "oil", "headlights", "weight", "traits"]
+const FIELDS =["carId", "charName", "profilePic", "backgroundPic", "introAudio", "engine", "steering", "traction", "armor", "luck", "clover", "oil", "headlights", "weight", "traits", "gears"]

@@ -4,8 +4,8 @@ extends Node
 #The demo and the full game share this file: load_data() merges each save with the current defaults
 #(migrate()) before anything reads it.
 
-const SAVE_VERSION := 8 #6: the unlock system (Unlocks, meta.unlocks, meta.lifetime, car gem prices). 7: mode tiers (ModeTiers).
-#8: the road atlas (30 levels in 6 regions, the Marathon road, meta.carClears)
+const SAVE_VERSION := 9 #6: the unlock system (Unlocks, meta.unlocks, meta.lifetime, car gem prices). 7: mode tiers (ModeTiers).
+#8: the road atlas (30 levels in 6 regions, the Marathon road, meta.carClears). 9: the "audi" became the "supercar".
 #Saves older than FIRST_KEPT_VERSION start over (the author's call when the unlocks went in, and again for the road
 #atlas): the old file is copied beside the save as <name>.v<version>.tres, then a new save replaces it.
 const FIRST_KEPT_VERSION := 8
@@ -63,6 +63,7 @@ func migrate() -> bool:
 	var before = var_to_str([playerData.cars, playerData.levels, playerData.saveVersion, playerData.selectedCar, playerData.selectedLevel, playerData.gameMode, playerData.gameTier, playerData.meta])
 	for section in defaults.meta:
 		if not playerData.meta.get(section) is Dictionary: playerData.meta[section] = {}
+	for old in RENAMED_CARS: renameCar(old, RENAMED_CARS[old])
 	for defaultCar in defaults.cars:
 		var saved = playerData.cars.filter(func(c): return c.name == defaultCar.name)
 		if saved.is_empty():
@@ -85,6 +86,24 @@ func migrate() -> bool:
 	playerData.gameTier = ModeTiers.clampTier(playerData.gameTier)
 	playerData.saveVersion = SAVE_VERSION
 	return before != var_to_str([playerData.cars, playerData.levels, playerData.saveVersion, playerData.selectedCar, playerData.selectedLevel, playerData.gameMode, playerData.gameTier, playerData.meta])
+
+#cars whose id changed: old name -> new name (version 9)
+const RENAMED_CARS := {"audi": "supercar"}
+
+#moves a renamed car's save data to its new name: its garage entry (kept in place, so selectedCar still
+#points at it), its unlock and its clears on every level and mode
+func renameCar(old: String, new: String) -> void:
+	for car in playerData.cars:
+		if car.name == old: car.name = new
+	var unlocks = playerData.meta.get("unlocks", {})
+	if unlocks is Dictionary && unlocks.has("car:" + old):
+		unlocks["car:" + new] = unlocks["car:" + old]
+		unlocks.erase("car:" + old)
+	for byMode in playerData.meta.get("carClears", {}).values():
+		for byCar in byMode.values():
+			if byCar.has(old):
+				byCar[new] = maxi(int(byCar[old]), int(byCar.get(new, 0)))
+				byCar.erase(old)
 
 #The save's levels rebuilt from the registry (Levels.ORDER). A saved entry keeps its unlock, beaten modes and
 #best tiers (a mode beaten before the tiers, version 7, counts as Easy); entries for levels no longer in the
@@ -153,7 +172,7 @@ func requestStatCost(statString: Root.upgrade, carIndex := -1) -> int:
 ## An upgrade from `level` to the next: (level + 1)^1.6 x 15, x the car's scale. An upgrade is +1 to the stat
 ## on any car, so it is worth most on the entry cars' low stats; the advanced cars' upgrades are the long
 ## coin sink instead (package 1, B-4).
-const UPGRADE_COST_SCALE := {"sedan": 1.0, "van": 1.0, "taxi": 1.2, "pickup": 1.2, "semi": 1.6, "audi": 1.8,
+const UPGRADE_COST_SCALE := {"sedan": 1.0, "van": 1.0, "taxi": 1.2, "pickup": 1.2, "semi": 1.6, "supercar": 1.8,
 	"racer": 1.8, "police": 2.2, "ambulance": 2.5}
 static func upgradePrice(level: int, carName: String) -> int:
 	return int(pow(level + 1, 1.6) * 15 * UPGRADE_COST_SCALE.get(carName, 1.0))

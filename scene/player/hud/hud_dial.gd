@@ -73,6 +73,7 @@ func targetValue(car) -> float:
 	match kind:
 		Kind.TACH:
 			var px = car.velocity.length()
+			if car.gears > 0: return gearedRpm(car)
 			return 0.8 if px < 5.0 else 1.1 + 6.6 * fmod(px, GEAR_SPAN) / GEAR_SPAN
 		Kind.SPEEDO: return car.velocity.length() * unitsPerPx()
 		Kind.FUEL: return clampf(car.fuel, 0.0, 100.0)
@@ -88,7 +89,7 @@ func _process(delta: float) -> void:
 	shownValue = lerpf(shownValue, target, 1.0 - exp(-delta * 14.0))
 	var key: Array
 	match kind:
-		Kind.TACH: key = [snappedf(shownValue, 0.02), gearText(car)]
+		Kind.TACH: key = [snappedf(shownValue, 0.02), gearText(car), gearColor(car)]
 		Kind.SPEEDO:
 			readoutTimer -= delta
 			if readoutTimer <= 0.0:
@@ -99,6 +100,24 @@ func _process(delta: float) -> void:
 	if key != shownKey:
 		shownKey = key
 		needle.queue_redraw()
+
+#a geared car's revs: through the gear it is in, bouncing off the limiter at the top of any gear but the
+#last; in N the throttle revs it freely
+static func gearedRpm(car) -> float:
+	if car.gear == 0: return 0.8 + (5.6 if car._car_input.acceleration > 0.0 else 0.0)
+	var r: float = car.rpmShare()
+	if car.velocity.length() < 5.0 && car._car_input.acceleration == 0.0: return 0.8
+	var rpm := 1.1 + 6.4 * minf(r, 1.0)
+	if r >= 1.0 && car.gear < car.gears && car._car_input.acceleration > 0.0: rpm -= 0.35 * absf(sin(Time.get_ticks_msec() * 0.03))
+	return rpm
+
+#the gear's colour: gold, green near the redline of a gear you shift by hand (time to shift up), white
+#while a well-timed shift's push lasts
+static func gearColor(car) -> Color:
+	if car.gears <= 0 || car.gear < 1: return HudTheme.GOLD
+	if car.shiftKick > 0: return Color.WHITE
+	if car.isManual() && car.gear < car.gears && car.rpmShare() >= OverheadCarBody2D.SHIFT_KICK_FROM: return HudTheme.OK
+	return HudTheme.GOLD
 
 static func gearText(car) -> String:
 	if car.gear < 0: return "R"
@@ -159,7 +178,7 @@ func drawNeedle() -> void:
 	match kind:
 		Kind.TACH:
 			drawPointer(angleFor(shownValue / RPM_MAX), 98 * unit, HudTheme.NEEDLE, 5 * unit)
-			HudTheme.text(needle, center + Vector2(0, 74) * unit, gearText(car), int(40 * unit), HudTheme.GOLD, HORIZONTAL_ALIGNMENT_CENTER, 10, HudTheme.DEEP)
+			HudTheme.text(needle, center + Vector2(0, 74) * unit, gearText(car), int(40 * unit), gearColor(car), HORIZONTAL_ALIGNMENT_CENTER, 10, HudTheme.DEEP)
 		Kind.SPEEDO:
 			drawPointer(angleFor(shownValue / speedMax), 98 * unit, HudTheme.NEEDLE, 5 * unit)
 			HudTheme.text(needle, center + Vector2(0, 66) * unit, str(readout), int(34 * unit), HudTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER, 7)

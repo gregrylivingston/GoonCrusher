@@ -96,6 +96,8 @@ func buildSchema() -> Array:
 				"info":"Units for the speedometer, the summary and the station distance.", "perf":"None"},
 			{"type":"choice", "key":"gameplay/show_timer", "label":"Show Run Timer", "options":onOff(), "tag":GAMEPLAY_TAG,
 				"info":"Shows the run clock on the HUD.", "gameplay":"In Sprint and Marathon the timer is information you lose when it is hidden.", "perf":"None"},
+			{"type":"choice", "key":"gameplay/auto_gearbox", "label":"Automatic Gearbox", "options":onOff(), "tag":GAMEPLAY_TAG,
+				"info":"The racer, supercar and semi have manual gearboxes: Shift Up and Shift Down change gear, and down past N is reverse. On, they shift themselves and Brake backs up as in the other cars.", "gameplay":"A hand shift near the redline gives a short push that the automatic never does.", "perf":"None"},
 			{"type":"choice", "key":"gameplay/confirm_quit", "label":"Confirm Abandon / Quit", "options":onOff(),
 				"info":"Abandon and Quit in the pause menu need a second press.", "perf":"None"},
 			{"type":"choice", "key":"gameplay/car_paint", "label":"Car Paint", "options":[["weathered", "Weathered"], ["showroom", "Showroom"]],

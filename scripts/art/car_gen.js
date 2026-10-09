@@ -108,7 +108,7 @@ semiTrailer:{ name:'Semi trailer', seed:59, paint:'#d8d7d1', clean:'#f4f4f0', gr
 	parts:[{y0:-155,y1:155,W:100,rim:4,rimF:2.5,rimR:3,pf:30,pr:30,tf:1,tr:1,arches:[],front:0,rear:1,box:'trailer'}],
 	wheels:[[92,42,12,22],[110,42,12,22]], lights:{f:'none',r:'vert'}, bumper:{f:'none',r:'black',w:.9},
 	feats:['trailer']},
-audi:{ name:'Supercar', driver:'Snake', cost:10000, seed:67, paint:'#a8202c', clean:'#d4142a', grime:{dirt:.55,rust:.2,fade:.25,moss:0}, sideTint:'#2a2a2e',
+supercar:{ name:'Supercar', driver:'Snake', cost:10000, seed:67, paint:'#a8202c', clean:'#d4142a', grime:{dirt:.55,rust:.2,fade:.25,moss:0}, sideTint:'#2a2a2e',
 	parts:[{y0:-98,y1:98,W:92,rim:8,rimF:5,rimR:5,pf:4,pr:5.4,tf:.78,tr:.9,arches:[[-58,2.6,16],[56,4.2,17]],front:1,rear:1,
 		cabin:{wf:-24,rf:-9,rr:18,wr:30,gi:3.5,side:6,bowF:7,bowR:5,cp:9,bp:null},doors:[-6],hood:1,trunk:0,filler:[-1,26]}],
 	wheels:[[-58,38,11,26],[56,39,12,27]], lights:{f:'led',r:'strip'}, bumper:{f:'none',r:'none',w:.8}, mirrors:-20,
@@ -134,7 +134,7 @@ ambulance:{ name:'Ambulance', driver:'Xavier', cost:35000, seed:97, paint:'#dedc
 	feats:['ambuBox'],
 	side:{sill:14,nose:40,hood:50,belt:55,roof:80,noseR:10,tailR:4,roofR:9,winR:-50,box:[15,98],rim:'white'}}
 };
-const ORDER=['sedan','van','taxi','pickup','semi','audi','racer','police','ambulance'];
+const ORDER=['sedan','van','taxi','pickup','semi','supercar','racer','police','ambulance'];
 
 /* ---------- looks per style ---------- */
 function makeLook(sp,style){

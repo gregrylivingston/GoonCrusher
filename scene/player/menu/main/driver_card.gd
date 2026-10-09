@@ -7,6 +7,7 @@ class_name DriverCard extends Panel
 #           edge (`StatRail`): eight rows (icon and value, over a thin bar against 100: cream = the car's
 #           base stat, gold = upgrades bought), for show only: Upgrades is where they are bought. The rail
 #           runs down into the name band and ends there in a cut corner, edged in orange.
+#           A manual car (CarInfo.gears) carries a "6-SPEED MANUAL" chip in the art's top right corner.
 #  band     the name (right of the rail), with the car type and weight class
 #  traits   the car's two signature features (CarTraits): icon, name, kind and its one-line `short`;
 #           hovering one shows its full text
@@ -73,6 +74,8 @@ var portrait := TextureRect.new()
 var band := ColorRect.new()
 var nameLabel := Label.new()
 var typeLabel := Label.new()  #"PICKUP · HEAVY" at the band's right end
+var gearChip := PanelContainer.new() #"6-SPEED MANUAL" on a manual car's art
+var gearLabel := Label.new()
 var traitList := VBoxContainer.new()
 var statLine := StatRail.new()
 var statList := VBoxContainer.new()
@@ -130,6 +133,15 @@ func _ready() -> void:
 	typeLabel.position = Vector2(16, ART_HEIGHT + 3)
 	typeLabel.size = Vector2(SIZE.x - 32, BAND_HEIGHT)
 	body.add_child(typeLabel)
+
+	gearChip.add_theme_stylebox_override("panel", MenuTheme.box(Color(HudTheme.PANEL, 0.85), HudTheme.RIM, 7, 2, Vector4(8, 1, 8, 1)))
+	gearChip.mouse_filter = MOUSE_FILTER_IGNORE
+	body.add_child(gearChip)
+	gearLabel.add_theme_font_size_override("font_size", 12)
+	gearLabel.add_theme_color_override("font_color", HudTheme.GOLD)
+	gearLabel.add_theme_constant_override("outline_size", 0)
+	gearLabel.mouse_filter = MOUSE_FILTER_IGNORE
+	gearChip.add_child(gearLabel)
 
 	traitList.add_theme_constant_override("separation", 0)
 	traitList.position = Vector2(14, TRAITS_Y)
@@ -322,6 +334,11 @@ func isLocked() -> bool:
 #everything that can change while the menu is open: lock state, prices, stats, progress
 func refresh() -> void:
 	for node in [band, nameLabel, typeLabel, traitList]: node.visible = showingFront
+	gearChip.visible = showingFront && info != null && info.gears > 0
+	if gearChip.visible:
+		gearLabel.text = "%d-SPEED MANUAL" % info.gears
+		gearChip.reset_size()
+		gearChip.position = Vector2(SIZE.x - gearChip.size.x - 10, 10)
 	if info == null: #still loading: a plain card with the car's name
 		nameLabel.text = str(car.get("name", "")).to_upper()
 		typeLabel.text = ""

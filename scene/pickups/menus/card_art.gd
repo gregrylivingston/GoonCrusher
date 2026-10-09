@@ -14,7 +14,7 @@ const STATION := "res://world/art/station/%s.png"
 const CAR := "res://scene/car/%s/art/%s_c0.png"
 const GOON := "res://scene/enemy/goons/%s/art/%s_idle0.png"
 const ICON := "res://texture/icon/%s.svg"
-const CARS := ["sedan", "taxi", "racer", "van", "police", "pickup", "audi"]
+const CARS := ["sedan", "taxi", "racer", "van", "police", "pickup", "supercar"]
 const GOONS := ["grunt", "goonling", "rat", "gremlin", "yipper", "bandit", "skink", "spiker"]
 
 ## per kind (Pickups.K): ground, layers, emblem icon

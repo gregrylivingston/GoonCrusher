@@ -863,7 +863,9 @@ func carDetail(entry: Dictionary) -> void:
 	if Root.IS_DEMO && index >= Root.DEMO_CAR_COUNT: status = ["NOT IN DEMO", HudTheme.MUTED]
 	elif car.cost != 0: status = ["LOCKED", HudTheme.MUTED]
 	else: status = ["OWNED", HudTheme.OK]
-	titleRow((info.charName if info else str(car.name)).to_upper(), [[str(car.name).capitalize().to_upper(), HudTheme.SKY], status])
+	var chips := [[str(car.name).capitalize().to_upper(), HudTheme.SKY], status]
+	if info && info.gears > 0: chips.insert(1, ["%d-SPEED MANUAL" % info.gears, HudTheme.GOLD]) #OverheadCarBody2D, "the gearbox"
+	titleRow((info.charName if info else str(car.name)).to_upper(), chips)
 	if info == null: return
 	paragraph(carTraits(info))
 	signatureRows(info)

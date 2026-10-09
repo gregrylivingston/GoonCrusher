@@ -17,6 +17,11 @@ func _provide_input(_input):
 		_input.steering *= 0.9
 		return _input
 	_input.handbrake = pressed("Handbrake") #a powerslide (OverheadCarBody2D.HANDBRAKE_*)
+	if car.gears > 0:
+		gearbox(_input)
+		var aim := Input.get_axis("TurnLeft", "TurnRight") if not driver else steerTarget(pressed("TurnLeft"), pressed("TurnRight"))
+		_input.steering = steerToward(_input.steering, aim, car.steerRate())
+		return _input
 	if pressed("Accelerate"):
 		if car.gear < 1:car.setForwardCollisionMode(true)
 		_input.acceleration = 1.0
@@ -38,6 +43,28 @@ func _provide_input(_input):
 		else: _input.braking = true
 	else: _input.braking = false
 	return _input
+
+#A geared car (OverheadCarBody2D, "the gearbox"). By hand: ShiftUp / ShiftDown move the lever (down past N is
+#R), Accelerate drives in the gear it is in (backward in R), and Brake only brakes. Otherwise (the AI, or the
+#Automatic Gearbox setting) autoGear picks the gear and Brake at a standstill backs up, as in an automatic.
+func gearbox(_input) -> void:
+	_input.braking = false
+	_input.acceleration = 0.0
+	if car.isManual():
+		if Input.is_action_just_pressed("ShiftUp"): car.shift(1)
+		if Input.is_action_just_pressed("ShiftDown"): car.shift(-1)
+		if pressed("Accelerate"): _input.acceleration = -1.0 if car.gear == -1 else 1.0
+		_input.braking = pressed("Brake")
+	else:
+		if pressed("Accelerate"):
+			car.setGear(car.autoGear(car.gear, car.velocity.length()))
+			_input.acceleration = 1.0
+		if pressed("Brake"):
+			if car.velocity.length() < 10 || car.gear == -1:
+				car.setGear(-1)
+				_input.acceleration = -1.0
+			else: _input.braking = true
+	_input.gear = car.gear
 
 #the wheel after one tick with these keys held. Shared with the AI driver's prediction.
 static func nextSteering(steering: float, left: bool, right: bool, rate: float) -> float:

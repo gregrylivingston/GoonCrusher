@@ -117,7 +117,7 @@ func test_an_owned_driver_shows_stats_and_drive():
 	card.free()
 
 func test_every_card_lists_two_features_with_their_short_text():
-	for id in ["sedan", "van", "taxi", "pickup", "audi", "racer", "police", "ambulance", "semi"]:
+	for id in ["sedan", "van", "taxi", "pickup", "supercar", "racer", "police", "ambulance", "semi"]:
 		var card = DriverCard.new()
 		add_child(card)
 		var info: CarInfo = load("res://scene/car/%s/%s_info.tres" % [id, id])

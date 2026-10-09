@@ -3,7 +3,7 @@ extends GameTest
 #System damage (docs/CAR_ART.md): which system a hit wears, the wear cooldown, the factor in physics,
 #the station repair, and the baked art every car scene points at.
 
-const CARS := ["sedan", "van", "taxi", "pickup", "semi", "audi", "racer", "police", "ambulance"]
+const CARS := ["sedan", "van", "taxi", "pickup", "semi", "supercar", "racer", "police", "ambulance"]
 const Car = preload("res://lib/overhead_car_2d/overhead_car_body_2d.gd")
 
 var saved: Dictionary

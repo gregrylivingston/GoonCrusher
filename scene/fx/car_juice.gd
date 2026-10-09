@@ -344,6 +344,14 @@ static func enginePitch(speed: float, throttle: float, reverse: bool) -> float:
 	var g := floorf(gears)
 	return PITCH_IDLE + PITCH_RANGE * (gears - g) + PITCH_PER_GEAR * minf(g, 4.0) + load
 
+## A geared car's pitch: up through the gear it is in, flat and stuttering on the limiter; N revs with the throttle
+static func gearedPitch(gear: int, share: float, throttle: float, limited: bool) -> float:
+	var load := PITCH_LOAD * absf(throttle)
+	if gear == 0: return PITCH_IDLE + (PITCH_RANGE if throttle > 0.0 else 0.0) + load
+	var pitch := PITCH_IDLE + PITCH_RANGE * minf(share, 1.0) + PITCH_PER_GEAR * minf(maxi(gear, 1) - 1, 4.0) + load
+	if limited && share >= 1.0 && throttle > 0.0: pitch -= 0.12 * absf(sin(Time.get_ticks_msec() * 0.03))
+	return pitch
+
 static func gearOf(speed: float) -> int:
 	return int(speed / GEAR_SPEED) + 1
 
@@ -378,12 +386,12 @@ func topSpeed() -> float:
 
 func engineSound(speed: float, throttle: float, reverse: bool, delta: float) -> void:
 	var player: AudioStreamPlayer2D = car.engineAudio
-	var target := enginePitch(speed, throttle, reverse)
+	var target: float = enginePitch(speed, throttle, reverse) if car.gears <= 0 else gearedPitch(car.gear, car.rpmShare(), throttle, car.gear < car.gears)
 	enginePitchNow = lerpf(enginePitchNow, target, 1.0 - exp(-PITCH_EASE * delta))
 	player.pitch_scale = maxf(enginePitchNow, 0.1)
 	player.volume_db = engineBaseDb + (0.0 if absf(throttle) > 0.1 else ENGINE_COAST_DB)
-	var gear := gearOf(speed)
-	if gear > lastGear && throttle > 0.5 && not reverse: pitchVel -= 0.35 * motion #the squat of a shift
+	var gear: int = gearOf(speed) if car.gears <= 0 else car.gear
+	if gear > lastGear && gear > 1 && throttle > 0.5 && not reverse: pitchVel -= 0.35 * motion #the squat of a shift
 	lastGear = gear
 	backfireCooldown = maxf(0.0, backfireCooldown - delta)
 	var lifted := lastThrottle > 0.5 && throttle <= 0.1

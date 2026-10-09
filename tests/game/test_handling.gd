@@ -4,7 +4,7 @@ extends GameTest
 #band that drives well, and the cars still differ. scripts/debug/handling_lab.gd prints the full table.
 
 const DT := 1.0 / 60.0
-const CARS := ["sedan", "taxi", "van", "pickup", "semi", "ambulance", "audi", "police", "racer"]
+const CARS := ["sedan", "taxi", "van", "pickup", "semi", "ambulance", "supercar", "police", "racer"]
 var CTRL = load("res://scene/player/controller/playerCarController.gd")
 
 func car(id: String, up := 0) -> OverheadCarBody2D:

@@ -51,12 +51,12 @@ class_name PlayerData extends Resource
 		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,"score":0,"combo":0,},
 		"scene":"res://scene/car/semi/semi.tscn",
 	},
-	{	"name":"audi",
+	{	"name":"supercar",
 		"cost":30000,
 		"gems":5,
 		"upgrades":{},
 		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,"score":0,"combo":0,},
-		"scene":"res://scene/car/audi/audi.tscn"
+		"scene":"res://scene/car/supercar/supercar.tscn"
 	},
 	{	"name":"racer",
 		"cost":30000,
