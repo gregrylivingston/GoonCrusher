@@ -60,8 +60,8 @@ func test_regions_dress_with_real_props():
 		for zone in WorldSkin.ZONES:
 			for prop in d.dressing[zone]: assert_true(manifest.has(String(prop)), "%s zone %d: %s is in props.json" % [region, zone, prop])
 			for motif in d.motifs[zone]: assert_true(WorldSkin.MOTIFS.has(StringName(motif)), "%s zone %d: motif %s" % [region, zone, motif])
-		assert_true(manifest.has(String(d.landmarkFallback)), "%s: its fallback landmark is baked" % region)
-		assert_true(manifest.has(String(Territories.landmark(region, manifest))), "%s: the landmark it shows is baked" % region)
+		assert_true(manifest.has(String(Territories.landmark(region))), "%s: its landmark is baked" % region)
+		assert_true(StringName(Territories.landmark(region)) in WorldSkin.LANDMARKS, "%s: its landmark is listed with the beacons" % region)
 	for id in Levels.ORDER:
 		var def := Levels.get_def(id)
 		for prop in def.dressing: assert_true(manifest.has(String(prop)), "%s: its own dressing %s is in props.json" % [id, prop])
@@ -167,13 +167,21 @@ func test_region_props_rise_with_distance():
 	var ctx := skinFor(&"quarry").recipeContext([], [])
 	assert_eq(ctx.propTables.size(), WorldSkin.ZONES, "one prop table per zone for the workers")
 
+#mountain and the snowy pines (their ground mostly snow) throw snow dust and drop snow (PropReactions)
+func test_snowy_landscapes_are_the_snowbound_ones():
+	for id in Landscapes.ORDER:
+		var land := Landscapes.get_def(id)
+		var snow: int = land.baseTerrain.count(Root.terrain.SNOW) + land.baseTerrain.count(Root.terrain.DEEPSNOW)
+		assert_eq(land.snowy, snow * 2 > land.baseTerrain.size(), "%s: snowy exactly when its ground is mostly snow" % id)
+	assert_true(Landscapes.get_def(&"forest_snow").snowy, "the snowy pines")
+
 func test_landmarks_are_the_regions():
-	assert_eq(Territories.landmark(&"wilds", WorldSkin.loadManifest()), &"landmark_wild")
-	var big := Territories.landmark(&"hunting", WorldSkin.loadManifest())
-	assert_true(big == &"landmark_big" || (big == &"landmark_wild" && not WorldSkin.loadManifest().has("landmark_big")), "Big Game's skull, or the antler cairn until it is baked")
+	assert_eq(Territories.landmark(&"wilds"), &"landmark_wild")
+	var big := Territories.landmark(&"hunting")
+	assert_eq(big, &"landmark_big", "Big Game's skull")
 	assert_true(skinFor(&"frostbite").propScenes.has(big), "the level loads its region's landmark")
 	var map := WorldMap.build(3, Levels.get_def(&"crusher"))
 	for chunk in map.landmarks:
-		for entry in map.landmarks[chunk]: assert_eq(entry[0], String(Territories.landmark(&"works", WorldSkin.loadManifest())), "every district shows The Works' landmark")
+		for entry in map.landmarks[chunk]: assert_eq(entry[0], String(Territories.landmark(&"works")), "every district shows The Works' landmark")
 	var seconds: Array = Landscapes.get_def(&"scrapyard").nameSecond
 	for d in map.districts: assert_true(d.name.get_slice(" ", d.name.get_slice_count(" ") - 1) in seconds || d.name.ends_with("Rest Stop"), "%s: a scrapyard word" % d.name)

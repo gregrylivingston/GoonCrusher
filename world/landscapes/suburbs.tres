@@ -46,7 +46,10 @@ dressing = {
 &"hydrant": 2,
 &"busstop": 1,
 &"sign": 1,
-&"dumpster": 1
+&"dumpster": 1,
+&"mailbox": 3,
+&"swingset": 1,
+&"trampoline": 1
 }
 motifs = {
 &"orchard": 1

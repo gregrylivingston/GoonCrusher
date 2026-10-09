@@ -6,7 +6,7 @@
 script = ExtResource("1_def")
 id = &"saltflats"
 displayName = "Salt Flats"
-poster = "res://world/art/posters/canyon.png"
+poster = "res://world/art/posters/saltflats.png"
 region = &"raiders"
 stop = 3
 order = 12

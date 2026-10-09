@@ -75,7 +75,7 @@ const CRACK_DB := -6.0
 
 static var current: PropReactions
 
-var grammar: StringName
+var snowy := false     #a snowy landscape's level (Landscape.snowy): snow dust, pines drop snow
 var leafTextures := {}  #prop id -> the baked leaves strip (a row of 4 square cells)
 var canopies: Array = [] #[prop root, canopy Sprite2D, local Rect2, square, reach (world px)]
 var springs: Array = []  #[target Node2D, kind, age, amplitude, local direction, rest position, rest rotation, rest scale, prop root]
@@ -86,8 +86,8 @@ var dust: CarJuice.Particles
 var particleScale := 1.0
 var calm := false
 
-func _init(levelGrammar: StringName = &"", leaves := {}) -> void:
-	grammar = levelGrammar
+func _init(snowyLevel := false, leaves := {}) -> void:
+	snowy = snowyLevel
 	leafTextures = leaves
 	name = "PropReactions"
 	process_mode = Node.PROCESS_MODE_PAUSABLE #the TileManager always runs; reactions stop with the game
@@ -352,7 +352,6 @@ func dropLeaves(prop: Node2D, count: int, dir: Vector2) -> void:
 	count = roundi(count * particleScale)
 	if tex == null || canopy == null || count <= 0: return
 	var cells := maxi(1, tex.get_width() / maxi(1, tex.get_height()))
-	var snowy := grammar == &"mountain"
 	var reach := 60.0
 	for entry in canopies:
 		if entry[0] == prop: reach = entry[4] * 0.8
@@ -373,7 +372,7 @@ func splash(at: Vector2, radius: float) -> void:
 
 func puff(at: Vector2, dir: Vector2, k: float, heavy: bool) -> void:
 	var n := roundi((5.0 if heavy else 3.0) * (0.5 + k) * particleScale)
-	var col := SNOW_DUST if grammar == &"mountain" else DUST
+	var col := SNOW_DUST if snowy else DUST
 	for i in n:
 		var v := (-dir * randf_range(20.0, 70.0)).rotated(randf_range(-1.2, 1.2))
 		dust.spawn(at + Vector2(randf_range(-14, 14), randf_range(-14, 14)), v, randf_range(0.5, 0.9), randf_range(10.0, 18.0) * (1.0 + k * 0.5), col, CarJuice.Kind.PUFF)

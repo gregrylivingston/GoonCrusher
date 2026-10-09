@@ -41,12 +41,12 @@ waterLook = &"lava"
 waterGlow = Color(1, 0.36, 0.06, 0.85)
 waterFoam = Color(1, 0.62, 0.2, 1)
 dressing = {
-&"rock_red": 3,
-&"boulder_red": 2,
 &"deadtree": 2,
 &"pebbles": 5,
 &"bones": 2,
-&"oilstain": 2
+&"oilstain": 2,
+&"rock_black": 4,
+&"steam_vent": 3
 }
 motifs = {
 &"boneyard": 1

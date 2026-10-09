@@ -35,9 +35,11 @@ dressing = {
 &"tufts": 4,
 &"reeds": 4,
 &"log": 2,
-&"shack": 2,
 &"crate": 1,
-&"rock": 1
+&"rock": 1,
+&"palm": 6,
+&"beach_hut": 2,
+&"lifeguard_tower": 1
 }
 motifs = {}
 nameSecond = Array[String](["Beach", "Lagoon", "Pier", "Inlet", "Cove", "Sandbar", "Shore", "Bay", "Dunes", "Stilts"])

@@ -38,6 +38,8 @@ class_name Landscape extends Resource
 @export var waterLook: StringName = &"water"
 @export var waterGlow := Color(0, 0, 0, 0)
 @export var waterFoam := Color.WHITE
+## Snowbound: prop hits throw snow dust and shaken pines drop snow (PropReactions)
+@export var snowy := false
 
 @export_group("Dressing")
 ## Natural props: {prop id: weight} (props.json; DECOR ones as MultiMesh decor), on every zone, under the

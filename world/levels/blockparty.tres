@@ -6,7 +6,7 @@
 script = ExtResource("1_def")
 id = &"blockparty"
 displayName = "Block Party"
-poster = "res://world/art/posters/city.png"
+poster = "res://world/art/posters/blockparty.png"
 region = &"sprawl"
 stop = 5
 order = 24

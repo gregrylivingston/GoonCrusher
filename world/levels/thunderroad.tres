@@ -6,7 +6,7 @@
 script = ExtResource("1_def")
 id = &"thunderroad"
 displayName = "Thunder Road"
-poster = "res://world/art/posters/highway.png"
+poster = "res://world/art/posters/thunderroad.png"
 region = &"raiders"
 stop = 5
 order = 14

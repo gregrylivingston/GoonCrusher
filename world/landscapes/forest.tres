@@ -40,11 +40,14 @@ dressing = {
 &"log": 2,
 &"rock": 2,
 &"tufts": 4,
-&"cabin": 1
+&"cabin": 1,
+&"ranger_tower": 1,
+&"fallen_trunk": 3
 }
 motifs = {
 &"pinestand": 4,
-&"cabincamp": 1
+&"cabincamp": 1,
+&"rangerpost": 1
 }
 nameSecond = Array[String](["Pines", "Woods", "Timber", "Hollow", "Clearing", "Grove", "Thicket", "Stand", "Ridge", "Glade"])
 fallback = &"meadow"

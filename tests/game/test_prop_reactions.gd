@@ -16,7 +16,7 @@ var reactions: PropReactions
 
 func before_each():
 	savedCar = Root.playerCar
-	reactions = PropReactions.new(&"meadow", {})
+	reactions = PropReactions.new(false, {})
 	add_child_autofree(reactions)
 	reactions.particleScale = 1.0
 	reactions.calm = false

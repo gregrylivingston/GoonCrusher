@@ -6,7 +6,7 @@
 script = ExtResource("1_def")
 id = &"mudlick"
 displayName = "Mudlick Marsh"
-poster = "res://world/art/posters/bayou.png"
+poster = "res://world/art/posters/mudlick.png"
 region = &"tribe"
 stop = 1
 order = 5

@@ -26,14 +26,14 @@ const MATERIAL_OF: Array[String] = ["grass", "sand", "mud", "water", "rock", "mo
 	"oil", "shallows", "wash", "conveyor", "mudpit", "deepsnow", "lot", "roof", "bridge"]
 ## Zones a level's districts fall in (Territories.zoneFor): 0 near the start to 2 far out
 const ZONES := 3
-## The landmarks with art today: the fallbacks of every region's own (Territories.landmark); a level loads its
+## The regions' landmarks (Territories.landmark), each with a beacon that glows at night; a level loads its
 ## region's one (every district has it, ChunkRecipe.placeLandmarks), whatever its dressing
-const LANDMARKS: Array[StringName] = [&"landmark_wild", &"landmark_tribe", &"landmark_scrap"]
+const LANDMARKS: Array[StringName] = [&"landmark_wild", &"landmark_tribe", &"landmark_scrap", &"landmark_big", &"landmark_swarm", &"landmark_war"]
 const RING := 8
 const CTL_SIZE := Vector2i(RING * ChunkRecipe.FW, RING * ChunkRecipe.FH)
 const QUAD := 1280.0
 ## Props that may stand on a road (the rest keep off asphalt and oil)
-const ROAD_PROPS := [&"cone", &"jersey", &"wreck", &"manhole", &"barricade", &"sign"]
+const ROAD_PROPS := [&"cone", &"jersey", &"wreck", &"manhole", &"barricade", &"sign", &"mile_marker"]
 ## Props laid in short chains, end to end
 const CHAIN_PROPS := [&"fence", &"hedge", &"jersey", &"fortwall"]
 ## Props laid only as field lines (ChunkRecipe.placeFieldLines), by the features key giving the chance per lattice edge
@@ -48,6 +48,8 @@ const MOTIFS := {
 	&"wreckpile": {"min": 3, "members": [["wreck", 3, 330.0, "disc"], ["tyres", 2, 400.0, "disc"], ["barrel", 1, 380.0, "disc"]]},
 	&"junkyard": {"min": 3, "members": [["scrapheap", 1, 0.0, "centre"], ["container", 2, 580.0, "ring"], ["tyres", 2, 460.0, "disc"], ["barrel", 1, 430.0, "disc"]]},
 	&"pinestand": {"min": 4, "members": [["pine", 7, 560.0, "disc"], ["stump", 1, 500.0, "disc"]]},
+	&"snowstand": {"min": 4, "members": [["pine_snow", 7, 560.0, "disc"], ["stump", 1, 500.0, "disc"]]},
+	&"rangerpost": {"min": 2, "members": [["ranger_tower", 1, 0.0, "centre"], ["cabin", 1, 480.0, "ring"], ["logpile", 2, 420.0, "disc"]]},
 	&"cypressgrove": {"min": 3, "members": [["cypress", 4, 470.0, "disc"], ["log", 1, 430.0, "disc"]]},
 	&"orchard": {"min": 4, "members": [["oak", 6, 400.0, "grid"]]},
 	&"boneyard": {"min": 3, "members": [["deadtree", 1, 0.0, "centre"], ["carcass", 2, 340.0, "disc"], ["rock_red", 2, 400.0, "disc"]]},
@@ -56,7 +58,7 @@ const MOTIFS := {
 }
 ## Where decor goes: "road" (asphalt, oil, lots), "wet" (shallows and banks), "any"; others off roads
 ## Decor that bends away from the car (world_decor.gdshader `bend`: world px a corner moves right under it)
-const BEND_DECOR := {&"tufts": 14.0, &"reeds": 18.0}
+const BEND_DECOR := {&"tufts": 14.0, &"reeds": 18.0, &"tumbleweed": 12.0}
 const DECOR_PLACE := {&"paint": "road", &"streetglow": "road", &"oilstain": "any", &"reeds": "wet", &"cracks": "any"}
 const PICKUP_IDS := {"fuel": "fuel", "health": "health", "purse": "purse", "slot": "slotmachine"}
 const POOL_CAP := {"quad": 200, "body": 16, "occluder": 160, "line": 160, "mmi": 24, "prop": 40}
@@ -291,7 +293,7 @@ func dressingIds() -> Dictionary:
 				if manifest.get(String(mid), {}).get("class", "DECOR") != "DECOR" && not mid in props: props.push_back(mid)
 	var roof: StringName = look.roofDecor
 	if roof != &"" && manifest.has(String(roof)) && not roof in decor: decor.push_back(roof)
-	var landmark := Territories.landmark(def.region, manifest)
+	var landmark := Territories.landmark(def.region)
 	if manifest.has(String(landmark)) && not landmark in props: props.push_back(landmark)
 	#what interactive props leave behind (logs from a log pile, a crane's container)
 	for id in props.duplicate():

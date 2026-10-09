@@ -6,7 +6,7 @@
 script = ExtResource("1_def")
 id = &"ghosttown"
 displayName = "Ghost Town"
-poster = "res://world/art/posters/city.png"
+poster = "res://world/art/posters/ghosttown.png"
 region = &"raiders"
 stop = 2
 order = 11

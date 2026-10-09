@@ -44,7 +44,10 @@ dressing = {
 &"wreck": 1,
 &"cone": 1,
 &"bones": 1,
-&"oilstain": 1
+&"oilstain": 1,
+&"tumbleweed": 2,
+&"mile_marker": 3,
+&"salt_mound": 3
 }
 motifs = {
 &"pileup": 1

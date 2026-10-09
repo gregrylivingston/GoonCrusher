@@ -6,7 +6,7 @@
 script = ExtResource("1_def")
 id = &"tankfarm"
 displayName = "Tank Farm"
-poster = "res://world/art/posters/crusher.png"
+poster = "res://world/art/posters/tankfarm.png"
 region = &"works"
 stop = 2
 order = 26

@@ -33,18 +33,20 @@ roofDecor = &""
 waterLook = &"water"
 waterGlow = Color(0, 0, 0, 0)
 waterFoam = Color(1, 1, 1, 1)
+snowy = true
 dressing = {
-&"pine": 10,
 &"rock_white": 2,
 &"rock_ice": 1,
 &"stump": 2,
 &"logpile": 2,
 &"cabin": 2,
-&"snowcat": 1
+&"snowcat": 1,
+&"pine_snow": 10,
+&"fallen_trunk": 2
 }
 motifs = {
-&"pinestand": 4,
-&"cabincamp": 2
+&"cabincamp": 2,
+&"snowstand": 4
 }
 nameSecond = Array[String](["Pines", "Timberline", "Drift", "Hollow", "Clearing", "Camp", "Thicket", "Stand", "Ridge", "Larches"])
 fallback = &"mountain"

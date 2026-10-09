@@ -31,6 +31,7 @@ roofDecor = &""
 waterLook = &"water"
 waterGlow = Color(0, 0, 0, 0)
 waterFoam = Color(1, 1, 1, 1)
+snowy = true
 dressing = {
 &"pine": 7,
 &"rock_ice": 3,

@@ -6,7 +6,7 @@
 script = ExtResource("1_def")
 id = &"moosewoods"
 displayName = "Moose Woods"
-poster = "res://world/art/posters/prairie.png"
+poster = "res://world/art/posters/moosewoods.png"
 region = &"wilds"
 stop = 5
 order = 4

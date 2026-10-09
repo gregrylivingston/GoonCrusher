@@ -13,11 +13,6 @@ const GROUNDS := ["grass", "moss", "dirt", "sand", "mud", "mudpit", "snow", "dee
 const EDGES := ["shore_foam", "cliff_lip", "canyon_rim", "mesa_lip", "kerb", "hedge", "scrapwall", "snow_ridge", "roof_edge",
 	"basalt_lip", "timber_edge", "shingle_edge"]
 const STATION := ["station_lot", "station_wall", "station_roof", "station_lamp", "station_pump"]
-const POSTERS := ["prairie", "bayou", "canyon", "quarry", "frostbite", "highway", "city", "crusher"]
-#the Road Atlas's new levels (baked ahead of their LevelDefs, so not read from Levels.ORDER)
-const ROAD_ATLAS_POSTERS := ["orchard", "moosewoods", "mudlick", "stilttown", "lantern", "sawmill", "ghosttown", "saltflats",
-	"raiderpass", "thunderroad", "frozenlake", "timberline", "tarpits", "summit", "manhole", "culdesac", "gridlock", "blockparty",
-	"blastpits", "tankfarm", "slagfields", "theline"]
 #the prop catalog of the world spec (section 6)
 const CATALOG := ["rock", "boulder", "rock_white", "rock_ice", "oak", "pine", "cypress", "log", "stump", "saguaro", "deadtree",
 	"carcass", "haybale", "fence", "hedge", "crate", "shack", "tent", "totem", "firepit", "tyres", "barricade", "barrel", "crane",
@@ -164,16 +159,20 @@ func test_ground_edges_station_and_posters_exist():
 		assert_true(tex != null, "edge strip %s" % name)
 		if tex: assert_eq(tex.get_height(), 96, "edge strip %s is 96 texels across" % name)
 	for name in STATION: assert_true(ResourceLoader.exists(ART + "station/%s.png" % name), "station %s" % name)
-	for id in POSTERS:
-		var path := ART + "posters/%s.png" % id
-		assert_true(ResourceLoader.exists(path), "poster %s" % id)
-		var tex: Texture2D = load(path) if ResourceLoader.exists(path) else null
-		if tex: assert_eq(Vector2i(tex.get_width(), tex.get_height()), Vector2i(1792, 1024), "poster %s size" % id)
 
-func test_road_atlas_posters_exist():
-	assert_eq(ROAD_ATLAS_POSTERS.size(), 22, "one poster per new level")
-	for id in ROAD_ATLAS_POSTERS:
+#one baked poster per level, and each level shows its own
+func test_every_level_has_its_own_poster():
+	assert_eq(Levels.ORDER.size(), 30, "the road atlas's 30 levels")
+	var baked := []
+	for file in DirAccess.get_files_at(ART + "posters"):
+		if file.get_extension() == "png": baked.push_back(file.get_basename())
+	baked.sort()
+	var ids: Array = Levels.ORDER.map(func(id): return String(id))
+	ids.sort()
+	assert_eq(baked, ids, "the posters are the levels")
+	for id in Levels.ORDER:
 		var path := ART + "posters/%s.png" % id
-		assert_true(ResourceLoader.exists(path), "poster %s" % id)
+		assert_eq(Levels.get_def(id).poster, path, "%s shows its own poster" % id)
 		var tex: Texture2D = load(path) if ResourceLoader.exists(path) else null
+		assert_true(tex != null, "poster %s" % id)
 		if tex: assert_eq(Vector2i(tex.get_width(), tex.get_height()), Vector2i(1792, 1024), "poster %s size" % id)

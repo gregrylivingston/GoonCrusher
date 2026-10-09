@@ -44,7 +44,10 @@ dressing = {
 &"deadtree": 1,
 &"tufts": 3,
 &"watertower": 1,
-&"sign": 1
+&"sign": 1,
+&"wagon": 2,
+&"water_trough": 2,
+&"tumbleweed": 4
 }
 motifs = {}
 nameSecond = Array[String](["Main Street", "Saloon", "Corral", "Depot", "Gulch", "Boardwalk", "Livery", "Square", "Mine", "Gallows"])

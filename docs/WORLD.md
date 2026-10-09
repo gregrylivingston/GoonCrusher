@@ -145,7 +145,7 @@ Each level is a `LevelDef` in `world/levels/<id>.tres`, listed in road order by 
 
 ### LevelDef fields
 
-- **Menu:** `id`, `displayName`, `poster` (`world/art/posters/<id>.png`; new levels point at their fallback landscape's level's poster until theirs is baked), `region` (a `Territories` id), `stop` (1-5; `isFinale()`), `order`, `blurb`, `barrier`, `surfaces`.
+- **Menu:** `id`, `displayName`, `poster` (`world/art/posters/<id>.png`, its own; `test_world_art.gd` checks the 30 posters are the 30 levels), `region` (a `Territories` id), `stop` (1-5; `isFinale()`), `order`, `blurb`, `barrier`, `surfaces`.
 - **Run:** `startPosition`, `seconds`, `spawnTimer`, `giantOdds`, `escalationSpeed`, `sprintSlack`, `rules` (`nightShare`, `events`).
 - **Goons:** `lineup` (3-6 goon ids of the region's class; `LevelRoster.lineupFor` validates it and falls back to the whole class).
 - **World:** `landscape` (a `Landscapes` id), and overrides of the landscape's world: `grammar`, `features` (the grammar's parameters, below), `baseTerrain` (terrain ids by noise band, low to high; the commonest is the level's main ground, the faster one on a tie: `WorldField.mainTerrain`), `accents` (surfaces sprinkled as patches; only "plain" surfaces count: grass, sand, mud, moss, dirt, snow, wash, deep snow, lot). Empty ones come from the landscape (`resolve()`, called by `Levels.get_def`, `Level.applyDef`, `snapshot()` and `WorldSkin`). Then `dressing` and `motifs` (`{id: weight}` over the landscape's and region's, below), `pickupTable` (`{kind: weight}`), `pickupsPerChunk`.
@@ -155,9 +155,9 @@ Each level is a `LevelDef` in `world/levels/<id>.tres`, listed in road order by 
 
 ## Landscapes
 
-A `Landscape` (`world/landscapes/<id>.tres`, registry `Landscapes`) is where a level is: a generator grammar with its default world (`features`, `baseTerrain`, `accents`), the terrains the generator adds (`terrains`, the old `GRAMMAR_TERRAIN`), the skin (`materials`: terrain id → ground material over `WorldSkin.MATERIAL_OF`; `roofMaterial`, the wall top; `wallStrip`; `wallTint`; `organic`; `roofDecor`), the water look (`waterLook` water or lava, `waterGlow`, `waterFoam`), natural `dressing` and `motifs`, district `nameSecond` words, the Goonopedia `text` and a `fallback`. A new landscape re-skins an existing generator: needles drive like grass, salt like dirt, tar like mud and lava kills like deep water, so no new terrain physics or native `WorldGrid` changes are needed.
+A `Landscape` (`world/landscapes/<id>.tres`, registry `Landscapes`) is where a level is: a generator grammar with its default world (`features`, `baseTerrain`, `accents`), the terrains the generator adds (`terrains`, the old `GRAMMAR_TERRAIN`), the skin (`materials`: terrain id → ground material over `WorldSkin.MATERIAL_OF`; `roofMaterial`, the wall top; `wallStrip`; `wallTint`; `organic`; `roofDecor`), the water look (`waterLook` water or lava, `waterGlow`, `waterFoam`), natural `dressing` and `motifs`, district `nameSecond` words, the Goonopedia `text`, `snowy` (prop hits throw snow dust and pines drop snow: `mountain` and `forest_snow`) and a `fallback`. A new landscape re-skins an existing generator: needles drive like grass, salt like dirt, tar like mud and lava kills like deep water, so no new terrain physics or native `WorldGrid` changes are needed.
 
-| id | Name | Generator | New art it waits for | Fallback | Levels |
+| id | Name | Generator | Its own new art | Fallback | Levels |
 |---|---|---|---|---|---|
 | `meadow` | Meadow | meadow | | | 2 |
 | `bayou` | Bayou | bayou | | | 3 |
@@ -175,7 +175,7 @@ A `Landscape` (`world/landscapes/<id>.tres`, registry `Landscapes`) is where a l
 | `volcano` | Volcano | canyon | `ash`, `tar`, `lava`, `basalt`, `basalt_lip` | `canyon` | 2 |
 | `suburbs` | Suburbs | city (houses, lawns, hedges) | `lawn`, `roof_shingle`, `shingle_edge` | `city` | 1 |
 
-**Fallback skin.** `Landscapes.skinOf(id)` checks once per landscape whether every material and the wall strip it names exist in `world/art` (`missingArt`); if not, the level is drawn with its fallback's skin (materials map, roof, strip, tint, borders, roof decor) while keeping its own generator, world, props and names. The lava look needs no art, so a volcano level glows from day one. Each landscape switches to its own skin by itself once its whole set is baked (`TODO_PROPS.md` lists the props still to wire).
+**Fallback skin.** `Landscapes.skinOf(id)` checks once per landscape whether every material and the wall strip it names exist in `world/art` (`missingArt`); if not, the level is drawn with its fallback's skin (materials map, roof, strip, tint, borders, roof decor) while keeping its own generator, world, props and names. The lava look needs no art, so a volcano level glows from day one. Each landscape switches to its own skin by itself once its whole set is baked; all seven new ones have theirs now.
 
 **Today's eight draw as before.** Their tables moved out of `WorldSkin` (`GRAMMAR_TERRAIN`, `WALL_STRIP`, `WALL_TINT`, `ORGANIC`, `ROOF_DECOR`), `WorldMap` (`NAME_SECOND`) and `Levels` (`GRAMMAR_TEXT`) unchanged, and `test_landscapes.gd` checks each kept level's material layers, water and wall layers, tint, borders, strips and roof decor against what the old code built. The world preview of the eight is identical too. What changed on purpose is the dressing: the per-district faction tables gave way to the landscape's natural props and the region's overlay.
 
@@ -185,18 +185,18 @@ A `Landscape` (`world/landscapes/<id>.tres`, registry `Landscapes`) is where a l
 
 `Territories` (`scripts/world/territories.gd`; the `Region` autoload already means a run's districts) holds the six regions:
 
-| id | Name | Class | Landmark (fallback) | Strength step: speed / damage / crush | Sprint distance | Demo |
+| id | Name | Class | Landmark | Strength step: speed / damage / crush | Sprint distance | Demo |
 |---|---|---|---|---|---|---|
 | `wilds` | The Wilds | Wild Things | `landmark_wild` | ×1 | 20,000 px | yes |
 | `tribe` | Tribe Country | Goon Tribe | `landmark_tribe` | ×1 | 22,800 px | yes |
 | `raiders` | Raider Road | Scrap Gang | `landmark_scrap` | ×1 | 25,600 px | |
-| `hunting` | Hunting Grounds | Big Game | `landmark_big` (`landmark_wild`) | ×1.00 / ×1.10 / ×1.10 | 28,400 px | |
-| `sprawl` | The Sprawl | Street Swarm | `landmark_swarm` (`landmark_tribe`) | ×1.10 / ×1.10 / ×1.05 | 31,200 px | |
-| `works` | The Works | War Machine | `landmark_war` (`landmark_scrap`) | ×1.10 / ×1.20 / ×1.10 | 34,000 px | |
+| `hunting` | Hunting Grounds | Big Game | `landmark_big` | ×1.00 / ×1.10 / ×1.10 | 28,400 px | |
+| `sprawl` | The Sprawl | Street Swarm | `landmark_swarm` | ×1.10 / ×1.10 / ×1.05 | 31,200 px | |
+| `works` | The Works | War Machine | `landmark_war` | ×1.10 / ×1.20 / ×1.10 | 34,000 px | |
 
 - **Class:** every level's line-up comes from the region's class (`Goons.CLASSES`, docs/GOONS.md "Classes").
-- **Overlay:** `dressing` and `motifs` are three tables, one per zone (0 near the start, 2 far out): the region's own props laid over the landscape's (`WorldSkin.zoneTables`), heavier further out, so driving out feels like going deeper into their turf. The Wilds: carcasses, beehives, bones. Tribe Country: tents, totems, firepits, crates, fort walls, camps. Raider Road: tyres, wrecks, barrels, barricades, scrap heaps, wreck piles. Hunting Grounds: bones, carcasses, boneyards. The Sprawl: dumpsters, crates, manholes, graffiti. The Works: barrels, tanks, cranes, oil, containers, junkyards.
-- **Landmark:** every district's; the fallback stands in until the new art is in `props.json` (the same missing-art idea as the skins).
+- **Overlay:** `dressing` and `motifs` are three tables, one per zone (0 near the start, 2 far out): the region's own props laid over the landscape's (`WorldSkin.zoneTables`), heavier further out, so driving out feels like going deeper into their turf. The Wilds: carcasses, beehives, bones. Tribe Country: tents, totems, firepits, crates, fort walls, camps. Raider Road: tyres, wrecks, barrels, barricades, scrap heaps, wreck piles. Hunting Grounds: bones, carcasses, hunting stands, boneyards. The Sprawl: dumpsters, trash bags, crates, manholes, graffiti. The Works: barrels, tanks, cranes, oil, containers, junkyards.
+- **Landmark:** every district's, each with a beacon that glows at night (`WorldSkin.LANDMARKS`).
 - **Names:** district first words (`nameFirst`); the landscape gives the second.
 - **Strength step:** `Level.applyDef` copies it to `Level.strength`, and `Walker.applyStrength` multiplies each goon's speed, attack damage and crush speed (and a crushable head-on armor) as it spawns, like the giant multipliers. No mark shows on elites.
 
@@ -268,7 +268,7 @@ The output is the 40 × 20 terrain bytes plus the `water` and `wall` fields at 4
 - **Name:** a region word (`Territories` `nameFirst`) and a landscape word (`Landscape.nameSecond`), unique within the map ("Tusker Flats", "Rust Junction").
 - **Tint:** 0.9–1.08, also stored as a 4-bit code (`tintCodes`) that the ground shader shows as a faint brightness shift (0.93–1.05) on open ground.
 - **Giantism:** 0–99. Shown on the HUD region chip; not used by spawning yet.
-- **Landmark:** the region's (`Territories.landmark`: its own id when `props.json` has it, else its `landmarkFallback`, one of `landmark_wild`, `landmark_tribe`, `landmark_scrap`) at the open cell nearest the centroid (within 10 cells, not reserved, all 8 neighbours passable), recorded per chunk in `WorldMap.landmarks`. `ChunkRecipe.placeLandmarks` finds the exact spot round it (rings of 128 px, 8 rings) and leaves it out if nothing fits.
+- **Landmark:** the region's (`Territories.landmark`) at the open cell nearest the centroid (within 10 cells, not reserved, all 8 neighbours passable), recorded per chunk in `WorldMap.landmarks`. `ChunkRecipe.placeLandmarks` finds the exact spot round it (rings of 128 px, 8 rings) and leaves it out if nothing fits.
 
 `Region.setDistricts` turns each district into a region (`name`, `terrain`, `giantism`, `faction`, `goon`, `terrain_modulate`, `visited`). A district decides *who* spawns; waves are one clock for the whole run (`Region.wave`, `runTime`: a star and a wave chest every 60 s, no cap, untouched by crossing districts; roadmap W-1); `-- --class=<class>` (any of `Goons.CLASSES`) and `-- --goons=` override them. `TileManager.updateChunks` checks the car's coarse cell; when it enters a cell of another district (a barrier cell keeps the last one), it calls `Region.updatePlayerRegion`, which pushes the district's goons to the spawner. 
 
@@ -317,9 +317,9 @@ Wall blobs and holes under 2500 px² are dropped or filled (`MIN_LOOP_AREA`), pi
 - **Props** (`placeProps`) come in three passes, all counted against `features.props` (16 by default; Bayou and Frostbite 18, Canyon and Highway 13, City 12) × the chunk's open share:
   1. **Field lines** (`placeFieldLines`, package 14 P-3). Fences and hedges (`WorldSkin.FIELD_PROPS`) are never scattered: they lie on the edges of a field lattice in world space, one lattice per `FIELD_REGION` (10,240 px) square, turned up to `FIELD_ANGLE` (0.6 rad) from the world axes by the seed, `features.fieldSpacing` px apart (1400; Prairie 1600). Each lattice edge is a fence (chance `features.fenceDensity`), a hedge (`hedgeDensity`) or nothing; a run has a gap (a gate; two on runs of `FIELD_GATE_LONG` pieces or more). A chunk places the pieces whose centres are inside it, in the dressing of the district's zone there, on open ground off roads (so tracks and creeks cut gaps) and clear of water, walls and earlier reservations; pieces of one run touch end to end. Hedgerows get an oak at some corners (`CORNER_TREE`); a lattice cell fenced on `PADDOCK_EDGES` (3) sides is a paddock with 2-4 hay bales inside. Each piece counts as `FIELD_COST` (0.34) of a scattered prop.
   2. **Motifs** (`placeMotifs`, P-5). The zone's motif table (landscape, region, level) picks set pieces from `WorldSkin.MOTIFS` (camp, cabincamp, wreckpile, junkyard, pinestand, cypressgrove, orchard, boneyard, roadblock, pileup), `features.motifs` (1; City 0.4, Highway and Crusher 1.2) a fully open chunk. A motif's members sit at its centre, round a ring, scattered in a disc, or in a grid or line turned to the field lattice, `MOTIF_GAP` (70 px) apart instead of `PROP_GAP`; the motif keeps `PROP_GAP` from everything else and is skipped when fewer than its `min` members fit. Members load with the level whatever its dressing says. Each counts as `MOTIF_COST` (0.5).
-  3. **Scatter** by dart throwing for the rest (up to 14 darts per prop wanted), each spot from its coarse cell's district zone's table, field props left out. A prop must fit at its centre and 4 points across its box: on spawnable ground, never on a conveyor, mud pit or bridge, off asphalt and oil unless it is a road prop (`ROAD_PROPS`: cone, jersey, wreck, manhole, barricade, sign), at least 77 px (`PROP_MARGIN`) from water and walls, outside the start's core (1200 px), station lots and Defense lanes, and `PROP_GAP` (150 px) clear of everything placed, so a car can weave through. Other chain props (jersey, fortwall) are laid 2–4 end to end; a chain that may stand on roads lies along the road there (`roadAxis`: the heading of 8 with the longest run of road).
+  3. **Scatter** by dart throwing for the rest (up to 14 darts per prop wanted), each spot from its coarse cell's district zone's table, field props left out. A prop must fit at its centre and 4 points across its box: on spawnable ground, never on a conveyor, mud pit or bridge, off asphalt and oil unless it is a road prop (`ROAD_PROPS`: cone, jersey, wreck, manhole, barricade, sign, mile marker), at least 77 px (`PROP_MARGIN`) from water and walls, outside the start's core (1200 px), station lots and Defense lanes, and `PROP_GAP` (150 px) clear of everything placed, so a car can weave through. Other chain props (jersey, fortwall) are laid 2–4 end to end; a chain that may stand on roads lies along the road there (`roadAxis`: the heading of 8 with the longest run of road).
   Breakables take taken-set bits in placement order across the passes (`nextBit`). Recipes now average about 14-15 ms on a worker on Prairie (field lines and motifs), Prairie's chunks reach the 100-node budget, and the rest stay under it.
-- **Decor** (`placeDecor`): `features.decor` (110) × the open share, never on blocked, bridge or conveyor cells. `WorldSkin.DECOR_PLACE` limits some ids: `paint` and `streetglow` only on roads and lots, `reeds` only on shallows and banks, `oilstain` and `cracks` anywhere; the rest stay off asphalt, oil and shallows. Tufts and reeds bend away from the player's car (`WorldSkin.BEND_DECOR`, `world_decor.gdshader`: each corner pushed by how close it is to `gc_car_pos`, which PropReactions sets each frame; off at Ground Detail Simple).
+- **Decor** (`placeDecor`): `features.decor` (110) × the open share, never on blocked, bridge or conveyor cells. `WorldSkin.DECOR_PLACE` limits some ids: `paint` and `streetglow` only on roads and lots, `reeds` only on shallows and banks, `oilstain` and `cracks` anywhere; the rest stay off asphalt, oil and shallows. Tufts, reeds and tumbleweeds bend away from the player's car (`WorldSkin.BEND_DECOR`, `world_decor.gdshader`: each corner pushed by how close it is to `gc_car_pos`, which PropReactions sets each frame; off at Ground Detail Simple).
 - **Rooftops** (city): up to 48 a chunk on BUILDING cells, at least 0.3 field units (192 px) inside the parapet and 190 px apart, square to the street grid.
 
 ### Pickups and the taken set
@@ -425,7 +425,7 @@ Baked STATEFUL props carry their state as metadata on the root (`smashSpeed`, `b
 - **Cones** (`knocks`, checked by the car before the wall branch): hit at `KNOCK_SPEED` (120 px/s) or more, a cone's sprite flies 140-230 px along the hit and its collision goes off; the car keeps `KNOCK_KEEP` (96%) of its speed and takes no wall damage. Cones have no taken bit: a reloaded chunk stands them up again (`reset`, called by `ChunkView` on every pooled prop).
 - **Blasts:** `BreakableProp.blastAt` calls `PropReactions.blast`, which shakes the crowns in the radius and drops a few leaves.
 - **Near misses:** a breakable hit too slow to smash wobbles by speed ÷ smash speed instead of by `FULL_SPEED`; at `NEAR_SMASH` (70%) or more it cracks (the "rattle" sound, pitched up) and throws 2-5 chips off its debris strip, so the player learns how close they were.
-- **Bits:** leaves from each layered prop's baked `<id>_leaves.png` strip (`WorldSkin.leaves`; pine drops snow clumps on the mountain grammar), drawn by one `Bits` node (72 pooled), and dust and spray through a `CarJuice.Particles` (96). Driving Effects (`gfx/driving_fx`) scales them by `PARTICLE_SCALE` (none at Minimal); Reduce Motion cuts the springs to 40%.
+- **Bits:** leaves from each layered prop's baked `<id>_leaves.png` strip (`WorldSkin.leaves`; pine drops snow clumps on a snowy landscape, `Landscape.snowy`, which also turns hit dust to snow), drawn by one `Bits` node (72 pooled), and dust and spray through a `CarJuice.Particles` (96). Driving Effects (`gfx/driving_fx`) scales them by `PARTICLE_SCALE` (none at Minimal); Reduce Motion cuts the springs to 40%.
 
 ## Water
 
@@ -500,7 +500,7 @@ Spawning, props and FX rules for goons are in docs/GOONS.md ("The world").
 
 ## How to add a region
 
-1. Add an entry to `Territories.DATA` and its id to `Territories.ORDER`: name, colour, class (a `Goons.CLASSES` id, or a new class there), landmark and `landmarkFallback`, ten `nameFirst` words, three zones of `dressing` and `motifs`, the strength `step` and `demo`.
+1. Add an entry to `Territories.DATA` and its id to `Territories.ORDER`: name, colour, class (a `Goons.CLASSES` id, or a new class there), landmark (a prop with a beacon, also in `WorldSkin.LANDMARKS`), ten `nameFirst` words, three zones of `dressing` and `motifs`, the strength `step` and `demo`.
 2. Add its five levels to `Levels.ORDER` (How to add a level). The Sprint distance spreads over `Territories.ORDER` by itself.
 3. Update `test_levels.gd` (`IDS`, the regions test) and the tables in this file and docs/GOONS.md.
 
@@ -550,7 +550,7 @@ Spawning, props and FX rules for goons are in docs/GOONS.md ("The world").
 - **Highway edges** look blobby: the asphalt edge comes from the 128 px raster through organic blending.
 - **Bumper-only car collision:** the car's shape is a front and a rear polygon, so its middle can wedge on prop and wall corners (`overlap=` in `PLAYTEST_STUCK`).
 - **Unused def fields:** `nightTint`, `ambience`, and `sideStreetChance` in City's `features`.
-- **Placeholder content:** the 22 new levels start from their landscape's template level (posters, barrier and surfaces text) and the seven new landscapes from their fallback's art (docs/GAMEPLAY_SUGGESTIONS.md, road atlas P5-P6). Their props are listed for wiring in `TODO_PROPS.md`.
+- **Placeholder content:** the 22 new levels start from their landscape's template level (barrier and surfaces text; their posters are their own) (docs/GAMEPLAY_SUGGESTIONS.md, road atlas P6). The new props' dressing weights are first guesses.
 - **Lava at night:** the glow is part of the ground, so the night's `CanvasModulate` darkens it like any ground; it does not light the scene.
 - **Giantism** is per district but only shown on the HUD.
 - **Marathon's later stations** are found on the finished map, so their lot's terrain isn't cleared (props and pickups are kept out); a chunk with a naturally clear lot is preferred.

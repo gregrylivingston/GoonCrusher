@@ -136,7 +136,7 @@ func setupDistricts(table: Array) -> void:
 	if land && not land.nameSecond.is_empty(): seconds.assign(land.nameSecond)
 	var region: StringName = def.region if def else &"tribe"
 	var firsts: Array = Territories.get_def(region).get("nameFirst", Territories.DATA[&"tribe"].nameFirst)
-	var landmarkId := String(Territories.landmark(region, WorldSkin.loadManifest()))
+	var landmarkId := String(Territories.landmark(region))
 	var startIndex := coarseIndex(startPosition)
 	var startDistrict := district[startIndex] if startIndex >= 0 else -1
 	for entry in table:

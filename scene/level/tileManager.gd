@@ -119,7 +119,8 @@ func buildWorld() -> void:
 	var skinStart := Time.get_ticks_usec()
 	skin = WorldSkin.new(def)
 	skin.prewarm()
-	reactions = PropReactions.new(def.grammar, skin.leaves)
+	var land := Landscapes.get_def(def.landscape)
+	reactions = PropReactions.new(land != null && land.snowy, skin.leaves)
 	add_child(reactions)
 	if objective != "" && worldMap.stationChunk != WorldGen.NO_CHUNK: lots.push_back(lotRect(worldMap.stationChunk))
 	if objective == "defense" && worldMap.station != Vector2.INF:

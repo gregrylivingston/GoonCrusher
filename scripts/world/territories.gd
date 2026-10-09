@@ -6,8 +6,7 @@ class_name Territories extends RefCounted
 ##
 ##   name, color     the menus' name and colour
 ##   class           its goon class (Goons.CLASSES); every level's line-up comes from it
-##   landmark        the prop every district's landmark is (props.json), and landmarkFallback while its art is
-##                   missing (WorldSkin checks once per level)
+##   landmark        the prop every district's landmark is (props.json, with a beacon; WorldSkin.LANDMARKS)
 ##   nameFirst       district names' first words; the landscape gives the second (Landscape.nameSecond)
 ##   dressing        the region's own props by zone ({prop id: weight}, zone 0 near the start, 2 far out), laid
 ##                   over the landscape's natural dressing so its share rises as you drive out
@@ -22,42 +21,42 @@ const STOPS := 5 #levels per region; the 5th is its finale
 
 const DATA := {
 	&"wilds": {"name": "The Wilds", "color": Color("#8fbf55"), "class": &"wild", "demo": true,
-		"landmark": &"landmark_wild", "landmarkFallback": &"landmark_wild",
+		"landmark": &"landmark_wild",
 		"nameFirst": ["Tusker", "Jackalope", "Thornback", "Wildroot", "Howling", "Bramble", "Snapjaw", "Feral", "Burrow", "Antler"],
 		"dressing": [{&"carcass": 1, &"beehive": 1}, {&"carcass": 1, &"beehive": 1, &"bones": 2}, {&"carcass": 2, &"beehive": 2, &"bones": 3}],
 		"motifs": [{}, {}, {&"boneyard": 1}],
 		"step": {"speed": 1.0, "damage": 1.0, "crush": 1.0},
 		"blurb": "Critter country from farmland to swamp to red rock. The Wild Things teach crush speed."},
 	&"tribe": {"name": "Tribe Country", "color": Color("#4fb39b"), "class": &"tribe", "demo": true,
-		"landmark": &"landmark_tribe", "landmarkFallback": &"landmark_tribe",
+		"landmark": &"landmark_tribe",
 		"nameFirst": ["Totem", "Warpaint", "Grunt", "Bonefire", "Drumskull", "Spearhead", "Mudmask", "Hubcap", "Tusk", "Warband"],
 		"dressing": [{&"totem": 1, &"tent": 1}, {&"tent": 2, &"totem": 1, &"firepit": 1, &"crate": 2}, {&"tent": 2, &"totem": 2, &"firepit": 2, &"crate": 2, &"fortwall": 1}],
 		"motifs": [{}, {&"camp": 1}, {&"camp": 3}],
 		"step": {"speed": 1.0, "damage": 1.0, "crush": 1.0},
 		"blurb": "The Tribe's villages, camps and dig sites, from swamp villages to the Foreman's quarry."},
 	&"raiders": {"name": "Raider Road", "color": Color("#e07a52"), "class": &"scrap", "demo": false,
-		"landmark": &"landmark_scrap", "landmarkFallback": &"landmark_scrap",
+		"landmark": &"landmark_scrap",
 		"nameFirst": ["Rust", "Sprocket", "Gearhead", "Scrapper", "Chrome", "Piston", "Rivet", "Junker", "Sawtooth", "Busted"],
 		"dressing": [{&"tyres": 1, &"wreck": 1}, {&"tyres": 2, &"wreck": 2, &"barrel": 1, &"barricade": 1}, {&"tyres": 2, &"wreck": 3, &"barrel": 2, &"barricade": 2, &"scrapheap": 1}],
 		"motifs": [{}, {&"wreckpile": 1}, {&"wreckpile": 2, &"roadblock": 1}],
 		"step": {"speed": 1.0, "damage": 1.0, "crush": 1.0},
 		"blurb": "The open road and the towns along it. The Scrap Gang rides everything with wheels."},
 	&"hunting": {"name": "Hunting Grounds", "color": Color("#6aa9dc"), "class": &"biggame", "demo": false,
-		"landmark": &"landmark_big", "landmarkFallback": &"landmark_wild",
+		"landmark": &"landmark_big",
 		"nameFirst": ["Trophy", "Bigfoot", "Skull", "Mammoth", "Horn", "Stampede", "Hunter's", "Thunder", "Bone", "Grizzly"],
-		"dressing": [{&"bones": 2, &"carcass": 1}, {&"bones": 3, &"carcass": 2}, {&"bones": 4, &"carcass": 3}],
+		"dressing": [{&"bones": 2, &"carcass": 1}, {&"bones": 3, &"carcass": 2, &"hunting_stand": 1}, {&"bones": 4, &"carcass": 3, &"hunting_stand": 2}],
 		"motifs": [{}, {}, {&"boneyard": 1}],
 		"step": {"speed": 1.0, "damage": 1.1, "crush": 1.1},
 		"blurb": "Where the big ones live: snow, timber and tar. Build a run-up, then hit."},
 	&"sprawl": {"name": "The Sprawl", "color": Color("#a688d3"), "class": &"swarm", "demo": false,
-		"landmark": &"landmark_swarm", "landmarkFallback": &"landmark_tribe",
+		"landmark": &"landmark_swarm",
 		"nameFirst": ["Ratrun", "Alley", "Dumpster", "Gutter", "Sewer", "Graffiti", "Backlot", "Pack", "Scurry", "Stoop"],
-		"dressing": [{&"dumpster": 1}, {&"dumpster": 2, &"crate": 1, &"manhole": 1}, {&"dumpster": 3, &"crate": 2, &"manhole": 2, &"paint": 2}],
+		"dressing": [{&"dumpster": 1, &"trashbags": 1}, {&"dumpster": 2, &"trashbags": 2, &"crate": 1, &"manhole": 1}, {&"dumpster": 3, &"trashbags": 3, &"crate": 2, &"manhole": 2, &"paint": 2}],
 		"motifs": [{}, {}, {}],
 		"step": {"speed": 1.1, "damage": 1.1, "crush": 1.05},
 		"blurb": "City, suburbs and the jammed roads between. Packs and thieves: combos pay, crowds kill."},
 	&"works": {"name": "The Works", "color": Color("#d6ad3e"), "class": &"warmachine", "demo": false,
-		"landmark": &"landmark_war", "landmarkFallback": &"landmark_scrap",
+		"landmark": &"landmark_war",
 		"nameFirst": ["Furnace", "Smoke", "Slag", "Boiler", "Forge", "Cinder", "Gauge", "Valve", "Ironclad", "Blast"],
 		"dressing": [{&"barrel": 1}, {&"barrel": 2, &"tank": 1, &"oilstain": 2}, {&"barrel": 3, &"tank": 2, &"crane": 1, &"oilstain": 3, &"container": 1}],
 		"motifs": [{}, {&"junkyard": 1}, {&"junkyard": 2}],
@@ -117,8 +116,6 @@ static func zoneFor(distancePx: float, jitter: float) -> int:
 	if score < Goons.TRIBE_BELOW: return 1
 	return 2
 
-## The landmark a region's districts show: its own when props.json has it, else its fallback
-static func landmark(id: StringName, manifest: Dictionary) -> StringName:
-	var d := get_def(id)
-	var own: StringName = d.get("landmark", &"landmark_tribe")
-	return own if manifest.has(String(own)) else d.get("landmarkFallback", &"landmark_tribe")
+## The landmark a region's districts show
+static func landmark(id: StringName) -> StringName:
+	return get_def(id).get("landmark", &"landmark_tribe")
