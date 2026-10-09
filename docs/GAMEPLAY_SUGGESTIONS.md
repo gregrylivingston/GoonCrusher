@@ -214,7 +214,7 @@ Built (2026-10-08, "Done" above; docs/WORLD.md "Props and decor", "Interactive p
 - Pickups show short name tags in small type wherever an icon stands for something held or offered (N-1).
 - Menu shortcuts are letters near WASD; numbers only for lists such as levels and tabs.
 - Pickups unlock in a separate tree per kind; locked ones never drop and show as "???" until their parent is unlocked, then with a preview and price.
-- Entry cars cost coins; advanced ones (semi, audi, racer, police, ambulance) cost coins and gems. No level gates on cars.
+- Entry cars cost coins; advanced ones (semi, supercar, racer, police, ambulance) cost coins and gems. No level gates on cars.
 - The demo opens Common and Uncommon pickups only.
 - Saves from before the unlocks (version 6) start over; nothing from them is kept.
 - Unlock prices are placeholders, set now and re-fit in package 6.

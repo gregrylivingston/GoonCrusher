@@ -3,7 +3,7 @@ class_name PitShop extends PickupMenu
 #Marathon's pit shop: each station but the last sells three pickups for run coins, bought in order, top to
 #bottom: the action key (E) buys the next one (and leaves once nothing more can be bought), REJECT (Q) leaves. Each offer says what it does, in small
 #type under its name, before you buy it. Coins spent here don't reach the payout, which is the trade.
-#Leaving opens the station's free slot machine.
+#Leaving resumes the run (stations no longer give a free slot machine).
 
 const PRICES := [30, 60, 150, 400, 900] #by rarity tier
 const ROW_H := 104.0
@@ -69,8 +69,7 @@ func buy(index: int) -> void:
 	refresh()
 
 func leaveShop() -> void:
-	close(false)
-	if is_instance_valid(Root.levelRoot) && Root.levelRoot.has_method("openFreeSlotMachine"): Root.levelRoot.openFreeSlotMachine()
+	close()
 
 func rowRect(i: int) -> Rect2:
 	return Rect2(30, TOP + i * (ROW_H + ROW_GAP), STAGE.x - 60, ROW_H)

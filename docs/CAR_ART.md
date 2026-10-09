@@ -89,7 +89,7 @@ What things cost a bare car: a goon attack its `dmg` in `Goons.DATA` (1 to 12, �
 
 `OverheadCarBody2D.integrate()` is one tick of a bicycle model: the heading comes from the front and rear wheels, and the travel swings toward the heading by the grip each tick. `CarHandling` (`lib/overhead_car_2d/car_handling.gd`) turns the stats into its numbers. One shared instance, `CarHandling.tune`, holds every number, so the dev console's `handling` command changes them live for every car (and the AI's predictions follow). Nothing it sets is saved.
 
-Every stat goes through `CarHandling.dim()` first (`stat × 60 / (stat + 60)`), so upgrades and pickups sharpen a car with diminishing returns instead of erasing its character. **Weight** (`CarInfo.weight`, 0–100, never upgraded) is the character. The values are racer 15, audi 30, sedan 35, taxi 45, police 50, pickup 65, van 70, ambulance 80, semi 100.
+Every stat goes through `CarHandling.dim()` first (`stat × 60 / (stat + 60)`), so upgrades and pickups sharpen a car with diminishing returns instead of erasing its character. **Weight** (`CarInfo.weight`, 0–100, never upgraded) is the character. The values are racer 15, supercar 30, sedan 35, taxi 45, police 50, pickup 65, van 70, ambulance 80, semi 100.
 
 | What | Rule | Stats |
 |---|---|---|
@@ -118,7 +118,7 @@ Stock cars on grass after the first fit (2026-10-09). Before, the stock sedan to
 | sedan | 745 | 10 ticks | 1.89 / 1.84 / 1.84 | 1.07 s, 88% kept | 0.9 s | 272 |
 | van | 693 | 13 | 1.59 / 1.56 / 1.55 | 1.25 s, 88% | 0.9 s | 258 |
 | semi | 906 | 13 | 1.49 / 1.46 / 1.44 | 1.37 s, 88% | 1.3 s | 307 |
-| audi | 1,417 | 9 | 2.11 / 2.05 / 1.85 | 1.03 s, 89% | 1.2 s | 409 |
+| supercar | 1,417 | 9 | 2.11 / 2.05 / 1.85 | 1.03 s, 89% | 1.2 s | 409 |
 | racer | 1,553 | 9 | 2.11 / 2.02 / 1.77 | 1.08 s, 89% | 1.4 s | 417 |
 
 ## Traits
@@ -154,6 +154,18 @@ Each trait has a kind, and its kind decides where it lives:
 The numbers are first guesses. The handling ones are constants on the car (`CITY_GRIP`, `DOWNFORCE_*`, `TWO_WHEEL_*`, `SWAY_*`, `DRIFT_KING_*`, `LOAD_WEIGHT`, `FEATHER_BOUNCE`), the rules' are on `CarTraitRig`. `tests/game/test_traits.gd` covers every trait.
 
 **Adding a trait:** add it to `CarTraits.DATA` and to a car's `traits`, draw its icon in `pickup_icons.js` (`trait_<id>`) and run it, then add the `t<Name>` flag to the car (`cacheTraits` sets any flag named after the id). Put handling in the integrate helpers and rules in `CarTraitRig`, and give it a test.
+
+## Gearbox
+
+The racer (5 gears), supercar (6) and semi (7) are manual (`CarInfo.gears`; 0 is an automatic). The model is in `overhead_car_body_2d.gd` ("the gearbox"), and `gearThrust()` is read inside `integrate()`, so the AI driver's predictions follow it.
+
+- **Gears.** Each covers `gearSpan` px/s, set at the start of a run from the car's cruising top speed (engine with upgrades, against drag on grass) / (gears - 0.6), so the last gear runs past top speed and has no limiter. Pickups and Nitro can push past it.
+- **Push.** First gear pulls `LOW_GEAR_PULL` (60%) harder than the top gear. At the top of any gear but the last, the rev limiter cuts the push to 0. Below `BOG_BELOW` (55%) of a gear's range the engine bogs, down to `bogFloor(g)` at a standstill: 30% in second, halving each gear up (fifth about 4%), so first is by far the best start.
+- **Shifting.** R / C (D-pad Up / Down; `ShiftUp`, `ShiftDown`, rebindable). Down past N is R, and R only goes in below 40 px/s forward. In R, Accelerate drives backward; Brake only brakes. A shift between forward gears cuts the push for 6 ticks (the clutch), but a shift up from 88% of the gear's range (`SHIFT_KICK_FROM`) earns a ×1.3 push for half a second instead.
+- **Who shifts.** The player, unless the Automatic Gearbox setting (`gameplay/auto_gearbox`) is on. The AI driver and that setting use `autoGear` (up at 97% of a gear, down below 70% of the one under it), and Brake at a standstill backs up as in an automatic. A `CarInput` with no gear set gets the gear that suits its speed (`bestGear`).
+- **Feedback.** The tach follows the real gear and stutters on the limiter; the gear number turns green near the redline of a hand-shifted gear and white during the kick (`HudDial.gearColor`). The engine pitch follows the gear (`CarJuice.gearedPitch`). Cards and the Goonopedia show "N-SPEED MANUAL", and a toast names the keys a couple of seconds into the run.
+
+`tests/game/test_gearbox.gd` covers it, including that a car shifted well is no slower than the same car as an automatic.
 
 ## Horn and weight
 

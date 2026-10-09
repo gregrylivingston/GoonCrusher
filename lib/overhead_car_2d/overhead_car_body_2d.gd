@@ -180,9 +180,9 @@ const SHIFT_CUT_TICKS := 6
 const SHIFT_KICK_TICKS := 30
 const SHIFT_KICK := 1.3
 const SHIFT_KICK_FROM := 0.88  #share of a gear's range from which a shift up earns the kick
-const LOW_GEAR_PULL := 0.35    #first gear pulls this much harder than the top gear
-const BOG_BELOW := 0.4         #under this share of a gear's range (any gear but first) the engine bogs...
-const BOG_THRUST := 0.45       #...down to this share of its push at a standstill
+const LOW_GEAR_PULL := 0.6     #first gear pulls this much harder than the top gear
+const BOG_BELOW := 0.55        #under this share of a gear's range (any gear but first) the engine bogs...
+const BOG_THRUST := 0.3        #...down to this share of its push at a standstill in second, halving each gear up (bogFloor)
 const TOP_GEAR_REACH := 0.6    #gearSpan = cruising top speed / (gears - this): the last gear runs past it
 const AUTO_UP := 0.97          #autoGear shifts up at this share of the gear's range...
 const AUTO_DOWN := 0.7         #...and down below this share of the gear under it
@@ -984,10 +984,12 @@ func updateLookAhead(delta: float) -> void:
 
 var defaultZoomLevel:float = 0.45
 var cameraAdjustmentSpeed: float = 0.0008
+const SPEED_ZOOM_FLOOR := 0.8 #the furthest the speed zoom goes: 0.8 of the default zoom, a quarter more view
 func updateCameraZoom():
 	var targetZoomFactor: float
 	if velocity.length() > 450.0 && isPlayer && is_instance_valid(camera):
-		targetZoomFactor = defaultZoomLevel + 0.10 - velocity.length() / 4500.0
+		#pulls back with speed, but never past SPEED_ZOOM_FLOOR of the default: further out, the car and goons got too small to read
+		targetZoomFactor = maxf(defaultZoomLevel + 0.06 - velocity.length() / 7500.0, defaultZoomLevel * SPEED_ZOOM_FLOOR)
 	else:
 		targetZoomFactor = defaultZoomLevel
 	if camera.zoom.x > targetZoomFactor:
@@ -1260,13 +1262,18 @@ func gearThrust(g: int, speed: float) -> float:
 	var r := speed / (gearSpan * g)
 	if g < gears && r >= 1.0: return 0.0 #the rev limiter
 	var thrust := 1.0 + LOW_GEAR_PULL * float(gears - g) / maxf(gears - 1, 1)
-	if g > 1: thrust *= lerpf(BOG_THRUST, 1.0, clampf(r / BOG_BELOW, 0.0, 1.0))
+	if g > 1: thrust *= lerpf(bogFloor(g), 1.0, clampf(r / BOG_BELOW, 0.0, 1.0))
 	if shiftKick > 0: thrust *= SHIFT_KICK
 	return thrust
 
 ## The gear that suits `speed`: the lowest one still under its limiter
 func bestGear(speed: float) -> int:
 	return clampi(int(speed / gearSpan) + 1, 1, gears)
+
+## A gear's share of its push at a standstill: BOG_THRUST in second, half that in third and so on, so
+## pulling away in fifth barely moves the car and first is by far the best start
+static func bogFloor(g: int) -> float:
+	return BOG_THRUST * pow(0.5, g - 2)
 
 ## How far through its gear the engine is: 0 at the bottom, 1 at the limiter (R and N count from gear 1's span)
 func rpmShare() -> float:

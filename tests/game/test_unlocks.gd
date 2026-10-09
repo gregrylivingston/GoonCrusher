@@ -219,4 +219,4 @@ func test_the_goonopedia_sells_prize_games_in_ladder_order():
 	assert_eq(data().coin, 100000 - int(CrushPrizes.price("shuffle").coin), "at its price")
 	assert_eq(Unlocks.state("prize:scratch"), Unlocks.S.READY, "and the next one is for sale")
 	assert_true(Unlocks.price("prize:shuffle").is_empty(), "an open game has no price")
-	assert_eq(Pickups.rarity("claw"), Pickups.R.UNCOMMON, "the weakest prize game is an Uncommon drop")
+	assert_eq(Pickups.rarity("claw"), Pickups.R.RARE, "the weakest prize game is a Rare drop")

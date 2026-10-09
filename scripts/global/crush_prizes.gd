@@ -29,11 +29,12 @@ const TIERS := ["Cardboard", "Bronze", "Silver", "Gold", "Diamond"]
 const TIER_COLORS := [Color(0.784, 0.635, 0.416), Color(0.851, 0.537, 0.29), Color(0.8, 0.835, 0.871), Color(1.0, 0.827, 0.42), Color(0.541, 0.91, 1.0)]
 const TOP_TIER := 4
 
-## The XP box `level` (1, 2, 3...) needs on its own: 50, 200, 450, 800, 1250... AI playtests (Countdown and
+## The XP box `level` (1, 2, 3...) needs on its own: 120, 634, 1678, 3346, 5704... (2026-10-09: was
+## 50 * level^2; prize games came too often). AI playtests (Countdown and
 ## Goonpocalypse, 3-4 min) make 150-1300 XP, 2-7.5 per crush as giants and combos pile up: 1-3 boxes a run,
 ## fewer than the old crush goals gave the same runs (2-4). A human's pace is for package 1 to check.
-const XP_BASE := 50.0
-const XP_EXP := 2.0
+const XP_BASE := 120.0
+const XP_EXP := 2.4
 
 ## Crush XP: by rank (Goons.DATA: 1 fodder, 2 special, 3 heavy), times 4 for a giant and 10 for a boss
 const RANK_XP := [1.0, 1.0, 3.0, 8.0]

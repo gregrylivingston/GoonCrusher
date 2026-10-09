@@ -34,6 +34,11 @@ enum F { WILD, TRIBE, SCRAP }
 ## Tier odds before Dice. Each tier above Common is scaled by (1 + Dice / DICE_DIVISOR[tier]).
 const TIER_WEIGHTS := [64.0, 26.0, 8.0, 1.6, 0.4]
 const DICE_DIVISOR := [0.0, 40.0, 25.0, 18.0, 12.0]
+## Ordinary drops: before the tier roll, this share of plain goon drops is a single Coin. It starts at
+## ORDINARY_SHARE.x and eases to .y as droppable pickups open (ORDINARY_OPEN_SPAN of them), so the Coin stays
+## a big part of the mix however much is unlocked. Giants and bosses (bump > 0) skip it.
+const ORDINARY_SHARE := Vector2(0.5, 0.35)
+const ORDINARY_OPEN_SPAN := 50.0
 ## Every PITY-th drop without a Rare or better is a Rare.
 const PITY := 25
 const GENERIC_SCENE := "res://scene/pickups/pickup.tscn"
@@ -51,9 +56,9 @@ const TICKS := 60 #physics ticks per second (never changes; see CLAUDE.md)
 ## its rarity's (Unlocks.PICKUP_PRICE). Locked pickups never drop and are never offered.
 const DATA := {
 	#---------------------------------------------------------------- the original 14
-	"fuel": {"start":true, "name":"Fuel Can", "kind":K.SUPPLY, "rarity":R.COMMON, "w":32, "icon":"fuel", "scene":"res://scene/powerup/fuel.tscn", "ui":"fuelui", "fac":{F.SCRAP:1.4},
+	"fuel": {"start":true, "name":"Fuel Can", "kind":K.SUPPLY, "rarity":R.UNCOMMON, "w":32, "icon":"fuel", "scene":"res://scene/powerup/fuel.tscn", "ui":"fuelui", "fac":{F.SCRAP:1.4},
 		"text":"Adds 20 fuel."},
-	"health": {"start":true, "name":"Repair Kit", "kind":K.SUPPLY, "rarity":R.COMMON, "w":15, "icon":"health", "scene":"res://scene/powerup/health.tscn", "ui":"healthui", "fac":{F.WILD:1.3},
+	"health": {"start":true, "name":"Repair Kit", "kind":K.SUPPLY, "rarity":R.UNCOMMON, "w":15, "icon":"health", "scene":"res://scene/powerup/health.tscn", "ui":"healthui", "fac":{F.WILD:1.3},
 		"text":"Patches up 20 hull."},
 	"coin": {"start":true, "name":"Coin", "kind":K.LOOT, "rarity":R.COMMON, "w":20, "icon":"coin", "scene":"res://scene/powerup/coin.tscn", "ui":"coinui",
 		"text":"+1 coin. Stars multiply what a run pays."},
@@ -77,13 +82,13 @@ const DATA := {
 		"text":"15 to 100 coins in one go."},
 	"gem": {"parent":"coin", "name":"Gem", "kind":K.LOOT, "rarity":R.UNCOMMON, "w":14, "icon":"gem", "scene":"res://scene/powerup/gem.tscn", "ui":"gemui",
 		"text":"+1 gem. Gems buy starting gadgets, boosts and unlocks, and are kept after the run."},
-	"slotmachine": {"start":true, "name":"Slot Machine", "kind":K.CASINO, "rarity":R.RARE, "w":10, "icon":"slotMachine", "scene":"res://scene/powerup/slotMachine.tscn", "ui":"slotmachineui", "ai":50,
+	"slotmachine": {"start":true, "name":"Slot Machine", "kind":K.CASINO, "rarity":R.EPIC, "w":10, "icon":"slotMachine", "scene":"res://scene/powerup/slotMachine.tscn", "ui":"slotmachineui", "ai":50,
 		"text":"Opens the slot machine. Pairs pay twice, triples five times, and three stars are the jackpot. Bet run coins for better reels."},
 
 	#---------------------------------------------------------------- supplies
-	"jerry": {"parent":"fuel", "name":"Jerry Can", "kind":K.SUPPLY, "rarity":R.UNCOMMON, "w":8, "icon":"jerry", "ui":"fuelui", "fuel":50.0, "fac":{F.SCRAP:3.0}, "ai":30,
+	"jerry": {"parent":"fuel", "name":"Jerry Can", "kind":K.SUPPLY, "rarity":R.RARE, "w":8, "icon":"jerry", "ui":"fuelui", "fuel":50.0, "fac":{F.SCRAP:3.0}, "ai":30,
 		"text":"Adds 50 fuel in one go. Scrap Gang vehicles carry them."},
-	"wrench": {"parent":"health", "name":"Wrench", "kind":K.SUPPLY, "rarity":R.COMMON, "w":6, "icon":"wrench", "ui":"healthui", "repair":35.0, "fac":{F.TRIBE:1.5}, "ai":14,
+	"wrench": {"parent":"health", "name":"Wrench", "kind":K.SUPPLY, "rarity":R.UNCOMMON, "w":6, "icon":"wrench", "ui":"healthui", "repair":35.0, "fac":{F.TRIBE:1.5}, "ai":14,
 		"text":"Repairs your most damaged system by 35."},
 	"tyre": {"parent":"wrench", "name":"Spare Tyre", "kind":K.SUPPLY, "rarity":R.COMMON, "w":1, "icon":"tyre", "ui":"tractionui", "system":"tires", "fac":{F.WILD:2.0}, "ai":10,
 		"text":"Puts the tires back to 100. Rattlers, Quills and Shredders wear them."},
@@ -95,9 +100,9 @@ const DATA := {
 		"text":"Puts the steering back to 100."},
 	"tankpatch": {"parent":"jerry", "name":"Tank Patch", "kind":K.SUPPLY, "rarity":R.COMMON, "w":1, "icon":"tankpatch", "ui":"oilui", "system":"tank", "fac":{F.SCRAP:2.0}, "ai":10,
 		"text":"Puts the tank back to 100, which stops a leak."},
-	"toolbox": {"parent":"wrench", "name":"Toolbox", "kind":K.SUPPLY, "rarity":R.UNCOMMON, "w":6, "icon":"toolbox", "ui":"healthui", "repair":40.0, "fac":{F.TRIBE:2.0}, "ai":22,
+	"toolbox": {"parent":"wrench", "name":"Toolbox", "kind":K.SUPPLY, "rarity":R.RARE, "w":6, "icon":"toolbox", "ui":"healthui", "repair":40.0, "fac":{F.TRIBE:2.0}, "ai":22,
 		"text":"+40 to all five systems."},
-	"service": {"parent":"toolbox", "name":"Full Service", "kind":K.SUPPLY, "rarity":R.RARE, "w":10, "icon":"service", "ui":"healthui", "ai":45,
+	"service": {"parent":"toolbox", "name":"Full Service", "kind":K.SUPPLY, "rarity":R.EPIC, "w":10, "icon":"service", "ui":"healthui", "ai":45,
 		"text":"Fuel, hull and every system to full."},
 
 	#---------------------------------------------------------------- tune-ups
@@ -115,7 +120,7 @@ const DATA := {
 		"text":"For 15 s: pickups within 700 px fly to the car."},
 	"frenzy": {"parent":"magnet", "name":"Coin Frenzy", "kind":K.BOOST, "rarity":R.UNCOMMON, "w":6, "icon":"frenzy", "ui":"buffui", "secs":20.0, "ai":22,
 		"text":"For 20 s: every coin counts double, and every crush drops a coin."},
-	"freetank": {"parent":"magnet", "name":"Free Tank", "kind":K.BOOST, "rarity":R.UNCOMMON, "w":5, "icon":"infinity", "ui":"buffui", "secs":20.0, "fac":{F.SCRAP:2.0}, "ai":20,
+	"freetank": {"parent":"magnet", "name":"Free Tank", "kind":K.BOOST, "rarity":R.RARE, "w":5, "icon":"infinity", "ui":"buffui", "secs":20.0, "fac":{F.SCRAP:2.0}, "ai":20,
 		"text":"For 20 s: the engine burns no fuel."},
 	"shield": {"parent":"magnet", "name":"Bubble Shield", "kind":K.BOOST, "rarity":R.UNCOMMON, "w":7, "icon":"shield", "ui":"buffui", "secs":15.0, "hits":3, "ai":24,
 		"text":"For 15 s, or three hits: blocks every hit, and bumps don't scuff the car."},
@@ -153,7 +158,7 @@ const DATA := {
 		"text":"Throws a spinning hubcap that bounces between up to 6 goons, crushing each."},
 	"airstrike": {"parent":"mine", "name":"Airstrike", "kind":K.GADGET, "rarity":R.RARE, "w":8, "icon":"mortar", "ui":"itemui", "charges":1, "radius":230.0, "ai":30,
 		"text":"Three blasts walk forward from 400 px ahead of the car."},
-	"pocket": {"parent":"flare", "name":"Pocket Station", "kind":K.GADGET, "rarity":R.RARE, "w":6, "icon":"pocket", "ui":"itemui", "charges":1, "modes":[M.COUNTDOWN, M.SPRINT, M.MARATHON, M.POCALYPSE], "ai":35,
+	"pocket": {"parent":"flare", "name":"Pocket Station", "kind":K.GADGET, "rarity":R.EPIC, "w":6, "icon":"pocket", "ui":"itemui", "charges":1, "modes":[M.COUNTDOWN, M.SPRINT, M.MARATHON, M.POCALYPSE], "ai":35,
 		"text":"A pit stop when you choose: fuel, hull and every system to full."},
 	"nuke": {"parent":"airstrike", "name":"Goon Nuke", "kind":K.GADGET, "rarity":R.LEGENDARY, "w":10, "icon":"nuke", "ui":"itemui", "charges":1, "ai":80,
 		"text":"Every goon on screen dies, and every one counts as a crush."},
@@ -179,19 +184,19 @@ const DATA := {
 		"text":"Lets loose a golden goon that runs from you for 25 s. Crush it for 250 coins and a Star Fragment."},
 
 	#---------------------------------------------------------------- casino and chance
-	"scratch": {"parent":"slotmachine", "name":"Scratch Card", "kind":K.CASINO, "rarity":R.UNCOMMON, "w":6, "icon":"scratch", "ui":"coinui", "ai":18,
+	"scratch": {"parent":"slotmachine", "name":"Scratch Card", "kind":K.CASINO, "rarity":R.RARE, "w":6, "icon":"scratch", "ui":"coinui", "ai":18,
 		"text":"Scratches itself in the HUD corner while you drive. Three of a kind pays that prize three times; two of a kind pays it once."},
-	"mystery": {"parent":"slotmachine", "name":"Mystery Box", "kind":K.CASINO, "rarity":R.UNCOMMON, "w":6, "icon":"mystery", "ui":"buffui", "ai":20,
+	"mystery": {"parent":"slotmachine", "name":"Mystery Box", "kind":K.CASINO, "rarity":R.RARE, "w":6, "icon":"mystery", "ui":"buffui", "ai":20,
 		"text":"Any pickup from any kind. Its rarity is rolled again, with Dice."},
-	"double": {"parent":"slotmachine", "name":"Double or Nothing", "kind":K.CASINO, "rarity":R.UNCOMMON, "w":5, "icon":"double", "ui":"coinui", "secs":4.0, "odds":0.5, "ai":8,
+	"double": {"parent":"slotmachine", "name":"Double or Nothing", "kind":K.CASINO, "rarity":R.RARE, "w":5, "icon":"double", "ui":"coinui", "secs":4.0, "odds":0.5, "ai":8,
 		"text":"Bet the coins earned since your last bet: Accelerate rolls, Brake walks away. Even odds, a little better with Dice."},
-	"lottery": {"parent":"scratch", "name":"Lottery Ticket", "kind":K.CASINO, "rarity":R.UNCOMMON, "w":4, "icon":"lottery", "ui":"coinui", "ai":10,
+	"lottery": {"parent":"scratch", "name":"Lottery Ticket", "kind":K.CASINO, "rarity":R.RARE, "w":4, "icon":"lottery", "ui":"coinui", "ai":10,
 		"text":"Three numbers from 0 to 9, checked on the results ticket against the last digit of your crushes, top speed and coins. Each match pays 50; all three pay 500."},
 	"wheel": {"parent":"scratch", "name":"Prize Wheel", "kind":K.CASINO, "rarity":R.RARE, "w":0, "icon":"wheel", "ui":"coinui",
 		"text":"Found in the world. Drive across it and your speed sets the spin, from BUST to JACKPOT."},
-	"deal": {"parent":"double", "name":"The Deal", "kind":K.CASINO, "rarity":R.RARE, "w":6, "icon":"deal", "ui":"slotmachineui", "ai":40,
+	"deal": {"parent":"double", "name":"The Deal", "kind":K.CASINO, "rarity":R.EPIC, "w":6, "icon":"deal", "ui":"slotmachineui", "ai":40,
 		"text":"Pick one of three cards. A gem deals a new hand; run coins raise the hand's rarity. It can also come in a gift box."},
-	"claw": {"parent":"mystery", "name":"Claw Crane", "kind":K.CASINO, "rarity":R.UNCOMMON, "w":5, "icon":"claw", "ui":"slotmachineui", "ai":25, #the weakest prize game (CrushPrizes), so an Uncommon drop
+	"claw": {"parent":"mystery", "name":"Claw Crane", "kind":K.CASINO, "rarity":R.RARE, "w":5, "icon":"claw", "ui":"slotmachineui", "ai":25, #the weakest prize game (CrushPrizes), so the cheapest (Rare) of them
 		"text":"Steer the claw over a heap of prizes and drop it with Accelerate. Prizes can slip on the way up. Run coins buy another grab."},
 
 	#---------------------------------------------------------------- skill challenges
@@ -215,17 +220,17 @@ const DATA := {
 		"text":"Crushes less than 1.5 s apart chain. A chain of 3 doubles coins, and it climbs to x5 at 12."},
 
 	#---------------------------------------------------------------- mode specials
-	"stopwatch": {"parent":"ffwd", "needs":["mode:sprint"], "name":"Stopwatch", "kind":K.MODE, "rarity":R.UNCOMMON, "w":10, "icon":"stopwatch", "ui":"clockui", "modes":[M.SPRINT, M.MARATHON], "seconds":10.0, "ai":30,
+	"stopwatch": {"parent":"ffwd", "needs":["mode:sprint"], "name":"Stopwatch", "kind":K.MODE, "rarity":R.RARE, "w":10, "icon":"stopwatch", "ui":"clockui", "modes":[M.SPRINT, M.MARATHON], "seconds":10.0, "ai":30,
 		"text":"+10 s on the clock. Sprint and Marathon."},
-	"ffwd": {"start":true, "name":"Fast Forward", "kind":K.MODE, "rarity":R.UNCOMMON, "w":10, "icon":"ffwd", "ui":"clockui", "modes":[M.COUNTDOWN, M.DEFENSE], "seconds":10.0, "ai":30,
+	"ffwd": {"start":true, "name":"Fast Forward", "kind":K.MODE, "rarity":R.RARE, "w":10, "icon":"ffwd", "ui":"clockui", "modes":[M.COUNTDOWN, M.DEFENSE], "seconds":10.0, "ai":30,
 		"text":"Takes 10 s off the clock, which these modes win at. Countdown and Defense."},
-	"barricade": {"parent":"ffwd", "needs":["mode:defense"], "name":"Barricade Kit", "kind":K.MODE, "rarity":R.COMMON, "w":10, "icon":"barricade", "ui":"itemui", "modes":[M.DEFENSE], "barrier":150.0, "ai":25,
+	"barricade": {"parent":"ffwd", "needs":["mode:defense"], "name":"Barricade Kit", "kind":K.MODE, "rarity":R.UNCOMMON, "w":10, "icon":"barricade", "ui":"itemui", "modes":[M.DEFENSE], "barrier":150.0, "ai":25,
 		"text":"Bring it into the station's lot for +150 barrier. Defense."},
-	"turret": {"parent":"barricade", "name":"Sentry Turret", "kind":K.MODE, "rarity":R.RARE, "w":10, "icon":"turret", "ui":"buffui", "modes":[M.DEFENSE], "secs":30.0, "ai":40,
+	"turret": {"parent":"barricade", "name":"Sentry Turret", "kind":K.MODE, "rarity":R.EPIC, "w":10, "icon":"turret", "ui":"buffui", "modes":[M.DEFENSE], "secs":30.0, "ai":40,
 		"text":"Sets up by the station's pumps and shoots goons for 30 s. Kills count. Defense."},
 	"compass": {"parent":"stopwatch", "name":"Shortcut Map", "kind":K.MODE, "rarity":R.UNCOMMON, "w":6, "icon":"compass", "ui":"buffui", "modes":[M.SPRINT, M.MARATHON], "secs":15.0, "ai":12,
 		"text":"For 15 s: arrows mark a route to the station around water and hills. Sprint and Marathon."},
-	"panic": {"parent":"ffwd", "needs":["survive:180"], "name":"Panic Button", "kind":K.MODE, "rarity":R.RARE, "w":10, "icon":"panic", "ui":"buffui", "modes":[M.POCALYPSE], "secs":30.0, "ai":30,
+	"panic": {"parent":"ffwd", "needs":["survive:180"], "name":"Panic Button", "kind":K.MODE, "rarity":R.EPIC, "w":10, "icon":"panic", "ui":"buffui", "modes":[M.POCALYPSE], "secs":30.0, "ai":30,
 		"text":"For 30 s: the horde stops getting worse. The clock keeps counting. Goonpocalypse."},
 }
 
@@ -384,6 +389,9 @@ static func pickWeighted(weights: Dictionary, roll: float) -> String:
 ## One drop: the tier (with Dice, the pity counter and `bump` tiers up for giants and bosses), then an
 ## item of that tier. Falls back a tier when nothing in it is allowed here.
 static func roll(dice: float, mode: int, night: bool, faction := -1, bump := 0) -> String:
+	if bump == 0 && randf() < ordinaryShare():
+		dropsSinceRare += 1
+		return "coin"
 	var tier := pickTier(tierWeights(dice), randf())
 	if dropsSinceRare + 1 >= PITY: tier = maxi(tier, R.RARE)
 	tier = mini(tier + bump, R.LEGENDARY)
@@ -393,6 +401,13 @@ static func roll(dice: float, mode: int, night: bool, faction := -1, bump := 0) 
 		if id != "": return id
 		tier -= 1
 	return "coin" #a tree root: always open
+
+## The share of plain drops that are an ordinary Coin, by how many droppable pickups are open.
+static func ordinaryShare() -> float:
+	var open := 0
+	for id in DATA:
+		if DATA[id].get("w", 0) > 0 && Unlocks.isPickupOpen(id): open += 1
+	return lerpf(ORDINARY_SHARE.x, ORDINARY_SHARE.y, clampf(open / ORDINARY_OPEN_SPAN, 0.0, 1.0))
 
 ## The roll for the player's car right now.
 static func rollForCar(faction := -1, bump := 0) -> String:

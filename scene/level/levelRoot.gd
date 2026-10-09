@@ -47,7 +47,7 @@ const ROUTE_FACTOR_DEFAULT = 1.1
 const STATION_APPROACH_PX = 1500.0
 
 #Marathon: a relay of Sprint-length legs (ModeTiers.LEGS by tier). Each station but the last adds that leg's
-#clock, refuels, patches the car up and opens a free slot machine; the last one wins.
+#clock, refuels, patches the car up and opens the pit shop; the last one wins.
 const MARATHON_TURN = PI / 3 #each leg heads off within this of the last leg's heading
 const MARATHON_HEAL = 35.0   #health restored at each station
 var leg := 1
@@ -367,15 +367,10 @@ func stationReached(station: Node2D) -> void:
 	seconds += sprintSeconds(driveLength(maxf(tileManager.lastRouteLength, from.distance_to(next.global_position))), levelSeconds, slack())
 	call_deferred("openPitShop")
 
-#Marathon stations: the pit shop sells pickups for run coins, then the free slot machine opens
+#Marathon stations: the pit shop sells pickups for run coins
 func openPitShop() -> void:
 	if hasEnded || get_tree().paused: return
 	PitShop.open()
-
-func openFreeSlotMachine() -> void:
-	if hasEnded || get_tree().paused: return
-	get_tree().paused = true
-	SlotMachine.open()
 
 #--- Defense ------------------------------------------------------------------------------------
 
