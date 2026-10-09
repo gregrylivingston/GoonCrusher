@@ -462,9 +462,10 @@ func effectiveWeight() -> int:
 static func isRough(surface: int) -> bool:
 	return surface != World.UNKNOWN && World.friction(surface) > World.GRASS_FRICTION
 
-## the ground's grip for this car (World.grip, with City Tyres and Off-Road)
+## the ground's grip for this car (World.grip, with City Tyres and Off-Road; no tyre helps in deep water)
 func surfaceGrip(surface: int) -> float:
 	var g := World.grip(surface)
+	if World.isLethal(surface): return g
 	if tCityTyres:
 		if PAVED.has(surface): g *= CITY_GRIP
 		elif surface == Root.terrain.DIRT || isRough(surface): g *= CITY_DIRT_GRIP
@@ -515,7 +516,7 @@ func handbrakeGrip() -> float:
 func groundFriction(surface: int) -> float:
 	if surface == World.UNKNOWN: return friction
 	var f := World.friction(surface)
-	if f > World.GRASS_FRICTION: #rough ground: Off-Road barely feels it, Low Clearance feels it more
+	if f > World.GRASS_FRICTION && not World.isLethal(surface): #rough ground: Off-Road barely feels it, Low Clearance feels it more (deep water: neither)
 		if tOffroad: f = World.GRASS_FRICTION + (f - World.GRASS_FRICTION) * OFFROAD_FRICTION
 		elif tLowClearance: f = World.GRASS_FRICTION + (f - World.GRASS_FRICTION) * LOW_CLEARANCE_FRICTION
 	return World.effectiveFriction(f, armor)
@@ -530,21 +531,29 @@ static func conveyorPull(vel: Vector2, beltVelocity: Vector2) -> Vector2:
 	var along := vel.dot(dir)
 	return dir * (speed - along) * CONVEYOR_PULL if along < speed else Vector2.ZERO
 
-#Once a tick, with the car's position: the car is wrecked once its centre has been over a lethal cell
-#(deep water) for LETHAL_TICKS ticks in a row, through destroy() like the old water Area2D (which now
-#drowns goons only). `friction` follows the ground under the car, for the HUD and the AI's sums.
-const LETHAL_TICKS := 2
-var lethalTicks := 0
+#Once a tick, with the car's position (docs/WORLD.md, "Water and the car"): water hurts the car with its
+#centre over it, World.hurt(surface) health a second before armor through damage() (WADE 2, deep
+#WATER 33), while integrate() reads the same rows' drag and lost grip. A stock sedan flat out over a
+#300-400 px strip of deep water loses about 15-25 health; about 3 s in it wrecks the car, which counts as a
+#drowning (`drowned`). The water ignores shields and golden rides (they block hits, not the river); being
+#airborne (Hop, Jump Jets) keeps the car out of it. `friction` follows the ground under the car, for the HUD
+#and the AI's sums. `deepTicks` (ticks in a row over deep water) is for CarJuice and the HUD's warning.
+var deepTicks := 0
+var drowned := false          #wrecked over deep water (the playtest's WATER ending)
+var waterHealthLost := 0.0    #health this run's water took (the playtest's damage_water)
 func checkGround(at: Vector2) -> void:
 	var surface := World.surfaceAt(at)
 	if surface != World.UNKNOWN: friction = groundFriction(surface)
-	if isWrecked:
-		lethalTicks = 0
-		return
-	lethalTicks = lethalTicks + 1 if World.lethalAt(at) else 0
-	if lethalTicks >= LETHAL_TICKS:
-		lethalTicks = 0
-		destroy()
+	deepTicks = deepTicks + 1 if World.isLethal(surface) && airborneTicks == 0 else 0
+	if isWrecked: return
+	var hurt := World.hurt(surface)
+	if hurt > 0.0 && airborneTicks == 0: soak(hurt / Engine.physics_ticks_per_second)
+
+## One tick of water damage (checkGround): armor counts, shields and golden rides don't
+func soak(amount: float) -> void:
+	var before := health
+	damage(amount, true)
+	waterHealthLost += maxf(0.0, minf(before, before - health))
 
 #how square a wall hit is: |normal . direction of travel|, from WALL_IMPACT_MIN (a glancing scrape)
 #to 1 (head-on). Wall damage and the speed lost scale with it.
@@ -1095,18 +1104,23 @@ func spendGems(numOfGems: int):
 	else:
 		return false
 
-func damage(damage: float):
-	if blockedByPickup(damage): return
+## Health damage, armor applied once. `water` (soak): a shield or golden ride doesn't block it.
+func damage(damage: float, water := false):
+	if not water && blockedByPickup(damage): return
 	lastHurtTick = Engine.get_physics_frames()
 	health -= damage * armorFactor(armor)
 	updateDamageLook()
-	if health <= 0 && not defibrillate():
-		destroy()
+	if health <= 0 && not defibrillate(): wreck()
+
+## Health ran out: wrecked, a drowning when its centre is over deep water
+func wreck() -> void:
+	if not isWrecked && deepTicks > 0: drowned = true
+	destroy()
 
 const SECOND_WIND_FUEL := 10.0
 const DEFIB_HEALTH := 30.0
-## Defibrillator: the first time health reaches 0, back to DEFIB_HEALTH instead of wrecked. Drowning calls
-## destroy() directly, so water still wins.
+## Defibrillator: the first time health reaches 0, back to DEFIB_HEALTH instead of wrecked, deep water
+## included (water hurts through damage(), so the shock buys about a second to get out).
 func defibrillate() -> bool:
 	if not tDefib || defibUsed || isDestroyed: return false
 	defibUsed = true
@@ -1360,4 +1374,4 @@ func loseHealth(amount: float) -> void:
 	health -= amount
 	lastHurtTick = Engine.get_physics_frames()
 	updateDamageLook()
-	if health <= 0 && not defibrillate(): destroy()
+	if health <= 0 && not defibrillate(): wreck()

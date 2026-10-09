@@ -23,7 +23,7 @@ const BREAKABLE := "res://scripts/world/breakable.gd"
 const STRIPS: Array[String] = ["shore_foam", "cliff_lip", "canyon_rim", "mesa_lip", "kerb", "snow_ridge", "hedge", "scrapwall", "roof_edge"]
 ## Ground material by terrain id (Root.terrain order): every landscape's default (Landscape.materials overrides it)
 const MATERIAL_OF: Array[String] = ["grass", "sand", "mud", "water", "rock", "moss", "dirt", "snow", "asphalt", "ice",
-	"oil", "shallows", "wash", "conveyor", "mudpit", "deepsnow", "lot", "roof", "bridge"]
+	"oil", "shallows", "wash", "conveyor", "mudpit", "deepsnow", "lot", "roof", "bridge", "wade"]
 ## Zones a level's districts fall in (Territories.zoneFor): 0 near the start to 2 far out
 const ZONES := 3
 ## The regions' landmarks (Territories.landmark), each with a beacon that glows at night; a level loads its
@@ -124,7 +124,8 @@ func _init(levelDef: LevelDef) -> void:
 
 #--- ground ------------------------------------------------------------------------------------------
 
-## The terrains this level can show: base, accents, the landscape's own, water and shallows
+## The terrains this level can show: base, accents, the landscape's own, water and shallows (wading depth,
+## where its water has that band, comes after the wall top: setupGround)
 func levelTerrains() -> Array:
 	var ids := {}
 	for t in def.baseTerrain: ids[int(t)] = true
@@ -133,6 +134,10 @@ func levelTerrains() -> Array:
 	ids[Root.terrain.WATER] = true
 	ids[Root.terrain.SHALLOWS] = true
 	return ids.keys()
+
+## Deep water here has a wading band (WorldField.hasWade, as the raster decides it)
+func hasWade() -> bool:
+	return WorldField.hasWade(grammar, land.wade)
 
 ## The ground material a terrain is drawn with, in this level's skin
 func materialOf(t: int) -> String:
@@ -146,6 +151,7 @@ func setupGround() -> void:
 		if not name in wanted: wanted.push_back(name)
 	var wallName := look.roofMaterial
 	if not wallName in wanted: wanted.push_back(wallName)
+	if hasWade() && not materialOf(Root.terrain.WADE) in wanted: wanted.push_back(materialOf(Root.terrain.WADE)) #last: the other layers keep their places
 	layers = wanted
 	layerOf.resize(MATERIAL_OF.size())
 	for t in MATERIAL_OF.size():
@@ -157,6 +163,10 @@ func setupGround() -> void:
 	groundMaterial.set_shader_parameter("materials", materialArray())
 	groundMaterial.set_shader_parameter("macro_noise", load(MACRO))
 	groundMaterial.set_shader_parameter("water_layer", float(layers.find(materialOf(Root.terrain.WATER))))
+	#wading depth: drawn with its own layer from the water's edge (field 0) down to WADE_DEPTH, where the raster puts WADE
+	var wadeLayer := layers.find(materialOf(Root.terrain.WADE)) if hasWade() else -1
+	groundMaterial.set_shader_parameter("wade_layer", float(maxi(wadeLayer, 0)))
+	groundMaterial.set_shader_parameter("wade_depth", WorldGen.WADE_DEPTH if wadeLayer >= 0 else 0.0)
 	groundMaterial.set_shader_parameter("wall_layer", float(layers.find(wallName)))
 	groundMaterial.set_shader_parameter("wall_tint", look.wallTint)
 	groundMaterial.set_shader_parameter("ctl_size", Vector2(CTL_SIZE))
@@ -204,6 +214,7 @@ func placeholderColor(name: String) -> Color:
 	match name:
 		"water": return Color("#284a57")
 		"shallows": return Color("#4f7a7a")
+		"wade": return Color("#3a6670")
 		"rock", "roof", "basalt", "roof_timber", "roof_shingle": return Color("#6b6560")
 		"lava": return Color("#c8501a")
 		"tar": return Color("#1d1b1c")

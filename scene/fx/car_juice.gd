@@ -8,7 +8,8 @@ class_name CarJuice extends Node2D
 ##     car's measured acceleration), bumps on Hop and Jump Jets landings, wall hits and ground changes, and a
 ##     camera jolt on wall hits scaled by speed (through CrushFeel's kick and trauma).
 ##   - D-3 ground: dust, spray and clods per surface
-##     (World.surfaceAt), tyre smoke in slides, wall-scrape sparks, and a flame and glow when a drift boost fires.
+##     (World.surfaceAt), tyre smoke in slides, wall-scrape sparks, and a flame and glow when a drift boost fires;
+##     in water a bow wave off the nose, and over deep water the car settles in, tinted, with bubbles (water()).
 ##   - D-4 sound: engine pitch through the gears (the controller's gear rule), tyre squeal from slip and a
 ##     backfire pop on lift-off.
 ## Reduce Motion drops the jolts and bounces and calms the lean; Car Shake Off drops the bounces;
@@ -77,7 +78,20 @@ const TRAILS := {
 	"MOSS": [Color(0.32, 0.5, 0.26, 0.8), 0.25, Kind.BITS],
 	"ICE": [Color(0.85, 0.95, 1.0, 0.6), 0.3, Kind.BITS],
 	"SHALLOWS": [Color(0.78, 0.9, 1.0, 0.75), 1.5, Kind.SPRAY],
+	"WADE": [Color(0.8, 0.92, 1.0, 0.8), 2.4, Kind.SPRAY],
+	"WATER": [Color(0.78, 0.9, 1.0, 0.85), 2.0, Kind.SPRAY],
 }
+#--- water (docs/CAR_ART.md, "Driving feel": Water) ---
+const BOW_SPEED := 220.0         #px/s before wading depth or deep water throws a bow wave off the nose
+const BOW_RATE := 0.9            #bow particles per front corner per tick at 700 px/s (times the trail rate)
+const SINK_EASE := 2.5           #per second toward fully sunk (over deep water) or afloat
+const SINK_SCALE := 0.1          #body scale lost fully sunk: it settles into the water
+const SINK_PX := 5.0             #body offset fully sunk (down the screen, like the lean's shadow drop)
+const SINK_TINT := Color(0.5, 0.64, 0.74) #body tint fully sunk: the water over it
+const SINK_SHADOW := 0.85        #share of the shadow gone fully sunk
+const BUBBLE_RATE := 0.6         #bubbles per tick fully sunk (times the trail rate)
+const LAVA_SPRAY := Color(1.0, 0.55, 0.15, 0.9) #a lava landscape's deep "water" throws embers instead
+const LAVA_TINT := Color(1.0, 0.55, 0.4)
 const SMOKE := Color(0.82, 0.82, 0.84, 0.45) #tyre smoke in a slide or up on two wheels
 const SPARK := Color(1.0, 0.75, 0.35)
 const SLIDE_SMOKE_SLIP := 0.35   #rad of slip before the tyres smoke
@@ -129,6 +143,11 @@ var backfireLeft := 0.0
 var dust: Particles
 var sparks: Particles
 
+var sink := 0.0                  #0 afloat to 1 sunk: deep water under the car (show only)
+var wasDeep := false
+var lava := false                #the level's deep water is lava (Landscape.waterLook)
+var shadowAlpha := 1.0
+
 static var trailBySurface := {}  #World surface index -> TRAILS entry, built once
 
 func _ready() -> void:
@@ -138,6 +157,7 @@ func _ready() -> void:
 	bodyBase = body.position
 	bodyScale = body.scale
 	shadowBase = shadow.position
+	shadowAlpha = shadow.self_modulate.a
 	engineBaseDb = car.engineAudio.volume_db
 	squealBaseDb = car.tiresAudio.volume_db
 	prevVel = car.velocity
@@ -153,6 +173,9 @@ func _ready() -> void:
 	sparks = Particles.new(true, 2)
 	sparks.material = glow
 	for n in [dust, sparks]: add_child(n)
+	var def := Levels.current()
+	var land: Landscape = Landscapes.get_def(def.landscape) if def else null
+	lava = land != null && land.waterLook == &"lava"
 	readSettings()
 	Settings.changed.connect(onSettingChanged)
 
@@ -210,6 +233,7 @@ func _physics_process(delta: float) -> void:
 		if trailKind(surface) == Kind.SPRAY && speed > 200.0: groundBurst(surface, 10)
 	lastSurface = surface
 	if not airborne && not dead: emitTrail(surface, speed, slip)
+	water(surface, speed, airborne, delta)
 
 	#D-4
 	engineSound(speed, car._car_input.acceleration, vel.dot(Vector2.from_angle(car.rotation)) < 0.0 && speed > 5.0, delta)
@@ -224,10 +248,52 @@ func _physics_process(delta: float) -> void:
 func placeBody() -> void:
 	var sprite: Node2D = body.get_parent()
 	var off := Vector2(pitch * PITCH_PX, lean * ROLL_PX)
-	body.position = bodyBase + off.rotated(-sprite.rotation)
-	body.scale = bodyScale * Vector2(1.0 - ROLL_SQUASH * minf(absf(lean), 2.0), 1.0) * (1.0 + HEIGHT_SCALE * height)
+	var down := (Vector2(0.0, SINK_PX * sink)).rotated(-car.rotation) #settling into deep water: down the screen
+	body.position = bodyBase + off.rotated(-sprite.rotation) + down.rotated(-sprite.rotation)
+	body.scale = bodyScale * Vector2(1.0 - ROLL_SQUASH * minf(absf(lean), 2.0), 1.0) * (1.0 + HEIGHT_SCALE * height) * (1.0 - SINK_SCALE * sink)
 	var drop := (HEIGHT_SHADOW * maxf(height, 0.0)).rotated(-car.rotation) #the light doesn't turn with the car
 	shadow.position = shadowBase + (-off * SHADOW_PX / ROLL_PX + drop).rotated(-sprite.rotation)
+
+## Water, each tick (show only): a bow wave off the nose in wading depth and deep water at speed; over deep
+## water the car settles in (sink: smaller, lower, tinted by the water over it, its shadow gone), bubbles and
+## a waterline of foam round it, and a big splash going in (with a hiss and a thud)
+func water(surface: int, speed: float, airborne: bool, delta: float) -> void:
+	var deep := not airborne && surface != World.UNKNOWN && World.isLethal(surface)
+	var was := sink
+	sink = move_toward(sink, 1.0 if deep else 0.0, SINK_EASE * delta)
+	if sink != was:
+		body.modulate = Color.WHITE.lerp(LAVA_TINT if lava else SINK_TINT, sink)
+		shadow.self_modulate.a = shadowAlpha * (1.0 - SINK_SHADOW * sink)
+	if deep && not wasDeep:
+		groundBurst(surface, int(clampf(speed / 30.0, 8.0, 30.0)))
+		Audio.play(Transition.SOUNDS["hiss"], -8.0, 0.7)
+		if speed > 300.0: Audio.play(Transition.SOUNDS["thud"], -6.0, 0.7)
+		bump(-clampf(speed / 500.0, 0.4, 1.6))
+	wasDeep = deep
+	if level[0] == 0 || airborne: return
+	var rate: float = level[2]
+	var wet := deep || surface == Root.terrain.WADE
+	if wet && speed > BOW_SPEED: bowWave(surface, speed, rate)
+	if sink > 0.3 && rng.randf() < BUBBLE_RATE * rate * sink: bubble()
+
+func bowWave(surface: int, speed: float, rate: float) -> void:
+	var t := trailFor(surface)
+	var fwd := Vector2.from_angle(car.rotation)
+	var front: float = car.bodyRect.end.x
+	for s in [-1.0, 1.0]:
+		if rng.randf() >= BOW_RATE * rate * clampf(speed / 700.0, 0.3, 1.3): continue
+		var corner: Vector2 = car.to_global(Vector2(front, s * car.bodyRect.size.y * 0.45))
+		var side: Vector2 = fwd.orthogonal() * s
+		dust.spawn(corner, (side * rng.randf_range(0.45, 0.8) + fwd * rng.randf_range(0.1, 0.35)) * speed * 0.6, rng.randf_range(0.3, 0.55), rng.randf_range(5.0, 8.0), t[0], Kind.SPRAY)
+
+## A bubble or a fleck of foam on the waterline round the sunk car
+func bubble() -> void:
+	var r: Rect2 = car.bodyRect
+	var local := Vector2(rng.randf_range(r.position.x, r.end.x), rng.randf_range(r.position.y, r.end.y))
+	if rng.randf() < 0.5: local.y = r.position.y if local.y < r.get_center().y else r.end.y #on the flank: the waterline
+	var at: Vector2 = car.to_global(local)
+	var c := LAVA_SPRAY if lava else Color(0.88, 0.96, 1.0, 0.7)
+	dust.spawn(at, car.velocity * 0.1 + Vector2(rng.randf_range(-12, 12), rng.randf_range(-12, 12)), rng.randf_range(0.5, 0.9), rng.randf_range(3.0, 6.0), c, Kind.PUFF)
 
 ## A jolt of `amount` height units (negative squashes first, positive lifts first)
 func bump(amount: float) -> void:
@@ -356,7 +422,7 @@ func emitTrail(surface: int, speed: float, slip: float) -> void:
 	var rate: float = level[2]
 	var back := -Vector2.from_angle(car.rotation)
 	if trailBySurface.has(surface):
-		var t: Array = trailBySurface[surface]
+		var t: Array = trailFor(surface)
 		var chance: float = t[1] * rate * clampf(speed / 700.0, 0.2, 1.0) * (1.0 + 2.0 * slip)
 		var tires: Array = car.tires if t[2] == Kind.SPRAY else rearTires()
 		for tire in tires:
@@ -375,11 +441,16 @@ func groundParticle(t: Array, at: Vector2, back: Vector2, speed: float) -> void:
 			var side := Vector2.from_angle(car.rotation).orthogonal() * (1.0 if car.to_local(at).y > 0.0 else -1.0)
 			dust.spawn(at + jitter, (side * rng.randf_range(0.3, 0.6) + back * 0.3) * speed + car.velocity * 0.3, rng.randf_range(0.35, 0.6), rng.randf_range(4.0, 7.0), t[0], Kind.SPRAY)
 
+## The surface's trail entry, with embers for a lava landscape's deep "water"
+func trailFor(surface: int) -> Array:
+	if lava && World.isLethal(surface): return [LAVA_SPRAY, 1.0, Kind.SPRAY]
+	return trailBySurface.get(surface, [SMOKE, 1.0, Kind.PUFF])
+
 ## A burst of the surface's trail (or tyre smoke on hard ground) at `at`, or under the car
 func groundBurst(surface: int, count: int, at := Vector2.INF) -> void:
 	if level[0] == 0: return
 	if at == Vector2.INF: at = car.global_position
-	var t: Array = trailBySurface.get(surface, [SMOKE, 1.0, Kind.PUFF])
+	var t: Array = trailFor(surface)
 	for i in count: groundParticle(t, at, Vector2.RIGHT.rotated(rng.randf() * TAU), 300.0)
 
 func sparkBurst(at: Vector2, dir: Vector2, count: int, color := SPARK, spread := 0.9, speed := 400.0) -> void:

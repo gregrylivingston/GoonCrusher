@@ -169,6 +169,12 @@ func _process(delta: float) -> void:
 	if flashT > 0.0:
 		busy = true
 		flashT -= delta
+	var car = Root.playerCar
+	var deep: bool = is_instance_valid(car) && car.deepTicks > 0 && not car.isDestroyed
+	if deep && deepShown == 0.0: deepLabel = deepWaterLabel()
+	deepShown = move_toward(deepShown, 1.0 if deep else 0.0, DEEP_FADE * delta)
+	if deepShown > 0.0: busy = true
+	elif deepDrawn: busy = true #one more redraw clears it
 	PickupWorld.beacons = PickupWorld.beacons.filter(func(b): return is_instance_valid(b[0]) && not b[0].is_queued_for_deletion())
 	var stationOn: bool = is_instance_valid(Root.station) && is_instance_valid(Root.playerCar) && Root.station.active
 	if busy || not PickupWorld.beacons.is_empty() || stationOn || stationShown: queue_redraw()
@@ -189,6 +195,37 @@ func _draw() -> void:
 	drawBeacons()
 	if stationShown: drawStation()
 	if flashT > 0.0: drawShockwave(1.0 - flashT / SHOCK_SECONDS)
+	deepDrawn = deepShown > 0.0
+	if deepDrawn: drawDeepWater(deepShown)
+
+#Deep water (docs/HUD.md): while the car's centre is over it (car.deepTicks), a red edge round the screen
+#and "DEEP WATER" under the toasts, pulsing (Reduce Flashing: steady), fading in and out over 1 / DEEP_FADE s.
+#Lava landscapes say "LAVA". Silent: CarJuice's splash and hiss are the cue going in.
+const DEEP_FADE := 4.0
+const DEEP_EDGE := 0.1   #the red edge's depth, as a share of the screen's height
+var deepShown := 0.0
+var deepDrawn := false
+var deepLabel := "DEEP WATER"
+
+static func deepWaterLabel() -> String:
+	var def := Levels.current()
+	var land: Landscape = Landscapes.get_def(def.landscape) if def else null
+	return "LAVA" if land != null && land.waterLook == &"lava" else "DEEP WATER"
+
+func drawDeepWater(k: float) -> void:
+	var pulse := 1.0 if Settings.get_value("access/reduce_flashing") else 0.7 + 0.3 * sin(Time.get_ticks_msec() * 0.009)
+	var red := Color(HudTheme.BAD, 0.5 * k * pulse)
+	var clear := Color(HudTheme.BAD, 0.0)
+	var d := size.y * DEEP_EDGE
+	var w := size.x
+	var h := size.y
+	var colors := PackedColorArray([red, red, clear, clear])
+	draw_polygon(PackedVector2Array([Vector2(0, 0), Vector2(w, 0), Vector2(w - d, d), Vector2(d, d)]), colors)
+	draw_polygon(PackedVector2Array([Vector2(w, h), Vector2(0, h), Vector2(d, h - d), Vector2(w - d, h - d)]), colors)
+	draw_polygon(PackedVector2Array([Vector2(0, h), Vector2(0, 0), Vector2(d, d), Vector2(d, h - d)]), colors)
+	draw_polygon(PackedVector2Array([Vector2(w, 0), Vector2(w, h), Vector2(w - d, h - d), Vector2(w - d, d)]), colors)
+	var grow := 0.0 if Settings.reduce_motion() else 2.0 * (pulse - 0.7) / 0.3
+	HudTheme.text(self, Vector2(w * 0.5, 300.0), deepLabel, int(30.0 + grow), Color(HudTheme.BAD.lerp(Color.WHITE, 0.2), k), HORIZONTAL_ALIGNMENT_CENTER, 7, Color(HudTheme.OUTLINE, k))
 
 #the pill drops 12 px with an overshoot as it arrives and its rim flashes white (Reduce Motion: fades only)
 func drawToast(t: Array, w: float) -> void:

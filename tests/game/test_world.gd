@@ -2,7 +2,7 @@ extends GameTest
 
 #World (scripts/world/world.gd): the terrain table, its predicates, the runtime queries' delegation,
 #and the car's use of them: surface handling in integrate(), the off-road rule, wall-hit angles and
-#the two-tick water death.
+#the per-tick water damage.
 
 const DT := 1.0 / 60.0
 
@@ -86,14 +86,14 @@ func test_table_matches_the_terrain_enums():
 		assert_eq(Goons.T[key], id, "Goons.T.%s mirrors Root.terrain" % key)
 	assert_eq(Goons.T.size(), Root.terrain.size(), "Goons.T has every terrain")
 	var expected := ["GRASS", "SAND", "MUD", "WATER", "HILLS", "MOSS", "DIRT", "SNOW", "ASPHALT", "ICE", "OIL",
-		"SHALLOWS", "WASH", "CONVEYOR", "MUDPIT", "DEEPSNOW", "LOT", "BUILDING", "BRIDGE"]
+		"SHALLOWS", "WASH", "CONVEYOR", "MUDPIT", "DEEPSNOW", "LOT", "BUILDING", "BRIDGE", "WADE"]
 	for i in expected.size(): assert_eq(Root.terrain.find_key(i), expected[i], "append-only order at %d" % i)
 
 func test_table_rows_are_consistent():
 	var letters := {}
 	for i in World.TERRAIN.size():
 		var d: Dictionary = World.TERRAIN[i]
-		for field in ["name", "letter", "friction", "grip", "brake", "push", "passable", "lethal", "wall", "routeWeight", "spawnable"]:
+		for field in ["name", "letter", "friction", "grip", "brake", "push", "passable", "lethal", "wall", "routeWeight", "spawnable", "hurt"]:
 			assert_true(d.has(field), "%s has %s" % [d.get("name", i), field])
 		assert_false(letters.has(d.letter), "letter %s is unique" % d.letter)
 		letters[d.letter] = true
@@ -322,28 +322,27 @@ func test_breakables_need_their_smash_speed():
 	plain.free()
 	fence.free()
 
-#--- water death ---------------------------------------------------------------------------------
+#--- water ---------------------------------------------------------------------------------------
+#(the crossing, drowning and wading numbers are in test_water.gd)
 
-func test_water_wrecks_the_car_after_two_ticks():
+func test_deep_water_hurts_the_car_each_tick_instead_of_wrecking_it():
 	var map = useMap(Root.terrain.GRASS)
 	map.left = Root.terrain.WATER
 	var car = makeCar(LethalCar)
-	car.checkGround(Vector2(-500, 0))
-	assert_eq(car.destroyed, 0, "one tick over water is forgiven")
-	car.checkGround(Vector2(-500, 0))
-	assert_eq(car.destroyed, 1, "the second wrecks the car")
-	car.checkGround(Vector2(-500, 0))
-	car.checkGround(Vector2(-500, 0))
-	assert_eq(car.destroyed, 1, "only once")
-
-func test_water_count_resets_on_land():
-	var map = useMap(Root.terrain.GRASS)
-	map.left = Root.terrain.WATER
-	var car = makeCar(LethalCar)
-	car.checkGround(Vector2(-500, 0))
+	car.armor = 0
+	for i in 5: car.checkGround(Vector2(-500, 0))
+	assert_eq(car.destroyed, 0, "a few ticks over deep water no longer wreck the car")
+	assert_almost_eq(car.health, 100.0 - World.hurt(Root.terrain.WATER) * 5.0 / Engine.physics_ticks_per_second, 0.01, "it loses the row's hurt per second")
+	assert_eq(car.deepTicks, 5, "ticks in a row over deep water")
 	car.checkGround(Vector2(500, 0))
+	assert_eq(car.deepTicks, 0, "back on land")
+
+func test_friction_follows_the_ground_under_the_car():
+	var map = useMap(Root.terrain.GRASS)
+	map.left = Root.terrain.WATER
+	var car = makeCar(LethalCar)
+	car.armor = 0
 	car.checkGround(Vector2(-500, 0))
-	assert_eq(car.destroyed, 0, "two ticks, but not in a row")
 	assert_almost_eq(car.friction, World.friction(Root.terrain.WATER), 0.0001, "friction follows the ground under the car")
 	car.checkGround(Vector2(500, 0))
 	assert_almost_eq(car.friction, 0.13, 0.0001, "grass")
@@ -354,6 +353,7 @@ func test_bridges_and_shallows_are_safe():
 		useMap(safe)
 		for i in 5: car.checkGround(Vector2(10, 10))
 	assert_eq(car.destroyed, 0)
+	assert_almost_eq(car.health, 100.0, 0.0001, "and never hurt")
 
 #--- lighting ------------------------------------------------------------------------------------
 

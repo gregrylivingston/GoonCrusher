@@ -6,7 +6,8 @@ class_name WorldPreview extends RefCounted
 ##          --objective=sprint|defense (place a station and show its route) --fine=<chunks to time>
 ## Legend: World.TERRAIN letters (g grass, s sand, m mud, ~ deep water, ^ hills/rock, o moss, d dirt, * snow,
 ## = asphalt, i ice, % oil, - shallows, w wash, > conveyor, @ mud pit, # deep snow, l lot, B building,
-## b bridge), '+' a pass cut through a wall, S start, X station, M a Defense lane mouth, '.' the route.
+## b bridge, v wading depth: fine maps only), '+' a pass cut through a wall, S start, X station, M a Defense
+## lane mouth, '.' the route.
 
 static func run(options: Dictionary) -> void:
 	var ids: Array = Levels.ORDER.duplicate()

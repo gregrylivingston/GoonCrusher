@@ -46,6 +46,8 @@ const FILL := 64     #a pocket filled in: the fine map fills it too
 const START := 128   #in the start's component (reachable from the start)
 
 const BAND := 0.4         #fields below this at a cell centre block the coarse cell; also the shallows band
+const WADE_DEPTH := 0.35  #the outer band of deep water (field 0 to -this, about 224 px) is wading depth (WADE) where WorldField.wade
+const WADE_STEEP := 2.0   #...where water pillars and filled pockets fall this much faster, so they stay deep round a blocked cell's centre
 const A_LO := 0.3         #fine fields stay above (coarse envelope - A_LO): open corridors 896 px wide
 const PILLAR_PX := 160.0  #fine fields are blocked within this of a blocked coarse cell's centre
 const MAX_RUN := 4        #barrier cells in a row before a crossing (spacing 5120 px)
@@ -87,6 +89,7 @@ const WATER := 3
 const HILLS := 4
 const SHALLOWS := 11
 const BRIDGE := 18
+const WADE := 19
 
 #--- hashing -------------------------------------------------------------------------------------
 
@@ -1006,6 +1009,8 @@ static func fineRaster(job: Dictionary) -> void:
 				else: fillH[l] = -1.0
 	var wallT := f.wallTerrain
 	var shallowsOn := f.shallows
+	var wadeDrop := WADE_DEPTH if f.wade else 0.0
+	var steep := WADE_STEEP if f.wade else 1.0 #water pillars and filled pockets: the same edge and shallows, deep sooner
 	#what depends only on the column, worked out once (the same doubles the loop used to compute per cell)
 	var colX := PackedFloat64Array()
 	var colTx := PackedFloat64Array()
@@ -1052,7 +1057,7 @@ static func fineRaster(job: Dictionary) -> void:
 			if ownKind != 0:
 				var oc := cellCentre(Vector2i(ownX, ownY))
 				var pillar := -0.5 + sqrt((x - oc.x) * (x - oc.x) + (y - oc.y) * (y - oc.y)) / (PILLAR_PX * 2.0)
-				if ownKind == 1: waterField = minf(waterField, pillar)
+				if ownKind == 1: waterField = minf(waterField, minf(pillar, pillar * steep))
 				else: wallField = minf(wallField, pillar)
 			var bridge := false
 			var ford := false
@@ -1060,7 +1065,7 @@ static func fineRaster(job: Dictionary) -> void:
 			if special:
 				var fw := fillW[l] * w00 + fillW[l + 1] * w10 + fillW[l + LOCAL_W] * w01 + fillW[l + LOCAL_W + 1] * w11
 				var fh := fillH[l] * w00 + fillH[l + 1] * w10 + fillH[l + LOCAL_W] * w01 + fillH[l + LOCAL_W + 1] * w11
-				waterField = minf(waterField, fw + 0.7)
+				waterField = minf(waterField, minf(fw + 0.7, (fw + 0.7) * steep))
 				wallField = minf(wallField, fh + 0.7)
 				#crossings in this cell or a 4-neighbour open their full width
 				var own := Vector2i(ownX, ownY)
@@ -1089,7 +1094,8 @@ static func fineRaster(job: Dictionary) -> void:
 			if inPass && (t == WorldField.DEEPSNOW || t == WorldField.ICE): t = WorldField.SNOW
 			if wallField < 0.0: t = wallT
 			elif bridge && v.x < BAND: t = BRIDGE
-			elif waterField < 0.0: t = WATER
+			elif waterField < -wadeDrop: t = WATER
+			elif waterField < 0.0: t = WADE
 			elif (ford || shallowsOn) && waterField < BAND: t = SHALLOWS
 			if bridge && v.x < 0.0: waterField = v.x #the water under the deck, for the art
 			water[j * FIELD_W + i] = waterField

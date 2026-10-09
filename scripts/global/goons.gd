@@ -23,7 +23,7 @@ const ART_RES := 2.0
 const WAVE_MIX := [[95, 5, 0], [70, 30, 0], [50, 30, 20], [40, 30, 30]]
 
 ## Mirrors Root.terrain (same order; test_goons.gd checks it), because an autoload's enum can't be used in a const.
-enum T { GRASS, SAND, MUD, WATER, HILLS, MOSS, DIRT, SNOW, ASPHALT, ICE, OIL, SHALLOWS, WASH, CONVEYOR, MUDPIT, DEEPSNOW, LOT, BUILDING, BRIDGE }
+enum T { GRASS, SAND, MUD, WATER, HILLS, MOSS, DIRT, SNOW, ASPHALT, ICE, OIL, SHALLOWS, WASH, CONVEYOR, MUDPIT, DEEPSNOW, LOT, BUILDING, BRIDGE, WADE }
 ## Tuning keys (all optional, defaults in walker.gd): speed (px/s), windDist (px), windT, atkT, recT (s),
 ## lunge (speed multiplier while attacking), dmg (health its attack takes from a car with no armor; docs/CAR_ART.md), sys (car system the attack wears),
 ## crush (crush speed px/s), front (head-on crush speed; 0 = none), arc (half-width of the front in radians, default 1.05), turn (rad/s), pack (spawn group size),

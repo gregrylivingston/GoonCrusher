@@ -7,7 +7,7 @@ script = ExtResource("1_land")
 id = &"volcano"
 displayName = "Volcano"
 grammar = &"canyon"
-text = "Ash plains and basalt walls. Tar pools bog you down; the lava kills like deep water."
+text = "Ash plains and basalt walls. Tar pools bog you down; lava burns a car out in seconds."
 features = {
 "ridgeFrequency": 4.5e-05,
 "wallWidth": 1400.0,
@@ -40,6 +40,7 @@ roofDecor = &""
 waterLook = &"lava"
 waterGlow = Color(1, 0.36, 0.06, 0.85)
 waterFoam = Color(1, 0.62, 0.2, 1)
+wade = false
 dressing = {
 &"deadtree": 2,
 &"pebbles": 5,

@@ -56,7 +56,7 @@ const DATA := {
 		"text":"At night the red and blue lightbar washes a circle round the car, so it sees goons beside and behind it, not only in the beams."},
 	&"defib": {"name":"Defibrillator", "kind":Kind.MECHANIC,
 		"short":"Comes back once from 0 health",
-		"text":"Once a run, when its health hits 0, it shocks itself back to 30%. Deep water still drowns it."},
+		"text":"Once a run, when its health hits 0, it shocks itself back to 30%, even in deep water."},
 	&"box_sway": {"name":"Box Sway", "kind":Kind.PHYSICS,
 		"short":"Brake into turns, power out of them",
 		"text":"The tall box shifts its weight: braking dips the nose for more bite turning in, and power through a hard corner swings the tail out."},

@@ -26,7 +26,7 @@ const COLUMNS = ["run", "level", "mode", "car", "profile", "seed", "upgrades", "
 	"damage_rocks", "damage_goon_contact", "damage_goon_attacks", "crush_misses", "min_fuel", "min_health",
 	"end_fuel", "end_health", "distance_px", "avg_speed", "top_speed", "eco_seconds", "stuck", "escapes", "ai_ms", "goals",
 	"pk_supply", "pk_tune", "pk_boost", "pk_gadget", "pk_loot", "pk_casino", "pk_skill", "pk_mode", "pk_move", "persona", "session",
-	"tier", "win_bonus", "first_clear", "first_clear_gem"]
+	"tier", "win_bonus", "first_clear", "first_clear_gem", "damage_water"]
 
 var options := {}
 var jobs: Array = []
@@ -40,6 +40,7 @@ var levelTime := 0.0
 var maxSeconds := 900.0
 var prevHealth := 100.0
 var prevWallLost := 0.0
+var prevWaterLost := 0.0
 var lastPosition := Vector2.ZERO
 var clockSeen := false
 var slotPressTimer := 0.0
@@ -173,7 +174,7 @@ func beginRow(job: Dictionary, upgrades: String) -> void:
 	row = {"run":jobIndex + 1, "level":job.level, "mode":job.mode.to_lower(), "car":job.car, "profile":job.profile, "seed":job.seed,
 		"upgrades":upgrades, "sight":str(options.get("sight", "human")),
 		"fuel_pickups":0, "health_pickups":0, "purses":0, "coins_picked":0, "gems_picked":0, "stat_pickups":0,
-		"crush_misses":0, "damage_rocks":0.0, "damage_goon_contact":0.0, "damage_goon_attacks":0.0, "min_fuel":100.0, "min_health":100.0, "distance_px":0.0, "timeout":false}
+		"crush_misses":0, "damage_rocks":0.0, "damage_goon_contact":0.0, "damage_goon_attacks":0.0, "damage_water":0.0, "min_fuel":100.0, "min_health":100.0, "distance_px":0.0, "timeout":false}
 
 #--career: the menu started a run (the save holds what the persona chose); record it like a job
 func beginCareerRun() -> void:
@@ -197,6 +198,7 @@ func onCarReady(newCar: OverheadCarBody2D) -> void:
 	car.rewarded.connect(onRewarded)
 	prevHealth = car.health
 	prevWallLost = 0.0
+	prevWaterLost = 0.0
 	lastPosition = car.global_position
 
 func onRewarded(powerup: String, quantity) -> void:
@@ -237,6 +239,12 @@ func _physics_process(delta):
 	if wallDrop > 0.0:
 		row.damage_rocks += wallDrop
 		drop -= wallDrop
+	#water: what wading and deep water took (OverheadCarBody2D.soak)
+	var waterDrop = car.waterHealthLost - prevWaterLost
+	prevWaterLost = car.waterHealthLost
+	if waterDrop > 0.0:
+		row.damage_water += waterDrop
+		drop -= waterDrop
 		if options.has("trace") && wallDrop > 1.0: print("PLAYTEST_HIT t=%.1f v=%d drop=%.1f plan=%s predicted_hit=%s goal=%s with=%s" % [levelTime, car.velocity.length(), wallDrop, str(driver.plan), str(driver.planHit), driver.goal.get("kind", "-"), wallName()])
 	if drop > 0.001:
 		if touchingGoon(): row.damage_goon_contact += drop #the car ran into it (crushes cost health too)
@@ -333,7 +341,8 @@ func wallName() -> String:
 
 #--trace: the world's coarse map (1280 px cells) around the start and the station, one letter per cell
 #from World.TERRAIN: g grass, s sand, m mud, ~ water, ^ hills, o moss, d dirt, * snow, = asphalt, i ice,
-#% oil, - shallows, w wash, > conveyor, @ mud pit, # deep snow, l lot, B building, b bridge; + a pass;
+#% oil, - shallows, w wash, > conveyor, @ mud pit, # deep snow, l lot, B building, b bridge, v wading depth
+#(fine maps only); + a pass;
 #S start, X station. Cropped to MAP_CROP cells.
 const MAP_CROP := Vector2i(120, 48)
 func printMap() -> void:
@@ -416,8 +425,8 @@ func recordRun() -> void:
 	recorded = true
 	var reason = str(Root.endCondition.find_key(Root.levelRoot.endReason))
 	if row.timeout: reason = "TIMEOUT"
-	elif reason == "NOHEALTH" && car.health > 0.0:
-		reason = "WATER" #the water kills without damage
+	elif reason == "NOHEALTH" && car.drowned:
+		reason = "WATER" #wrecked over deep water
 		printWaterDeath()
 	row.erase("timeout")
 	row.reason = reason
@@ -445,7 +454,7 @@ func recordRun() -> void:
 	row.top_speed = int(car._highest_measured_speed)
 	row.avg_speed = int(row.distance_px / maxf(levelTime, 0.1))
 	row.distance_px = int(row.distance_px)
-	for key in ["damage_rocks", "damage_goon_contact", "damage_goon_attacks", "min_fuel", "min_health"]: row[key] = snappedf(row[key], 0.1)
+	for key in ["damage_rocks", "damage_goon_contact", "damage_goon_attacks", "damage_water", "min_fuel", "min_health"]: row[key] = snappedf(row[key], 0.1)
 	if is_instance_valid(driver):
 		row.stuck = driver.stats.stuck
 		row.escapes = driver.stats.escapes
@@ -512,7 +521,7 @@ func finish() -> void:
 		var endings = {}
 		for result in runs: endings[result.reason] = endings.get(result.reason, 0) + 1
 		var summary = {"combo":key, "runs":runs.size(), "wins":runs.filter(func(r): return r.won).size(), "endings":endings}
-		for field in ["score", "level_time", "legs", "crushed", "payout", "star", "damage_rocks", "damage_goon_contact", "damage_goon_attacks", "min_fuel", "stuck", "escapes", "avg_speed"]:
+		for field in ["score", "level_time", "legs", "crushed", "payout", "star", "damage_rocks", "damage_goon_contact", "damage_goon_attacks", "damage_water", "min_fuel", "stuck", "escapes", "avg_speed"]:
 			var total = 0.0
 			for result in runs: total += float(result.get(field, 0))
 			summary["avg_" + field] = snappedf(total / runs.size(), 0.1)

@@ -201,8 +201,7 @@ func _physics_process(_delta):
 			if Input.is_action_pressed(action): Input.action_release(action)
 		return
 	var car = Root.playerCar
-	car.health = 100.0 #god mode
-	car.lethalTicks = 0 #...over deep water too: the car drowns after LETHAL_TICKS ticks in a row, and a drowned car ends the benchmark
+	car.health = 100.0 #god mode (deep water too: it hurts through damage(), so the refill keeps the car afloat)
 	car.fuel = 100.0
 	drive(car)
 

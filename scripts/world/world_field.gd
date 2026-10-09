@@ -43,6 +43,7 @@ const DEEPSNOW := 15
 const LOT := 16
 const BUILDING := 17
 const BRIDGE := 18
+const WADE := 19
 ## Surfaces the generic accent noise may sprinkle; the rest (ice, oil, belts, pits...) only come from grammar rules
 const PLAIN_SURFACES := [GRASS, SAND, MUD, MOSS, DIRT, SNOW, WASH, DEEPSNOW, LOT]
 
@@ -73,6 +74,9 @@ var accents := PackedByteArray()
 var main := GRASS
 ## Deep water gets a band of SHALLOWS (meadow, bayou); elsewhere its bank is the surface
 var shallows := true
+## Deep water's outer band is wading depth (WADE, WorldGen.WADE_DEPTH) where it has shallows and the landscape
+## doesn't opt out (Landscape.wade, passed as the def's "_wade": lava has none); elsewhere its edge is sheer
+var wade := true
 ## The terrain walls are (BUILDING in the city, HILLS elsewhere)
 var wallTerrain := HILLS
 ## What a coarse crossing cut through water becomes: a ford (SHALLOWS) or a bridge (BRIDGE)
@@ -221,7 +225,6 @@ func setup(mapSeed: int, def: Dictionary) -> void:
 			threshC = feat("branchChance", 0.7)
 		Grammar.CITY:
 			wallTerrain = BUILDING
-			shallows = false
 			waterCrossing = BRIDGE
 			bridgeHalf = 640.0 #the full street
 			chance = PackedFloat32Array([feat("buildingShare", 0.45), feat("parkShare", 0.2), feat("lotShare", 0.25), feat("canalShare", 0.1)])
@@ -243,9 +246,20 @@ func setup(mapSeed: int, def: Dictionary) -> void:
 			passHalf = 640.0
 			barrierCap = float(features.get("barrierCap", 0.35))
 
+	shallows = hasShallows(grammar)
+	wade = shallows && bool(def.get("_wade", true))
 	g1 = G_PLAIN * f1
 	g2 = G_PLAIN * f2
 	g4 = G_PLAIN * f4
+
+## Does deep water get a shallows band (every grammar but the city's sheer canals)
+static func hasShallows(g: int) -> bool:
+	return g != Grammar.CITY
+
+## Does a level's deep water get a wading band (WADE): its grammar has shallows and its landscape doesn't opt
+## out (Landscape.wade). The raster (WorldGen.fineRaster, via the def's "_wade") and the ground shader (WorldSkin) ask this.
+static func hasWade(grammarName: StringName, landscapeWade: bool) -> bool:
+	return landscapeWade && hasShallows(GRAMMARS.get(grammarName, Grammar.MEADOW))
 
 func feat(key: String, fallback: float) -> float:
 	return float(features.get(key, fallback))

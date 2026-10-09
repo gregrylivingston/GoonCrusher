@@ -6,16 +6,17 @@ extends GameTest
 #borrows its fallback's skin but keeps its own generator; lava glows; a region's props rise with distance.
 
 #what WorldSkin built for the eight kept levels before the landscapes existed (commit e03a6cad): layers, water
-#layer, wall layer, wall tint, organic, wall strip, roof decor, layerOf by terrain id
+#layer, wall layer, wall tint, organic, wall strip, roof decor, layerOf by terrain id. The water rework (2026-10-09)
+#added the wading band's `wade` layer last (none in the city), so every earlier layer kept its place.
 const BEFORE := {
-	&"prairie": ["grass,moss,dirt,shallows,water,rock", 4, 5, Color(1, 1, 1), 1.0, "cliff_lip", "", [0, 0, 0, 4, 5, 1, 2, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0]],
-	&"bayou": ["moss,mud,grass,shallows,bridge,water,rock", 5, 6, Color(1, 1, 1), 1.0, "cliff_lip", "", [2, 0, 1, 5, 6, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 4]],
-	&"canyon": ["dirt,sand,wash,rock,water,shallows", 4, 3, Color(1.16, 0.84, 0.7), 1.0, "mesa_lip", "", [0, 1, 0, 4, 3, 0, 0, 0, 0, 0, 0, 5, 2, 0, 0, 0, 0, 0, 0]],
-	&"quarry": ["dirt,mud,lot,mudpit,rock,water,shallows", 5, 4, Color(1.04, 0.99, 0.93), 1.0, "cliff_lip", "", [0, 0, 1, 5, 4, 0, 0, 0, 0, 0, 0, 6, 0, 0, 3, 0, 2, 0, 0]],
-	&"frostbite": ["snow,deepsnow,ice,rock,water,shallows", 4, 3, Color(1.12, 1.14, 1.2), 1.0, "snow_ridge", "", [0, 0, 0, 4, 3, 0, 0, 0, 0, 2, 0, 5, 0, 0, 0, 1, 0, 0, 0]],
-	&"highway": ["sand,dirt,asphalt,oil,lot,rock,water,shallows", 6, 5, Color(1.1, 0.95, 0.82), 0.7, "cliff_lip", "", [0, 0, 0, 6, 5, 0, 1, 0, 2, 0, 3, 7, 0, 0, 0, 0, 4, 0, 0]],
-	&"city": ["lot,asphalt,grass,moss,bridge,roof,water,shallows", 6, 5, Color(1, 1, 1), 0.2, "roof_edge", "rooftop", [2, 0, 0, 6, 0, 3, 0, 0, 1, 0, 0, 7, 0, 0, 0, 0, 0, 5, 4]],
-	&"crusher": ["dirt,lot,oil,conveyor,rock,water,shallows", 5, 4, Color(0.78, 0.74, 0.7), 0.5, "scrapwall", "", [0, 0, 0, 5, 4, 0, 0, 0, 0, 0, 2, 6, 0, 3, 0, 0, 1, 0, 0]],
+	&"prairie": ["grass,moss,dirt,shallows,water,rock,wade", 4, 5, Color(1, 1, 1), 1.0, "cliff_lip", "", [0, 0, 0, 4, 5, 1, 2, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 6]],
+	&"bayou": ["moss,mud,grass,shallows,bridge,water,rock,wade", 5, 6, Color(1, 1, 1), 1.0, "cliff_lip", "", [2, 0, 1, 5, 6, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 4, 7]],
+	&"canyon": ["dirt,sand,wash,rock,water,shallows,wade", 4, 3, Color(1.16, 0.84, 0.7), 1.0, "mesa_lip", "", [0, 1, 0, 4, 3, 0, 0, 0, 0, 0, 0, 5, 2, 0, 0, 0, 0, 0, 0, 6]],
+	&"quarry": ["dirt,mud,lot,mudpit,rock,water,shallows,wade", 5, 4, Color(1.04, 0.99, 0.93), 1.0, "cliff_lip", "", [0, 0, 1, 5, 4, 0, 0, 0, 0, 0, 0, 6, 0, 0, 3, 0, 2, 0, 0, 7]],
+	&"frostbite": ["snow,deepsnow,ice,rock,water,shallows,wade", 4, 3, Color(1.12, 1.14, 1.2), 1.0, "snow_ridge", "", [0, 0, 0, 4, 3, 0, 0, 0, 0, 2, 0, 5, 0, 0, 0, 1, 0, 0, 0, 6]],
+	&"highway": ["sand,dirt,asphalt,oil,lot,rock,water,shallows,wade", 6, 5, Color(1.1, 0.95, 0.82), 0.7, "cliff_lip", "", [0, 0, 0, 6, 5, 0, 1, 0, 2, 0, 3, 7, 0, 0, 0, 0, 4, 0, 0, 8]],
+	&"city": ["lot,asphalt,grass,moss,bridge,roof,water,shallows", 6, 5, Color(1, 1, 1), 0.2, "roof_edge", "rooftop", [2, 0, 0, 6, 0, 3, 0, 0, 1, 0, 0, 7, 0, 0, 0, 0, 0, 5, 4, 0]],
+	&"crusher": ["dirt,lot,oil,conveyor,rock,water,shallows,wade", 5, 4, Color(0.78, 0.74, 0.7), 0.5, "scrapwall", "", [0, 0, 0, 5, 4, 0, 0, 0, 0, 0, 2, 6, 0, 3, 0, 0, 1, 0, 0, 7]],
 }
 const GRAMMARS := [&"meadow", &"bayou", &"canyon", &"quarry", &"mountain", &"highway", &"city", &"yard"]
 
@@ -120,7 +121,9 @@ func test_lava_glows_and_its_shore_burns():
 	var foam: int = skin.stripNames.find("shore_foam")
 	assert_eq(skin.stripColors[foam], Landscapes.get_def(&"volcano").waterFoam, "the shore foam takes the lava's colour")
 	assert_eq(skinFor(&"prairie").stripColors[foam], Color.WHITE, "water keeps white foam")
-	assert_true(World.isLethal(Root.terrain.WATER), "lava is the water terrain: it kills like deep water")
+	assert_true(World.isLethal(Root.terrain.WATER), "lava is the water terrain: it hurts like deep water")
+	assert_almost_eq(float(skin.groundMaterial.get_shader_parameter("wade_depth")), 0.0, 0.0001, "and has no wading band")
+	assert_almost_eq(float(skinFor(&"prairie").groundMaterial.get_shader_parameter("wade_depth")), WorldGen.WADE_DEPTH, 0.0001, "water does")
 
 func test_new_levels_take_their_landscapes_world():
 	for id in Levels.ORDER:
