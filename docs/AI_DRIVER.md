@@ -39,7 +39,9 @@ Godot_console.exe --headless --fixed-fps 60 --path . -- --playtest --uncapped --
 
 | Option | Default | |
 |---|---|---|
-| `--level=a,b` | `prairie` | level ids (`Levels.ORDER`), 0-based indices or old scene names |
+| `--level=a,b` | `prairie` | level ids (`Levels.ORDER`, 30), 0-based indices or scene names |
+| `--landscape=<id>` | the level's | builds every level in this landscape (`Landscapes.ORDER`; docs/WORLD.md "Landscapes"); benchmarks and the world preview take it too |
+| `--class=<id>` | the line-up | every district's goons from this class (`Goons.CLASSES`) instead of the level's line-up; `--goons=a,b,c` forces three |
 | `--mode=a,b` | `countdown` | `countdown`, `sprint`, `goonpocalypse`, `marathon`, `defense` |
 | `--car=a,b` | `sedan` | car names from the save (`sedan`, `van`, `police`, ...) |
 | `--profiles=a,b` | `cautious` (`AIProfiles.BEST`) | AI profiles to play (below); each is another dimension like car or mode |
@@ -123,7 +125,7 @@ Godot_console.exe --headless --fixed-fps 60 --path . -- --career --persona=rooki
 |---|---|---|---|
 | Drives with | `rookie` (late keys, noisy plans) | `cautious` (`BEST`) | `crusher` |
 | Menus with | the mouse | keys | both, plus pad glyphs |
-| Runs | the obvious next one: the furthest open level's first unbeaten mode; after 3 losses in a row there, Countdown on the level before to farm coins | the path while it's winning, else the run that pays most per minute in its own history (20% sampling the others) | the level and mode it has played least, with the car it has driven least |
+| Runs | the obvious next one: the furthest open level's first unbeaten mode in `Root.MODE_PATH` order (Countdown, Sprint, then the Marathon that opens the next level); a finale whose Marathon was won below Medium gets the Marathon again on Medium; then Goonpocalypse and Defense where they are open; after 3 losses in a row there, Countdown on the level before to farm coins | the path while it's winning, else the run that pays most per minute in its own history (20% sampling the others) | the level and mode it has played least, with the car it has driven least |
 | Garage | a new car the moment it is affordable, any pickup unlock under half the bank, then the cheapest upgrade going | saves once the next car is within 3 average payouts; meanwhile the pickup unlock with the best `ai` worth per coin (under a third of the bank), then Engine, Armor, Oil, Traction first (no stat more than 2 levels ahead of the lowest) | buys every car to try it, often a random pickup unlock, then the stat it has least of |
 | Gems | never | a starting gadget only with 6+ gems, Nitro in the boost slot with 8+ left; slot rerolls when a spin paid nothing | gadgets, boosts, rerolls, new hands, raises at random |
 | In-run screens | slot bet 0; in The Deal keeps a card once fewer than half the deck beat it; the nearest claw prize; the first Pit Shop offer it can afford | bets 25 with 400+ run coins; keeps a Deal card worth 20+ (`ai`); the rarest claw prize; supplies in the Pit Shop | random bets; keeps a Deal card it hasn't discovered; extra claw grabs; buys the whole Pit Shop |
@@ -137,10 +139,12 @@ Godot_console.exe --headless --fixed-fps 60 --path . -- --career --persona=rooki
 | Tier | Levels and modes | Cars | Upgrades | Bank | Pickups |
 |---|---|---|---|---|---|
 | `fresh` | a new save | sedan | none | 0 | the 10 tree roots |
-| `early` | level 1 beaten through Goonpocalypse, so level 2 is open | 2 | 3 per stat | 1,500 coins, 2 gems | Commons |
-| `mid` | levels 1-4 beaten through Goonpocalypse | 4 | 8 | 8,000, 5 | up to Uncommon |
-| `late` | levels 1-7 fully beaten, all open | 7 | 14 | 40,000, 12 | up to Epic |
-| `maxed` | everything beaten | all 9 | 20 (max) | 1,000,000, 99 | all |
+| `early` | The Wilds (levels 1-5) beaten through the Marathon on Medium, so Mudlick Marsh (6) is open | 2 | 3 per stat | 1,500 coins, 2 gems | Commons |
+| `mid` | three regions (levels 1-15) through the Marathon and Goonpocalypse on Medium; Frostbite Pass (16) open | 4 | 8 | 8,000, 5 | up to Uncommon |
+| `late` | five regions (1-25) fully beaten on Medium; Blast Pits (26) open | 7 | 14 | 40,000, 12 | up to Epic |
+| `maxed` | all 30 levels beaten on Hard, every car has cleared every mode (`meta.carClears`) | all 9 | 20 (max) | 1,000,000, 99 | all |
+
+Modes are credited on Medium (the finales ask for it), and Goonpocalypse and Defense only where the Marathon is, as play would.
 
 Pickups open down each tree from its root, so none is open while its parent is locked (`CareerStart.build`).
 

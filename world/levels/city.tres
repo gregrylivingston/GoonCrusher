@@ -7,24 +7,21 @@ script = ExtResource("1_def")
 id = &"city"
 displayName = "Rust City"
 poster = "res://world/art/posters/city.png"
-act = 3
-order = 6
+region = &"sprawl"
+stop = 1
+order = 20
 blurb = "A street grid between buildings, parks, lots and canals. Bridges cross the canals where the streets do."
 barrier = "Building blocks wall every street, and canals cut across the grid, bridged at each street."
 surfaces = "Asphalt streets, concrete lots, park grass. The canals drown."
 startPosition = Vector2(2129, 1227)
-seconds = 500
-spawnTimer = 2.9
-giantOdds = 22
-escalationSpeed = 0.18
-sprintSlack = 1.2
-modes = []
-factionBand = Vector2(2.0, 3.5)
-roster = {
-0: [&"bandit"],
-1: [&"rat", &"gremlin", &"grunt", &"slinger"],
-2: [&"turret", &"magnet", &"boostjack", &"karter", &"sawbot", &"spoke"]
-}
+seconds = 420
+spawnTimer = 3.5
+giantOdds = 12
+escalationSpeed = 0.164
+sprintSlack = 1.28
+rules = {}
+lineup = Array[StringName]([&"rat", &"gremlin", &"bandit", &"karter"])
+landscape = &"city"
 grammar = &"city"
 features = {
 "buildingShare": 0.45,
@@ -40,45 +37,15 @@ features = {
 }
 baseTerrain = [16, 8, 16, 0, 16]
 accents = [8, 16, 0]
-dressing = {
-0: {
-&"oak": 3,
-&"tufts": 4,
-&"dumpster": 2,
-&"busstop": 1,
-&"sign": 1
-},
-1: {
-&"dumpster": 3,
-&"manhole": 3,
-&"barricade": 2,
-&"crate": 2,
-&"hydrant": 2
-},
-2: {
-&"streetglow": 3,
-&"hydrant": 3,
-&"dumpster": 3,
-&"busstop": 2,
-&"manhole": 2,
-&"cone": 3,
-&"wreck": 2,
-&"billboard": 1,
-&"paint": 3
-}
-}
-motifs = {
-2: {
-&"pileup": 1
-}
-}
+dressing = {}
+motifs = {}
 pickupTable = {
-&"coinline": 24,
-&"fuel": 38,
+&"coinline": 28,
+&"fuel": 40,
 &"health": 7,
 &"purse": 4,
 &"slot": 3,
-&"none": 124
+&"none": 118
 }
 pickupsPerChunk = 2
 palette = {

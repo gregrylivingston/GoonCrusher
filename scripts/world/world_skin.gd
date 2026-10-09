@@ -7,6 +7,9 @@ class_name WorldSkin extends RefCounted
 ##     world cell modulo its size, so one material serves every chunk and bilinear fields run across seams;
 ##   - the edge strips, the decor atlases and their materials, the props' scenes and variant textures;
 ##   - recipeContext(): the plain tables ChunkRecipe reads on the worker threads;
+## The look comes from the level's landscape (Landscape: materials, walls, water, natural props) drawn with its
+## skin (Landscapes.skinOf: the landscape's own once its art is in, else its fallback's), and its region
+## (Territories: the props it lays over the landscape by zone, its landmark).
 ##   - pools of ground quads, bodies, shapes, occluders, lines, MultiMeshes and props, all bounded.
 
 const MANIFEST := "res://world/art/props.json"
@@ -18,25 +21,14 @@ const DECOR_SHADER := "res://shader/world_decor.gdshader"
 const GLOW_SHADER := "res://shader/world_decor_glow.gdshader"
 const BREAKABLE := "res://scripts/world/breakable.gd"
 const STRIPS: Array[String] = ["shore_foam", "cliff_lip", "canyon_rim", "mesa_lip", "kerb", "snow_ridge", "hedge", "scrapwall", "roof_edge"]
-## Ground material by terrain id (Root.terrain order)
+## Ground material by terrain id (Root.terrain order): every landscape's default (Landscape.materials overrides it)
 const MATERIAL_OF: Array[String] = ["grass", "sand", "mud", "water", "rock", "moss", "dirt", "snow", "asphalt", "ice",
 	"oil", "shallows", "wash", "conveyor", "mudpit", "deepsnow", "lot", "roof", "bridge"]
-## Terrains a grammar adds to the level's base and accents (the ocean's water and shallows are always in)
-const GRAMMAR_TERRAIN := {
-	&"meadow": [6, 11], &"bayou": [11, 18], &"canyon": [12, 1, 6, 4], &"quarry": [6, 2, 16, 14, 4],
-	&"mountain": [9, 15, 7, 4], &"highway": [8, 10, 6, 16, 4], &"city": [8, 16, 0, 5, 18, 17], &"yard": [6, 16, 10, 13, 4],
-}
-const WALL_STRIP := {&"canyon": "mesa_lip", &"mountain": "snow_ridge", &"city": "roof_edge", &"yard": "scrapwall"}
-## Decor the recipe lays on rooftops (BUILDING cells), by grammar
-const ROOF_DECOR := {&"city": &"rooftop"}
-## Every level loads these (one per district, ChunkRecipe.placeLandmarks), whatever its dressing
+## Zones a level's districts fall in (Territories.zoneFor): 0 near the start to 2 far out
+const ZONES := 3
+## The landmarks with art today: the fallbacks of every region's own (Territories.landmark); a level loads its
+## region's one (every district has it, ChunkRecipe.placeLandmarks), whatever its dressing
 const LANDMARKS: Array[StringName] = [&"landmark_wild", &"landmark_tribe", &"landmark_scrap"]
-const WALL_TINT := {
-	&"canyon": Color(1.16, 0.84, 0.7), &"mountain": Color(1.12, 1.14, 1.2), &"quarry": Color(1.04, 0.99, 0.93),
-	&"highway": Color(1.1, 0.95, 0.82), &"yard": Color(0.78, 0.74, 0.7),
-}
-## How far borders between surfaces wander (ground.gdshader): crisper on built-up levels
-const ORGANIC := {&"city": 0.2, &"yard": 0.5, &"highway": 0.7}
 const RING := 8
 const CTL_SIZE := Vector2i(RING * ChunkRecipe.FW, RING * ChunkRecipe.FH)
 const QUAD := 1280.0
@@ -46,7 +38,7 @@ const ROAD_PROPS := [&"cone", &"jersey", &"wreck", &"manhole", &"barricade", &"s
 const CHAIN_PROPS := [&"fence", &"hedge", &"jersey", &"fortwall"]
 ## Props laid only as field lines (ChunkRecipe.placeFieldLines), by the features key giving the chance per lattice edge
 const FIELD_PROPS := {&"fence": "fenceDensity", &"hedge": "hedgeDensity"}
-## Set pieces (ChunkRecipe.placeMotifs), chosen per faction by LevelDef.motifs. members: [prop id, count, radius px,
+## Set pieces (ChunkRecipe.placeMotifs), chosen per zone from the landscape's, the region's and the level's motifs. members: [prop id, count, radius px,
 ## shape]: "centre", "ring" (evenly round the radius), "disc" (scattered inside it), "grid" or "line" (turned to the
 ## field lattice, `radius` apart). min: fewer members than this that fit and the motif is skipped. Members are
 ## loaded with the level whether its dressing names them or not.
@@ -83,6 +75,8 @@ static var manifestCache := {}
 
 var def: LevelDef
 var grammar: StringName
+var land: Landscape  #the level's landscape: its terrains, natural props and water look
+var look: Landscape  #whose skin it is drawn with (Landscapes.skinOf): its own, or its fallback's while its art is missing
 var layers: Array[String] = []
 var layerOf := PackedByteArray()
 var groundMaterial: ShaderMaterial
@@ -92,6 +86,8 @@ var ctlDirty := false
 var slotOwner := {} #ring slot (Vector2i) -> the chunk whose block is there
 var quadMesh: ArrayMesh
 var strips: Array[Texture2D] = []
+var stripNames: Array[String] = [] #STRIPS, then the landscape's wall strip if it is another
+var stripColors: Array[Color] = [] #each strip's Line2D colour: white, the lava's shore foam (Landscape.waterFoam)
 var decorMeshes := {}    #decor id -> QuadMesh
 var decorMaterials := {} #decor id -> ShaderMaterial
 var decorTextures := {}  #decor id -> Texture2D
@@ -111,8 +107,11 @@ static func loadManifest() -> Dictionary:
 	return manifestCache
 
 func _init(levelDef: LevelDef) -> void:
-	def = levelDef
-	grammar = levelDef.grammar
+	def = levelDef.resolve()
+	grammar = def.grammar
+	land = Landscapes.get_def(def.landscape)
+	if land == null: land = Landscapes.get_def(&"meadow")
+	look = Landscapes.skinOf(land.id)
 	manifest = loadManifest()
 	setupGround()
 	setupStrips()
@@ -123,39 +122,45 @@ func _init(levelDef: LevelDef) -> void:
 
 #--- ground ------------------------------------------------------------------------------------------
 
-## The terrains this level can show: base, accents, the grammar's own, water and shallows
+## The terrains this level can show: base, accents, the landscape's own, water and shallows
 func levelTerrains() -> Array:
 	var ids := {}
 	for t in def.baseTerrain: ids[int(t)] = true
 	for t in def.accents: ids[int(t)] = true
-	for t in GRAMMAR_TERRAIN.get(grammar, []): ids[int(t)] = true
+	for t in land.terrains: ids[int(t)] = true
 	ids[Root.terrain.WATER] = true
 	ids[Root.terrain.SHALLOWS] = true
 	return ids.keys()
 
+## The ground material a terrain is drawn with, in this level's skin
+func materialOf(t: int) -> String:
+	return look.materialOf(t)
+
 func setupGround() -> void:
 	var main := WorldField.mainTerrain(PackedByteArray(def.baseTerrain if not def.baseTerrain.is_empty() else [0]))
-	var wanted: Array[String] = [MATERIAL_OF[main]]
+	var wanted: Array[String] = [materialOf(main)]
 	for t in levelTerrains():
-		var name: String = MATERIAL_OF[t]
+		var name: String = materialOf(t)
 		if not name in wanted: wanted.push_back(name)
-	var wallName := "roof" if grammar == &"city" else "rock"
+	var wallName := look.roofMaterial
 	if not wallName in wanted: wanted.push_back(wallName)
 	layers = wanted
 	layerOf.resize(MATERIAL_OF.size())
 	for t in MATERIAL_OF.size():
-		var at := layers.find(MATERIAL_OF[t])
+		var at := layers.find(materialOf(t))
 		layerOf[t] = at if at >= 0 else 0
 	var shader: Shader = load(GROUND_SHADER)
 	groundMaterial = ShaderMaterial.new()
 	groundMaterial.shader = shader
 	groundMaterial.set_shader_parameter("materials", materialArray())
 	groundMaterial.set_shader_parameter("macro_noise", load(MACRO))
-	groundMaterial.set_shader_parameter("water_layer", float(layers.find("water")))
+	groundMaterial.set_shader_parameter("water_layer", float(layers.find(materialOf(Root.terrain.WATER))))
 	groundMaterial.set_shader_parameter("wall_layer", float(layers.find(wallName)))
-	groundMaterial.set_shader_parameter("wall_tint", WALL_TINT.get(grammar, Color.WHITE))
+	groundMaterial.set_shader_parameter("wall_tint", look.wallTint)
 	groundMaterial.set_shader_parameter("ctl_size", Vector2(CTL_SIZE))
-	groundMaterial.set_shader_parameter("organic", ORGANIC.get(grammar, 1.0))
+	groundMaterial.set_shader_parameter("organic", look.organic)
+	#lava (the landscape's own water look, art or not): the water layer glows in its colour
+	groundMaterial.set_shader_parameter("water_glow", land.waterGlow if land.waterLook == &"lava" else Color(0, 0, 0, 0))
 	ctlImage = Image.create_empty(CTL_SIZE.x, CTL_SIZE.y, false, Image.FORMAT_RGBA8)
 	ctlImage.fill(Color(0, 1, 1, 0)) #nothing written yet: open ground of layer 0
 	ctlTexture = ImageTexture.create_from_image(ctlImage)
@@ -197,7 +202,13 @@ func placeholderColor(name: String) -> Color:
 	match name:
 		"water": return Color("#284a57")
 		"shallows": return Color("#4f7a7a")
-		"rock", "roof": return Color("#6b6560")
+		"rock", "roof", "basalt", "roof_timber", "roof_shingle": return Color("#6b6560")
+		"lava": return Color("#c8501a")
+		"tar": return Color("#1d1b1c")
+		"ash": return Color("#5c5752")
+		"salt": return Color("#e6e2d8")
+		"beach": return Color("#d9c79a")
+		"needles", "lawn": return Color("#4f6b3a")
 		"asphalt": return Color("#3c3d40")
 		"snow", "deepsnow", "ice": return Color("#c5cbd1")
 		"sand", "wash": return Color("#b59a6a")
@@ -232,30 +243,56 @@ func flush() -> void:
 		ctlDirty = false
 		ctlTexture.update(ctlImage)
 
+## The edge strips (STRIPS, plus the skin's wall strip when it is another), each with its line colour
 func setupStrips() -> void:
-	for name in STRIPS: strips.push_back(load(EDGE_DIR + name + ".png"))
+	stripNames.assign(STRIPS)
+	if not look.wallStrip in stripNames && ResourceLoader.exists(EDGE_DIR + look.wallStrip + ".png"): stripNames.push_back(look.wallStrip)
+	for name in stripNames:
+		strips.push_back(load(EDGE_DIR + name + ".png"))
+		stripColors.push_back(land.waterFoam if name == "shore_foam" && land.waterLook == &"lava" else Color.WHITE)
+
+## The props, decor and set pieces of one zone: the landscape's natural ones, the region's own for the zone
+## (Territories dressing and motifs) on top, then the level's own (LevelDef.dressing / motifs: {id: weight},
+## replacing the weight; 0 takes it out). {"dressing": {id: weight}, "motifs": {id: weight}}
+func zoneTables(zone: int) -> Dictionary:
+	var region := Territories.get_def(def.region)
+	var out := {}
+	for key in ["dressing", "motifs"]:
+		var table := {}
+		for id in land.get(key): table[StringName(id)] = float(land.get(key)[id])
+		var overlay: Array = region.get(key, [])
+		if zone < overlay.size():
+			for id in overlay[zone]: table[StringName(id)] = table.get(StringName(id), 0.0) + float(overlay[zone][id])
+		var own: Dictionary = def.get(key)
+		for id in own:
+			if own[id] is Dictionary: continue #a zone table from before the landscapes; levels list flat weights now
+			table[StringName(id)] = float(own[id])
+		for id in table.keys(): if table[id] <= 0.0: table.erase(id)
+		out[key] = table
+	return out
 
 #--- props and decor ---------------------------------------------------------------------------------
 
-## The ids the level's dressing names, by class: {"decor": [...], "props": [...]}
+## The ids the level's dressing names (every zone), by class: {"decor": [...], "props": [...]}. Ids props.json
+## doesn't have yet are left out.
 func dressingIds() -> Dictionary:
 	var decor := []
 	var props := []
-	for faction in def.dressing:
-		for id in def.dressing[faction]:
+	for zone in ZONES:
+		var tables := zoneTables(zone)
+		for id in tables.dressing:
 			var entry: Dictionary = manifest.get(String(id), {})
 			if entry.is_empty(): continue
 			var list := decor if entry.get("class", "") == "DECOR" else props
 			if not StringName(id) in list: list.push_back(StringName(id))
-	for faction in def.motifs:
-		for motif in def.motifs[faction]:
+		for motif in tables.motifs:
 			for m in MOTIFS.get(StringName(motif), {}).get("members", []):
 				var mid := StringName(m[0])
 				if manifest.get(String(mid), {}).get("class", "DECOR") != "DECOR" && not mid in props: props.push_back(mid)
-	var roof: StringName = ROOF_DECOR.get(grammar, &"")
+	var roof: StringName = look.roofDecor
 	if roof != &"" && manifest.has(String(roof)) && not roof in decor: decor.push_back(roof)
-	for id in LANDMARKS:
-		if manifest.has(String(id)) && not id in props: props.push_back(id)
+	var landmark := Territories.landmark(def.region, manifest)
+	if manifest.has(String(landmark)) && not landmark in props: props.push_back(landmark)
 	#what interactive props leave behind (logs from a log pile, a crane's container)
 	for id in props.duplicate():
 		for product in Spill.PRODUCTS.get(id, []):
@@ -311,21 +348,21 @@ func recipeContext(lots: Array, lanes: Array) -> Dictionary:
 	for id in decorMeshes: decor[String(id)] = {"place": DECOR_PLACE.get(id, "")}
 	var propTables := {}
 	var decorTables := {}
-	for faction in def.dressing:
+	var motifTables := {}
+	for zone in ZONES:
+		var tables := zoneTables(zone)
 		var pt := {}
 		var dt := {}
-		for id in def.dressing[faction]:
-			var w := float(def.dressing[faction][id])
+		for id in tables.dressing:
+			var w: float = tables.dressing[id]
 			if props.has(String(id)): pt[String(id)] = w
 			elif decor.has(String(id)): dt[String(id)] = w
-		propTables[int(faction)] = pt
-		decorTables[int(faction)] = dt
-	var motifTables := {}
-	for faction in def.motifs:
+		propTables[zone] = pt
+		decorTables[zone] = dt
 		var mt := {}
-		for motif in def.motifs[faction]:
-			if MOTIFS.has(StringName(motif)): mt[String(motif)] = float(def.motifs[faction][motif])
-		motifTables[int(faction)] = mt
+		for motif in tables.motifs:
+			if MOTIFS.has(StringName(motif)): mt[String(motif)] = float(tables.motifs[motif])
+		motifTables[zone] = mt
 	var motifDefs := {}
 	for motif in MOTIFS: motifDefs[String(motif)] = MOTIFS[motif].duplicate(true)
 	var fieldDensity := {}
@@ -334,17 +371,16 @@ func recipeContext(lots: Array, lanes: Array) -> Dictionary:
 		if chance > 0.0 && props.has(String(id)): fieldDensity[String(id)] = chance
 	var pickupTable := {}
 	for kind in def.pickupTable: pickupTable[String(kind)] = float(def.pickupTable[kind])
-	var wallStrip: String = WALL_STRIP.get(grammar, "cliff_lip")
 	return {
 		"layerOf": layerOf, "mainLayer": 0, "blocked": blocked, "spawnable": spawnable,
-		"wallStrip": STRIPS.find(wallStrip), "waterStrip": STRIPS.find("shore_foam"),
+		"wallStrip": stripNames.find(look.wallStrip if look.wallStrip in stripNames else "cliff_lip"), "waterStrip": stripNames.find("shore_foam"),
 		"props": props, "decor": decor, "propTables": propTables, "decorTables": decorTables,
 		"pickupTable": pickupTable, "pickupsPerChunk": def.pickupsPerChunk, "pickupIds": pickupIds(),
 		"motifs": motifTables, "motifDefs": motifDefs, "motifsPerChunk": float(def.features.get("motifs", 1.0)),
 		"fieldDensity": fieldDensity, "fieldSpacing": float(def.features.get("fieldSpacing", 1400.0)),
 		"propsPerChunk": int(def.features.get("props", 16)), "decorPerChunk": int(def.features.get("decor", 110)),
 		"start": def.startPosition, "lots": lots, "lanes": lanes, "lotTerrain": Root.terrain.LOT,
-		"roofDecor": String(ROOF_DECOR.get(grammar, &"")) if decorMeshes.has(ROOF_DECOR.get(grammar, &"")) else "",
+		"roofDecor": String(look.roofDecor) if decorMeshes.has(look.roofDecor) else "",
 	}
 
 ## Loads and pools a few of everything a chunk uses before the run starts (behind the loading), so the first

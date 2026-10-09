@@ -119,6 +119,7 @@ func applyLine(skin: WorldSkin, tm: Node) -> bool:
 	index += 1
 	var line := skin.newLine()
 	line.texture = skin.strips[entry[0]]
+	line.default_color = skin.stripColors[entry[0]] #white, or a lava shore's foam
 	line.points = entry[1]
 	line.position = origin
 	tm.edgeLayer.add_child(line)

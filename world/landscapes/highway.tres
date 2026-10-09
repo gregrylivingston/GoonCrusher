@@ -1,0 +1,55 @@
+[gd_resource type="Resource" script_class="Landscape" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/landscape.gd" id="1_land"]
+
+[resource]
+script = ExtResource("1_land")
+id = &"highway"
+displayName = "Desert Highway"
+grammar = &"highway"
+text = "A highway runs east. Fast asphalt, oil slicks, barriers and pile-ups."
+features = {
+"warpFrequency": 4e-05,
+"warpAmplitude": 3000.0,
+"roadWidth": 1600.0,
+"highwaySpacing": 23040.0,
+"branchEvery": 3,
+"branchChance": 0.7,
+"branchWidth": 1000.0,
+"oilAbove": 0.6,
+"rockAbove": 0.4,
+"gasStationEvery": 6,
+"motifs": 1.2,
+"props": 13
+}
+baseTerrain = [1, 6, 1, 6, 1]
+accents = [8, 10]
+terrains = [8, 10, 6, 16, 4]
+materials = {}
+roofMaterial = "rock"
+wallStrip = "cliff_lip"
+wallTint = Color(1.1, 0.95, 0.82, 1)
+organic = 0.7
+roofDecor = &""
+waterLook = &"water"
+waterGlow = Color(0, 0, 0, 0)
+waterFoam = Color(1, 1, 1, 1)
+dressing = {
+&"saguaro": 3,
+&"rock": 3,
+&"pebbles": 4,
+&"jersey": 3,
+&"cone": 3,
+&"sign": 2,
+&"wreck": 2,
+&"gaspump": 1,
+&"billboard": 1,
+&"oilstain": 3,
+&"watertower": 1
+}
+motifs = {
+&"pileup": 2,
+&"roadblock": 1
+}
+nameSecond = Array[String](["Junction", "Overpass", "Exit", "Turnpike", "Truckstop", "Mile", "Interchange", "Strip", "Bypass", "Rest Stop"])
+fallback = &""

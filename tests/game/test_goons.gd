@@ -1,7 +1,7 @@
 extends GameTest
 
 #The goon roster (docs/GOONS.md): every registry entry has baked art and a known verb, every faction can fill
-#a region on every terrain, regions get factions by distance and level, and crush rules hold.
+#a region on every terrain, the fallback factionFor rises by distance and level, and crush rules hold.
 
 const PLAYABLE := [Goons.T.GRASS, Goons.T.SAND, Goons.T.MUD, Goons.T.MOSS, Goons.T.DIRT, Goons.T.SNOW]
 const VERBS := [&"lunge", &"dodger", &"lobber", &"shooter", &"trapper", &"bomber", &"hitcher", &"turtle", &"boss", &"burrow",
@@ -70,7 +70,7 @@ func test_regions_get_a_faction_and_its_goons():
 	assert_true(region.has("faction"), "faction stored")
 	for key in ["name", "giantism", "goon"]: assert_true(region.has(key), "keeps %s for the HUD" % key)
 	assert_false(region.has("wave"), "waves are the run's, not the district's")
-	for id in region.goon: assert_eq(Goons.DATA[id].faction, region.faction, "%s matches the region" % id)
+	assert_eq(region.faction, Goons.DATA[region.goon[0]].faction, "the region's faction is its first goon's (an elite line-up mixes factions)")
 
 func test_waves_are_one_clock_for_the_run():
 	Region.resetRegions()

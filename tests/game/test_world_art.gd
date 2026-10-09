@@ -143,11 +143,15 @@ func test_landmarks_have_beacons_and_extras_exist():
 	assert_eq(props().get("rooftop", {}).get("class", ""), "DECOR", "rooftop is decor (no collision)")
 
 func test_level_dressing_names_known_props():
+	for id in Landscapes.ORDER:
+		for prop in Landscapes.get_def(id).dressing: assert_true(props().has(String(prop)), "landscape %s dresses with %s, which is baked" % [id, prop])
+	for region in Territories.ORDER:
+		for zone in Territories.get_def(region).dressing:
+			for prop in zone: assert_true(props().has(String(prop)), "region %s dresses with %s, which is baked" % [region, prop])
 	for id in Levels.ORDER:
 		var def := Levels.get_def(id)
 		if def == null: continue
-		for faction in def.dressing:
-			for prop in def.dressing[faction]: assert_true(props().has(String(prop)), "%s dresses with %s, which is baked" % [id, prop])
+		for prop in def.dressing: assert_true(props().has(String(prop)), "%s dresses with %s, which is baked" % [id, prop])
 
 func test_ground_edges_station_and_posters_exist():
 	for name in GROUNDS + ["macro_noise"]:

@@ -1,0 +1,43 @@
+[gd_resource type="Resource" script_class="LevelDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/level_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"timberline"
+displayName = "Timberline Camp"
+poster = "res://world/art/posters/frostbite.png"
+region = &"hunting"
+stop = 3
+order = 17
+blurb = "Snowy pines, cabins, snowcats and log piles. Herds come through the trees."
+barrier = "A creek with deep pools winds through the meadow. Ford it where the shallows are."
+surfaces = "Packed snow, deep snow that drags, frozen lakes with no grip at all."
+startPosition = Vector2(2866, 1583)
+seconds = 400
+spawnTimer = 3.6
+giantOdds = 8
+escalationSpeed = 0.16
+sprintSlack = 1.3
+rules = {}
+lineup = Array[StringName]([&"wrecker", &"rammer", &"thunderhoof", &"yeti"])
+landscape = &"forest_snow"
+dressing = {}
+motifs = {}
+pickupTable = {
+&"coinline": 30,
+&"fuel": 42,
+&"health": 7,
+&"purse": 4,
+&"slot": 3,
+&"none": 114
+}
+pickupsPerChunk = 2
+palette = {
+&"ground": Color(0.85, 0.88, 0.92, 1),
+&"accent": Color(0.7, 0.76, 0.84, 1),
+&"ice": Color(0.62, 0.78, 0.88, 1),
+&"rock": Color(0.42, 0.44, 0.5, 1)
+}
+nightTint = Color(0.06, 0.08, 0.16, 1)
+ambience = &"wind"

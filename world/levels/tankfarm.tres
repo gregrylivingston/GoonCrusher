@@ -1,0 +1,43 @@
+[gd_resource type="Resource" script_class="LevelDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/level_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"tankfarm"
+displayName = "Tank Farm"
+poster = "res://world/art/posters/crusher.png"
+region = &"works"
+stop = 2
+order = 26
+blurb = "Tank farms and oil. Fire and slime from range, and blasts that chain through the tanks."
+barrier = "Scrap mountains and container rows wall the yard plots."
+surfaces = "Dirt and concrete, oil spills with no grip, conveyor belts that push you along. Tanks and barrels explode."
+startPosition = Vector2(2129, 1227)
+seconds = 490
+spawnTimer = 2.9
+giantOdds = 23
+escalationSpeed = 0.181
+sprintSlack = 1.2
+rules = {}
+lineup = Array[StringName]([&"torch", &"torcher", &"spitter"])
+landscape = &"scrapyard"
+dressing = {}
+motifs = {}
+pickupTable = {
+&"coinline": 23,
+&"fuel": 37,
+&"health": 7,
+&"purse": 4,
+&"slot": 3,
+&"none": 126
+}
+pickupsPerChunk = 2
+palette = {
+&"ground": Color(0.44, 0.4, 0.36, 1),
+&"accent": Color(0.36, 0.33, 0.3, 1),
+&"lot": Color(0.5, 0.5, 0.48, 1),
+&"oil": Color(0.12, 0.11, 0.12, 1)
+}
+nightTint = Color(0.07, 0.05, 0.05, 1)
+ambience = &"yard"

@@ -31,7 +31,7 @@ static func run(options: Dictionary) -> void:
 			preview(def, s, w, h, objective, fineCount)
 
 static func preview(def: LevelDef, worldSeed: int, w: int, h: int, objective: String, fineCount: int) -> void:
-	var offset := Level.sprintOffsetPx(def.seconds, WorldGen.hashf(worldSeed, WorldGen.TAG_SPRINT, 0, 0) * 2.0 - 1.0)
+	var offset := Level.sprintOffsetPx(Level.sprintDistance(def), WorldGen.hashf(worldSeed, WorldGen.TAG_SPRINT, 0, 0) * 2.0 - 1.0)
 	var map := WorldMap.build(worldSeed, def, objective, offset)
 	var blocked := 0
 	var reachable := 0
@@ -53,7 +53,7 @@ static func preview(def: LevelDef, worldSeed: int, w: int, h: int, objective: St
 	var here := map.districtAt(def.startPosition)
 	if here >= 0:
 		var d: Dictionary = map.districts[here]
-		print("  start district %d '%s' faction=%s goons=%s" % [here, d.name, Goons.factionName(d.faction), d.goons])
+		print("  start district %d '%s' zone=%d faction=%s goons=%s" % [here, d.name, d.zone, Goons.factionName(d.faction), d.goons])
 	var centre := startCell
 	if map.station != Vector2.INF && objective == "sprint": centre = (startCell + WorldGen.cellOf(map.station)) / 2
 	for line in WorldGen.ascii({"terrain": map.terrain, "flags": map.flags}, centre, w, h, marks): print("  |" + line + "|")
@@ -76,7 +76,7 @@ static func preview(def: LevelDef, worldSeed: int, w: int, h: int, objective: St
 		print("  fine raster: %d chunks, mean %.2f ms, worst %.2f ms (fields alone %.2f ms)" % [fineCount, total / 1000.0 / fineCount, worst / 1000.0, sampleUsec / 1000.0])
 
 static func probe(def: LevelDef, worldSeed: int, at: Vector2, objective: String) -> void:
-	var offset := Level.sprintOffsetPx(def.seconds, WorldGen.hashf(worldSeed, WorldGen.TAG_SPRINT, 0, 0) * 2.0 - 1.0)
+	var offset := Level.sprintOffsetPx(Level.sprintDistance(def), WorldGen.hashf(worldSeed, WorldGen.TAG_SPRINT, 0, 0) * 2.0 - 1.0)
 	var map := WorldMap.build(worldSeed, def, objective, offset)
 	var cell := map.coarseCell(at)
 	print("PROBE %s seed=%d at %s: coarse cell %s chunk %s" % [def.id, worldSeed, at, cell, WorldGen.chunkOf(at)])

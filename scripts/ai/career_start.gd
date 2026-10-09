@@ -5,33 +5,37 @@ class_name CareerStart extends RefCounted
 #in order, a level's beaten modes follow the unlock chain (Root.isModeUnlocked), and only owned cars carry
 #upgrades. The harness writes the result to its scratch save; the real save is never read or touched here.
 #  levels   levels unlocked, from the first (a new save has only the first)
-#  beaten   {level count: [modes]}: those modes are marked beaten on that many levels, from the first; a level
-#           with LevelDef.unlockModes beaten opens the next
+#  beaten   {level count: [modes]}: those modes are marked beaten (on `tier`) on that many levels, from the first;
+#           Goonpocalypse and Defense only where the Marathon is (the unlock chain); a level whose Marathon is
+#           won (on Medium at a finale) opens the next
+#  tier     the tier the beaten modes are credited on (ModeTiers; Medium by default, so finales open)
+#  carClears every owned car has cleared every beaten mode on that tier (meta.carClears)
 #  cars     cars owned: the cheapest first (the order players can afford them)
 #  upgrades every stat of every owned car at this level (capped at SaveManager.MAX_UPGRADE_LEVEL)
 #  coins, gems  the bank
 #  pickups  the rarest pickup tier unlocked (Pickups.R; missing: only the tree roots), following each tree
 #           down from its root, so no pickup is open while its parent is locked
 const G := Root.gameModes
-const ALL_MODES := [G.GOONCRUSHER, G.SPRINT, G.GOONPOCALYPSE, G.MARATHON, G.DEFENSE]
+const ALL_MODES := Root.MODE_PATH
+const ROAD := [G.GOONCRUSHER, G.SPRINT, G.MARATHON]
 const TIERS := {
 	"fresh": {},
-	#an hour in: the first level beaten through Goonpocalypse (so the second is open), a second car, a few upgrades
-	"early": {"beaten": {1: [G.GOONCRUSHER, G.SPRINT, G.GOONPOCALYPSE]}, "cars": 2, "upgrades": 3, "coins": 1500, "gems": 2, "pickups": Pickups.R.COMMON},
-	#halfway: the first four levels cleared through Goonpocalypse, four cars, mid upgrades
-	"mid": {"beaten": {4: [G.GOONCRUSHER, G.SPRINT, G.GOONPOCALYPSE]}, "cars": 4, "upgrades": 8, "coins": 8000, "gems": 5, "pickups": Pickups.R.UNCOMMON},
-	#most of the way: every level open, all but the last fully beaten, all but the two dearest cars
-	"late": {"beaten": {7: ALL_MODES}, "cars": 7, "upgrades": 14, "coins": 40000, "gems": 12, "pickups": Pickups.R.EPIC},
-	#everything: every mode beaten everywhere, every car maxed, a deep bank
-	"maxed": {"beaten": {99: ALL_MODES}, "cars": 99, "upgrades": 99, "coins": 1000000, "gems": 99, "pickups": Pickups.R.LEGENDARY},
+	#an hour or two in: The Wilds done (Tribe Country's first level open), a second car, a few upgrades
+	"early": {"beaten": {5: ROAD}, "cars": 2, "upgrades": 3, "coins": 1500, "gems": 2, "pickups": Pickups.R.COMMON},
+	#halfway: three regions down the road, Goonpocalypse picked up on the way, four cars, mid upgrades
+	"mid": {"beaten": {15: [G.GOONCRUSHER, G.SPRINT, G.MARATHON, G.GOONPOCALYPSE]}, "cars": 4, "upgrades": 8, "coins": 8000, "gems": 5, "pickups": Pickups.R.UNCOMMON},
+	#most of the way: five regions fully beaten (The Works open), all but the two dearest cars
+	"late": {"beaten": {25: ALL_MODES}, "cars": 7, "upgrades": 14, "coins": 40000, "gems": 12, "pickups": Pickups.R.EPIC},
+	#everything: every mode beaten on Hard everywhere by every car, every car maxed, a deep bank
+	"maxed": {"beaten": {99: ALL_MODES}, "tier": ModeTiers.HARD, "carClears": true, "cars": 99, "upgrades": 99, "coins": 1000000, "gems": 99, "pickups": Pickups.R.LEGENDARY},
 }
 #one line per tier, for the console's `start` and the docs
 const TIER_TEXT := {
 	"fresh": "a new save",
-	"early": "Countdown, Sprint and Goonpocalypse beaten on the first level, 2 cars, upgrades at 3, 1,500 coins, Common pickups",
-	"mid": "4 levels beaten through Goonpocalypse, 4 cars, upgrades at 8, 8,000 coins, pickups up to Uncommon",
-	"late": "7 levels fully beaten, 7 cars, upgrades at 14, 40,000 coins, pickups up to Epic",
-	"maxed": "everything beaten, owned and unlocked, every upgrade maxed, 1,000,000 coins",
+	"early": "The Wilds done on Medium (Countdown, Sprint, Marathon; Mudlick Marsh open), 2 cars, upgrades at 3, 1,500 coins, Common pickups",
+	"mid": "3 regions done on Medium with Goonpocalypse (Frostbite Pass open), 4 cars, upgrades at 8, 8,000 coins, pickups up to Uncommon",
+	"late": "5 regions fully beaten on Medium (Blast Pits open), 7 cars, upgrades at 14, 40,000 coins, pickups up to Epic",
+	"maxed": "all 30 levels beaten on Hard by every car, everything owned and unlocked, every upgrade maxed, 1,000,000 coins",
 }
 const STATS := [Root.upgrade.ENGINE, Root.upgrade.STEERING, Root.upgrade.TRACTION, Root.upgrade.ARMOR,
 	Root.upgrade.HEADLIGHTS, Root.upgrade.OIL, Root.upgrade.CLOVER, Root.upgrade.LUCK]
@@ -45,15 +49,28 @@ static func build(tier: String, overrides: Dictionary = {}) -> PlayerData:
 	data.levels = Levels.defaultEntries()
 	if spec.has("levels"):
 		for i in data.levels.size(): data.levels[i].unlocked = data.levels[i].unlocked || i < int(spec.levels)
+	var winTier := ModeTiers.clampTier(int(spec.get("tier", ModeTiers.MEDIUM))) #Medium: finales ask for it (Root.opensNextLevel)
 	for count in spec.get("beaten", {}):
 		for i in mini(int(count), data.levels.size()):
 			data.levels[i].unlocked = true
-			for mode in spec.beaten[count]: SaveManager.passTier(data.levels[i], mode, ModeTiers.MEDIUM) #Medium: later acts ask for it (Root.mediumToOpenNext)
-			#enough modes beaten open the next level (LevelDef.unlockModes)
+			var modes: Array = spec.beaten[count]
+			for mode in modes:
+				#Goonpocalypse and Defense open behind the Marathon (Root.isModeUnlocked)
+				if mode in [G.GOONPOCALYPSE, G.DEFENSE] && not G.MARATHON in modes: continue
+				SaveManager.passTier(data.levels[i], mode, winTier)
+			#a won Marathon opens the next level
 			if i + 1 < data.levels.size() && Root.opensNextLevel(data.levels[i]): data.levels[i + 1].unlocked = true
 	var byPrice: Array = data.cars.duplicate()
 	byPrice.sort_custom(func(a, b): return a.cost < b.cost)
 	var owned := mini(int(spec.get("cars", 1)), byPrice.size())
+	if spec.get("carClears", false): #every owned car has won every beaten mode on the tier
+		var clears := {}
+		for level in data.levels:
+			for mode in level.gamemodeBeat:
+				if not level.gamemodeBeat[mode]: continue
+				var byCar: Dictionary = clears.get_or_add(str(level.id), {}).get_or_add(int(mode), {})
+				for i in owned: byCar[str(byPrice[i].name)] = ModeTiers.best(level, mode)
+		data.meta.carClears = clears
 	for i in owned:
 		byPrice[i].cost = 0
 		var level := mini(int(spec.get("upgrades", 0)), SaveManager.MAX_UPGRADE_LEVEL)

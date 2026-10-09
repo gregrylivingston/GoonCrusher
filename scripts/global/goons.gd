@@ -5,8 +5,9 @@ class_name Goons extends RefCounted
 enum faction { WILD, TRIBE, SCRAP }
 const FACTION_NAMES := ["Wild Things", "Goon Tribe", "Scrap Gang"]
 
-## Region factions (Region.gd): score = distance from the start in chunks × DISTANCE_WEIGHT + level index
-## × LEVEL_WEIGHT ± FACTION_JITTER. Below WILD_BELOW the region is wild, below TRIBE_BELOW tribal, else scrap.
+## Distance scoring: score = distance from the start in chunks × DISTANCE_WEIGHT (+ level index × LEVEL_WEIGHT
+## in factionFor, the fallback without a level) ± FACTION_JITTER. A level's districts use the same score for
+## their zone (Territories.zoneFor: below WILD_BELOW zone 0, below TRIBE_BELOW zone 1, else zone 2).
 const DISTANCE_WEIGHT := 0.35
 const LEVEL_WEIGHT := 0.3
 const FACTION_JITTER := 0.4
@@ -24,7 +25,7 @@ const WAVE_MIX := [[95, 5, 0], [70, 30, 0], [50, 30, 20], [40, 30, 30]]
 ## Mirrors Root.terrain (same order; test_goons.gd checks it), because an autoload's enum can't be used in a const.
 enum T { GRASS, SAND, MUD, WATER, HILLS, MOSS, DIRT, SNOW, ASPHALT, ICE, OIL, SHALLOWS, WASH, CONVEYOR, MUDPIT, DEEPSNOW, LOT, BUILDING, BRIDGE }
 ## Tuning keys (all optional, defaults in walker.gd): speed (px/s), windDist (px), windT, atkT, recT (s),
-## lunge (speed multiplier while attacking), dmg (car damage() units), sys (car system the attack wears),
+## lunge (speed multiplier while attacking), dmg (health its attack takes from a car with no armor; docs/CAR_ART.md), sys (car system the attack wears),
 ## crush (crush speed px/s), front (head-on crush speed; 0 = none), arc (half-width of the front in radians, default 1.05), turn (rad/s), pack (spawn group size),
 ## tele (telegraph: arrow, ring, land, aim, crack, none). rank: 1 fodder, 2 special, 3 heavy.
 ## Tiers: Scrap Gang hits hardest per hit (they hit less often, since they peel off), then Tribe, then Wild.
@@ -118,6 +119,41 @@ const DATA := {
 	&"magnet": {"name":"Magnet", "faction":faction.SCRAP, "rank":3, "biomes":[T.DIRT, T.SNOW, T.MUD, T.MOSS], "verb":&"rider",
 		"speed":220, "act":"magnet", "sys":"steering", "crush":200},
 }
+
+## The six goon classes (docs/GOONS.md, "Classes"): the goons a region may field (Territories). A goon keeps
+## its faction (colours, goo, drops, the EMP's target, the crushed:<faction> counters); a class is only a list.
+## The first three are the factions' own (every rank-1+ member; the Goonling is spawn-only); the three elite
+## classes are themed squads drawn from every faction. A level's line-up (LevelDef.lineup) is 3-6 of its
+## region's class.
+const CLASSES := {
+	&"wild": {"name": "Wild Things", "faction": faction.WILD, "members": [&"jackalope", &"tusker", &"bandit", &"stinger", &"buzzard",
+		&"rattler", &"quill", &"spitter", &"snapper", &"yipper", &"bullmoose", &"thunderhoof"]},
+	&"tribe": {"name": "Goon Tribe", "faction": faction.TRIBE, "members": [&"grunt", &"hubcap", &"dasher", &"torch", &"spiker", &"yeti",
+		&"doomcart", &"gremlin", &"shellback", &"foreman", &"skink", &"rat", &"boulder", &"nightcrawler", &"wrecker", &"slinger", &"rammer", &"splitter"]},
+	&"scrap": {"name": "Scrap Gang", "faction": faction.SCRAP, "members": [&"spoke", &"chainer", &"torcher", &"harpooner", &"sidecar",
+		&"plowboss", &"karter", &"slick", &"boostjack", &"shredder", &"sawbot", &"turret", &"magnet"]},
+	&"biggame": {"name": "Big Game", "faction": -1, "members": [&"tusker", &"thunderhoof", &"bullmoose", &"snapper", &"yeti", &"boulder",
+		&"wrecker", &"rammer", &"plowboss", &"harpooner"]},
+	&"swarm": {"name": "Street Swarm", "faction": -1, "members": [&"rat", &"yipper", &"jackalope", &"bandit", &"splitter", &"dasher",
+		&"gremlin", &"karter", &"spoke", &"sawbot"]},
+	&"warmachine": {"name": "War Machine", "faction": -1, "members": [&"doomcart", &"torch", &"torcher", &"spitter", &"slinger", &"turret",
+		&"sidecar", &"boostjack", &"magnet", &"foreman"]},
+}
+const CLASS_ORDER: Array[StringName] = [&"wild", &"tribe", &"scrap", &"biggame", &"swarm", &"warmachine"]
+
+static func classMembers(id: StringName) -> Array:
+	return CLASSES.get(StringName(id), {}).get("members", [])
+
+static func className(id: StringName) -> String:
+	return CLASSES.get(StringName(id), {}).get("name", String(id).capitalize())
+
+## An elite class draws from every faction (Big Game, Street Swarm, War Machine)
+static func isElite(id: StringName) -> bool:
+	return int(CLASSES.get(StringName(id), {}).get("faction", -1)) < 0
+
+## The classes a goon plays in
+static func classesOf(goon: StringName) -> Array:
+	return CLASS_ORDER.filter(func(c): return goon in classMembers(c))
 
 static func scenePath(id: StringName) -> String:
 	return "res://scene/enemy/goons/%s/%s.tscn" % [id, id]

@@ -7,24 +7,21 @@ script = ExtResource("1_def")
 id = &"crusher"
 displayName = "The Crusher"
 poster = "res://world/art/posters/crusher.png"
-act = 3
-order = 7
+region = &"works"
+stop = 5
+order = 29
 blurb = "The Scrap Gang's home: yard plots walled by scrap mountains, container rows, tank farms and conveyor lanes."
 barrier = "Scrap mountains and container rows wall the yard plots."
 surfaces = "Dirt and concrete, oil spills with no grip, conveyor belts that push you along. Tanks and barrels explode."
 startPosition = Vector2(2129, 1227)
-seconds = 540
+seconds = 530
 spawnTimer = 2.6
 giantOdds = 30
 escalationSpeed = 0.19
 sprintSlack = 1.15
-modes = []
-factionBand = Vector2(2.4, 3.6)
-roster = {
-0: [],
-1: [&"wrecker", &"rammer"],
-2: [&"plowboss", &"magnet", &"shredder", &"harpooner", &"boostjack", &"turret", &"chainer"]
-}
+rules = {}
+lineup = Array[StringName]([&"foreman", &"turret", &"magnet", &"boostjack", &"doomcart"])
+landscape = &"scrapyard"
 grammar = &"yard"
 features = {
 "plotSize": 3,
@@ -42,38 +39,8 @@ features = {
 }
 baseTerrain = [6, 16, 6, 16, 6]
 accents = [10, 13, 16]
-dressing = {
-0: {
-&"scrapheap": 3,
-&"tyres": 2
-},
-1: {
-&"tyres": 3,
-&"barricade": 2,
-&"crate": 2,
-&"barrel": 2,
-&"scrapheap": 2
-},
-2: {
-&"scrapheap": 5,
-&"container": 4,
-&"tank": 2,
-&"crane": 2,
-&"wreck": 3,
-&"barrel": 3,
-&"tyres": 3,
-&"oilstain": 3
-}
-}
-motifs = {
-1: {
-&"wreckpile": 1
-},
-2: {
-&"junkyard": 3,
-&"wreckpile": 2
-}
-}
+dressing = {}
+motifs = {}
 pickupTable = {
 &"coinline": 21,
 &"fuel": 36,

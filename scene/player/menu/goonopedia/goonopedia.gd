@@ -103,9 +103,9 @@ const MODE_RULES := {
 const MODE_UNLOCK := {
 	Root.gameModes.GOONCRUSHER: "Open on every unlocked level.",
 	Root.gameModes.SPRINT: "Beat Countdown on a level to unlock it there.",
-	Root.gameModes.MARATHON: "Beat Sprint on a level to unlock it there.",
-	Root.gameModes.DEFENSE: "Beat Sprint on a level to unlock it there.",
-	Root.gameModes.GOONPOCALYPSE: "Beat Countdown and Sprint on a level to unlock it there.",
+	Root.gameModes.MARATHON: "Beat Sprint on a level to unlock it there. Winning it opens the next level (on Medium at a region's finale).",
+	Root.gameModes.DEFENSE: "Win the Marathon on a level to unlock it there.",
+	Root.gameModes.GOONPOCALYPSE: "Win the Marathon on a level to unlock it there.",
 }
 
 #system -> [icon, what wear does]. The car's CONDITION_FLOOR supplies the numbers.
@@ -688,6 +688,8 @@ func goonDetail(entry: Dictionary) -> void:
 	elif front > 0.0: rows.push_back(["Head-on", "Needs " + Settings.speed_text(front) + "+"])
 	if d.has("sys"): rows.push_back(["Wears your", SYSTEM_NAMES.get(d.sys, d.sys)])
 	if d.has("pack"): rows.push_back(["Comes in", "groups of %d" % d.pack])
+	var classes := Goons.classesOf(id)
+	if not classes.is_empty(): rows.push_back(["Plays in", ", ".join(classes.map(Goons.className))])
 	rows.push_back(["You've crushed", DriverCard.formatCoins(SaveManager.playerData.goonsCrushed.get(String(id), 0))])
 	statTable(rows)
 
@@ -912,19 +914,25 @@ func carTraits(info: CarInfo) -> String:
 
 #---------- levels ----------
 
-#Every level in the registry (Levels, LevelDef); unlocks and beaten modes come from the save's entry at the same index
+#Every level in the registry (Levels, LevelDef), grouped by region (Territories), in road order; unlocks and
+#beaten modes come from the save's entry at the same index
 func buildLevels() -> void:
 	var levels = SaveManager.playerData.levels
 	var open = range(levels.size()).filter(func(i): return isLevelOpen(i)).size()
 	progressLabel.text = "LEVELS OPEN  %d / %d" % [open, levels.size()]
-	section("LEVELS", "%d / %d open" % [open, levels.size()])
-	var g = grid(2)
-	for i in levels.size():
-		var def := Levels.defAt(i)
-		var b = tile(g, {"kind": "level", "key": i, "stretch": TextureRect.STRETCH_KEEP_ASPECT_COVERED, "inset": 4.0},
-			null, "%d   %s" % [i + 1, levelName(i).to_upper()], Vector2(334, 200))
-		if not isLevelOpen(i): b.get_node("art").modulate = Color(0.35, 0.35, 0.35)
-		loadThen(def.poster if def else str(levels[i].get("image", "")), setTileArt.bind(b))
+	for region in Territories.ORDER:
+		var ids := Territories.levelsOf(region).filter(func(id): return Levels.indexOf(id) >= 0 && Levels.indexOf(id) < levels.size())
+		var here := ids.filter(func(id): return isLevelOpen(Levels.indexOf(id))).size()
+		section("%d  %s" % [Territories.indexOf(region) + 1, Territories.displayName(region).to_upper()],
+			"%s  -  %d / %d open" % [Goons.className(Territories.classOf(region)), here, ids.size()], Territories.color(region))
+		var g = grid(2)
+		for id in ids:
+			var i := Levels.indexOf(id)
+			var def := Levels.defAt(i)
+			var b = tile(g, {"kind": "level", "key": i, "stretch": TextureRect.STRETCH_KEEP_ASPECT_COVERED, "inset": 4.0},
+				null, "%s   %s" % [Levels.stopText(i), levelName(i).to_upper()], Vector2(334, 200))
+			if not isLevelOpen(i): b.get_node("art").modulate = Color(0.35, 0.35, 0.35)
+			loadThen(def.poster if def else str(levels[i].get("image", "")), setTileArt.bind(b))
 
 static func isLevelOpen(index: int) -> bool:
 	return SaveManager.playerData.levels[index].unlocked && not (Root.IS_DEMO && index >= Root.DEMO_LEVEL_COUNT)
@@ -942,13 +950,15 @@ func levelDetail(entry: Dictionary) -> void:
 	loadThen(def.poster if def else str(level.get("image", "")), setTexture.bind(art)) #bound, not captured: the card may be gone by then
 	var status = ["OPEN", HudTheme.OK] if isLevelOpen(index) else (["NOT IN DEMO", HudTheme.MUTED] if level.unlocked else ["LOCKED", HudTheme.BAD])
 	var chips = [status]
-	if def: chips.push_front(["ACT %d" % def.act, HudTheme.RIM])
-	titleRow("%d  %s" % [index + 1, levelName(index).to_upper()], chips)
+	if def:
+		if def.isFinale(): chips.push_front(["FINALE", HudTheme.GOLD])
+		chips.push_front([Territories.displayName(def.region).to_upper(), Territories.color(def.region)])
+	titleRow("%s  %s" % [Levels.stopText(index), levelName(index).to_upper()], chips)
 	if not isLevelOpen(index) && level.unlocked == false: paragraph(Root.openRuleText(SaveManager.playerData.levels[index - 1] if index > 0 else {}) + ".", "MutedLabel")
 	if def:
 		if def.blurb != "": paragraph(def.blurb)
-		var grammar: String = Levels.GRAMMAR_TEXT.get(def.grammar, "")
-		if grammar != "": paragraph(grammar, "MutedLabel")
+		var land := Landscapes.get_def(def.landscape)
+		if land && land.text != "": paragraph("%s: %s" % [land.displayName, land.text], "MutedLabel")
 		factRow("BARRIER", def.barrier, HudTheme.RIM)
 		factRow("SURFACES", def.surfaces, HudTheme.RIM)
 	var beatRow = HBoxContainer.new()
@@ -972,33 +982,28 @@ func levelDetail(entry: Dictionary) -> void:
 		["Giants", "%d%% at first, rising" % clampi(stats.giants, 0, 100), clampf(stats.giants, 0.0, 100.0)],
 	])
 	var label = Label.new()
-	label.text = "WHO HOLDS THE LAND"
+	label.text = "WHO LIVES HERE"
 	label.theme_type_variation = "MutedLabel"
 	detail.add_child(label)
-	var road = FactionRoad.new()
-	road.band = def.factionBand
-	road.custom_minimum_size = Vector2(0, 58)
-	detail.add_child(road)
-	var rows = []
-	for f in factionsOn(def):
-		var names = LevelRoster.rosterFor(def, f).map(func(id): return Goons.DATA[id].name if isDiscovered(id) else "???")
-		rows.push_back([Goons.factionName(f), ", ".join(names)])
-	statTable(rows)
+	statTable(regionRows(def))
 
 ## The level's clock and starting spawn tuning, as levelRoot copies them from the def
 static func levelStats(def: LevelDef) -> Dictionary:
 	return {"seconds": float(def.seconds), "spawn": def.spawnTimer, "giants": def.giantOdds}
 
-## The factions that can hold land on the level: those its faction band reaches (the band clamps the jittered score)
-static func factionsOn(def: LevelDef) -> Array:
-	var out := []
-	var low := LevelRoster.factionForScore(minf(def.factionBand.x, def.factionBand.y))
-	var high := LevelRoster.factionForScore(LevelRoster.bandTop(def.factionBand))
-	for f in range(low, high + 1):
-		var source := LevelRoster.rosterFaction(def, f)
-		if source == f: out.push_back(f)
-		elif not source in out: out.push_back(source)
-	return out
+## Who lives on a level: its region, the region's class, the line-up (??? until met) and an elite region's
+## strength step
+static func regionRows(def: LevelDef) -> Array:
+	var rows := [["Region", "%s  (%d of %d)" % [Territories.displayName(def.region), def.stop, Territories.STOPS]],
+		["Class", Goons.className(Territories.classOf(def.region))],
+		["Line-up", ", ".join(LevelRoster.lineupFor(def).map(func(id): return Goons.DATA[id].name if isDiscovered(id) else "???"))]]
+	var step := Territories.step(def.region)
+	var parts := []
+	for key in [["speed", "faster"], ["damage", "harder hits"], ["crush", "tougher to crush"]]:
+		var x := float(step.get(key[0], 1.0))
+		if x > 1.0: parts.push_back("+%d%% %s" % [roundi((x - 1.0) * 100.0), key[1]])
+	if not parts.is_empty(): rows.push_back(["Elite", ", ".join(parts)])
+	return rows
 
 #---------- pickups ----------
 
@@ -1314,7 +1319,7 @@ func unlockRows(id: String) -> void:
 
 #---------- modes ----------
 
-const MODE_ORDER := [Root.gameModes.GOONCRUSHER, Root.gameModes.SPRINT, Root.gameModes.GOONPOCALYPSE, Root.gameModes.MARATHON, Root.gameModes.DEFENSE]
+const MODE_ORDER := Root.MODE_PATH
 
 func buildModes() -> void:
 	var available = MODE_ORDER.filter(func(m): return Root.isModeAvailable(m)).size()
@@ -1473,35 +1478,3 @@ class Glow extends Control:
 			falloff.width = 256
 			falloff.height = 256
 		draw_texture_rect(falloff, Rect2(Vector2.ZERO, size), false, color)
-
-#who holds the land along the road out from the start on one level (LevelRoster.factionScore, clamped to
-#the level's faction band): each slice is coloured by the chance of each faction there, jitter included
-class FactionRoad extends Control:
-	const CHUNKS := 9.0
-	var band := Vector2(0.0, 3.6)
-
-	func _draw() -> void:
-		var bar = Rect2(0, 4, size.x, 22)
-		var slices := 90
-		for i in slices:
-			var chunks = (i + 0.5) / slices * CHUNKS
-			var score = chunks * Goons.DISTANCE_WEIGHT #the band clamps the jittered score
-			var j = Goons.FACTION_JITTER
-			var wild = 1.0 if band.y <= Goons.WILD_BELOW else (0.0 if band.x >= Goons.WILD_BELOW else clampf((Goons.WILD_BELOW - score + j) / (2.0 * j), 0.0, 1.0))
-			var scrap = 1.0 if band.x >= Goons.TRIBE_BELOW else (0.0 if band.y <= Goons.TRIBE_BELOW else clampf((score - Goons.TRIBE_BELOW + j) / (2.0 * j), 0.0, 1.0))
-			var tribe = maxf(0.0, 1.0 - wild - scrap)
-			var color = FACTION_COLORS[0] * wild + FACTION_COLORS[1] * tribe + FACTION_COLORS[2] * scrap
-			color.a = 1.0
-			var w = size.x / slices
-			draw_rect(Rect2(bar.position.x + i * w, bar.position.y, w + 0.5, bar.size.y), color)
-		draw_rect(bar, Color(0, 0, 0, 0.6), false, 2.0)
-		HudTheme.text(self, Vector2(0, 50), "START", 15, HudTheme.MUTED, HORIZONTAL_ALIGNMENT_LEFT, 4)
-		HudTheme.text(self, Vector2(size.x, 50), "FAR OUT", 15, HudTheme.MUTED, HORIZONTAL_ALIGNMENT_RIGHT, 4)
-		var names = Goons.FACTION_NAMES.map(func(n): return n.to_upper())
-		var total := 0.0
-		for name in names: total += HudTheme.textWidth(name, 14) + 30.0
-		var x = (size.x - total) * 0.5
-		for f in names.size():
-			draw_rect(Rect2(x, 38, 10, 10), FACTION_COLORS[f])
-			HudTheme.text(self, Vector2(x + 15, 50), names[f], 14, HudTheme.TEXT, HORIZONTAL_ALIGNMENT_LEFT, 4)
-			x += HudTheme.textWidth(names[f], 14) + 30.0

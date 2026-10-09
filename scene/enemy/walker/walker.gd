@@ -89,6 +89,7 @@ func _ready():
 	savedLayers = Vector2i(collision_layer, collision_mask)
 	motion_mode = MOTION_MODE_FLOATING #top-down, like the car: no floor, wall or ceiling sorting in move_and_slide
 	bindSprite(sprite)
+	applyStrength(Root.levelRoot.strength if is_instance_valid(Root.levelRoot) && Root.levelRoot is Level else Territories.NO_STEP)
 	if isGiant:
 		scale *= GIANT_SCALE
 		speed *= GIANT_SPEED
@@ -104,6 +105,14 @@ func _ready():
 	verb = GoonVerbs.make(def.get("verb", &"lunge"), self)
 	verb.setup()
 	if is_instance_valid(Root.spawnManager) && Root.spawnManager.isNight: setNight(true)
+
+## The region's elite strength step (Territories.step, Level.strength): faster, harder-hitting goons that need
+## a faster hit to crush. A head-on armor that no speed beats (the Plowboss's 99999) stays as it is.
+func applyStrength(step: Dictionary) -> void:
+	speed *= float(step.get("speed", 1.0))
+	attackDamage *= float(step.get("damage", 1.0))
+	crushSpeed *= float(step.get("crush", 1.0))
+	if frontArmor > 0.0 && frontArmor < 9999.0: frontArmor *= float(step.get("crush", 1.0))
 
 const RING_TEXTURE = preload("res://texture/fx/circle_05.png")
 

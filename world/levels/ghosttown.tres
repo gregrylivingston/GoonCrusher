@@ -1,0 +1,43 @@
+[gd_resource type="Resource" script_class="LevelDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/level_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"ghosttown"
+displayName = "Ghost Town"
+poster = "res://world/art/posters/city.png"
+region = &"raiders"
+stop = 2
+order = 11
+blurb = "Raiders looting a western town: wide dirt streets, timber fronts, tumbleweeds. Slick vans oil the main street."
+barrier = "Building blocks wall every street, and canals cut across the grid, bridged at each street."
+surfaces = "Asphalt streets, concrete lots, park grass. The canals drown."
+startPosition = Vector2(2129, 1227)
+seconds = 350
+spawnTimer = 4.1
+giantOdds = -2
+escalationSpeed = 0.146
+sprintSlack = 1.37
+rules = {}
+lineup = Array[StringName]([&"karter", &"slick", &"torcher", &"sidecar"])
+landscape = &"ghosttown"
+dressing = {}
+motifs = {}
+pickupTable = {
+&"coinline": 35,
+&"fuel": 45,
+&"health": 8,
+&"purse": 5,
+&"slot": 4,
+&"none": 103
+}
+pickupsPerChunk = 2
+palette = {
+&"ground": Color(0.46, 0.45, 0.43, 1),
+&"accent": Color(0.38, 0.36, 0.34, 1),
+&"asphalt": Color(0.22, 0.22, 0.24, 1),
+&"park": Color(0.38, 0.5, 0.3, 1)
+}
+nightTint = Color(0.06, 0.06, 0.1, 1)
+ambience = &"city"

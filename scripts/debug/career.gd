@@ -23,7 +23,7 @@ class_name CareerPilot extends Node
 const MENU_SCENE := "res://scene/player/menu/main/main2.tscn"
 const GARAGE := 0 #main2.Screen
 const SETUP := 1
-const MODE_ORDER := [Root.gameModes.GOONCRUSHER, Root.gameModes.SPRINT, Root.gameModes.MARATHON, Root.gameModes.DEFENSE, Root.gameModes.GOONPOCALYPSE] #main2.MODE_ORDER
+const MODE_ORDER := Root.MODE_PATH #the medallions, left to right (main2.MODE_ORDER)
 const SOFTLOCK_MS := 10000
 
 var playtest: Node #the Playtest autoload, which records the runs (null under autopilot)

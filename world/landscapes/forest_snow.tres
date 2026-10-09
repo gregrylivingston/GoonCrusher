@@ -1,0 +1,50 @@
+[gd_resource type="Resource" script_class="Landscape" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/landscape.gd" id="1_land"]
+
+[resource]
+script = ExtResource("1_land")
+id = &"forest_snow"
+displayName = "Snowy Pine Forest"
+grammar = &"meadow"
+text = "Snowed-in pines and clearings round a frozen creek. Deep drifts drag at the wheels."
+features = {
+"creekFrequency": 4e-05,
+"creekWidth": 1100.0,
+"poolThreshold": 0.45,
+"poolWidth": 520.0,
+"fordWidth": 1200.0,
+"trackWidth": 420.0,
+"barrierCap": 0.15,
+"props": 20,
+"motifs": 1.5
+}
+baseTerrain = [7, 7, 6, 7, 15]
+accents = [9, 15]
+terrains = [6, 11, 7, 15]
+materials = {
+6: "needles"
+}
+roofMaterial = "rock"
+wallStrip = "snow_ridge"
+wallTint = Color(1.12, 1.14, 1.2, 1)
+organic = 1
+roofDecor = &""
+waterLook = &"water"
+waterGlow = Color(0, 0, 0, 0)
+waterFoam = Color(1, 1, 1, 1)
+dressing = {
+&"pine": 10,
+&"rock_white": 2,
+&"rock_ice": 1,
+&"stump": 2,
+&"logpile": 2,
+&"cabin": 2,
+&"snowcat": 1
+}
+motifs = {
+&"pinestand": 4,
+&"cabincamp": 2
+}
+nameSecond = Array[String](["Pines", "Timberline", "Drift", "Hollow", "Clearing", "Camp", "Thicket", "Stand", "Ridge", "Larches"])
+fallback = &"mountain"

@@ -28,6 +28,32 @@ func test_hits_wear_the_system_on_the_side_that_hit():
 	assert_eq(Car.zoneForHit(Vector2(0, -1), Vector2(40, 44), half), "steering", "side, ahead of the middle")
 	assert_eq(Car.zoneForHit(Vector2(0, 1), Vector2(-40, -44), half), "tires", "side, behind the middle")
 
+#health damage (docs/CAR_ART.md, "Health damage"): a bare car takes the full amount, a little armor helps
+#a lot, and no armor makes the car immune
+func test_armor_helps_early_but_never_makes_the_car_immune():
+	assert_almost_eq(Car.armorFactor(0), 1.0, 0.001, "no armor: the full hit")
+	assert_gt(0.85, Car.armorFactor(10), "a few points already take a good share off")
+	assert_gt(0.75, Car.armorFactor(20), "a fully upgraded bare car")
+	var gainEarly: float = Car.armorFactor(0) - Car.armorFactor(20)
+	var gainLate: float = Car.armorFactor(70) - Car.armorFactor(90)
+	assert_gt(gainEarly, gainLate * 4.0, "the first 20 points matter far more than 70 to 90")
+	assert_gt(Car.armorFactor(Car.STAT_CAP), 0.45, "the in-run cap still takes nearly half")
+	assert_gt(Car.armorFactor(100000), Car.ARMOR_FLOOR - 0.001, "never under the floor")
+	var last := 2.0
+	for a in range(0, 200, 5):
+		assert_gt(last, Car.armorFactor(a), "more armor always helps a little")
+		last = Car.armorFactor(a)
+
+func test_goon_hits_hurt_a_bare_car():
+	var car = makeCar("sedan")
+	car.armor = 0
+	car.damage(3.0) #a typical goon attack (Goons.DATA dmg)
+	assert_almost_eq(car.health, 97.0, 0.001, "a bare car loses the hit's full damage")
+	car.armor = Car.STAT_CAP
+	car.health = 100.0
+	car.damage(3.0)
+	assert_between(car.health, 98.0, 99.0, "the most armor still loses more than a point")
+
 func test_wall_wear_has_a_cooldown_per_system():
 	var car = makeCar()
 	car.wearSystem("engine", 20.0)

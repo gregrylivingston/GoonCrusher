@@ -17,7 +17,7 @@ func world(id: StringName, worldSeed: int) -> Array:
 	var key := "%s:%d" % [id, worldSeed]
 	if not maps.has(key):
 		var def := Levels.get_def(id)
-		var offset := Level.sprintOffsetPx(def.seconds, WorldGen.hashf(worldSeed, WorldGen.TAG_SPRINT, 0, 0) * 2.0 - 1.0)
+		var offset := Level.sprintOffsetPx(Level.sprintDistance(def), WorldGen.hashf(worldSeed, WorldGen.TAG_SPRINT, 0, 0) * 2.0 - 1.0)
 		var map := WorldMap.build(worldSeed, def, "sprint", offset)
 		var skin := WorldSkin.new(def)
 		var lots := [TileManager.lotRect(map.stationChunk)] if map.stationChunk != WorldGen.NO_CHUNK else []
@@ -39,7 +39,7 @@ func recipeFor(map: WorldMap, chunk: Vector2i) -> Dictionary:
 func test_recipes_keep_their_budgets_and_rules():
 	var worst := {}
 	var timing := PackedStringArray()
-	for id in Levels.ORDER:
+	for id in worldLevels():
 		var maxima := {"nodes": 0, "occluders": 0, "pieces": 0, "props": 0, "pickups": 0, "decor": 0, "lines": 0}
 		var usec := 0
 		var count := 0
@@ -143,7 +143,7 @@ func test_the_same_input_gives_the_same_recipe():
 	for id in [&"prairie", &"bayou", &"city", &"crusher"]:
 		var w := world(id, 2)
 		var map: WorldMap = w[0]
-		var other := WorldMap.build(2, Levels.get_def(id), "sprint", Level.sprintOffsetPx(Levels.get_def(id).seconds, WorldGen.hashf(2, WorldGen.TAG_SPRINT, 0, 0) * 2.0 - 1.0))
+		var other := WorldMap.build(2, Levels.get_def(id), "sprint", Level.sprintOffsetPx(Level.sprintDistance(Levels.get_def(id)), WorldGen.hashf(2, WorldGen.TAG_SPRINT, 0, 0) * 2.0 - 1.0))
 		other.recipeContext = w[1]
 		for chunk in sampleChunks(map):
 			var a := recipeFor(map, chunk)
@@ -314,7 +314,7 @@ func test_recipe_profile():
 	var recipeAll := 0
 	var worstAll := 0
 	var n := 0
-	for id in Levels.ORDER:
+	for id in worldLevels():
 		var w := world(id, 1)
 		var map: WorldMap = w[0]
 		var start := WorldGen.chunkOf(map.startPosition)
@@ -366,7 +366,7 @@ func test_recipe_profile():
 #a profile of the raster's parts: making the WorldField (noise objects, lattices) and sampling it 924 times
 func test_raster_profile():
 	var parts := PackedStringArray()
-	for id in Levels.ORDER:
+	for id in worldLevels():
 		var w := world(id, 1)
 		var map: WorldMap = w[0]
 		var t0 := Time.get_ticks_usec()
@@ -412,11 +412,11 @@ func test_apply_step_profile():
 		parts.push_back("%s first %.2f median %.2f" % [id, times[0] / 1000.0, rest[4] / 1000.0])
 	print("  APPLY_PROFILE " + ", ".join(parts))
 
-#every district gets a landmark cell near its middle, and the recipe of that chunk stands the faction's
+#every district gets a landmark cell near its middle, and the recipe of that chunk stands the region's
 #landmark there (on open ground, within the budgets, checked like any prop)
 func test_districts_get_their_landmarks():
 	var report := PackedStringArray()
-	for id in Levels.ORDER:
+	for id in worldLevels():
 		var map: WorldMap = world(id, 1)[0]
 		var withCell := 0
 		for d in map.districts:

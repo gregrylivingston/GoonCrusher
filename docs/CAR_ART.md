@@ -48,8 +48,18 @@ Each car also has a "rust and dust" side profile in the weathered paint (look A)
 | tank | rear hits | oil in `fuelBurn`, floor 0.4, plus `fuelLeak` below 50% (up to 0.006 fuel per tick) |
 
 - **Mapping:** `zoneForHit(normal, point, halfWidth)` works in car space. The normal points from the obstacle to the car: x < -0.6 is a front hit, x > 0.6 a rear hit. A front hit is a corner when |y| > 45% of the half width.
-- **Wall wear:** `ZONE_WEAR_PER_SPEED` (0.035) × speed × 100 / (armor + 100), so a 500 px/s hit takes 17.5 at armor 0. Hits under 80 px/s don't wear. Each system has a 30-tick cooldown, so scraping along a wall can't empty it.
-- **Goons:** a crush never wears the car. A goon bump below crush speed takes `GOON_SCUFF` (2) from the side it hit. Goon attacks only take health.
+- **Wall wear:** `ZONE_WEAR_PER_SPEED` (0.035) × speed × `armorFactor(armor)`, so a 500 px/s hit takes 17.5 at armor 0. Hits under 80 px/s don't wear. Each system has a 30-tick cooldown, so scraping along a wall can't empty it.
+- **Goons:** a crush never wears the car. A goon bump below crush speed takes `GOON_SCUFF` (2) from the side it hit. A goon attack takes health and wears the system it targets by 3 × its `dmg` (`Walker.hitCar`).
+
+### Health damage
+
+Health is 100. `damage(amount)` takes `amount` as the health a car with no armor loses, times `armorFactor(armor)` = `ARMOR_FLOOR + (1 - ARMOR_FLOOR) × ARMOR_KNEE / (ARMOR_KNEE + armor)` (0.4 and 20). A little armor helps a lot and a lot never makes the car immune:
+
+| Armor | 0 | 10 | 20 | 50 | 90 | 150 (in-run cap) |
+|---|---|---|---|---|---|---|
+| Share of a hit taken | 100% | 80% | 70% | 57% | 51% | 47% |
+
+What things cost a bare car: a goon attack its `dmg` in `Goons.DATA` (1 to 12, ×2 for a giant; a typical lunge 3, a Wrecker 12); a crush or bump `GOON_CONTACT_DAMAGE` (0.35, once per goon per 30 ticks); a wall hit `WALL_DAMAGE_PER_SPEED` (0.012) × speed × impact (6 for a 500 px/s head-on); a wall scrape at most 0.3 every 15 ticks; logs, crates and air drops 6, 8 and 10 (`Spill`); a bee sting 0.5 every 0.4 s. A Repair Kit heals 20. `loseHealth` (a Hot Potato) skips armor and shields. A Bubble Shield soaks everything but only spends a charge on hits over 5.
 - **AI:** the factors are applied inside `integrate()`, so the AI driver's prediction matches.
 - **Repair:** the station repairs everything (`repairAll`) in the modes where it doesn't end the run. Destroying the car sets every system to 0, so the art goes fully wrecked.
 

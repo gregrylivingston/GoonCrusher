@@ -137,17 +137,6 @@ func test_gift_boxes_are_counted_for_unlocks():
 	assert_eq(Unlocks.progressOf("boxes:5").have, 4, "boxes add up over runs")
 	assert_eq(int(data.meta.lifetime.bestBox), 3, "and the best run is kept")
 
-func test_later_acts_need_medium_wins_to_open_the_next_level():
-	var data = PlayerData.new()
-	SaveManager.playerData = data
-	var quarry: Dictionary = data.levels[Levels.indexOf(&"quarry")] #act 2: one of the three on Medium
-	assert_eq(Root.mediumToOpenNext(quarry), 1)
-	assert_eq(Root.mediumToOpenNext(data.levels[Levels.indexOf(&"city")]), 2, "act 3 asks for two")
-	assert_eq(Root.mediumToOpenNext(data.levels[0]), 0, "act 1 asks for none")
-	for mode in [M.GOONCRUSHER, M.SPRINT, M.GOONPOCALYPSE]: SaveManager.passTier(quarry, mode, ModeTiers.EASY)
-	assert_false(Root.opensNextLevel(quarry), "three Easy wins aren't enough in act 2")
-	assert_eq(Root.openLeftText(quarry), "Win 1 more on Medium here")
-	SaveManager.passTier(quarry, M.SPRINT, ModeTiers.MEDIUM)
-	assert_true(Root.opensNextLevel(quarry))
-	assert_eq(Root.openLeftText(quarry), "")
-	assert_true(Root.openRuleText(quarry).contains("1 on Medium"))
+func test_level_step_spreads_the_pay_over_thirty_levels():
+	assert_almost_eq(ModeTiers.levelFactor(29), 1.0 + 0.35 * 7, 0.05, "the 30th level pays what the 8th paid before the road atlas")
+	assert_gt(ModeTiers.levelFactor(15), ModeTiers.levelFactor(14))

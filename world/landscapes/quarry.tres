@@ -1,0 +1,54 @@
+[gd_resource type="Resource" script_class="Landscape" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/landscape.gd" id="1_land"]
+
+[resource]
+script = ExtResource("1_land")
+id = &"quarry"
+displayName = "Quarry"
+grammar = &"quarry"
+text = "Haul roads between the pit, the junk fort and the tyre camps. Mind the mud pits."
+features = {
+"pieceCells": 10.0,
+"pitChance": 0.3,
+"pitRadius": 3200.0,
+"pitRamps": 2,
+"fortChance": 0.25,
+"fortRadius": 2200.0,
+"fortGates": 3,
+"tyreCamps": 0.25,
+"campRadius": 1500.0,
+"rampWidth": 1000.0,
+"haulFrequency": 4.5e-05,
+"haulRoadWidth": 900.0,
+"mudPitRadius": 200.0
+}
+baseTerrain = [6, 2, 6, 16, 6]
+accents = [2, 14, 16]
+terrains = [6, 2, 16, 14, 4]
+materials = {}
+roofMaterial = "rock"
+wallStrip = "cliff_lip"
+wallTint = Color(1.04, 0.99, 0.93, 1)
+organic = 1
+roofDecor = &""
+waterLook = &"water"
+waterGlow = Color(0, 0, 0, 0)
+waterFoam = Color(1, 1, 1, 1)
+dressing = {
+&"rock": 4,
+&"boulder": 2,
+&"stump": 1,
+&"tufts": 4,
+&"tyres": 3,
+&"crane": 1,
+&"shack": 2,
+&"barricade": 1,
+&"barrel": 1,
+&"watertower": 1
+}
+motifs = {
+&"junkyard": 1
+}
+nameSecond = Array[String](["Pit", "Diggings", "Quarry", "Cut", "Spoil", "Workings", "Tailings", "Dig", "Shaft", "Benches"])
+fallback = &""

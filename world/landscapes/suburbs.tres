@@ -1,0 +1,55 @@
+[gd_resource type="Resource" script_class="Landscape" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/landscape.gd" id="1_land"]
+
+[resource]
+script = ExtResource("1_land")
+id = &"suburbs"
+displayName = "Suburbs"
+grammar = &"city"
+text = "Houses, lawns, hedge and fence lines round the back yards, and pools. Cul-de-sacs off every street."
+features = {
+"buildingShare": 0.35,
+"parkShare": 0.35,
+"lotShare": 0.15,
+"canalShare": 0.08,
+"canalWidth": 1040.0,
+"sidewalk": 110.0,
+"sideStreetChance": 0.7,
+"barrierCap": 0.35,
+"motifs": 0.4,
+"props": 12,
+"hedgeDensity": 0.12,
+"fenceDensity": 0.12,
+"fieldSpacing": 1200.0
+}
+baseTerrain = [0, 8, 0, 16, 0]
+accents = [0, 5]
+terrains = [8, 16, 0, 5, 18, 17]
+materials = {
+0: "lawn",
+17: "roof_shingle"
+}
+roofMaterial = "roof_shingle"
+wallStrip = "shingle_edge"
+wallTint = Color(1, 1, 1, 1)
+organic = 0.3
+roofDecor = &""
+waterLook = &"water"
+waterGlow = Color(0, 0, 0, 0)
+waterFoam = Color(1, 1, 1, 1)
+dressing = {
+&"oak": 4,
+&"hedge": 3,
+&"fence": 3,
+&"tufts": 4,
+&"hydrant": 2,
+&"busstop": 1,
+&"sign": 1,
+&"dumpster": 1
+}
+motifs = {
+&"orchard": 1
+}
+nameSecond = Array[String](["Lane", "Court", "Drive", "Grove", "Close", "Terrace", "Crescent", "Gardens", "Estates", "Park"])
+fallback = &"city"

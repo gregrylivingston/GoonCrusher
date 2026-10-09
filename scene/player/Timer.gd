@@ -38,7 +38,24 @@ func _process(delta):
 		return
 	showTime()
 
-	if int(Root.levelRoot.seconds )% daylength == 0:dayNightCycle()
+	var share := nightShare()
+	if share >= 0.0: nightByShare(share)
+	elif int(Root.levelRoot.seconds )% daylength == 0:dayNightCycle()
+
+#the level's rules.nightShare (LevelDef.rules): the share of each two-daylength cycle that is night, or -1
+#when the level keeps the old cycle (night falls and lifts every daylength seconds)
+func nightShare() -> float:
+	var def = Root.levelRoot.def
+	if def == null || not def.rules.has("nightShare"): return -1.0
+	return clampf(float(def.rules.nightShare), 0.0, 1.0)
+
+#day first, then night for `share` of each cycle, on the run clock
+func nightByShare(share: float) -> void:
+	var cycle: float = daylength * 2.0
+	var night := fposmod(Root.levelRoot.elapsed, cycle) >= cycle * (1.0 - share)
+	if night != Root.levelRoot.isDaytime: return #already there
+	Root.levelRoot.isDaytime = not night
+	Root.levelRoot.setNighttime(night)
 
 #a countdown shows the whole seconds left, rounded up so 0:00 means time is up; a count-up shows
 #whole seconds elapsed. Never below 0:00.

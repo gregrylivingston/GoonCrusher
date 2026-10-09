@@ -550,7 +550,7 @@ static func pickupValue(kind: String, quantity: float, fuel: float, health: floa
 static func goonValue(neighbours: int, base := 12.0, pack := 4.0) -> float:
 	return base + pack * mini(neighbours, 6)
 
-#Every crush costs health (the car's own damage(5) on contact), so crushing is paid for out of a
+#Every crush costs health (the car's own GOON_CONTACT_DAMAGE on contact), so crushing is paid for out of a
 #budget: below the reserve the car stops hunting and steers around goons. Countdown keeps a reserve
 #for the time still to survive; the others a flat one.
 func protecting() -> bool:

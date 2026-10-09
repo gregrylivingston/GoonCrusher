@@ -4,10 +4,11 @@ extends Node
 #The demo and the full game share this file: load_data() merges each save with the current defaults
 #(migrate()) before anything reads it.
 
-const SAVE_VERSION := 7 #6: the unlock system (Unlocks, meta.unlocks, meta.lifetime, car gem prices). 7: mode tiers (ModeTiers)
-#Saves older than FIRST_KEPT_VERSION start over (the author's call when the unlocks went in): the old file is
-#copied beside the save as <name>.v<version>.tres, then a new save replaces it.
-const FIRST_KEPT_VERSION := 6
+const SAVE_VERSION := 8 #6: the unlock system (Unlocks, meta.unlocks, meta.lifetime, car gem prices). 7: mode tiers (ModeTiers).
+#8: the road atlas (30 levels in 6 regions, the Marathon road, meta.carClears)
+#Saves older than FIRST_KEPT_VERSION start over (the author's call when the unlocks went in, and again for the road
+#atlas): the old file is copied beside the save as <name>.v<version>.tres, then a new save replaces it.
+const FIRST_KEPT_VERSION := 8
 var save_path = "user://saveData_0.1.tres"
 var playerData: PlayerData
 var saveTimer: Timer
@@ -205,21 +206,28 @@ func selectPreviousCar():
 	return playerData.cars[playerData.selectedCar]
 
 
-#A won run: the mode is beaten here on the run's tier (and the tiers below it). Once Root.modesToOpenNext(level)
-#modes are beaten (Countdown, Sprint and one more), the next level opens and the menu moves to it; until then
-#the menu offers this level's next unbeaten mode. Levels already open stay open (saves from before the rule
-#keep theirs). Returns the best tier before this run, for the first-clear bonus (ModeTiers.firstClear).
-func currentLevelPassed() -> int:
-	var level: Dictionary = playerData.levels[playerData.selectedLevel]
-	var before := passTier(level, playerData.gameMode, playerData.gameTier)
-	var next = playerData.selectedLevel + 1
+#A won run: the mode is beaten on the RUN's level on the run's tier (and the tiers below it), and the run's car
+#clears it there (meta.carClears). The run's level, mode and tier come from the level that ran (Level.runLevel,
+#runMode, tier; the menu's selection may have moved since), else the menu's selection (tests, tools). Once the
+#Marathon is won (on Medium at a region's finale: Root.opensNextLevel) the next level opens and the menu moves
+#to it; until then the menu offers this level's next unbeaten mode. Levels already open stay open.
+#Returns the best tier before this run, for the first-clear bonus (ModeTiers.firstClear).
+func currentLevelPassed(levelIndex := -1, mode := -1, tier := -1) -> int:
+	var run = Root.levelRoot if is_instance_valid(Root.levelRoot) && Root.levelRoot is Level && Root.levelRoot.is_inside_tree() else null
+	if levelIndex < 0: levelIndex = run.runLevel if run else playerData.selectedLevel
+	if mode < 0: mode = run.runMode if run else playerData.gameMode
+	if tier < 0: tier = run.tier if run else playerData.gameTier
+	levelIndex = clampi(levelIndex, 0, playerData.levels.size() - 1)
+	var level: Dictionary = playerData.levels[levelIndex]
+	var before := passTier(level, mode, tier)
+	var next = levelIndex + 1
 	if Root.opensNextLevel(level) && next < playerData.levels.size() && not playerData.levels[next].unlocked:
 		playerData.levels[next].unlocked = true
 		#the demo unlocks the level for the full game but doesn't open the menu on a level it can't play
 		if not (Root.IS_DEMO && next >= Root.DEMO_LEVEL_COUNT):
 			playerData.selectedLevel = next
 			playerData.gameMode = Root.gameModes.GOONCRUSHER
-	else:
+	elif playerData.selectedLevel == levelIndex:
 		var unbeaten = Root.MODE_PATH.filter(func(m): return not level.gamemodeBeat.get(m, false) && Root.isModePlayable(level, m))
 		if not unbeaten.is_empty(): playerData.gameMode = unbeaten[0]
 	save_character_data()
@@ -242,15 +250,78 @@ func setGameTier(tier: int) -> void:
 	playerData.gameTier = tier
 	save_character_data()
 
-## Modes still to beat on a level before the next one opens (0 when it is open or there is none)
-func modesToGo(index: int) -> int:
-	if index + 1 >= playerData.levels.size() || playerData.levels[index + 1].unlocked: return 0
-	return maxi(Root.modesToOpenNext(playerData.levels[index]) - Root.modesBeaten(playerData.levels[index]), 0)
-
 ## What is left on a level before the next one opens ("" when it is open or there is none): Root.openLeftText
 func openLeft(index: int) -> String:
 	if index + 1 >= playerData.levels.size() || playerData.levels[index + 1].unlocked: return ""
 	return Root.openLeftText(playerData.levels[index])
+
+#--- car clears (meta.carClears) ----------------------------------------------------------------
+#Which cars have won each mode on each level, and on which tier: meta.carClears[level id][mode][car name] =
+#the best tier (ModeTiers). A win credits the run's car on that tier and every tier below it, like medals.
+#A car's first clear of a tier pays CAR_CLEAR_SHARE of that tier's first-clear coins x the level step, and
+#the ninth car to clear a mode, level and tier (a Full Garage) pays FULL_GARAGE_GEMS by tier. Placeholders.
+const CAR_CLEAR_SHARE := 0.1
+const FULL_GARAGE_GEMS := [0, 1, 2, 4]
+
+## The best tier `car` has won `mode` on at level `index` (ModeTiers.NONE when none)
+func carClearTier(index: int, mode: int, car: String) -> int:
+	if index < 0 || index >= playerData.levels.size(): return ModeTiers.NONE
+	var byLevel: Dictionary = playerData.meta.get("carClears", {}).get(levelKey(playerData.levels[index]), {})
+	return int(byLevel.get(mode, {}).get(car, ModeTiers.NONE))
+
+## How many cars have won `mode` at level `index` on `tier` or harder
+func carsCleared(index: int, mode: int, tier: int) -> int:
+	if index < 0 || index >= playerData.levels.size(): return 0
+	var byLevel: Dictionary = playerData.meta.get("carClears", {}).get(levelKey(playerData.levels[index]), {})
+	var n := 0
+	var byCar: Dictionary = byLevel.get(mode, {})
+	for car in byCar:
+		if int(byCar[car]) >= tier: n += 1
+	return n
+
+## Every car in the garage has won `mode` at level `index` on `tier` or harder
+func isFullGarage(index: int, mode: int, tier: int) -> bool:
+	return carsCleared(index, mode, tier) >= playerData.cars.size()
+
+## Credits a won run to its car (tier and the tiers below). Returns what it earned: {"tiers": the newly
+## cleared tiers, "coin": the new car clear bonus, "gem": the Full Garage gems, "fullGarage": the tiers that
+## just became a Full Garage}. Nothing is paid here; the results ticket pays it.
+func creditCarClear(index: int, mode: int, tier: int, car: String) -> Dictionary:
+	var out := {"tiers": [], "coin": 0, "gem": 0, "fullGarage": []}
+	if index < 0 || index >= playerData.levels.size() || car == "": return out
+	tier = ModeTiers.clampTier(tier)
+	var before := carClearTier(index, mode, car)
+	if tier <= before: return out
+	var garageBefore := []
+	for t in ModeTiers.TIERS: garageBefore.push_back(isFullGarage(index, mode, t))
+	var clears: Dictionary = playerData.meta.get_or_add("carClears", {})
+	clears.get_or_add(levelKey(playerData.levels[index]), {}).get_or_add(mode, {})[car] = tier
+	for t in range(before + 1, tier + 1):
+		out.tiers.push_back(t)
+		out.coin += carClearCoins(t, index)
+		if not garageBefore[t - 1] && isFullGarage(index, mode, t):
+			out.fullGarage.push_back(t)
+			out.gem += FULL_GARAGE_GEMS[t]
+	save_character_data()
+	return out
+
+## What a car's first clear of `tier` pays at level `index`: a share of the tier's first-clear coins
+static func carClearCoins(tier: int, index: int) -> int:
+	return roundi(ModeTiers.FIRST_CLEAR_COINS[ModeTiers.clampTier(tier)] * CAR_CLEAR_SHARE * ModeTiers.levelFactor(index))
+
+## Car clears on every level and mode (the carclears:<n> condition) and Full Garages (garages:<n>), any tier
+func carClearCount() -> int:
+	var n := 0
+	for byMode in playerData.meta.get("carClears", {}).values():
+		for byCar in byMode.values(): n += byCar.size()
+	return n
+
+func fullGarageCount() -> int:
+	var n := 0
+	for i in playerData.levels.size():
+		for mode in Root.gameModes.values():
+			if isFullGarage(i, mode, ModeTiers.EASY): n += 1
+	return n
 
 var carNameToFind
 func getCarByName(carName):

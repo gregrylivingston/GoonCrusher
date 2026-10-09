@@ -1,0 +1,43 @@
+[gd_resource type="Resource" script_class="LevelDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/level_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"stilttown"
+displayName = "Stilt Town"
+poster = "res://world/art/posters/bayou.png"
+region = &"tribe"
+stop = 2
+order = 6
+blurb = "A lagoon village on stilts with piers and sandbars. Hubcap shields block head-on hits, so go round."
+barrier = "Lakes and braided channels. Boardwalk bridges cross the deep water."
+surfaces = "Mud that drags, moss and grass, shallows that slow you down, deep water that drowns."
+startPosition = Vector2(2129, 1227)
+seconds = 300
+spawnTimer = 4.5
+giantOdds = -10
+escalationSpeed = 0.134
+sprintSlack = 1.43
+rules = {}
+lineup = Array[StringName]([&"grunt", &"hubcap", &"slinger", &"dasher"])
+landscape = &"coast"
+dressing = {}
+motifs = {}
+pickupTable = {
+&"coinline": 38,
+&"fuel": 47,
+&"health": 8,
+&"purse": 5,
+&"slot": 4,
+&"none": 98
+}
+pickupsPerChunk = 2
+palette = {
+&"ground": Color(0.33, 0.4, 0.26, 1),
+&"accent": Color(0.38, 0.33, 0.22, 1),
+&"water": Color(0.18, 0.3, 0.28, 1),
+&"shallows": Color(0.3, 0.4, 0.33, 1)
+}
+nightTint = Color(0.04, 0.08, 0.07, 1)
+ambience = &"bayou"

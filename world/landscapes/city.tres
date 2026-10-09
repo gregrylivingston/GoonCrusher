@@ -1,0 +1,52 @@
+[gd_resource type="Resource" script_class="Landscape" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/landscape.gd" id="1_land"]
+
+[resource]
+script = ExtResource("1_land")
+id = &"city"
+displayName = "City"
+grammar = &"city"
+text = "A street grid between buildings, parks, lots and canals. Bridges cross at the streets."
+features = {
+"buildingShare": 0.45,
+"parkShare": 0.2,
+"lotShare": 0.25,
+"canalShare": 0.1,
+"canalWidth": 1040.0,
+"sidewalk": 110.0,
+"sideStreetChance": 0.5,
+"barrierCap": 0.35,
+"motifs": 0.4,
+"props": 12
+}
+baseTerrain = [16, 8, 16, 0, 16]
+accents = [8, 16, 0]
+terrains = [8, 16, 0, 5, 18, 17]
+materials = {}
+roofMaterial = "roof"
+wallStrip = "roof_edge"
+wallTint = Color(1, 1, 1, 1)
+organic = 0.2
+roofDecor = &"rooftop"
+waterLook = &"water"
+waterGlow = Color(0, 0, 0, 0)
+waterFoam = Color(1, 1, 1, 1)
+dressing = {
+&"oak": 2,
+&"tufts": 3,
+&"dumpster": 2,
+&"busstop": 2,
+&"sign": 1,
+&"hydrant": 3,
+&"manhole": 2,
+&"cone": 2,
+&"streetglow": 3,
+&"paint": 3,
+&"billboard": 1
+}
+motifs = {
+&"pileup": 1
+}
+nameSecond = Array[String](["Heights", "Blocks", "Plaza", "Row", "Square", "Quarter", "Projects", "Downtown", "Avenue", "Docks"])
+fallback = &""

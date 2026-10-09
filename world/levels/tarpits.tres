@@ -1,0 +1,43 @@
+[gd_resource type="Resource" script_class="LevelDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/level_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"tarpits"
+displayName = "Tar Pits"
+poster = "res://world/art/posters/canyon.png"
+region = &"hunting"
+stop = 4
+order = 18
+blurb = "Ash plains with tar pools that bog you down and lava that kills. Lure the heavies across the tar."
+barrier = "Red canyon walls and mesas. A pass opens through them every chunk."
+surfaces = "Hardpan dirt, sand dunes that drag, dry washes that run fast."
+startPosition = Vector2(2129, 1227)
+seconds = 410
+spawnTimer = 3.6
+giantOdds = 10
+escalationSpeed = 0.162
+sprintSlack = 1.29
+rules = {}
+lineup = Array[StringName]([&"bullmoose", &"boulder", &"rammer", &"thunderhoof"])
+landscape = &"volcano"
+dressing = {}
+motifs = {}
+pickupTable = {
+&"coinline": 29,
+&"fuel": 41,
+&"health": 7,
+&"purse": 4,
+&"slot": 3,
+&"none": 116
+}
+pickupsPerChunk = 2
+palette = {
+&"ground": Color(0.62, 0.42, 0.28, 1),
+&"accent": Color(0.7, 0.55, 0.38, 1),
+&"wall": Color(0.48, 0.28, 0.2, 1),
+&"wash": Color(0.72, 0.62, 0.46, 1)
+}
+nightTint = Color(0.1, 0.06, 0.08, 1)
+ambience = &"desert"

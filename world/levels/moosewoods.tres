@@ -1,0 +1,43 @@
+[gd_resource type="Resource" script_class="LevelDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/level_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"moosewoods"
+displayName = "Moose Woods"
+poster = "res://world/art/posters/prairie.png"
+region = &"wilds"
+stop = 5
+order = 4
+blurb = "Dense pines broken by clearings. Herds stampede through the clearings and Bullmoose crash out of the trees."
+barrier = "A creek with deep pools winds through the meadow. Ford it where the shallows are."
+surfaces = "Grass and moss, fast dirt tracks, shallows that slow you down, deep pools that drown. Hedgerows, fences and hay bales smash at speed."
+startPosition = Vector2(2866, 1583)
+seconds = 290
+spawnTimer = 4.6
+giantOdds = -12
+escalationSpeed = 0.132
+sprintSlack = 1.44
+rules = {}
+lineup = Array[StringName]([&"bullmoose", &"thunderhoof", &"tusker", &"yipper"])
+landscape = &"forest"
+dressing = {}
+motifs = {}
+pickupTable = {
+&"coinline": 40,
+&"fuel": 48,
+&"health": 8,
+&"purse": 5,
+&"slot": 4,
+&"none": 95
+}
+pickupsPerChunk = 2
+palette = {
+&"ground": Color(0.42, 0.55, 0.3, 1),
+&"accent": Color(0.5, 0.6, 0.32, 1),
+&"track": Color(0.55, 0.47, 0.33, 1),
+&"water": Color(0.2, 0.38, 0.5, 1)
+}
+nightTint = Color(0.05, 0.07, 0.12, 1)
+ambience = &"meadow"

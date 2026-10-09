@@ -37,11 +37,31 @@ After a bake that adds new PNGs, run `Godot_console.exe --headless --path . --im
 - **Goonopedia:** a goon shows once crushed; the console's `unlock goons` / `lock goons` override that.
 - **Testing:** `-- --faction=wild|tribe|scrap` forces every district's faction, and `-- --goons=a,b,c` forces its three goons. Both work with `--playtest` and `--bench`.
 
+## Classes
+
+The road atlas (docs/WORLD.md, "The levels", "Regions") replaces the faction band, the per-level rosters and `--faction=` above. A goon keeps its faction: its colours, goo, drop weights, the EMP's target and the `crushed:<faction>` unlock counters are unchanged. A **class** is only a list of the goons a region may field (`Goons.CLASSES`, `CLASS_ORDER`, `classMembers`, `className`, `isElite`, `classesOf`):
+
+| Class | Kind | Region | Members |
+|---|---|---|---|
+| `wild` Wild Things | faction | The Wilds | every rank-1+ Wild Thing (12) |
+| `tribe` Goon Tribe | faction | Tribe Country | every rank-1+ Tribe goon (18; the Goonling is spawn-only). Its Yeti and Boulder play in Big Game. |
+| `scrap` Scrap Gang | faction | Raider Road | every Scrap Gang rider (13) |
+| `biggame` Big Game | elite | Hunting Grounds | tusker, thunderhoof, bullmoose, snapper, yeti, boulder, wrecker, rammer, plowboss, harpooner |
+| `swarm` Street Swarm | elite | The Sprawl | rat, yipper, jackalope, bandit, splitter, dasher, gremlin, karter, spoke, sawbot |
+| `warmachine` War Machine | elite | The Works | doomcart, torch, torcher, spitter, slinger, turret, sidecar, boostjack, magnet, foreman |
+
+- **Line-ups:** each level fields 3-6 goons of its region's class (`LevelDef.lineup`; `test_levels.gd` checks every line-up is in its class and that a region's levels field all of its class, except a goon handed to another region's class). `LevelRoster.lineupFor` validates it (unknown ids and rank-0 goons dropped, an empty one falls back to the class).
+- **A district's three goons** (`LevelRoster.pickGoons`): slot 1 one of the line-up's lowest rank, slots 2 and 3 a seeded shuffle of the rest, with no faction padding. The district's `faction` is its first goon's, so an elite district can mix factions.
+- **Zones, not factions:** a district's distance from the start now gives its zone (`Territories.zoneFor`, the same score and thresholds), which only picks how dense the region's own props are (docs/WORLD.md, "Regions").
+- **Elite strength step:** the elite regions step their goons up as they spawn (`Territories.step`, `Level.strength`, `Walker.applyStrength`): Hunting Grounds damage and crush speed ×1.10, The Sprawl speed and damage ×1.10 and crush ×1.05, The Works speed ×1.10, damage ×1.20, crush ×1.10. A head-on armor no speed beats stays as it is. No mark shows on elites. Placeholders for the pacing pass.
+- **Goonopedia:** a goon's page lists the classes it plays in; a level's card lists its region, class, line-up and elite step.
+- **Testing:** `-- --class=wild|tribe|scrap|biggame|swarm|warmachine` picks every district's goons from that class instead of the line-up (`Region.forcedClass`); `-- --goons=a,b,c` still forces three. Both work with `--playtest` and `--bench`.
+
 ## The roster
 
 | Goon | Faction | Verb | Rule |
 |---|---|---|---|
-| Jackalope | Wild | hopper | Hops; can't be hit at the peak of a hop (0.1-0.35 s of each 0.45 s hop, resting 0.6 s between: in the air about a quarter of the time). Take-off and landing can be crushed |
+| Jackalope | Wild | hopper | Hops; can't be hit in the air (0.12-0.6 s of each 0.75 s hop, resting 0.7 s between: in the air about a third of the time). Take-off and landing can be crushed. The hop is drawn as a jump: the sprite rises 46 px and grows, draws over the car while out of reach, leaves a shadow on the ground and dust at both ends; driving under one says "AIRBORNE" |
 | Tusker | Wild | charger | Long straight charge, armoured head-on while charging |
 | Bandit | Wild | thief | Steals pickups and runs; crush it to get them back |
 | Stinger | Wild | striker | Stops at its reach and strikes |
@@ -101,7 +121,7 @@ After a bake that adds new PNGs, run `Godot_console.exe --headless --path . --im
 
 ## Crushing
 
-`OverheadCarBody2D.crushGoon` calls `goon.tryCrush(car, speed × car.crushWeight())` and returns false when the goon resists. `crushWeight()` is the car's weight (docs/CAR_ART.md, "Horn and weight"): weight 50 counts its speed as it is, the semi as 1.43× (it crushes at 70% of the speed), the racer as 0.83×. On false the car keeps its usual scuff (`wearSystem(hitZone, GOON_SCUFF)`). A successful crush never wears the car's systems, but every goon contact, crush or not, chips the hull by `GOON_CONTACT_DAMAGE` (5 before armour, about 0.35 health on a stock car; once per goon per 30 ticks). Keep it at 5 or less, or a Bubble Shield would spend a charge on every crush.
+`OverheadCarBody2D.crushGoon` calls `goon.tryCrush(car, speed × car.crushWeight())` and returns false when the goon resists. `crushWeight()` is the car's weight (docs/CAR_ART.md, "Horn and weight"): weight 50 counts its speed as it is, the semi as 1.43× (it crushes at 70% of the speed), the racer as 0.83×. On false the car keeps its usual scuff (`wearSystem(hitZone, GOON_SCUFF)`). A successful crush never wears the car's systems, but every goon contact, crush or not, chips the hull by `GOON_CONTACT_DAMAGE` (0.35 health before armour; once per goon per 30 ticks). Keep it at 5 or less, or a Bubble Shield would spend a charge on every crush. A goon's `dmg` is the health its attack takes from a car with no armor (docs/CAR_ART.md, "Health damage").
 
 A goon resists when any of these holds:
 - it is invulnerable: a hidden shell, a rolling boulder, buried, airborne, riding the car, or a flying bird

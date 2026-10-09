@@ -1,0 +1,52 @@
+[gd_resource type="Resource" script_class="Landscape" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/landscape.gd" id="1_land"]
+
+[resource]
+script = ExtResource("1_land")
+id = &"scrapyard"
+displayName = "Scrapyard"
+grammar = &"yard"
+text = "Scrap yard plots walled by scrap mountains, container rows and conveyor lanes."
+features = {
+"plotSize": 3,
+"scrapMountainShare": 0.25,
+"containerRows": 0.3,
+"gapChance": 0.6,
+"tankFarmChance": 0.15,
+"conveyorEvery": 4,
+"conveyorWidth": 640.0,
+"oilAbove": 0.55,
+"scrapWidth": 860.0,
+"containerWidth": 600.0,
+"barrierCap": 0.35,
+"motifs": 1.2
+}
+baseTerrain = [6, 16, 6, 16, 6]
+accents = [10, 13, 16]
+terrains = [6, 16, 10, 13, 4]
+materials = {}
+roofMaterial = "rock"
+wallStrip = "scrapwall"
+wallTint = Color(0.78, 0.74, 0.7, 1)
+organic = 0.5
+roofDecor = &""
+waterLook = &"water"
+waterGlow = Color(0, 0, 0, 0)
+waterFoam = Color(1, 1, 1, 1)
+dressing = {
+&"scrapheap": 5,
+&"container": 3,
+&"tank": 1,
+&"crane": 2,
+&"wreck": 2,
+&"tyres": 3,
+&"barrel": 2,
+&"oilstain": 3
+}
+motifs = {
+&"junkyard": 2,
+&"wreckpile": 1
+}
+nameSecond = Array[String](["Yard", "Heap", "Lot", "Stacks", "Pile", "Compound", "Depot", "Crusher", "Pens", "Scrapline"])
+fallback = &""
