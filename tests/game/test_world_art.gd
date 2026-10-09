@@ -7,21 +7,32 @@ extends GameTest
 const ART := "res://world/art/"
 const CLASSES := ["DECOR", "LOW", "TALL", "STATEFUL", "WALL"]
 const GROUNDS := ["grass", "moss", "dirt", "sand", "mud", "mudpit", "snow", "deepsnow", "ice", "asphalt", "lot", "wash",
-	"oil", "shallows", "water", "conveyor", "rock", "roof", "bridge", "gravel"]
-const EDGES := ["shore_foam", "cliff_lip", "canyon_rim", "mesa_lip", "kerb", "hedge", "scrapwall", "snow_ridge", "roof_edge"]
+	"oil", "shallows", "water", "conveyor", "rock", "roof", "bridge", "gravel",
+	#Road Atlas landscapes (forest, coast, ghost town, salt flats, volcano, suburbs)
+	"needles", "beach", "salt", "ash", "tar", "lava", "basalt", "roof_timber", "roof_shingle", "lawn"]
+const EDGES := ["shore_foam", "cliff_lip", "canyon_rim", "mesa_lip", "kerb", "hedge", "scrapwall", "snow_ridge", "roof_edge",
+	"basalt_lip", "timber_edge", "shingle_edge"]
 const STATION := ["station_lot", "station_wall", "station_roof", "station_lamp", "station_pump"]
 const POSTERS := ["prairie", "bayou", "canyon", "quarry", "frostbite", "highway", "city", "crusher"]
+#the Road Atlas's new levels (baked ahead of their LevelDefs, so not read from Levels.ORDER)
+const ROAD_ATLAS_POSTERS := ["orchard", "moosewoods", "mudlick", "stilttown", "lantern", "sawmill", "ghosttown", "saltflats",
+	"raiderpass", "thunderroad", "frozenlake", "timberline", "tarpits", "summit", "manhole", "culdesac", "gridlock", "blockparty",
+	"blastpits", "tankfarm", "slagfields", "theline"]
 #the prop catalog of the world spec (section 6)
 const CATALOG := ["rock", "boulder", "rock_white", "rock_ice", "oak", "pine", "cypress", "log", "stump", "saguaro", "deadtree",
 	"carcass", "haybale", "fence", "hedge", "crate", "shack", "tent", "totem", "firepit", "tyres", "barricade", "barrel", "crane",
 	"fortwall", "cabin", "snowcat", "wreck", "jersey", "cone", "gaspump", "sign", "billboard", "hydrant", "dumpster", "busstop",
 	"manhole", "streetglow", "scrapheap", "container", "tank", "landmark_wild", "landmark_tribe", "landmark_scrap", "reeds",
 	"tufts", "pebbles", "cracks", "bones", "paint", "oilstain"]
-const BREAKABLE := ["haybale", "fence", "hedge", "crate", "barricade"]
+const BREAKABLE := ["haybale", "fence", "hedge", "crate", "barricade", "wagon", "water_trough", "mailbox", "trashbags"]
 const EXPLOSIVE := ["barrel", "tank"]
 #added after the spec: canyon's red rocks and the city's rooftop decor
 const EXTRA := ["rock_red", "boulder_red", "rooftop"]
-const LANDMARKS := ["landmark_wild", "landmark_tribe", "landmark_scrap"]
+#the Road Atlas expansion's props (forest, coast, ghost town, salt flats, volcano, suburbs, the overlays, landmarks)
+const ROAD_ATLAS := ["ranger_tower", "fallen_trunk", "pine_snow", "palm", "beach_hut", "lifeguard_tower", "wagon", "water_trough",
+	"tumbleweed", "mile_marker", "salt_mound", "rock_black", "steam_vent", "mailbox", "swingset", "trampoline", "hunting_stand",
+	"trashbags", "landmark_big", "landmark_swarm", "landmark_war"]
+const LANDMARKS := ["landmark_wild", "landmark_tribe", "landmark_scrap", "landmark_big", "landmark_swarm", "landmark_war"]
 
 func manifest() -> Dictionary:
 	var data = JSON.parse_string(FileAccess.get_file_as_string(ART + "props.json"))
@@ -126,6 +137,9 @@ func test_scenes_match_the_manifest():
 func test_landmarks_have_beacons_and_extras_exist():
 	for id in LANDMARKS: assert_true(props().get(id, {}).has("beacon"), "%s: a beacon" % id)
 	for id in EXTRA: assert_true(props().has(id), "%s: in the manifest" % id)
+	for id in ROAD_ATLAS: assert_true(props().has(id), "%s (Road Atlas): in the manifest" % id)
+	for id in ["tumbleweed", "steam_vent"]: assert_eq(props().get(id, {}).get("class", ""), "DECOR", "%s is decor" % id)
+	for id in ["pine_snow", "palm"]: assert_true(props().get(id, {}).get("canopy") is Array, "%s is layered" % id)
 	assert_eq(props().get("rooftop", {}).get("class", ""), "DECOR", "rooftop is decor (no collision)")
 
 func test_level_dressing_names_known_props():
@@ -147,6 +161,14 @@ func test_ground_edges_station_and_posters_exist():
 		if tex: assert_eq(tex.get_height(), 96, "edge strip %s is 96 texels across" % name)
 	for name in STATION: assert_true(ResourceLoader.exists(ART + "station/%s.png" % name), "station %s" % name)
 	for id in POSTERS:
+		var path := ART + "posters/%s.png" % id
+		assert_true(ResourceLoader.exists(path), "poster %s" % id)
+		var tex: Texture2D = load(path) if ResourceLoader.exists(path) else null
+		if tex: assert_eq(Vector2i(tex.get_width(), tex.get_height()), Vector2i(1792, 1024), "poster %s size" % id)
+
+func test_road_atlas_posters_exist():
+	assert_eq(ROAD_ATLAS_POSTERS.size(), 22, "one poster per new level")
+	for id in ROAD_ATLAS_POSTERS:
 		var path := ART + "posters/%s.png" % id
 		assert_true(ResourceLoader.exists(path), "poster %s" % id)
 		var tex: Texture2D = load(path) if ResourceLoader.exists(path) else null

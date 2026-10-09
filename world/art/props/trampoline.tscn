@@ -1,0 +1,19 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://world/art/props/trampoline.png" id="tex"]
+
+[sub_resource type="ConvexPolygonShape2D" id="shape"]
+points = PackedVector2Array(-97.3, -50.7, -60, -92, 8, -109.3, 60, -92, 97.3, -50.7, 105.3, 30.7, 57.3, 93.3, -8, 109.3, -57.3, 93.3, -105.3, 30.7)
+
+[node name="trampoline" type="StaticBody2D"]
+collision_layer = 1
+collision_mask = 0
+metadata/propId = &"trampoline"
+metadata/propClass = &"LOW"
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(1.3333, 1.3333)
+texture = ExtResource("tex")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("shape")
