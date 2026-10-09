@@ -79,8 +79,8 @@ func test_claw_holds_by_strength():
 	assert_true(ClawCrane.rollStrength(0, 4) > ClawCrane.rollStrength(0, 0) - 0.3, "a better box makes a stronger claw")
 
 func test_claw_junk_costs():
-	assert_true(ClawCrane.isJunk("junk:bomb") && not ClawCrane.isJunk("coinstack"))
-	for id in ClawCrane.JUNK:
+	assert_true(PickupMenu.isJunk("junk:bomb") && not PickupMenu.isJunk("coinstack"))
+	for id in PickupMenu.JUNK:
 		assert_true(ClawCrane.textureOf(id) != null, "%s has an icon" % id)
 		assert_false(Pickups.has(id), "junk is not a pickup")
 
@@ -101,3 +101,37 @@ func test_deal_counts_what_beats_your_card():
 	var legendary := gadget(Pickups.R.LEGENDARY)
 	assert_eq(PickupDeal.beats(common, [legendary, common, legendary]), 2)
 	assert_eq(PickupDeal.beats(legendary, [legendary, common]), 0)
+
+
+func test_every_prize_game_opens():
+	for g in CrushPrizes.GAMES: assert_true(CrushPrizes.game(g.id).has("icon") && CrushPrizes.texture(g.id) != null, "%s has an icon" % g.id)
+	assert_eq(CrushPrizes.GAMES.map(func(g): return g.id), ["claw", "shuffle", "scratch", "press", "deal", "pachinko", "slot", "pusher"], "the ladder, weakest first")
+
+func test_physics_rests_on_a_floor_and_bounces():
+	var physics := PrizePhysics.new()
+	var ball := physics.add(Vector2(100, 0), 10.0)
+	var floor := [[Vector2(0, 200), Vector2(400, 200), 2.0]]
+	for i in 480: physics.step(1.0 / 240.0, [floor[0]])
+	assert_almost_eq(ball.pos.y, 188.0, 1.0, "it comes to rest on the floor")
+	assert_true(ball.held, "held up by it")
+	physics.bounce = 0.6
+	ball.pos = Vector2(100, 100)
+	ball.prev = ball.pos
+	var lowest := 0.0
+	var rose := false
+	for i in 240:
+		physics.step(1.0 / 240.0, [floor[0]])
+		if ball.pos.y > lowest: lowest = ball.pos.y
+		elif lowest > 180.0 && ball.pos.y < lowest - 5.0: rose = true
+	assert_true(rose, "a bouncy ball comes back up off the floor")
+
+func test_shuffle_rounds_get_better_and_harder():
+	assert_gt(HubcapShuffle.roundTier(2, 0), HubcapShuffle.roundTier(0, 0), "later rounds are rarer")
+	assert_gt(HubcapShuffle.swapCount(2, 0), HubcapShuffle.swapCount(0, 0), "and swap more")
+	assert_true(HubcapShuffle.swapCount(0, 4) <= HubcapShuffle.swapCount(0, 0), "a better box swaps less")
+
+func test_the_deal_deck():
+	var deck := PickupDeal.dealDeck(Pickups.R.COMMON)
+	assert_eq(deck.size(), PickupDeal.DECK)
+	assert_true(deck.filter(func(id): return id in ["coin", "coinstack", "purse"]).size() >= PickupDeal.COIN_CARDS, "with coin cards in it")
+	for id in deck: assert_false(id in Pickups.NOT_IN_GAMES, "never another game")

@@ -182,6 +182,10 @@ func hints(list: Array) -> void:
 		hintRow.remove_child(child)
 		child.queue_free()
 	for h in list: hintRow.add_child(KeyHint.make(PackedStringArray(h[0]), h[1], 15, true))
+	if list.is_empty(): #keep the row's height, so the card never changes size
+		var gap := Control.new()
+		gap.custom_minimum_size = Vector2(0, 30)
+		hintRow.add_child(gap)
 
 func say(text: String) -> void:
 	info.text = text
