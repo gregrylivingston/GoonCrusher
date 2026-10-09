@@ -148,7 +148,7 @@ func _physics_process(delta):
 		drown()
 		return
 	if (state == &"move" || state == &"lured") && not Pickups.lures.is_empty():
-		var lure := Pickups.lureFor(global_position, def.get("verb", &"lunge")) #Goon Bait, Flare
+		var lure := Pickups.lureFor(global_position, def.get("verb", &"lunge"), int(def.get("rank", 1)), distTo(car)) #Goon Bait, Flare, Dinner Bell, Salt Lick
 		if lure != Vector2.INF:
 			if state != &"lured": setState(&"lured")
 			if def.get("verb", &"") == &"flyer": chase(lure + Vector2.from_angle(stateTime * 0.8) * 220.0, speedNow(), delta, 3.0) #circles it

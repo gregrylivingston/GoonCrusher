@@ -230,3 +230,105 @@ func test_clearing_a_warren_pays_once():
 		b.set_meta(&"group", 78)
 		BreakableProp.smashNode(b, null)
 	assert_eq(car.coin, coins + Spill.WARREN_COINS, "nor one cleared far from the car")
+
+#--- R-9 bee yards -----------------------------------------------------------------------------------------
+
+func liveSwarms() -> Array:
+	return get_children().filter(func(n): return n is Spill.Swarm && not n.leaving())
+
+func test_a_swarm_stings_the_car_only_when_the_car_broke_its_hive():
+	var car := makeCar(Vector2(30, 0))
+	var hive := prop("beehive", Vector2(0, 0))
+	BreakableProp.smashNode(hive, null) #a goon knocked it
+	var health := car.health
+	await frames(40)
+	assert_eq(car.health, health, "not the car's doing: no stings")
+	var before := coinsOnLevel()
+	BreakableProp.smashNode(prop("beehive", Vector2(0, 2500)), null)
+	await get_tree().process_frame
+	assert_eq(coinsOnLevel() - before, BreakableProp.COIN_SPILL[&"beehive"], "a hive spills its honey coins")
+	car.global_position = Vector2(3030, 0)
+	var hive2 := prop("beehive", Vector2(3000, 0))
+	BreakableProp.smashNode(hive2, car)
+	await frames(40)
+	assert_true(car.health < health, "the car broke this one: stung")
+
+func test_live_swarms_are_capped():
+	makeCar(Vector2(0, 4000))
+	for i in Spill.SWARM_CAP + 2: BreakableProp.smashNode(prop("beehive", Vector2(i * 600.0, 0)), null)
+	assert_eq(liveSwarms().size(), Spill.SWARM_CAP, "the oldest go when a new one comes")
+
+func test_a_raiding_bandit_is_stung_first():
+	makeCar(Vector2(0, 4000))
+	var hive := prop("beehive", Vector2(0, 0))
+	var bystander := goon(&"grunt", Vector2(60, 0), true)
+	var bandit := goon(&"bandit", Vector2(-300, 0), true)
+	hive.set_meta(&"raider", bandit)
+	BreakableProp.smashNode(hive, null)
+	var swarm: Spill.Swarm = liveSwarms()[0]
+	assert_eq(swarm.first, bandit, "the swarm knows who raided it")
+	for i in 120:
+		await get_tree().physics_frame
+		if flattened(bandit): break
+	assert_true(flattened(bandit), "the raider is stung")
+	assert_eq(swarm.kills, 1 if not flattened(bystander) else 2, "the raider before anything else")
+
+#--- R-10 lures ----------------------------------------------------------------------------------------------
+
+func test_lures_can_take_heavies_only_and_let_go_near_the_car():
+	Pickups.lures = []
+	Pickups.addLure(Vector2.ZERO, 800.0, INF, &"", 3, 400.0, 99)
+	assert_eq(Pickups.lureFor(Vector2(300, 0), &"lunge", 3, 2000.0), Vector2.ZERO, "a heavy is drawn")
+	assert_eq(Pickups.lureFor(Vector2(300, 0), &"lunge", 1, 2000.0), Vector2.INF, "fodder isn't")
+	assert_eq(Pickups.lureFor(Vector2(300, 0), &"lunge", 3, 300.0), Vector2.INF, "nor a heavy the car is on")
+	Pickups.removeLure(99)
+	assert_true(Pickups.lures.is_empty(), "taken back")
+
+func test_the_dinner_bell_calls_every_goon_near_once():
+	makeCar(Vector2(-2000, 0))
+	Pickups.lures = []
+	var reactions: PropReactions = add_child_autofree(PropReactions.new())
+	var bell := prop("bell", Vector2(0, 0))
+	var g := goon(&"grunt", Vector2(900, 0))
+	await frames(2)
+	PropReactions.hit(bell, Vector2(Spill.BELL_RAM - 40.0, 0))
+	assert_true(Pickups.lures.is_empty(), "a nudge doesn't ring it")
+	assert_eq(SmashTags.smashSpeed(bell), Spill.BELL_RAM, "its tag shows the ram that rings it")
+	PropReactions.hit(bell, Vector2(Spill.BELL_RAM + 50.0, 0))
+	assert_eq(Pickups.lures.size(), 1, "CLANG")
+	assert_eq(Pickups.lureFor(g.global_position, &"lunge", 1, 2000.0), bell.global_position, "goons in range go to it")
+	assert_eq(Pickups.lureFor(Vector2(Spill.BELL_LURE + 100.0, 0), &"lunge", 1, 2000.0), Vector2.INF, "not beyond it")
+	await frames(3)
+	assert_eq(g.state, &"lured", "the grunt walks over")
+	assert_false(Spill.ringBell(bell, 9999.0), "once per bell")
+	assert_eq(SmashTags.smashSpeed(bell), INF, "no tag once rung")
+	reactions.queue_free()
+
+func test_a_salt_lick_lures_heavies_while_loaded():
+	makeCar(Vector2(0, 5000))
+	Pickups.lures = []
+	var lick := prop("saltlick", Vector2(0, 0))
+	assert_eq(Pickups.lureFor(Vector2(600, 0), &"lunge", 3, 3000.0), lick.global_position, "a Bullmoose drifts to it")
+	assert_eq(Pickups.lureFor(Vector2(600, 0), &"pack", 1, 3000.0), Vector2.INF, "a Yipper doesn't")
+	Spill.disarm(lick)
+	assert_eq(Pickups.lureFor(Vector2(600, 0), &"lunge", 3, 3000.0), Vector2.INF, "gone with its chunk")
+
+#--- R-11 scarecrows ---------------------------------------------------------------------------------------
+
+func test_buzzards_roost_on_scarecrows_and_a_ram_drops_them():
+	var car := makeCar(Vector2(0, 2000))
+	var crow := prop("scarecrow", Vector2(0, 0))
+	assert_true(crow.is_in_group(BreakableProp.ROOST_GROUP), "a scarecrow is a roost")
+	var bird := goon(&"buzzard", Vector2(300, 0))
+	await frames(2)
+	bird.cooldown = 0.0
+	for i in 200:
+		await get_tree().physics_frame
+		if bird.state == &"roost": break
+	assert_eq(bird.state, &"roost", "it perches on the scarecrow")
+	assert_eq(SmashTags.smashSpeed(crow), Spill.ROOSTS[&"scarecrow"].knock, "its tag shows the knock")
+	assert_eq(Spill.knockRoost(crow, Spill.ROOSTS[&"scarecrow"].knock + 10.0), 1, "a ram knocks it down")
+	assert_eq(bird.state, &"stun")
+	assert_true(crow.get_node("Sprite2D").has_meta(&"spinning"), "the scarecrow spins")
+	BreakableProp.smashNode(crow, car)
+	assert_false(crow.is_in_group(BreakableProp.ROOST_GROUP), "a smashed one is no roost")

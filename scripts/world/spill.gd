@@ -21,8 +21,10 @@ class_name Spill extends RefCounted
 ##          pickup out ("LOOT RECOVERED"). The stash outlives a chunk reload (a record on the TileManager).
 ##   burrow a Jackalope burrow caves in: the one hiding in it is thrown out stunned, it spawns no more, and when
 ##          every burrow of its warren (the `group` meta ChunkView sets from the motif) is down: WARREN CLEARED
+## Lures (R-10; through Pickups.lures): the Dinner Bell, rammed at BELL_RAM, calls every goon within BELL_LURE to
+## it for BELL_SECONDS, once per bell; a Salt Lick is a permanent lure for heavies (rank 3) while its chunk is loaded.
 ## PropReactions.addHero calls arm() for every prop that streams in (and disarm() when its chunk goes), which
-## restores per-prop state: a den's sacks.
+## restores per-prop state (a den's sacks, a rung bell) and registers a salt lick's lure.
 
 const DEFS := {
 	&"logpile": {"kind": "logs"}, &"watertower": {"kind": "wave"}, &"billboard": {"kind": "fall"},
@@ -49,6 +51,8 @@ const SWARM_REACH := 700.0                  #px it looks for goons
 const SWARM_KILLS := 8
 const SWARM_STING := 0.5                    #car damage per sting, every STING_GAP while it is on the car
 const STING_GAP := 0.4
+const STING_WINDOW := 3.0                   #s after the car broke a hive in which its swarm may sting the car
+const SWARM_CAP := 3
 const DROP_SPEED := 320.0                   #px/s into the crane that shakes the container loose
 const DROP_TIP := Vector2(265.0, -16.0)     #the jib's tip, crane-local px (world_gen.js crane canopy)
 const DROP_SECONDS := 0.7
@@ -61,8 +65,10 @@ const LURE_GOON := 650.0
 const REACH := 150.0                        #px from the pile's centre where a goon can cut it loose
 ## Roosts by prop id: how many Buzzards a crown holds, the ram (px/s into the trunk) that knocks them down, how
 ## long they lie stunned, and how far from the trunk they sit. Scarecrows (Orchard Lanes) join with a row here.
-const ROOSTS := {&"deadtree": {"perches": 3, "knock": 250.0, "stun": 1.5, "ring": 46.0}}
+const ROOSTS := {&"deadtree": {"perches": 3, "knock": 250.0, "stun": 1.5, "ring": 46.0},
+	&"scarecrow": {"perches": 2, "knock": 250.0, "stun": 1.5, "ring": 36.0}}
 const ROOST_SECONDS := Vector2(9.0, 14.0)  #how long a Buzzard sits before it flies off again
+const SPIN_SECONDS := 0.7                  #a knocked scarecrow's spin
 
 ## A spilling prop broke: let its contents loose. `dir` is where they go (the car's travel, or toward the car
 ## when a goon cut it loose); `byPlayer` whether the player gets the crushes (always, today: the chaos is theirs).
@@ -83,6 +89,12 @@ static func release(node: Node2D, dir: Vector2) -> void:
 static func arm(prop: Node2D) -> void:
 	match BreakableProp.propId(prop):
 		&"den": loadStash(prop)
+		&"bell": prop.set_meta(&"spilled", isUsed(prop.global_position)) #rung once a run
+		&"saltlick": Pickups.addLure(prop.global_position, SALT_LURE, INF, &"", SALT_RANK, SALT_LOOSE, prop.get_instance_id())
+
+## Its chunk is going (PropReactions.forget): a salt lick's lure goes with it
+static func disarm(prop: Node2D) -> void:
+	if BreakableProp.propId(prop) == &"saltlick": Pickups.removeLure(prop.get_instance_id())
 
 static func fx() -> GoonFx:
 	return Root.spawnManager.fx if is_instance_valid(Root.spawnManager) else null
@@ -125,6 +137,17 @@ static func ram(prop: Node2D, speed: float) -> void:
 	var id := BreakableProp.propId(prop)
 	if DEFS.get(id, {}).get("kind", "") == "drop": ramCrane(prop, speed)
 	if ROOSTS.has(id): knockRoost(prop, speed)
+	if id == &"bell": ringBell(prop, speed)
+
+## The ram that does something to a rammed (not smashed) prop: a crane's drop, a bell's ring, a roost's knock;
+## INF once spent, -1 for a prop rams don't work on (SmashTags shows it like a smash speed)
+static func ramSpeed(prop: Node2D) -> float:
+	match BreakableProp.propId(prop):
+		&"crane": return INF if prop.get_meta(&"spilled", false) else DROP_SPEED
+		&"bell": return INF if prop.get_meta(&"spilled", false) else BELL_RAM
+	var roost: Dictionary = ROOSTS.get(BreakableProp.propId(prop), {})
+	if not roost.is_empty() && BreakableProp.isBreakable(prop): return INF if prop.get_meta(&"smashed", false) else float(roost.knock)
+	return -1.0
 
 ## Where perch `slot` of a roost is
 static func roostSpot(prop: Node2D, slot: int) -> Vector2:
@@ -150,7 +173,53 @@ static func knockRoost(prop: Node2D, speed: float) -> int:
 		goon.verb.dropFromRoost(float(def.stun))
 		n += 1
 	if n > 0 && fx(): fx().label(prop.global_position, "KNOCKED DOWN" if n == 1 else "KNOCKED DOWN x%d" % n, 20)
+	if BreakableProp.propId(prop) == &"scarecrow" && not prop.get_meta(&"smashed", false): spin(prop)
 	return n
+
+## A scarecrow rammed hard spins round once on its post
+static func spin(prop: Node2D) -> void:
+	var sprite: Node2D = prop.get_node_or_null("Sprite2D")
+	if sprite == null || sprite.has_meta(&"spinning"): return
+	sprite.set_meta(&"spinning", true)
+	var rest := sprite.rotation
+	var tween := sprite.create_tween()
+	tween.tween_property(sprite, "rotation", rest + TAU, SPIN_SECONDS).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_callback(func():
+		sprite.rotation = rest
+		sprite.remove_meta(&"spinning"))
+
+#--- lures: the Dinner Bell, the Salt Lick (R-10) ---------------------------------------------------------
+
+const BELL_RAM := 150.0     #px/s into the bell that rings it (15 MPH)
+const BELL_LURE := 1200.0
+const BELL_SECONDS := 6.0
+const SALT_LURE := 900.0
+const SALT_RANK := 3        #heavies only
+const SALT_LOOSE := 500.0   #a heavy at the lick goes back to the car once the car is this close to it
+
+## CLANG: every goon within BELL_LURE walks to the bell for BELL_SECONDS (a grazing herd stampedes away from
+## it instead). Once per bell, even after its chunk reloads. True when it rang.
+static func ringBell(bell: Node2D, speed: float) -> bool:
+	if speed < BELL_RAM || bell.get_meta(&"spilled", false): return false
+	bell.set_meta(&"spilled", true)
+	markUsed(bell.global_position)
+	var at := bell.global_position
+	Pickups.addLure(at, BELL_LURE, BELL_SECONDS)
+	for goon in goonsNear(at, BELL_LURE):
+		if not goon.dead && goon.verb is GoonVerbs.Herd && goon.state == &"graze": goon.verb.spook(at)
+	Audio.play(Transition.SOUNDS["clank"], 0.0, 0.55)
+	if fx():
+		fx().ring(at, BELL_LURE * 0.5)
+		fx().ring(at, BELL_LURE)
+		fx().label(at, "CLANG!", 26, HudTheme.GOLD)
+	return true
+
+## Whether a once-only prop at `at` has been used this run (markUsed; the crane's record)
+static func isUsed(at: Vector2) -> bool:
+	var tm := tileManager()
+	if tm == null || not tm.has_method("spillUsed"): return false
+	var chunk: Vector2i = tm.chunkOf(at)
+	return tm.spillUsed(chunk, at - Vector2(chunk) * ChunkRecipe.CHUNK)
 
 #--- logs --------------------------------------------------------------------------------------------
 
@@ -246,21 +315,35 @@ static func fall(board: Node2D) -> void:
 	if PropReactions.current: PropReactions.current.puff(board.to_global(box.get_center()), Vector2.from_angle(board.global_rotation + PI * 0.5 * side), 1.0, true)
 	if fx(): fx().label(board.global_position, "FLATTENED", 22)
 
+## Live swarms, oldest first: at most SWARM_CAP (each scans the goons every tick); a new one sends the oldest off
+static var swarms: Array = []
+
 static func swarm(hive: Node2D) -> void:
 	var parent := hive.get_parent()
 	if parent == null: return
+	swarms = swarms.filter(func(s): return is_instance_valid(s) && not s.is_queued_for_deletion() && not s.leaving())
+	while swarms.size() >= SWARM_CAP: swarms.pop_front().disperse()
 	var s := Swarm.new(hive.global_position)
+	#it stings the car only if the car broke this hive just now (STING_WINDOW); a raiding Bandit is its first target
+	s.stingUntil = float(hive.get_meta(&"carBrokeAt", -INF)) + STING_WINDOW
+	if hive.has_meta(&"raider") && is_instance_valid(hive.get_meta(&"raider")): s.first = hive.get_meta(&"raider")
 	parent.add_child(s)
+	swarms.push_back(s)
 	if fx(): fx().label(hive.global_position, "BEES!", 22)
 
-## A cloud of bees out of a smashed hive: it flies at the nearest goon within SWARM_REACH and flattens what it
-## reaches (SWARM_KILLS at most), stings the car while it is on it, and disperses after SWARM_SECONDS
+## A cloud of bees out of a smashed hive: it flies at the goon that raided the hive, else the nearest goon within
+## SWARM_REACH, and flattens what it reaches (SWARM_KILLS at most). It goes for the car, and stings it while on it,
+## only when the car broke the hive in the last STING_WINDOW s. It disperses after SWARM_SECONDS.
 class Swarm extends Node2D:
 	const DOTS := 26
+	const LOOK_EVERY := 3 #ticks between target searches
 	var age := 0.0
 	var kills := 0
 	var stingT := 0.0
+	var stingUntil := -INF #GoonVerbs.now() seconds
+	var first = null #the goon that raided the hive (a Bandit): stung first
 	var vel := Vector2.ZERO
+	var target := Vector2.INF
 	var seeds := PackedVector2Array()
 
 	func _init(at: Vector2) -> void:
@@ -270,23 +353,25 @@ class Swarm extends Node2D:
 		global_position = at
 		for i in DOTS: seeds.push_back(Vector2(randf() * TAU, randf_range(0.6, 1.8)))
 
+	func leaving() -> bool:
+		return age >= Spill.SWARM_SECONDS || kills >= Spill.SWARM_KILLS
+
+	func disperse() -> void:
+		age = maxf(age, Spill.SWARM_SECONDS)
+
+	func angry() -> bool:
+		return GoonVerbs.now() < stingUntil
+
 	func _physics_process(delta: float) -> void:
 		age += delta
-		if age >= Spill.SWARM_SECONDS || kills >= Spill.SWARM_KILLS:
+		if leaving():
 			modulate.a -= delta * 2.0
 			if modulate.a <= 0.0: queue_free()
 			queue_redraw()
 			return
-		var target := Vector2.INF
-		var best := Spill.SWARM_REACH * Spill.SWARM_REACH
-		for goon in Spill.goonsNear(global_position, Spill.SWARM_REACH):
-			if goon.get("dead"): continue
-			var d: float = goon.global_position.distance_squared_to(global_position)
-			if d < best:
-				best = d
-				target = goon.global_position
 		var car = Root.playerCar
-		if target == Vector2.INF && is_instance_valid(car) && car.global_position.distance_to(global_position) < 500.0: target = car.global_position
+		if (Engine.get_physics_frames() + get_instance_id()) % LOOK_EVERY == 0: target = pickTarget(car)
+		elif is_instance_valid(first) && not first.dead: target = first.global_position
 		var want := (target - global_position).normalized() * Spill.SWARM_SPEED if target != Vector2.INF else Vector2.ZERO
 		vel = vel.lerp(want, minf(4.0 * delta, 1.0))
 		global_position += vel * delta
@@ -295,10 +380,24 @@ class Swarm extends Node2D:
 				kills += 1
 				Spill.flatten(goon, global_position, &"crush", &"bees")
 		stingT -= delta
-		if is_instance_valid(car) && car.global_position.distance_to(global_position) < 70.0 && stingT <= 0.0:
+		if angry() && is_instance_valid(car) && car.global_position.distance_to(global_position) < 70.0 && stingT <= 0.0:
 			stingT = Spill.STING_GAP
 			car.damage(Spill.SWARM_STING)
 		queue_redraw()
+
+	## The raider first, then the nearest goon in reach, then the car if it broke the hive just now
+	func pickTarget(car) -> Vector2:
+		if is_instance_valid(first) && not first.dead: return first.global_position
+		var at := Vector2.INF
+		var best := Spill.SWARM_REACH * Spill.SWARM_REACH
+		for goon in Spill.goonsNear(global_position, Spill.SWARM_REACH):
+			if goon.get("dead"): continue
+			var d: float = goon.global_position.distance_squared_to(global_position)
+			if d < best:
+				best = d
+				at = goon.global_position
+		if at == Vector2.INF && angry() && is_instance_valid(car) && car.global_position.distance_to(global_position) < 500.0: at = car.global_position
+		return at
 
 	func _draw() -> void:
 		for i in DOTS:

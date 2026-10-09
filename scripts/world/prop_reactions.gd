@@ -216,12 +216,12 @@ func react(prop: Node2D, moving: Vector2, point: Vector2) -> void:
 		k = clampf(near, 0.15, 1.0)
 		if near >= NEAR_SMASH: crack(prop, dir, near)
 	var sprite: Node2D = prop.get_node_or_null("Sprite2D")
+	Spill.ram(prop, speed) #a hard ram drops a crane's container, a roost's Buzzards, rings a bell...
 	match kind:
 		CANOPY:
 			var canopy: Node2D = prop.get_node_or_null("Canopy")
 			if canopy: spring(prop, canopy, CANOPY, k, dir)
 			dropLeaves(prop, roundi(lerpf(LEAVES.x, LEAVES.y, k)), dir)
-			Spill.ram(prop, speed) #a hard ram drops the crane's container, or a roost's Buzzards
 		THUD: pass
 		KNOCK:
 			if speed >= KNOCK_SPEED:
@@ -346,6 +346,7 @@ func forget(prop: Node2D) -> void:
 	for i in range(canopies.size() - 1, -1, -1):
 		if canopies[i][0] == prop: canopies.remove_at(i)
 	if is_instance_valid(tags): tags.forget(prop)
+	Spill.disarm(prop)
 
 ## A blast at `pos` shakes the canopies within `radius` (BreakableProp.blastAt)
 static func blast(pos: Vector2, radius: float) -> void:

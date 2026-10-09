@@ -26,7 +26,7 @@ const SPEED_KEEP := 0.85 #share of the car's speed kept through a smash
 ## Props that barely slow the car (speedKeep): a burrow mound caves in, a pumpkin splats
 const SPEED_KEEPS := {&"burrow": 0.95, &"pumpkin": 0.98}
 ## Coins a smash throws out, once (every paying prop has a taken-set bit, or Spill.markUsed for one without)
-const COIN_SPILL := {&"haybale": 2, &"fence": 1, &"crate": 3, &"den": 4, &"burrow": 1}
+const COIN_SPILL := {&"haybale": 2, &"fence": 1, &"crate": 3, &"den": 4, &"burrow": 1, &"beehive": 2}
 const BLAST := {&"barrel": Vector2(170.0, 8.0), &"tank": Vector2(320.0, 16.0)} #radius px, car damage
 const DEFAULT_BLAST := Vector2(170.0, 8.0)
 const CHAIN_DELAY := 0.12
@@ -105,6 +105,7 @@ static func smashNode(node: Node2D, car: Node2D = null) -> void:
 	markTaken(node)
 	#a log pile, water tower, billboard or hive lets its contents loose (Spill)
 	Spill.release(node, dir)
+	if Spill.ROOSTS.has(propId(node)): Spill.knockRoost(node, INF) #a smashed scarecrow drops its Buzzards
 	var fx = Root.spawnManager.fx if is_instance_valid(Root.spawnManager) else null
 	if fx: fx.dust(pos)
 

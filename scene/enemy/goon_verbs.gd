@@ -138,6 +138,7 @@ class Verb extends RefCounted:
 				g.chase(at, g.speedNow(), delta)
 				if g.global_position.distance_to(at) < g.bodyRadius + 60.0:
 					seekAt.set_meta(&"spillDir", at - g.global_position)
+					seekAt.set_meta(&"raider", g) #a raided hive's swarm goes for the raider first (Spill.Swarm)
 					BreakableProp.smashNode(seekAt)
 					seekAt = null
 					seekT = 0.3
