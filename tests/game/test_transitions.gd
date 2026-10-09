@@ -69,34 +69,17 @@ func test_a_hint_bar_is_clickable():
 	var row = add_child_autofree(KeyHint.bar([[["ui_cancel"], "Back"], [["ui_accept"], "Start"]]))
 	for hint in row.get_children(): assert_true(hint.clickable)
 
-#the original bug: a plain Control in a stat row defaults to MOUSE_FILTER_STOP and ate the click
-func test_nothing_in_a_stat_row_swallows_its_click():
+#the stat rail is display only: nothing in it takes the mouse, so clicks and hovers go to what is under it
+func test_nothing_in_the_stat_rail_takes_the_mouse():
 	var card = DriverCard.new()
 	add_child(card)
 	var info = load(CarInfo.pathFor("res://scene/car/sedan/sedan.tscn"))
 	card.setup({"name": "sedan", "cost": 0, "upgrades": {}, "records": {}}, info, 0)
 	card.setFocused(true)
-	for row in card.statButtons + card.compactButtons:
-		for node in row.find_children("*", "Control", true, false):
-			assert_eq(node.mouse_filter, Control.MOUSE_FILTER_IGNORE, "%s in a stat row must ignore the mouse" % node.name)
+	for node in [card.statLine] + card.statLine.find_children("*", "Control", true, false):
+		assert_eq(node.mouse_filter, Control.MOUSE_FILTER_IGNORE, "%s in the stat rail must ignore the mouse" % node.name)
 	card.free()
 
-func test_upgrade_mode_opens_the_sheet_on_the_clicked_stat():
-	var card = DriverCard.new()
-	add_child(card)
-	var info = load(CarInfo.pathFor("res://scene/car/sedan/sedan.tscn"))
-	card.setup({"name": "sedan", "cost": 0, "upgrades": {}, "records": {}}, info, 0)
-	card.setFocused(true)
-	card.setUpgradeMode(true, false, Root.upgrade.ARMOR)
-	assert_true(card.sheet.visible, "the sheet is open")
-	assert_false(card.compact.visible, "the compact grid is folded away")
-	assert_eq(card.get_viewport().gui_get_focus_owner(), card.statButtons[3], "focus starts on the stat that was clicked")
-	assert_eq(card.upgradeButton.text, "Done")
-	card.setUpgradeMode(false, false)
-	assert_true(card.compact.visible)
-	card.free()
-
-#a door someone is waiting on (the loading door) must never be freed by a second close
 func test_a_second_close_reuses_the_door():
 	var first = Transition.close("ONE", "LOADING", 0.2)
 	var second = Transition.close("TWO", "LOADING", 0.4)

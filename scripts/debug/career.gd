@@ -244,19 +244,12 @@ func shop() -> bool:
 		elif want.has("pickup"): ok = await unlockPickup(want.pickup)
 		else: ok = await upgrade(want.car, want.upgrade)
 		if not ok: return false
-	var m := menu()
-	if m != null && m.upgrading:
-		await activate(m.cards[SaveManager.playerData.selectedCar].upgradeButton, "ui_cancel")
-		if not await waitFor(func(): return not menu().upgrading, 3.0, "Done to close the upgrade sheet"): return false
 	return true
 
 func selectCar(index: int) -> bool:
 	var m := menu()
 	var data := SaveManager.playerData
 	if data.selectedCar == index: return true
-	if m.upgrading:
-		await press("ui_cancel")
-		if not await waitFor(func(): return not menu().upgrading, 3.0, "Back to close the upgrade sheet"): return false
 	for step in data.cars.size() + 2:
 		if data.selectedCar == index: return true
 		var count := data.cars.size()
@@ -297,9 +290,6 @@ func unlock(index: int) -> bool:
 func unlockPickup(id: String) -> bool:
 	var uid := id if id.begins_with("prize:") else "pickup:" + id
 	var data := SaveManager.playerData
-	if menu().upgrading:
-		await press("ui_cancel")
-		if not await waitFor(func(): return not menu().upgrading, 3.0, "Back to close the upgrade sheet"): return false
 	await press("ui_codex")
 	if not await waitFor(func(): return goonopedia() != null, 3.0, "G to open the Goonopedia"): return false
 	var page := goonopedia()
@@ -354,42 +344,62 @@ func goonopedia() -> Goonopedia:
 		if node is Goonopedia && not node.is_queued_for_deletion(): return node
 	return null
 
+## Buys one upgrade the way a player does: Upgrades on the garage card opens the driver's page in the
+## Goonopedia, then a click on the stat's upgrade button (or Up/Down to it and Accept), then Back.
 func upgrade(index: int, stat: int) -> bool:
 	var data := SaveManager.playerData
 	if not await selectCar(index): return false
-	var m := menu()
-	var card: DriverCard = m.cards[index]
-	if not m.upgrading:
-		await activate(card.upgradeButton, "ui_upgrade")
-		if not await waitFor(func(): return menu().upgrading, 3.0, "Upgrade to open the sheet"): return false
-	var row := -1
-	for i in DriverCard.STATS.size(): if DriverCard.STATS[i][1] == stat: row = i
-	var button: Button = card.statButtons[row]
+	var card: DriverCard = menu().cards[index]
+	await activate(card.upgradeButton, "ui_upgrade")
+	if not await waitFor(func(): return goonopedia() != null, 3.0, "Upgrades to open the driver's page"): return false
+	var page := goonopedia()
+	if page.tab != Goonopedia.Tab.CARS || page.shown == null || page.shown.kind != "car" || page.shown.key != index:
+		issue("ui", "Upgrades opened the Goonopedia on %s, not %s's card" % [Goonopedia.TAB_NAMES[page.tab], data.cars[index].name])
+		return await closeGoonopedia(false)
+	await waitFor(func(): return page.upgradeButton(stat) != null, 3.0, "the upgrade buttons to show")
+	var button := page.upgradeButton(stat)
+	var statName := String(DriverCard.STATS.filter(func(s): return s[1] == stat)[0][0])
+	if button == null:
+		issue("ui", "no %s upgrade button on %s's page" % [statName, data.cars[index].name])
+		return await closeGoonopedia(false)
 	var level := int(data.cars[index].upgrades.get(stat, 0))
 	var coins := data.coin
-	var cost := SaveManager.requestStatCost(stat)
-	if useMouse(): await click(button)
+	var cost := SaveManager.requestStatCost(stat, index)
+	if useMouse():
+		if not await wheelIntoView(page.detailScroll, button):
+			issue("mouse", "the mouse wheel couldn't bring the %s upgrade into view" % statName)
+			return await closeGoonopedia(false)
+		await click(button)
 	else:
-		for step in DriverCard.STATS.size():
-			var at := card.statButtons.find(button.get_viewport().gui_get_focus_owner())
+		var buttons: Array[Button] = []
+		for s in DriverCard.STATS: buttons.push_back(page.upgradeButton(s[1]))
+		var row := buttons.find(button)
+		for step in buttons.size():
+			var at := buttons.find(button.get_viewport().gui_get_focus_owner())
 			if at == row: break
 			if at < 0:
-				issue("ui", "no stat row has focus in the upgrade sheet; keys can't choose one (focus on %s, rows showing: %s, sheet at %.2f)" % [focusName(), button.is_visible_in_tree(), card.sheetAmount])
-				return false
+				issue("ui", "no upgrade button has focus on the driver's page; keys can't choose one (focus on %s)" % focusName())
+				return await closeGoonopedia(false)
 			await press("ui_down" if row > at else "ui_up")
-			if card.statButtons.find(button.get_viewport().gui_get_focus_owner()) == at:
-				issue("ui", "Up/Down didn't move between the upgrade rows (stuck on %s)" % DriverCard.STATS[at][0])
-				return false
+			if buttons.find(button.get_viewport().gui_get_focus_owner()) == at:
+				issue("ui", "Up/Down didn't move between the upgrade buttons (stuck on %s)" % DriverCard.STATS[at][0])
+				return await closeGoonopedia(false)
 		await press("ui_accept")
 	await think(0.2)
 	if int(data.cars[index].upgrades.get(stat, 0)) != level + 1 || data.coin != coins - cost:
 		issue("economy" if data.coin != coins else "block", "upgrading %s on %s: level %d -> %d, bank %d -> %d (cost %d)" % [
-			DriverCard.STATS[row][0], data.cars[index].name, level, int(data.cars[index].upgrades.get(stat, 0)), coins, data.coin, cost])
-		return false
+			statName, data.cars[index].name, level, int(data.cars[index].upgrades.get(stat, 0)), coins, data.coin, cost])
+		return await closeGoonopedia(false)
 	shopping.upgrades += 1
 	shopping.upgrade_coins += cost
-	note("CAREER_SHOP session=%d upgrade %s %s to %d for %d (bank %d)" % [session, data.cars[index].name, DriverCard.STATS[row][0], level + 1, cost, data.coin])
-	return true
+	note("CAREER_SHOP session=%d upgrade %s %s to %d for %d (bank %d)" % [session, data.cars[index].name, statName, level + 1, cost, data.coin])
+	return await closeGoonopedia(true)
+
+## Back out of the Goonopedia; returns `result` once it has closed (false if it never does)
+func closeGoonopedia(result: bool) -> bool:
+	await press("ui_cancel")
+	if not await waitFor(func(): return goonopedia() == null, 3.0, "Back to close the Goonopedia"): return false
+	return result
 
 func openSetup() -> bool:
 	var card: DriverCard = menu().cards[SaveManager.playerData.selectedCar]
@@ -950,7 +960,7 @@ func where() -> String:
 		return "run %s %s t=%.0f%s" % [Levels.ORDER[runPlan.level], Root.gameModeDescription[runPlan.mode].name, runTime, " paused" if get_tree().paused else ""]
 	var m := menu()
 	if m == null: return "scene %s" % (get_tree().current_scene.name if get_tree().current_scene else "-")
-	return "garage%s" % (" upgrades" if m.upgrading else "") if m.screen == GARAGE else "run setup"
+	return "garage" if m.screen == GARAGE else "run setup"
 
 func note(text: String) -> void:
 	print(text)

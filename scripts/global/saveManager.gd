@@ -316,6 +316,20 @@ func carClearCount() -> int:
 		for byCar in byMode.values(): n += byCar.size()
 	return n
 
+## What `car` has won, for its garage card: {"levels": levels it has won any mode on, "tiers": [0, mode wins
+## on Easy or harder, on Medium or harder, on Hard]}, each level and mode counted once
+func carProgress(car: String) -> Dictionary:
+	var out := {"levels": 0, "tiers": [0, 0, 0, 0]}
+	for byMode in playerData.meta.get("carClears", {}).values():
+		var won := false
+		for byCar in byMode.values():
+			var best := int(byCar.get(car, ModeTiers.NONE))
+			if best <= ModeTiers.NONE: continue
+			won = true
+			for t in ModeTiers.TIERS: if best >= t: out.tiers[t] += 1
+		if won: out.levels += 1
+	return out
+
 func fullGarageCount() -> int:
 	var n := 0
 	for i in playerData.levels.size():

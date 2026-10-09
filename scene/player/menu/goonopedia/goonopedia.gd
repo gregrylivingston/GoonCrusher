@@ -128,17 +128,43 @@ var listScroll := ScrollContainer.new()
 var detail := VBoxContainer.new()
 var into: VBoxContainer = detail #where the card helpers add rows: the detail card, or a showcase's side column
 var progressLabel := Label.new()
+var detailScroll := ScrollContainer.new() #the detail card's scroll
 var bankRow := HBoxContainer.new() #the header's coins and gems, as symbols
 var tiles: Array[Button] = []
 var shown = null #the entry in the detail card
 var preview: GoonPreview
 var pending := {}        #resource path -> Callable(resource) to run once it has loaded on a worker thread
 var carInfos := {}       #car index -> CarInfo
+var focusStat := -2 #the upgrade button showCar wants focused once the car's info has loaded; -2 none
 
 static func open(parent: Node) -> Goonopedia:
 	var page = Goonopedia.new()
 	parent.add_child(page)
 	return page
+
+## The garage's Upgrades: the page opened on a car's card in the Cars tab, with the focus on `stat`'s
+## upgrade button (the first stat's for -1)
+static func openCar(parent: Node, carIndex: int, stat := -1) -> Goonopedia:
+	var page := open(parent)
+	page.showCar(carIndex, stat)
+	return page
+
+
+func showCar(carIndex: int, stat := -1) -> void:
+	setTab(Tab.CARS)
+	var b := tileFor(carIndex)
+	if b == null: return
+	b.grab_focus() #shows its card
+	focusStat = stat if stat >= 0 else Root.upgrade.ENGINE
+	focusUpgrade()
+
+#moves the focus to the upgrade button showCar asked for, once the card has it
+func focusUpgrade() -> void:
+	if focusStat == -2: return
+	var button := upgradeButton(focusStat)
+	if button == null: return
+	focusStat = -2
+	button.grab_focus()
 
 func _ready() -> void:
 	add_to_group("menuOverlay")
@@ -175,8 +201,8 @@ func _ready() -> void:
 	body.add_child(left)
 	var right = PanelContainer.new()
 	right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var detailScroll = ScrollContainer.new()
 	detailScroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	detailScroll.follow_focus = true #an upgrade button moved to with keys scrolls into view
 	detail.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	detail.add_theme_constant_override("separation", 10)
 	detailScroll.add_child(detail)
@@ -820,6 +846,7 @@ func onCarInfo(info: CarInfo, index: int, b) -> void:
 		setTileArt(info.profilePic, b)
 		b.get_node("caption").text = info.charName
 	refreshIfShown("car", index)
+	focusUpgrade()
 
 func carDetail(entry: Dictionary) -> void:
 	var index: int = entry.key

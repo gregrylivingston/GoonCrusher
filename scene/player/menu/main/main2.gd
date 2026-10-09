@@ -2,7 +2,8 @@ extends CanvasLayer
 
 #The main menu, as cards (docs/UI.md).
 #  GARAGE     a carousel of driver cards (DriverCard). LB/RB or Left/Right picks a driver, Accept
-#             drives or unlocks, Upgrade hands focus to the stat rows, Records shows the driver's bests.
+#             drives or unlocks, Upgrades opens the driver's page in the Goonopedia (where upgrades are
+#             bought), Records shows the driver's bests.
 #  RUN SETUP  level poster cards with the five mode medallions under them. LB/RB picks a level,
 #             Left/Right a mode, Up/Down its tier (ModeTiers: Easy, Medium, Hard), Accept starts the run,
 #             Back returns to the garage. Medals (bronze, silver, gold) show the best tier beaten.
@@ -12,12 +13,14 @@ extends CanvasLayer
 
 enum Screen { GARAGE, SETUP }
 
-#carousel slots by offset from the selected card: position and scale of a 380 x 640 card
+#carousel slots by offset from the selected card: position and scale of a 380 x 560 card (the focused
+#one's progress pill hangs under it)
 const CARD_SLOTS := {
 	0: [Vector2(610, 138), 1.0],
 	-1: [Vector2(333, 246), 0.7], 1: [Vector2(1001, 246), 0.7],
 	-2: [Vector2(92, 290), 0.58], 2: [Vector2(1288, 290), 0.58],
 }
+const ACTION_DOCK_WIDTH := 280.0
 const POSTER_SIZE := Vector2(640, 340)
 const POSTER_SLOTS := {0: [Vector2(480, 112), 1.0], -1: [Vector2(110, 196), 0.5], 1: [Vector2(1170, 196), 0.5]}
 const SLIDE_SECONDS := 0.22
@@ -30,12 +33,12 @@ const STEAM_ICON := preload("res://texture/icon/steam.png")
 const BUY_SOUND := preload("res://sound/fx/short-success-sound-glockenspie.mp3")
 
 var screen := Screen.GARAGE
-var upgrading := false
 var loadingLevel := false
 var ui := Control.new()
 var backgrounds: Array[TextureRect] = []
 var frontBackground := 0
 var garage := Control.new()
+var actionDock := Control.new() #the focused card's Drive and Upgrades, at the bottom right
 var setup := Control.new()
 var logo := Label.new()
 var cards: Array[DriverCard] = []
@@ -228,12 +231,25 @@ func buildGarage() -> void:
 		garage.add_child(card)
 		card.drivePressed.connect(goToSetup)
 		card.unlockPressed.connect(onUnlockPressed)
-		card.upgradePressed.connect(onUpgradePressed)
-		card.sheetRequested.connect(func(stat): setUpgrading(true, stat))
+		card.upgradesRequested.connect(openUpgrades)
 		card.selectRequested.connect(selectCar.bind(i))
 		cards.push_back(card)
 		card.car = cars[i]
 		card.refresh()
+	#every card's Drive and Upgrades sit in one dock at the bottom right; only the focused card's show
+	actionDock.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
+	actionDock.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	actionDock.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	actionDock.offset_left = -24 - ACTION_DOCK_WIDTH
+	actionDock.offset_right = -24
+	actionDock.offset_top = -18 - DriverCard.BUTTON_HEIGHT
+	actionDock.offset_bottom = -18
+	actionDock.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	garage.add_child(actionDock)
+	for card in cards:
+		card.remove_child(card.actions)
+		actionDock.add_child(card.actions)
+		card.actions.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 func buildSetup() -> void:
 	setup.visible = false
@@ -561,7 +577,6 @@ func selectCar(index: int, animate := true) -> void:
 	if index != SaveManager.playerData.selectedCar:
 		SaveManager.playerData.selectedCar = index
 		SaveManager.save_character_data()
-	setUpgrading(false)
 	if cards[index].info == null: finishCarLoad(index, true)
 	Root.selectedCar = cars[index]
 	Root.playerCar = null #the menu shows a car from its CarInfo, without loading the car scene
@@ -585,7 +600,7 @@ func layoutCards(animate: bool) -> void:
 		var scale: float = slot[1] if slot else 0.5
 		var tint = Color.WHITE if offset == 0 else (Color(0.6, 0.6, 0.6) if slot else Color(0.6, 0.6, 0.6, 0.0))
 		if slot && card.info == null && not pendingInfos.has(i): requestCarInfo(i)
-		if card.focused != (offset == 0): card.setFocused(offset == 0)
+		if card.focused != (offset == 0): card.setFocused(offset == 0, animate)
 		if animate && slot && not card.visible: #sliding in from off screen
 			card.position = target + Vector2(signf(offset) * 300, 0)
 			card.modulate = Color(tint, 0.0)
@@ -642,23 +657,11 @@ func showBackground(texture: Texture2D, animate := true) -> void:
 	tween.tween_property(next, "modulate:a", 1.0, SLIDE_SECONDS if animate else 0.0)
 	tween.tween_property(front, "modulate:a", 0.0, SLIDE_SECONDS if animate else 0.0)
 
-func setUpgrading(on: bool, stat := -1) -> void:
-	if on && (screen != Screen.GARAGE || cards[SaveManager.playerData.selectedCar].isLocked()): return
-	if on == upgrading && stat < 0: return
-	upgrading = on
-	cards[SaveManager.playerData.selectedCar].setUpgradeMode(on, true, stat)
-	updateHints()
-
-#a stat row (or the Upgrade button, stat -1) was pressed on the focused card
-func onUpgradePressed(stat: int) -> void:
-	if stat < 0:
-		setUpgrading(not upgrading)
-		return
-	var before = SaveManager.playerData.coin
-	if SaveManager.requestStatUpgrade(stat): #requestStatUpgrade calls statUpdatesUiUpdate
-		buyPlayer.play()
-		cards[SaveManager.playerData.selectedCar].celebrate(stat)
-		animateCoins(before, SaveManager.playerData.coin)
+#Upgrades (or a stat on the focused card): the driver's page in the Goonopedia, on that stat's upgrade
+func openUpgrades(stat := -1) -> void:
+	var index: int = SaveManager.playerData.selectedCar
+	if screen != Screen.GARAGE || cards[index].isLocked() || overlayOpen(): return
+	Goonopedia.openCar(self, index, stat).closed.connect(onOverlayClosed)
 
 func onUnlockPressed() -> void:
 	var before = SaveManager.playerData.coin
@@ -676,7 +679,6 @@ func onUnlockPressed() -> void:
 #the garage and run setup swap behind the shutter (Transition)
 func goToSetup() -> void:
 	if cards[SaveManager.playerData.selectedCar].isLocked() || screen == Screen.SETUP: return
-	setUpgrading(false)
 	Transition.play(showSetup, "GOONCRUSHER", "RUN SETUP")
 
 func showSetup() -> void:
@@ -849,25 +851,21 @@ func _process(_delta):
 	for index in pendingInfos.keys(): finishCarLoad(index, false)
 	for index in pendingPosters.keys(): finishPosterLoad(index, false)
 
-#menu navigation runs before the GUI so Left/Right switch cards instead of moving focus;
-#in upgrade mode the arrows go to the GUI, which moves between the stat rows
+#menu navigation runs before the GUI so Left/Right switch cards instead of moving focus
 func _input(event: InputEvent) -> void:
 	if Settings.menu_open || loadingLevel || overlayOpen() || Transition.busy() || not event.is_pressed() || event.is_echo(): return
 	if event is InputEventMouseButton:
-		if not upgrading && (event.button_index == MOUSE_BUTTON_WHEEL_UP || event.button_index == MOUSE_BUTTON_WHEEL_DOWN):
+		if (event.button_index == MOUSE_BUTTON_WHEEL_UP || event.button_index == MOUSE_BUTTON_WHEEL_DOWN):
 			var step = -1 if event.button_index == MOUSE_BUTTON_WHEEL_UP else 1
 			if screen == Screen.GARAGE: selectCar(SaveManager.playerData.selectedCar + step)
 			else: stepLevelTo(SaveManager.playerData.selectedLevel + step)
 			get_viewport().set_input_as_handled()
 		return
 	var handled := true
-	if screen == Screen.GARAGE && upgrading:
-		if event.is_action_pressed("ui_cancel") || event.is_action_pressed("ui_upgrade"): setUpgrading(false)
-		else: handled = false
-	elif screen == Screen.GARAGE:
+	if screen == Screen.GARAGE:
 		if event.is_action_pressed("ui_tab_prev") || event.is_action_pressed("ui_left"): selectCar(SaveManager.playerData.selectedCar - 1)
 		elif event.is_action_pressed("ui_tab_next") || event.is_action_pressed("ui_right"): selectCar(SaveManager.playerData.selectedCar + 1)
-		elif event.is_action_pressed("ui_upgrade"): setUpgrading(true)
+		elif event.is_action_pressed("ui_upgrade"): openUpgrades()
 		elif event.is_action_pressed("ui_records"): openRecords()
 		elif event.is_action_pressed("ui_codex"): openGoonopedia()
 		elif event.is_action_pressed("ui_menu"): openSettings()
@@ -924,12 +922,10 @@ func updateHints() -> void:
 	var hints: Array
 	if screen == Screen.SETUP:
 		hints = [[["ui_tab_prev", "ui_tab_next"], "Level"], [["ui_left", "ui_right"], "Mode"], [["ui_up", "ui_down"], "Tier"], [["ui_accept"], "Start"], [["ui_upgrade"], "Gadget"], [["ui_boost"], "Boost"], [["ui_records"], "Records"], [["ui_codex"], "Goonopedia"], [["ui_cancel"], "Back"]]
-	elif upgrading:
-		hints = [[["ui_up", "ui_down"], "Choose"], [["ui_accept"], "Buy"], [["ui_cancel"], "Done"]]
 	else:
 		var locked = cards[SaveManager.playerData.selectedCar].isLocked()
 		hints = [[["ui_tab_prev", "ui_tab_next"], "Driver"], [["ui_accept"], "Unlock" if locked else "Drive"]]
-		if not locked: hints.push_back([["ui_upgrade"], "Upgrade"])
+		if not locked: hints.push_back([["ui_upgrade"], "Upgrades"])
 		hints.append_array([[["ui_records"], "Records"], [["ui_codex"], "Goonopedia"], [["ui_menu"], "Settings"]])
 	for hint in hints: hintBar.add_child(KeyHint.make(PackedStringArray(hint[0]), hint[1], 16, true))
 

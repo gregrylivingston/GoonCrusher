@@ -1,29 +1,41 @@
 class_name DriverCard extends Panel
 
-#One driver in the garage carousel (main2.gd). The card is drawn at 380 x 640 and the carousel
-#scales the side cards down. Only the focused card shows stats and buttons:
-#  stats    browsing: a compact 2 x 4 grid (icon, value, an underline against 100: cream = the car's
-#           base stat, gold = upgrades bought). Clicking a stat opens the upgrade sheet on it.
-#  sheet    upgrade mode: the art folds up and the stats become one row each with the stat's name and
-#           the next upgrade's price. Hovering a row focuses it, and the focused row's price becomes a
-#           BUY button. Accept or a click buys, on the press; holding Accept keeps buying.
-#  buttons  Drive (or Unlock with its price) and Upgrade (Done in upgrade mode)
-#Locked drivers show as a silhouette with their unlock price.
+#One driver in the garage carousel (main2.gd). The card is drawn at 380 x 560 and the carousel
+#scales the side cards down. Side cards show their back: the background art and the portrait, nothing
+#else. Selecting a card flips it over (`flip`; a fade with Reduce Motion) to its front, top to bottom:
+#  art      the driver's background and portrait, with the stats in a black rail against the card's left
+#           edge (`StatRail`): eight rows (icon and value, over a thin bar against 100: cream = the car's
+#           base stat, gold = upgrades bought), for show only: Upgrades is where they are bought. The rail
+#           runs down into the name band and ends there in a cut corner, edged in orange.
+#  band     the name (right of the rail), with the car type and weight class
+#  traits   the car's two signature features (CarTraits): icon, name, kind and its one-line `short`;
+#           hovering one shows its full text
+#Under the focused card, outside its frame, a pill says what this car has won (SaveManager.carProgress):
+#medals by tier and levels won. Its buttons, Drive (or Unlock) and Upgrades (its icon and key, which opens
+#the driver's page in the Goonopedia, where upgrades are bought), are `actions`, which main2 docks at the
+#screen's bottom right; only the focused card's show.
+#Locked drivers show as a silhouette with their unlock price over the foot of the art, and no stats.
+#Portraits sit against the right edge, clear of the rail: the art's drivers stand at the right of their
+#pictures, and some (sedan, van, racer) are cut off there.
 
 signal drivePressed
 signal unlockPressed
-signal upgradePressed(stat: Root.upgrade)
-signal sheetRequested(stat: Root.upgrade)
+signal upgradesRequested(stat: int) #-1 for no particular stat
 signal selectRequested
 
-const SIZE := Vector2(380, 640)
-const ART_HEIGHT := 380.0
-const SHEET_ART_HEIGHT := 150.0  #the art's height with the upgrade sheet open
-const BAND_HEIGHT := 64.0
-const SHEET_SECONDS := 0.28
-const PRICE_WIDTH := 84.0 #a sheet row's price slot; the focused row's BUY button widens it
-const HOLD_DELAY := 0.4    #holding Accept on a sheet row buys again after this...
-const HOLD_REPEAT := 0.12  #...and then this often, until the stat maxes or the coins run out
+const SIZE := Vector2(380, 560)
+const ART_HEIGHT := 404.0
+const BAND_HEIGHT := 52.0
+const RAIL_WIDTH := 78.0
+const RAIL_FOOT := ART_HEIGHT + 26.0 #the rail runs halfway down the band...
+const BEVEL := Vector2(26, 40)        #...and its foot's inner corner is cut off this much
+const NAME_X := RAIL_WIDTH + 14.0     #the name starts clear of the rail
+const RAIL_PAD := Vector4(12, 16, 14, 14) #the rows' margins inside the rail: left, top, right (clear of the orange edge), bottom (clear of the cut)
+const TRAIT_ROW := 44.0
+const TRAITS_Y := ART_HEIGHT + BAND_HEIGHT + 8
+const GAP := 10.0 #between the card and the progress pill under it
+const BUTTON_HEIGHT := 52.0
+const FLIP_SECONDS := 0.42
 const STATS := [
 	["engine", Root.upgrade.ENGINE, preload("res://texture/icon/engine.svg")],
 	["steering", Root.upgrade.STEERING, preload("res://texture/icon/steering.svg")],
@@ -34,7 +46,7 @@ const STATS := [
 	["clover", Root.upgrade.CLOVER, preload("res://texture/icon/clover.svg")],
 	["luck", Root.upgrade.LUCK, preload("res://texture/icon/luck.svg")],
 ]
-#the sheet's name and tooltip for each stat
+#each stat's name and tooltip
 const STAT_TEXT := {
 	"engine": ["Engine", "Acceleration and top speed"],
 	"steering": ["Steering", "How fast the car turns"],
@@ -51,107 +63,156 @@ var info: CarInfo
 var index := 0
 var focused := false
 var demoLocked := false
-var upgrading := false
-var sheetAmount := 0.0       #0 browsing, 1 upgrade sheet open; tweened by setUpgradeMode
+var showingFront := false
+
+var flipper := Control.new() #the card's faces and frame, turned by `flip` about the card's centre
+var flipTween: Tween
 
 var art := TextureRect.new()
 var portrait := TextureRect.new()
 var band := ColorRect.new()
 var nameLabel := Label.new()
+var typeLabel := Label.new()  #"PICKUP · HEAVY" at the band's right end
+var traitList := VBoxContainer.new()
+var statLine := StatRail.new()
+var statList := VBoxContainer.new()
+var body := Panel.new()  #the card itself, clipped to its rounded corners; the progress pill hangs below it
+var progress := PanelContainer.new()
+var medalCounts: Array[Label] = [] #Easy, Medium, Hard
+var levelsLabel := Label.new()
+var lockLine := PanelContainer.new() #a locked driver's price (or "Not in the demo"), over the foot of the art
+var lockList := VBoxContainer.new()
 var infoLabel := Label.new()
-var priceLine := Control.new() #a locked driver's price, as numbers and symbols, under the car type
-var traitRow := HFlowContainer.new() #the car's signature features (CarTraits) as badges along the art's foot
-var traitRows := 1 #rows the badges take: a third badge wraps onto a second row above the first
-var stats := Control.new()       #holds both stat layouts
-var compact := GridContainer.new()
-var sheet := VBoxContainer.new()
+var priceLine := Control.new()
 var actions := HBoxContainer.new()
 var frame := Panel.new()
 var catcher := Button.new() #a click anywhere on a side card selects it
 var mainButton: Button
 var upgradeButton: Button
-var statButtons: Array[Button] = []    #the sheet's rows, which buy
-var compactButtons: Array[Button] = [] #the grid's rows, which open the sheet
-var sheetTween: Tween
-var holdTime := 0.0
+var statRows: Array[Control] = [] #the rail's rows: icon, value and bar
 
 func _ready() -> void:
-	set_process(false) #runs in upgrade mode only, for the held Accept
 	size = SIZE
 	custom_minimum_size = SIZE
-	clip_children = CanvasItem.CLIP_CHILDREN_AND_DRAW
 	mouse_filter = MOUSE_FILTER_IGNORE
-	add_theme_stylebox_override("panel", MenuTheme.box(Color(0.082, 0.067, 0.059, 0.97), Color(0, 0, 0, 0), 18, 0))
+	add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+	flipper.size = SIZE
+	flipper.pivot_offset = SIZE / 2.0
+	flipper.mouse_filter = MOUSE_FILTER_IGNORE
+	add_child(flipper)
+	body.size = SIZE
+	body.clip_children = CanvasItem.CLIP_CHILDREN_AND_DRAW
+	body.mouse_filter = MOUSE_FILTER_IGNORE
+	body.add_theme_stylebox_override("panel", MenuTheme.box(Color(0.082, 0.067, 0.059, 0.97), Color(0, 0, 0, 0), 18, 0))
+	flipper.add_child(body)
 	for picture in [art, portrait]:
 		picture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		picture.mouse_filter = MOUSE_FILTER_IGNORE
-		add_child(picture)
+		body.add_child(picture)
 	art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	portrait.stretch_mode = TextureRect.STRETCH_SCALE #sized to the texture's aspect by layoutFace
 
-	traitRow.alignment = FlowContainer.ALIGNMENT_CENTER
-	traitRow.add_theme_constant_override("h_separation", 6)
-	traitRow.add_theme_constant_override("v_separation", 4)
-	traitRow.mouse_filter = MOUSE_FILTER_IGNORE
-	add_child(traitRow)
 	band.color = HudTheme.RIM
 	band.mouse_filter = MOUSE_FILTER_IGNORE
-	add_child(band)
+	band.position = Vector2(0, ART_HEIGHT)
+	band.size = Vector2(SIZE.x, BAND_HEIGHT)
+	body.add_child(band)
 	nameLabel.theme_type_variation = "DarkLabel"
-	nameLabel.add_theme_font_size_override("font_size", 38)
-	nameLabel.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	nameLabel.add_theme_font_size_override("font_size", 30)
 	nameLabel.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	add_child(nameLabel)
+	nameLabel.clip_text = true
+	body.add_child(nameLabel)
+	typeLabel.theme_type_variation = "DarkLabel"
+	typeLabel.add_theme_font_size_override("font_size", 12)
+	typeLabel.modulate = Color(1, 1, 1, 0.8)
+	typeLabel.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	typeLabel.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	typeLabel.position = Vector2(16, ART_HEIGHT + 3)
+	typeLabel.size = Vector2(SIZE.x - 32, BAND_HEIGHT)
+	body.add_child(typeLabel)
 
+	traitList.add_theme_constant_override("separation", 0)
+	traitList.position = Vector2(14, TRAITS_Y)
+	traitList.size = Vector2(SIZE.x - 28, 2 * TRAIT_ROW)
+	traitList.mouse_filter = MOUSE_FILTER_IGNORE
+	body.add_child(traitList)
+
+	statLine.size = Vector2(RAIL_WIDTH, RAIL_FOOT)
+	statLine.mouse_filter = MOUSE_FILTER_IGNORE
+	body.add_child(statLine) #after the band, which it overlaps
+	statList.add_theme_constant_override("separation", 0)
+	statList.position = Vector2(RAIL_PAD.x, RAIL_PAD.y)
+	statList.size = Vector2(RAIL_WIDTH - RAIL_PAD.x - RAIL_PAD.z, RAIL_FOOT - BEVEL.y - RAIL_PAD.y - RAIL_PAD.w)
+	statList.mouse_filter = MOUSE_FILTER_IGNORE
+	statLine.add_child(statList)
+	var smoked := MenuTheme.box(Color(HudTheme.PANEL, 0.72), Color(1, 1, 1, 0.12), 12, 1, Vector4(4, 6, 4, 6))
+	for s in STATS: statRows.push_back(makeStatRow(s))
+
+	progress.add_theme_stylebox_override("panel", MenuTheme.box(Color(HudTheme.PANEL, 0.9), Color(1, 1, 1, 0.14), 12, 2, Vector4(14, 3, 14, 3)))
+	progress.mouse_filter = MOUSE_FILTER_IGNORE
+	add_child(progress)
+	var won = HBoxContainer.new()
+	won.add_theme_constant_override("separation", 12)
+	won.mouse_filter = MOUSE_FILTER_IGNORE
+	progress.add_child(won)
+	for tier in ModeTiers.TIERS:
+		var medal = HBoxContainer.new()
+		medal.add_theme_constant_override("separation", 4)
+		medal.mouse_filter = MOUSE_FILTER_PASS
+		medal.tooltip_text = "Modes won on %s or harder" % ModeTiers.NAMES[tier]
+		var star := MenuTheme.iconRect(HudTheme.STAR_ICON, 16)
+		star.modulate = ModeTiers.MEDAL_COLORS[tier]
+		star.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		star.mouse_filter = MOUSE_FILTER_IGNORE
+		medal.add_child(star)
+		var count = Label.new()
+		count.add_theme_font_size_override("font_size", 15)
+		count.add_theme_constant_override("outline_size", 0)
+		count.mouse_filter = MOUSE_FILTER_IGNORE
+		medal.add_child(count)
+		medalCounts.push_back(count)
+		won.add_child(medal)
+	levelsLabel.theme_type_variation = "MutedLabel"
+	levelsLabel.add_theme_font_size_override("font_size", 14)
+	levelsLabel.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	won.add_child(levelsLabel)
+
+	lockLine.add_theme_stylebox_override("panel", smoked)
+	lockLine.position = Vector2(12, ART_HEIGHT - 12 - 46)
+	lockLine.size = Vector2(SIZE.x - 24, 46)
+	lockLine.mouse_filter = MOUSE_FILTER_IGNORE
+	body.add_child(lockLine)
+	lockList.alignment = BoxContainer.ALIGNMENT_CENTER
+	lockList.mouse_filter = MOUSE_FILTER_IGNORE
+	lockLine.add_child(lockList)
 	infoLabel.theme_type_variation = "BodyLabel"
-	infoLabel.add_theme_font_size_override("font_size", 26)
+	infoLabel.add_theme_font_size_override("font_size", 20)
 	infoLabel.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	infoLabel.position = Vector2(0, ART_HEIGHT + BAND_HEIGHT + 24)
-	infoLabel.size = Vector2(SIZE.x, 40)
-	add_child(infoLabel)
-	priceLine.position = Vector2(0, ART_HEIGHT + BAND_HEIGHT + 68)
-	priceLine.size = Vector2(SIZE.x, 36)
+	lockList.add_child(infoLabel)
+	priceLine.custom_minimum_size = Vector2(0, 34)
 	priceLine.mouse_filter = MOUSE_FILTER_IGNORE
-	add_child(priceLine)
-
-	stats.mouse_filter = MOUSE_FILTER_IGNORE
-	stats.size = SIZE
-	add_child(stats)
-	compact.columns = 2
-	compact.add_theme_constant_override("h_separation", 6)
-	compact.add_theme_constant_override("v_separation", 2)
-	compact.position = Vector2(12, ART_HEIGHT + BAND_HEIGHT + 8)
-	compact.size = Vector2(SIZE.x - 24, 124)
-	compact.mouse_filter = MOUSE_FILTER_IGNORE
-	stats.add_child(compact)
-	sheet.add_theme_constant_override("separation", 2)
-	sheet.position = Vector2(12, SHEET_ART_HEIGHT + BAND_HEIGHT + 8)
-	sheet.size = Vector2(SIZE.x - 24, SIZE.y - 74 - (SHEET_ART_HEIGHT + BAND_HEIGHT + 8))
-	sheet.mouse_filter = MOUSE_FILTER_IGNORE
-	stats.add_child(sheet)
-	for s in STATS:
-		compactButtons.push_back(makeCompactRow(s))
-		statButtons.push_back(makeSheetRow(s))
+	lockList.add_child(priceLine)
 
 	actions.add_theme_constant_override("separation", 10)
-	actions.position = Vector2(14, SIZE.y - 66)
-	actions.size = Vector2(SIZE.x - 28, 54)
-	add_child(actions)
+	actions.size = Vector2(SIZE.x, BUTTON_HEIGHT)
+	actions.grow_horizontal = Control.GROW_DIRECTION_BEGIN #an UNLOCK that needs more room grows leftward
+	add_child(actions) #until main2 docks it
 	mainButton = MenuTheme.button("DRIVE", PackedStringArray(["ui_accept"]), true)
-	mainButton.custom_minimum_size = Vector2(0, 52)
+	mainButton.custom_minimum_size = Vector2(0, BUTTON_HEIGHT)
 	mainButton.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	mainButton.add_theme_font_size_override("font_size", 24)
 	mainButton.pressed.connect(onMainPressed)
 	actions.add_child(mainButton)
-	upgradeButton = MenuTheme.button("Upgrade", PackedStringArray(["ui_upgrade"]), false, preload("res://texture/icon/upgrade.svg"))
-	upgradeButton.custom_minimum_size = Vector2(168, 52)
-	upgradeButton.add_theme_font_size_override("font_size", 18)
-	upgradeButton.pressed.connect(func(): upgradePressed.emit(-1))
+	upgradeButton = MenuTheme.button("", PackedStringArray(["ui_upgrade"]), false, preload("res://texture/icon/upgrade.svg"))
+	upgradeButton.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	upgradeButton.custom_minimum_size = Vector2(112, BUTTON_HEIGHT)
+	upgradeButton.tooltip_text = "Upgrades"
+	upgradeButton.pressed.connect(func(): upgradesRequested.emit(-1))
 	actions.add_child(upgradeButton)
 
 	frame.mouse_filter = MOUSE_FILTER_IGNORE
 	frame.size = SIZE
-	add_child(frame)
+	flipper.add_child(frame)
 	catcher.flat = true
 	catcher.focus_mode = Control.FOCUS_NONE
 	catcher.size = SIZE
@@ -159,89 +220,39 @@ func _ready() -> void:
 	for state in ["normal", "hover", "pressed", "focus"]: catcher.add_theme_stylebox_override(state, StyleBoxEmpty.new())
 	catcher.pressed.connect(func(): selectRequested.emit())
 	add_child(catcher)
-	applySheet(0.0)
+	layoutFace()
 	setFocused(false)
 
-#a stat row: a Button whose highlight is the row itself, holding a line laid out inside its margins.
-#Everything in the line ignores the mouse so a click anywhere on the row reaches the button.
-func statRow(stat: Array, height: float, inset: float) -> Array:
-	var row = Button.new()
-	row.theme_type_variation = "StatRow"
-	row.custom_minimum_size = Vector2(0, height)
-	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.focus_mode = Control.FOCUS_NONE
-	row.mouse_default_cursor_shape = CURSOR_POINTING_HAND
-	row.tooltip_text = "%s: %s" % STAT_TEXT[stat[0]]
-	var line = HBoxContainer.new()
-	line.name = "line"
-	line.mouse_filter = MOUSE_FILTER_IGNORE
-	line.add_theme_constant_override("separation", 7)
-	line.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	line.offset_left = inset
-	line.offset_right = -inset
-	row.add_child(line)
-	return [row, line]
-
-func makeCompactRow(stat: Array) -> Button:
-	var parts = statRow(stat, 29, 8)
-	var row: Button = parts[0]
-	var line: HBoxContainer = parts[1]
-	line.add_child(MenuTheme.iconRect(stat[2], 20))
-	line.add_child(valueLabel(18, 28))
-	line.add_child(statBar(6))
-	row.pressed.connect(func(): sheetRequested.emit(stat[1]))
-	MenuTheme.addSounds(row)
-	compact.add_child(row)
-	return row
-
-func makeSheetRow(stat: Array) -> Button:
-	var parts = statRow(stat, 40, 12)
-	var row: Button = parts[0]
-	var line: HBoxContainer = parts[1]
-	line.add_child(MenuTheme.iconRect(stat[2], 26))
-	var title = Label.new()
-	title.text = STAT_TEXT[stat[0]][0].to_upper()
-	title.theme_type_variation = "BodyLabel"
-	title.add_theme_font_size_override("font_size", 17)
-	title.custom_minimum_size.x = 92
-	title.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	line.add_child(title)
-	line.add_child(valueLabel(22, 34))
-	line.add_child(statBar(8))
-	var price = Control.new()
-	price.name = "price"
-	price.custom_minimum_size = Vector2(PRICE_WIDTH, 26)
-	price.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	price.mouse_filter = MOUSE_FILTER_IGNORE
-	line.add_child(price)
-	row.action_mode = BaseButton.ACTION_MODE_BUTTON_PRESS #buys on the press, so a held Accept repeats from there
-	row.pressed.connect(onSheetRowPressed.bind(row, stat[1]))
-	row.mouse_entered.connect(func():
-		if row.focus_mode != Control.FOCUS_NONE: row.grab_focus())
-	row.focus_entered.connect(showBuy.bind(row, true))
-	row.focus_exited.connect(showBuy.bind(row, false))
-	MenuTheme.addSounds(row)
-	sheet.add_child(row)
-	return row
-
-static func valueLabel(fontSize: int, width: float) -> Label:
+#a stat's row on the rail: icon and value side by side over a thin bar. Display only, so nothing in it
+#takes the mouse.
+func makeStatRow(stat: Array) -> VBoxContainer:
+	var row = VBoxContainer.new()
+	row.name = stat[0]
+	row.add_theme_constant_override("separation", 5)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	row.mouse_filter = MOUSE_FILTER_IGNORE
+	var top = HBoxContainer.new()
+	top.add_theme_constant_override("separation", 6)
+	top.mouse_filter = MOUSE_FILTER_IGNORE
+	row.add_child(top)
+	var icon := MenuTheme.iconRect(stat[2], 16)
+	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	icon.mouse_filter = MOUSE_FILTER_IGNORE
+	top.add_child(icon)
 	var value = Label.new()
 	value.name = "value"
-	value.custom_minimum_size.x = width
-	value.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	value.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	value.add_theme_font_size_override("font_size", fontSize)
+	value.add_theme_font_size_override("font_size", 15)
+	value.add_theme_constant_override("outline_size", 0)
 	value.mouse_filter = MOUSE_FILTER_IGNORE
-	return value
-
-static func statBar(height: float) -> StatBar:
+	top.add_child(value)
 	var bar = StatBar.new()
 	bar.name = "bar"
-	bar.custom_minimum_size = Vector2(30, height)
-	bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	bar.custom_minimum_size = Vector2(0, 3)
 	bar.mouse_filter = MOUSE_FILTER_IGNORE
-	return bar
+	row.add_child(bar)
+	statList.add_child(row)
+	return row
 
 func setup(entry: Dictionary, carInfo: CarInfo, carIndex: int) -> void:
 	car = entry
@@ -250,67 +261,97 @@ func setup(entry: Dictionary, carInfo: CarInfo, carIndex: int) -> void:
 	demoLocked = Root.IS_DEMO && carIndex >= Root.DEMO_CAR_COUNT
 	art.texture = info.backgroundPic
 	portrait.texture = info.profilePic
-	for child in traitRow.get_children():
-		traitRow.remove_child(child)
+	layoutFace()
+	for child in traitList.get_children():
+		traitList.remove_child(child)
 		child.queue_free()
 	for id in info.traits:
-		if CarTraits.has(id): traitRow.add_child(traitBadge(id))
-	traitRows = 2 if traitRow.get_child_count() > 2 else 1
-	applySheet(sheetAmount) #the badges' rows decide where they sit
+		if CarTraits.has(id): traitList.add_child(traitLine(id))
 	refresh()
 
-## A trait's badge: its icon and name on a dark pill edged in its kind's colour (CarTraits.KIND_COLORS)
-static func traitBadge(id: StringName) -> PanelContainer:
-	var panel = PanelContainer.new()
-	var col := CarTraits.color(id)
-	panel.add_theme_stylebox_override("panel", MenuTheme.box(Color(0.055, 0.047, 0.043, 0.9), Color(col, 0.85), 8, 2, Vector4(6, 3, 10, 3)))
-	panel.mouse_filter = MOUSE_FILTER_IGNORE
-	var line = HBoxContainer.new()
-	line.add_theme_constant_override("separation", 5)
-	line.mouse_filter = MOUSE_FILTER_IGNORE
-	panel.add_child(line)
-	var icon := MenuTheme.iconRect(CarTraits.texture(id), 24)
+## A trait's row: its icon, then its name and kind over its one-line description (CarTraits `short`).
+## Hovering it shows the full text.
+static func traitLine(id: StringName) -> HBoxContainer:
+	var row = HBoxContainer.new()
+	row.custom_minimum_size.y = TRAIT_ROW
+	row.add_theme_constant_override("separation", 10)
+	row.mouse_filter = MOUSE_FILTER_PASS
+	row.tooltip_text = CarTraits.DATA[id].text
+	var icon := MenuTheme.iconRect(CarTraits.texture(id), 32)
+	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	icon.mouse_filter = MOUSE_FILTER_IGNORE
-	line.add_child(icon)
-	var label = Label.new()
-	label.text = CarTraits.displayName(id).to_upper()
-	label.add_theme_font_size_override("font_size", 15)
-	label.add_theme_color_override("font_color", col.lightened(0.45))
-	label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	label.mouse_filter = MOUSE_FILTER_IGNORE
-	line.add_child(label)
-	return panel
+	row.add_child(icon)
+	var column = VBoxContainer.new()
+	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	column.alignment = BoxContainer.ALIGNMENT_CENTER
+	column.add_theme_constant_override("separation", -2)
+	column.mouse_filter = MOUSE_FILTER_IGNORE
+	row.add_child(column)
+	var title = HBoxContainer.new()
+	title.add_theme_constant_override("separation", 8)
+	title.mouse_filter = MOUSE_FILTER_IGNORE
+	column.add_child(title)
+	var heading = Label.new()
+	heading.text = CarTraits.displayName(id)
+	heading.add_theme_font_size_override("font_size", 17)
+	heading.add_theme_constant_override("outline_size", 0)
+	heading.mouse_filter = MOUSE_FILTER_IGNORE
+	title.add_child(heading)
+	var kind = Label.new()
+	kind.text = CarTraits.KIND_NAMES[CarTraits.kind(id)]
+	if CarTraits.kind(id) == CarTraits.Kind.ABILITY: kind.text += "  ·  " + InputGlyphs.label("Ability")
+	kind.add_theme_font_size_override("font_size", 11)
+	kind.add_theme_color_override("font_color", CarTraits.color(id))
+	kind.add_theme_constant_override("outline_size", 0)
+	kind.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	kind.mouse_filter = MOUSE_FILTER_IGNORE
+	title.add_child(kind)
+	var short = Label.new()
+	short.text = CarTraits.DATA[id].short
+	short.theme_type_variation = "MutedLabel"
+	short.add_theme_font_size_override("font_size", 13)
+	short.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	short.clip_text = true
+	short.mouse_filter = MOUSE_FILTER_IGNORE
+	column.add_child(short)
+	return row
 
 func isLocked() -> bool:
 	return car.cost != 0 || demoLocked
 
-#everything that can change while the menu is open: lock state, prices, stats, coins
+#everything that can change while the menu is open: lock state, prices, stats, progress
 func refresh() -> void:
+	for node in [band, nameLabel, typeLabel, traitList]: node.visible = showingFront
 	if info == null: #still loading: a plain card with the car's name
 		nameLabel.text = str(car.get("name", "")).to_upper()
-		infoLabel.text = ""
-		stats.visible = false
+		typeLabel.text = ""
+		statLine.visible = false
+		progress.visible = false
+		lockLine.visible = false
 		actions.visible = false
 		return
 	var locked = isLocked()
 	portrait.modulate = Color(0, 0, 0, 0.88) if locked else Color.WHITE
 	nameLabel.text = info.charName.to_upper()
-	var type = info.carId.capitalize()
-	infoLabel.text = "Not in the demo" if demoLocked else "%s  ·  %s" % [type, weightClass(info.weight)]
-	stats.visible = focused && not locked
-	infoLabel.visible = not stats.visible
+	typeLabel.text = "%s  ·  %s" % [info.carId.capitalize().to_upper(), weightClass(info.weight).to_upper()]
+	statLine.visible = showingFront && not locked
+	nameLabel.position = Vector2(NAME_X if statLine.visible else 16.0, ART_HEIGHT)
+	nameLabel.size = Vector2(SIZE.x - 16 - nameLabel.position.x, BAND_HEIGHT)
+	progress.visible = focused && not locked
+	lockLine.visible = showingFront && locked
+	infoLabel.text = "Not in the demo"
+	infoLabel.visible = demoLocked
 	for child in priceLine.get_children():
 		priceLine.remove_child(child)
 		child.queue_free()
-	var cost := Unlocks.price("car:" + str(car.name))
 	if car.cost != 0 && not demoLocked: #"10,000 (coin)  5 (gem)", gold when the bank covers it
+		var cost := Unlocks.price("car:" + str(car.name))
 		var row := MenuTheme.symbolRow([HudTheme.LOCK_ICON, "  ", cost], 26, HudTheme.GOLD if Unlocks.canAfford("car:" + str(car.name)) else MenuTheme.BODY_TEXT)
 		row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		priceLine.add_child(row)
-	priceLine.visible = infoLabel.visible
+	priceLine.visible = car.cost != 0 && not demoLocked
 	actions.visible = focused
 	upgradeButton.visible = not locked
-	upgradeButton.text = "Done" if upgrading else "Upgrade"
 	var oldParts = mainButton.get_node_or_null("parts")
 	if oldParts:
 		mainButton.remove_child(oldParts)
@@ -328,9 +369,11 @@ func refresh() -> void:
 	else:
 		mainButton.text = "DRIVE"
 		mainButton.disabled = false
-	if stats.visible: refreshStats()
+	if not locked:
+		refreshStats()
+		refreshProgress()
 
-#the car's weight (CarInfo.weight, CarHandling) in a word, under its name
+#the car's weight (CarInfo.weight, CarHandling) in a word, on the band
 static func weightClass(weight: int) -> String:
 	if weight < 30: return "Light"
 	if weight < 60: return "Medium"
@@ -340,97 +383,26 @@ func refreshStats() -> void:
 	for i in STATS.size():
 		var s = STATS[i]
 		var base: int = info.get(s[0])
-		var level = SaveManager.getUpgradeLevel(s[1])
-		for row in [compactButtons[i], statButtons[i]]:
-			row.get_node("line/value").text = str(base + level)
-			var bar: StatBar = row.get_node("line/bar")
-			bar.base = base
-			bar.bought = level
-			bar.queue_redraw()
-		var row = statButtons[i]
-		var holder: Control = row.get_node("line/price")
-		for child in holder.get_children():
-			holder.remove_child(child) #now, so the new chips keep their names
-			child.queue_free()
-		var maxed = SaveManager.isUpgradeMaxed(s[1])
-		var affordable = canBuy(s[1])
-		var price = "MAX" if maxed else formatCoins(SaveManager.requestStatCost(s[1]))
-		var chipPanel = MenuTheme.priceChip(price, HudTheme.COIN_ICON, affordable)
-		chipPanel.name = "plain"
-		holder.add_child(chipPanel)
-		if not maxed:
-			var buy = buyChip(price)
-			buy.name = "buy"
-			holder.add_child(buy)
-		for chip in holder.get_children(): chip.set_anchors_and_offsets_preset(Control.PRESET_CENTER_RIGHT, Control.PRESET_MODE_MINSIZE)
-		#unaffordable rows stay pressable so a click can say no (shakeRow); they are only dimmed
-		row.get_node("line").modulate = Color.WHITE if affordable else Color(1, 1, 1, 0.55)
-		showBuy(row, row.has_focus())
+		var level = SaveManager.getUpgradeLevel(s[1], index)
+		var row := statRows[i]
+		row.find_child("value", true, false).text = str(base + level)
+		var bar: StatBar = row.get_node("bar")
+		bar.base = base
+		bar.bought = level
+		bar.queue_redraw()
 
-#the focused row's price turns into a solid BUY button (none once the stat is maxed); the slot widens
-#for it and the bar gives up the room
-func showBuy(row: Button, isFocused: bool) -> void:
-	var holder: Control = row.get_node("line/price")
-	var buy: Control = holder.get_node_or_null("buy")
-	var on = isFocused && buy != null
-	holder.get_node("plain").visible = not on
-	if buy:
-		buy.visible = on
-		buy.set_anchors_and_offsets_preset(Control.PRESET_CENTER_RIGHT, Control.PRESET_MODE_MINSIZE)
-	holder.custom_minimum_size.x = maxf(PRICE_WIDTH, buy.get_combined_minimum_size().x) if on else PRICE_WIDTH
+#medals by tier (each level and mode once, on its tier or harder) and the levels won, out of every level;
+#the demo counts all of them too, its locked ones included
+func refreshProgress() -> void:
+	var won := SaveManager.carProgress(info.carId)
+	for i in ModeTiers.TIERS.size(): medalCounts[i].text = str(won.tiers[ModeTiers.TIERS[i]])
+	levelsLabel.text = "%d / %d levels won" % [won.levels, SaveManager.playerData.levels.size()] if won.levels > 0 else "Not raced yet"
+	placeProgress()
 
-#"BUY 504 (coin)" on the orange of the primary button
-static func buyChip(price: String) -> PanelContainer:
-	var chipPanel = PanelContainer.new()
-	chipPanel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	chipPanel.add_theme_stylebox_override("panel", MenuTheme.box(HudTheme.RIM, MenuTheme.DEEP_ORANGE, 7, 2, Vector4(8, 1, 8, 1)))
-	var line = HBoxContainer.new()
-	line.add_theme_constant_override("separation", 4)
-	line.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	for part in ["BUY", price, HudTheme.COIN_ICON]:
-		if part is Texture2D:
-			line.add_child(MenuTheme.iconRect(part, 18))
-			continue
-		var label = Label.new()
-		label.text = part
-		label.add_theme_font_size_override("font_size", 15)
-		label.add_theme_color_override("font_color", MenuTheme.DARK_TEXT)
-		label.add_theme_constant_override("outline_size", 0)
-		line.add_child(label)
-	chipPanel.add_child(line)
-	return chipPanel
-
-static func canBuy(stat: int) -> bool:
-	return not SaveManager.isUpgradeMaxed(stat) && SaveManager.requestStatCost(stat) <= SaveManager.playerData.coin
-
-func onSheetRowPressed(row: Button, stat: int) -> void:
-	holdTime = 0.0
-	if canBuy(stat): upgradePressed.emit(stat)
-	else: Juice.shake(row)
-
-#a held Accept on the focused row buys again every HOLD_REPEAT after HOLD_DELAY, and stops for good
-#(until released) at the first upgrade it can't buy
-func _process(delta: float) -> void:
-	var at := statButtons.find(get_viewport().gui_get_focus_owner())
-	if at < 0 || not Input.is_action_pressed("ui_accept") || Settings.menu_open:
-		holdTime = 0.0
-		return
-	holdTime += delta
-	if holdTime < HOLD_DELAY: return
-	holdTime -= HOLD_REPEAT
-	if canBuy(STATS[at][1]): upgradePressed.emit(STATS[at][1])
-	else: holdTime = -INF
-
-#a bought upgrade: the row flashes gold, the value pops and the bar's new segment glows
-func celebrate(stat: int) -> void:
-	for i in STATS.size():
-		if STATS[i][1] != stat: continue
-		var row = statButtons[i]
-		Juice.flash(row, HudTheme.GOLD)
-		Juice.pop(row.get_node("line/value"), 1.45)
-		var bar: StatBar = row.get_node("line/bar")
-		bar.glow = 1.0
-		bar.create_tween().tween_property(bar, "glow", 0.0, 0.5)
+#the pill centered under the card, sized to what it says
+func placeProgress() -> void:
+	progress.reset_size()
+	progress.position = Vector2((SIZE.x - progress.size.x) / 2.0, SIZE.y + GAP)
 
 static func formatCoins(amount: int) -> String:
 	var text = str(amount)
@@ -440,73 +412,81 @@ static func formatCoins(amount: int) -> String:
 		text = text.substr(0, text.length() - 3)
 	return text + out
 
-func setFocused(value: bool) -> void:
+## `animate` flips the card over to its new face; otherwise it just shows it
+func setFocused(value: bool, animate := false) -> void:
 	focused = value
 	catcher.visible = not value
 	frame.add_theme_stylebox_override("panel", frameBox(value))
-	if not value && upgrading: setUpgradeMode(false, false)
+	if animate && value != showingFront && is_visible_in_tree(): flip(value)
+	else: showFace(value)
+
+func showFace(front: bool) -> void:
+	showingFront = front
+	layoutFace()
 	refresh()
+
+#the back is the background over the whole card with the portrait standing at its foot, full width; the
+#front keeps the art above the band, the portrait against the right edge (the rail is on the left)
+func layoutFace() -> void:
+	art.size = Vector2(SIZE.x, ART_HEIGHT if showingFront else SIZE.y)
+	var aspect := 1.0
+	if portrait.texture: aspect = portrait.texture.get_width() / float(portrait.texture.get_height())
+	if showingFront:
+		var h := ART_HEIGHT - 24.0
+		portrait.size = Vector2(h * aspect, h)
+		portrait.position = Vector2(SIZE.x - portrait.size.x, 24.0)
+	else:
+		portrait.size = Vector2(SIZE.x, SIZE.x / aspect)
+		portrait.position = Vector2(0, SIZE.y - portrait.size.y)
+
+#turns the card over about its vertical axis: it squeezes to an edge with a little lift and tilt, swaps
+#faces there, then opens out with a flash and an overshoot. Reduce Motion crossfades instead.
+func flip(front: bool) -> void:
+	if flipTween: flipTween.kill()
+	flipper.scale = Vector2.ONE
+	flipper.rotation = 0.0
+	flipper.modulate = Color.WHITE
+	flipTween = create_tween()
+	if Settings.reduce_motion():
+		flipTween.tween_property(flipper, "modulate:a", 0.0, 0.1)
+		flipTween.tween_callback(showFace.bind(front))
+		flipTween.tween_property(flipper, "modulate:a", 1.0, 0.14)
+		return
+	var half := FLIP_SECONDS * 0.4
+	var tilt := -0.05 if front else 0.05
+	flipTween.set_parallel()
+	flipTween.tween_property(flipper, "scale", Vector2(0.0, 1.07), half).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+	flipTween.tween_property(flipper, "rotation", tilt, half).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+	flipTween.chain().tween_callback(func():
+		showFace(front)
+		flipper.modulate = Color(1.7, 1.6, 1.4)) #the new face catches the light as it turns toward you
+	flipTween.chain().tween_property(flipper, "scale", Vector2.ONE, FLIP_SECONDS - half).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	flipTween.tween_property(flipper, "rotation", 0.0, FLIP_SECONDS - half).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	flipTween.tween_property(flipper, "modulate", Color.WHITE, FLIP_SECONDS - half)
 
 static func frameBox(isFocused: bool) -> StyleBoxFlat:
 	var style = MenuTheme.box(Color(0, 0, 0, 0), HudTheme.RIM if isFocused else Color(1, 1, 1, 0.22), 18, 5 if isFocused else 3)
 	style.draw_center = false
 	return style
 
-#upgrade mode: the art folds up, the sheet's rows take focus so a controller or keyboard can buy,
-#and the mouse focuses whichever row it is over. `stat` picks the row to start on.
-func setUpgradeMode(on: bool, animate := true, stat := -1) -> void:
-	upgrading = on
-	holdTime = 0.0
-	set_process(on)
-	for row in statButtons: row.focus_mode = Control.FOCUS_ALL if on else Control.FOCUS_NONE
-	if sheetTween: sheetTween.kill()
-	if animate:
-		sheetTween = create_tween().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-		sheetTween.tween_method(applySheet, sheetAmount, 1.0 if on else 0.0, SHEET_SECONDS)
-	else: applySheet(1.0 if on else 0.0)
-	refresh()
-	if not on:
-		if focused: mainButton.grab_focus()
-		return
-	for i in STATS.size():
-		if STATS[i][1] == stat:
-			statButtons[i].grab_focus()
-			return
-	for i in STATS.size():
-		if canBuy(STATS[i][1]):
-			statButtons[i].grab_focus()
-			return
-	statButtons[0].grab_focus()
-
-#lays the card out between browsing (0) and the upgrade sheet (1)
-func applySheet(amount: float) -> void:
-	sheetAmount = amount
-	var artHeight = lerpf(ART_HEIGHT, SHEET_ART_HEIGHT, amount)
-	art.size = Vector2(SIZE.x, artHeight)
-	portrait.position = Vector2(10, lerpf(30, 8, amount))
-	portrait.size = Vector2(SIZE.x - 20, artHeight - portrait.position.y)
-	band.position = Vector2(0, artHeight)
-	band.size = Vector2(SIZE.x, BAND_HEIGHT)
-	traitRow.position = Vector2(8, artHeight - 6 - traitRows * 34 - (traitRows - 1) * 4)
-	traitRow.size = Vector2(SIZE.x - 16, traitRows * 34 + (traitRows - 1) * 4)
-	traitRow.modulate.a = clampf(1.0 - amount * 2.5, 0.0, 1.0)
-	traitRow.visible = traitRow.modulate.a > 0.0
-	nameLabel.position = band.position
-	nameLabel.size = band.size
-	compact.modulate.a = clampf(1.0 - amount * 2.5, 0.0, 1.0)
-	compact.visible = compact.modulate.a > 0.0
-	sheet.modulate.a = clampf(amount * 2.0 - 1.0, 0.0, 1.0)
-	sheet.position.y = SHEET_ART_HEIGHT + BAND_HEIGHT + 8 + (1.0 - amount) * 40.0
-	#shown (if still clear) for all of upgrade mode: hiding it early in the fade-in dropped the focus the
-	#sheet's first row had just taken, leaving keys and pads with nothing to move
-	sheet.visible = sheet.modulate.a > 0.0 || upgrading
-
 func onMainPressed() -> void:
 	if isLocked(): unlockPressed.emit()
 	else: drivePressed.emit()
 
+#the stat rail's ground: near-black, lighter toward its inner edge, from the card's top into the name band,
+#its foot's inner corner cut off, with an orange line down the inner edge and along the cut
+class StatRail extends Control:
+	func _draw() -> void:
+		var w := size.x
+		var h := size.y
+		var shape := PackedVector2Array([Vector2(0, 0), Vector2(w, 0), Vector2(w, h - BEVEL.y), Vector2(w - BEVEL.x, h), Vector2(0, h)])
+		var dark := Color(0.043, 0.035, 0.031)
+		var light := Color(0.11, 0.086, 0.075)
+		draw_polygon(shape, PackedColorArray([dark, light, light, dark.lerp(light, (w - BEVEL.x) / w), dark]))
+		draw_polyline(PackedVector2Array([Vector2(w - 1.5, 0), Vector2(w - 1.5, h - BEVEL.y), Vector2(w - BEVEL.x - 1.5, h)]), HudTheme.RIM, 3.0, true)
+
 #a stat against 100: cream for the car's base value, gold for the upgrades bought on top,
-#with faint ticks every 10. `glow` brightens the gold part for a moment after a purchase.
+#with faint ticks every 10 when it is tall enough. `glow` brightens the gold part for a moment.
 class StatBar extends Control:
 	var base := 0
 	var bought := 0

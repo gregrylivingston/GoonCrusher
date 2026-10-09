@@ -60,12 +60,12 @@ Run flows 1 to 6 under each of these:
 
 - Every bottom hint bar is clickable: the main menu (Back included), Goonopedia, pause, Deal, Claw and Pit Shop. Also the Q/E tab chips in Settings and Goonopedia.
 - Driver card:
-  - Clicking a stat opens the upgrade sheet on that stat.
-  - Hover focuses a row, and a click buys.
-  - A row you can't afford shakes.
-  - Done closes the sheet.
-  - Upgrade and unlock flashes.
-- The mouse wheel scrolls the carousels (not in upgrade mode).
+  - Upgrades opens the Goonopedia on that car with its Engine upgrade button focused. The stat rail ignores the mouse.
+  - Hovering a feature shows its full text.
+  - Side cards show only their art; selecting one flips it to its front (a crossfade with Reduce Motion), and the old one flips back.
+  - Drive and Upgrades sit at the bottom right and follow the selected card.
+  - Unlock flashes.
+- The mouse wheel scrolls the carousels.
 - Clicking a side poster selects that level.
 - The medallions have hover states.
 - Check that a synthetic action fired by a click never leaves an action stuck "pressed" (`KeyHint.fire`).

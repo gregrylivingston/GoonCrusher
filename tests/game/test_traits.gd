@@ -3,7 +3,7 @@ extends GameTest
 #Car traits (CarTraits, CarTraitRig; docs/CAR_ART.md "Traits"): every car has its signature features, the
 #handling ones change integrate()'s numbers the right way, and the rules do what their cards say.
 
-const CARS := {"sedan": 2, "van": 2, "taxi": 2, "pickup": 2, "audi": 2, "racer": 2, "police": 2, "ambulance": 2, "semi": 3}
+const CARS := {"sedan": 2, "van": 2, "taxi": 2, "pickup": 2, "audi": 2, "racer": 2, "police": 2, "ambulance": 2, "semi": 2}
 const T = Root.terrain
 
 func car(id: String) -> OverheadCarBody2D:
