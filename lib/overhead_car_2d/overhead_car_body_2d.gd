@@ -61,6 +61,9 @@ var secondWindUsed := false
 var defibUsed := false
 var lastHurtTick := -100000 #physics frame of the last damage or system wear (Duct Tape waits on it)
 var spareItem := ""        #Cargo Bay: a second gadget, moved up when the first runs out
+var hornSound: AudioStream #sound/horn/<carId>.wav (scripts/art/horn_sounds.py)
+var hornWasDown := false
+var hornCooldown := 0
 var spareCharges := 0
 
 func hasTrait(id: StringName) -> bool:
@@ -169,6 +172,8 @@ func _init():
 func _ready():
 	if trailer: trailer.attach(self)
 	cacheTraits()
+	var hornPath := "res://sound/horn/%s.wav" % carId
+	if ResourceLoader.exists(hornPath): hornSound = load(hornPath)
 	purseAudio.append_array(powerupAudio)
 	$"AudioStream-Engine".stream = engineNoise
 	$"AudioStream-Engine".play()
@@ -282,7 +287,9 @@ func _physics_process(delta):
 		_car_input.acceleration = 0.0
 		_car_input.steering = 0.0
 	if not zoneCooldown.is_empty(): tickZoneCooldowns()
-	if isPlayer: tickPickups()
+	if isPlayer:
+		tickPickups()
+		tickHorn()
 	if fuel <= 0 && not isDestroyed: outOfFuel()
 	checkGround(global_position)
 	
@@ -701,11 +708,43 @@ func goonBumpReady(goon: Object) -> bool:
 
 #false when the goon resisted: some need more speed, a hit from the side, or can't be hit right now
 #(Walker.tryCrush, docs/GOONS.md). The goon handles the bounce and any damage itself.
+#Weight crushes: a heavy car meets a goon's crush speed sooner, a light one later. The car's speed counts
+#times crushWeight(): weight 50 as before, the semi (100) crushes at 70% of the speed, the racer (15) needs
+#about 120%.
+const CRUSH_WEIGHT := 0.6
+func crushWeight() -> float:
+	return 1.0 / (1.0 + (0.5 - CarHandling.weightShare(effectiveWeight())) * CRUSH_WEIGHT)
+
+#--- the horn: every car has one (Horn action, Q / pad Y) ---
+#Its own sound (sound/horn/<carId>.wav), and goons in a cone ahead flinch: a short stun and a shove away,
+#the Air Horn gadget's effect in miniature (Gadgets.stun). On a short cooldown so it can't stun-lock.
+const HORN_RANGE := 450.0
+const HORN_CONE := 0.9      #radians either side of the nose
+const HORN_STUN := 0.6
+const HORN_PUSH := 160.0
+const HORN_COOLDOWN := 72   #ticks
+func tickHorn() -> void:
+	if hornCooldown > 0: hornCooldown -= 1
+	var down := not isDestroyed && actionDown("Horn")
+	if down && not hornWasDown && hornCooldown == 0: honk()
+	hornWasDown = down
+
+func honk() -> void:
+	hornCooldown = HORN_COOLDOWN
+	if hornSound: Audio.play(hornSound)
+	if not is_instance_valid(Root.spawnManager): return
+	var forward := global_transform.x
+	for goon in Root.spawnManager.goonsNear(global_position, HORN_RANGE):
+		if goon.dead: continue
+		var to: Vector2 = goon.global_position - global_position
+		if absf(forward.angle_to(to)) > HORN_CONE: continue
+		Gadgets.stun(goon, HORN_STUN, to.normalized() * HORN_PUSH)
+
 func crushGoon(collider, speed := -1.0) -> bool:
 	if not is_instance_valid(collider) || collider.isDying(): return true
 	if speed < 0.0: speed = velocity.length()
 	if collider.has_method("tryCrush"):
-		if not collider.tryCrush(self, speed): return false
+		if not collider.tryCrush(self, speed * crushWeight()): return false
 	else: collider.destroy()
 	if isPlayer: Settings.vibrate(0.4, 0.0, 0.08)
 	creditGoon(collider)

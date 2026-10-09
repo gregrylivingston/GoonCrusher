@@ -96,20 +96,8 @@ func test_slot_pays_what_the_line_shows():
 	assert_eq(machine.line(), ["coin", "coin", "gem"], "a spinning reel shows the nearest symbol")
 	freeMenu(machine)
 
-func test_wheel_power():
-	assert_eq(PrizeWheelMenu.powerAt(0.0), 0.0)
-	assert_almost_eq(PrizeWheelMenu.powerAt(PrizeWheelMenu.SWEEP), 1.0, 0.001, "full after one sweep")
-	assert_almost_eq(PrizeWheelMenu.powerAt(PrizeWheelMenu.SWEEP * 2.0), 0.0, 0.001, "and empty again")
-
 func test_deal_counts_what_beats_your_card():
 	var common := gadget(Pickups.R.UNCOMMON)
 	var legendary := gadget(Pickups.R.LEGENDARY)
 	assert_eq(PickupDeal.beats(common, [legendary, common, legendary]), 2)
 	assert_eq(PickupDeal.beats(legendary, [legendary, common]), 0)
-
-func test_vault_dial():
-	assert_eq(PrizeVault.gap(1, 39), 2, "the dial wraps")
-	assert_eq(PrizeVault.gap(39, 1), 2)
-	assert_eq(PrizeVault.listen(12, 12), 1.0, "on the number")
-	assert_eq(PrizeVault.listen(12 + int(PrizeVault.HEAR), 12), 0.0, "out of hearing")
-	assert_gt(PrizeVault.listen(14, 12), PrizeVault.listen(16, 12), "louder when closer")

@@ -11,10 +11,10 @@ extends Node2D
 #  H          hold a Legendary gadget (to see a lesser prize sold)
 #The panel lists what the car was actually credited by each play (the car's `rewarded` signal and the change
 #in coins, gems, stars and held items), to check against the winnings board.
-#`-- --lab-shots` plays by itself (tapping Accelerate, as the playtest harness does), saves a screenshot of
+#`-- --lab-shots` plays by itself (tapping the action key, as the playtest harness does), saves a screenshot of
 #each play when it opens and on its winnings board to user://prize_lab/, and quits after SHOT_PLAYS.
 
-@export_enum("claw", "slot", "wheel", "deal", "vault", "pitshop") var game := "claw"
+@export_enum("claw", "slot", "deal", "pitshop") var game := "claw"
 @export_range(0, 4) var tier := 0
 
 const SCRATCH_SAVE := "user://prize_lab/lab_save.tres"
@@ -168,7 +168,7 @@ func _input(event: InputEvent) -> void:
 		_: return
 	get_viewport().set_input_as_handled()
 
-#--lab-shots: tap Accelerate through the game and screenshot it open and on its board
+#--lab-shots: tap the action key through the game and screenshot it open and on its board
 func selfPlay(delta: float) -> void:
 	openT += delta
 	var menus := get_tree().get_nodes_in_group("pickupMenu")
@@ -180,7 +180,7 @@ func selfPlay(delta: float) -> void:
 	tapT -= delta
 	if tapT <= 0.0:
 		tapT = 0.45
-		KeyHint.fire("Accelerate")
+		KeyHint.fire(PickupMenu.ACT)
 
 func capture(moment: String) -> void:
 	shot[moment] = true

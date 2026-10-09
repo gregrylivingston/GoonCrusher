@@ -101,7 +101,7 @@ After a bake that adds new PNGs, run `Godot_console.exe --headless --path . --im
 
 ## Crushing
 
-`OverheadCarBody2D.crushGoon` calls `goon.tryCrush(car, speed)` and returns false when the goon resists. On false the car keeps its usual scuff (`wearSystem(hitZone, GOON_SCUFF)`). A successful crush never wears the car's systems, but every goon contact, crush or not, chips the hull by `GOON_CONTACT_DAMAGE` (5 before armour, about 0.35 health on a stock car; once per goon per 30 ticks). Keep it at 5 or less, or a Bubble Shield would spend a charge on every crush.
+`OverheadCarBody2D.crushGoon` calls `goon.tryCrush(car, speed × car.crushWeight())` and returns false when the goon resists. `crushWeight()` is the car's weight (docs/CAR_ART.md, "Horn and weight"): weight 50 counts its speed as it is, the semi as 1.43× (it crushes at 70% of the speed), the racer as 0.83×. On false the car keeps its usual scuff (`wearSystem(hitZone, GOON_SCUFF)`). A successful crush never wears the car's systems, but every goon contact, crush or not, chips the hull by `GOON_CONTACT_DAMAGE` (5 before armour, about 0.35 health on a stock car; once per goon per 30 ticks). Keep it at 5 or less, or a Bubble Shield would spend a charge on every crush.
 
 A goon resists when any of these holds:
 - it is invulnerable: a hidden shell, a rolling boulder, buried, airborne, riding the car, or a flying bird

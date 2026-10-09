@@ -79,17 +79,6 @@ func test_every_game_has_a_name_and_icon():
 		assert_true(CrushPrizes.texture(g.id) != null, "%s has an icon" % g.id)
 		assert_true(g.get("start", false) || not CrushPrizes.price(g.id).is_empty(), "%s has a price or starts open" % g.id)
 
-func test_box_versions_of_the_games():
-	var plain := PrizeWheelMenu.wedgesFor(0).map(func(w): return w[0])
-	assert_true("BUST" in plain, "the plain wheel can bust")
-	var bronze := PrizeWheelMenu.wedgesFor(1).map(func(w): return w[0])
-	assert_false("BUST" in bronze, "a Bronze box's wheel never busts")
-	var diamond := PrizeWheelMenu.wedgesFor(CrushPrizes.TOP_TIER).map(func(w): return w[0])
-	assert_eq(diamond.count("JACKPOT"), 2, "a Diamond wheel has two jackpots")
-	assert_true("200" in diamond, "coin wedges doubled from Silver up")
-	assert_eq(PrizeVault.minTierFor(0), Pickups.R.RARE)
-	assert_eq(PrizeVault.minTierFor(CrushPrizes.TOP_TIER), Pickups.R.EPIC)
-
 func test_every_pickup_name_tag_fits():
 	for id in Pickups.DATA:
 		var tag := Pickups.shortName(id)

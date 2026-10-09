@@ -196,3 +196,21 @@ func test_drop_the_load():
 	assert_gt(1.0, rig.abilityReady(), "and restocks before it can drop again")
 	for t in int(CarTraitRig.DROP_RESTOCK * Engine.physics_ticks_per_second): rig.tickDrop()
 	assert_false(semi.loadDropped, "restocked")
+
+#--- across the garage ---
+
+func test_weight_changes_the_crush_speed():
+	assert_almost_eq(car("police").crushWeight(), 1.0, 0.001, "weight 50 crushes as before")
+	assert_almost_eq(1.0 / car("semi").crushWeight(), 0.7, 0.01, "the semi at 70% of the speed")
+	assert_gt(1.0 / car("racer").crushWeight(), 1.15, "the racer needs more")
+	var semi := car("semi")
+	var full := semi.crushWeight()
+	semi.loadDropped = true
+	assert_gt(full, semi.crushWeight(), "an empty trailer crushes a little less")
+
+func test_every_car_has_a_horn():
+	for id in CARS:
+		var c := car(id)
+		assert_true(c.hornSound != null, "%s has its own horn (sound/horn/%s.wav)" % [id, id])
+	assert_true(InputMap.has_action("Horn") && InputMap.has_action("Ability"), "both actions exist")
+	assert_true(Settings.REBINDABLE.has("Horn") && Settings.REBINDABLE.has("Ability"), "and can be rebound")

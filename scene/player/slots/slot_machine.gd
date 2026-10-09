@@ -1,11 +1,11 @@
 class_name SlotMachine extends PickupMenu
 
 #The slot machine (docs/PICKUPS.md, "The slot machine"): three reels of pickups (SlotSymbols) spin at a
-#speed you can read, and each Accelerate stops the next one on the symbol coming up, so a good eye can
-#time it. Before the first stop Steer sets the bet (run coins that tilt the reels toward rarer prizes).
-#Once all three stand, nudges (one, plus one per gift box tier) roll a reel on by one symbol: Steer picks
-#the reel, Use nudges it, and the line under the reels says what the pay line pays as it stands. Brake
-#spins again for a gem. Accelerate collects: a pair pays its symbol twice, a triple five times, stars are
+#speed you can read, and each press of the action key (E) stops the next one on the symbol coming up, so a
+#good eye can time it. Before the first stop A / D set the bet (run coins that tilt the reels toward rarer
+#prizes). Once all three stand, nudges (one, plus one per gift box tier) roll a reel on by one symbol: A / D
+#pick the reel, W nudges it, and the line under the reels says what the pay line pays as it stands. REJECT
+#(Q) spins again for a gem. The action key collects: a pair pays its symbol twice, a triple five times, stars are
 #Star Fragments and three are the jackpot. What the pay line shows is exactly what pays.
 
 const STRIP := 24          #symbols on a reel
@@ -64,14 +64,14 @@ func line() -> Array:
 
 func updateHints() -> void:
 	if phase == "spin":
-		var list := [[["Accelerate"], "Stop reel %d" % (nextStop + 1)]]
+		var list := [[[ACT], "Stop reel %d" % (nextStop + 1)]]
 		if not betPaid: list.push_back([["TurnLeft", "TurnRight"], "Bet"])
 		hints(list)
 		return
-	var list := [[["Accelerate"], "Collect"]]
+	var list := [[[ACT], "Collect"]]
 	if nudges > 0: list.push_back([["TurnLeft", "TurnRight"], "Reel"])
-	if nudges > 0: list.push_back([["UseItem"], "Nudge (%d)" % nudges])
-	if runGems() >= REROLL_GEMS: list.push_back([["Brake"], "Spin again (%d gem)" % REROLL_GEMS])
+	if nudges > 0: list.push_back([["Accelerate"], "Nudge (%d)" % nudges])
+	if runGems() >= REROLL_GEMS: list.push_back([[REJECT], "Spin again (%d gem)" % REROLL_GEMS])
 	hints(list)
 
 func updateInfo() -> void:
@@ -80,16 +80,16 @@ func updateInfo() -> void:
 
 func onAction(action: String) -> void:
 	match action:
-		"Accelerate", "ui_accept":
+		ACT, "ui_accept":
 			if phase == "spin": stopNext()
 			else: collect()
 		"TurnLeft", "TurnRight":
 			var step := -1 if action == "TurnLeft" else 1
 			if phase == "spin": changeBet(step)
 			elif nudges > 0: cursor = wrapi(cursor + step, 0, 3)
-		"UseItem":
+		"Accelerate":
 			if phase == "stopped": nudge(cursor)
-		"Brake":
+		REJECT:
 			if phase == "stopped": spinAgain()
 
 func onStageMouse(event: InputEvent) -> void:

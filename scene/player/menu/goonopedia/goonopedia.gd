@@ -1025,10 +1025,8 @@ func buildPickups() -> void:
 const PRIZE_TEXT := {
 	"claw": "Steer the claw over the prize pile and drop it. One grab is free; run coins buy more.",
 	"scratch": "Three cells scratch open one by one. Two alike pay once, three alike pay three times.",
-	"wheel": "Drive the spin: the wedge under the pointer pays out, or busts.",
 	"deal": "Three cards face up. Take one, raise the hand with run coins, or pay a gem for a new one.",
 	"slot": "Three reels of prizes, with bets and paylines. A spin can pay three things.",
-	"vault": "Five sealed boxes of Rare or better. Open two of them, or three from a Diamond box.",
 }
 
 func buildPrizeLadder() -> void:

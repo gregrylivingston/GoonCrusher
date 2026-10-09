@@ -1,7 +1,7 @@
 class_name ClawCrane extends PickupMenu
 
 #The Claw Crane (docs/PICKUPS.md, "Prize games"): a side view of an arcade crane over a heap of prizes.
-#The gantry runs back and forth on its own; Accelerate (or a click) drops the claw where it is. Stopping
+#The gantry runs back and forth on its own; the action key (E, or a click) drops the claw where it is. Stopping
 #swings the claw on its cable, so a good drop allows for the swing. The prizes are loose objects (a small
 #physics sim, `stepPhysics`): the open prongs shove them aside on the way down, closing scoops up whatever
 #is between them, one prize or several, and on the way up the claw goes weak to this grab's strength
@@ -109,7 +109,7 @@ func build() -> void:
 	ids.shuffle()
 	for id in ids: addPrize(id, freeSpot(radiusOf(id)))
 	settle(1.5)
-	hints([[["Accelerate"], "Drop"]])
+	hints([[[ACT], "Drop"]])
 	updateInfo()
 
 static func isJunk(id: String) -> bool:
@@ -159,19 +159,19 @@ func clawXform() -> Transform2D:
 func updateInfo() -> void:
 	match phase:
 		"patrol": say("Grabs left %d   -   Run coins %d" % [grabs, runCoins()])
-		"done": say("Out of grabs." + ("   Brake: one more for %d coins" % EXTRA_GRAB if runCoins() >= EXTRA_GRAB else ""))
+		"done": say("Out of grabs." + ("   %s: one more for %d coins" % [InputGlyphs.label(REJECT), EXTRA_GRAB] if runCoins() >= EXTRA_GRAB else ""))
 
 func onAction(action: String) -> void:
 	match action:
-		"Accelerate", "ui_accept":
+		ACT, "ui_accept":
 			if phase == "patrol": startDrop()
 			elif phase == "done": showWinnings()
-		"Brake":
+		REJECT: #retry: another grab for run coins
 			if phase == "done" && runCoins() >= EXTRA_GRAB:
 				Root.playerCar.coin -= EXTRA_GRAB
 				grabs += 1
 				phase = "patrol"
-				hints([[["Accelerate"], "Drop"]])
+				hints([[[ACT], "Drop"]])
 				updateInfo()
 		"ui_cancel":
 			if phase == "done": showWinnings()
@@ -238,7 +238,7 @@ func afterGrab() -> void:
 	phase = "patrol" if grabs > 0 else "done"
 	patrolDir = 1.0
 	if phase == "done":
-		if runCoins() >= EXTRA_GRAB: hints([[["Accelerate"], "Collect"], [["Brake"], "Another grab  (%d coins)" % EXTRA_GRAB]])
+		if runCoins() >= EXTRA_GRAB: hints([[[ACT], "Collect"], [[REJECT], "Another grab  (%d coins)" % EXTRA_GRAB]])
 		else: showWinnings()
 	updateInfo()
 
@@ -273,9 +273,9 @@ func prongPoint(side: float, i: int) -> Vector2:
 ## The claw's colliders in stage space: the head's underside and each prong's two segments
 func clawSegments() -> Array:
 	var x := clawXform()
-	var out := [[x * Vector2(HEAD.position.x, HEAD.end.y), x * HEAD.end]]
+	var out := [[x * Vector2(HEAD.position.x, HEAD.end.y), x * HEAD.end, 0.0]]
 	for side in [-1.0, 1.0]:
-		for i in 2: out.push_back([x * prongPoint(side, i), x * prongPoint(side, i + 1)])
+		for i in 2: out.push_back([x * prongPoint(side, i), x * prongPoint(side, i + 1), side])
 	return out
 
 #---------- the physics: position-based circles against the cabinet and the claw ----------
@@ -286,17 +286,25 @@ func stepPhysics(dt: float) -> void:
 	for i in now.size():
 		var was: Array = now[i]
 		if segs.size() == now.size(): was = segs[i]
-		claw.push_back([now[i][0], now[i][1], now[i][0] - was[0], now[i][1] - was[1]])
+		claw.push_back([now[i][0], now[i][1], now[i][0] - was[0], now[i][1] - was[1], now[i][2]])
 	segs = now
+	var near := Rect2(now[0][0], Vector2.ZERO) #the claw's bounds: prizes outside it skip the claw's segments
+	for seg in now: near = near.expand(seg[0]).expand(seg[1])
+	near = near.grow(PRONG_W + 24.0)
 	for p in prizes:
 		var v: Vector2 = ((p.pos - p.prev) * DAMP).limit_length(MAX_MOVE)
 		p.prev = p.pos
 		p.pos += v + Vector2(0, FALL * dt * dt)
+	prizes.sort_custom(func(a, b): return a.pos.x < b.pos.x) #sweep: only neighbours along x can touch
 	for k in ITERATIONS:
 		for i in prizes.size():
-			for j in range(i + 1, prizes.size()): pair(prizes[i], prizes[j])
+			var reach: float = prizes[i].pos.x + prizes[i].r + 26.0
+			for j in range(i + 1, prizes.size()):
+				if prizes[j].pos.x > reach: break
+				pair(prizes[i], prizes[j])
 		for p in prizes:
-			for s in claw: pushOut(p, s[0], s[1], s[2], s[3])
+			if near.has_point(p.pos):
+				for s in claw: pushOut(p, s[0], s[1], s[2], s[3], s[4])
 			cabinet(p)
 	for p in prizes.duplicate():
 		var moved: Vector2 = p.pos - p.prev
@@ -315,8 +323,9 @@ func pair(a: Dictionary, b: Dictionary) -> void:
 	b.pos += n * (reach - dist) * a.m / total
 
 ## Pushes a prize out of a segment of the claw that moved by `ma` and `mb` this step, and drags it along
-## with the segment a little (friction)
-func pushOut(p: Dictionary, a: Vector2, b: Vector2, ma: Vector2, mb: Vector2) -> void:
+## with the segment a little (friction). A prong's outside (`side`: -1 left prong, 1 right, 0 the head) is
+## smooth, so prizes slide off the arms instead of riding up on them.
+func pushOut(p: Dictionary, a: Vector2, b: Vector2, ma: Vector2, mb: Vector2, side := 0.0) -> void:
 	var ab := b - a
 	var u := clampf((p.pos - a).dot(ab) / maxf(ab.length_squared(), 0.0001), 0.0, 1.0)
 	var d: Vector2 = p.pos - (a + ab * u)
@@ -325,6 +334,7 @@ func pushOut(p: Dictionary, a: Vector2, b: Vector2, ma: Vector2, mb: Vector2) ->
 	if dist >= reach: return
 	var n := d / dist if dist > 0.0001 else Vector2(-ab.y, ab.x).normalized()
 	p.pos += n * (reach - dist)
+	if side != 0.0 && clawXform().basis_xform_inv(n).x * side > 0.2: return #the outside of a prong
 	var slide: Vector2 = (p.pos - p.prev) - ma.lerp(mb, u)
 	slide -= n * slide.dot(n)
 	p.pos -= slide * FRICTION

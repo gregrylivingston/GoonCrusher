@@ -107,7 +107,7 @@ Every car has signature features beyond its stats (`scripts/global/car_traits.gd
 Each trait has a kind, and its kind decides where it lives:
 - **Physics** changes handling inside `integrate()`, so the AI driver's predictions follow it. The car caches one flag per trait in `_ready` (`cacheTraits`: `second_wind` becomes `tSecondWind`), and `integrate()` reads them through `surfaceGrip`, `traitGrip`, `traitSteer`, `groundFriction`, `handbrakeGrip` and `effectiveWeight`.
 - **Mechanic** and **Ability** are rules on top. They live in `CarTraitRig` (`lib/overhead_car_2d/car_trait_rig.gd`), a child the car makes when it has any trait and ticks after its own move. The rig also holds the state the physics flags read (`twoWheels`, `loadDropped`).
-- **Ability** has its own button: the **Ability** action (Q, pad Y), rebindable in Settings.
+- **Ability** has its own button: the **Ability** action (F, pad B), rebindable in Settings.
 
 | Car | Trait | Kind | What it does | Where |
 |---|---|---|---|---|
@@ -134,6 +134,12 @@ Each trait has a kind, and its kind decides where it lives:
 The numbers are first guesses. The handling ones are constants on the car (`CITY_GRIP`, `DOWNFORCE_*`, `TWO_WHEEL_*`, `SWAY_*`, `DRIFT_KING_*`, `LOAD_WEIGHT`, `FEATHER_BOUNCE`), the rules' are on `CarTraitRig`. `tests/game/test_traits.gd` covers every trait.
 
 **Adding a trait:** add it to `CarTraits.DATA` and to a car's `traits`, draw its icon in `pickup_icons.js` (`trait_<id>`) and run it, then add the `t<Name>` flag to the car (`cacheTraits` sets any flag named after the id). Put handling in the integrate helpers and rules in `CarTraitRig`, and give it a test.
+
+## Horn and weight
+
+**Horn.** Every car has a horn on the **Horn** action (Q, pad Y; rebindable). Each plays its own sound, `sound/horn/<carId>.wav`, baked by `scripts/art/horn_sounds.py`: the sedan's tired bleat, the van's low honk, the taxi's double honk, the pickup's beep-beep, the supercar's sharp honk, the racer's chirp, the police whoop, the ambulance's yelp, the semi's air horn. Goons within `HORN_RANGE` (450 px) and `HORN_CONE` (0.9 rad either side of the nose) flinch, stunned for 0.6 s and shoved away, like the Air Horn gadget in miniature (`Gadgets.stun`). Cooldown 1.2 s (`honk`, `tickHorn`).
+
+**Weight crushes.** A heavy car meets a goon's crush speed sooner and a light one later: `crushGoon` passes `tryCrush` the car's speed times `crushWeight()` = 1 / (1 + (0.5 − weight share) × 0.6). Weight 50 crushes as before, the semi at 70% of the speed (75% with its load dropped), the racer needs about 120%.
 
 ## Trailer
 

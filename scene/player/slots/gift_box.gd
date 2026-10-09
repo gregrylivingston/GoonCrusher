@@ -2,7 +2,7 @@ class_name GiftBox extends CanvasLayer
 
 #A gift box earned with crush XP (CrushPrizes, docs/PICKUPS.md "Gift boxes"): it drops in over the dimmed
 #run, shakes, pops its lid on the prize game inside and opens that game. Only for show: nothing is
-#credited here. Accelerate or a click skips ahead; headless runs and the harnesses skip it at once
+#credited here. The action key (E) or a click skips ahead; headless runs and the harnesses skip it at once
 #(Transition.instant()); Reduce Motion drops the shake.
 
 const GIFT_ICON := preload("res://texture/icon/gift.svg")
@@ -64,7 +64,7 @@ func _process(delta: float) -> void:
 		popped = true
 		Transition.sound("pop", -2.0, 0.9)
 		Settings.vibrate(0.3, 0.5, 0.12)
-	if t >= HOLD_UNTIL || (t >= SKIP_AFTER && InputMap.has_action("Accelerate") && Input.is_action_just_pressed("Accelerate")):
+	if t >= HOLD_UNTIL || (t >= SKIP_AFTER && InputMap.has_action(PickupMenu.ACT) && Input.is_action_just_pressed(PickupMenu.ACT)):
 		finish()
 		return
 	stage.queue_redraw()

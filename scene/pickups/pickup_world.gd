@@ -80,7 +80,7 @@ func startEvent(kind: String, car) -> void:
 
 ## Testing: `-- --pickup-shots=deal,claw,pitshop,scratch,double` (with a bench run, e.g. --bench=SL)
 ## opens each in turn after the countdown and saves user://bench/pickup_<id>.png. Gift boxes (CrushPrizes):
-## `giftbox:<tier>:<game>` shows a box at its reveal, `prizewheel:<tier>` and `vault:<tier>` the pausing games.
+## `giftbox:<tier>:<game>` shows a box at its reveal.
 func screenshots(ids: PackedStringArray) -> void:
 	await get_tree().create_timer(4.5, true).timeout
 	var placed := 0
@@ -98,8 +98,6 @@ func screenshots(ids: PackedStringArray) -> void:
 				box.tier = boxTier
 				box.preview = 1.25
 				Root.levelRoot.add_child(box)
-			"prizewheel": PrizeWheelMenu.open(boxTier)
-			"vault": PrizeVault.open(boxTier)
 			"pitshop": PitShop.open()
 			"wheel": addToLevel(WorldProps.PrizeWheel.new(), beside)
 			"speedtrap": addToLevel(WorldProps.SpeedTrap.new(), beside)

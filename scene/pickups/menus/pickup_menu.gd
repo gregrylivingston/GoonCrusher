@@ -7,12 +7,16 @@ class_name PickupMenu extends CanvasLayer
 #which lists each prize and what it did (held on E, sold because a rarer one is held, +40 coins...).
 #Prizes are credited the moment they are won (award), never from an animation; the board only shows them.
 #
-#Driven by the driving keys as well as the menu keys. A key held when the game opens is ignored until it
-#is released, so a held Accelerate can't play something by accident. Closing resumes the run through a
+#Keys, the same in every game: the action key (ACT, E / X) does the game's main thing, WASD (Steer and
+#Accelerate / Brake) moves or picks things, and REJECT (Q / Y) turns down, redraws or retries. The action
+#key held when the game opens is ignored until it is released, so a gadget fired on the road can't play
+#something by accident. Closing resumes the run through a
 #quick 3-2-1 (resumeRun).
 
 const STAGE := Vector2(640, 420)
-const ARM_SECONDS := 0.2   #at least this long before a key counts, and Accelerate must be up
+const ARM_SECONDS := 0.2   #at least this long before a key counts, and the action key must be up
+const ACT := "UseItem"     #E / X: the main action
+const REJECT := "Horn"     #Q / Y: turn down, redraw, retry
 const BOARD_ROWS := 6      #rows the winnings board shows; more are summed into the last
 const ROW_STEP := 0.09     #seconds between rows appearing
 
@@ -53,7 +57,7 @@ func _ready() -> void:
 		return
 	add_to_group("slotMachine") #the playtest and bench harnesses tap Accelerate through anything in it
 	InputGlyphs.ensureMenuActions()
-	waitRelease = InputMap.has_action("Accelerate") && Input.is_action_pressed("Accelerate")
+	waitRelease = InputMap.has_action(ACT) && Input.is_action_pressed(ACT)
 	root.theme = MenuTheme.theme()
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(root)
@@ -100,7 +104,7 @@ func build() -> void: pass
 func _process(delta: float) -> void:
 	if closed || not shown: return
 	armed += delta
-	if waitRelease && not Input.is_action_pressed("Accelerate"): waitRelease = false
+	if waitRelease && not Input.is_action_pressed(ACT): waitRelease = false
 	if boardUp:
 		boardT += delta
 		board.queue_redraw()
@@ -108,10 +112,10 @@ func _process(delta: float) -> void:
 		tick(delta)
 		stage.queue_redraw()
 		return
-	for action in ["Accelerate", "Brake", "TurnLeft", "TurnRight", "UseItem", "ui_accept", "ui_cancel"]:
+	for action in [ACT, REJECT, "Accelerate", "Brake", "TurnLeft", "TurnRight", "ui_accept", "ui_cancel"]:
 		if InputMap.has_action(action) && Input.is_action_just_pressed(action):
 			if boardUp:
-				if action in ["Accelerate", "ui_accept", "ui_cancel"] && boardT > 0.25: close()
+				if action in [ACT, "ui_accept", "ui_cancel"] && boardT > 0.25: close()
 			else: onAction(action)
 	tick(delta)
 	stage.queue_redraw()
@@ -120,7 +124,8 @@ func _process(delta: float) -> void:
 func live() -> bool:
 	return armed >= ARM_SECONDS && not waitRelease
 
-## A key went down (after arming): Accelerate, Brake, TurnLeft, TurnRight, UseItem, ui_accept or ui_cancel.
+## A key went down (after arming): ACT, REJECT, Accelerate (W), Brake (S), TurnLeft (A), TurnRight (D),
+## ui_accept or ui_cancel. Games treat ui_accept like ACT.
 func onAction(_action: String) -> void: pass
 ## Every frame, armed or not (the tree is paused, so this is the game's clock).
 func tick(_delta: float) -> void: pass
@@ -266,7 +271,7 @@ static func outcome(car, id: String, times := 1) -> String:
 	var stop := text.find(". ")
 	return text.substr(0, stop + 1) if stop > 0 else text
 
-## Turns the stage into the winnings board; Accelerate (or a click) then leaves.
+## Turns the stage into the winnings board; the action key (or a click) then leaves.
 func showWinnings(heading := "") -> void:
 	if boardUp: return
 	boardUp = true
@@ -274,7 +279,7 @@ func showWinnings(heading := "") -> void:
 	board.set_meta("heading", heading)
 	board.visible = true
 	board.mouse_filter = Control.MOUSE_FILTER_STOP #over any buttons the game put on the stage
-	hints([[["Accelerate"], "Back to the road"]])
+	hints([[[ACT], "Back to the road"]])
 	say("")
 	Transition.sound("pop", -6.0, 1.1)
 

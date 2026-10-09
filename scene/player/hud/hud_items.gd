@@ -93,7 +93,7 @@ func drawSlot(at: Vector2, id: String, charges: int, action: String) -> void:
 	var keyName := InputGlyphs.label(action)
 	if keyName != "": HudTheme.text(self, at + Vector2(BOX * 0.5 + 8.0, 8.0), keyName, 16, HudTheme.GOLD, HORIZONTAL_ALIGNMENT_LEFT, 5)
 
-#the car's own ability (CarTraits ABILITY: the semi's Drop the Load): lit when ready, dim and filling while
+#the car's own ability (CarTraits ABILITY: the semi's Drop the Load, on F / pad B): lit when ready, dim and filling while
 #it recharges, with the Ability key
 func drawAbility(at: Vector2, ready: float) -> void:
 	var rect := Rect2(at - Vector2(BOX, BOX) * 0.5, Vector2(BOX, BOX))

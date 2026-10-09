@@ -391,14 +391,14 @@ func touchingWall() -> bool:
 		if World.isWall(collider): return true
 	return false
 
-#a slot machine pauses the run: tap Accelerate to stop each reel, then claim (never reroll)
+#a prize game pauses the run: tap its action key (PickupMenu.ACT) until it closes (never reroll)
 #paused this long (real ms) with no menu to answer once the run has started, the run would hang (a crush goal
 #that paused for a menu that never opened)
 const SOFTLOCK_MS := 10000
 var pausedEmptySince := -1
 func tapSlotMachine(delta: float) -> void:
 	if get_tree().get_nodes_in_group("slotMachine").is_empty():
-		if Input.is_action_pressed("Accelerate"): Input.action_release("Accelerate")
+		if Input.is_action_pressed(PickupMenu.ACT): Input.action_release(PickupMenu.ACT)
 		if pausedEmptySince < 0: pausedEmptySince = Time.get_ticks_msec()
 		elif clockSeen && Time.get_ticks_msec() - pausedEmptySince > SOFTLOCK_MS && get_tree().get_nodes_in_group("pauseMenu").is_empty():
 			print("PLAYTEST_SOFTLOCK t=%.1f: the tree was paused with no menu open; unpausing" % levelTime)
@@ -407,10 +407,10 @@ func tapSlotMachine(delta: float) -> void:
 		return
 	pausedEmptySince = -1
 	slotPressTimer -= delta
-	if Input.is_action_pressed("Accelerate"): Input.action_release("Accelerate")
+	if Input.is_action_pressed(PickupMenu.ACT): Input.action_release(PickupMenu.ACT)
 	elif slotPressTimer <= 0.0:
 		slotPressTimer = 0.4
-		Input.action_press("Accelerate")
+		Input.action_press(PickupMenu.ACT) #the prize games' action key
 
 func recordRun() -> void:
 	recorded = true

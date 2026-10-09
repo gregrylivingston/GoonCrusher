@@ -16,10 +16,8 @@ class_name CrushPrizes extends RefCounted
 const GAMES := [
 	{"id": "claw", "name": "Claw Crane", "icon": "res://texture/icon/claw.svg", "start": true},
 	{"id": "scratch", "name": "Scratch Card", "icon": "res://texture/icon/scratch.svg", "price": {"coin": 3000}},
-	{"id": "wheel", "name": "Prize Wheel", "icon": "res://texture/icon/wheel.svg", "price": {"coin": 8000}},
 	{"id": "deal", "name": "The Deal", "icon": "res://texture/icon/deal.svg", "price": {"coin": 18000}},
 	{"id": "slot", "name": "Slot Machine", "icon": "res://texture/icon/slotMachine.svg", "price": {"coin": 40000}},
-	{"id": "vault", "name": "The Vault", "icon": "res://texture/icon/vault.svg", "price": {"coin": 80000, "gem": 10}},
 ]
 
 ## Box tiers by box level: box 1 is Cardboard, box 5 and later Diamond.
@@ -161,10 +159,8 @@ static func openGame(id: String, tier: int) -> void:
 		"claw": ClawCrane.open(tier, true)
 		"scratch":
 			if is_instance_valid(HudChance.current): HudChance.current.startScratch(tier)
-		"wheel": PrizeWheelMenu.open(tier)
 		"deal": PickupDeal.open(true, tier)
 		"slot": SlotMachine.open(tier, true)
-		"vault": PrizeVault.open(tier)
 
 static func pauses(id: String) -> bool:
 	return id != "scratch"

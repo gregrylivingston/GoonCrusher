@@ -6,7 +6,7 @@ extends Node
 #the prizes per grab, for weak to strong claws. `--strength=<0..1>` runs one; `--trace` prints a few grabs.
 
 var junkWon := 0
-var GRABS := 150 if not OS.get_cmdline_user_args().has("--trace") else 6
+var GRABS := 50 if not OS.get_cmdline_user_args().has("--trace") else 6
 
 func _ready() -> void:
 	Unlocks.allOpen = true

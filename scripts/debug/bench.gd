@@ -234,11 +234,11 @@ func checkRouteProgress(car) -> void:
 func drive(car) -> void:
 	var wanted = []
 	if get_tree().get_nodes_in_group("slotMachine").size() > 0:
-		#tap Accelerate to stop each reel and then claim
+		#tap the prize games' action key through whatever is open
 		slotPressTimer -= get_physics_process_delta_time()
 		if slotPressTimer <= 0.0:
 			slotPressTimer = 0.4
-			wanted = ["Accelerate"]
+			wanted = [PickupMenu.ACT]
 	elif recoverTime > 0.0:
 		#stuck on a rock: back up while turning, then drive off at an angle
 		recoverTime -= get_physics_process_delta_time()
@@ -261,7 +261,7 @@ func drive(car) -> void:
 	else:
 		stuckTime = 0.0
 	if cfg.pattern == "route" && levelTime > 6.0: checkRouteProgress(car)
-	for action in ["Accelerate", "Brake", "TurnLeft", "TurnRight"]:
+	for action in ["Accelerate", "Brake", "TurnLeft", "TurnRight", PickupMenu.ACT]:
 		if action in wanted && not Input.is_action_pressed(action): Input.action_press(action)
 		elif not action in wanted && Input.is_action_pressed(action): Input.action_release(action)
 

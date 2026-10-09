@@ -576,27 +576,23 @@ func answer(screen: Node) -> void:
 	elif screen is PickupDeal: name = "The Deal"
 	elif screen is ClawCrane: name = "Claw Crane"
 	elif screen is PitShop: name = "Pit Shop"
-	elif screen is PrizeWheelMenu: name = "Prize Wheel"
-	elif screen is PrizeVault: name = "The Vault"
 	note("CAREER_SCREEN session=%d t=%.0f %s" % [session, runTime, name])
 	if screen is SlotMachine: await answerSlots(screen)
 	elif screen is PickupDeal: await answerDeal(screen)
 	elif screen is ClawCrane: await answerClaw(screen)
 	elif screen is PitShop: await answerPit(screen)
-	elif screen is PrizeWheelMenu: await answerWheel(screen)
-	elif screen is PrizeVault: await answerVault(screen)
 	else: issue("ui", "an unknown screen in group slotMachine: %s" % screen.name)
 	if not await waitFor(func(): return screen.is_queued_for_deletion(), 12.0, "the %s to close" % name, screen):
 		if is_instance_valid(screen): screen.queue_free() #the harness takes it away so the run can go on
 		get_tree().paused = false
 
-## Every prize game ends on its winnings board: Accelerate (or a click on it) leaves.
+## Every prize game ends on its winnings board: the action key (or a click on it) leaves.
 func leaveBoard(game: PickupMenu, name: String) -> void:
 	if not await waitFor(func(): return game.boardUp, 6.0, "%s's winnings board" % name, game): return
 	if not is_instance_valid(game): return
 	await think(0.5)
 	if useMouse(): await click(game.board)
-	else: await press("Accelerate")
+	else: await press(PickupMenu.ACT)
 
 func answerSlots(machine: SlotMachine) -> void:
 	var car := Root.playerCar
@@ -609,33 +605,33 @@ func answerSlots(machine: SlotMachine) -> void:
 	while is_instance_valid(machine) && spins < 2:
 		for reel in 3:
 			if not is_instance_valid(machine) || machine.phase != "spin": break
-			await press("Accelerate", 0.4)
+			await press(PickupMenu.ACT, 0.4)
 		if not await waitFor(func(): return machine.phase == "stopped", 6.0, "the slot machine's reels to stop", machine): return
 		var paid := SlotSymbols.payouts(machine.line())
 		spins += 1
 		if spins == 1 && Personas.slotReroll(persona, car.gem, paid, rng) && car.gem >= SlotMachine.REROLL_GEMS:
 			var gems := car.gem
-			await press("Brake", 0.3)
+			await press(PickupMenu.REJECT, 0.3)
 			if car.gem != gems - SlotMachine.REROLL_GEMS: issue("economy", "a slot reroll took %d gems (had %d)" % [gems - car.gem, gems])
 			continue
 		break
 	if not is_instance_valid(machine): return
-	await press("Accelerate") #collect
+	await press(PickupMenu.ACT) #collect
 	await leaveBoard(machine, "the slot machine")
 
 func answerDeal(deal: PickupDeal) -> void:
 	var car := Root.playerCar
-	await think(PickupMenu.ARM_SECONDS + 0.3)
-	while deal.canSwap() && not Personas.dealKeep(persona, deal.hand, deal.cards, rng):
+	await think(PickupMenu.ARM_SECONDS + 0.6)
+	while deal.canRedraw() && not Personas.dealKeep(persona, deal.hand, deal.cards, rng):
 		var hand := deal.hand
-		await press("Brake", 0.4)
+		await press(PickupMenu.REJECT, 0.7) #the next card flips over
 		if not is_instance_valid(deal): return
 		if deal.hand == hand:
-			issue("ui", "Swap in The Deal did nothing")
+			issue("ui", "Redraw in The Deal did nothing")
 			break
 	var id: String = deal.hand
 	var before := int(car.pickedById.get(id, 0))
-	await press("Accelerate")
+	await press(PickupMenu.ACT)
 	await think(0.3)
 	if is_instance_valid(car) && int(car.pickedById.get(id, 0)) <= before && Pickups.has(id):
 		issue("economy", "The Deal's %s was kept but not collected" % id)
@@ -651,59 +647,38 @@ func answerClaw(crane: ClawCrane) -> void:
 			var prize: Dictionary = crane.prizes[target]
 			await waitFor(func(): return crane.phase == "patrol" && absf(crane.tipX() - prize.pos.x) < 12.0, 10.0, "the claw to pass over its prize", crane)
 			if not is_instance_valid(crane): return
-		await press("Accelerate", 0.1)
+		await press(PickupMenu.ACT, 0.1)
 		if not await waitFor(func(): return crane.boardUp || crane.phase == "done" || (crane.phase == "patrol" && crane.grabs > 0), 10.0, "the claw to come back", crane): return
 		if not is_instance_valid(crane) || crane.boardUp: break
 		if crane.grabs > 0: continue #free grabs left
 		if grab >= 1 || not extra: break
-		await press("Brake", 0.3) #another grab for run coins
+		await press(PickupMenu.REJECT, 0.3) #another grab for run coins
 		if crane.grabs == 0: break
-	if is_instance_valid(crane) && not crane.boardUp: await press("Accelerate") #collect
+	if is_instance_valid(crane) && not crane.boardUp: await press(PickupMenu.ACT) #collect
 	if is_instance_valid(crane): await leaveBoard(crane, "the Claw Crane")
-
-#the Prize Wheel from a gift box: hold to charge, let go, wait for it to stop, leave
-func answerWheel(wheel: PrizeWheelMenu) -> void:
-	await think(PickupMenu.ARM_SECONDS + 0.3)
-	var coins := Root.playerCar.coin
-	Input.action_press("Accelerate")
-	await think(rng.randf_range(0.2, 2.0))
-	Input.action_release("Accelerate")
-	if not await waitFor(func(): return wheel.phase == "done", 10.0, "the Prize Wheel to stop", wheel): return
-	if wheel.result.is_valid_int() && Root.playerCar.coin < coins + int(wheel.result): issue("economy", "the Prize Wheel's %s wedge didn't pay" % wheel.result)
-	await leaveBoard(wheel, "the Prize Wheel")
-
-#the Vault from a gift box: turn the dial to each number (sometimes a little off, as a person listening would)
-#and try it, until it opens or the alarm goes
-func answerVault(vault: PrizeVault) -> void:
-	await think(PickupMenu.ARM_SECONDS + 0.3)
-	var tries := 0
-	while is_instance_valid(vault) && vault.phase == "crack" && tries < 8:
-		tries += 1
-		var off := rng.randi_range(1, 3) if rng.randf() < 0.3 else 0
-		var goal := posmod(int(vault.combo[vault.cracked]) + off, PrizeVault.DIAL)
-		for step in PrizeVault.DIAL:
-			if vault.number() == goal: break
-			var ahead := posmod(goal - vault.number(), PrizeVault.DIAL)
-			await press("TurnRight" if ahead <= PrizeVault.DIAL / 2 else "TurnLeft", 0.08)
-			if not is_instance_valid(vault): return
-		if vault.number() != goal:
-			issue("ui", "Steer didn't turn the Vault's dial to %d (it shows %d)" % [goal, vault.number()])
-			break
-		await press("Accelerate", 0.35)
-	await leaveBoard(vault, "the Vault")
 
 func answerPit(shop: PitShop) -> void:
 	await think(PickupMenu.ARM_SECONDS + 0.3)
 	var prices := shop.offers.map(func(id): return shop.price(id) if id != "" else 0)
-	for i in Personas.pitBuys(persona, shop.offers, prices, PickupMenu.runCoins()):
-		if useMouse(): await click(shop.buttons[i])
-		else:
-			for step in shop.buttons.size():
-				if shop.buttons[i].has_focus(): break
-				await press("TurnRight", 0.2)
-			await press("Accelerate", 0.3)
-		if shop.offers[i] != "": issue("ui", "the Pit Shop didn't sell %s" % shop.offers[i])
-	await press("Brake")
+	var wanted := Personas.pitBuys(persona, shop.offers, prices, PickupMenu.runCoins())
+	while shop.next in wanted && shop.canBuy(): #the shop sells in order: stop at the first one not wanted
+		var at := shop.next
+		if useMouse(): await clickStage(shop, shop.rowRect(at).get_center())
+		else: await press(PickupMenu.ACT, 0.3)
+		if shop.next == at:
+			issue("ui", "the Pit Shop didn't sell %s" % shop.offers[at])
+			break
+	if useMouse(): await clickStage(shop, PitShop.LEAVE.get_center())
+	else: await press(PickupMenu.REJECT)
+
+## Clicks a point on a prize game's stage
+func clickStage(game: PickupMenu, at: Vector2) -> void:
+	var press := InputEventMouseButton.new()
+	press.button_index = MOUSE_BUTTON_LEFT
+	press.pressed = true
+	press.position = at
+	game.stageInput(press)
+	await think(0.3)
 
 func pauseRun() -> void:
 	await press("ui_menu", 0.5)
