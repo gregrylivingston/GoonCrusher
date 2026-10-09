@@ -131,13 +131,13 @@ func tune(id: StringName) -> void:
 	queue.push_back(songItem(picked.nextSong()))
 	requestHead()
 
-#what follows a song: maybe a segment, then the next song
+#what follows a song: none, one or two segments (of different kinds), then the next song
 func planAfterSong() -> Array:
 	var picked: RadioStation = stations[station]
 	var song = picked.nextSong()
 	var out := []
-	var segment = picked.pickSegment()
-	if not segment.is_empty() && segment.get("path"): out.push_back(segment)
+	for segment in picked.pickSegments():
+		if segment.get("path"): out.push_back(segment)
 	out.push_back(songItem(song))
 	return out
 

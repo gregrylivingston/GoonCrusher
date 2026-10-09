@@ -14,7 +14,9 @@ var name: String
 var short: String
 var color := Color.WHITE
 var order := 99
-var segmentChance := 0.6
+#relative odds of 0, 1 or 2 segments between two songs (station.json "segment_counts"); two are always
+#of different kinds. Stations without it use "segment_chance": [1 - chance, chance, 0].
+var segmentCounts: Array[float] = [0.4, 0.6, 0.0]
 var weights := {"ident":1.0, "talk":1.0, "ad":1.0}
 var crossfade := 2.5
 var logo: String = ""
@@ -37,7 +39,11 @@ func applyConfig(config: Dictionary) -> void:
 	short = str(config.get("short", initials(name)))
 	color = Color.from_string(str(config.get("color", "#ffffff")), Color.WHITE)
 	order = int(config.get("order", 99))
-	segmentChance = clampf(float(config.get("segment_chance", 0.6 if talks else 0.3)), 0.0, 1.0)
+	var chance = clampf(float(config.get("segment_chance", 0.6 if talks else 0.3)), 0.0, 1.0)
+	segmentCounts.assign([1.0 - chance, chance, 0.0])
+	var counts = config.get("segment_counts")
+	if counts is Array && counts.size() == 3:
+		for i in 3: segmentCounts[i] = maxf(0.0, float(counts[i]))
 	crossfade = clampf(float(config.get("crossfade", 2.5)), 0.0, 10.0)
 	var w = config.get("weights", {})
 	if w is Dictionary:
@@ -58,25 +64,40 @@ func nextSong() -> String:
 	var path = bag("song", files.get("song", [])).next()
 	return path if path else ""
 
-#The segment to play between two songs, or {} for none, by the station's chance and weights.
-#Segments are not contextual (docs/RADIO.md): any one may play at any time.
-func pickSegment() -> Dictionary:
-	if rng.randf() >= segmentChance: return {}
+#The segments to play between two songs: none, one, or two of different kinds, by the station's
+#segment_counts, each kind picked by its weight. Segments are not contextual (docs/RADIO.md): any one
+#may play at any time.
+func pickSegments() -> Array:
+	var count = weightedIndex(segmentCounts)
+	var out := []
+	var used := []
+	for n in count:
+		var kind = pickKind(used)
+		if kind == "": break
+		used.push_back(kind)
+		out.push_back({"kind":kind, "path":bag(kind, files[kind]).next()})
+	return out
+
+#a segment kind with files, by weight, skipping the kinds already used; "" when none is left
+func pickKind(exclude: Array = []) -> String:
 	var kinds := []
-	var total := 0.0
+	var odds: Array[float] = []
 	for kind in SEGMENT_KINDS:
-		if weights[kind] > 0.0 && not files.get(kind, []).is_empty():
+		if weights[kind] > 0.0 && not files.get(kind, []).is_empty() && not exclude.has(kind):
 			kinds.push_back(kind)
-			total += weights[kind]
-	if kinds.is_empty(): return {}
+			odds.push_back(weights[kind])
+	if kinds.is_empty(): return ""
+	return kinds[weightedIndex(odds)]
+
+func weightedIndex(odds: Array[float]) -> int:
+	var total := 0.0
+	for w in odds: total += w
+	if total <= 0.0: return 0
 	var roll = rng.randf() * total
-	var kind = kinds.back()
-	for k in kinds:
-		roll -= weights[k]
-		if roll < 0.0:
-			kind = k
-			break
-	return {"kind":kind, "path":bag(kind, files[kind]).next()}
+	for i in odds.size():
+		roll -= odds[i]
+		if roll < 0.0: return i
+	return odds.size() - 1
 
 func nextIdent() -> String:
 	var path = bag("ident", files.get("ident", [])).next()
