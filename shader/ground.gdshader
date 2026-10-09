@@ -27,6 +27,11 @@ uniform float organic = 1.0; // how far the borders wander: less on built-up lev
 // lava (Landscape.waterLook "lava", WorldSkin): the water layer glows in rgb, mixed in by a (0: plain water). Its
 // texture stays as relief; the glow is hotter away from the shore and pulses slowly above gc_ground_quality 0.
 uniform vec4 water_glow : source_color = vec4(0.0);
+// wading depth (WorldSkin, WorldGen.WADE_DEPTH): from the water's edge (field 0) down to -wade_depth the water is
+// drawn with wade_layer, choppier and lighter, blending into the deep water over a short step; 0 where the level's
+// water has no wading band (city canals, lava). Still one water texture read a pixel, two only across the step.
+uniform float wade_layer = 0.0;
+uniform float wade_depth = 0.0;
 
 const float CELL = 128.0;
 const float TILE = 1024.0; // world px one 512 texel material tile covers
@@ -34,6 +39,7 @@ const float FIELD_RANGE = 1.0;
 const float BELT_SPEED = 0.244; // 250 px/s in tile units
 const float TINT_LOW = 0.93;
 const float TINT_HIGH = 1.05;
+const float WADE_STEP = 0.05; // field units either side of -wade_depth over which wading depth turns deep
 
 varying vec2 world;
 
@@ -119,8 +125,20 @@ void fragment() {
 	if (!deck && water < aaWater && wall > -aaWall) {
 		vec2 wuv = uv;
 		if (gc_ground_quality > 0) wuv += vec2(sin(TIME * 0.4 + uv.y * 5.0), cos(TIME * 0.33 + uv.x * 4.0)) * 0.006 + vec2(TIME * 0.004, 0.0);
-		vec3 deep = texture(materials, vec3(wuv, water_layer)).rgb;
-		deep *= mix(1.06, 0.7, clamp(-water / 0.6, 0.0, 1.0));
+		// the wading band's share: 1 from the edge down to the step at -wade_depth, 0 below it and on levels without one
+		float wading = wade_depth > 0.0 ? smoothstep(-wade_depth - WADE_STEP, -wade_depth + WADE_STEP, water) : 0.0;
+		vec3 deep = vec3(0.0);
+		if (wading < 1.0) {
+			deep = texture(materials, vec3(wuv, water_layer)).rgb;
+			deep *= mix(1.06, 0.7, clamp(-water / 0.6, 0.0, 1.0));
+		}
+		if (wading > 0.0) {
+			// a quicker, crossing chop than the deep water's drift
+			vec2 cuv = uv;
+			if (gc_ground_quality > 0) cuv += vec2(sin(TIME * 0.9 + uv.y * 9.0), cos(TIME * 0.75 + uv.x * 8.0)) * 0.004 + vec2(TIME * 0.006, TIME * 0.003);
+			vec3 wade = texture(materials, vec3(cuv, wade_layer)).rgb * mix(1.02, 0.9, clamp(-water / wade_depth, 0.0, 1.0));
+			deep = mix(deep, wade, wading);
+		}
 		if (water_glow.a > 0.0) {
 			float pulse = gc_ground_quality > 0 ? 0.88 + 0.12 * sin(TIME * 1.3 + (uv.x + uv.y) * 6.0) : 1.0;
 			float heat = mix(0.75, 1.2, clamp(-water / 0.6, 0.0, 1.0)) * pulse;

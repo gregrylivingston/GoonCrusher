@@ -170,7 +170,7 @@ static func mode(car, id: String, d: Dictionary) -> void:
 ## Critter Chain: what each kill source is called in the combo readout. Sources with the same name count once.
 const CHAIN_NAMES := {&"car": "CRUSH", &"logs": "LOGS", &"bees": "BEES", &"splash": "SPLASH", &"drown": "SPLASH",
 	&"fall": "FALL", &"drop": "DROP", &"blast": "BOOM", &"gadget": "BOOM", &"trample": "TRAMPLE", &"quill": "QUILLS",
-	&"shell": "SHELL"}
+	&"shell": "SHELL", &"rocks": "ROCKS", &"spines": "SPINES"}
 
 ## The car crushed a goon at `pos`, by its bumper (`source` car) or with something it set off near it
 ## (SpawnManager.creditCrush): Crush Combo, Coin Frenzy and Golden Ride pay here. The chain remembers its

@@ -88,6 +88,8 @@ func test_surfaces_have_the_right_trails():
 	assert_eq(CarJuice.trailKind(surface("SNOW")), CarJuice.Kind.PUFF, "snow: powder")
 	assert_eq(CarJuice.trailKind(surface("MUD")), CarJuice.Kind.BITS, "mud: clods")
 	assert_eq(CarJuice.trailKind(surface("SHALLOWS")), CarJuice.Kind.SPRAY, "shallows: spray")
+	assert_eq(CarJuice.trailKind(surface("WADE")), CarJuice.Kind.SPRAY, "wading depth: spray")
+	assert_eq(CarJuice.trailKind(surface("WATER")), CarJuice.Kind.SPRAY, "deep water: spray")
 	assert_eq(CarJuice.trailKind(surface("ASPHALT")), -1, "asphalt: only tyre smoke in a slide")
 	assert_true(CarJuice.isRough(surface("MUD")) && not CarJuice.isRough(surface("ASPHALT")), "a road to mud bumps")
 
@@ -126,6 +128,45 @@ func test_the_body_returns_to_rest():
 	var body: Sprite2D = car.get_node("sprite/body")
 	assert_gt(0.1, body.position.distance_to(car.juice.bodyBase), "the body is back in place")
 	assert_gt(0.001, absf(body.scale.x - car.juice.bodyScale.x), "and its size")
+
+#Water (CarJuice.water): over deep water the body settles in, tinted, its shadow fading, and comes back out;
+#a bow wave sprays in wading depth at speed; none of it touches the car's velocity
+class WaterMap extends RefCounted:
+	var terrain := 0
+	func terrainAt(_pos: Vector2) -> int: return terrain
+	func surfaceAt(pos: Vector2) -> int: return terrainAt(pos)
+	func lethalAt(pos: Vector2) -> bool: return World.isLethal(terrainAt(pos))
+	func blockedAt(pos: Vector2) -> bool: return World.isBlocked(terrainAt(pos))
+	func spawnableAt(pos: Vector2) -> bool: return World.isSpawnable(terrainAt(pos))
+
+func test_the_car_settles_into_deep_water_and_sprays_through_wading_depth():
+	var savedMap = Root.worldMap
+	var map := WaterMap.new()
+	Root.worldMap = map
+	var car = makeCar()
+	Settings.set_value("gfx/driving_fx", 2, false)
+	var body: Sprite2D = car.get_node("sprite/body")
+	var shadow: Sprite2D = car.get_node("sprite/shadow")
+	var alpha := shadow.self_modulate.a
+	car.velocity = Vector2(600, 0)
+	map.terrain = Root.terrain.WATER
+	for i in 60: car.juice._physics_process(1.0 / 60.0)
+	assert_almost_eq(car.juice.sink, 1.0, 0.001, "a second over deep water: sunk")
+	assert_gt(1.0, body.modulate.g, "tinted by the water over it")
+	assert_gt(car.juice.bodyScale.x, body.scale.x, "settled lower: smaller from overhead")
+	assert_gt(alpha, shadow.self_modulate.a, "its shadow gone under")
+	assert_eq(car.velocity, Vector2(600, 0), "show only")
+	map.terrain = Root.terrain.GRASS
+	for i in 60: car.juice._physics_process(1.0 / 60.0)
+	assert_almost_eq(car.juice.sink, 0.0, 0.001, "out again")
+	assert_eq(body.modulate, Color.WHITE)
+	assert_almost_eq(shadow.self_modulate.a, alpha, 0.001)
+	map.terrain = Root.terrain.WADE
+	car.juice.dust.resize(CarJuice.LEVELS[2][0]) #an empty pool
+	for i in 20: car.juice._physics_process(1.0 / 60.0)
+	assert_gt(car.juice.dust.alive, 10, "wading at speed: spray and a bow wave")
+	assert_almost_eq(car.juice.sink, 0.0, 0.001, "wading never sinks the car")
+	Root.worldMap = savedMap
 
 #Headlights (OverheadCarBody2D.setHeadlightStrength): the stat shows as a longer, wider, brighter beam and
 #bigger, brighter tail lamps, bright when braking or reversing

@@ -68,6 +68,7 @@ const BIT_POOL := 72
 const DUST := Color(0.72, 0.64, 0.52, 0.5)
 const SNOW_DUST := Color(0.94, 0.96, 1.0, 0.65)
 const WATER := Color(0.72, 0.84, 0.95, 0.75)
+const PUMPKIN := Color(0.95, 0.52, 0.1, 0.95)
 const SPRAY_SECONDS := 2.2
 const SPRAY_RATE := 70.0   #droplets a second at Full
 const KNOCK_SPEED := 120.0 #a cone hit this fast flies off...
@@ -136,8 +137,10 @@ func addCanopy(prop: Node2D, canopy: Sprite2D) -> void:
 	canopy.modulate.a = 1.0
 	canopies.push_back([prop, canopy, rect, BreakableProp.propId(prop) in SQUARE_CANOPIES, reach])
 
-## A prop joined the world (ChunkView): an interactive one (SmashTags.HEROES) gets a smash tag
+## A prop joined the world (ChunkView): its per-prop state comes back (Spill.arm: a den's stash...) and an
+## interactive one (SmashTags.HEROES) gets a smash tag
 func addHero(prop: Node2D) -> void:
+	Spill.arm(prop)
 	if is_instance_valid(tags): tags.add(prop)
 
 static var rectCache := {} #texture path -> its opaque rect in texels
@@ -214,12 +217,12 @@ func react(prop: Node2D, moving: Vector2, point: Vector2) -> void:
 		k = clampf(near, 0.15, 1.0)
 		if near >= NEAR_SMASH: crack(prop, dir, near)
 	var sprite: Node2D = prop.get_node_or_null("Sprite2D")
+	Spill.ram(prop, speed) #a hard ram drops a crane's container, a roost's Buzzards, rings a bell...
 	match kind:
 		CANOPY:
 			var canopy: Node2D = prop.get_node_or_null("Canopy")
 			if canopy: spring(prop, canopy, CANOPY, k, dir)
 			dropLeaves(prop, roundi(lerpf(LEAVES.x, LEAVES.y, k)), dir)
-			Spill.ram(prop, speed) #a hard ram drops the crane's container, or a roost's Buzzards
 		THUD: pass
 		KNOCK:
 			if speed >= KNOCK_SPEED:
@@ -344,6 +347,7 @@ func forget(prop: Node2D) -> void:
 	for i in range(canopies.size() - 1, -1, -1):
 		if canopies[i][0] == prop: canopies.remove_at(i)
 	if is_instance_valid(tags): tags.forget(prop)
+	Spill.disarm(prop)
 
 ## A blast at `pos` shakes the canopies within `radius` (BreakableProp.blastAt)
 static func blast(pos: Vector2, radius: float) -> void:
@@ -383,6 +387,12 @@ func splash(at: Vector2, radius: float) -> void:
 		var v := Vector2.from_angle(TAU * i / maxi(n, 1) + randf_range(-0.1, 0.1)) * radius * randf_range(1.2, 2.0)
 		dust.spawn(at, v, randf_range(0.5, 0.9), randf_range(3.0, 6.0), WATER, CarJuice.Kind.SPRAY)
 	for i in roundi(10 * particleScale): dust.spawn(at + Vector2.from_angle(randf() * TAU) * radius * 0.5, Vector2.ZERO, 0.9, 30.0, Color(WATER, 0.35), CarJuice.Kind.PUFF)
+
+## A burst of wet bits thrown along `dir` (a pumpkin splat, Spill)
+func splatter(at: Vector2, dir: Vector2, col: Color) -> void:
+	for i in roundi(16.0 * particleScale):
+		var v := (dir * randf_range(40.0, 180.0)).rotated(randf_range(-1.1, 1.1)) + Vector2.from_angle(randf() * TAU) * 30.0
+		dust.spawn(at, v, randf_range(0.4, 0.8), randf_range(4.0, 9.0), col, CarJuice.Kind.SPRAY)
 
 func puff(at: Vector2, dir: Vector2, k: float, heavy: bool) -> void:
 	var n := roundi((5.0 if heavy else 3.0) * (0.5 + k) * particleScale)

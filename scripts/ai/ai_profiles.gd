@@ -47,7 +47,8 @@ const DEFAULTS = {
 	"fuelHope": 1.15,          #fuel saving assumes this much more fuel turns up on the way
 	"carefulSpeed": 260.0,     #speed when going in for a pickup among rocks
 	"stationSpeed": 450.0,     #speed within 2500 px of the station's driveway
-	#deep water (WorldHooks): the car dies two ticks after its centre is over it, and shallows are slippery
+	#deep water (WorldHooks): the car takes about 30 health a second with its centre over it (never planned through),
+	#and the wading band and shallows before it are slow and slippery
 	"waterLookSeconds": 0.9,   #deep water this many seconds ahead along a plan's path costs...
 	"waterNearCost": 8.0,      #...this much per second of the plan, more the closer and faster
 	"waterSpeed": 340.0,       #the throttle lifts above this speed while deep water is ahead within 1.5x waterLookSeconds

@@ -82,6 +82,8 @@ static func jobFor(mapSeed: int, levelDef: LevelDef, objective: String = "", sta
 	for t in levelDef.baseTerrain: bands.push_back(int(t))
 	if bands.is_empty(): bands.push_back(0)
 	snap["_main"] = WorldField.mainTerrain(bands)
+	var land := Landscapes.get_def(levelDef.landscape)
+	snap["_wade"] = land == null || land.wade #WorldField.wade: deep water's wading band, unless the landscape opts out
 	var weights := PackedFloat32Array()
 	for row in World.TERRAIN: weights.push_back(row.routeWeight)
 	return {"seed": mapSeed, "def": snap, "objective": objective, "stationOffset": stationOffset, "weights": weights}

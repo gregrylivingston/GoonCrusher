@@ -147,8 +147,9 @@ func _physics_process(delta):
 	if beginTick(delta, car): #the state clock; true when it stands in deep water
 		drown()
 		return
+	checkWade()
 	if (state == &"move" || state == &"lured") && not Pickups.lures.is_empty():
-		var lure := Pickups.lureFor(global_position, def.get("verb", &"lunge")) #Goon Bait, Flare
+		var lure := Pickups.lureFor(global_position, def.get("verb", &"lunge"), int(def.get("rank", 1)), distTo(car)) #Goon Bait, Flare, Dinner Bell, Salt Lick
 		if lure != Vector2.INF:
 			if state != &"lured": setState(&"lured")
 			if def.get("verb", &"") == &"flyer": chase(lure + Vector2.from_angle(stateTime * 0.8) * 220.0, speedNow(), delta, 3.0) #circles it
@@ -278,6 +279,18 @@ func checkWater(car: Node2D) -> bool:
 	drown()
 	return true
 
+## Wading depth (WADE) slows a solid goon to WorldHooks.WADE_SLOW through the buff scale, as slime does, every
+## WADE_EVERY ticks (staggered); a stronger slow already on it is kept. It never drowns there.
+func checkWade() -> void:
+	if (Engine.get_physics_frames() + get_instance_id()) % WorldHooks.WADE_EVERY == 0: applyWade()
+
+func applyWade() -> void:
+	if collision_layer == 0: return
+	var scaleHere := WorldHooks.wadeScaleAt(global_position)
+	if scaleHere >= 1.0 || (isBuffed() && buffScale <= scaleHere): return
+	buffScale = scaleHere
+	buffUntil = GoonVerbs.now() + WorldHooks.WADE_HOLD
+
 ## Into the water: a splash, and a crush ("SPLASH") when the car put it there
 func drown() -> void:
 	if dead: return
@@ -333,6 +346,15 @@ func bounceCar(car: Node2D, dmg: float, system: String, label := "BLOCKED") -> v
 
 func isDying() -> bool:
 	return dead
+
+## Gone without a death: no corpse, no drop, no credit (a Bandit home in its den)
+func vanish() -> void:
+	if dead: return
+	dead = true
+	myMode = mode.DEAD
+	var f = fx()
+	if f: f.dust(global_position)
+	queue_free()
 
 ## Every death: crushed or blown up (squashed or flung, decal, bits, spatter: GoonFx.crushed; maybe a
 ## pickup), or drowned (no decal).

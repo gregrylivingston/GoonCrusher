@@ -243,8 +243,11 @@ static var loadout := "" #a gadget bought in run setup; the player's car takes i
 static var boostLoadout := "" #...and a boost
 static var textures := {}
 static var timeWarp := false #Time Warp: goons skip most physics ticks (Walker._physics_process)
-## A lure goons walk to instead of the car (Goon Bait, Flare): {pos, until (msec), radius, only (verb or &"")}.
+## A lure goons walk to instead of the car (Goon Bait, Flare, the Dinner Bell, a Salt Lick): {pos, until (msec),
+## radius, only (verb or &"")}, and optionally rank (only goons of at least this rank), loose (px: it lets go of
+## a goon while the car is this close to it) and key (to take it back, removeLure).
 static var lures: Array = []
+const FOREVER := 1 << 62 #msec: a lure that lasts until it is taken back
 
 ## Called when a run starts (Level._ready).
 static func resetRun() -> void:
@@ -256,10 +259,10 @@ static func resetRun() -> void:
 static func goonTickSkipped() -> bool:
 	return timeWarp && Engine.get_physics_frames() % 5 >= 2
 
-## The lure a goon at `pos` with this verb should walk to, or Vector2.INF. The newest lure in reach wins.
-## Every goon asks every tick while a lure is out, so it walks the list backwards, dropping spent lures as it
-## goes, and allocates nothing (it used to copy the list per call).
-static func lureFor(pos: Vector2, verb: StringName) -> Vector2:
+## The lure a goon at `pos` with this verb and rank, `carDist` from the car, should walk to, or Vector2.INF. The
+## newest lure in reach wins. Every goon asks every tick while a lure is out, so it walks the list backwards,
+## dropping spent lures as it goes, and allocates nothing (it used to copy the list per call).
+static func lureFor(pos: Vector2, verb: StringName, rank := 0, carDist := INF) -> Vector2:
 	if lures.is_empty(): return Vector2.INF
 	var now := Time.get_ticks_msec()
 	for i in range(lures.size() - 1, -1, -1):
@@ -268,8 +271,18 @@ static func lureFor(pos: Vector2, verb: StringName) -> Vector2:
 			lures.remove_at(i)
 			continue
 		if l.only != &"" && l.only != verb: continue
+		if rank < int(l.get("rank", 0)) || carDist < float(l.get("loose", 0.0)): continue
 		if pos.distance_squared_to(l.pos) < l.radius * l.radius: return l.pos
 	return Vector2.INF
+
+## Puts a lure out for `seconds` (FOREVER: until removeLure(key)); see lures
+static func addLure(pos: Vector2, radius: float, seconds: float, only := &"", rank := 0, loose := 0.0, key := 0) -> void:
+	var until := FOREVER if seconds == INF else Time.get_ticks_msec() + int(seconds * 1000.0)
+	lures.push_back({"pos": pos, "until": until, "radius": radius, "only": only, "rank": rank, "loose": loose, "key": key})
+
+static func removeLure(key: int) -> void:
+	for i in range(lures.size() - 1, -1, -1):
+		if int(lures[i].get("key", 0)) == key: lures.remove_at(i)
 
 #--- lookups ------------------------------------------------------------------------------------
 

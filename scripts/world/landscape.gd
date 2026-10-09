@@ -2,7 +2,7 @@ class_name Landscape extends Resource
 ## Where a level is (docs/WORLD.md, "Landscapes"): the layout generator, the ground materials, walls, water,
 ## natural props and district name words. One per res://world/landscapes/<id>.tres, listed by Landscapes. A new
 ## landscape re-skins an existing generator: it maps terrains to its own materials, so needles drive like grass
-## and lava kills like deep water, with no new terrain physics. Until its art exists in world/art it borrows
+## and lava hurts like deep water, with no new terrain physics. Until its art exists in world/art it borrows
 ## its fallback landscape's skin (Landscapes.skinOf) and keeps its own generator, features and props.
 
 @export var id: StringName
@@ -38,6 +38,9 @@ class_name Landscape extends Resource
 @export var waterLook: StringName = &"water"
 @export var waterGlow := Color(0, 0, 0, 0)
 @export var waterFoam := Color.WHITE
+## Deep water's outer band is wading depth (WADE: slow, slippery, a little damage) on grammars with shallows;
+## false keeps the edge sheer (lava)
+@export var wade := true
 ## Snowbound: prop hits throw snow dust and shaken pines drop snow (PropReactions)
 @export var snowy := false
 

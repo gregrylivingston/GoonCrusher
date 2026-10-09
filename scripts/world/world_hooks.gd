@@ -44,14 +44,25 @@ static func slideStep(pos: Vector2, step: Vector2) -> Vector2:
 static func drownCredited(now: float, lastTouch: float) -> bool:
 	return now - lastTouch <= DROWN_CREDIT_SECONDS
 
-## The nearest dry, open point to `pos` (a drowned goon's bank): rings of fine cells, eight directions each.
-## `pos` itself when nothing is found.
+## The nearest dry, open point to `pos` (a drowned goon's bank): rings of fine cells, eight directions each,
+## past the wading band. `pos` itself when nothing is found.
 static func bankNear(pos: Vector2) -> Vector2:
 	for ring in range(1, BANK_RINGS + 1):
 		for dir in DIRS:
 			var p: Vector2 = pos + dir * FINE * ring
-			if not World.blockedAt(p) && not World.lethalAt(p): return p
+			var t := World.terrainAt(p)
+			if not World.isBlocked(t) && not World.isLethal(t) && t != Root.terrain.WADE: return p
 	return pos
+
+#--- wading depth ------------------------------------------------------------------------------------
+
+const WADE_SLOW := 0.6   #a solid goon in wading depth (WADE) moves at this share of its speed (the buff scale, like slime)...
+const WADE_HOLD := 0.2   #...for this long after the last check that found it there
+const WADE_EVERY := 4    #ticks between checks, staggered by goon (Walker.checkWade)
+
+## A solid goon's speed share in wading depth this tick: WADE_SLOW there, 1 elsewhere
+static func wadeScaleAt(pos: Vector2) -> float:
+	return WADE_SLOW if World.terrainAt(pos) == Root.terrain.WADE else 1.0
 
 ## Is there deep water within `radius` of `pos`: the point, then eight directions at the radius and at half of
 ## it (17 reads). Coarser than a disc, but water bodies are hundreds of px across.
@@ -75,11 +86,11 @@ static func lethalAhead(pos: Vector2, dir: Vector2, dist: float) -> float:
 static func tetherMustBreak(carPos: Vector2) -> bool:
 	return nearLethal(carPos, TETHER_SAFE_PX)
 
-## Where oil and slime may land: not on shallows, deep water or a wall, and not within one fine cell of deep
-## water (the slick would read as a swim, and a slid car would drown)
+## Where oil and slime may land: not on shallows, wading depth, deep water or a wall, and not within one fine
+## cell of deep water (the slick would read as a swim, and a slid car would end up in it)
 static func hazardAllowed(pos: Vector2) -> bool:
 	var t := World.terrainAt(pos)
-	if t == Root.terrain.SHALLOWS || World.isLethal(t) || World.isWallTerrain(t): return false
+	if t == Root.terrain.SHALLOWS || t == Root.terrain.WADE || World.isLethal(t) || World.isWallTerrain(t): return false
 	for dir in DIRS:
 		if World.lethalAt(pos + dir * FINE): return false
 	return true

@@ -20,7 +20,13 @@ giantOdds = -17
 escalationSpeed = 0.125
 sprintSlack = 1.48
 rules = {
-"dazeHeavies": true
+"dazeHeavies": true,
+"events": {
+"barge": 1,
+"goldgoon": 2,
+"rings": 2
+},
+"nightShare": 0.4
 }
 lineup = Array[StringName]([&"snapper", &"spitter", &"jackalope", &"tusker"])
 landscape = &"bayou"
@@ -32,12 +38,25 @@ features = {
 "channelWidth": 1000.0,
 "channelGap": 0.25,
 "bridgeWidth": 900.0,
-"props": 18
+"props": 18,
+"fordShare": 0.4,
+"fordWidth": 1200.0,
+"heroes": 1.5
 }
 baseTerrain = [2, 5, 0, 5, 2]
 accents = [11, 5]
 dressing = {}
-motifs = {}
+motifs = {
+&"cypressgrove": 1,
+&"hivegrove": 1,
+&"warren": 0.4
+}
+heroes = {
+&"log": [3.0, "bank"],
+&"still": [1.5, "bank"],
+&"sluice": [1.5, "ford"],
+&"logpile": [0.7, "bank"]
+}
 pickupTable = {
 &"coinline": 41,
 &"fuel": 49,

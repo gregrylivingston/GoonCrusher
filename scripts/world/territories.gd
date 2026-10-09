@@ -11,6 +11,8 @@ class_name Territories extends RefCounted
 ##   dressing        the region's own props by zone ({prop id: weight}, zone 0 near the start, 2 far out), laid
 ##                   over the landscape's natural dressing so its share rises as you drive out
 ##   motifs          the same for set pieces (WorldSkin.MOTIFS)
+##   heroes          the same for heroes ({prop or motif id: [weight, anchor]}, ChunkRecipe.placeHeroes), under
+##                   the level's own (LevelDef.heroes)
 ##   step            the elite strength step, applied when a goon spawns (Walker): speed, damage and the crush
 ##                   speed needed, as multipliers. The factions' regions are x1.
 ##   demo            in the demo
@@ -23,8 +25,10 @@ const DATA := {
 	&"wilds": {"name": "The Wilds", "color": Color("#8fbf55"), "class": &"wild", "demo": true,
 		"landmark": &"landmark_wild",
 		"nameFirst": ["Tusker", "Jackalope", "Thornback", "Wildroot", "Howling", "Bramble", "Snapjaw", "Feral", "Burrow", "Antler"],
-		"dressing": [{&"carcass": 1, &"beehive": 1}, {&"carcass": 1, &"beehive": 1, &"bones": 2}, {&"carcass": 2, &"beehive": 2, &"bones": 3}],
-		"motifs": [{}, {}, {&"boneyard": 1}],
+		#crates everywhere (the Bandit's raids; one crate kind, the baked one) and crate stashes; hives as heroes from zone 1
+		"dressing": [{&"carcass": 1, &"beehive": 1, &"crate": 1}, {&"carcass": 1, &"beehive": 1, &"bones": 2, &"crate": 1}, {&"carcass": 2, &"beehive": 2, &"bones": 3, &"crate": 1}],
+		"motifs": [{&"cratestash": 0.3}, {&"cratestash": 0.4}, {&"boneyard": 1, &"cratestash": 0.4}],
+		"heroes": [{&"cratestash": [1.0, "any"]}, {&"cratestash": [1.0, "any"], &"beehive": [0.5, "any"]}, {&"cratestash": [1.0, "any"], &"beehive": [1.0, "any"]}],
 		"step": {"speed": 1.0, "damage": 1.0, "crush": 1.0},
 		"blurb": "Critter country from farmland to swamp to red rock. The Wild Things teach crush speed."},
 	&"tribe": {"name": "Tribe Country", "color": Color("#4fb39b"), "class": &"tribe", "demo": true,

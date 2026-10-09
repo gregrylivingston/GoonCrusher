@@ -46,8 +46,9 @@ const REVERSE_BELOW_SPEED = 150.0
 const STOPPED_SPEED = 60.0   #below this, reversing is always among the choices (three-point turns)
 
 #costs are in seconds of estimated arrival time; the tunable ones are profile parameters (AIProfiles)
-const LETHAL_COST = 1000.0    #driving into water
+const LETHAL_COST = 1000.0    #driving into deep water (it no longer wrecks the car at once, but it is never a way through)
 const SHALLOWS_COST = 0.3     #per second of a plan with a wheel in shallows: slow and slippery, never deadly
+const WADE_COST = 0.8         #per second of a plan with a wheel in wading depth: slower, slipperier, a little damage
 const WET_CORNER_SHARE = 0.3  #per second of a plan with a corner (not the centre) over deep water, this share of LETHAL_COST
 
 const GOAL_RADIUS = {"pickup":70.0, "goon":80.0, "station":300.0, "roam":600.0, "patrol":600.0, "escape":300.0}
@@ -858,6 +859,7 @@ func scoreRollout(rollout: Dictionary, target: Vector2) -> float:
 	var cost = 0.0
 	var last = path.size() - 1
 	var endSpeed = speeds[last]
+	var startWet := World.lethalAt(path[0])
 	for i in range(1, path.size()):
 		#forwards is how the game is played: rolling backwards costs, whatever it gains
 		if forwards[i] < -20.0: cost += p.reverseCost * segment
@@ -868,14 +870,18 @@ func scoreRollout(rollout: Dictionary, target: Vector2) -> float:
 			if speeds[i] < CRUSH_SPEED: cost += p.slowGoonCost * segment * goonsNear(path[i])
 		var ground = footprintTerrain(path[i], headings[i])
 		if World.isLethal(ground):
-			#the car dies once its centre is over deep water: that ends the plan. A corner over it (the
+			#the car's centre over deep water (it hurts fast and drags it to a crawl) ends the plan. A corner over it (the
 			#footprint has a margin) is a near miss: very dear, but a plan that keeps the centre out still
-			#beats one that doesn't when every choice is wet (a car already on the edge)
-			if World.lethalAt(path[i]) || World.lethalAt(path[i].lerp(path[i - 1], 0.5)):
+			#beats one that doesn't when every choice is wet (a car already on the edge). A car already in deep
+			#water (shoved or slid in: it survives a while now) pays for every wet moment instead, so the plan
+			#that gets it out soonest wins.
+			var centreWet: bool = World.lethalAt(path[i]) || World.lethalAt(path[i].lerp(path[i - 1], 0.5))
+			if centreWet && not startWet:
 				rollout.hitSeconds = i * segment
 				return LETHAL_COST * (2.0 - float(i) / last)
-			cost += LETHAL_COST * WET_CORNER_SHARE * segment
+			cost += LETHAL_COST * WET_CORNER_SHARE * segment * (2.0 if centreWet else 1.0)
 		if ground == Root.terrain.SHALLOWS: cost += SHALLOWS_COST * segment
+		elif ground == Root.terrain.WADE: cost += WADE_COST * segment
 		cost += waterAheadCost(path[i - 1], path[i], speeds[i]) * segment
 		sweepSmashes = 0
 		var fraction = 0.0 if World.isWallTerrain(ground) else sweep(path[i - 1], headings[i - 1], path[i] - path[i - 1], i == 1, minf(speeds[i - 1], speeds[i]))
@@ -1021,8 +1027,8 @@ static func smashableAt(collider: Object, speed: float, margin := 1.15) -> bool:
 	return speed >= OverheadCarBody2D.smashSpeedOf(collider) * margin
 
 #the worst ground under the car's corners (plus a margin): a lethal terrain (water) if any corner is
-#over one, else a wall terrain (hills, buildings), else shallows, else GRASS. Read from World (the
-#fine map once there is one), falling back to the route's chunk map.
+#over one, else a wall terrain (hills, buildings), else wading depth, else shallows, else GRASS. Read from
+#World (the fine map once there is one), falling back to the route's chunk map.
 func footprintTerrain(pos: Vector2, heading: Vector2) -> int:
 	var forward = heading.normalized() * (halfSize.x + 40.0)
 	var side = heading.normalized().orthogonal() * (halfSize.y + 40.0)
@@ -1032,7 +1038,9 @@ func footprintTerrain(pos: Vector2, heading: Vector2) -> int:
 		if type == World.UNKNOWN: type = route.terrainAt(corner)
 		if World.isLethal(type): return type
 		if World.isWallTerrain(type): worst = type
-		elif type == Root.terrain.SHALLOWS && not World.isWallTerrain(worst): worst = type
+		elif World.isWallTerrain(worst): continue
+		elif type == Root.terrain.WADE: worst = type
+		elif type == Root.terrain.SHALLOWS && worst != Root.terrain.WADE: worst = type
 	return worst
 
 #--- recovery ---------------------------------------------------------------------------------
