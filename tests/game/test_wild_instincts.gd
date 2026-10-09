@@ -274,8 +274,9 @@ func test_a_fast_close_pass_or_a_blast_spooks_a_herd():
 #--- G-2 daze --------------------------------------------------------------------------------------------
 
 func test_a_dazed_bullmoose_crushes_at_three_quarters():
-	assert_true(Levels.defAt(Levels.indexOf(&"prairie")).rules.get("dazeHeavies", false), "Region 1 levels daze heavies")
-	assert_false(Levels.defAt(Levels.indexOf(&"quarry")).rules.get("dazeHeavies", false), "others don't")
+	for id in Levels.ORDER: #Region 1 levels daze heavies, others don't
+		var def := Levels.get_def(id)
+		assert_eq(bool(def.rules.get("dazeHeavies", false)), def.region == &"wilds", "%s: dazeHeavies only in The Wilds" % id)
 	var car := makeCar(Vector2(0, 3000))
 	level(&"quarry")
 	var plain := goon(&"bullmoose", Vector2(0, 0), true)
@@ -407,10 +408,15 @@ func test_the_golden_goon_is_a_jackalope_in_the_wilds():
 	assert_true(gold.jackalope != null, "so the Golden Goon is a Golden Jackalope")
 	var savedRegion: Dictionary = Region.currentRegion
 	Region.currentRegion = {"faction": Goons.faction.TRIBE}
-	level(&"city")
-	assert_false(WorldProps.inWilds(), "a level with no region and a Tribe district isn't")
+	var city := level(&"city")
+	assert_false(WorldProps.inWilds(), "a level in another region isn't")
 	var plain: WorldProps.GoldenGoon = add_child_autofree(WorldProps.GoldenGoon.new())
 	assert_true(plain.jackalope == null, "the plain Golden Goon there")
 	Region.currentRegion = {"faction": Goons.faction.WILD}
-	assert_true(WorldProps.inWilds(), "until region data exists, a Wild district counts")
+	assert_false(WorldProps.inWilds(), "the level's region wins over the district")
+	city.def = city.def.duplicate()
+	city.def.region = &""
+	assert_true(WorldProps.inWilds(), "a level without a region goes by the district: a Wild one counts")
+	Region.currentRegion = {"faction": Goons.faction.TRIBE}
+	assert_false(WorldProps.inWilds(), "and a Tribe one doesn't")
 	Region.currentRegion = savedRegion
