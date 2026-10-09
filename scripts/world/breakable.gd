@@ -150,6 +150,8 @@ static func breakVisual(node: Node) -> void:
 ## A pooled prop that was smashed comes back whole (Spill.armSaguaro: a hero saguaro without a taken-set bit)
 static func unsmash(node: Node) -> void:
 	node.remove_meta(&"smashed")
+	var sprite: Node2D = node.get_node_or_null("Sprite2D")
+	if sprite: sprite.scale.y = absf(sprite.scale.y) #a fall flips it to lie the other way (Spill.fall)
 	for child in node.get_children():
 		if child is CollisionShape2D || child is CollisionPolygon2D: child.set_deferred("disabled", false)
 		elif child is LightOccluder2D:

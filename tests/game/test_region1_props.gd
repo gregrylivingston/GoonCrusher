@@ -598,3 +598,20 @@ func test_a_flash_flood_sweeps_the_wash_and_carries_the_car():
 	assert_eq(car.health, health, "never hurt")
 	car.global_position = flood.global_position + Vector2(0, 600)
 	assert_false(flood.pushCar(), "off the wash it is left alone")
+
+func test_a_pooled_hero_saguaro_comes_back_whole():
+	var car := makeCar(Vector2(0, 400)) #below it: it falls the other way
+	var cactus: StaticBody2D = load("res://world/art/props/saguaro.tscn").instantiate()
+	cactus.set_meta(&"hero", true)
+	add_child_autofree(cactus)
+	Spill.arm(cactus)
+	BreakableProp.smashNode(cactus, car)
+	assert_true(cactus.get_node("Sprite2D").scale.y < 0.0, "lying the other way")
+	Spill.arm(cactus) #ChunkView hands the pooled prop out again
+	await get_tree().physics_frame
+	assert_false(cactus.get_meta(&"smashed", false), "standing again")
+	assert_false(cactus.get_node("CollisionShape2D").disabled, "solid")
+	assert_true(cactus.get_node("Sprite2D").scale.y > 0.0, "upright")
+	cactus.remove_meta(&"hero")
+	Spill.arm(cactus)
+	assert_false(BreakableProp.isBreakable(cactus), "placed as scenery next time, it is scenery")
