@@ -180,7 +180,111 @@ gravel(S){ const base=C('#807a70'), dark=C('#655f56');
 	const cv=pixels(S,S,(u,v,i,j,o)=>{ const n=fbm(u*5,v*5,201,4,5); put(o,mixc(dark,base,smooth(.25,.7,n))); jitter(o,i,j,202,22); });
 	const x=cv.getContext('2d');
 	scatter(x,S,S,3200,203,5,(c,R)=>pebble(c,R,.8+R()*2,['#8a8178','#a39c8f','#6f6a62','#7d6f5f','#968a7a']));
-	overlayGrime(x,S,S,.12); return cv; }
+	overlayGrime(x,S,S,.12); return cv; },
+/* ---- Road Atlas landscapes (forest, coast, ghost town, salt flats, volcano, suburbs) ---- */
+/* forest floor: pine needle litter over dark humus, mossy patches, twigs and cones; a warm brown next to grass and moss */
+needles(S){ const base=C('#7f6246'), dark=C('#563f2b'), rust=C('#8e6a46'), olive=C('#62603c');
+	const cv=pixels(S,S,(u,v,i,j,o)=>{ const n=fbm(u*4,v*4,221,4,4), m=fbm(u*18,v*18,222,3,18), d=fbm(u*3,v*3,223,3,3), h=fbm(u*48,v*48,224,2,48);
+		let c=mixc(dark,base,.3+.7*smooth(.25,.66,n)); c=mixc(c,rust,smooth(.55,.75,m)*.35); c=mixc(c,olive,smooth(.6,.74,d)*.55); c=shade(c,(h-.5)*.14); put(o,c); jitter(o,i,j,225,14); });
+	const x=cv.getContext('2d'), moss=(px,py)=>fbm(px/S*3,py/S*3,223,3,3);
+	scatter(x,S,S,21000,226,8,(c,R,k,px,py)=>{ const a=R()*TAU, l=5+R()*4.5, q=R(); c.beginPath(); c.moveTo(-Math.cos(a)*l/2,-Math.sin(a)*l/2); c.lineTo(Math.cos(a)*l/2,Math.sin(a)*l/2); c.lineWidth=.6+R()*.4;
+		c.strokeStyle=q<.35?'rgba(184,138,86,.7)':q<.75?'rgba(124,84,48,.65)':'rgba(52,36,22,.6)'; c.stroke(); });
+	scatter(x,S,S,700,227,6,(c,R,k,px,py)=>{ if(moss(px,py)<.58) return; const r=1.4+R()*2.4; vol(c,0,0,r,r*(.8+R()*.3),R()<.6?'#5c6236':'#6c7040',{hi:.22,lo:-.32}); });
+	scatter(x,S,S,70,228,18,(c,R)=>{ const a=R()*TAU, l=8+R()*14; limb(c,[-Math.cos(a)*l/2,-Math.sin(a)*l/2],[Math.cos(a)*l/2,Math.sin(a)*l/2],1.2+R()*1.2,'#5e4a36'); });
+	scatter(x,S,S,46,229,8,(c,R)=>{ c.rotate(R()*TAU); ell(c,0,0,4.6,3.1); c.fillStyle='rgba('+AO+',.3)'; c.fill(); vol(c,0,0,3.8,2.5,'#7a5636',{hi:.25,lo:-.4}); c.strokeStyle='rgba(40,26,14,.6)'; c.lineWidth=.6; for(let k=-2;k<=2;k++){ c.beginPath(); c.moveTo(k*1.4,-2); c.lineTo(k*1.4+.8,2); c.stroke(); } });
+	overlayGrime(x,S,S,.12); return cv; },
+/* pale coast sand: cooler and greyer than desert sand, soft swash ripples, wet patches, shells and wrack lines */
+beach(S){ const base=C('#a99f88'), dark=C('#928872'), light=C('#bab29c'), wet=C('#867e6c');
+	const cv=pixels(S,S,(u,v,i,j,o)=>{ const n=fbm(u*3,v*3,231,4,3), w=fbm(u*4,v*4,232,3,4);
+		const rip=Math.sin(TAU*(v*14+u+w*1.3)), crest=Math.pow(Math.max(0,rip),3), trough=Math.pow(Math.max(0,-rip),2);
+		let c=mixc(dark,base,smooth(.25,.65,n)); c=shade(c,crest*.04-trough*.035); c=mixc(c,light,smooth(.6,.8,fbm(u*8,v*8,233,3,8))*.35);
+		c=mixc(c,wet,smooth(.6,.72,fbm(u*2,v*2,234,3,2))*.5); put(o,c); jitter(o,i,j,235,9); });
+	const x=cv.getContext('2d');
+	scatter(x,S,S,7,236,120,(c,R)=>{ c.rotate(R()*TAU); const L=90+R()*90; for(let k=0;k<70;k++){ const t=k/70, px=(t-.5)*L, py=Math.sin(t*5+R()*.4)*8+(R()-.5)*5; ell(c,px,py,1+R()*2,.7+R()*1.2,R()*3); c.fillStyle=R()<.6?'rgba(58,62,44,.5)':'rgba(96,84,60,.45)'; c.fill(); } });
+	scatter(x,S,S,110,237,6,(c,R)=>{ c.rotate(R()*TAU); const r=2+R()*2.4; c.beginPath(); c.moveTo(0,r*.6); c.arc(0,r*.6,r*1.3,-Math.PI*.82,-Math.PI*.18); c.closePath(); c.fillStyle=R()<.6?'#d6cdbb':'#c4a798'; c.fill();
+		c.strokeStyle='rgba(120,100,84,.5)'; c.lineWidth=.5; for(let k=-2;k<=2;k++){ c.beginPath(); c.moveTo(0,r*.6); c.lineTo(Math.sin(k*.3)*r*1.2,r*.6-Math.cos(k*.3)*r*1.2); c.stroke(); } });
+	scatter(x,S,S,160,238,5,(c,R)=>pebble(c,R,.8+R()*1.4,['#8a8272','#a49c8a','#6f6a60']));
+	scatter(x,S,S,6,239,24,(c,R)=>{ const a=R()*TAU, l=14+R()*16; limb(c,[-Math.cos(a)*l/2,-Math.sin(a)*l/2],[Math.cos(a)*l/2,Math.sin(a)*l/2],2.4+R()*1.6,'#9a8e7c'); });
+	overlayGrime(x,S,S,.07); return cv; },
+/* salt crust: pale polygons with raised pressure ridges and a hairline crack along each; bright like snow (an exception) */
+salt(S){ const base=C('#bab5aa'), dark=C('#a39e93'), ridge=C('#d3cfc6'), dirt=C('#978c7c');
+	const cv=pixels(S,S,(u,v,i,j,o)=>{ const wx=fbm(u*4,v*4,241,3,4)*.4, w=worley(u*7+wx,v*7+wx*.7,242,7,7), e=w.f2-w.f1, n=fbm(u*3,v*3,243,4,3), m=fbm(u*24,v*24,244,2,24),
+		mask=.45+.55*smooth(.32,.6,fbm(u*5,v*5,245,2,5));
+		let c=mixc(dark,base,.35+.65*smooth(.25,.65,n)); c=shade(c,(w.id-.5)*.05+(m-.5)*.05);
+		c=shade(c,-smooth(.12,.07,e)*smooth(.03,.07,e)*.05); c=mixc(c,ridge,smooth(.07,.02,e)*.75*mask); c=shade(c,-smooth(.012,0,e)*.32*mask);
+		c=mixc(c,dirt,smooth(.66,.8,fbm(u*2,v*2,246,3,2))*.32); put(o,c); if(hash2(i,j,247)>.997){ o[0]+=18; o[1]+=18; o[2]+=18; } jitter(o,i,j,248,7); });
+	const x=cv.getContext('2d');
+	scatter(x,S,S,50,249,6,(c,R)=>{ ell(c,0,0,1+R()*1.6,1+R()*1.3); c.fillStyle='rgba(110,102,90,.35)'; c.fill(); });
+	overlayGrime(x,S,S,.04); return cv; },
+/* volcanic ash: soft grey-brown drifts with wind ripples, cinders and the odd pumice stone */
+ash(S){ const base=C('#6b6662'), dark=C('#55514f'), light=C('#7e7873'), warm=C('#6f6259');
+	const cv=pixels(S,S,(u,v,i,j,o)=>{ const n=fbm(u*3,v*3,251,4,3), m=fbm(u*20,v*20,253,3,20), rip=Math.sin(TAU*(v*20+u*2+fbm(u*4,v*4,254,3,4)*1.5));
+		let c=mixc(dark,base,.3+.7*smooth(.25,.65,n)); c=shade(c,Math.pow(Math.max(0,rip),3)*.05-Math.pow(Math.max(0,-rip),2)*.04);
+		c=mixc(c,light,smooth(.55,.8,m)*.3); c=mixc(c,warm,smooth(.58,.74,fbm(u*2,v*2,255,3,2))*.45); put(o,c); jitter(o,i,j,256,10); });
+	const x=cv.getContext('2d');
+	scatter(x,S,S,1100,257,5,(c,R)=>pebble(c,R,.7+R()*1.5,['#3e3a38','#4a4442','#55504b','#5e4a40']));
+	scatter(x,S,S,40,258,6,(c,R)=>pebble(c,R,1.6+R()*2,['#8a837a','#958c80']));
+	overlayGrime(x,S,S,.1); return cv; },
+/* tar: glossy near-black with slow folds, a soft sheen and domed bubbles (some popped); below the band like oil */
+tar(S){ const base=C('#1f1c1a'), sheen=C('#4d4842'), brown=C('#2f251d');
+	const cv=pixels(S,S,(u,v,i,j,o)=>{ const s=fbm(u*6+fbm(u*2,v*2,262,2,2)*1.5,v*6,263,4,6), b=fbm(u*2,v*2,264,3,2), rd=1-Math.abs(2*fbm(u*5,v*5,265,3,5)-1);
+		let c=mixc(base,brown,smooth(.4,.7,b)*.6); c=shade(c,Math.sin(TAU*s*3)*.05); c=mixc(c,sheen,Math.pow(smooth(.6,.85,s),2)*.55); c=mixc(c,[118,112,104],Math.pow(rd,7)*.42); put(o,c); jitter(o,i,j,266,4); });
+	const x=cv.getContext('2d');
+	scatter(x,S,S,30,267,30,(c,R)=>{ const r=6+R()*16; for(let k=1;k<3;k++){ ell(c,0,0,r*k*.6,r*k*.5); c.lineWidth=.8; c.strokeStyle='rgba(120,114,104,'+(.16/k)+')'; c.stroke(); } });
+	scatter(x,S,S,150,268,14,(c,R)=>{ const r=2+R()*7;
+		if(R()<.3){ ell(c,0,0,r,r); c.lineWidth=1; c.strokeStyle='rgba(130,124,114,.35)'; c.stroke(); ell(c,0,0,r*.7,r*.7); c.fillStyle='rgba(8,6,5,.55)'; c.fill(); return; }
+		ell(c,0,0,r*1.15,r*1.15); c.fillStyle='rgba(6,5,4,.5)'; c.fill(); vol(c,0,0,r,r,'#2c2723',{hi:.35,lo:-.4,fy:0}); ell(c,0,0,r*.32,r*.26); c.fillStyle='rgba(176,170,160,.5)'; c.fill(); });
+	return cv; },
+/* lava, drawn in the water layer: dark cooled crust plates over a molten network; the brightest cores stay thin */
+lava(S){ const crust=C('#2b2320'), crustL=C('#463a33'), deep=C('#6e2210'), mid=C('#a8421b'), hot=C('#d2712e'), core=C('#e8a85a');
+	const cv=pixels(S,S,(u,v,i,j,o)=>{ const wx=fbm(u*3,v*3,271,3,3)*.6, w=worley(u*6+wx,v*6+wx*.8,272,6,6), e=w.f2-w.f1, cw=.035+.07*fbm(u*4,v*4,273,3,4);
+		const pool=smooth(.6,.72,fbm(u*2,v*2,274,4,2)), fl=fbm(u*10+wx*3,v*10,275,3,10), g=smooth(cw,0,e), heat=Math.max(g*(.75+.25*w.id),pool*(.55+.45*fl));
+		let c=mixc(crust,crustL,smooth(.3,.7,fbm(u*16,v*16,276,3,16))*.6); c=shade(c,(w.id-.5)*.08); c=mixc(c,deep,smooth(.62,.82,fbm(u*5,v*5,277,2,5))*.3);
+		c=shade(c,smooth(cw+.05,cw,e)*smooth(cw*.6,cw,e)*.12);
+		const t=Math.min(1,heat*(.8+.3*fl)), col=t<.5?mixc(deep,mid,t/.5):t<.85?mixc(mid,hot,(t-.5)/.35):mixc(hot,core,(t-.85)/.15);
+		c=mixc(c,col,smooth(0,.3,heat)); put(o,c); jitter(o,i,j,278,6); });
+	const x=cv.getContext('2d');
+	scatter(x,S,S,40,279,40,(c,R)=>crackWalk(c,R,4+(R()*6|0),.9,'rgba(176,66,26,.45)',true));
+	return cv; },
+/* basalt: hexagonal column tops (volcano wall tops), each at its own height, dark joints with ash in them */
+basalt(S){ const dark=C('#3f3c3a'), light=C('#6c6763'), joint=C('#211e1d'), ash=C('#6b6662');
+	const cv=pixels(S,S,(u,v,i,j,o)=>{ const wx=fbm(u*4,v*4,281,3,4)*.25, w=worley(u*12+wx,v*12,282,12,12), e=w.f2-w.f1, g=fbm(u*48,v*48,283,2,48), l=fbm(u*5,v*5,284,3,5);
+		let c=mixc(dark,light,.08+w.id*.84); c=shade(c,(g-.5)*.12-w.f1*.12); c=mixc(c,C('#76705a'),smooth(.7,.8,l)*.35);
+		c=mixc(c,ash,smooth(.55,.78,fbm(u*4,v*4,285,3,4))*(1-w.id)*.5);
+		c=shade(c,smooth(.11,.06,e)*smooth(.025,.06,e)*.15); c=mixc(c,joint,smooth(.05,.014,e)*.92); put(o,c); jitter(o,i,j,286,12); });
+	const x=cv.getContext('2d');
+	scatter(x,S,S,40,287,30,(c,R)=>crackWalk(c,R,3+(R()*4|0),.9,'rgba('+AO+',.4)',false));
+	overlayGrime(x,S,S,.1); return cv; },
+/* ghost town roofs: sun-bleached wooden shakes in courses along x, butt ends shaded, a few missing, tin patches */
+roof_timber(S){ const RH=32, cols=[C('#7d7262'),C('#6e5f4e'),C('#8a7f70'),C('#746856')], rows=[];
+	for(let r=0;r<S/RH;r++){ const R=rng(291+r*7), cuts=[]; let x=R()*30; const x0=x; while(x<x0+S-16){ cuts.push(x); x+=11+R()*14; } rows.push(cuts); }
+	const shakeAt=(row,i)=>{ const cuts=rows[row], n=cuts.length; let k=n-1; for(let q=0;q<n;q++){ const a=cuts[q], b=q+1<n?cuts[q+1]:cuts[0]+S; if(((i-a)%S+S)%S<b-a){ k=q; break; } } const a=cuts[k], b=k+1<n?cuts[k+1]:cuts[0]+S; return [k,((i-a)%S+S)%S,b-a]; };
+	const cv=pixels(S,S,(u,v,i,j,o)=>{ const row=(j/RH)|0, kk=j%RH, [k,di,w]=shakeAt(row,i), t=hash2(k,row,292), g=fbm(u*64+t*5,v*6,293,3,64,6), lm=fbm(u*4,v*4,294,3,4);
+		let c=mixc(cols[(t*4)|0],cols[((t*13)|0)%4],.4); c=shade(c,(g-.5)*.26+(t-.5)*.06); c=shade(c,-kk/RH*.08);
+		if(kk>RH-4) c=shade(c,-.32*(kk-(RH-4))/4); if(kk<2) c=shade(c,.06); if(di<1.5||di>w-1) c=shade(c,-.45);
+		if(t>.985&&kk<RH-4){ c=mixc(C('#2a221c'),c,.4); if(Math.abs(kk-12)<2) c=C('#5a4a3a'); }
+		c=mixc(c,C('#6a6e48'),smooth(.68,.8,lm)*.4); put(o,c); jitter(o,i,j,295,10); });
+	const x=cv.getContext('2d');
+	scatter(x,S,S,3,296,70,(c,R)=>{ c.rotate((R()-.5)*.1); sheet(c,0,0,50+R()*40,40+R()*30,R()<.5?'#7a6a5a':'#6d6a64',R,{rib:5,rust:.9}); for(const s of [-1,1]) for(const t of [-1,1]){ ell(c,s*20,t*14,1,1); c.fillStyle='#2a2826'; c.fill(); } });
+	overlayGrime(x,S,S,.18); return cv; },
+/* suburb roofs: slate-grey three-tab asphalt shingles, granular, butt edges shaded, algae streaks running downslope */
+roof_shingle(S){ const RH=24, TW=48, base=C('#5d6065');
+	const cv=pixels(S,S,(u,v,i,j,o)=>{ const row=(j/RH)|0, off=(row%2)*TW/2, tab=(((i+off)/TW)|0)%(S/TW), t=hash2(tab,row,301), k=j%RH, st=fbm(u*8,v*2,302,3,8,2), m=fbm(u*5,v*5,303,3,5);
+		let c=shade(base,(t-.5)*.16); if(t>.975) c=mixc(c,C('#64584f'),.6); c=shade(c,-smooth(.55,.72,st)*.14);
+		if(k>RH-3) c=shade(c,-.3*(k-(RH-3))/3); if(k<1.5) c=shade(c,.06); if((i+off)%TW<1.6&&k>4) c=shade(c,-.4);
+		c=mixc(c,C('#5c6648'),smooth(.7,.8,m)*.35); put(o,c); jitter(o,i,j,304,24); });
+	overlayGrime(cv.getContext('2d'),S,S,.14); return cv; },
+/* suburb lawn: mown stripes 128 px wide (soft light/dark bands along y), short blades, clover and daisies */
+lawn(S){ const base=C('#6b8648'), dark=C('#5a7440'), light=C('#7b9450'), dry=C('#8e8a5c'), SW=64;
+	const cv=pixels(S,S,(u,v,i,j,o)=>{ const n=fbm(u*4,v*4,311,4,4), m=fbm(u*24,v*24,312,3,24), k=i%SW, st=((i/SW)|0)%2, edge=smooth(0,6,Math.min(k,SW-k));
+		let c=mixc(dark,base,.35+.65*smooth(.25,.65,n)); c=mixc(c,light,smooth(.55,.8,m)*.35); c=mixc(c,dry,smooth(.68,.78,fbm(u*3,v*3,313,3,3))*.35);
+		c=shade(c,(st?.045:-.04)*edge); put(o,c); jitter(o,i,j,314,12); });
+	const x=cv.getContext('2d');
+	scatter(x,S,S,13000,315,5,(c,R,k,px)=>{ const st=((px/SW)|0)%2, a=Math.PI/2+(st?.35:-.35)+(R()-.5)*.6, l=1.6+R()*2; c.beginPath(); c.moveTo(0,0); c.lineTo(Math.cos(a)*l,Math.sin(a)*l); c.lineWidth=.7;
+		c.strokeStyle=R()<.5?(st?'rgba(150,170,104,.45)':'rgba(64,84,40,.5)'):'rgba(96,120,62,.5)'; c.stroke(); });
+	scatter(x,S,S,60,316,6,(c,R)=>{ for(let k=0;k<3;k++){ const a=k/3*TAU+R(); ell(c,Math.cos(a)*1.4,Math.sin(a)*1.4,1.3,1.1); c.fillStyle='rgba(84,116,58,.8)'; c.fill(); } });
+	scatter(x,S,S,40,317,4,(c,R)=>{ ell(c,0,0,1.3,1.3); c.fillStyle='rgba(226,222,206,.85)'; c.fill(); ell(c,0,0,.5,.5); c.fillStyle='#c8a848'; c.fill(); });
+	overlayGrime(x,S,S,.06); return cv; }
 };
 function renderGround(name){ return GROUND[name](GROUND_TEXELS); }
 /* 256 px tileable greyscale noise for macro variation and organic borders in the ground shader */
@@ -272,7 +376,43 @@ snow_ridge(){ const edge=wobble(371,50,9,6), crest=wobble(372,24,6,5), snow=C('#
 	return pixels(EW,EH,(u,v,i,j,o)=>{ const e=edge(u), c0=crest(u), n=fbm(u*16,v*4,373,3,16,0), l=fbm(u*10,v*3,375,3,10,0); let c,a=1;
 		if(j<e){ const t=j<c0?(c0-j)/c0:(j-c0)/Math.max(8,e-c0); c=mixc(snow,sh,smooth(.15,1,t)*.65); c=shade(c,(n-.5)*.06+(l-.5)*.05); a=j<c0?smooth(0,c0,j):1-smooth(e-6,e,j)*.25; }
 		else { c=[110,124,148]; a=.22*(1-smooth(e,e+36,j)); }
-		put(o,c); o[3]=a*255; if(j<e&&hash2(i,j,374)>.995){ o[0]+=20;o[1]+=20;o[2]+=20; } }); }
+		put(o,c); o[3]=a*255; if(j<e&&hash2(i,j,374)>.995){ o[0]+=20;o[1]+=20;o[2]+=20; } }); },
+/* volcano walls: basalt column tops fading in, the lit broken ends of the columns, a grooved face, AO and fallen
+   column chunks at the foot */
+basalt_lip(){ const edge=wobble(391,38,7,8), dark=C('#3f3c3a'), light=C('#6c6763'), joint=C('#211e1d');
+	const cv=pixels(EW,EH,(u,v,i,j,o)=>{ const e=edge(u), w=worley(u*8,j/64,392,8,0), d=w.f2-w.f1, g=fbm(u*64,v*12,393,2,64,0); let c,a=1;
+		if(j<e){ c=mixc(dark,light,.08+w.id*.84); c=shade(c,(g-.5)*.12); if(j>e-12) c=shade(c,.06+.1*smooth(e-12,e-2,j)); c=shade(c,smooth(.11,.06,d)*smooth(.025,.06,d)*.15); c=mixc(c,joint,smooth(.05,.014,d)*.92); a=smooth(0,16,j); }
+		else if(j<e+7){ const gr=Math.sin(i*.8+fbm(u*20,0,394,2,20,0)*6); c=shade(dark,-.25+gr*.08-(j-e)/7*.2); }
+		else { c=[18,13,16]; a=.6*(1-smooth(e+7,e+56,j)); }
+		put(o,c); o[3]=a*255; if(j<e+7) jitter(o,i,j,395,12); });
+	const x=cv.getContext('2d');
+	scatter(x,EW,EH,46,396,10,(c,R,k,px,py)=>{ c.translate(0,edge(px/EW)-py+10+R()*16); const r=2.5+R()*4.5, pts=[]; for(let q=0;q<6;q++){ const a=q/6*TAU+R()*.3; pts.push([Math.cos(a)*r,Math.sin(a)*r]); } polyVol(c,pts,0,0,r,R()<.5?'#4c4845':'#5a5551',{hi:.25,lo:-.5}); },false);
+	return cv; },
+/* ghost town roofs: the last courses of shakes fading in from the roof, ragged butt ends, a lit fascia board and the
+   building's AO on the street */
+timber_edge(){ const cols=[C('#7d7262'),C('#6e5f4e'),C('#8a7f70'),C('#746856')], R=rng(401), cuts=[], ends=[]; let px=0; while(px<EW-20){ cuts.push(px); ends.push(39+R()*6); px+=11+R()*14; }
+	const at=i=>{ let k=0; for(let q=0;q<cuts.length;q++) if(i>=cuts[q]) k=q; return k; };
+	return pixels(EW,EH,(u,v,i,j,o)=>{ const k=at(i), di=i-cuts[k], w=(k+1<cuts.length?cuts[k+1]:EW)-cuts[k], t=hash2(k,0,402), g=fbm(u*64+t*5,v*6,403,3,64,0), end=ends[k];
+		let c=[18,13,16], a=0;
+		if(j<14) a=0;
+		else if(j<end){ c=mixc(cols[(t*4)|0],cols[((t*13)|0)%4],.4); c=shade(c,(g-.5)*.26+(t-.5)*.06); if(di<1.5||di>w-1) c=shade(c,-.45); if(j>end-3) c=shade(c,-.25); if(Math.abs(j-26)<1.5) c=shade(c,-.3); a=smooth(14,24,j); }
+		else if(j<47){ a=.75; }
+		else if(j<52){ c=shade(C('#8a7d6c'),(fbm(u*40,0,404,2,40,0)-.5)*.14+(j<49?.08:-.1)); a=1; }
+		else { a=.45*(1-smooth(52,84,j)); }
+		put(o,c); o[3]=a*255; if(a>.9) jitter(o,i,j,405,10); }); },
+/* suburb roofs: a starter course of three-tab shingles, the metal drip edge, a half-round gutter with leaves in it
+   and the house's AO on the lawn */
+shingle_edge(){ const base=C('#5d6065'), TW=48, RH=12;
+	const cv=pixels(EW,EH,(u,v,i,j,o)=>{ const row=((j-14)/RH)|0, off=(row%2)*TW/2, tab=(((i+off)/TW)|0)%(EW/TW), t=hash2(tab,row,411), k=(j-14)%RH; let c=[18,13,16], a=0;
+		if(j<14) a=0;
+		else if(j<38){ c=shade(base,(t-.5)*.16); if(k>RH-3) c=shade(c,-.3); if((i+off)%TW<1.6&&k>2) c=shade(c,-.4); a=smooth(14,22,j); }
+		else if(j<41){ c=shade(C('#8c8e8e'),j===38?.1:-.05); a=1; }
+		else if(j<48){ const y=(j-41)/7; c=shade(C('#9a9890'),.12-Math.pow(Math.abs(y-.35)*2,2)*.3); if(y>.15&&y<.55) c=shade(c,-.3); a=1; }
+		else { a=.42*(1-smooth(48,78,j)); }
+		put(o,c); o[3]=a*255; if(j>=22&&j<38) jitter(o,i,j,412,22); });
+	const x=cv.getContext('2d');
+	scatter(x,EW,EH,30,413,6,(c,R,k,px,py)=>{ c.translate(0,-py+42.5+R()*2); ell(c,0,0,2+R()*2,1.2+R(),R()*3); c.fillStyle=R()<.5?'rgba(110,86,48,.85)':'rgba(84,96,52,.85)'; c.fill(); },false);
+	return cv; }
 };
 function renderEdge(name){ return EDGE[name](); }
 

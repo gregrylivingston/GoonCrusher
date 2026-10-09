@@ -7,8 +7,11 @@ extends GameTest
 const ART := "res://world/art/"
 const CLASSES := ["DECOR", "LOW", "TALL", "STATEFUL", "WALL"]
 const GROUNDS := ["grass", "moss", "dirt", "sand", "mud", "mudpit", "snow", "deepsnow", "ice", "asphalt", "lot", "wash",
-	"oil", "shallows", "water", "conveyor", "rock", "roof", "bridge", "gravel"]
-const EDGES := ["shore_foam", "cliff_lip", "canyon_rim", "mesa_lip", "kerb", "hedge", "scrapwall", "snow_ridge", "roof_edge"]
+	"oil", "shallows", "water", "conveyor", "rock", "roof", "bridge", "gravel",
+	#Road Atlas landscapes (forest, coast, ghost town, salt flats, volcano, suburbs)
+	"needles", "beach", "salt", "ash", "tar", "lava", "basalt", "roof_timber", "roof_shingle", "lawn"]
+const EDGES := ["shore_foam", "cliff_lip", "canyon_rim", "mesa_lip", "kerb", "hedge", "scrapwall", "snow_ridge", "roof_edge",
+	"basalt_lip", "timber_edge", "shingle_edge"]
 const STATION := ["station_lot", "station_wall", "station_roof", "station_lamp", "station_pump"]
 const POSTERS := ["prairie", "bayou", "canyon", "quarry", "frostbite", "highway", "city", "crusher"]
 #the prop catalog of the world spec (section 6)

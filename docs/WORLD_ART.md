@@ -9,8 +9,8 @@ The ground, edges, props, station textures and level posters are generated top-d
 | `scripts/art/art_core.js` | Shared helpers: seeded `rng`, noise and periodic `fbm`/`worley`, colour maths, the overhead-lit `vol`/`polyVol`, `facetRock`, `tire`, grime, and the alpha-mask convex `hull`. (`car_gen.js` and `goon_gen.js` keep their own copies so their output never changes.) |
 | `scripts/art/world_gen.js` | The generator (`window.WorldArt`): `GROUND` (materials), `EDGE` (strips), `PROPS` (the catalog: class, size and a draw function per prop), `STATION`, `POSTER` (one vignette per level) and the bake functions. **Change world art here.** |
 | `scripts/art/bake_world.html`, `scripts/art/bake_world.py` | The bake. `python scripts/art/bake_world.py [job ...] [--only id,id]` opens `bake_world.html#<job>:<ids>` in headless Edge (3 in parallel) and writes the files, `props.json`, the prop scenes and every `.import` file. |
-| `world/art/ground/` | 20 seamless materials (`<name>.png`, 512²) and `macro_noise.png` (256², greyscale). |
-| `world/art/edges/` | 9 edge strips for `Line2D` (512×96). |
+| `world/art/ground/` | 30 seamless materials (`<name>.png`, 512²) and `macro_noise.png` (256², greyscale). |
+| `world/art/edges/` | 12 edge strips for `Line2D` (512×96). |
 | `world/art/props/` | Each prop's variants (`<id>.png`, `<id>_v1.png`...), breakable and explosive states (`<id>_broken.png`, `<id>_debris.png`), the landmarks' beacon glows (`<id>_beacon.png`) and its scene (`<id>.tscn`). |
 | `shader/world_beacon.gdshader`, `shader/world_beacon.tres` | The landmarks' beacon: additive, unlit, a slow breath and a double flash, out of step per landmark; `gc_motion` (Reduce Motion) calms it. One shared material; its `night` parameter dims it to 15% by day, faded by `Level.fadeBeacons` with the day and night. |
 | `world/art/decor/` | One atlas per decor id (`<id>.png`, a row of 4 square cells). |
@@ -42,13 +42,15 @@ Godot_console.exe --headless --path . --import
 - **Light from straight overhead.** Nothing implies a sun direction. Height reads only through ambient occlusion: a dark contact band at the foot of cliffs, props and buildings, and a lighter lip on top edges. So every sprite and strip may be rotated and flipped freely.
 - **Contact shadows are centred** under each prop (a blurred silhouette, `shadow` in the design). Props get a **1.0 px rim** in `rgba(18,13,16,.9)`, thinner than the goons' 1.6, so the actors stay the most outlined thing on screen. Flat things (decor, the manhole, scorch and debris remains) have no rim.
 - **Palette:** ground mid-value (about 35-60% luminance) and less saturated than the actors. Never use telegraph red `#ff5c30`, HUD orange `#f0a030` or Scrap teal `#2aa6a1` as a large fill. Teal appears only as small daubs on Scrap Gang props; the Tribe's orange is the rag colour `#e0782c`. Deep water is slate (`#284a57`), not teal. Bake at final brightness: no modulates above 1.
-- Known exceptions: snow (`#c5cbd1`, about 78%) and deep snow are brighter than the mid-value band, because snow has to read as snow; asphalt and deep water sit a little below it.
+- Known exceptions: snow (`#c5cbd1`, about 78%) and deep snow are brighter than the mid-value band, because snow has to read as snow; asphalt and deep water sit a little below it. The Road Atlas added three more: `salt` (about 68%) is bright because a salt flat has to read white to the horizon; `tar` (about 17%) is near-black like `oil`; and `lava` (about 26% on average) is mostly dark crust, its molten network in deep red to orange (`#6e2210` to `#d2712e`, the thin cores `#e8a85a`), kept off telegraph red and HUD orange and dark enough that the ground shader's glow can lift it without blowing out.
 - **Texel density:** ground 0.5 texels per world px (a 512 tile covers 1024 px), props, strips and decor 0.75 (shown at scale 1/0.75 = 1.3333), matching the goons.
 - **Grime:** props get the goons' grime pattern (`#2e2218`) source-atop at their `grime` alpha. Tiles use the seamless twin (`grimeTile`, 128 px with a periodic lattice) so it never seams.
 
 ## Ground materials
 
 `grass`, `moss`, `dirt`, `sand`, `mud`, `mudpit`, `snow`, `deepsnow`, `ice`, `asphalt`, `lot`, `wash`, `oil`, `shallows`, `water` (deep), `conveyor`, `rock` (cliff and mountain tops), `roof` (building rooftops), `bridge` (deck planks), `gravel`.
+
+The Road Atlas landscapes added ten: `needles` (forest floor: rust-brown pine needle litter, mossy patches, twigs and cones; drives like grass), `beach` (pale coast sand, cooler and greyer than `sand`, swash ripples, shells, wrack lines), `salt` (salt crust polygons about 146 px across with raised ridges and a hairline crack), `ash` (volcanic ash with wind ripples and cinders), `tar` (glossy near-black with slow folds and domed bubbles), `lava` (dark cooled crust plates over a molten network and open pools; drawn in the ground shader's water layer), `basalt` (hexagonal column tops for volcano walls, each at its own height), `roof_timber` (ghost town roofs: bleached wooden shakes in 64 px courses along x, a few missing, tin patches), `roof_shingle` (suburb roofs: slate three-tab shingles in 48 px courses along x, algae streaks downslope) and `lawn` (mown suburb grass, light and dark stripes 128 px wide running along y).
 
 - Seamless: every noise call wraps its lattice (`fbm(u*k, v*k, seed, oct, k)`), and strokes and pebbles near an edge are drawn again on the far side (`wrapAt`). Sample them with repeat on.
 - `conveyor` moves along **+x**: cleats run across x every 32 texels and the worn chevrons point +x. Rotate the UVs with the belt direction.
@@ -72,8 +74,11 @@ Godot_console.exe --headless --path . --import
 | `hedge` | symmetric: AO, hedge body in the middle, AO | |
 | `scrapwall` | symmetric: AO, junk panels, tyres and teal daubs in the middle, AO | |
 | `roof_edge` | the roof: AO cast by the parapet, its inner face, the lit coping (joints every 40 texels), its outer face on the contour | the building's AO on the pavement |
+| `basalt_lip` | basalt column tops fading in, the lit broken column ends, a short grooved face | AO and fallen column chunks at the foot |
+| `timber_edge` | the roof: the last courses of shakes fading in, ragged butt ends, the eave's shadow, a lit fascia board on the contour | the building's AO on the street |
+| `shingle_edge` | the roof: a course of three-tab shingles fading in, the metal drip edge, a half-round gutter with leaves in it on the contour | the house's AO on the lawn |
 
-`roof_edge` is the city's wall strip (`WorldSkin.WALL_STRIP`). One-sided strips put the barrier (water, cliff top, canyon, kerb, roof) at the top (v = 0). Which side of a `Line2D` that lands on depends on the direction of its points, so build contours with a consistent winding and reverse the points if the lip faces the wrong way. `ChunkRecipe` does this: its lines run with the barrier on the left (docs/WORLD.md).
+`roof_edge` is the city's wall strip (`WorldSkin.WALL_STRIP`). One-sided strips put the barrier (water, cliff top, canyon, kerb, roof, volcano wall) at the top (v = 0). Which side of a `Line2D` that lands on depends on the direction of its points, so build contours with a consistent winding and reverse the points if the lip faces the wrong way. `ChunkRecipe` does this: its lines run with the barrier on the left (docs/WORLD.md).
 
 ## Props
 
