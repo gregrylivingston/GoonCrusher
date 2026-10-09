@@ -188,6 +188,7 @@ func onNodeAdded(node: Node) -> void:
 	elif node is Level:
 		if levelSeconds >= 0.0: node.seconds = levelSeconds #before _ready, so every mode sees it
 	elif node is SpawnManager:
+		node.floorOn = false #scenarios set their own crowds (and were measured before the nearby floor)
 		if cfg.has("spawnTimer"): node.spawnTimer = cfg.spawnTimer
 		if cfg.has("escalation"): node.escalationSpeed = cfg.escalation
 		if cfg.has("progress"): node.gameTimeProgress = cfg.progress
