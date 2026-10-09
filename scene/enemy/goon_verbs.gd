@@ -113,6 +113,7 @@ class Verb extends RefCounted:
 	func findSeek(row: Array, car: Node2D) -> Node2D:
 		var carRange: float = row[2]
 		var action: StringName = row[1]
+		if action in Goons.SEEK_SELF: return null #the verb uses this row itself (a Thief's den)
 		if (action == &"perch" || action == &"roost") && g.cooldown > 0.0: return null
 		if carRange > 0.0 && g.distTo(car) >= carRange: return null
 		if carRange < 0.0 && g.distTo(car) <= -carRange: return null
@@ -670,6 +671,7 @@ class Hopper extends Verb:
 		if g.state == &"hop": drawHop(car)
 		elif lifted: land() #knocked out of a hop (a blast, a stun)
 	func move(delta: float, car: Node2D) -> void:
+		if tryHide(delta, car): return
 		g.play(&"idle")
 		if g.stateTime < REST: return
 		if g.cooldown <= 0.0 && g.distTo(car) < g.windDist:
@@ -684,17 +686,76 @@ class Hopper extends Verb:
 		lifted = true
 		called = false
 		shadow.visible = true
-	func other(delta: float, _car: Node2D) -> void:
-		if g.state == &"hop":
-			g.global_position += hopDir * g.speedNow() * STRIDE * delta
-			var up: bool = g.stateTime >= AIR_FROM && g.stateTime < AIR_TO
-			if up != g.invulnerable: #take-off and landing can be crushed; the peak can't
-				g.setSolid(not up)
-				g.invulnerable = up
-			if g.stateTime >= HOP:
-				land()
-				g.fx().dust(g.global_position)
-				g.setState(&"move")
+	func other(delta: float, car: Node2D) -> void:
+		match g.state:
+			&"hop":
+				g.global_position += hopDir * g.speedNow() * STRIDE * delta
+				var up: bool = g.stateTime >= AIR_FROM && g.stateTime < AIR_TO
+				if up != g.invulnerable: #take-off and landing can be crushed; the peak can't
+					g.setSolid(not up)
+					g.invulnerable = up
+				if g.stateTime >= HOP:
+					land()
+					g.fx().dust(g.global_position)
+					g.setState(&"move")
+			&"dive":
+				if not is_instance_valid(burrow) || burrow.get_meta(&"smashed", false):
+					surface()
+					return
+				var u := minf(g.stateTime / HIDE_DIVE, 1.0)
+				g.global_position = diveFrom.lerp(burrow.global_position, u)
+				g.sprite.scale = Vector2.ONE * baseScale * (1.0 - 0.6 * u)
+				if u >= 1.0:
+					g.sprite.visible = false
+					g.setState(&"hidden")
+			&"hidden":
+				if not is_instance_valid(burrow) || not burrow.is_inside_tree() || burrow.get_meta(&"smashed", false): surface()
+				elif g.stateTime > HIDE_MAX || (g.stateTime > HIDE_MIN && g.distTo(car) > HIDE_CLEAR): surface()
+
+	#--- R-7: burrows (its seeks "hide" row) -----------------------------------------------------------
+	const HIDE_SPEED := 200.0 #the car bearing down at least this fast...
+	const HIDE_EVERY := 0.2   #...checked this often
+	const HIDE_DIVE := 0.25   #s the dive into the mound takes
+	const HIDE_MIN := 1.5     #s it stays down at least...
+	const HIDE_MAX := 6.0     #...and at most
+	const HIDE_CLEAR := 450.0 #it comes out once the car is this far off
+	var hideT := 0.0
+	var burrow: Node2D = null #the burrow it is diving into or hiding in (its "occupant" meta is this goon)
+	var diveFrom := Vector2.ZERO
+	## The car bears down: dive into a free burrow nearby, out of reach (invulnerable, not solid). True when it did.
+	func tryHide(delta: float, car: Node2D) -> bool:
+		hideT -= delta
+		if hideT > 0.0: return false
+		hideT = HIDE_EVERY
+		var row := Goons.seekRow(g.def, &"hide")
+		if row.is_empty() || not GoonVerbs.bearingDown(car, g.global_position, row[2], HIDE_SPEED): return false
+		var b := WorldHooks.nearestInGroup(g.get_tree(), row[0], g.global_position, row[3], &"smashed")
+		if b == null || Spill.occupant(b) != null: return false
+		burrow = b
+		b.set_meta(&"occupant", g)
+		diveFrom = g.global_position
+		g.setSolid(false)
+		g.invulnerable = true
+		g.setState(&"dive")
+		g.play(&"special", HIDE_DIVE)
+		return true
+	## Back out of the burrow (or it went): visible, solid and crushable again
+	func surface() -> void:
+		if is_instance_valid(burrow) && Spill.occupant(burrow) == g: burrow.remove_meta(&"occupant")
+		burrow = null
+		g.sprite.visible = true
+		g.sprite.scale = Vector2.ONE * baseScale
+		g.setSolid(true)
+		g.invulnerable = false
+		g.setState(&"move")
+		g.cooldown = maxf(g.cooldown, 0.5)
+		g.fx().dust(g.global_position)
+	## Its burrow caved in (Spill.collapseBurrow): thrown out stunned
+	func flush(stun: float) -> void:
+		surface()
+		stunFor(stun, Vector2.from_angle(randf() * TAU) * 120.0)
+	func onDeath(_cause: StringName) -> void:
+		if is_instance_valid(burrow) && Spill.occupant(burrow) == g: burrow.remove_meta(&"occupant")
 	## The jump's look, from how far through the hop it is: up and back down on a sine.
 	func drawHop(car: Node2D) -> void:
 		var h := sin(PI * clampf(g.stateTime / HOP, 0.0, 1.0))
@@ -718,14 +779,18 @@ class Hopper extends Verb:
 		shadow.visible = false
 
 #==================================================================================================
-## Steals pickups and runs; crush it to get them back with interest (Bandit).
+## Steals pickups and runs; crush it to get them back with interest (Bandit). With loot it runs home to the
+## nearest den (its seeks "stash" row's range, R-6): there it stashes the loot (Spill.stash) and is gone, with
+## no credit. Smash the den to get the loot back; never smashed, it stays lost.
 class Thief extends Verb:
+	const HOME_SECONDS := 25.0 #a run home that takes longer than this gives up and flees as usual
 	var target: Node2D = null
 	var stolen: Array = []
 	var lookT := 0.0
+	var den: Node2D = null
+	var denT := 0.0
 	## A pickup to steal comes first; with none in reach, its seeks rows send it to raid a crate or a hive
-	## (Goons.DATA; a raided hive's swarm usually gets the Bandit first). A den to stash loot in (R-6) is the
-	## next row to add.
+	## (Goons.DATA; a raided hive's swarm usually gets the Bandit first).
 	func seekProp(delta: float, car: Node2D) -> bool:
 		lookT -= delta
 		if lookT <= 0.0:
@@ -755,9 +820,25 @@ class Thief extends Verb:
 		g.chase(g.global_position + want * 60.0, g.speedNow() * 0.8, delta)
 	func other(delta: float, car: Node2D) -> void:
 		if g.state == &"flee":
+			if goHome(delta): return
 			var away := (g.global_position - car.global_position).normalized()
 			g.chase(g.global_position + away * 60.0, g.speedNow() * 1.25, delta, 8.0)
 			if g.stateTime > 6.0: g.setState(&"move")
+	## With loot and a den in range: run to it and stash. True while it is doing that.
+	func goHome(delta: float) -> bool:
+		if stolen.is_empty() || g.stateTime > HOME_SECONDS: return false
+		denT -= delta
+		if denT <= 0.0:
+			denT = 0.5
+			var row := Goons.seekRow(g.def, &"stash")
+			den = WorldHooks.nearestInGroup(g.get_tree(), row[0], g.global_position, row[3], &"smashed") if not row.is_empty() else null
+		if not is_instance_valid(den) || den.get_meta(&"smashed", false): return false
+		g.chase(den.global_position, g.speedNow() * 1.25, delta, 8.0)
+		if g.global_position.distance_to(den.global_position) < g.bodyRadius + Spill.DEN_REACH:
+			Spill.stash(den, stolen)
+			stolen.clear()
+			g.vanish()
+		return true
 	func onDeath(cause: StringName) -> void:
 		if stolen.is_empty(): return
 		var at := WorldHooks.bankNear(g.global_position) if cause == &"drown" else g.global_position #washed up on the bank

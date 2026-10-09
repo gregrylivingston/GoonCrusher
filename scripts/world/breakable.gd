@@ -19,16 +19,20 @@ class_name BreakableProp extends StaticBody2D
 ## - tag() puts the props goons care about into groups (SpawnManager calls it from SceneTree.node_added):
 ##   prop_log (Snapper spawns), prop_manhole (Rat Pack spawns), prop_crate (Bandit bait), prop_carcass
 ##   (Buzzard perches), prop_hive (Yippers knock, Bandits raid), prop_rock (Rattlers sun on red rocks),
+##   prop_den (Bandits stash loot, Spill.stash), prop_burrow (Jackalope spawns and hides),
 ##   prop_roost (Buzzard roosts, Spill.ROOSTS), prop_explosive. Goons.DATA "seeks" names the groups a goon uses.
 
 const SPEED_KEEP := 0.85 #share of the car's speed kept through a smash
-const COIN_SPILL := {&"haybale": 2, &"fence": 1, &"crate": 3}
+## Props that barely slow the car (speedKeep): a burrow mound caves in, a pumpkin splats
+const SPEED_KEEPS := {&"burrow": 0.95, &"pumpkin": 0.98}
+## Coins a smash throws out, once (every paying prop has a taken-set bit, or Spill.markUsed for one without)
+const COIN_SPILL := {&"haybale": 2, &"fence": 1, &"crate": 3, &"den": 4, &"burrow": 1}
 const BLAST := {&"barrel": Vector2(170.0, 8.0), &"tank": Vector2(320.0, 16.0)} #radius px, car damage
 const DEFAULT_BLAST := Vector2(170.0, 8.0)
 const CHAIN_DELAY := 0.12
 const COIN_SCENE := "res://scene/powerup/coin.tscn"
 const GROUPS := {&"log": &"prop_log", &"manhole": &"prop_manhole", &"crate": &"prop_crate", &"carcass": &"prop_carcass", &"logpile": &"prop_logpile",
-	&"beehive": &"prop_hive", &"rock_red": &"prop_rock"}
+	&"beehive": &"prop_hive", &"rock_red": &"prop_rock", &"den": &"prop_den", &"burrow": &"prop_burrow"}
 const ROOST_GROUP := &"prop_roost" #crowns Buzzards roost in (Spill.ROOSTS)
 const EXPLOSIVE_GROUP := &"prop_explosive"
 const DEBRIS_PIECES := 5
@@ -68,6 +72,10 @@ static func smashedByGoon(node: Object, speed: float, dir: Vector2) -> bool:
 static func propId(node: Object) -> StringName:
 	return StringName(node.get_meta(&"propId", &""))
 
+## The share of the car's speed it keeps through smashing this prop (overhead_car_body_2d.gd)
+static func speedKeep(node: Object) -> float:
+	return SPEED_KEEPS.get(propId(node), SPEED_KEEP)
+
 ## Groups for the props goons look for; cheap enough to run on every StaticBody2D added to the tree
 static func tag(node: Node) -> void:
 	if not node.has_meta(&"propId") || node.get_meta(&"smashed", false): return
@@ -76,6 +84,7 @@ static func tag(node: Node) -> void:
 	if node.get_meta(&"explosive", false): node.add_to_group(EXPLOSIVE_GROUP)
 	if Spill.DEFS.has(propId(node)): node.add_to_group(Spill.SPILL_GROUP)
 	if Spill.ROOSTS.has(propId(node)): node.add_to_group(ROOST_GROUP)
+	if propId(node) == &"burrow": node.add_to_group(Spill.WARREN_GROUP) #kept when it caves in: the warren count
 
 #--- smashing ----------------------------------------------------------------------------------------
 
@@ -86,6 +95,7 @@ static func smashNode(node: Node2D, car: Node2D = null) -> void:
 		detonate(node)
 		return
 	node.set_meta(&"smashed", true)
+	if is_instance_valid(car): node.set_meta(&"carBrokeAt", GoonVerbs.now()) #a hive's swarm stings the car that broke it (Spill.Swarm)
 	var pos := node.global_position
 	#along the car's travel, or the direction a goon (a charge, a cut), or a blast gave it
 	var dir: Vector2 = node.get_meta(&"spillDir", car.velocity if is_instance_valid(car) else Vector2.ZERO)
@@ -108,12 +118,15 @@ static func breakVisual(node: Node) -> void:
 		elif child is LightOccluder2D:
 			child.set_meta("gc_vis", false) #Settings re-applies lighting from this
 			child.visible = false
-	for group in [GROUPS.get(propId(node), &""), EXPLOSIVE_GROUP, Spill.SPILL_GROUP]:
+	for group in [GROUPS.get(propId(node), &""), EXPLOSIVE_GROUP, Spill.SPILL_GROUP, ROOST_GROUP]:
 		if group != &"" && node.is_in_group(group): node.remove_from_group(group)
 
 ## Coin pickups thrown out along `dir` (the car's travel, or a charge's); the car collects them like any other
 static func spillCoins(id: StringName, pos: Vector2, dir: Vector2) -> int:
-	var count: int = COIN_SPILL.get(id, 0)
+	return throwCoins(COIN_SPILL.get(id, 0), pos, dir)
+
+## `count` coin pickups thrown out along `dir` from `pos` (spillCoins; an orchard oak's apples, a cleared warren)
+static func throwCoins(count: int, pos: Vector2, dir: Vector2) -> int:
 	if count <= 0 || not is_instance_valid(Root.levelRoot): return 0
 	var scene: PackedScene = load(COIN_SCENE)
 	var ahead: Vector2 = dir.normalized() if dir.length() > 1.0 else Vector2.RIGHT

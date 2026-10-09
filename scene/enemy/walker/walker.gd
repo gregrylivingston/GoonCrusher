@@ -334,6 +334,15 @@ func bounceCar(car: Node2D, dmg: float, system: String, label := "BLOCKED") -> v
 func isDying() -> bool:
 	return dead
 
+## Gone without a death: no corpse, no drop, no credit (a Bandit home in its den)
+func vanish() -> void:
+	if dead: return
+	dead = true
+	myMode = mode.DEAD
+	var f = fx()
+	if f: f.dust(global_position)
+	queue_free()
+
 ## Every death: crushed or blown up (squashed or flung, decal, bits, spatter: GoonFx.crushed; maybe a
 ## pickup), or drowned (no decal).
 func destroy(cause: StringName = &"crush"):

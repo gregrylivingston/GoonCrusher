@@ -18,6 +18,8 @@ const HEROES := {
 	&"fence": "Fences smash at %s",
 	&"haybale": "Hay bales smash at %s",
 	&"hedge": "Hedges smash at %s",
+	&"den": "Smash Bandit dens at %s: the stolen loot bursts out",
+	&"burrow": "Burrows cave in at %s: flush the Jackalopes out",
 }
 const SHOW_PX := 700.0
 const HEADING_DOT := 0.82  #the car's travel within about 35 degrees of the prop

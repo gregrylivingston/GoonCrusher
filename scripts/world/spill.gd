@@ -16,10 +16,18 @@ class_name Spill extends RefCounted
 ## Every kill here goes through flatten with its source (logs, splash, fall, bees, drop), which SpawnManager.creditCrush
 ## credits to the player, Critter Chain included, when it happens within CRITTER_CREDIT_PX of the car.
 ## Roosts (ROOSTS): crowns Buzzards sit in (Goons.DATA seeks "roost"); a ram on the trunk (ram) knocks them down.
+## Region 1 (The Wilds; docs/GOONS.md "Wild instincts"):
+##   stash  the Bandit den: Bandits carry stolen loot home to it (stash); smashing it bursts every stashed
+##          pickup out ("LOOT RECOVERED"). The stash outlives a chunk reload (a record on the TileManager).
+##   burrow a Jackalope burrow caves in: the one hiding in it is thrown out stunned, it spawns no more, and when
+##          every burrow of its warren (the `group` meta ChunkView sets from the motif) is down: WARREN CLEARED
+## PropReactions.addHero calls arm() for every prop that streams in (and disarm() when its chunk goes), which
+## restores per-prop state: a den's sacks.
 
 const DEFS := {
 	&"logpile": {"kind": "logs"}, &"watertower": {"kind": "wave"}, &"billboard": {"kind": "fall"},
 	&"beehive": {"kind": "swarm"}, &"crane": {"kind": "drop"},
+	&"den": {"kind": "stash"}, &"burrow": {"kind": "burrow"},
 }
 ## Props a spill leaves behind: WorldSkin loads them with the level whenever the spilling prop is in its dressing
 const PRODUCTS := {&"logpile": [&"log"], &"crane": [&"container"]}
@@ -68,6 +76,13 @@ static func release(node: Node2D, dir: Vector2) -> void:
 		"wave": wave(node.global_position)
 		"fall": fall(node)
 		"swarm": swarm(node)
+		"stash": releaseStash(node, dir)
+		"burrow": collapseBurrow(node)
+
+## A prop streamed in (PropReactions.addHero, from ChunkView): its per-prop state comes back
+static func arm(prop: Node2D) -> void:
+	match BreakableProp.propId(prop):
+		&"den": loadStash(prop)
 
 static func fx() -> GoonFx:
 	return Root.spawnManager.fx if is_instance_valid(Root.spawnManager) else null
@@ -351,6 +366,102 @@ class Drop extends Node2D:
 		Audio.play(Transition.SOUNDS["thud"], -2.0, 0.7)
 		Spill.record(&"container", at, rot)
 		queue_free()
+
+#--- the Bandit den (R-6) ------------------------------------------------------------------------------
+
+const DEN_GROUP := &"prop_den"
+const DEN_REACH := 95.0   #px past a Bandit's body from the den's centre where it stashes (the hut's hull is ~75)
+const SACKS_SHOWN := 3    #the den's sack overlay has frames 0-3
+const STASH_META := &"denStash" #the TileManager's record: {den key: [{"scene": path}, ...]}
+
+## A den's key in the record: its position, which a chunk rebuilds the same every time
+static func denKey(den: Node2D) -> Vector2i:
+	return Vector2i(den.global_position.round())
+
+static func stashRecord() -> Dictionary:
+	var tm := tileManager()
+	if tm == null: return {}
+	if not tm.has_meta(STASH_META): tm.set_meta(STASH_META, {})
+	return tm.get_meta(STASH_META)
+
+## What a den holds: [{"scene": path}, ...]
+static func stashOf(den: Node2D) -> Array:
+	return den.get_meta(&"stash", [])
+
+## A Bandit got home: its loot goes into the den (and the record) and shows as sacks
+static func stash(den: Node2D, loot: Array) -> void:
+	if loot.is_empty() || den.get_meta(&"smashed", false): return
+	var held: Array = stashOf(den).duplicate()
+	held.append_array(loot)
+	den.set_meta(&"stash", held)
+	stashRecord()[denKey(den)] = held #without a TileManager (a test) the record is a throwaway
+	showSacks(den)
+	if fx(): fx().label(den.global_position, "STASHED", 18)
+
+## A den streamed back in: what it held before its chunk went
+static func loadStash(den: Node2D) -> void:
+	var held: Array = stashRecord().get(denKey(den), [])
+	den.set_meta(&"stash", held.duplicate())
+	showSacks(den)
+
+## The sack overlay: one sack per stashed thing, up to SACKS_SHOWN; hidden on a broken den
+static func showSacks(den: Node2D) -> void:
+	var sacks: Sprite2D = den.get_node_or_null("Sacks")
+	if sacks == null: return
+	sacks.visible = not den.get_meta(&"smashed", false)
+	sacks.frame = clampi(stashOf(den).size(), 0, mini(SACKS_SHOWN, sacks.hframes - 1))
+
+## The den was smashed: every stashed pickup bursts out along `dir` (its own coins come from COIN_SPILL)
+static func releaseStash(den: Node2D, dir: Vector2) -> int:
+	var held := stashOf(den)
+	den.set_meta(&"stash", [])
+	stashRecord().erase(denKey(den))
+	showSacks(den)
+	if held.is_empty() || fx() == null: return 0
+	for i in held.size():
+		var scene: String = held[i].get("scene", "")
+		if scene == "": continue
+		fx().dropAt(den.global_position + dir.rotated((i - (held.size() - 1) * 0.5) * 0.5) * 150.0, scene)
+	fx().label(den.global_position, "LOOT RECOVERED" if held.size() == 1 else "LOOT RECOVERED x%d" % held.size(), 22, HudTheme.GOLD)
+	return held.size()
+
+#--- burrows and warrens (R-7) ----------------------------------------------------------------------------
+
+const WARREN_GROUP := &"prop_warren" #every burrow, smashed or not (BreakableProp.tag), for the warren count
+const BURROW_STUN := 1.5
+const WARREN_COINS := 20
+const WARREN_XP := 15.0
+
+## A burrow caved in: its occupant is flushed out stunned; the last of a warren pays the warren bonus
+static func collapseBurrow(burrow: Node2D) -> void:
+	var o = occupant(burrow)
+	if burrow.has_meta(&"occupant"): burrow.remove_meta(&"occupant")
+	if o != null && not o.dead && o.verb is GoonVerbs.Hopper: o.verb.flush(BURROW_STUN)
+	if warrenCleared(burrow): payWarren(burrow.global_position)
+
+## The goon hiding in (or diving into) a burrow, or null
+static func occupant(burrow: Node2D) -> Node2D:
+	if not burrow.has_meta(&"occupant"): return null
+	var o = burrow.get_meta(&"occupant")
+	return o if is_instance_valid(o) else null
+
+## Whether every burrow sharing this one's warren (`group` meta, 0 for none) is down
+static func warrenCleared(burrow: Node2D) -> bool:
+	var key: int = burrow.get_meta(&"group", 0)
+	if key == 0 || not burrow.is_inside_tree(): return false
+	for n in burrow.get_tree().get_nodes_in_group(WARREN_GROUP):
+		if n != burrow && int(n.get_meta(&"group", 0)) == key && not n.get_meta(&"smashed", false): return false
+	return true
+
+## WARREN CLEARED: coins and crush XP to the player, credited now, when the car is near (CRITTER_CREDIT_PX)
+static func payWarren(at: Vector2) -> bool:
+	var car = Root.playerCar
+	if not is_instance_valid(car) || car.global_position.distance_to(at) > SpawnManager.CRITTER_CREDIT_PX: return false
+	car.reward("coin", WARREN_COINS)
+	if car.get("isPlayer"): car.crushXp += WARREN_XP * car.crushXpMult
+	RewardFlyers.flyUpgrade(Root.upgrade.PURSE, at)
+	if fx(): fx().label(at, "WARREN CLEARED  +%d" % WARREN_COINS, 24, HudTheme.GOLD)
+	return true
 
 #--- the record ---------------------------------------------------------------------------------------
 

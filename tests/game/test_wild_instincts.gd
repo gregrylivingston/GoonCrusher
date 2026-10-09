@@ -192,11 +192,11 @@ func test_the_seeks_table_is_well_formed():
 		for row in Goons.DATA[id].get("seeks", []):
 			assert_eq(row.size(), 4, "%s: [group, action, carRange, goonRange]" % id)
 			assert_true(row[0] in groups, "%s seeks a tagged group (%s)" % [id, row[0]])
-			assert_true(row[1] in [&"release", &"knock", &"raid", &"perch", &"roost"], "%s: a known action" % id)
+			assert_true(row[1] in [&"release", &"knock", &"raid", &"perch", &"roost", &"stash", &"hide"], "%s: a known action" % id)
 			assert_gt(float(row[3]), 0.0, "%s looks somewhere" % id)
 	var yipper: Array = Goons.DATA[&"yipper"].seeks.map(func(r): return r[1])
 	assert_eq(yipper, [&"release", &"knock"], "Yippers release piles and knock hives")
-	assert_eq(Goons.DATA[&"bandit"].seeks.map(func(r): return r[0]), [&"prop_crate", &"prop_hive"], "Bandits raid crates and hives")
+	assert_eq(Goons.DATA[&"bandit"].seeks.map(func(r): return r[0]), [&"prop_crate", &"prop_hive", &"prop_den"], "Bandits raid crates and hives, and stash in dens")
 	assert_eq(Goons.DATA[&"buzzard"].seeks.map(func(r): return r[1]), [&"perch", &"roost"], "Buzzards perch and roost")
 	assert_true(prop("beehive", Vector2(9000, 0)).is_in_group(&"prop_hive"), "hives are tagged")
 	assert_true(prop("rock_red", Vector2(9000, 900)).is_in_group(&"prop_rock"), "so are red rocks")

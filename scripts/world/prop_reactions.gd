@@ -136,8 +136,10 @@ func addCanopy(prop: Node2D, canopy: Sprite2D) -> void:
 	canopy.modulate.a = 1.0
 	canopies.push_back([prop, canopy, rect, BreakableProp.propId(prop) in SQUARE_CANOPIES, reach])
 
-## A prop joined the world (ChunkView): an interactive one (SmashTags.HEROES) gets a smash tag
+## A prop joined the world (ChunkView): its per-prop state comes back (Spill.arm: a den's stash...) and an
+## interactive one (SmashTags.HEROES) gets a smash tag
 func addHero(prop: Node2D) -> void:
+	Spill.arm(prop)
 	if is_instance_valid(tags): tags.add(prop)
 
 static var rectCache := {} #texture path -> its opaque rect in texels
