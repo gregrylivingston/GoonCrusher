@@ -18,7 +18,7 @@ const SMALL := Vector2(150, 205)
 const HAND_AT := Vector2(40, 36)
 const DECK_AT := Vector2(420, 60)
 const FLIP_TIME := 0.45
-## a card back per kind of pickup (Pickups.K): its colour and emblem
+## a card back's colour per kind of pickup (Pickups.K); the art is CardArt's
 const BACKS := {
 	Pickups.K.SUPPLY: [Color("2f7d4f"), "res://texture/icon/toolbox.svg"],
 	Pickups.K.TUNE: [Color("8a5a1c"), "res://texture/icon/upgrade.svg"],
@@ -142,9 +142,10 @@ func drawStage() -> void:
 	var at := DECK_AT.lerp(HAND_AT, u)
 	var size := SMALL.lerp(CARD, u)
 	var sx := absf(cos(flip * PI))
-	m.draw_set_transform(at + size * 0.5, 0.0, Vector2(maxf(sx, 0.02), 1.0))
+	var turn := Transform2D(0.0, Vector2(maxf(sx, 0.02), 1.0), 0.0, at + size * 0.5)
+	m.draw_set_transform_matrix(turn)
 	if flip >= 0.5: drawFace(m, hand, -size * 0.5, size)
-	else: drawBack(m, hand, -size * 0.5, size)
+	else: drawBack(m, hand, -size * 0.5, size, turn)
 	m.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 func drawFace(m: Control, id: String, at: Vector2, size := CARD) -> void:
@@ -160,14 +161,8 @@ func drawFace(m: Control, id: String, at: Vector2, size := CARD) -> void:
 	HudTheme.text(m, at + Vector2(size.x * 0.5, 202.0 * k), Pickups.shortName(id).to_upper(), int(20 * k), HudTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER, 5)
 	m.draw_multiline_string(HudTheme.BODY, at + Vector2(12, 226.0 * k), Pickups.def(id).get("text", ""), HORIZONTAL_ALIGNMENT_CENTER, size.x - 24, int(12 * k), 5, HudTheme.MUTED)
 
-## A card back shows the kind of pickup, never the rarity
-func drawBack(m: Control, id: String, at: Vector2, size := CARD) -> void:
+## A card back shows the kind of pickup, never the rarity: a little scene of it in the game's own art
+## (CardArt). `base` is the transform the card is drawn through (a card mid-flip).
+func drawBack(m: Control, id: String, at: Vector2, size := CARD, base := Transform2D.IDENTITY) -> void:
 	var kind: int = Pickups.def(id).get("kind", Pickups.K.LOOT)
-	var back: Array = BACKS.get(kind, BACKS[Pickups.K.LOOT])
-	var col: Color = back[0]
-	m.draw_rect(Rect2(at, size), col)
-	m.draw_rect(Rect2(at + Vector2(7, 7), size - Vector2(14, 14)), col.lightened(0.35), false, 2.0)
-	for i in 5: m.draw_line(at + Vector2(10, 10 + i * size.y * 0.22), at + Vector2(size.x - 10, 10 + i * size.y * 0.22 + 18), Color(1, 1, 1, 0.05), 6.0)
-	HudTheme.icon(m, load(back[1]), at + size * Vector2(0.5, 0.45), size.x * 0.42, Color(1, 1, 1, 0.9))
-	HudTheme.text(m, at + Vector2(size.x * 0.5, size.y - 18.0), Pickups.KIND_NAMES[kind].to_upper(), int(maxf(11.0, size.x * 0.085)), HudTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER, 3)
-	m.draw_rect(Rect2(at, size), HudTheme.OUTLINE, false, 2.0)
+	CardArt.drawBack(m, base, kind, at, size, hash(id), backColor(id), Pickups.KIND_NAMES[kind])

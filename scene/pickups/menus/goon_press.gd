@@ -20,7 +20,7 @@ const RAISE := 0.25
 const CRUSH_GOAL := 8
 const ITEMS := 18
 const GOONS := ["grunt", "goonling", "rat", "gremlin", "skink", "yipper", "bandit", "spiker"]
-const ITEM_SIZE := 58.0
+const ITEM_SIZE := 86.0
 
 var tier := 0
 var items: Array = []      #{kind: goon/crate/bomb, x, goon, id, hit}
@@ -45,7 +45,7 @@ func build() -> void:
 	var kinds := []
 	for i in ITEMS: kinds.push_back("crate" if i < crates else ("bomb" if i < crates + bombs else "goon"))
 	kinds.shuffle()
-	var x := STAGE.x + 60.0
+	var x := STAGE.x - 30.0
 	for kind in kinds:
 		var item := {"kind": kind, "x": x, "hit": false}
 		if kind == "goon": item["goon"] = GOONS.pick_random()
@@ -141,7 +141,7 @@ func drawStage() -> void:
 		match item.kind:
 			"goon":
 				var tex := goonTexture(item.goon, item.hit)
-				if tex: HudTheme.icon(m, tex, c + (Vector2(0, ITEM_SIZE * 0.35) if item.hit else Vector2.ZERO), ITEM_SIZE * (1.2 if item.hit else 1.0), Color.WHITE)
+				if tex: HudTheme.icon(m, tex, c + (Vector2(0, ITEM_SIZE * 0.3) if item.hit else Vector2(0, ITEM_SIZE * 0.1)), ITEM_SIZE * (2.2 if item.hit else 1.9), Color.WHITE) #the art has wide margins
 				else: m.draw_circle(c, 20.0, Color("7aa35a"))
 			"crate":
 				if item.hit: HudTheme.icon(m, Pickups.texture(item.id), c, 44.0)

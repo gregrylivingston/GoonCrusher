@@ -1,0 +1,19 @@
+[remap]
+
+importer="oggvorbisstr"
+type="AudioStreamOggVorbis"
+uid="uid://duwg0a0qu7q5f"
+path="res://.godot/imported/There's a Goon on My Hood.ogg-d2b1e722cdc815693c7e471bec57f328.oggvorbisstr"
+
+[deps]
+
+source_file="res://sound/radio/gooncrusher/songs/There's a Goon on My Hood.ogg"
+dest_files=["res://.godot/imported/There's a Goon on My Hood.ogg-d2b1e722cdc815693c7e471bec57f328.oggvorbisstr"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4
