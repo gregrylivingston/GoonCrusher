@@ -1,2 +1,25 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+# Line endings: LF everywhere, on every machine, whatever core.autocrlf says.
+# Godot writes .import, .tscn, .tres, .godot and .cfg files with LF on all platforms; with CRLF checkouts
+# every reimport looked like thousands of modified files.
+* text=auto eol=lf
+
+# Windows scripts keep CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary assets: never diff or convert
+*.png binary
+*.jpg binary
+*.webp binary
+*.psd binary
+*.ico binary
+*.mp3 binary
+*.ogg binary
+*.wav binary
+*.ttf binary
+*.otf binary
+*.res binary
+*.dll binary
+*.so binary
+*.dylib binary
+*.pyc binary

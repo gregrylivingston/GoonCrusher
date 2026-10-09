@@ -28,3 +28,7 @@ bin/macos/
 
 # Per-machine editor settings
 .vscode/
+
+# Python caches
+__pycache__/
+*.pyc
