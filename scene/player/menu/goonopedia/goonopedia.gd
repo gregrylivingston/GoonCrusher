@@ -86,7 +86,7 @@ const PICKUP_TEXT := {
 	Root.upgrade.LUCK: ["Dice", "+%d Dice for this run: drops are more often purses, gems and slot machines."],
 	Root.upgrade.COIN: ["Coin", "+%d coin. Stars multiply what a run pays."],
 	Root.upgrade.PURSE: ["Purse", "+%d coins in one go."],
-	Root.upgrade.GEM: ["Gem", "+%d gem. Gems pay for slot machine rerolls."],
+	Root.upgrade.GEM: ["Gem", "+%d gem. Gems buy a gadget and boost for the next run, and unlocks."],
 	Root.upgrade.SLOTMACHINE: ["Slot Machine", "Opens the slot machine: three reels of prizes, free to spin."],
 }
 const STAT_UPGRADES := [Root.upgrade.ENGINE, Root.upgrade.STEERING, Root.upgrade.TRACTION, Root.upgrade.ARMOR,
@@ -1029,11 +1029,11 @@ func buildPickups() -> void:
 #here like pickups ("prize:<id>" through Unlocks).
 const PRIZE_TEXT := {
 	"claw": "The claw runs back and forth on its own: drop it at the right moment and hope it holds. Watch for junk.",
-	"shuffle": "A prize goes under a hubcap and they shuffle. Find it, then keep it or go again for a better one.",
+	"shuffle": "A prize, a coin and some junk go under three hubcaps and they shuffle. Find the prize, then keep it or go again.",
 	"scratch": "Three cells scratch open one by one. Two alike pay once, three alike pay three times.",
-	"press": "Slam the press on the conveyor: crush goons, crack prize crates, miss the bombs.",
+	"press": "Three slams on a fast conveyor: whatever is under the press is yours. Crates pay prizes, goons coins, bombs hurt.",
 	"deal": "Keep the card you're dealt or redraw, three times. The backs show what kind of card comes next.",
-	"pachinko": "Aim the dropper and let the ball rattle through the pegs. The outer cups pay best.",
+	"pachinko": "The dropper slides and swings by itself: time your drops, as many balls at once as you like. The outer cups pay best.",
 	"pusher": "Drop coins on the pile and push prizes over the ledge. Can pay several things at once.",
 	"slot": "Three reels of prizes, with bets and paylines. A spin can pay three things.",
 }

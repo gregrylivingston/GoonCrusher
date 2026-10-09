@@ -158,7 +158,7 @@ Built (2026-10-08, "Done" above; docs/WORLD.md "Props and decor", "Interactive p
 - **T2-11.** Night as a real phase: about 150 s day and 90 s night, a night spawn table, ×1.5 coins at night (`Timer.gd` `daylength`). S.
 
 ### Package 5: Slot machine and gems
-- **T1-10.** Gems buy slot rerolls and a starting gadget and boost (`Pickups.LOADOUT`, `BOOST_LOADOUT`); The Deal's gem hand went with its rework (2026-10-09). Proposal, cheapest first: a gem pouch (carry up to 3 into a run), Second Wind (pay gems to continue with 50 health and fuel; must hook in before `endLevel`; not in Goonpocalypse), respec. Cosmetics move to package 15; locked pickups to package 12. M.
+- **T1-10.** Gems buy a starting gadget and boost (the slot's gem respin went on 2026-10-09) (`Pickups.LOADOUT`, `BOOST_LOADOUT`); The Deal's gem hand went with its rework (2026-10-09). Proposal, cheapest first: a gem pouch (carry up to 3 into a run), Second Wind (pay gems to continue with 50 health and fuel; must hook in before `endLevel`; not in Goonpocalypse), respec. Cosmetics move to package 15; locked pickups to package 12. M.
 
 ### Package 6: Driver perks
 - **T2-13.** Driver perks and affinity (hooks: `awardBase` in `playerRoot.gd`, the purse's `MIN_COINS`/`MAX_COINS`). The economy that was here is in package 1 (B-4). M–L.

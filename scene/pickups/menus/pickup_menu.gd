@@ -1,7 +1,7 @@
 class_name PickupMenu extends CanvasLayer
 
-#The frame every pausing prize game is built on (docs/PICKUPS.md, "Prize games"): the Claw Crane, the Slot
-#Machine, the Prize Wheel, The Deal, The Vault and the Pit Shop. One card in the menu theme (docs/UI.md) over
+#The frame every pausing prize game is built on (docs/PICKUPS.md, "Prize games"): the Claw Crane, Hubcap
+#Shuffle, Goon Press, The Deal, Pachinko Drop, the Slot Machine, Coin Pusher and the Pit Shop. One card in the menu theme (docs/UI.md) over
 #a dimmed run, always the same size: a title and a subtitle, a STAGE-sized play area the game draws on (or
 #fills with controls), one status line and a row of key hints. Every game ends on the same winnings board,
 #which lists each prize and what it did (held on E, sold because a rarer one is held, +40 coins...).

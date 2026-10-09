@@ -606,20 +606,10 @@ func answerSlots(machine: SlotMachine) -> void:
 	for i in SlotSymbols.BETS.size():
 		if SlotSymbols.bet >= bet || machine.betPaid: break
 		await press("TurnRight", 0.3)
-	var spins := 0
-	while is_instance_valid(machine) && spins < 2:
-		for reel in 3:
-			if not is_instance_valid(machine) || machine.phase != "spin": break
-			await press(PickupMenu.ACT, 0.4)
-		if not await waitFor(func(): return machine.phase == "stopped", 6.0, "the slot machine's reels to stop", machine): return
-		var paid := SlotSymbols.payouts(machine.line())
-		spins += 1
-		if spins == 1 && Personas.slotReroll(persona, car.gem, paid, rng) && car.gem >= SlotMachine.REROLL_GEMS:
-			var gems := car.gem
-			await press(PickupMenu.REJECT, 0.3)
-			if car.gem != gems - SlotMachine.REROLL_GEMS: issue("economy", "a slot reroll took %d gems (had %d)" % [gems - car.gem, gems])
-			continue
-		break
+	for reel in 3:
+		if not is_instance_valid(machine) || machine.phase != "spin": break
+		await press(PickupMenu.ACT, 0.4)
+	if not await waitFor(func(): return machine.phase == "stopped", 6.0, "the slot machine's reels to stop", machine): return
 	if not is_instance_valid(machine): return
 	await press(PickupMenu.ACT) #collect
 	await leaveBoard(machine, "the slot machine")

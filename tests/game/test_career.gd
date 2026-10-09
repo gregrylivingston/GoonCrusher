@@ -173,7 +173,6 @@ func test_in_run_choices_are_valid():
 		assert_true(target >= 0 && target < prizes.size(), "%s aims at a prize" % id)
 		var buys := Personas.pitBuys(persona, ["jerry", "", "fuel"], [60, 0, 30], 70)
 		for i in buys: assert_true(i != 1, "%s doesn't buy a sold slot" % id)
-		assert_false(Personas.slotReroll(persona, 0, {}, rng()), "%s can't reroll without gems" % id)
 		var gadget := Personas.chooseLoadout(persona, 0, rng())
 		assert_eq(gadget, "", "%s buys no gadget without gems" % id)
 		assert_eq(Personas.chooseBoost(persona, 0, rng()), "", "%s buys no boost without gems" % id)

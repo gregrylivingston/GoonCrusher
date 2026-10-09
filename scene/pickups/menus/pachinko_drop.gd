@@ -1,15 +1,22 @@
 class_name PachinkoDrop extends PickupMenu
 
-#Pachinko Drop (docs/PICKUPS.md, "Prize games"): A / D slide the dropper along the top, the action key (E)
-#drops a ball into a field of pegs, and it rattles down into one of seven cups, each showing its prize. The
-#outer cups hold the rarest prizes and the pegs make them hardest to reach. REJECT (Q) nudges the cabinet
-#once per ball, toward the side you last steered. A cup pays the moment a ball lands in it, then refills.
+#Pachinko Drop (docs/PICKUPS.md, "Prize games"): the dropper slides along the top on its own while its
+#nozzle swings left and right on a different beat; the action key (E) fires a ball along the nozzle into a
+#field of pegs, and it rattles down into one of seven cups, each showing its prize. Balls can be fired as
+#fast as you like, several in the air at once. The outer cups hold the rarest prizes and the pegs make them
+#hardest to reach. REJECT (Q) nudges the cabinet toward where the nozzle points, shoving every ball in play;
+#each ball fired earns one nudge. A cup pays the moment a ball lands in it, then refills.
 #Three balls, one more per two box tiers; better boxes fill the cups with better prizes. The balls run on
 #PrizePhysics, with bounce and a little scatter off every peg (the luck).
 
 const BALL_R := 9.0
 const DROP_Y := 34.0
-const DROPPER_SPEED := 260.0
+const SLIDE := 250.0       #px either side of the middle the dropper slides
+const SLIDE_RATE := 1.1    #rad/s of its slide
+const AIM := 0.6           #rad either side of straight down the nozzle swings
+const AIM_RATE := 2.7      #rad/s of its swing: off the slide's beat, so the two line up differently each time
+const LAUNCH := 230.0      #px/s out of the nozzle
+const REFIRE := 0.12       #s between balls
 const PEG_TOP := 86.0
 const PEG_ROWS := 8
 const PEG_GAP := 52.0
@@ -28,9 +35,11 @@ var pegs: Array = []       #peg centres
 var walls: Array = []      #static segments: cup dividers, the floor, the sides
 var cups: Array = []       #prize id per cup
 var dropX := 320.0
-var lastDir := 1.0
+var aim := 0.0             #the nozzle, radians from straight down (positive points right)
+var clock := 0.0
+var cooldown := 0.0
 var balls := 3
-var nudged := false        #this ball's nudge is spent
+var nudges := 0            #one earned per ball fired
 var leftover := 0.0
 var flash := {}            #cup index -> seconds left of its win flash
 
@@ -41,7 +50,7 @@ static func open(boxTier := 0) -> void:
 	Root.levelRoot.add_child.call_deferred(game)
 
 func build() -> void:
-	title("PACHINKO DROP", "Aim, drop, and nudge it once. The outer cups pay best.")
+	title("PACHINKO DROP", "Time your drops. The outer cups pay best.")
 	balls = 3 + int(tier / 2.0)
 	physics.bounce = 0.45
 	physics.scatter = 60.0
@@ -56,7 +65,8 @@ func build() -> void:
 	for i in range(1, CUPS): walls.push_back([Vector2(i * CUP_W, CUP_TOP), Vector2(i * CUP_W, STAGE.y), 3.0])
 	walls.push_back([Vector2(0, STAGE.y - 8.0), Vector2(STAGE.x, STAGE.y - 8.0), 2.0])
 	for i in CUPS: cups.push_back(rollCup(i))
-	hints([[["TurnLeft", "TurnRight"], "Aim"], [[ACT], "Drop"], [[REJECT], "Nudge"]])
+	clock = randf() * TAU
+	hints([[[ACT], "Drop"], [[REJECT], "Nudge"]])
 	updateInfo()
 
 func rollCup(i: int) -> String:
@@ -65,41 +75,43 @@ func rollCup(i: int) -> String:
 	return Pickups.rollOffer(floorTier, Pickups.NOT_IN_GAMES, cups)
 
 func updateInfo() -> void:
-	say("Balls left %d" % balls + ("   -   nudge ready" if not nudged && not physics.bodies.is_empty() else ""))
+	say("Balls left %d" % balls + ("   -   nudges %d" % nudges if nudges > 0 else ""))
 
 func onAction(action: String) -> void:
 	match action:
 		ACT, "ui_accept": drop()
 		REJECT: nudge()
-		"TurnLeft": lastDir = -1.0
-		"TurnRight": lastDir = 1.0
 
 func onStageMouse(event: InputEvent) -> void:
-	if event is InputEventMouseMotion: dropX = clampf(event.position.x, 20.0, STAGE.x - 20.0)
-	elif isClick(event): drop()
+	if isClick(event): drop()
+
+func nozzle() -> Vector2:
+	return Vector2(sin(aim), cos(aim))
 
 func drop() -> void:
-	if balls <= 0 || not physics.bodies.is_empty(): return #one ball at a time
+	if balls <= 0 || cooldown > 0.0: return
 	balls -= 1
-	nudged = false
-	var b := physics.add(Vector2(dropX + randf_range(-1.5, 1.5), DROP_Y), BALL_R)
-	PrizePhysics.setVelocity(b, Vector2(0, 40), STEP)
+	nudges += 1
+	cooldown = REFIRE
+	var b := physics.add(Vector2(dropX, DROP_Y) + nozzle() * 10.0, BALL_R)
+	PrizePhysics.setVelocity(b, nozzle() * LAUNCH, STEP)
 	Transition.sound("clank", -16.0, 1.6)
 	updateInfo()
 
 func nudge() -> void:
-	if nudged || physics.bodies.is_empty(): return
-	nudged = true
-	for b in physics.bodies: PrizePhysics.setVelocity(b, PrizePhysics.velocity(b, STEP) + Vector2(lastDir * NUDGE, -40.0), STEP)
+	if nudges <= 0 || physics.bodies.is_empty(): return
+	nudges -= 1
+	var dir := 1.0 if aim >= 0.0 else -1.0
+	for b in physics.bodies: PrizePhysics.setVelocity(b, PrizePhysics.velocity(b, STEP) + Vector2(dir * NUDGE, -40.0), STEP)
 	Juice.shake(card, 4.0)
 	Transition.sound("thud", -10.0, 1.3)
 	updateInfo()
 
 func tick(delta: float) -> void:
-	var dir := 0.0
-	if Input.is_action_pressed("TurnLeft"): dir -= 1.0
-	if Input.is_action_pressed("TurnRight"): dir += 1.0
-	if live(): dropX = clampf(dropX + dir * DROPPER_SPEED * delta, 20.0, STAGE.x - 20.0)
+	clock += delta
+	cooldown -= delta
+	dropX = STAGE.x * 0.5 + sin(clock * SLIDE_RATE) * SLIDE
+	aim = sin(clock * AIM_RATE + 1.0) * AIM
 	for k in flash.keys():
 		flash[k] -= delta
 		if flash[k] <= 0.0: flash.erase(k)
@@ -136,12 +148,16 @@ func drawStage() -> void:
 		HudTheme.icon(m, Pickups.texture(cups[i]), r.get_center() + Vector2(0, -6), 36.0)
 		HudTheme.text(m, Vector2(r.get_center().x, r.end.y - 4.0), Pickups.shortName(cups[i]), 11, col, HORIZONTAL_ALIGNMENT_CENTER, 3, HudTheme.OUTLINE, HudTheme.BODY)
 	for w in walls: m.draw_line(w[0], w[1], Color(0.6, 0.6, 0.66), w[2] * 2.0)
-	#the dropper
+	#the dropper and its nozzle
+	var at := Vector2(dropX, DROP_Y)
+	m.draw_line(Vector2(20, 16), Vector2(STAGE.x - 20.0, 16), Color(1, 1, 1, 0.12), 2.0)
+	if balls > 0:
+		var span := (PEG_TOP - 8.0 - DROP_Y) / maxf(nozzle().y, 0.1)
+		m.draw_dashed_line(at + nozzle() * 14.0, at + nozzle() * span, Color(1, 1, 1, 0.3), 2.0, 6.0)
+	m.draw_line(at, at + nozzle() * 16.0, HudTheme.GOLD, 8.0)
 	m.draw_rect(Rect2(dropX - 18.0, 10.0, 36.0, 14.0), HudTheme.RIM)
-	if physics.bodies.is_empty() && balls > 0:
-		m.draw_circle(Vector2(dropX, DROP_Y), BALL_R, Color(0.9, 0.92, 0.96))
-		m.draw_dashed_line(Vector2(dropX, DROP_Y + 12.0), Vector2(dropX, PEG_TOP - 8.0), Color(1, 1, 1, 0.25), 2.0, 6.0)
+	if balls > 0 && cooldown <= 0.0: m.draw_circle(at - Vector2(0, 2), BALL_R * 0.6, Color(0.9, 0.92, 0.96))
 	for b in physics.bodies:
 		m.draw_circle(b.pos, BALL_R, Color(0.9, 0.92, 0.96))
 		m.draw_circle(b.pos - Vector2(3, 3), 3.0, Color.WHITE)
-	for i in balls - (0 if physics.bodies.is_empty() else 0): m.draw_circle(Vector2(STAGE.x - 16.0 - i * 20.0, 17.0), 6.0, Color(0.9, 0.92, 0.96, 0.8))
+	for i in balls: m.draw_circle(Vector2(STAGE.x - 16.0 - i * 20.0, 17.0), 6.0, Color(0.9, 0.92, 0.96, 0.8))

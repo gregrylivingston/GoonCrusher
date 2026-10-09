@@ -11,7 +11,7 @@ class_name Personas extends RefCounted
 #            blocked, saves for cars, puts upgrades into the stats that win runs. Shows the fastest
 #            progression and any run or purchase that pays far more than the rest.
 #  explorer  a completionist: plays the least-played level, mode and car, buys every car to try it,
-#            opens every menu, bets, rerolls, raises, pauses and sometimes abandons. Finds blocks and bugs.
+#            opens every menu, bets, raises, pauses and sometimes abandons. Finds blocks and bugs.
 
 const G := Root.gameModes
 const U := Root.upgrade
@@ -292,7 +292,7 @@ static func chooseLoadout(persona: Dictionary, gems: int, rng: RandomNumberGener
 	var options := Pickups.LOADOUT.keys().filter(func(id): return Pickups.LOADOUT[id] <= gems && Unlocks.isPickupOpen(id))
 	if options.is_empty(): return ""
 	if persona.runs == "coverage": return options[rng.randi() % options.size()] if rng.randf() < 0.5 else ""
-	return options[0] if gems >= 6 else "" #the grinder keeps a reserve for slot rerolls
+	return options[0] if gems >= 6 else "" #the grinder keeps a reserve
 
 ## The boost to buy with the gems left after the gadget (Pickups.BOOST_LOADOUT), or "".
 static func chooseBoost(persona: Dictionary, gems: int, rng: RandomNumberGenerator) -> String:
@@ -300,7 +300,7 @@ static func chooseBoost(persona: Dictionary, gems: int, rng: RandomNumberGenerat
 	var options := Pickups.BOOST_LOADOUT.keys().filter(func(id): return Pickups.BOOST_LOADOUT[id] <= gems && Unlocks.isPickupOpen(id))
 	if options.is_empty(): return ""
 	if persona.runs == "coverage": return options[rng.randi() % options.size()] if rng.randf() < 0.5 else ""
-	return "nitro" if "nitro" in options && gems >= 8 else "" #the grinder keeps a reserve for slot rerolls
+	return "nitro" if "nitro" in options && gems >= 8 else "" #the grinder keeps a reserve
 
 #---------- in a run ----------
 
@@ -310,12 +310,6 @@ static func slotBet(persona: Dictionary, runCoins: int, rng: RandomNumberGenerat
 		"rich": return 1 if runCoins >= 400 else 0
 		"random": return rng.randi() % SlotSymbols.BETS.size()
 	return 0
-
-## Spend a gem to spin the reels again: only on a result with nothing paid.
-static func slotReroll(persona: Dictionary, gems: int, paid: Dictionary, rng: RandomNumberGenerator) -> bool:
-	if not persona.gems || gems <= 0: return false
-	if persona.runs == "coverage": return rng.randf() < 0.5
-	return paid.is_empty() && gems >= 3
 
 ## The Deal: keep the card in hand (true) or swap it for the next one. "rarest" keeps once fewer than half
 ## of the deck beat it, "worth" once it is worth enough to the AI, "new" keeps a card it hasn't seen yet.
