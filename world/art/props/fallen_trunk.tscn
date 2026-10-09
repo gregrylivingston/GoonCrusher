@@ -9,7 +9,10 @@ points = PackedVector2Array(-222.7, -49.3, -206.7, -86.7, -193.3, -93.3, 144, -6
 collision_layer = 1
 collision_mask = 0
 metadata/propId = &"fallen_trunk"
-metadata/propClass = &"LOW"
+metadata/propClass = &"STATEFUL"
+metadata/smashSpeed = 300.0
+metadata/broken = "res://world/art/props/fallen_trunk_broken.png"
+metadata/debris = "res://world/art/props/fallen_trunk_debris.png"
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 scale = Vector2(1.3333, 1.3333)

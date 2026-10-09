@@ -1,0 +1,19 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://world/art/props/saltlick.png" id="tex"]
+
+[sub_resource type="ConvexPolygonShape2D" id="shape"]
+points = PackedVector2Array(-45.3, 4, -34.7, -34.7, -29.3, -38.7, 10.7, -48, 36, -33.3, 50.7, -10.7, 33.3, 38.7, 0, 52, -9.3, 48, -37.3, 22.7)
+
+[node name="saltlick" type="StaticBody2D"]
+collision_layer = 1
+collision_mask = 0
+metadata/propId = &"saltlick"
+metadata/propClass = &"LOW"
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(1.3333, 1.3333)
+texture = ExtResource("tex")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("shape")

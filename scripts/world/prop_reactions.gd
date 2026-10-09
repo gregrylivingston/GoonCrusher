@@ -44,6 +44,12 @@ const REACT := {
 	&"fallen_trunk": THUD, &"salt_mound": THUD, &"rock_black": THUD,
 	&"trampoline": SQUASH, &"trashbags": SQUASH,
 	&"mailbox": KNOCK,
+	#Region 1 (The Wilds) props
+	&"bell": SWAY, &"scarecrow": SWAY,
+	&"farmgate": WOBBLE, &"still": WOBBLE, &"tnt": WOBBLE,
+	&"den": SHAKE, &"honeyshed": SHAKE, &"sluice": SHAKE,
+	&"rockpile": THUD, &"rock_roll": THUD, &"saltlick": THUD,
+	&"burrow": SQUASH, &"pumpkin": SQUASH,
 }
 const MIN_SPEED := 60.0    #px/s into the prop before anything reacts
 const FULL_SPEED := 520.0  #...and for the full reaction

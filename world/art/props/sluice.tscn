@@ -1,0 +1,22 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://world/art/props/sluice.png" id="tex"]
+
+[sub_resource type="ConvexPolygonShape2D" id="shape"]
+points = PackedVector2Array(-137.3, -20, -101.3, -30.7, 98.7, -30.7, 137.3, -20, 138.7, 4, 137.3, 20, 104, 25.3, -104, 25.3, -137.3, 20, -138.7, 4)
+
+[node name="sluice" type="StaticBody2D"]
+collision_layer = 1
+collision_mask = 0
+metadata/propId = &"sluice"
+metadata/propClass = &"STATEFUL"
+metadata/smashSpeed = 350.0
+metadata/broken = "res://world/art/props/sluice_broken.png"
+metadata/debris = "res://world/art/props/sluice_debris.png"
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(1.3333, 1.3333)
+texture = ExtResource("tex")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("shape")

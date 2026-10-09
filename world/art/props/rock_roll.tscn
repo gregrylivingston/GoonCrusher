@@ -1,0 +1,19 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://world/art/props/rock_roll.png" id="tex"]
+
+[sub_resource type="ConvexPolygonShape2D" id="shape"]
+points = PackedVector2Array(-45.3, 0, -32, -34.7, -17.3, -42.7, 13.3, -42.7, 41.3, -16, 44, 2.7, 37.3, 26.7, 20, 38.7, -2.7, 45.3, -34.7, 30.7)
+
+[node name="rock_roll" type="StaticBody2D"]
+collision_layer = 1
+collision_mask = 0
+metadata/propId = &"rock_roll"
+metadata/propClass = &"LOW"
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(1.3333, 1.3333)
+texture = ExtResource("tex")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("shape")

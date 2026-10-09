@@ -1,0 +1,22 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://world/art/props/pumpkin.png" id="tex"]
+
+[sub_resource type="ConvexPolygonShape2D" id="shape"]
+points = PackedVector2Array(-32, -6.7, -20, -24, 34.7, -58.7, 50.7, -57.3, 58.7, -50.7, 58.7, -25.3, 28, 16, 8, 29.3, -20, 24, -32, 6.7)
+
+[node name="pumpkin" type="StaticBody2D"]
+collision_layer = 1
+collision_mask = 0
+metadata/propId = &"pumpkin"
+metadata/propClass = &"STATEFUL"
+metadata/smashSpeed = 40.0
+metadata/broken = "res://world/art/props/pumpkin_broken.png"
+metadata/debris = "res://world/art/props/pumpkin_debris.png"
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(1.3333, 1.3333)
+texture = ExtResource("tex")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("shape")

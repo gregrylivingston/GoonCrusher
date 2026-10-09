@@ -1,0 +1,23 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://world/art/props/tnt.png" id="tex"]
+
+[sub_resource type="ConvexPolygonShape2D" id="shape"]
+points = PackedVector2Array(-52, -30.7, 28, -58.7, 44, -52, 80, -32, 74.7, 44, 25.3, 68, 24, 68, -46.7, 36, -48, 34.7, -52, -24)
+
+[node name="tnt" type="StaticBody2D"]
+collision_layer = 1
+collision_mask = 0
+metadata/propId = &"tnt"
+metadata/propClass = &"STATEFUL"
+metadata/smashSpeed = 120.0
+metadata/broken = "res://world/art/props/tnt_broken.png"
+metadata/debris = "res://world/art/props/tnt_debris.png"
+metadata/explosive = true
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(1.3333, 1.3333)
+texture = ExtResource("tex")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("shape")
