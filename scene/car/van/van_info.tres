@@ -14,6 +14,7 @@
 [ext_resource type="AudioStream" path="res://scene/car/van/audio/van_intro_13.mp3" id="12_ciwxm"]
 [ext_resource type="Texture2D" path="res://scene/car/van/char_van3.png" id="13_d8j14"]
 [ext_resource type="Script" path="res://scene/car/car_info.gd" id="14_1r88j"]
+[ext_resource type="Texture2D" path="res://scene/car/van/art/van_side.png" id="side_pic"]
 
 [resource]
 script = ExtResource("14_1r88j")
@@ -23,6 +24,7 @@ weight = 70
 charName = "Lester"
 profilePic = ExtResource("13_d8j14")
 backgroundPic = ExtResource("1_whqq6")
+sidePic = ExtResource("side_pic")
 introAudio = Array[AudioStreamMP3]([ExtResource("2_pkm3n"), ExtResource("3_rh6et"), ExtResource("4_61n53"), ExtResource("5_4dxo1"), ExtResource("6_j2yrl"), ExtResource("7_yhysk"), ExtResource("8_v5dlq"), ExtResource("9_uawhr"), ExtResource("10_kum80"), ExtResource("11_6iftp"), ExtResource("12_ciwxm")])
 engine = 1
 steering = 1

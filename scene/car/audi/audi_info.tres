@@ -12,6 +12,7 @@
 [ext_resource type="AudioStream" path="res://scene/car/audi/audio/audi_intro_9.mp3" id="10_6xomm"]
 [ext_resource type="Texture2D" path="res://scene/car/audi/char_audi.png" id="11_ivnrd"]
 [ext_resource type="Script" path="res://scene/car/car_info.gd" id="12_ancu4"]
+[ext_resource type="Texture2D" path="res://scene/car/audi/art/audi_side.png" id="side_pic"]
 
 [resource]
 script = ExtResource("12_ancu4")
@@ -21,6 +22,7 @@ weight = 30
 charName = "Snake"
 profilePic = ExtResource("11_ivnrd")
 backgroundPic = ExtResource("1_i168s")
+sidePic = ExtResource("side_pic")
 introAudio = Array[AudioStreamMP3]([ExtResource("2_mighj"), ExtResource("3_vd6xs"), ExtResource("4_vv8pc"), ExtResource("5_8hu1w"), ExtResource("6_f8b3u"), ExtResource("7_jmnx4"), ExtResource("8_u8tca"), ExtResource("9_85qep"), ExtResource("10_6xomm")])
 engine = 40
 steering = 15

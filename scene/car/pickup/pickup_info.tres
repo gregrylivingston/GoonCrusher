@@ -16,6 +16,7 @@
 [ext_resource type="AudioStream" path="res://scene/car/pickup/audio/pickup_intro_13.mp3" id="14_si8oy"]
 [ext_resource type="Texture2D" path="res://scene/car/pickup/char_pickup_transparent.png" id="15_vw14w"]
 [ext_resource type="Script" path="res://scene/car/car_info.gd" id="16_kjd4j"]
+[ext_resource type="Texture2D" path="res://scene/car/pickup/art/pickup_side.png" id="side_pic"]
 
 [resource]
 script = ExtResource("16_kjd4j")
@@ -25,6 +26,7 @@ weight = 65
 charName = "Karen"
 profilePic = ExtResource("15_vw14w")
 backgroundPic = ExtResource("1_g53yi")
+sidePic = ExtResource("side_pic")
 introAudio = Array[AudioStreamMP3]([ExtResource("2_0lvlg"), ExtResource("3_5x8ef"), ExtResource("4_laqh1"), ExtResource("5_fwjlt"), ExtResource("6_kw3iu"), ExtResource("7_gnual"), ExtResource("8_lloa8"), ExtResource("9_12vs1"), ExtResource("10_8oulo"), ExtResource("11_dovl8"), ExtResource("12_7d16l"), ExtResource("13_8qije"), ExtResource("14_si8oy")])
 engine = 22
 steering = 10

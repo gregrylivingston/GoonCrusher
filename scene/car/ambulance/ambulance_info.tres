@@ -11,6 +11,7 @@
 [ext_resource type="AudioStream" path="res://scene/car/ambulance/audio/ambulance_intro_8.mp3" id="9_v8ld4"]
 [ext_resource type="Texture2D" path="res://scene/car/ambulance/char_ambulance.png" id="10_tp774"]
 [ext_resource type="Script" path="res://scene/car/car_info.gd" id="11_jhpki"]
+[ext_resource type="Texture2D" path="res://scene/car/ambulance/art/ambulance_side.png" id="side_pic"]
 
 [resource]
 script = ExtResource("11_jhpki")
@@ -20,6 +21,7 @@ weight = 80
 charName = "Xavier"
 profilePic = ExtResource("10_tp774")
 backgroundPic = ExtResource("1_or3hi")
+sidePic = ExtResource("side_pic")
 introAudio = Array[AudioStreamMP3]([ExtResource("2_i8iso"), ExtResource("3_muo1h"), ExtResource("4_3b3ts"), ExtResource("5_6656i"), ExtResource("6_inaq2"), ExtResource("7_oqqu2"), ExtResource("8_76r7g"), ExtResource("9_v8ld4")])
 engine = 30
 steering = 20
