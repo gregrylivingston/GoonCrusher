@@ -9,6 +9,7 @@ displayName = "Snapper Bayou"
 poster = "res://world/art/posters/bayou.png"
 region = &"wilds"
 stop = 3
+openers = Array[StringName]([&"rally", &"countdown"])
 featured = Array[StringName]([&"blackout", &"hotlap", &"keepcup"])
 order = 2
 blurb = "Basins fill into lakes and braided channels split the land. Boardwalk bridges cross the deep water; the shallows slow you down."

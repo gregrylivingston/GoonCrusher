@@ -9,6 +9,7 @@ displayName = "Stilt Town"
 poster = "res://world/art/posters/stilttown.png"
 region = &"tribe"
 stop = 2
+openers = Array[StringName]([&"flatout", &"countdown"])
 featured = Array[StringName]([&"bounty", &"hotlap", &"keepcup"])
 order = 6
 blurb = "A lagoon village on stilts with piers and sandbars. Hubcap shields block head-on hits, so go round."

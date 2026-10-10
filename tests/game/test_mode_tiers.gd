@@ -146,3 +146,10 @@ func test_gift_boxes_are_counted_for_unlocks():
 func test_level_step_spreads_the_pay_over_thirty_levels():
 	assert_almost_eq(ModeTiers.levelFactor(29), 1.0 + 0.35 * 7, 0.05, "the 30th level pays what the 8th paid before the road atlas")
 	assert_gt(ModeTiers.levelFactor(15), ModeTiers.levelFactor(14))
+
+func test_an_easy_countdown_is_never_over_two_and_a_half_minutes():
+	for i in Levels.ORDER.size():
+		var def := Levels.defAt(i)
+		var id: StringName = Levels.ORDER[i]
+		assert_true(ModeTiers.countdownSeconds(def.seconds, ModeTiers.EASY) <= 150.0, "%s" % id)
+		assert_gt(ModeTiers.countdownSeconds(def.seconds, ModeTiers.EASY), 90.0, "%s: long enough to be a run" % id)

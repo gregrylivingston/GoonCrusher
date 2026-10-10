@@ -71,42 +71,67 @@ static func isModeAvailable(mode: int) -> bool:
 	if devAllModesAvailable: return true
 	return MODE_AVAILABLE.get(mode, false)
 
-#the mode open on every unlocked level: the shortest and easiest, where a new level starts
-const FIRST_MODE := gameModes.SPRINT
-#the two modes every level starts with, in order; its three featured modes open behind them
-const STAPLE_MODES := [gameModes.SPRINT, gameModes.GOONCRUSHER]
+#how many of a level's modes are openers: the first is open with the level, the second behind it
+const OPENER_SLOTS := 2
 
-## The modes a level plays, in the order a player meets them and the menus show them: Sprint, Countdown, then
-## its featured Crusher, Trial and Goon Cup mode (LevelDef.featured, Modes.featured). The one list every menu,
-## harness and test reads. `level` is a save entry (its "id") or a level index; an entry with no id has only
-## the staples.
+## The modes a level plays, in the order a player meets them and the menus show them: its two openers
+## (LevelDef.openers; Sprint then Countdown unless it names others), then its featured Crusher, Trial and Goon
+## Cup mode (LevelDef.featured). The one list every menu, harness and test reads. `level` is a save entry (its
+## "id") or a level index; an entry with no id has only the default openers.
 static func modePath(level) -> Array:
 	var def: LevelDef = null
 	if level is int: def = Levels.defAt(level)
 	elif level is Dictionary && level.has("id"): def = Levels.get_def(StringName(str(level.id)))
-	return STAPLE_MODES + (Modes.featured(def) if def else [])
+	return Modes.openers(def) + (Modes.featured(def) if def else [])
 
-## A level's featured modes: the ones behind Countdown, any of which opens the next level
+## The mode open on an unlocked level from the start: where a new level begins
+static func firstMode(level) -> int:
+	return modePath(level)[0]
+
+## A level's two openers
+static func openerModes(level) -> Array:
+	return modePath(level).slice(0, OPENER_SLOTS)
+
+## A level's featured modes: the ones behind its second opener, any of which opens the next level
 static func featuredModes(level) -> Array:
-	return modePath(level).slice(STAPLE_MODES.size())
+	return modePath(level).slice(OPENER_SLOTS)
 
 ## The modes whose win opens the next level: the featured ones that can be played. A level none of whose
-## featured modes is finished yet opens the road on Countdown, so unfinished modes never block it.
+## featured modes is finished yet opens the road on its second opener, so unfinished modes never block it.
 static func roadModes(level) -> Array:
 	var road := featuredModes(level).filter(func(m): return isModeAvailable(m))
-	return road if not road.is_empty() else [gameModes.GOONCRUSHER]
+	return road if not road.is_empty() else [modePath(level)[OPENER_SLOTS - 1]]
 
-#the per-level unlock chain, ignoring availability. Sprint is open on any unlocked level, Countdown needs
-#Sprint beaten, and the level's three featured modes need Countdown. A mode the level doesn't feature is shut.
+#the per-level unlock chain, ignoring availability. The first opener is open on any unlocked level, the second
+#needs the first beaten, and the level's three featured modes need the second. A mode the level doesn't play
+#is shut here (Free Play opens those: freePlayOpen).
 static func isModeUnlocked(level: Dictionary, mode: int) -> bool:
 	if not level.get("unlocked", false): return false
-	if mode not in modePath(level): return false
+	var path := modePath(level)
+	var slot := path.find(mode)
+	if slot < 0: return false
 	var beat: Dictionary = level.get("gamemodeBeat", {})
 	if beat.get(mode, false): return true #a mode already beaten stays open
-	match mode:
-		gameModes.SPRINT: return true
-		gameModes.GOONCRUSHER: return beat.get(gameModes.SPRINT, false)
-	return beat.get(gameModes.GOONCRUSHER, false)
+	if slot == 0: return true
+	return beat.get(path[mini(slot, OPENER_SLOTS) - 1], false)
+
+## Free Play: every mode the level plays (and that can be played) is won, so any other mode can be driven
+## here. A Free Play run pays its coins and nothing else: no medal, clear, record or unlock (Level.freePlay).
+static func freePlayOpen(level: Dictionary) -> bool:
+	if not level.get("unlocked", false): return false
+	var path := modePath(level).filter(func(m): return isModeAvailable(m))
+	return not path.is_empty() && modesBeaten(level) >= path.size()
+
+## The modes Free Play offers on a level: every built mode it doesn't play, in Root.gameModes order
+static func freePlayModes(level) -> Array:
+	var path := modePath(level)
+	return gameModes.values().filter(func(m): return m not in path && isModeAvailable(m))
+
+## Is this mode on this level a Free Play run (one the level doesn't play). An entry with no id names no
+## level, so nothing is Free Play there.
+static func isFreePlay(level, mode: int) -> bool:
+	if level is Dictionary && not level.has("id"): return false
+	return mode not in modePath(level)
 
 ## Modes beaten on a level, counting only those it plays that can be played
 static func modesBeaten(level: Dictionary) -> int:
@@ -155,15 +180,18 @@ static func openLeftText(level: Dictionary) -> String:
 
 #can this mode be started on this level from the menu
 static func isModePlayable(level: Dictionary, mode: int) -> bool:
-	return isModeAvailable(mode) && isModeUnlocked(level, mode)
+	if not isModeAvailable(mode): return false
+	return isModeUnlocked(level, mode) || (isFreePlay(level, mode) && freePlayOpen(level))
 
 #why a mode can't be started, for the menu; "" when it can
 static func modeLockReason(level: Dictionary, mode: int) -> String:
 	if not isModeAvailable(mode): return "Coming Soon"
-	if isModeUnlocked(level, mode): return ""
+	if isModePlayable(level, mode): return ""
 	if not level.get("unlocked", false): return "Level Locked"
-	if mode not in modePath(level): return "Not On This Level"
-	return "Beat Sprint To Unlock" if mode == gameModes.GOONCRUSHER else "Beat Countdown To Unlock"
+	var path := modePath(level)
+	var slot := path.find(mode)
+	if slot < 0: return "Win All Five Modes Here"
+	return "Beat %s To Unlock" % modeName(path[mini(slot, OPENER_SLOTS) - 1])
 
 #coins a run pays: its coins times the star multiplier, x1 plus STAR_BONUS a star, up to STAR_MULT_MAX (20 stars).
 #Was coins x stars, which paid six-figure runs by the sixth level (career playtests);

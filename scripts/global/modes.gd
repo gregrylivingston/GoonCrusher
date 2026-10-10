@@ -1,8 +1,10 @@
 class_name Modes extends RefCounted
 ## The game modes (Root.gameModes) as data: each mode's id, category, words and rules, and which three a level
-## features. Every level plays Sprint, then Countdown, then one Crusher, one Trial and one Goon Cup mode picked
-## for it (LevelDef.featured); winning any one of the three opens the next level (Root.modePath, roadModes,
-## opensNextLevel). Root.MODE_AVAILABLE says which modes are built; the rest show "Coming Soon".
+## plays. Every level plays five: two openers picked for it (LevelDef.openers; Sprint then Countdown unless it
+## names others), then one Crusher, one Trial and one Goon Cup mode (LevelDef.featured); winning any one of the
+## three opens the next level (Root.modePath, roadModes, opensNextLevel). Winning all five opens Free Play: any
+## other mode on that level, for coins only (Root.freePlayOpen). Root.MODE_AVAILABLE says which modes are built;
+## the rest show "Coming Soon".
 ##
 ##   id           the word tools, unlock conditions and level defs use ("rally"); IDS is in Root.gameModes order
 ##   name         the menus' name, upper case
@@ -91,6 +93,8 @@ const DATA := {
 
 ## The featured modes of a level whose def names none (a def from before the mode menu, a test's stand-in)
 const DEFAULT_FEATURED := [M.MARATHON, M.RALLY, M.CANNONBALL]
+## The openers of a level whose def names none
+const DEFAULT_OPENERS := [M.SPRINT, M.GOONCRUSHER]
 
 ## A few words for a mode's row in run setup
 const SHORT := {
@@ -175,13 +179,22 @@ static func fillsBoxes(mode: int) -> bool:
 static func inCategory(cat: int) -> Array:
 	return DATA.keys().filter(func(m): return DATA[m].category == cat)
 
+## A level's two opening modes, in order (LevelDef.openers, as ids); the defaults unless it names two
+static func openers(def: LevelDef) -> Array:
+	var out := []
+	for id in (def.openers if def else []):
+		var mode := byId(id)
+		if mode >= 0 && mode not in out: out.push_back(mode)
+	return out if out.size() == DEFAULT_OPENERS.size() else DEFAULT_OPENERS.duplicate()
+
 ## A level's three featured modes, Crusher then Trial then Goon Cup (LevelDef.featured, as ids)
 static func featured(def: LevelDef) -> Array:
+	var first := openers(def)
 	var out := []
 	for id in (def.featured if def else []):
 		var mode := byId(id)
-		if mode >= 0 && mode not in Root.STAPLE_MODES && mode not in out: out.push_back(mode)
-	return out if not out.is_empty() else DEFAULT_FEATURED.duplicate()
+		if mode >= 0 && mode not in first && mode not in out: out.push_back(mode)
+	return out if not out.is_empty() else DEFAULT_FEATURED.filter(func(m): return m not in first)
 
 ## Root.gameModeDescription: mode -> {name, description}
 static func descriptions() -> Dictionary:

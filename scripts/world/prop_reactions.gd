@@ -190,9 +190,10 @@ func updateCanopies(delta: float) -> void:
 static func isKnockable(collider: Object) -> bool:
 	return collider is Node2D && REACT.get(BreakableProp.propId(collider), NONE) == KNOCK && not collider.get_meta(&"knocked", false)
 
-## A cone the car hits fast enough flies off (react) and stops being a wall: true when it did, so the car
+## A cone the car hits fast enough flies off (react) and stops being a wall (a farm gate swings open): true when it did, so the car
 ## keeps its speed (overhead_car_body_2d.gd, before the wall branch)
 static func knocks(collider: Object, moving: Vector2) -> bool:
+	if Spill.pushGate(collider, moving): return true #a shut farm gate bumped too slowly to smash swings open
 	if current == null || not collider is Node2D || moving.length() < KNOCK_SPEED: return false
 	if REACT.get(BreakableProp.propId(collider), NONE) != KNOCK || collider.get_meta(&"knocked", false): return false
 	current.react(collider, moving, Vector2.INF)
@@ -218,6 +219,7 @@ func react(prop: Node2D, moving: Vector2, point: Vector2) -> void:
 		if near >= NEAR_SMASH: crack(prop, dir, near)
 	var sprite: Node2D = prop.get_node_or_null("Sprite2D")
 	Spill.ram(prop, speed) #a hard ram drops a crane's container, a roost's Buzzards, rings a bell...
+	if Spill.kick(prop, moving): return #a lying log hit on its side rolls on
 	match kind:
 		CANOPY:
 			var canopy: Node2D = prop.get_node_or_null("Canopy")
@@ -331,8 +333,8 @@ static func reset(prop: Node2D) -> void:
 	var canopy: Node2D = prop.get_node_or_null("Canopy")
 	if canopy: canopy.modulate.a = 1.0
 
-## Drops a prop's springs, flights and canopy (its chunk is going): put at rest at once
-func forget(prop: Node2D) -> void:
+## Puts a prop's springs at rest at once (a gate about to swing, Spill.setGate)
+func rest(prop: Node2D) -> void:
 	for i in range(springs.size() - 1, -1, -1):
 		var e: Array = springs[i]
 		if e[8] != prop: continue
@@ -341,6 +343,10 @@ func forget(prop: Node2D) -> void:
 			e[0].rotation = e[6]
 			e[0].scale = e[7]
 		springs.remove_at(i)
+
+## Drops a prop's springs, flights and canopy (its chunk is going): put at rest at once
+func forget(prop: Node2D) -> void:
+	rest(prop)
 	for i in range(flights.size() - 1, -1, -1):
 		if is_instance_valid(flights[i][0]) && flights[i][0].get_parent() == prop:
 			flights[i][0].position = flights[i][2]

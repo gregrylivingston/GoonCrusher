@@ -115,7 +115,8 @@ func buildWorld() -> void:
 			#(nor is a Rally Stage: one course for bronze, silver and gold)
 			var sprintTier: int = SaveManager.getGameTier() if played == Root.gameModes.SPRINT else ModeTiers.NONE
 			var yRoll := 0.0 if played == Root.gameModes.FLATOUT else WorldGen.hashf(worldSeed, WorldGen.TAG_SPRINT, 0, 0) * 2.0 - 1.0 #Flat Out runs due east
-			offset = Level.sprintOffsetPx(Level.sprintDistance(def, sprintTier), yRoll, sprintTier)
+			var distance: float = Level.legDistance(def) if played == Root.gameModes.MARATHON else Level.sprintDistance(def, sprintTier)
+			offset = Level.sprintOffsetPx(distance, yRoll, sprintTier)
 		Root.gameModes.DEFENSE: objective = "defense"
 		Root.gameModes.CONES: objective = "defense" #a cleared lot at the start for the cones; no station is placed on it (ConeCourse)
 	buildJob = WorldMap.jobFor(worldSeed, def, objective, offset)
@@ -248,6 +249,26 @@ func spillEntry(chunk: Vector2i) -> Dictionary:
 func addSpilled(id: StringName, at: Vector2, rot: float) -> void:
 	var chunk := chunkOf(at)
 	spillEntry(chunk).props.push_back([id, at - Vector2(chunk) * ChunkRecipe.CHUNK, rot])
+
+## A spilled prop at `at` was moved on (Spill.kick): its record goes. False when there was none (not a spilled one).
+func removeSpilled(id: StringName, at: Vector2) -> bool:
+	var chunk := chunkOf(at)
+	var props: Array = spilled.get(chunk, {}).get("props", [])
+	var local := at - Vector2(chunk) * ChunkRecipe.CHUNK
+	for i in props.size():
+		if props[i][0] == id && props[i][1].distance_to(local) < 8.0:
+			props.remove_at(i)
+			return true
+	return false
+
+## One of a chunk's own props is leaving it (a kicked log): its view no longer pools or frees it
+func disownProp(node: Node2D) -> void:
+	var view = views.get(chunkOf(node.global_position))
+	if view == null: return
+	for i in view.props.size():
+		if view.props[i][1] == node:
+			view.props.remove_at(i)
+			return
 
 func markSpillUsed(at: Vector2) -> void:
 	var chunk := chunkOf(at)

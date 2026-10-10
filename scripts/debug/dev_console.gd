@@ -558,11 +558,11 @@ func setGoons(unlock: bool) -> String:
 	for id in Goons.DATA: crushed[String(id)] = maxi(crushed.get(String(id), 0), 1)
 	return "Goons: all %d revealed in the Goonopedia" % Goons.DATA.size()
 
-#Sprint and Countdown beaten opens every mode a level plays (Root.isModeUnlocked); locking clears every beaten mode
+#a level's two openers beaten opens every mode it plays (Root.isModeUnlocked); locking clears every beaten mode
 func setModes(unlock: bool) -> String:
 	for level in SaveManager.playerData.levels:
 		if unlock:
-			for mode in Root.STAPLE_MODES: SaveManager.passTier(level, mode, ModeTiers.EASY)
+			for mode in Root.openerModes(level): SaveManager.passTier(level, mode, ModeTiers.EASY)
 		else:
 			for mode in level.gamemodeBeat: level.gamemodeBeat[mode] = false
 			if level.get("tiers") is Dictionary:
@@ -570,7 +570,7 @@ func setModes(unlock: bool) -> String:
 	if not unlock: return "Modes: every beaten mode cleared"
 	var comingSoon = Root.MODE_AVAILABLE.keys().filter(func(m): return not Root.MODE_AVAILABLE[m])
 	var note = "" if Root.devAllModesAvailable || comingSoon.is_empty() else " (Coming Soon modes stay hidden; see unfinished)"
-	return "Modes: Sprint and Countdown marked beaten on every level, so every mode is open on unlocked levels" + note
+	return "Modes: both openers marked beaten on every level, so every mode is open on unlocked levels" + note
 
 #every level of a region (1-6 or its Territories id) and every level before it; locking closes the region's
 #levels (the first level of the game stays open)
@@ -646,7 +646,7 @@ func cmdPlay(args: Array) -> String:
 		var lines := ["-- play <mode> [level] [easy | medium | hard] --"]
 		for mode in Root.gameModes.values():
 			var at := firstLevelWith(mode)
-			lines.push_back("  %-14s %-17s %-12s %s" % [Modes.idOf(mode), Modes.title(mode), "every level" if mode in Root.STAPLE_MODES else Modes.categoryName(mode), "" if mode in Root.STAPLE_MODES else "e.g. " + String(Levels.ORDER[at])])
+			lines.push_back("  %-14s %-17s %-12s %s" % [Modes.idOf(mode), Modes.title(mode), Modes.categoryName(mode), "e.g. " + String(Levels.ORDER[at])])
 		return "
 ".join(lines)
 	var mode := Modes.byId(args[0].to_lower())
@@ -676,9 +676,10 @@ func playFromMenu(index: int) -> void:
 			return
 		await get_tree().process_frame
 
-## The first level that plays a mode (Root.modePath), or the selected one for a staple
+## The level a mode is played on when none is named: the selected one if it plays the mode, else the first
+## that does (Root.modePath)
 func firstLevelWith(mode: int) -> int:
-	if mode in Root.STAPLE_MODES: return SaveManager.playerData.selectedLevel
+	if mode in Root.modePath(SaveManager.playerData.selectedLevel): return SaveManager.playerData.selectedLevel
 	for i in Levels.count():
 		if mode in Root.modePath(i): return i
 	return SaveManager.playerData.selectedLevel

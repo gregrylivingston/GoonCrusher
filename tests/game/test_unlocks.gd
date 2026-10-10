@@ -73,8 +73,8 @@ func test_prices_are_spread_out_inside_a_rarity():
 		if cost.is_empty() || Pickups.DATA[id].has("price"): continue
 		byRarity.get_or_add(Pickups.rarity(id), []).push_back(int(cost.get("coin", 0)) + 100000 * int(cost.get("gem", 0)))
 	var commons: Array = byRarity[Pickups.R.COMMON]
-	assert_eq(commons.min(), 20, "the cheapest Common is pocket change")
-	assert_eq(commons.max(), 1000, "and the dearest about a thousand")
+	assert_eq(commons.min(), 40, "the cheapest Common is pocket change")
+	assert_eq(commons.max(), 2000, "and the dearest about two thousand")
 	for r in [Pickups.R.COMMON, Pickups.R.UNCOMMON, Pickups.R.RARE]:
 		var seen := {}
 		for p in byRarity[r]: seen[p] = true

@@ -4,7 +4,7 @@ extends Node
 #The demo and the full game share this file: load_data() merges each save with the current defaults
 #(migrate()) before anything reads it.
 
-const SAVE_VERSION := 13 #13: the pickup "tyre" is "tire" (RENAMED_PICKUPS). 12: the mode menu (Modes: each level features three modes, any of which opens the next; openDueLevels). 11: most tree roots start locked (keepOldStarters). 10: the gift box games joined the Casino tree (mergePrizeUnlocks). 6: the unlock system (Unlocks, meta.unlocks, meta.lifetime, car gem prices). 7: mode tiers (ModeTiers).
+const SAVE_VERSION := 14 #14: levels pick their own two openers (keepOpenerWins). 13: the pickup "tyre" is "tire" (RENAMED_PICKUPS). 12: the mode menu (Modes: each level features three modes, any of which opens the next; openDueLevels). 11: most tree roots start locked (keepOldStarters). 10: the gift box games joined the Casino tree (mergePrizeUnlocks). 6: the unlock system (Unlocks, meta.unlocks, meta.lifetime, car gem prices). 7: mode tiers (ModeTiers).
 #8: the road atlas (30 levels in 6 regions, the Marathon road, meta.carClears). 9: the "audi" became the "supercar".
 #Saves older than FIRST_KEPT_VERSION start over (the author's call when the unlocks went in, and again for the road
 #atlas): the old file is copied beside the save as <name>.v<version>.tres, then a new save replaces it.
@@ -83,6 +83,7 @@ func migrate() -> bool:
 			if not car.records.has(key): car.records[key] = 0
 	#levels were not saved before version 1, so older saves get the defaults here
 	playerData.levels = mergeLevels(playerData.levels)
+	if playerData.saveVersion < 14: keepOpenerWins() #before openDueLevels reads what is beaten
 	if playerData.saveVersion < 12: openDueLevels()
 	playerData.selectedCar = clampi(playerData.selectedCar, 0, playerData.cars.size() - 1)
 	playerData.selectedLevel = clampi(playerData.selectedLevel, 0, playerData.levels.size() - 1)
@@ -116,6 +117,17 @@ func mergePrizeUnlocks() -> void:
 		if unlocks.has("prize:" + game): unlocks["pickup:" + PRIZE_PICKUPS[game]] = true
 		unlocks.erase("prize:" + game)
 	unlocks["pickup:slotmachine"] = true
+
+#version 14: a level's two openers are its own (LevelDef.openers), where every level opened on Sprint then
+#Countdown. A win on an old opener carries to the mode now in its slot, on the same tier, so nothing a save
+#had open is shut again.
+func keepOpenerWins() -> void:
+	for level in playerData.levels:
+		if not level is Dictionary || not level.has("id"): continue
+		var now := Root.openerModes(level)
+		for slot in Modes.DEFAULT_OPENERS.size():
+			var was: int = Modes.DEFAULT_OPENERS[slot]
+			if now[slot] != was && level.get("gamemodeBeat", {}).get(was, false): passTier(level, now[slot], ModeTiers.best(level, was))
 
 #pickups whose id changed: old id -> new id (version 13)
 const RENAMED_PICKUPS := {"tyre": "tire"}
@@ -210,13 +222,13 @@ const MAX_UPGRADE_LEVEL := 20
 func requestStatCost(statString: Root.upgrade, carIndex := -1) -> int:
 	return upgradePrice(getUpgradeLevel(statString, carIndex), str(playerData.cars[playerData.selectedCar if carIndex < 0 else carIndex].name))
 
-## An upgrade from `level` to the next: (level + 1)^1.6 x 15, x the car's scale. An upgrade is +1 to the stat
+## An upgrade from `level` to the next: (level + 1)^1.6 x 30, x the car's scale. An upgrade is +1 to the stat
 ## on any car, so it is worth most on the entry cars' low stats; the advanced cars' upgrades are the long
 ## coin sink instead.
 const UPGRADE_COST_SCALE := {"sedan": 1.0, "van": 1.0, "taxi": 1.2, "pickup": 1.2, "semi": 1.6, "supercar": 1.8,
 	"racer": 1.8, "police": 2.2, "ambulance": 2.5}
 static func upgradePrice(level: int, carName: String) -> int:
-	return int(pow(level + 1, 1.6) * 15 * UPGRADE_COST_SCALE.get(carName, 1.0))
+	return int(pow(level + 1, 1.6) * 30 * UPGRADE_COST_SCALE.get(carName, 1.0))
 
 func isUpgradeMaxed(statString: Root.upgrade, carIndex := -1) -> bool:
 	return getUpgradeLevel(statString, carIndex) >= MAX_UPGRADE_LEVEL
@@ -258,7 +270,7 @@ func currentLevelPassed(levelIndex := -1, mode := -1, tier := -1) -> int:
 		#the demo unlocks the level for the full game but doesn't open the menu on a level it can't play
 		if not (Root.IS_DEMO && next >= Root.DEMO_LEVEL_COUNT):
 			playerData.selectedLevel = next
-			playerData.gameMode = Root.FIRST_MODE
+			playerData.gameMode = Root.firstMode(next)
 	elif playerData.selectedLevel == levelIndex:
 		var unbeaten = Root.modePath(level).filter(func(m): return not level.gamemodeBeat.get(m, false) && Root.isModePlayable(level, m))
 		if not unbeaten.is_empty(): playerData.gameMode = unbeaten[0]

@@ -6,12 +6,12 @@
 - **Crusher** (goons are the point): Countdown, Sprint, Marathon, Defense, Goonpocalypse, Blackout, Bounty Hunt.
 - **Trial** (no goons, the course and the clock): Rally Stage, Flat Out, Hot Lap, Drift Trial, Cone Course, Smash Run.
 - **Goon Cup** (rival drivers): see `goon-cup.md`.
-- A level plays Sprint, then Countdown, then its three featured modes, one per kind.
+- A level plays five modes picked for it: two simple openers, then three featured modes, one per kind. Winning all five opens Free Play: any other mode on that level, for coins only.
 - Easy, Medium and Hard on every mode and level, shown as bronze, silver and gold medals.
 
 ## Numbers
 - 19 modes: 7 Crusher, 6 Trial, 6 Goon Cup (`scripts/global/modes.gd`).
-- The demo's ten levels feature 16 modes; with Sprint and Countdown that is 18 (`world/levels/*.tres`, `featured`).
+- The demo's ten levels play all 19 modes between them (`world/levels/*.tres`, `openers` and `featured`).
 - 0.1 had 5 modes in code; its menu locked all but Countdown and Sprint in the demo (old `main2.gd`).
 
 ## Demo vs full game

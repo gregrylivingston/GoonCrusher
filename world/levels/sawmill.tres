@@ -9,6 +9,7 @@ displayName = "Sawmill Landing"
 poster = "res://world/art/posters/sawmill.png"
 region = &"tribe"
 stop = 4
+openers = Array[StringName]([&"rally", &"countdown"])
 featured = Array[StringName]([&"marathon", &"smash", &"circuit"])
 order = 8
 blurb = "A logging camp: log piles that Grunts and Splitters cut loose, cranes, and Spiker traps on the haul tracks."

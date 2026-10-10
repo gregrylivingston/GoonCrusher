@@ -153,6 +153,7 @@ func applyProp(skin: WorldSkin, tm: Node) -> bool:
 	if not skin.propScenes.has(id) || tm.reservedAt(origin + p[1], 0.0): return false
 	var bit: int = p[4]
 	if bit >= 0 && tm.isTaken(chunk, bit): return false
+	if Spill.KICKS.has(id) && tm.has_method("spillUsed") && tm.spillUsed(chunk, p[1]): return false #a log the car rolled away (Spill.leaveHome)
 	var stateful: bool = bit >= 0 || skin.manifest.get(String(id), {}).get("class", "") == "STATEFUL"
 	var node: StaticBody2D = skin.propScenes[id].instantiate() if stateful else skin.newProp(id)
 	if not stateful: PropReactions.reset(node) #a pooled prop may come back mid-wobble or knocked over

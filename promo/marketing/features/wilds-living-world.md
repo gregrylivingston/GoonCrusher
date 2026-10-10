@@ -4,7 +4,7 @@
 
 ## What it is
 - Smash a log pile and the logs roll through the crowd. Rock piles slide, beehives swarm, towers and saguaros topple, a sluice gate floods its channel.
-- Goons use the same props: Bandits haul stolen loot to a den (smash it to get it back), Jackalopes hide in burrows, others cut log piles loose at you.
+- Goons use the same props: Bandits haul stolen loot to a den (smash it to get it back), Jackalopes hide in burrows, others cut log piles loose at you, open farm gates to get at you or shut one in your face.
 - Kills you set up count as crushes and join the combo as a Critter Chain; mixing kinds pays more.
 - World events: a stampede, and a flash flood down a wash.
 - A Dinner Bell calls goons to it; a Salt Lick draws the heavies.

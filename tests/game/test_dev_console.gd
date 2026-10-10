@@ -165,5 +165,5 @@ func test_play_lists_every_mode_and_refuses_what_it_cant_start():
 	for id in Modes.IDS: assert_true(listing.contains(id), "play lists %s" % id)
 	assert_true(listing.contains("e.g. "), "with a level that features each")
 	assert_true(Console.execute("play nonsense").begins_with("Error"), "an unknown mode is an error")
-	assert_eq(Console.firstLevelWith(Root.gameModes.FLATOUT), Levels.indexOf(&"saltflats"), "Flat Out's first level is Salt Flats")
+	assert_eq(Console.firstLevelWith(Root.gameModes.FLATOUT), Levels.indexOf(&"stilttown"), "Flat Out's first level is Stilt Town, which opens on it")
 	assert_eq(Console.firstLevelWith(Root.gameModes.MARATHON), 0)

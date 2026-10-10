@@ -9,6 +9,7 @@ displayName = "Lantern Marsh"
 poster = "res://world/art/posters/lantern.png"
 region = &"tribe"
 stop = 3
+openers = Array[StringName]([&"sprint", &"smash"])
 featured = Array[StringName]([&"blackout", &"cones", &"knockout"])
 order = 7
 blurb = "Mostly night. Lantern posts and your headlights are the only light; Nightcrawlers and Skinks own the dark."

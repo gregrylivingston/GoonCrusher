@@ -88,7 +88,8 @@ void fragment() {
 	COLOR = vec4(line.rgb, line.a * clamp(n - a, 0.0, 1.0));
 }"
 const SLIDE_SECONDS := 0.22
-const MODE_SLOTS := 5 #the mode rows, top to bottom: Sprint, Countdown and the level's three featured modes (Root.modePath)
+const MODE_SLOTS := 5 #the mode rows, top to bottom: the level's two openers and its three featured modes (Root.modePath)
+const FREE_ROW_HEIGHT := 30.0 #the slim Free Play row under them
 const TEXT_SHADER := preload("res://shader/3dtext.gdshader")
 const SETTINGS_ICON := preload("res://texture/icon/settings.svg")
 const QUIT_ICON := preload("res://texture/icon/quit.svg")
@@ -162,6 +163,7 @@ var carStripLabel := Label.new()
 var carCells: Array[Button] = []
 var outlineMaterial: ShaderMaterial
 var modeRows: Array[Button] = []
+var freeRow: Button #Free Play, under the five: any other mode once all five are won here (Root.freePlayOpen)
 var modeTitle := Label.new()
 var tierRow := HBoxContainer.new() #Easy, Medium, Hard (ModeTiers): a three-way switch
 var tierButtons: Array[Button] = []
@@ -467,7 +469,7 @@ func buildMap() -> void:
 	legend.position = Vector2(0, 730)
 	legend.size = Vector2(1600, 24)
 	legend.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var sample = MenuTheme.iconRect(HudTheme.MODE_ICONS[Root.FIRST_MODE], 20)
+	var sample = MenuTheme.iconRect(HudTheme.MODE_ICONS[Root.gameModes.SPRINT], 20)
 	sample.material = glyphMaterials[ModeTiers.HARD]
 	legend.add_child(sample)
 	var bar = ColorRect.new()
@@ -577,6 +579,9 @@ func buildOptions() -> void:
 		var row = makeModeRow(slot)
 		list.add_child(row)
 		modeRows.push_back(row)
+	freeRow = makeModeRow(MODE_SLOTS)
+	freeRow.custom_minimum_size.y = FREE_ROW_HEIGHT
+	list.add_child(freeRow)
 	options.add_child(list)
 	var pane = PanelContainer.new()
 	pane.position = OPTIONS_PANE.position
@@ -1005,8 +1010,19 @@ func modeOrder(index := -1) -> Array:
 
 func onModeRowPressed(slot: int) -> void:
 	var order := modeOrder()
+	if slot == MODE_SLOTS:
+		cycleFreePlay()
+		return
 	if slot >= order.size() || order[slot] == SaveManager.getGameMode(): return
 	SaveManager.setGameMode(order[slot])
+	refreshSetup()
+
+## The Free Play row: each press picks the next mode this level doesn't play (Root.freePlayModes)
+func cycleFreePlay() -> void:
+	var level := selectedLevelForModes()
+	var free := Root.freePlayModes(level)
+	if free.is_empty() || not Root.freePlayOpen(level): return
+	SaveManager.setGameMode(free[wrapi(free.find(SaveManager.getGameMode()) + 1, 0, free.size())])
 	refreshSetup()
 
 #one of Level Options' five mode rows: the mode's icon in a ring (a lock while it can't be started), its
@@ -1970,7 +1986,7 @@ func refreshSetup(animate := true) -> void:
 	if posters[selected].get_node("art").texture == null: finishPosterLoad(selected, true)
 	showBackground(posters[selected].get_node("art").texture, animate)
 	var mode = SaveManager.getGameMode()
-	if mode not in modeOrder(selected): mode = Root.FIRST_MODE #the saved mode isn't one this level plays
+	if not Root.isModePlayable(SaveManager.playerData.levels[selected], mode) && mode not in modeOrder(selected): mode = Root.firstMode(selected) #the saved mode isn't one this level plays
 	var forModes = selectedLevelForModes()
 	var open := isLevelSelectable(selected)
 	var data = SaveManager.playerData
@@ -2013,11 +2029,12 @@ func refreshSetup(animate := true) -> void:
 	for i in modeRows.size():
 		modeRows[i].visible = i < order.size()
 		if i < order.size(): refreshModeRow(modeRows[i], order[i], order[i] == mode, forModes, SaveManager.carClearTier(selected, order[i], driverCar))
+	refreshFreeRow(forModes, mode)
 	var tier := SaveManager.getGameTier()
 	refreshCarStrip(selected, mode, tier)
 	modeTitle.text = Root.gameModeDescription[mode].name
-	#the pane's edge is the mode's category color (a staple's is plain)
-	optionsPane.add_theme_stylebox_override("panel", MenuTheme.box(Color(HudTheme.PANEL, 0.94), PANEL_EDGE if mode in Root.STAPLE_MODES else Color(Modes.categoryColor(mode), 0.75), 16, 2, Vector4(26, 12, 26, 12)))
+	#the pane's edge is the mode's category color
+	optionsPane.add_theme_stylebox_override("panel", MenuTheme.box(Color(HudTheme.PANEL, 0.94), Color(Modes.categoryColor(mode), 0.75), 16, 2, Vector4(26, 12, 26, 12)))
 	modeText.text = Modes.short(mode)
 	modeTitle.tooltip_text = "%s %s" % [Root.gameModeDescription[mode].description, Root.MODE_RULES.get(mode, "")]
 	var reason = "" if open else ("Not in the demo" if isDemoLockedLevel(selected) else Root.openRuleText(SaveManager.playerData.levels[selected - 1] if selected > 0 else {}))
@@ -2081,9 +2098,8 @@ func refreshModeRow(b: Button, mode: int, selected: bool, level: Dictionary, min
 	var hover = style.duplicate()
 	hover.border_color = HudTheme.GOLD if selected else Color(HudTheme.RIM, 0.8)
 	b.add_theme_stylebox_override("hover", hover)
-	#a featured mode's ring is its category's color: Crusher, Trial or Goon Cup (Modes.CATEGORY_COLORS)
-	var staple: bool = mode in Root.STAPLE_MODES
-	var ring := Color(1, 1, 1, 0.25) if staple else Color(Modes.categoryColor(mode), 0.75)
+	#a mode's ring is its category's color: Crusher, Trial or Goon Cup (Modes.CATEGORY_COLORS)
+	var ring := Color(Modes.categoryColor(mode), 0.75)
 	b.get_node("row/disc").visible = built
 	b.get_node("row/soon").visible = not built
 	b.get_node("row/disc").add_theme_stylebox_override("panel", MenuTheme.box(HudTheme.PANEL, HudTheme.RIM if selected else ring, 30, 3, Vector4.ZERO))
@@ -2100,6 +2116,31 @@ func refreshModeRow(b: Button, mode: int, selected: bool, level: Dictionary, min
 	b.get_node("row/marks/mine").color = ModeTiers.MEDAL_COLORS[mine] if playable && mine > ModeTiers.NONE else Color(0, 0, 0, 0)
 	b.modulate = Color.WHITE if playable || selected else Color(1, 1, 1, 0.6)
 
+## The slim Free Play row: locked until all five modes are won here, then it names the mode picked (a press
+## picks the next one). Free Play pays coins only, so it shows no medals.
+func refreshFreeRow(level: Dictionary, mode: int) -> void:
+	var free := Root.freePlayModes(level)
+	freeRow.visible = not free.is_empty()
+	if free.is_empty(): return
+	var open := Root.freePlayOpen(level)
+	var picked: bool = open && mode in free
+	var style = MenuTheme.box(HudTheme.PANEL.lerp(HudTheme.RIM, 0.16) if picked else Color(HudTheme.PANEL, 0.9), HudTheme.RIM if picked else Color(1, 1, 1, 0.22), 14, 4 if picked else 2)
+	for state in ["normal", "pressed"]: freeRow.add_theme_stylebox_override(state, style)
+	var hover = style.duplicate()
+	hover.border_color = HudTheme.GOLD if picked else Color(HudTheme.RIM, 0.8)
+	freeRow.add_theme_stylebox_override("hover", hover)
+	freeRow.get_node("row/disc").visible = false
+	freeRow.get_node("row/marks").visible = false
+	var label: Label = freeRow.get_node("row/words/name")
+	label.text = "FREE PLAY:  %s" % Root.gameModeDescription[mode].name if picked else "FREE PLAY"
+	label.add_theme_font_size_override("font_size", 17)
+	label.add_theme_color_override("font_color", HudTheme.GOLD if picked else HudTheme.TEXT)
+	var note: Label = freeRow.get_node("row/soon")
+	note.visible = true
+	note.text = ("Next mode" if picked else "Any mode, coins only") if open else "Win all five modes here"
+	freeRow.tooltip_text = "Play any other mode on this level. Free Play pays coins and nothing else: no medals, records or unlocks." if open else Root.modeLockReason(level, free[0])
+	freeRow.modulate = Color.WHITE if open else Color(1, 1, 1, 0.6)
+
 func onStartPressed() -> void:
 	var index = SaveManager.playerData.selectedLevel
 	if screen == Screen.SETUP && optionsOpen && isLevelSelectable(index) && Root.isModePlayable(selectedLevelForModes(), SaveManager.getGameMode()) && ModeTiers.isOpen(selectedLevelForModes(), SaveManager.getGameMode(), SaveManager.getGameTier()):
@@ -2113,10 +2154,10 @@ func onStartPressed() -> void:
 			Pickups.boostLoadout = boost
 		startLevel(levelScene(index))
 
-#the mode shown when run setup opens: the saved one if it can be started here, else Countdown
+#the mode shown when run setup opens: the saved one if it can be started here, else the level's first
 func defaultGameMode() -> int:
 	var mode = SaveManager.getGameMode()
-	return mode if Root.isModePlayable(selectedLevelForModes(), mode) else Root.FIRST_MODE
+	return mode if Root.isModePlayable(selectedLevelForModes(), mode) else Root.firstMode(SaveManager.playerData.selectedLevel)
 
 #the selected level as the mode rules see it: a level the demo doesn't offer counts as locked
 func selectedLevelForModes() -> Dictionary:
@@ -2209,9 +2250,10 @@ func stepLevelTo(index: int) -> void:
 func triggerEdge(event: InputEvent, action: String) -> bool:
 	return not event is InputEventJoypadMotion || Input.is_action_just_pressed(action)
 
-#Up / Down: the mode rows, top to bottom (they wrap)
+#Up / Down: the mode rows, top to bottom (they wrap), then Free Play's modes once it is open
 func stepMode(direction: int) -> void:
 	var order := modeOrder()
+	if Root.freePlayOpen(selectedLevelForModes()): order = order + Root.freePlayModes(selectedLevelForModes())
 	var at = maxi(order.find(SaveManager.getGameMode()), 0)
 	SaveManager.setGameMode(order[wrapi(at + direction, 0, order.size())])
 	refreshSetup()

@@ -9,7 +9,7 @@ What is left to do on the modes: `docs/roadmap/ROADMAP_MODES.md` (it links the a
 | The mode list (append only) | `Root.gameModes` |
 | Each mode's id, category, words and rules | `Modes.DATA` (`scripts/global/modes.gd`; its header explains the keys) |
 | Each mode's numbers per tier | `ModeTiers` (`scripts/global/mode_tiers.gd`) |
-| A level's three featured modes | `LevelDef.featured` (`world/levels/<id>.tres`) |
+| A level's two openers and three featured modes | `LevelDef.openers`, `featured` (`world/levels/<id>.tres`); `Modes.openers`, `Modes.featured` |
 | Mode and level unlock rules, availability, the demo gate | `Root` (`modePath`, `isModeUnlocked`, `isModePlayable`, `MODE_AVAILABLE`, `opensNextLevel`, `IS_DEMO`) |
 | Crediting a win: level, tier, the car's clear | `SaveManager.currentLevelPassed`, `meta.carClears` |
 | The run's own level, mode and tier | `Level.runLevel`, `runMode`, `tier` |
@@ -19,7 +19,9 @@ What is left to do on the modes: `docs/roadmap/ROADMAP_MODES.md` (it links the a
 ## Rules
 
 - **Three categories:** Crusher (goons are the point), Trial (no goons: the course and the clock), Goon Cup (other drivers).
-- **One mode order:** every level plays Sprint, then Countdown, then its three featured modes, one per category. Every menu, harness and test reads `Root.modePath(level)`.
+- **One mode order:** every level plays five modes: its two openers (Sprint then Countdown unless the level names others), then its three featured modes, one per category. Every menu, harness and test reads `Root.modePath(level)`; nothing may assume a level has Sprint or Countdown.
+- **Openers** are simple modes, and at least one of the two has goons (Trials drop no coins and fill no gift boxes). The first is open with the level, the second opens behind it, the featured three behind the second (`Root.isModeUnlocked` goes by slot).
+- **Free Play** (`Root.freePlayOpen`, `freePlayModes`, `Level.freePlay`): all five won on a level opens every other mode there, on any tier. A Free Play run pays its coins, win bonus included, and nothing else: no medal, first-clear or car-clear bonus, record or unlock counter. The results ticket checks `Level.freePlay` before crediting.
 - **A variant runs on its base mode's rules** (`Modes.plays`), and a Trial has no goons, drops, night or fuel burn. So run code asks `Modes.running()`, `Modes.isTrial`, `hasGoons`, `drops`; it never compares against the save's mode.
 - **Any featured mode won opens the next level**, on Medium at a region's finale.
 - **Tiers:** every mode on every level has Easy, Medium and Hard, picked in Level Options (`PlayerData.gameTier`). The tier sets the goal and the world's toughness and shows as a medal. `gamemodeBeat` stays "beaten on any tier".

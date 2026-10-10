@@ -250,7 +250,7 @@ func liveSwarms() -> Array:
 func test_a_swarm_stings_the_car_only_when_the_car_broke_its_hive():
 	var car := makeCar(Vector2(30, 0))
 	var hive := prop("beehive", Vector2(0, 0))
-	BreakableProp.smashNode(hive, null) #a goon knocked it
+	BreakableProp.smashNode(hive, null) #a blast broke it
 	var health := car.health
 	await frames(40)
 	assert_eq(car.health, health, "not the car's doing: no stings")
@@ -269,20 +269,28 @@ func test_live_swarms_are_capped():
 	for i in Spill.SWARM_CAP + 2: BreakableProp.smashNode(prop("beehive", Vector2(i * 600.0, 0)), null)
 	assert_eq(liveSwarms().size(), Spill.SWARM_CAP, "the oldest go when a new one comes")
 
-func test_a_raiding_bandit_is_stung_first():
+func test_a_swarm_goes_straight_for_goons_and_leaves_after_three():
 	makeCar(Vector2(0, 4000))
 	var hive := prop("beehive", Vector2(0, 0))
-	var bystander := goon(&"grunt", Vector2(60, 0), true)
-	var bandit := goon(&"bandit", Vector2(-300, 0), true)
-	hive.set_meta(&"raider", bandit)
+	var crowd := []
+	for i in Spill.SWARM_KILLS + 2: crowd.push_back(goon(&"grunt", Vector2(150.0 + i * 110.0, 0), true))
 	BreakableProp.smashNode(hive, null)
 	var swarm: Spill.Swarm = liveSwarms()[0]
-	assert_eq(swarm.first, bandit, "the swarm knows who raided it")
-	for i in 120:
+	await frames(2)
+	assert_ne(swarm.target, Vector2.INF, "it has a target at once")
+	assert_eq(swarm.bees(), Spill.SWARM_KILLS, "three bees")
+	for i in 60:
 		await get_tree().physics_frame
-		if flattened(bandit): break
-	assert_true(flattened(bandit), "the raider is stung")
-	assert_eq(swarm.kills, 1 if not flattened(bystander) else 2, "the raider before anything else")
+		if flattened(crowd[0]): break
+	assert_true(flattened(crowd[0]), "the nearest goon is stung inside a second")
+	assert_eq(swarm.bees(), Spill.SWARM_KILLS - swarm.kills, "each sting costs a bee")
+	for i in 240:
+		await get_tree().physics_frame
+		if swarm.leaving(): break
+	assert_true(swarm.leaving(), "then it is gone")
+	assert_eq(swarm.kills, Spill.SWARM_KILLS, "after three goons")
+	assert_eq(swarm.bees(), 0, "no bees left")
+	assert_eq(crowd.filter(flattened).size(), Spill.SWARM_KILLS, "and no more")
 
 #--- R-10 lures ----------------------------------------------------------------------------------------------
 

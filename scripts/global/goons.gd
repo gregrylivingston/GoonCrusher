@@ -27,7 +27,8 @@ enum T { GRASS, SAND, MUD, WATER, HILLS, MOSS, DIRT, SNOW, ASPHALT, ICE, OIL, SH
 ## tele (telegraph: arrow, ring, land, aim, crack, none). rank: 1 fodder, 2 special, 3 heavy.
 ## Wild instincts (docs/GOONS.md, "Wild instincts"): seeks (props it goes for, SEEK_* below), smashes (its attack
 ## breaks breakables it is fast enough for), tramples (its attack flattens rank-1 goons in its way), daze (a lunge
-## into a wall dazes it, on levels whose LevelDef rules has dazeHeavies).
+## into a wall dazes it, on levels whose LevelDef rules has dazeHeavies), keeps (it can stand at an open farm gate as
+## its keeper and shut it on the car: Spill "gatekeepers").
 ## Tiers: Scrap Gang hits hardest per hit (they hit less often, since they peel off), then Tribe, then Wild.
 ## A stock sedan tops out near 433 px/s, so crush thresholds stay at or under 400: heavies need near-top speed, not upgrades.
 ## seeks rows: [group, action, carRange, goonRange]. Every SEEK_EVERY seconds the goon looks for the nearest prop
@@ -35,8 +36,9 @@ enum T { GRASS, SAND, MUD, WATER, HILLS, MOSS, DIRT, SNOW, ASPHALT, ICE, OIL, SH
 ## carRange of the goon and of the prop (it acts where the player sees it); < 0: the car must be farther than
 ## -carRange from the goon (it acts while the car keeps away); 0: anywhere. Actions (GoonVerbs.Verb.seekProp):
 ##   release  run to a log pile and cut it loose at the car (Spill.goonRelease)
-##   knock    break a hive near the car; its swarm hunts the nearest goons, often the goon's own pack
-##   raid     break it open (a crate, a hive) and steal what spills (the Thief takes pickups first)
+##   raid     break it open (a crate) and steal what spills (the Thief takes pickups first)
+##   open     run to a shut farm gate that stands between it and the car and open it (Spill.gateFor, goonGate)
+##   shut     run to an open farm gate the car is heading at and shut it before the car is through
 ##   perch    land on it and feed until the car comes at it (a carcass, like a crush decal)
 ##   roost    sit in its crown out of reach until rammed down (Spill.ROOSTS: dead trees; scarecrows later)
 ##   stash    (SEEK_SELF) with loot, run home to the nearest den within goonRange and stash it there (Thief, Spill.stash)
@@ -55,12 +57,12 @@ static func seekRow(def: Dictionary, action: StringName) -> Array:
 const DATA := {
 	#---------------------------------------------------------------- Wild Things (tier 1)
 	&"jackalope": {"name":"Jackalope", "faction":faction.WILD, "rank":1, "biomes":[T.GRASS, T.MOSS, T.SNOW], "verb":&"hopper",
-		"speed":170, "windDist":120, "windT":0.35, "atkT":0.3, "lunge":2.6, "dmg":2, "sys":"tires",
+		"speed":170, "windDist":120, "windT":0.35, "atkT":0.3, "lunge":2.6, "dmg":2, "sys":"tires", "keeps":true,
 		"seeks":[[&"prop_burrow", &"hide", 420.0, 250.0]]},
 	&"tusker": {"name":"Tusker", "faction":faction.WILD, "rank":2, "biomes":[T.GRASS, T.MUD], "verb":&"charger",
 		"speed":110, "windDist":380, "windT":0.7, "atkT":1.1, "lunge":3.6, "dmg":6, "sys":"engine", "front":280, "smashes":true, "tramples":true},
-	&"bandit": {"name":"Bandit", "faction":faction.WILD, "rank":1, "biomes":[T.GRASS, T.DIRT], "verb":&"thief", "speed":150,
-		"seeks":[[&"prop_crate", &"raid", 0.0, 600.0], [&"prop_hive", &"raid", 0.0, 600.0], [&"prop_den", &"stash", 0.0, 2500.0]]},
+	&"bandit": {"name":"Bandit", "faction":faction.WILD, "rank":1, "biomes":[T.GRASS, T.DIRT], "verb":&"thief", "speed":150, "keeps":true,
+		"seeks":[[&"prop_crate", &"raid", 650.0, 600.0], [&"prop_gate", &"shut", 1400.0, 450.0], [&"prop_den", &"stash", 0.0, 2500.0]]},
 	&"stinger": {"name":"Stinger", "faction":faction.WILD, "rank":2, "biomes":[T.SAND], "verb":&"striker",
 		"speed":100, "windDist":130, "windT":0.6, "atkT":0.35, "dmg":4, "sys":"steering", "tele":"ring"},
 	&"buzzard": {"name":"Buzzard", "faction":faction.WILD, "rank":1, "biomes":[T.SAND, T.DIRT], "verb":&"flyer",
@@ -76,7 +78,7 @@ const DATA := {
 		"speed":60, "atkT":0.35, "lunge":4.5, "dmg":6, "sys":"tires", "log":true, "tramples":true},
 	&"yipper": {"name":"Yipper", "faction":faction.WILD, "rank":1, "biomes":[T.DIRT, T.SNOW], "verb":&"pack",
 		"speed":175, "windDist":70, "windT":0.25, "atkT":0.25, "lunge":2.5, "recT":0.5, "dmg":2, "sys":"tank", "pack":4, "flank":true,
-		"seeks":[[&"prop_logpile", &"release", 900.0, 650.0], [&"prop_hive", &"knock", 900.0, 650.0]]},
+		"seeks":[[&"prop_logpile", &"release", 900.0, 650.0], [&"prop_gate", &"open", 900.0, 500.0]]},
 	&"bullmoose": {"name":"Bullmoose", "faction":faction.WILD, "rank":3, "biomes":[T.SNOW], "verb":&"lunge",
 		"speed":70, "windDist":220, "windT":0.9, "atkT":0.7, "lunge":3.4, "dmg":8, "sys":"engine", "crush":400, "tele":"ring", "wander":true,
 		"smashes":true, "tramples":true, "daze":true},

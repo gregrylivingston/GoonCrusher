@@ -70,6 +70,14 @@ func test_dice_raises_the_rare_tiers_only():
 	assert_eq(Pickups.pickTier([1.0, 1.0], 0.25), 0)
 	assert_eq(Pickups.pickTier([1.0, 1.0], 0.75), 1)
 
+#however lucky the car, a plain goon drops a Coin more often than everything else put together
+func test_coins_are_most_of_the_drops():
+	assert_gt(minf(Pickups.ORDINARY_SHARE.x, Pickups.ORDINARY_SHARE.y), 0.5, "the ordinary Coin's share")
+	var coins := 0
+	for i in 2000:
+		if Pickups.roll(60.0, Root.gameModes.GOONCRUSHER, false) == "coin": coins += 1
+	assert_gt(coins, 1000, "coins with a lot of Dice")
+
 func test_rolls_respect_mode_and_night():
 	for i in 400:
 		var id := Pickups.roll(0.0, Root.gameModes.GOONCRUSHER, false)

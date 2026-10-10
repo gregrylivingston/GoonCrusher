@@ -9,6 +9,7 @@ displayName = "Red Canyon"
 poster = "res://world/art/posters/canyon.png"
 region = &"wilds"
 stop = 4
+openers = Array[StringName]([&"sprint", &"bounty"])
 featured = Array[StringName]([&"defense", &"drift", &"pursuit"])
 order = 3
 blurb = "Ridged canyon walls and mesas box the roads in. A pass opens every chunk, and the dry washes are the fast lanes."

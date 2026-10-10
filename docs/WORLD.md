@@ -148,7 +148,7 @@ Interactive props and set pieces are placed **first** in each chunk, on layout a
 
 ### Field walls
 
-On a level with `features.hedgeWalls` (Orchard Lanes) a hedge lattice edge is an unbreakable hedgerow: boxes in the chunk's own wall body, a few occluder loops and one decor MultiMesh (docs/WORLD_ART.md "Hedgerow"), so a dense lattice costs almost no nodes. Gaps fall where a run crosses a road, track, water or reservation; some get a breakable farm gate. **Not terrain:** the fine/coarse clamp would punch a corridor through a thin terrain hedge every 1280 px.
+On a level with `features.hedgeWalls` (Orchard Lanes) a hedge lattice edge is an unbreakable hedgerow: boxes in the chunk's own wall body, a few occluder loops and one decor MultiMesh (docs/WORLD_ART.md "Hedgerow"), so a dense lattice costs almost no nodes. Gaps fall where a run crosses a road, track, water or reservation; some get a breakable farm gate, which goons open and shut (`Spill`, "farm gates"). **Not terrain:** the fine/coarse clamp would punch a corridor through a thin terrain hedge every 1280 px.
 
 ### Region 1 levels
 
@@ -194,7 +194,7 @@ Baked breakables carry their state as metadata (`smashSpeed`, `broken`, `debris`
 
 ## Interactive props
 
-`Spill.release(node, dir)` runs from `BreakableProp.smashNode` for every prop in `Spill.DEFS` (what each kind does is in the file's header): logs and rocks roll, towers and billboards topple, hives swarm, the crane drops its container, dens give back stolen loot, burrows cave in, sluices flood. Lures (the Dinner Bell, the Salt Lick) and Buzzard roosts live there too; the goon side is docs/GOONS.md "Wild instincts".
+`Spill.release(node, dir)` runs from `BreakableProp.smashNode` for every prop in `Spill.DEFS` (what each kind does is in the file's header): logs and rocks roll, towers and billboards topple, hives swarm, the crane drops its container, dens give back stolen loot, burrows cave in, sluices flood. Lures (the Dinner Bell, the Salt Lick), Buzzard roosts and the farm gates goons open and shut live there too; the goon side is docs/GOONS.md "Wild instincts".
 
 - Every kill goes through `Spill.flatten`, which credits the player.
 - **What spilled is kept** on the TileManager per chunk (`addSpilled`, `markSpillUsed`), so a reloaded chunk shows the logs where they came to rest and a crane drops only once.

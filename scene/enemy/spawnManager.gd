@@ -77,6 +77,7 @@ func despawnSweep() -> void:
 	for goon in goons.duplicate():
 		if not is_instance_valid(goon) || goon.is_queued_for_deletion() || view.has_point(goon.global_position): continue
 		if goon.has_meta(&"bounty"): continue #Bounty Hunt's mark waits wherever it is (BountyHunt)
+		if goon.state == Spill.KEEP_STATE: continue #a gatekeeper waits at its gate until the gate's chunk goes (Spill.dismissKeeper)
 		#far behind, or wedged against a barrier it will never get through (Walker.isStuck), once off screen
 		if goon.global_position.distance_to(carPosition) > DESPAWN_DISTANCE || goon.isStuck():
 			if base != Vector2.INF && goon.global_position.distance_to(base) < DESPAWN_DISTANCE: continue #Defense keeps its siege

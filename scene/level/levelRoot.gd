@@ -22,6 +22,9 @@ var elapsed := 0.0 #run-clock seconds that have passed, whichever way the clock 
 var isDaytime: bool = true
 var nightsSeen := 0 #nights that fell this run, for the unlock counters (Unlocks.countRun)
 var hasEnded := false #endLevel runs once per run, whichever ending gets there first
+## A Free Play run: a mode this level doesn't play (Root.freePlayOpen). It pays its coins and nothing else: the
+## results ticket credits no medal, clear, record or unlock counter.
+var freePlay := false
 var endReason: int = -1 #Root.endCondition once the run has ended
 var startPosition: Vector2 #where the car starts; objectives are placed relative to it
 var clockReady := false #true once the clock holds its final starting value (Sprint sets it from the station distance)
@@ -57,7 +60,7 @@ const MARATHON_HEAL = 35.0   #health restored at each station
 var leg := 1
 var legHeading := 0.0
 
-#Goonpocalypse: endless. Surviving ModeTiers.POCALYPSE_TARGET x the level's seconds beats the mode on the
+#Goonpocalypse: endless. Surviving ModeTiers.pocalypseSeconds beats the mode on the
 #run's tier; after that it is a chase for score and time (SaveManager.recordGoonpocalypse).
 var targetReached := false
 
@@ -82,6 +85,7 @@ func readRun() -> void:
 	tier = SaveManager.getGameTier()
 	runMode = SaveManager.playerData.gameMode
 	runLevel = SaveManager.playerData.selectedLevel
+	freePlay = Root.isFreePlay(runLevel, runMode)
 
 func applyDef() -> void:
 	if defApplied || def == null: return
@@ -153,7 +157,7 @@ func _ready():
 
 	match Modes.running(): #the tier's clock; Sprint and Marathon set theirs from the route
 		Root.gameModes.GOONPOCALYPSE: seconds = 0
-		Root.gameModes.GOONCRUSHER: seconds = levelSeconds * ModeTiers.CLOCK[tier]
+		Root.gameModes.GOONCRUSHER: seconds = ModeTiers.countdownSeconds(levelSeconds, tier)
 		Root.gameModes.DEFENSE: seconds = ModeTiers.DEFENSE_HOLD[tier]
 		Root.gameModes.BOUNTY: seconds = ModeTiers.bountySeconds(tier)
 		Root.gameModes.SMASH, Root.gameModes.DRIFT, Root.gameModes.KEEPCUP, Root.gameModes.DERBY: seconds = ModeTiers.goalSeconds(runMode, tier, levelSeconds, 1.0)
@@ -402,6 +406,10 @@ static func sprintOffsetPx(distance: float, yRoll: float, sprintTier: int = Mode
 static func sprintDistance(levelDef: LevelDef, sprintTier: int = ModeTiers.NONE) -> float:
 	return Territories.sprintDistance(levelDef.region if levelDef else &"") * ModeTiers.SPRINT_DISTANCE[clampi(sprintTier, ModeTiers.NONE, ModeTiers.HARD)]
 
+#how far apart a Marathon's stations are: shorter than the one-station races' drive, since it has several
+static func legDistance(levelDef: LevelDef) -> float:
+	return sprintDistance(levelDef) * ModeTiers.MARATHON_LEG
+
 #time allowed per second of reference driving: 1.5 on Easy (250 s) down to 1.1 on Northern Wastes (540 s)
 static func sprintSlack(levelSeconds: float) -> float:
 	return clampf(1.5 - (levelSeconds - 250.0) / 290.0 * 0.4, 1.1, 1.5)
@@ -467,7 +475,7 @@ func runPayout(won: bool) -> int:
 #--- Goonpocalypse ------------------------------------------------------------------------------
 
 func pocalypseTarget() -> float:
-	return levelSeconds * ModeTiers.POCALYPSE_TARGET[tier]
+	return ModeTiers.pocalypseSeconds(levelSeconds, tier)
 
 #crushes, plus 5 per giant, plus a point for every 2 s survived
 static func pocalypseScore(crushes: int, giants: int, survived: float) -> int:
@@ -546,7 +554,7 @@ func stationReached(station: Node2D) -> void:
 	var from = station.global_position
 	var tileManager = $TileManager
 	var turn := (WorldGen.hashf(tileManager.worldSeed, WorldGen.TAG_LEG, leg, 0) * 2.0 - 1.0) * MARATHON_TURN
-	var next = tileManager.placeNextStation(from, legHeadingFrom(from, legHeading, turn, sprintDistance(def)), sprintDistance(def))
+	var next = tileManager.placeNextStation(from, legHeadingFrom(from, legHeading, turn, legDistance(def)), legDistance(def))
 	legHeading = (next.global_position - from).angle()
 	seconds += sprintSeconds(driveLength(maxf(tileManager.lastRouteLength, from.distance_to(next.global_position))), levelSeconds, slack())
 	call_deferred("openPitShop")

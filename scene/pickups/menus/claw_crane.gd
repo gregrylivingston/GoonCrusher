@@ -8,8 +8,8 @@ class_name ClawCrane extends PickupMenu
 #(`rollStrength`: luck of the draw, Dice and the box tier), so prizes can slip out between the prong tips or
 #be shaken loose by the swing. Rarer prizes are smaller and slip through more easily. Whatever drops into the
 #chute is won, held or not, and that includes the bit of junk mixed into the heap (JUNK: a dud bomb, an
-#oil leak, a pickpocket), which costs something instead. One grab is free; run coins buy more. In a gift box (CrushPrizes) a higher tier
-#gives more free grabs (Silver 2, Diamond 3) and a stronger claw, and from Gold up fills the heap with Rare
+#oil leak, a pickpocket), which costs something instead. One grab, and the game is over. In a gift box (CrushPrizes) a higher tier
+#gives more grabs (Silver 2, Diamond 3) and a stronger claw, and from Gold up fills the heap with Rare
 #or better.
 
 const W := 640.0
@@ -34,7 +34,6 @@ const LIFT_SPEED := 240.0
 const CLOSE_TIME := 0.35
 const RELAX_TIME := 0.5
 const OPEN_TIME := 0.25
-const EXTRA_GRAB := 150
 const PRIZES := 24          #prizes in the heap, plus JUNK_COUNT junk
 const GOOD := 15           #of them rolled Uncommon or better; the rest are coin stacks
 ## the prongs turn about their hinges from OPEN_ANGLE (out) to SHUT_ANGLE (tips crossed); after closing, a
@@ -147,22 +146,13 @@ func clawXform() -> Transform2D:
 	return Transform2D(-theta, Vector2(tipX(), tipY()))
 
 func updateInfo() -> void:
-	match phase:
-		"patrol": say("Grabs left %d   -   Run coins %d" % [grabs, runCoins()])
-		"done": say("Out of grabs." + ("   %s: one more for %d coins" % [InputGlyphs.label(REJECT), EXTRA_GRAB] if runCoins() >= EXTRA_GRAB else ""))
+	if phase == "patrol": say("Grabs left %d" % grabs)
 
 func onAction(action: String) -> void:
 	match action:
 		ACT, "ui_accept":
 			if phase == "patrol": startDrop()
 			elif phase == "done": showWinnings()
-		REJECT: #retry: another grab for run coins
-			if phase == "done" && runCoins() >= EXTRA_GRAB:
-				Root.playerCar.coin -= EXTRA_GRAB
-				grabs += 1
-				phase = "patrol"
-				hints([[[ACT], "Drop"]])
-				updateInfo()
 		"ui_cancel":
 			if phase == "done": showWinnings()
 
@@ -227,9 +217,7 @@ func tick(delta: float) -> void:
 func afterGrab() -> void:
 	phase = "patrol" if grabs > 0 else "done"
 	patrolDir = 1.0
-	if phase == "done":
-		if runCoins() >= EXTRA_GRAB: hints([[[ACT], "Collect"], [[REJECT], "Another grab  (%d coins)" % EXTRA_GRAB]])
-		else: showWinnings()
+	if phase == "done": showWinnings() #out of grabs: no buying more
 	updateInfo()
 
 ## Drives the gantry toward `speed` at `rate`; returns its acceleration, for the swing.

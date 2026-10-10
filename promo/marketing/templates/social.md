@@ -62,7 +62,7 @@ Each uses only facts from the sheet named.
 
 **Before / after** (`features/goons.md`, `features/game-modes.md`)
 > 0.1: 18 goons. Two modes in the demo.
-> 0.3: 44 goons, 28 of them in the demo. 18 modes in the demo.
+> 0.3: 44 goons, 28 of them in the demo. All 19 modes in the demo.
 > We rebuilt it.
 
 **Number drop** (`features/goon-cup.md`)

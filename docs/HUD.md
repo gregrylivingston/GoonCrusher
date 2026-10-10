@@ -60,7 +60,7 @@ Each car has its own dashboard: a `HudSkin` (`hud_skin.gd`) named in `CarInfo.hu
 
 ## The mirror
 
-`HudMirror` does not own the clock or the goal: it lays `TopCenter` and `Objective` out on its glass (`apply`), turns off the goal's own panel (`HudObjective.framed`) and dresses the clock in the skin's font. Its dressing is `HudSkin.mirror`; the semi gets a console. The dice are the luck stat in pips and the clover carries the clover stat. The frame pulses red in the last seconds of a clock that loses the run (`hurry`).
+`HudMirror` does not own the clock or the goal: it lays `TopCenter` and `Objective` out on its glass (`apply`), turns off the goal's own panel (`HudObjective.framed`) and dresses the clock in the skin's font. Its dressing is `HudSkin.mirror`; the semi gets a console. The dice are the luck stat in pips and the clover carries the clover stat; they hang from the top of the frame on strings that run behind it (`charms`, drawn behind the frame), and what lights up over the frame is on `front`. The start lamps' layer is under the HUD's, so the rack comes down behind the mirror too. The frame pulses red in the last seconds of a clock that loses the run (`hurry`).
 
 ## The visors
 

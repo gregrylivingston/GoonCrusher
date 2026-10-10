@@ -7,6 +7,7 @@ extends CanvasLayer
 #the old 3-2-1 did, and unpauses on GO. Reduce Motion fades the rack in and out with no drop or smoke.
 #Back from a prize game (PickupMenu.resumeRun) the lamps run at QUICK_STEP: about a second in all.
 
+const LAYER := 2 #under the HUD (playerRoot.tscn), so the rack and its posts come down behind the mirror
 const STEP := 1.0
 const QUICK_STEP := 0.25
 const DROP_SECONDS := 0.26
@@ -20,7 +21,7 @@ var rack := StartLamps.new()
 var fx := TransitionFx.new()
 
 func _ready() -> void:
-	layer = 128
+	layer = LAYER
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	get_tree().paused = true
 	var screen = get_viewport().get_visible_rect().size

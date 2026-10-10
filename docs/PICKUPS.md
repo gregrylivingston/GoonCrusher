@@ -34,7 +34,7 @@ Pickups, the prize games, gift boxes and unlocks. The data is the source of trut
 
 A crushed goon drops by a Clover roll in `Walker.destroy`. `Walker.dropTable()` hands `GoonFx` a table holding `Pickups.ROLL`, and when the drop lands `Root.getPowerupFromWeights` calls `Pickups.rollForCar(faction, bump)`:
 
-1. **Ordinary drop:** a share of plain drops is a single Coin, shrinking as more pickups are unlocked (`ordinaryShare`), so the Coin stays a big part of the mix. Giants and bosses skip it.
+1. **Ordinary drop:** a share of plain drops is a single Coin, shrinking as more pickups are unlocked (`ordinaryShare`) but always over a half, and Dice doesn't change it: the Coin drops more often than everything else put together. Giants and bosses skip it.
 2. **Tier:** by `TIER_WEIGHTS`, raised by Dice, with a pity counter (`PITY`). Giants and bosses bump it a tier.
 3. **Item:** a weighted pick among the tier's open pickups, filtered by mode and night, scaled by the goon's faction (`fac`). An empty tier falls back a tier.
 

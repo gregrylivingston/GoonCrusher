@@ -152,7 +152,8 @@ func buildGameSummary():
 	var car = Root.playerCar
 	var carClear := {"tiers": [], "coin": 0, "gem": 0, "fullGarage": []}
 	var roadOpened := ""
-	if won:
+	var counts: bool = not level.freePlay #a Free Play run pays its coins and credits nothing else
+	if won && counts:
 		var nextWasOpen: bool = levelIndex + 1 >= SaveManager.playerData.levels.size() || SaveManager.playerData.levels[levelIndex + 1].unlocked
 		var before := SaveManager.currentLevelPassed(levelIndex, gameMode, level.tier) #the run's own, not the menu's selection
 		firstClear = ModeTiers.firstClear(before, level.tier, levelIndex)
@@ -162,11 +163,11 @@ func buildGameSummary():
 		level.firstClear = firstClear
 		progressNote = nextLevelNote(levelIndex, nextWasOpen)
 		if not nextWasOpen && levelIndex + 1 < SaveManager.playerData.levels.size() && SaveManager.playerData.levels[levelIndex + 1].unlocked: roadOpened = roadText(levelIndex + 1)
-	else:
+	elif not won:
 		$AudioStreamPlayer_highImpact.play()
 	var records = SaveManager.getCarByName(car.carId).records
 	var mode = Root.gameModeDescription[gameMode].name
-	var body = buildTicket("%s %s  -  %s  -  %s" % [ModeTiers.NAMES[level.tier].to_upper(), mode, SaveManager.playerData.levels[levelIndex].name.to_upper(), car.charName.to_upper()], reasonLine())
+	var body = buildTicket("%s%s %s  -  %s  -  %s" % ["FREE PLAY  -  " if level.freePlay else "", ModeTiers.NAMES[level.tier].to_upper(), mode, SaveManager.playerData.levels[levelIndex].name.to_upper(), car.charName.to_upper()], reasonLine())
 
 	#records: compare before updating, so a beaten record gets its badge
 	var crushed = car.currentGoonsCrushed
@@ -177,12 +178,12 @@ func buildGameSummary():
 	var powerups = car.powerupsCollected
 	var timer = get_tree().get_first_node_in_group("runTimer")
 	var newBest = {"time": false, "score": false}
-	if gameMode == Root.gameModes.GOONPOCALYPSE:
+	if gameMode == Root.gameModes.GOONPOCALYPSE && counts:
 		newBest = SaveManager.recordGoonpocalypse(levelIndex, car.carId, int(level.elapsed), level.runScore())
 	if level.course: #a fixed course: the stage time goes in the record book when the stage is won
 		var stage := {"time": false}
 		var lapped: bool = gameMode == Root.gameModes.HOTLAP #its record is the best lap, not the run
-		if won: stage = SaveManager.recordCourse(levelIndex, gameMode, car.carId, level.course.bestLap() if lapped else level.elapsed, level.course.lapTimes if level.course.laps > 1 else level.course.splits)
+		if won && counts: stage = SaveManager.recordCourse(levelIndex, gameMode, car.carId, level.course.bestLap() if lapped else level.elapsed, level.course.lapTimes if level.course.laps > 1 else level.course.splits)
 		addRow("Best lap" if lapped else "Stage time", Course.clock(level.course.bestLap() if lapped else level.elapsed), stage.time)
 		if level.course.laps > 1: addRow("Laps", "%d / %d" % [level.course.lap, level.course.laps], false)
 		if level.overshot: addRow("Too fast at the line", "+%d s" % int(ModeTiers.FLATOUT_PENALTY), false)
@@ -191,7 +192,7 @@ func buildGameSummary():
 		if gameMode == Root.gameModes.CONES: addRow("Cones hit", str(level.course.conesHit), false)
 	elif level.trial: #a score Trial: the time to its target is the record
 		var quick := {"time": false}
-		if won: quick = SaveManager.recordCourse(levelIndex, gameMode, car.carId, level.elapsed, [])
+		if won && counts: quick = SaveManager.recordCourse(levelIndex, gameMode, car.carId, level.elapsed, [])
 		addRow("Time", Course.clock(level.elapsed), quick.time)
 		addRow("Drift score" if gameMode == Root.gameModes.DRIFT else "Smashed", "%d / %d" % [level.trial.score, level.trial.target], false)
 	else: addRow("Time", timer.text if is_instance_valid(timer) else "-", newBest.time)
@@ -235,7 +236,7 @@ func buildGameSummary():
 	records.slotMachines = maxi(records.slotMachines, car.slotMachines)
 	records.combo = maxi(records.get("combo", 0), car.bestCombo)
 	var discovered = Goonopedia.creditCrushes(car.crushedById)
-	Unlocks.countRun(won, gameMode, level.nightsSeen, car.giantsCrushed, Root.playerRoot.boxLevel if is_instance_valid(Root.playerRoot) else 0)
+	if counts: Unlocks.countRun(won, gameMode, level.nightsSeen, car.giantsCrushed, Root.playerRoot.boxLevel if is_instance_valid(Root.playerRoot) else 0)
 	if OS.is_debug_build(): RunLog.append(car, level, reason, paid)
 
 	var blueprinted = PickupEffects.creditBlueprints(car) #free garage upgrades, however the run ended

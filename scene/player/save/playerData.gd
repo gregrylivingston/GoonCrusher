@@ -7,7 +7,7 @@ class_name PlayerData extends Resource
 @export var gem: int = 0
 @export var selectedCar: int = 0
 @export var selectedLevel: int = 0
-@export var gameMode: int = 1 #Sprint (Root.FIRST_MODE)
+@export var gameMode: int = 1 #Sprint, the first level's first mode
 @export var gameTier: int = 1 #ModeTiers: Easy, Medium or Hard, picked in run setup
 #goon id (Goons.DATA) -> how many the player has crushed, over every run; the Goonopedia reveals a goon
 #once it is crushed. Credited by gameSummary when a run ends.

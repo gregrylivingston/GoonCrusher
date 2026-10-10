@@ -666,8 +666,7 @@ func answerDeal(deal: PickupDeal) -> void:
 
 func answerClaw(crane: ClawCrane) -> void:
 	await think(PickupMenu.ARM_SECONDS + 0.3)
-	var extra: bool = persona.runs == "coverage" && Root.playerCar.coin >= ClawCrane.EXTRA_GRAB + 200
-	for grab in 4: #a gift box's claw can have up to 3 free grabs
+	for grab in 3: #a gift box's claw can have up to 3 grabs
 		#the claw runs back and forth by itself: drop as it passes over the prize the persona wants
 		var target := Personas.clawTarget(persona, crane.prizes, crane.tipX(), rng)
 		if target >= 0:
@@ -677,9 +676,6 @@ func answerClaw(crane: ClawCrane) -> void:
 		await press(PickupMenu.ACT, 0.1)
 		if not await waitFor(func(): return crane.boardUp || crane.phase == "done" || (crane.phase == "patrol" && crane.grabs > 0), 10.0, "the claw to come back", crane): return
 		if not is_instance_valid(crane) || crane.boardUp: break
-		if crane.grabs > 0: continue #free grabs left
-		if grab >= 1 || not extra: break
-		await press(PickupMenu.REJECT, 0.3) #another grab for run coins
 		if crane.grabs == 0: break
 	if is_instance_valid(crane) && not crane.boardUp: await press(PickupMenu.ACT) #collect
 	if is_instance_valid(crane): await leaveBoard(crane, "the Claw Crane")

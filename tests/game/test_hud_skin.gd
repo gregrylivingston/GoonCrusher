@@ -81,6 +81,10 @@ func test_charms_swing_apart():
 	for i in HudMirror.CHARMS.size():
 		for j in i:
 			assert_true(mirror.charmPoint(i, true).distance_to(mirror.charmPoint(j, true)) >= 12.0, "charms %d and %d rest apart" % [i, j])
+	#tied to the top of the frame, their strings run down behind it and they hang clear under it
+	assert_true(mirror.hook().y < mirror.body().get_center().y, "the strings are tied at the top")
+	assert_true(mirror.charms.show_behind_parent, "the charms are behind the frame")
+	for i in HudMirror.CHARMS.size(): assert_gt(mirror.charmPoint(i, true).y, mirror.body().end.y + 8.0, "charm %d hangs under the frame" % i)
 	mirror.free()
 	assert_eq(HudMirror.diceFor(1), 1)
 	assert_eq(HudMirror.diceFor(6), 1)

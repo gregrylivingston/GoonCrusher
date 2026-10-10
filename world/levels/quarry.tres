@@ -9,6 +9,7 @@ displayName = "Goon Quarry"
 poster = "res://world/art/posters/quarry.png"
 region = &"tribe"
 stop = 5
+openers = Array[StringName]([&"countdown", &"cones"])
 featured = Array[StringName]([&"goonpocalypse", &"drift", &"derby"])
 order = 9
 blurb = "Haul roads link a terraced pit, a junk fort with gates and tire camps. The Tribe digs here, and the mud pits swallow speed."

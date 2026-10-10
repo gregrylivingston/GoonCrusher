@@ -5,8 +5,9 @@ class_name HudMirror extends Control
 #out and restyles but does not own. Its frame is the car's dashboard's (HudSkin.mirror): a plain mirror, the
 #cab's with its license card, a camera screen... The semi has no mirror, so it gets a low console flush with the
 #top edge. Dice (the luck stat, as pips: 18 is three sixes) and a clover (the clover stat, as its number) hang
-#from the middle of it, each die and the clover on its own string, and swing as the car turns; their pickups fly to them.
-#The frame is drawn once; the charms and anything that moves are on a child CanvasItem that redraws on change.
+#from the top of it, each die and the clover on its own string that runs down behind the frame, and swing as the
+#car turns; their pickups fly to them. The frame is drawn once. What moves is on two child CanvasItems that redraw
+#on change: `charms` behind the frame (a charm that swings high goes behind the mirror) and `front` over it.
 
 const SIZE := Vector2(540, 92)
 const STALK := 14.0          #the mirror hangs this far under the top edge
@@ -15,10 +16,10 @@ const CLOCK_WIDTH := 170.0   #the left of the glass, for the clock; the goal tak
 const GOAL_WIDTH := 340.0
 const DICE_SHOWN := 3        #dice at most: 18 pips; more luck than that is a number under them
 const DIE := 17.0
-#the charms, each on its own string from the middle of the frame: [the angle it rests at (radians off plumb, left is
-#negative), its string's length, its swing's period in seconds]. Three dice, then the clover. No two share a period,
-#so they drift apart as they swing, and they rest fanned out so each can be seen.
-const CHARMS := [[-0.2, 30.0, 0.9], [-0.64, 41.0, 1.3], [-1.02, 33.0, 1.08], [0.6, 37.0, 1.5]]
+#the charms, each on its own string from the top of the frame: [the angle it rests at (radians off plumb, left is
+#negative), how much of its string shows under the frame, its swing's period in seconds]. Three dice, then the
+#clover. No two share a period, so they drift apart as they swing, and they rest fanned out so each can be seen.
+const CHARMS := [[-0.07, 28.0, 0.9], [-0.23, 42.0, 1.3], [-0.43, 34.0, 1.08], [0.22, 38.0, 1.5]]
 const CLOVER := 3            #its place in CHARMS
 const LEAN := 0.32           #radians a hard turn swings them
 const DAMPING := 1.6         #how fast a swing dies down
@@ -30,7 +31,8 @@ const PIPS := [[], [Vector2.ZERO], [Vector2(-1, -1), Vector2(1, 1)], [Vector2(-1
 	[Vector2(-1, -1), Vector2(1, -1), Vector2(-1, 0), Vector2(1, 0), Vector2(-1, 1), Vector2(1, 1)]]
 
 var skin: HudSkin = HudSkin.named(&"house")
-var charms := Control.new()
+var charms := Control.new() #behind the frame
+var front := Control.new()  #over it
 var markers := {}
 var set := false
 var angles: Array[float] = [] #each charm's angle off plumb
@@ -38,12 +40,17 @@ var speeds: Array[float] = []
 var lastLuck := -1
 var lastClover := -1
 var shownKey := []
+var shownFront := []
 
 func _ready() -> void:
 	mouse_filter = MOUSE_FILTER_IGNORE
 	charms.mouse_filter = MOUSE_FILTER_IGNORE
+	charms.show_behind_parent = true
 	add_child(charms)
 	charms.draw.connect(drawCharms)
+	front.mouse_filter = MOUSE_FILTER_IGNORE
+	add_child(front)
+	front.draw.connect(drawFront)
 	for group in ["luckui", "cloverui"]: markers[group] = HudTheme.marker(self, group, Vector2.ZERO)
 	Settings.changed.connect(onSettingChanged)
 	apply.call_deferred() #once the clock and the goal are in the tree beside it
@@ -72,14 +79,14 @@ func glassColor() -> Color:
 	if skin.style == HudSkin.Style.BAR || isConsole(): return Color(skin.face, 0.96)
 	return GLASS
 
-#where the charms' strings are tied
+#where the charms' strings are tied: the top of the frame
 func hook() -> Vector2:
-	return Vector2(size.x * 0.5, body().end.y - 2.0)
+	return Vector2(size.x * 0.5, body().position.y + 2.0)
 
 #where charm `i`'s string ends: swinging, or (`resting`) hanging still
 func charmPoint(i: int, resting := false) -> Vector2:
 	var angle: float = CHARMS[i][0] if resting || angles.is_empty() else angles[i]
-	return hook() + Vector2(sin(angle), cos(angle)) * CHARMS[i][1]
+	return hook() + Vector2(sin(angle), cos(angle)) * (body().size.y + CHARMS[i][1])
 
 ## Dice shown for a luck stat: a die for every six, DICE_SHOWN at most
 static func diceFor(luck: int) -> int:
@@ -125,6 +132,7 @@ func apply() -> void:
 	markers.cloverui.position = charmPoint(CLOVER, true)
 	queue_redraw()
 	charms.queue_redraw()
+	front.queue_redraw()
 
 func _process(delta: float) -> void:
 	var car = Root.playerCar
@@ -133,13 +141,17 @@ func _process(delta: float) -> void:
 		set = true
 		apply()
 	swingCharms(car, delta)
-	var key := [car.luck, car.clover, snappedf(hurry(), 0.1)]
-	for angle in angles: key.push_back(snappedf(angle, 0.012))
-	if skin.mirror == &"lights": key.push_back(HudInstrument.lightbarPhase(car))
-	if skin.mirror == &"screen": key.push_back(HudTheme.blinkOn())
+	var key := [car.luck, car.clover]
+	for angle in angles: key.push_back(snappedf(angle, 0.004)) #the strings are long: a small angle is a pixel
 	if key != shownKey:
 		shownKey = key
 		charms.queue_redraw()
+	var frontKey := [snappedf(hurry(), 0.1)]
+	if skin.mirror == &"lights": frontKey.push_back(HudInstrument.lightbarPhase(car))
+	if skin.mirror == &"screen": frontKey.push_back(HudTheme.blinkOn())
+	if frontKey != shownFront:
+		shownFront = frontKey
+		front.queue_redraw()
 
 #each charm is its own pendulum: pulled toward its rest (plus the car's turn), on its own period, dying down slowly.
 #A stat that rises kicks its charm. With Reduce Motion they hang still.
@@ -228,13 +240,13 @@ func _draw() -> void:
 			draw_arc(at, 15, 0.0, TAU, 24, s.muted, 2.0, true)
 			draw_circle(at + Vector2(-5, -5), 4.5, Color(1, 1, 1, 0.18))
 
-#---------- what moves: the dice, the clover, the hurry pulse, the lights ----------
+#---------- what moves over the frame: the hurry pulse, the lights ----------
 
-func drawCharms() -> void:
+func drawFront() -> void:
 	var car = Root.playerCar
 	var b := body()
 	var pulse := hurry()
-	if pulse > 0.0: HudTheme.panel(charms, b, Color(HudTheme.BAD, pulse), corner(), Color(HudTheme.BAD, 0.08 * pulse))
+	if pulse > 0.0: HudTheme.panel(front, b, Color(HudTheme.BAD, pulse), corner(), Color(HudTheme.BAD, 0.08 * pulse))
 	if not is_instance_valid(car): return
 	if skin.mirror == &"lights": #a light strip under the frame, in step with the car's lightbar at night
 		var phase := HudInstrument.lightbarPhase(car)
@@ -242,11 +254,17 @@ func drawCharms() -> void:
 			var group := 0 if i < 3 else 1 if i < 5 else 2
 			var lit := phase == 0 || (phase > 0 && (Time.get_ticks_msec() % 160 < 80 if group == 1 else phase == group / 2 + 1))
 			var x := b.position.x + 40.0 + i * 58.0 + (26.0 if i > 3 else 0.0)
-			charms.draw_rect(Rect2(x, b.end.y - 3, 44, 5), Color(HudInstrument.LIGHTBAR[group], 1.0 if lit else 0.3 if phase < 0 else 0.14))
+			front.draw_rect(Rect2(x, b.end.y - 3, 44, 5), Color(HudInstrument.LIGHTBAR[group], 1.0 if lit else 0.3 if phase < 0 else 0.14))
 	if skin.mirror == &"screen": #a rear camera: recording
 		var at := Vector2(glass().end.x - 44.0, glass().position.y + 11.0)
-		if HudTheme.blinkOn(): charms.draw_circle(at, 3.5, HudTheme.BAD)
-		HudTheme.text(charms, at + Vector2(8, 4), "REC", 9, HudTheme.BAD, HORIZONTAL_ALIGNMENT_LEFT, 0, HudTheme.OUTLINE, skin.body)
+		if HudTheme.blinkOn(): front.draw_circle(at, 3.5, HudTheme.BAD)
+		HudTheme.text(front, at + Vector2(8, 4), "REC", 9, HudTheme.BAD, HORIZONTAL_ALIGNMENT_LEFT, 0, HudTheme.OUTLINE, skin.body)
+
+#---------- what moves behind it: the dice and the clover ----------
+
+func drawCharms() -> void:
+	var car = Root.playerCar
+	if not is_instance_valid(car): return
 	#the dice: the luck stat in pips, a die for every six, each on its own string
 	var origin := hook()
 	var luck: int = maxi(car.luck, 1)

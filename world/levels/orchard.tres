@@ -9,6 +9,7 @@ displayName = "Orchard Lanes"
 poster = "res://world/art/posters/orchard.png"
 region = &"wilds"
 stop = 2
+openers = Array[StringName]([&"smash", &"countdown"])
 featured = Array[StringName]([&"bounty", &"cones", &"circuit"])
 order = 1
 blurb = "Farm country: a dense hedge and fence lattice with gates, orchards and beehives. Yipper packs flank down the lanes."

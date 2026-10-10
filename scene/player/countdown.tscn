@@ -4,5 +4,5 @@
 
 [node name="Countdown" type="CanvasLayer"]
 process_mode = 3
-layer = 128
+layer = 2
 script = ExtResource("1_cpgwf")

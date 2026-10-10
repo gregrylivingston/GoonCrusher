@@ -57,7 +57,7 @@ func test_migrate_adds_and_updates_without_losing_progress():
 	assert_eq(data.saveVersion, SaveManager.SAVE_VERSION)
 
 func test_saves_from_before_the_road_atlas_start_over():
-	assert_eq(SaveManager.SAVE_VERSION, 13)
+	assert_eq(SaveManager.SAVE_VERSION, 14)
 	assert_eq(SaveManager.FIRST_KEPT_VERSION, 8)
 	for version in [0, 4, 5, 6, 7]:
 		var data = PlayerData.new()
@@ -150,6 +150,26 @@ func test_old_prize_game_unlocks_become_casino_pickups():
 	SaveManager.playerData = fresh
 	SaveManager.migrate()
 	assert_true(fresh.meta.unlocks.is_empty(), "a new save starts with only the Fuel Can, the Coin and the Claw Crane")
+
+#version 14 gave levels their own two openers: a win on Sprint or Countdown carries to the mode now in its slot
+func test_old_opener_wins_carry_to_the_new_openers():
+	var data = PlayerData.new()
+	data.saveVersion = 13
+	SaveManager.playerData = data
+	SaveManager.migrate() #builds the level entries
+	var i := Levels.indexOf(&"orchard")
+	var level: Dictionary = data.levels[i]
+	var openers := Root.openerModes(level)
+	assert_ne(openers, Modes.DEFAULT_OPENERS, "Orchard Lanes names its own openers")
+	level.unlocked = true
+	SaveManager.passTier(level, Root.gameModes.SPRINT, ModeTiers.MEDIUM)
+	SaveManager.passTier(level, Root.gameModes.GOONCRUSHER, ModeTiers.EASY)
+	data.saveVersion = 13
+	SaveManager.migrate()
+	level = data.levels[i]
+	for slot in openers.size(): assert_true(level.gamemodeBeat.get(openers[slot], false), "opener %d is beaten" % (slot + 1))
+	assert_eq(ModeTiers.best(level, openers[0]), ModeTiers.MEDIUM, "on the tier the old one was won on")
+	for mode in Root.featuredModes(level): assert_true(Root.isModeUnlocked(level, mode), "so the featured modes stay open")
 
 #version 13 renamed the pickup "tyre" to "tire": its unlock and its discovery follow it
 func test_a_renamed_pickup_keeps_its_unlock():

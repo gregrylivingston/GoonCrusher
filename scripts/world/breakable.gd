@@ -18,7 +18,7 @@ class_name BreakableProp extends StaticBody2D
 ##   prop only ever detonates once: bounded.
 ## - tag() puts the props goons care about into groups (SpawnManager calls it from SceneTree.node_added):
 ##   prop_log (Snapper spawns), prop_manhole (Rat Pack spawns), prop_crate (Bandit bait), prop_carcass
-##   (Buzzard perches), prop_hive (Yippers knock, Bandits raid), prop_rock (Rattlers sun on red rocks),
+##   (Buzzard perches), prop_gate (farm gates goons open and shut, Spill), prop_rock (Rattlers sun on red rocks),
 ##   prop_den (Bandits stash loot, Spill.stash), prop_burrow (Jackalope spawns and hides),
 ##   prop_roost (Buzzard roosts, Spill.ROOSTS), prop_explosive. Goons.DATA "seeks" names the groups a goon uses.
 
@@ -38,9 +38,11 @@ const COIN_SCENE := "res://scene/powerup/coin.tscn"
 ## Chance a smash also throws out a Common or Uncommon pickup (a Coin Stack past that): the crate, the one crate
 ## the game has (Bandits raid it; PickupWorld.decorateChunk's crates are the same baked prop)
 const PICKUP_SPILL := {&"crate": 0.35}
+## Breakables no goon's charge breaks: letting the bees out is the player's call
+const GOON_PROOF := [&"beehive"]
 const SCRIPT_PATH := "res://scripts/world/breakable.gd"
 const GROUPS := {&"log": &"prop_log", &"manhole": &"prop_manhole", &"crate": &"prop_crate", &"carcass": &"prop_carcass", &"logpile": &"prop_logpile",
-	&"beehive": &"prop_hive", &"rock_red": &"prop_rock", &"den": &"prop_den", &"burrow": &"prop_burrow"}
+	&"farmgate": &"prop_gate", &"rock_red": &"prop_rock", &"den": &"prop_den", &"burrow": &"prop_burrow"}
 const ROOST_GROUP := &"prop_roost" #crowns Buzzards roost in (Spill.ROOSTS)
 const EXPLOSIVE_GROUP := &"prop_explosive"
 const BREAKABLE_GROUP := &"prop_breakable" #everything that smashes: the AI driver hunts these in a Smash Run
@@ -85,9 +87,10 @@ static func speedOf(node: Object) -> float:
 	return float(node.get_meta(&"smashSpeed", INF))
 
 ## A goon attacking at `speed` along `dir` breaks it (a Tusker's charge, a Bullmoose's lunge: Goons.DATA
-## "smashes"): spills and coins go along `dir`, and the goon keeps going. False when it holds (a wall to it).
+## "smashes"): spills and coins go along `dir`, and the goon keeps going. False when it holds (a wall to it:
+## too slow for it, or a hive, GOON_PROOF).
 static func smashedByGoon(node: Object, speed: float, dir: Vector2) -> bool:
-	if not node is Node2D || not isBreakable(node) || speedOf(node) > speed: return false
+	if not node is Node2D || not isBreakable(node) || speedOf(node) > speed || propId(node) in GOON_PROOF: return false
 	node.set_meta(&"spillDir", dir)
 	smashNode(node, null)
 	return true

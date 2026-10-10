@@ -4,14 +4,17 @@ class_name Spill extends RefCounted
 ## smash speed, a goon cutting it loose, or a blast), plus the crane, which drops its container when rammed
 ## hard (PropReactions). What comes out by kind:
 ##   logs   the log pile: LOGS logs roll out along the release direction, flattening goons (crushes for the
-##          player) and knocking the car, then lie where they stop as ordinary log props (Snapper spawns too)
+##          player) and knocking the car, then lie where they stop as log props (Snapper spawns too). A log is a
+##          wall while it rolls, and the car can roll any lying log on by hitting its side (kick).
 ##   wave   the water tower: a flood flattens the goons around it ("SPLASH")
 ##   fall   the billboard: it topples away from the car (its broken state is the board lying flat) and
 ##          flattens whatever is under it
-##   swarm  the beehive: a swarm that hunts the nearest goons for SWARM_SECONDS and stings the car if it is close
+##   swarm  the beehive: SWARM_KILLS big bees that fly straight at the nearest goons; each stings one flat and is gone
+##          (SWARM_SECONDS at most); it stings the car that broke the hive only when no goon is in reach. Goons
+##          never let the bees out (BreakableProp.GOON_PROOF): that is the player's call.
 ##   drop   the crane: its container falls off the jib's tip onto whatever is below, then stays as a prop
-## Goons whose Goons.DATA "seeks" says so walk to a log pile near the car and cut it loose, aimed at the car,
-## or knock a hive (GoonVerbs.Verb.seekProp). What spilled is recorded per chunk on the TileManager (addSpilled), so a
+## Goons whose Goons.DATA "seeks" says so walk to a log pile near the car and cut it loose, aimed at the car
+## (GoonVerbs.Verb.seekProp). What spilled is recorded per chunk on the TileManager (addSpilled), so a
 ## reloaded chunk shows the logs and containers where they came to rest and a crane drops only once.
 ## Every kill here goes through flatten with its source (logs, splash, fall, bees, drop), which SpawnManager.creditCrush
 ## credits to the player, Critter Chain included, when it happens within CRITTER_CREDIT_PX of the car.
@@ -32,8 +35,12 @@ class_name Spill extends RefCounted
 ## orchard oak (levels whose rules have "oakCoins") drops that many coins on its first hard hit, once.
 ## Lures (R-10; through Pickups.lures): the Dinner Bell, rammed at BELL_RAM, calls every goon within BELL_LURE to
 ## it for BELL_SECONDS, once per bell; a Salt Lick is a permanent lure for heavies (rank 3) while its chunk is loaded.
+## Farm gates (GATE_GROUP; "farm gates" below): half stand open from the start, each with a goon standing at
+## it who shuts the gate on the car ("gatekeepers"). Goons also open and shut them on the move
+## (Goons.DATA seeks "open" and "shut"). A bump too slow to smash a shut gate swings it open (pushGate). An open
+## gate's gap is clear; its leaf, swung aside, is still solid.
 ## PropReactions.addHero calls arm() for every prop that streams in (and disarm() when its chunk goes), which
-## restores per-prop state (a den's sacks, a rung bell) and registers a salt lick's lure.
+## restores per-prop state (a den's sacks, a rung bell, a gate standing open) and registers a salt lick's lure.
 
 ## Fall boxes: what lies under the fallen prop, prop-local px on its +y side (flipped when it falls the other way)
 const FALL_BOX := Rect2(-195.0, 18.0, 390.0, 130.0)      #the billboard's board lying flat
@@ -70,9 +77,10 @@ const FLOOD_LENGTH := 900.0                 #a sluice's flood capsule along the 
 const FLOOD_RADIUS := 170.0                 #...and its half width
 const OAK_SHAKE := 200.0                    #px/s into an orchard oak that shakes its apples down
 const SWARM_SECONDS := 12.0
-const SWARM_SPEED := 300.0
+const SWARM_SPEED := 600.0                  #faster than any goon
+const SWARM_TURN := 10.0                    #how fast it comes round to its target (share of the way per second)
 const SWARM_REACH := 700.0                  #px it looks for goons
-const SWARM_KILLS := 8
+const SWARM_KILLS := 3                      #goons it flattens before it is gone
 const SWARM_STING := 0.5                    #car damage per sting, every STING_GAP while it is on the car
 const STING_GAP := 0.4
 const STING_WINDOW := 3.0                   #s after the car broke a hive in which its swarm may sting the car
@@ -116,11 +124,14 @@ static func arm(prop: Node2D) -> void:
 		&"bell", &"oak": prop.set_meta(&"spilled", isUsed(prop.global_position)) #rung or shaken once a run
 		&"saguaro": armSaguaro(prop)
 		&"fallen_trunk": prop.set_meta(&"deadfall", leans(prop))
+		&"farmgate": armGate(prop)
 		&"saltlick": Pickups.addLure(prop.global_position, SALT_LURE, INF, &"", SALT_RANK, SALT_LOOSE, prop.get_instance_id())
 
-## Its chunk is going (PropReactions.forget): a salt lick's lure goes with it
+## Its chunk is going (PropReactions.forget): a salt lick's lure goes with it, a gate's waiting keeper too
 static func disarm(prop: Node2D) -> void:
-	if BreakableProp.propId(prop) == &"saltlick": Pickups.removeLure(prop.get_instance_id())
+	match BreakableProp.propId(prop):
+		&"saltlick": Pickups.removeLure(prop.get_instance_id())
+		&"farmgate": dismissKeeper(prop)
 
 static func fx() -> GoonFx:
 	return Root.spawnManager.fx if is_instance_valid(Root.spawnManager) else null
@@ -147,7 +158,7 @@ static func flatten(goon: Node2D, from: Vector2, cause: StringName = &"crush", s
 static func goonsNear(pos: Vector2, radius: float) -> Array:
 	return Root.spawnManager.goonsNear(pos, radius) if is_instance_valid(Root.spawnManager) else []
 
-## A goon cut a log pile loose (or knocked a hive over): it spills toward the car
+## A goon cut a log pile loose: it spills toward the car
 static func goonRelease(pile: Node2D, goon: Node2D, car: Node2D) -> void:
 	if pile.get_meta(&"smashed", false): return
 	var to: Vector2 = (car.global_position - pile.global_position) if is_instance_valid(car) else Vector2.ZERO
@@ -268,9 +279,9 @@ static func spillLogs(pile: Node2D, dir: Vector2) -> void:
 		parent.add_child(roller)
 	if fx(): fx().label(pile.global_position, def.get("label", "TIMBER!"))
 
-## A log rolling out of a pile: a log prop with its collision off, rolled side-on along `dir` and slowing (a
+## A log rolling out of a pile (or kicked on by the car): a log prop rolled side-on along `dir` and slowing (a
 ## boulder tumbles instead); goons in its path are flattened, the car is knocked once; when it stops it becomes a
-## plain prop where it lies
+## prop where it lies. It is a wall while it rolls, except to a car within LOG_GRACE of where it starts.
 class Roller extends Node2D:
 	var piece: StaticBody2D
 	var dir: Vector2
@@ -281,21 +292,24 @@ class Roller extends Node2D:
 	var id := &"log"        #the prop it settles as
 	var source := &"logs"   #its kills' name in the Critter Chain
 	var spin := false       #a boulder tumbles; a log rolls side-on
+	var shape: CollisionShape2D
 
-	func _init(node: StaticBody2D, at: Vector2, d: Vector2, dist: float) -> void:
+	## `rot`: the piece's own angle to keep (a kicked log); NAN turns it side-on to the roll
+	func _init(node: StaticBody2D, at: Vector2, d: Vector2, dist: float, rot := NAN) -> void:
 		piece = node
 		dir = d
 		distance = dist
 		from = at
 		top_level = true
 		global_position = at
-		var shape: CollisionShape2D = piece.get_node_or_null("CollisionShape2D")
-		if shape: shape.disabled = true
-		piece.rotation = d.angle() + PI * 0.5 #rolls side-on
+		shape = piece.get_node_or_null("CollisionShape2D")
+		if shape: shape.disabled = true #until it is clear of the car
+		piece.rotation = d.angle() + PI * 0.5 if is_nan(rot) else rot #rolls side-on
 		add_child(piece)
 
 	func _physics_process(delta: float) -> void:
 		age += delta
+		if shape && shape.disabled && (not is_instance_valid(Root.playerCar) || Root.playerCar.global_position.distance_to(global_position) > Spill.LOG_GRACE): shape.disabled = false
 		var t := minf(age / Spill.LOG_SECONDS, 1.0)
 		var along := distance * (1.0 - (1.0 - t) * (1.0 - t))
 		global_position = from + dir * along
@@ -325,10 +339,64 @@ class Roller extends Node2D:
 		parent.add_child(piece)
 		piece.global_position = at
 		piece.global_rotation = rot
-		var shape: CollisionShape2D = piece.get_node_or_null("CollisionShape2D")
 		if shape: shape.set_deferred("disabled", false)
 		Spill.record(id, at, rot)
 		queue_free()
+
+#--- kicking a log -------------------------------------------------------------------------------------
+
+## Lying pieces the car can send rolling (a pile's logs once they settle, the world's own scattered logs, a
+## rockslide's boulders), and their kills' name in the Critter Chain
+const KICKS := {&"log": &"logs", &"rock_roll": &"rocks"}
+const KICK_SPEED := 150.0  #px/s into a lying log, across its length, that sends it rolling
+const KICK_SIDE := 0.5     #a log only rolls when the hit is at least this much across its length (0.5: within 60 degrees of square)
+const KICK_CARRY := 1.1    #px it rolls per px/s of the hit, up to LOG_DISTANCE.y
+const LOG_GRACE := 170.0   #a rolling log is no wall to the car until it is this far from it (it starts beside the car)
+
+## The way a lying piece rolls when hit moving at `moving`, scaled by the speed that goes into the roll: a log
+## rolls across its length, to the side the hit pushes it (ZERO for a hit on its end); a boulder goes any way
+static func rollPush(piece: Node2D, moving: Vector2) -> Vector2:
+	if BreakableProp.propId(piece) != &"log": return moving
+	var across := piece.global_transform.y.normalized()
+	var into := moving.dot(across)
+	if absf(into) < moving.length() * KICK_SIDE: return Vector2.ZERO
+	return across * into
+
+## The car hit a lying log (or boulder) moving at `moving` (PropReactions.react, after the wall hit): pushed across
+## its length at KICK_SPEED or more it rolls on, flattening goons like any rolling log, and the knock costs the
+## player's car LOG_CAR_DAMAGE on top of the wall hit. Hit on its end it is a wall. True when it rolled.
+static func kick(piece: Node2D, moving: Vector2) -> bool:
+	var id := BreakableProp.propId(piece)
+	var parent := piece.get_parent()
+	if not KICKS.has(id) || parent == null || parent is Roller || not piece is StaticBody2D: return false
+	var push := rollPush(piece, moving)
+	var speed := push.length()
+	if speed < KICK_SPEED: return false
+	var at := piece.global_position
+	var rot := piece.global_rotation
+	leaveHome(piece, id, at)
+	if PropReactions.current: PropReactions.current.forget(piece)
+	parent.remove_child(piece)
+	piece.position = Vector2.ZERO
+	var roller := Roller.new(piece, at, push / speed, clampf(speed * KICK_CARRY, 120.0, LOG_DISTANCE.y), rot)
+	roller.id = id
+	roller.source = KICKS[id]
+	roller.spin = id == &"rock_roll"
+	roller.hitCar = true #it rolls away from the car that kicked it
+	parent.add_child(roller)
+	var car = Root.playerCar
+	if is_instance_valid(car) && car.global_position.distance_to(at) < 260.0: car.damage(LOG_CAR_DAMAGE)
+	return true
+
+## A lying piece is about to roll off: a spilled one's record goes (it is recorded again where it stops); one
+## of the world's own is marked gone from its chunk for the run (ChunkView.applyProp skips it) and its chunk
+## lets go of the node, so it isn't pooled from wherever it ends up
+static func leaveHome(piece: Node2D, id: StringName, at: Vector2) -> void:
+	var tm := tileManager()
+	if tm == null: return
+	if tm.has_method("removeSpilled") && tm.removeSpilled(id, at): return
+	if not BreakableProp.markTaken(piece): markUsed(at)
+	if tm.has_method("disownProp"): tm.disownProp(piece)
 
 #--- the water tower, the billboard, the beehive ------------------------------------------------------
 
@@ -467,26 +535,30 @@ static func swarm(hive: Node2D) -> void:
 	swarms = swarms.filter(func(s): return is_instance_valid(s) && not s.is_queued_for_deletion() && not s.leaving())
 	while swarms.size() >= SWARM_CAP: swarms.pop_front().disperse()
 	var s := Swarm.new(hive.global_position)
-	#it stings the car only if the car broke this hive just now (STING_WINDOW); a raiding Bandit is its first target
+	#it stings the car only if the car broke this hive just now (STING_WINDOW)
 	s.stingUntil = float(hive.get_meta(&"carBrokeAt", -INF)) + STING_WINDOW
-	if hive.has_meta(&"raider") && is_instance_valid(hive.get_meta(&"raider")): s.first = hive.get_meta(&"raider")
 	parent.add_child(s)
 	swarms.push_back(s)
 	if fx(): fx().label(hive.global_position, "BEES!", 22)
 
-## A cloud of bees out of a smashed hive: it flies at the goon that raided the hive, else the nearest goon within
-## SWARM_REACH, and flattens what it reaches (SWARM_KILLS at most). It goes for the car, and stings it while on it,
-## only when the car broke the hive in the last STING_WINDOW s. It disperses after SWARM_SECONDS.
+## The bees out of a smashed hive, SWARM_KILLS of them, drawn big enough to read: from its first tick the swarm
+## flies fast at the nearest goon within SWARM_REACH. Each goon it reaches costs one bee its sting (three bees, then
+## two, then one); with none left (or after SWARM_SECONDS) it is gone. With no goon in reach it goes for the car,
+## and stings it while on it, only when the car broke the hive in the last STING_WINDOW s.
 class Swarm extends Node2D:
-	const DOTS := 26
+	const ORBIT := 30.0     #px each bee circles from the swarm's center
+	const BEE_SCALE := 1.25 #a bee is about 45 px long
+	const DARK := Color(0.13, 0.1, 0.07)
+	const YELLOW := Color(0.98, 0.78, 0.16)
+	const WING := Color(0.93, 0.97, 1.0, 0.8)
 	const LOOK_EVERY := 3 #ticks between target searches
 	var age := 0.0
 	var kills := 0
 	var stingT := 0.0
 	var stingUntil := -INF #GoonVerbs.now() seconds
-	var first = null #the goon that raided the hive (a Bandit): stung first
 	var vel := Vector2.ZERO
 	var target := Vector2.INF
+	var looked := false #it picks a target on its first tick, then every LOOK_EVERY
 	var seeds := PackedVector2Array()
 
 	func _init(at: Vector2) -> void:
@@ -494,7 +566,7 @@ class Swarm extends Node2D:
 		z_as_relative = false
 		z_index = PropReactions.BITS_Z
 		global_position = at
-		for i in DOTS: seeds.push_back(Vector2(randf() * TAU, randf_range(0.6, 1.8)))
+		for i in Spill.SWARM_KILLS: seeds.push_back(Vector2(randf() * TAU, randf_range(0.85, 1.15)))
 
 	func leaving() -> bool:
 		return age >= Spill.SWARM_SECONDS || kills >= Spill.SWARM_KILLS
@@ -513,10 +585,11 @@ class Swarm extends Node2D:
 			queue_redraw()
 			return
 		var car = Root.playerCar
-		if (Engine.get_physics_frames() + get_instance_id()) % LOOK_EVERY == 0: target = pickTarget(car)
-		elif is_instance_valid(first) && not first.dead: target = first.global_position
+		if not looked || (Engine.get_physics_frames() + get_instance_id()) % LOOK_EVERY == 0:
+			looked = true
+			target = pickTarget(car)
 		var want := (target - global_position).normalized() * Spill.SWARM_SPEED if target != Vector2.INF else Vector2.ZERO
-		vel = vel.lerp(want, minf(4.0 * delta, 1.0))
+		vel = vel.lerp(want, minf(Spill.SWARM_TURN * delta, 1.0))
 		global_position += vel * delta
 		for goon in Spill.goonsNear(global_position, 40.0):
 			if not goon.get("dead") && kills < Spill.SWARM_KILLS:
@@ -528,9 +601,8 @@ class Swarm extends Node2D:
 			car.damage(Spill.SWARM_STING)
 		queue_redraw()
 
-	## The raider first, then the nearest goon in reach, then the car if it broke the hive just now
+	## The nearest goon in reach, else the car if it broke the hive just now
 	func pickTarget(car) -> Vector2:
-		if is_instance_valid(first) && not first.dead: return first.global_position
 		var at := Vector2.INF
 		var best := Spill.SWARM_REACH * Spill.SWARM_REACH
 		for goon in Spill.goonsNear(global_position, Spill.SWARM_REACH):
@@ -542,12 +614,181 @@ class Swarm extends Node2D:
 		if at == Vector2.INF && angry() && is_instance_valid(car) && car.global_position.distance_to(global_position) < 500.0: at = car.global_position
 		return at
 
+	## The bees still to sting
+	func bees() -> int:
+		return maxi(Spill.SWARM_KILLS - kills, 0)
+
+	## Each bee circles the swarm's center, nose along the way it flies
 	func _draw() -> void:
-		for i in DOTS:
+		var heading := vel.angle() if vel.length() > 20.0 else 0.0
+		for i in bees():
 			var s := seeds[i]
-			var p := Vector2(sin(age * 6.0 * s.y + s.x) * 34.0, cos(age * 7.3 * s.y + s.x * 1.7) * 26.0)
-			draw_circle(p, 2.6, Color(0.16, 0.13, 0.08, 0.9))
-			draw_circle(p + Vector2(1.2, 0), 1.4, Color(0.88, 0.7, 0.24, 0.95))
+			var a := age * 5.0 * s.y + s.x + i * TAU / Spill.SWARM_KILLS
+			var p := Vector2(cos(a), sin(a) * 0.8) * ORBIT
+			drawBee(p, heading + sin(age * 9.0 + s.x) * 0.35, age * 60.0 + s.x)
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+	## One bee, nose along +x: a dark outline, a striped yellow body, a stinger and two beating wings
+	func drawBee(at: Vector2, rot: float, beat: float) -> void:
+		draw_set_transform(at, rot, Vector2.ONE * BEE_SCALE)
+		for part in [[Vector2(-9.0, 0.0), 9.5], [Vector2(1.0, 0.0), 8.5], [Vector2(10.0, 0.0), 6.5]]: draw_circle(part[0], part[1], DARK)
+		draw_colored_polygon(PackedVector2Array([Vector2(-16.0, -3.5), Vector2(-25.0, 0.0), Vector2(-16.0, 3.5)]), DARK)
+		draw_circle(Vector2(-9.0, 0.0), 7.5, YELLOW)
+		draw_circle(Vector2(1.0, 0.0), 6.5, YELLOW)
+		draw_circle(Vector2(10.0, 0.0), 4.5, DARK)
+		for x in [-12.0, -6.5]: draw_line(Vector2(x, -6.5), Vector2(x, 6.5), DARK, 3.0)
+		var flap := 0.75 + 0.25 * sin(beat)
+		for side in [-1.0, 1.0]:
+			draw_circle(Vector2(-1.0, side * 11.0 * flap), 7.5, Color(DARK, 0.35))
+			draw_circle(Vector2(-1.0, side * 11.0 * flap), 6.5, WING)
+
+#--- farm gates -------------------------------------------------------------------------------------
+
+const GATE_GROUP := &"prop_gate"
+const GATE_HINGE := Vector2(-158.0, 0.0) #the hinge post, gate-local px (world_gen.js farmgate)
+const GATE_SWING := 1.4                  #radians an open gate stands at, about its hinge
+const GATE_SECONDS := 0.3                #its swing
+const GATE_REACH := 190.0                #px past a goon's body from the gate's center where it can work it
+const GATE_CLEAR := 230.0                #a gate never shuts on a car this close to it
+const GATE_AHEAD := 1200.0               #a goon shuts a gate the car is heading at from within this...
+const GATE_CAR_SPEED := 120.0            #...at this speed or more
+const GATE_OPEN_SHARE := 0.5             #the share of gates that stand open when they stream in
+const GATE_PUSH := 40.0                  #px/s: a bump this fast, under its smash speed, swings a shut gate open
+const GATE_TAG := 0x6A7E
+
+static func isOpen(gate: Node2D) -> bool:
+	return gate.get_meta(&"open", false)
+
+## Whether the gate at `at` stands open when it streams in: by its place, so the same every time. What goons do
+## to a gate lasts until its chunk goes.
+static func gateStartsOpen(at: Vector2) -> bool:
+	return WorldGen.hashf(0, GATE_TAG, roundi(at.x), roundi(at.y)) < GATE_OPEN_SHARE
+
+## Opens or shuts a gate: the leaf swings aside on its hinge, to its +y side or (`side` -1) the other, and the
+## gap is clear. The leaf is as solid and as breakable open as shut: its shape swings with it, at once, while the
+## sprite takes GATE_SECONDS. `instant` skips the swing (a gate streaming in).
+static func setGate(gate: Node2D, open: bool, instant := false, side := 1.0) -> void:
+	if gate.get_meta(&"smashed", false) || (isOpen(gate) == open && not instant): return
+	gate.set_meta(&"open", open)
+	gate.set_meta(&"swingSide", side)
+	var to := GATE_SWING * side if open else 0.0
+	for child in gate.get_children():
+		if child is CollisionShape2D || child is CollisionPolygon2D || child is LightOccluder2D:
+			child.set_deferred("rotation", to)
+			child.set_deferred("position", GATE_HINGE - GATE_HINGE.rotated(to))
+	var sprite: Node2D = gate.get_node_or_null("Sprite2D")
+	if sprite == null: return
+	if PropReactions.current: PropReactions.current.rest(gate) #a wobble would put the leaf back where it was
+	if sprite.has_meta(&"swing") && is_instance_valid(sprite.get_meta(&"swing")): sprite.get_meta(&"swing").kill()
+	if instant || not gate.is_inside_tree():
+		swingGate(to, sprite)
+		return
+	var tween := sprite.create_tween()
+	tween.tween_method(swingGate.bind(sprite), sprite.rotation, to, GATE_SECONDS).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	sprite.set_meta(&"swing", tween)
+
+## The leaf at `angle`, turned about its hinge post
+static func swingGate(angle: float, sprite: Node2D) -> void:
+	sprite.rotation = angle
+	sprite.position = GATE_HINGE - GATE_HINGE.rotated(angle)
+
+## Whether `a` and `b` are on opposite sides of the gate's line
+static func acrossGate(gate: Node2D, a: Vector2, b: Vector2) -> bool:
+	return gate.to_local(a).y * gate.to_local(b).y < 0.0
+
+## The gate a goon at `from` would work now (Goons.DATA seeks "open" and "shut"), or null: to open, the nearest
+## shut one within `reach` that stands between it and the car; to shut, the nearest open one the car is heading at
+static func gateFor(tree: SceneTree, group: StringName, action: StringName, from: Vector2, car: Node2D, reach: float) -> Node2D:
+	if tree == null || not is_instance_valid(car): return null
+	var best: Node2D = null
+	var bestD := reach * reach
+	for gate in tree.get_nodes_in_group(group):
+		if not gate is Node2D || not gate.is_inside_tree() || gate.get_meta(&"smashed", false): continue
+		var d: float = gate.global_position.distance_squared_to(from)
+		if d >= bestD: continue
+		if action == &"open" && (isOpen(gate) || not acrossGate(gate, from, car.global_position)): continue
+		if action == &"shut" && (not isOpen(gate) || not carHeadingAt(gate, car)): continue
+		bestD = d
+		best = gate
+	return best
+
+## The car is coming at the gate from within `ahead`, and is not yet in the gap
+static func carHeadingAt(gate: Node2D, car: Node2D, ahead := GATE_AHEAD) -> bool:
+	return car.global_position.distance_to(gate.global_position) > GATE_CLEAR && GoonVerbs.bearingDown(car, gate.global_position, ahead, GATE_CAR_SPEED)
+
+## The car bumped a shut gate too slowly to smash it (PropReactions.knocks, before the wall hit): at GATE_PUSH
+## or more it swings open away from the car, which keeps its speed. True when it did.
+static func pushGate(gate: Object, moving: Vector2) -> bool:
+	if not gate is Node2D || BreakableProp.propId(gate) != &"farmgate" || moving.length() < GATE_PUSH: return false
+	if gate.get_meta(&"smashed", false) || isOpen(gate): return false
+	setGate(gate, true, false, -1.0 if gate.to_local(gate.global_position - moving).y > 0.0 else 1.0)
+	Audio.play(Transition.SOUNDS["rattle"], -8.0, 0.8)
+	return true
+
+#--- gatekeepers ---------------------------------------------------------------------------------------
+## Every kept gate (gateKept, by its place) that streams in open gets a goon standing at it (postKeeper: the
+## first goon of the level's line-up whose Goons.DATA says "keeps"), in the state &"keep": it waits there and
+## slams the gate shut when the car heads for it from within KEEP_AHEAD (GoonVerbs.Verb.keepGate). A waiting
+## keeper goes with its gate's chunk (disarm) and is never swept up as a straggler (SpawnManager.despawnSweep);
+## once it has done its job the gate gets no other this run (markUsed).
+
+const KEEP_STATE := &"keep"
+const KEEP_AHEAD := 800.0    #px: the car this close and heading at the gate, and the keeper shuts it
+const KEEP_WAKE := 220.0     #a car this close to the keeper itself and it gives the gate up and comes for the car
+const GATE_KEPT_SHARE := 1.0 #the share of open gates that get a keeper
+const KEEP_TAG := 0x6A7F
+
+static func gateKept(at: Vector2) -> bool:
+	return WorldGen.hashf(0, KEEP_TAG, roundi(at.x), roundi(at.y)) < GATE_KEPT_SHARE
+
+## The goon keeping a gate, or null
+static func keeperOf(gate: Node2D) -> Node2D:
+	var k = gate.get_meta(&"keeper", null)
+	return k if is_instance_valid(k) && not k.get("dead") else null
+
+## Where a gate's keeper stands: by the latch post, on the side the open leaf isn't
+static func keeperSpot(gate: Node2D) -> Vector2:
+	return gate.to_global(Vector2(-GATE_HINGE.x, -80.0 * float(gate.get_meta(&"swingSide", 1.0))))
+
+## The goon that keeps this level's gates: the first of its line-up that "keeps" (&"" for none)
+static func keeperId() -> StringName:
+	var def := Levels.current()
+	for id in (def.lineup if def else []):
+		if Goons.DATA.get(id, {}).get("keeps", false): return id
+	return &""
+
+## A gate streamed in (arm): it stands open or shut by its place, and a kept open one gets its keeper
+static func armGate(gate: Node2D) -> void:
+	var at := gate.global_position
+	setGate(gate, gateStartsOpen(at), true)
+	if isOpen(gate) && gateKept(at) && not isUsed(at): postKeeper(gate, keeperId())
+
+## Stands a goon of `id` at an open gate as its keeper; null when it can't (no such goon, the goon cap)
+static func postKeeper(gate: Node2D, id: StringName) -> Node2D:
+	var sm = Root.spawnManager
+	if id == &"" || not is_instance_valid(sm) || not is_instance_valid(Root.levelRoot) || not sm.canSpawn() || keeperOf(gate) != null: return null
+	var goon: Node2D = sm.makeGoon(id)
+	goon.position = keeperSpot(gate)
+	goon.set_meta(&"spawnState", KEEP_STATE) #Walker._ready starts it there
+	goon.set_meta(&"gate", gate)
+	gate.set_meta(&"keeper", goon)
+	sm.registerGoon(goon)
+	Root.levelRoot.add_child(goon)
+	return goon
+
+## Its gate's chunk is going: a keeper still waiting goes with it
+static func dismissKeeper(gate: Node2D) -> void:
+	var k := keeperOf(gate)
+	if k != null && k.get("state") == KEEP_STATE: k.queue_free()
+
+## A goon at the gate works it. It never shuts one on a car in the gap (GATE_CLEAR). True when the gate moved.
+static func goonGate(gate: Node2D, open: bool, car: Node2D) -> bool:
+	if gate.get_meta(&"smashed", false) || isOpen(gate) == open: return false
+	if not open && is_instance_valid(car) && car.global_position.distance_to(gate.global_position) <= GATE_CLEAR: return false
+	setGate(gate, open, false, -1.0 if is_instance_valid(car) && gate.to_local(car.global_position).y > 0.0 else 1.0) #it swings away from the car
+	Audio.play(Transition.SOUNDS["rattle" if open else "clank"], -8.0, 0.8)
+	if fx(): fx().label(gate.global_position, "GATE OPEN" if open else "GATE SHUT", 18)
+	return true
 
 #--- the crane --------------------------------------------------------------------------------------
 

@@ -207,9 +207,12 @@ static func chooseLevelAndMode(persona: Dictionary, data: PlayerData, history: A
 	var next := pathRun(data, history, persona)
 	if next.is_empty(): return playable[0]
 	if losingStreak(history, next, persona.retreat):
-		#stuck: farm Countdown on the level before for a run (a player grinding coins to upgrade)
+		#stuck: farm the level before for a run (a player grinding coins to upgrade): its Countdown if it plays
+		#one, else the last of its modes with goons that is open
 		var back := maxi(next.level - 1, 0)
-		return {"level": back, "mode": G.GOONCRUSHER if Root.isModePlayable(data.levels[back], G.GOONCRUSHER) else Root.FIRST_MODE}
+		var farm: Array = Root.modePath(back).filter(func(m): return Modes.hasGoons(m) && Root.isModePlayable(data.levels[back], m))
+		if G.GOONCRUSHER in farm: return {"level": back, "mode": G.GOONCRUSHER}
+		return {"level": back, "mode": farm[-1] if not farm.is_empty() else Root.firstMode(back)}
 	return next
 
 ## Every {level, mode} the menu would start: the level is open and the mode unlocked and available.
@@ -247,7 +250,7 @@ static func pathRun(data: PlayerData, history: Array, persona: Dictionary) -> Di
 	for level in range(furthest, -1, -1): #everything beaten on Easy: go for medals
 		for run in playable:
 			if run.level == level && ModeTiers.best(data.levels[level], run.mode) < cap && not losingStreak(history, run, persona.retreat): return run
-	return {"level": furthest, "mode": Root.FIRST_MODE}
+	return {"level": furthest, "mode": Root.firstMode(furthest)}
 
 ## The last `count` runs of this level and mode were all lost.
 static func losingStreak(history: Array, run: Dictionary, count: int) -> bool:

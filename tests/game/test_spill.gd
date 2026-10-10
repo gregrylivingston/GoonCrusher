@@ -83,7 +83,58 @@ func test_a_log_pile_rolls_logs_that_flatten_goons_and_settle():
 	assert_eq(logs.size(), Spill.LOGS, "every log lies where it stopped as a prop")
 	for l in logs:
 		assert_true(l.global_position.x > 150.0, "downhill of the pile")
-		assert_false(l.get_node("CollisionShape2D").disabled, "and is solid again")
+		assert_false(l.get_node("CollisionShape2D").disabled, "and is solid")
+
+func test_a_rolling_log_is_a_wall_and_a_settled_one_can_be_kicked_on():
+	var car := makeCar(Vector2(0, -3000))
+	var pile := prop("logpile")
+	pile.set_meta(&"spillDir", Vector2.RIGHT)
+	BreakableProp.smashNode(pile, null)
+	await frames(3)
+	for r in get_children().filter(func(n): return n is Spill.Roller):
+		assert_false(r.piece.get_node("CollisionShape2D").disabled, "a rolling log is solid when the car isn't beside it")
+	await frames(int(Spill.LOG_SECONDS * 60) + 10)
+	var logs := get_children().filter(func(n): return n is StaticBody2D && n.get_meta(&"propId", &"") == &"log")
+	var l: StaticBody2D = logs[0]
+	var from := l.global_position
+	var across: Vector2 = l.global_transform.y.normalized()
+	if across.x < 0.0: across = -across
+	assert_true(across.x > 0.8, "it lies across the way it rolled")
+	assert_false(Spill.kick(l, across * (Spill.KICK_SPEED - 20.0)), "a tap leaves it lying")
+	assert_false(Spill.kick(l, across.orthogonal() * 500.0), "hit on its end it is a wall")
+	assert_eq(l.global_position, from, "still where it lay")
+	var lying := prop("log", Vector2(0, 2000))
+	assert_true(Spill.kick(lying, Vector2(0, 300)), "a scattered log hit on its side rolls too")
+	assert_almost_eq(Spill.rollPush(lying, Vector2(300, 300)).x, 0.0, 0.01, "always across its length")
+	var victim := goon(&"grunt", from + Vector2(250, 0))
+	car.global_position = from - Vector2(120, 0)
+	var health := car.health
+	assert_true(Spill.kick(l, Vector2(400, 0)), "a hard hit sends it rolling on")
+	assert_true(car.health < health, "which costs the car")
+	assert_true(l.get_node("CollisionShape2D").disabled, "no wall to the car right beside it")
+	car.global_position = Vector2(0, -3000)
+	await frames(int(Spill.LOG_SECONDS * 60) + 10)
+	assert_true(flattened(victim), "it flattens the goon in its way")
+	assert_true(l.global_position.x > from.x + 200.0, "and lies farther on")
+	assert_false(l.get_node("CollisionShape2D").disabled, "solid again")
+
+func test_the_car_driving_into_a_lying_log_rolls_it():
+	var car := makeCar(Vector2(-260, 0))
+	var lying := prop("log", Vector2.ZERO, PI * 0.5) #lengthwise along y: the car comes at its side
+	add_child_autofree(PropReactions.new())
+	await frames(2)
+	var rolled := false
+	for i in 90:
+		car.velocity = Vector2(400, 0)
+		await get_tree().physics_frame
+		if lying.get_parent() is Spill.Roller:
+			rolled = true
+			break
+	assert_true(rolled, "the hit sent it rolling")
+	car.global_position = Vector2(-3000, 0)
+	car.velocity = Vector2.ZERO
+	await frames(int(Spill.LOG_SECONDS * 60) + 10)
+	assert_true(lying.global_position.x > 150.0, "away from the car, and it lies there")
 
 func test_a_water_tower_floods_goons_flat():
 	makeCar(Vector2(-4000, 0))

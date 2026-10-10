@@ -1,7 +1,8 @@
 extends GameTest
 
 #Region 1, The Wilds (lane A; docs/GOONS.md "Wild instincts"): the Critter Chain (kills the player sets up join the
-#Crush Combo near the car, with a variety XP bonus), charges that break things, trampling, the seeks table, the lure
+#Crush Combo near the car, with a variety XP bonus), charges that break things, trampling, the seeks table, farm
+#gates goons open and shut, the lure
 #list, herds that graze and stampede, the Bullmoose daze, slime that slows goons, quills that hit goons, Rattlers
 #sunning on rocks, Buzzard roosts, smash tags and the Golden Jackalope.
 
@@ -192,31 +193,145 @@ func test_the_seeks_table_is_well_formed():
 		for row in Goons.DATA[id].get("seeks", []):
 			assert_eq(row.size(), 4, "%s: [group, action, carRange, goonRange]" % id)
 			assert_true(row[0] in groups, "%s seeks a tagged group (%s)" % [id, row[0]])
-			assert_true(row[1] in [&"release", &"knock", &"raid", &"perch", &"roost", &"stash", &"hide"], "%s: a known action" % id)
+			assert_true(row[1] in [&"release", &"raid", &"open", &"shut", &"perch", &"roost", &"stash", &"hide"], "%s: a known action" % id)
 			assert_gt(float(row[3]), 0.0, "%s looks somewhere" % id)
 	var yipper: Array = Goons.DATA[&"yipper"].seeks.map(func(r): return r[1])
-	assert_eq(yipper, [&"release", &"knock"], "Yippers release piles and knock hives")
-	assert_eq(Goons.DATA[&"bandit"].seeks.map(func(r): return r[0]), [&"prop_crate", &"prop_hive", &"prop_den"], "Bandits raid crates and hives, and stash in dens")
+	assert_eq(yipper, [&"release", &"open"], "Yippers release piles and open gates")
+	assert_eq(Goons.DATA[&"bandit"].seeks.map(func(r): return r[0]), [&"prop_crate", &"prop_gate", &"prop_den"], "Bandits raid crates, shut gates and stash in dens")
 	assert_eq(Goons.DATA[&"buzzard"].seeks.map(func(r): return r[1]), [&"perch", &"roost"], "Buzzards perch and roost")
-	assert_true(prop("beehive", Vector2(9000, 0)).is_in_group(&"prop_hive"), "hives are tagged")
+	assert_true(prop("farmgate", Vector2(9000, 0)).is_in_group(Spill.GATE_GROUP), "farm gates are tagged")
 	assert_true(prop("rock_red", Vector2(9000, 900)).is_in_group(&"prop_rock"), "so are red rocks")
 	assert_true(prop("deadtree", Vector2(9000, 1800)).is_in_group(BreakableProp.ROOST_GROUP), "and dead trees are roosts")
 
-func test_a_yipper_knocks_a_hive_over_near_the_car():
-	var car := makeCar(Vector2(0, 600))
+func test_goons_never_let_the_bees_out():
+	makeCar(Vector2(0, 4000))
 	var hive := prop("beehive")
-	var g := goon(&"yipper", Vector2(300, 0))
+	assert_false(BreakableProp.smashedByGoon(hive, 9999.0, Vector2.RIGHT), "a hive holds against any charge")
+	assert_false(hive.get_meta(&"smashed", false))
+	for id in Goons.DATA:
+		for row in Goons.DATA[id].get("seeks", []): assert_ne(row[0], &"prop_hive", "%s leaves hives alone" % id)
+
+func test_a_yipper_opens_the_gate_between_it_and_the_car():
+	var car := makeCar(Vector2(0, 500))
+	var gate := prop("farmgate")
+	var g := goon(&"yipper", Vector2(0, -300))
+	assert_true(Spill.acrossGate(gate, g.global_position, car.global_position), "the gate is between them")
+	assert_eq(Spill.gateFor(get_tree(), Spill.GATE_GROUP, &"shut", g.global_position, car, 500.0), null, "a shut gate can't be shut")
 	for i in 150:
-		if hive.get_meta(&"smashed", false): break
+		if Spill.isOpen(gate): break
 		g.verb.seekProp(1.0 / 60.0, car)
 		await get_tree().physics_frame
-	assert_true(hive.get_meta(&"smashed", false), "it knocked it over")
-	assert_eq(get_children().filter(func(n): return n is Spill.Swarm).size(), 1, "and the bees are out")
+	assert_true(Spill.isOpen(gate), "it opened it")
+	await frames(2)
+	var shape: CollisionShape2D = gate.get_node("CollisionShape2D")
+	assert_false(shape.disabled, "the open leaf is still solid")
+	assert_almost_eq(shape.rotation, -Spill.GATE_SWING, 0.001, "swung aside with the leaf, away from the car")
+	assert_almost_eq(shape.to_global(Spill.GATE_HINGE).distance_to(gate.to_global(Spill.GATE_HINGE)), 0.0, 0.01, "about its hinge")
+	assert_true(gate.is_in_group(BreakableProp.BREAKABLE_GROUP), "and still smashes")
+	var same := goon(&"yipper", Vector2(900, 400))
+	var gate2 := prop("farmgate", Vector2(900, 0))
+	car.global_position = Vector2(900, 800)
+	assert_eq(Spill.gateFor(get_tree(), Spill.GATE_GROUP, &"open", same.global_position, car, 500.0), null, "a gate that isn't in its way stays shut")
+	assert_false(Spill.isOpen(gate2))
 
-func test_a_bandit_raids_a_crate_when_nothing_is_lying_about():
+func test_a_bandit_shuts_the_gate_the_car_is_heading_at():
+	var car := makeCar(Vector2(0, 1000))
+	var gate := prop("farmgate")
+	Spill.setGate(gate, true, true)
+	var g := goon(&"bandit", Vector2(200, -100))
+	for i in 60:
+		g.verb.seekProp(1.0 / 60.0, car)
+		await get_tree().physics_frame
+	assert_true(Spill.isOpen(gate), "the car isn't coming: it stays open")
+	for i in 150:
+		if not Spill.isOpen(gate): break
+		car.velocity = Vector2(0, -200.0)
+		g.verb.seekProp(1.0 / 60.0, car)
+		await get_tree().physics_frame
+	assert_false(Spill.isOpen(gate), "it shut it in the car's face")
+	await frames(2)
+	assert_almost_eq(gate.get_node("CollisionShape2D").rotation, 0.0, 0.001, "across the gap again")
+	assert_eq(gate.get_node("CollisionShape2D").position, Vector2.ZERO)
+	var gate2 := prop("farmgate", Vector2(5000, 0))
+	Spill.setGate(gate2, true, true)
+	car.global_position = Vector2(5000, Spill.GATE_CLEAR - 50.0)
+	assert_false(Spill.goonGate(gate2, false, car), "never on a car in the gap")
+	assert_true(Spill.isOpen(gate2))
+
+func test_some_gates_stand_open_and_always_the_same_ones():
+	var open := 0
+	for i in 400:
+		var at := Vector2(i * 1200.0, i * 37.0)
+		assert_eq(Spill.gateStartsOpen(at), Spill.gateStartsOpen(at), "by its place")
+		if Spill.gateStartsOpen(at): open += 1
+	assert_between(open, 150, 250, "about half (%d of 400)" % open)
+
+func test_a_light_bump_swings_a_gate_open_and_a_hard_hit_still_smashes_it():
+	var car := makeCar(Vector2(0, 300))
+	var gate := prop("farmgate")
+	assert_false(Spill.pushGate(gate, Vector2(0, -Spill.GATE_PUSH + 10.0)), "a nudge does nothing")
+	assert_true(PropReactions.knocks(gate, Vector2(0, -100.0)), "a light bump swings it open, and the car keeps its speed")
+	assert_true(Spill.isOpen(gate))
+	await frames(2)
+	assert_almost_eq(gate.get_node("CollisionShape2D").rotation, -Spill.GATE_SWING, 0.001, "away from the car")
+	assert_false(gate.get_meta(&"smashed", false), "not smashed")
+	assert_false(Spill.pushGate(gate, Vector2(0, -100.0)), "an open leaf is a wall")
+	var gate2 := prop("farmgate", Vector2(3000, 0))
+	car.global_position = Vector2(3000, 300)
+	await frames(2)
+	for i in 90:
+		car.velocity = Vector2(0, -400.0)
+		await get_tree().physics_frame
+		if gate2.get_meta(&"smashed", false): break
+	assert_true(gate2.get_meta(&"smashed", false), "at speed it smashes as before")
+	assert_false(Spill.isOpen(gate2))
+
+func test_an_open_gate_has_a_keeper_that_shuts_it_on_the_car():
+	var car := makeCar(Vector2(0, 3000))
+	var stub := level(&"orchard")
+	assert_eq(Spill.keeperId(), &"jackalope", "Orchard Lanes' gates are kept by its first goon that keeps")
+	var gate := prop("farmgate")
+	assert_eq(Spill.postKeeper(gate, &"yipper" if false else &""), null, "no keeper without a goon for it")
+	Spill.setGate(gate, true, true)
+	var g: Walker = Spill.postKeeper(gate, Spill.keeperId())
+	assert_true(g != null && g.get_parent() == stub, "a goon stands at the gate")
+	assert_eq(g.global_position, Spill.keeperSpot(gate), "at its post")
+	assert_eq(Spill.postKeeper(gate, Spill.keeperId()), null, "one keeper a gate")
+	await frames(5)
+	assert_eq(g.state, Spill.KEEP_STATE, "it waits")
+	assert_true(g.global_position.distance_to(Spill.keeperSpot(gate)) < 5.0, "without moving")
+	manager.despawnSweep()
+	assert_false(g.is_queued_for_deletion(), "and is never swept up as a straggler")
+	car.global_position = Vector2(0, Spill.KEEP_AHEAD - 100.0)
+	for i in 30:
+		car.velocity = Vector2(0, -250.0)
+		await get_tree().physics_frame
+		if not Spill.isOpen(gate): break
+	assert_false(Spill.isOpen(gate), "the car heads for the gate: shut in its face")
+	assert_ne(g.state, Spill.KEEP_STATE, "and the keeper comes for the car")
+	var gate2 := prop("farmgate", Vector2(6000, 0))
+	Spill.setGate(gate2, true, true)
+	var g2: Walker = Spill.postKeeper(gate2, &"bandit")
+	await frames(3)
+	Spill.disarm(gate2)
+	assert_true(g2.is_queued_for_deletion(), "a keeper still waiting goes with its gate's chunk")
+
+func test_a_bandit_raids_and_steals_only_where_the_player_sees_it():
 	var car := makeCar(Vector2(0, 3000))
 	var crate := prop("crate")
 	var g := goon(&"bandit", Vector2(300, 0))
+	var coin: Node2D = add_child_autofree(load(BreakableProp.COIN_SCENE).instantiate())
+	coin.global_position = Vector2(300, -200)
+	for i in 60:
+		g.verb.seekProp(1.0 / 60.0, car)
+		await get_tree().physics_frame
+	assert_false(crate.get_meta(&"smashed", false), "the car is far off: the crate is left alone")
+	assert_false(is_instance_valid(g.verb.target), "and so is the pickup")
+	car.global_position = Vector2(150, 150)
+	g.verb.lookT = 0.0
+	g.verb.seekProp(1.0 / 60.0, car)
+	assert_eq(g.verb.target, coin, "in sight of the car it goes for the pickup")
+	coin.free()
 	for i in 150:
 		if crate.get_meta(&"smashed", false): break
 		g.verb.seekProp(1.0 / 60.0, car)

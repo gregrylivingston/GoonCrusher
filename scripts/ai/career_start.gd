@@ -85,14 +85,14 @@ static func build(tier: String, overrides: Dictionary = {}) -> PlayerData:
 	data.gem = int(spec.get("gems", 0))
 	data.selectedCar = data.cars.find(byPrice[owned - 1]) if owned > 0 else 0 #the best car owned, as a player would drive
 	data.selectedLevel = 0
-	data.gameMode = Root.FIRST_MODE
+	data.gameMode = Root.firstMode(0)
 	data.saveVersion = SaveManager.SAVE_VERSION
 	return data
 
 ## The modes a tier has beaten on level `index`: ROAD or ALL_MODES
 static func beatenModes(index: int, what: String) -> Array:
 	if what == ALL_MODES: return Root.modePath(index).filter(func(m): return Root.isModeAvailable(m))
-	return Root.STAPLE_MODES + [Root.roadModes(index)[0]]
+	return Root.openerModes(index) + [Root.roadModes(index)[0]]
 
 #---------- playing from a tier by hand (the console's `start`, the --play-start option) ----------
 

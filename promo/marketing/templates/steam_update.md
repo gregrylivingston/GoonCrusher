@@ -49,7 +49,7 @@ Built only from `CHANGELOG.md` and the fact sheets.
 
 **Full changes**
 - **World and levels.** Fences, crates and hay break if you hit them fast enough. Log piles roll, beehives swarm, sluice gates flood. Water has depth. The Wilds has stampedes and flash floods.
-- **Modes.** Every level plays Sprint, then Countdown, then three featured modes. Every mode has Easy, Medium and Hard, with bronze, silver and gold medals.
+- **Modes.** Every level plays five modes picked for it; win all five and Free Play opens there. Every mode has Easy, Medium and Hard, with bronze, silver and gold medals.
 - **Cars and handling.** The demo's sedan, van and taxi each drive their own way. Damage has five systems and shows on the car.
 - **Goons.** The demo's levels field 28 of them, from the Wild Things and the Goon Tribe. The Goonopedia keeps notes on every one you have crushed.
 - **Progression.** Win any featured mode to open the next level. First clears pay a bonus.

@@ -25,7 +25,7 @@ Everything that is not built yet lives in this folder: nowhere else. The area do
 
 ## The 0.3 demo
 
-**Scope (the author):** the first two regions, The Wilds and Tribe Country: 10 levels, the first 3 cars, and every mode those levels feature (`Root.IS_DEMO`, `DEMO_LEVEL_COUNT`, `DEMO_CAR_COUNT`, `Unlocks.inDemo`). That is 18 of the 19 modes: everything but Flat Out.
+**Scope (the author):** the first two regions, The Wilds and Tribe Country: 10 levels, the first 3 cars, and every mode those levels play (`Root.IS_DEMO`, `DEMO_LEVEL_COUNT`, `DEMO_CAR_COUNT`, `Unlocks.inDemo`): all 19 between them, since levels now pick their own two openers.
 
 ### Calls to confirm
 The sorting below is a proposal. These are the calls most worth a second look:

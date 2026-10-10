@@ -74,11 +74,29 @@ class Verb extends RefCounted:
 				g.play(&"idle")
 				if g.stateTime >= g.recT: g.setState(&"move")
 			&"stun": stun(delta, car)
+			Spill.KEEP_STATE: keepGate(delta, car)
 			_: other(delta, car)
 
 	func move(delta: float, car: Node2D) -> void:
 		g.chase(car.global_position, g.speedNow(), delta)
 		if g.cooldown <= 0.0 && g.distTo(car) < g.windDist: startWindup(car)
+
+	## A gatekeeper (Goons.DATA "keeps"; Spill.postKeeper stands it in Spill.KEEP_STATE at an open farm gate): it
+	## waits by its gate, watching the car, and slams the gate shut when the car heads for it. After that, or when
+	## the gate is gone or the car comes right up to it another way, it goes about its own business.
+	var keeping: Node2D = null
+	func keepGate(delta: float, car: Node2D) -> void:
+		g.play(&"idle")
+		if keeping == null: keeping = g.get_meta(&"gate", null)
+		if not is_instance_valid(keeping) || not keeping.is_inside_tree() || keeping.get_meta(&"smashed", false) || not Spill.isOpen(keeping) || g.distTo(car) < Spill.KEEP_WAKE:
+			leaveGate()
+			return
+		g.faceTo((car.global_position - g.global_position).angle(), delta, 6.0)
+		if Spill.carHeadingAt(keeping, car, Spill.KEEP_AHEAD) && Spill.goonGate(keeping, false, car): leaveGate()
+	## Done keeping: the gate gets no other keeper this run, and it goes about its own business
+	func leaveGate() -> void:
+		if is_instance_valid(keeping) && keeping.is_inside_tree(): Spill.markUsed(keeping.global_position)
+		g.setState(&"move")
 
 	## Wild instincts (Goons.DATA "seeks", one row per kind of prop; the actions are listed there): every
 	## Goons.SEEK_EVERY seconds it looks for the nearest prop a row allows, rows in order, and goes for it instead
@@ -117,7 +135,9 @@ class Verb extends RefCounted:
 		if (action == &"perch" || action == &"roost") && g.cooldown > 0.0: return null
 		if carRange > 0.0 && g.distTo(car) >= carRange: return null
 		if carRange < 0.0 && g.distTo(car) <= -carRange: return null
-		var prop := WorldHooks.nearestInGroup(g.get_tree(), row[0], g.global_position, row[3], &"smashed")
+		var prop: Node2D
+		if action == &"open" || action == &"shut": prop = Spill.gateFor(g.get_tree(), row[0], action, g.global_position, car, row[3])
+		else: prop = WorldHooks.nearestInGroup(g.get_tree(), row[0], g.global_position, row[3], &"smashed")
 		if prop == null || (carRange > 0.0 && prop.global_position.distance_to(car.global_position) >= carRange): return null
 		if action == &"roost":
 			var others := Spill.roosting(prop).size() - (1 if get("roostAt") == prop else 0)
@@ -128,7 +148,7 @@ class Verb extends RefCounted:
 	func doSeek(action: StringName, delta: float, car: Node2D) -> bool:
 		var at := seekAt.global_position
 		match action:
-			&"release", &"knock": #cut a pile loose, kick a hive over, at the car
+			&"release": #cut a pile loose at the car
 				g.chase(at, g.speedNow() * 1.15, delta)
 				if g.global_position.distance_to(at) < g.bodyRadius + Spill.REACH:
 					Spill.goonRelease(seekAt, g, car)
@@ -138,10 +158,19 @@ class Verb extends RefCounted:
 				g.chase(at, g.speedNow(), delta)
 				if g.global_position.distance_to(at) < g.bodyRadius + 60.0:
 					seekAt.set_meta(&"spillDir", at - g.global_position)
-					seekAt.set_meta(&"raider", g) #a raided hive's swarm goes for the raider first (Spill.Swarm)
 					BreakableProp.smashNode(seekAt)
 					seekAt = null
 					seekT = 0.3
+			&"open", &"shut": #work a farm gate: let itself through to the car, or shut it in the car's face
+				var open := action == &"open"
+				if Spill.isOpen(seekAt) == open: #another goon got there first
+					seekAt = null
+					return false
+				g.chase(at, g.speedNow() * 1.15, delta)
+				if g.global_position.distance_to(at) < g.bodyRadius + Spill.GATE_REACH:
+					Spill.goonGate(seekAt, open, car)
+					seekAt = null
+					seekT = 2.0
 			_: return false #perch and roost are the Flyer's
 		return true
 
@@ -613,7 +642,7 @@ class Charger extends Verb:
 		super.startWindup(car, lead)
 	func telegraphRadius() -> float: return g.speed * g.lunge * g.atkT
 	const WALL_STUN := 2.0 #a charge that ends on a wall stuns it this many times longer: lure it into a rock
-	## A charge bursts through breakables it is fast enough for ("smashes", R-3: a fence, hay, a hive, a log pile
+	## A charge bursts through breakables it is fast enough for ("smashes", R-3: a fence, hay, a gate, a log pile
 	## whose logs roll on along the charge, a barrel that blows) and keeps going; anything else is a BONK.
 	func attack(delta: float, car: Node2D) -> void:
 		var spd := g.speedNow() * g.lunge
@@ -785,22 +814,23 @@ class Hopper extends Verb:
 ## no credit. Smash the den to get the loot back; never smashed, it stays lost.
 class Thief extends Verb:
 	const HOME_SECONDS := 25.0 #a run home that takes longer than this gives up and flees as usual
+	const STEAL_SIGHT := 650.0 #px from the car: it only steals where the player sees it (the Bandit and the pickup both)
 	var target: Node2D = null
 	var stolen: Array = []
 	var lookT := 0.0
 	var den: Node2D = null
 	var denT := 0.0
-	## A pickup to steal comes first; with none in reach, its seeks rows send it to raid a crate or a hive
-	## (Goons.DATA; a raided hive's swarm usually gets the Bandit first).
+	## A pickup to steal comes first, when it and the Bandit are within STEAL_SIGHT of the car; with none in reach, its seeks rows send it to raid a crate or shut a farm
+	## gate the car is heading at (Goons.DATA).
 	func seekProp(delta: float, car: Node2D) -> bool:
 		lookT -= delta
 		if lookT <= 0.0:
 			lookT = 0.5
 			target = null
-			var best := 600.0
+			var best := 600.0 if g.distTo(car) < STEAL_SIGHT else 0.0
 			for p in g.get_tree().get_nodes_in_group("pickup"):
 				var d: float = g.global_position.distance_to(p.global_position)
-				if d < best && not p.is_queued_for_deletion():
+				if d < best && not p.is_queued_for_deletion() && p.global_position.distance_to(car.global_position) < STEAL_SIGHT:
 					best = d
 					target = p
 		if is_instance_valid(target): return false

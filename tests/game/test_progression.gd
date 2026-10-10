@@ -25,11 +25,17 @@ func test_a_level_plays_the_staples_and_its_three_featured_modes():
 	assert_eq(Root.modePath(level(true, [])), [M.SPRINT, M.GOONCRUSHER, M.MARATHON, M.RALLY, M.CANNONBALL], "Sprint, Countdown, then its Crusher, Trial and Goon Cup mode")
 	assert_eq(Root.modePath(0), Root.modePath(level(true, [])), "by index too")
 	assert_eq(Root.featuredModes(0), [M.MARATHON, M.RALLY, M.CANNONBALL])
-	assert_eq(Root.modePath({"unlocked": true}), Root.STAPLE_MODES, "an entry with no id has only the staples")
+	assert_eq(Root.modePath({"unlocked": true}), Modes.DEFAULT_OPENERS, "an entry with no id has only the default openers")
 	for i in Levels.count():
 		var featured := Root.featuredModes(i)
 		assert_eq(featured.map(func(m): return Modes.category(m)), Modes.CATEGORY_ORDER, "%s: one Crusher, one Trial, one Goon Cup" % Levels.ORDER[i])
-		for mode in featured: assert_false(mode in Root.STAPLE_MODES, "%s: a staple isn't featured" % Levels.ORDER[i])
+		var openers := Root.openerModes(i)
+		assert_eq(openers.size(), Root.OPENER_SLOTS, "%s: two openers" % Levels.ORDER[i])
+		assert_ne(openers[0], openers[1], "%s: two different openers" % Levels.ORDER[i])
+		assert_true(Modes.hasGoons(openers[0]) || Modes.hasGoons(openers[1]), "%s: at least one opener has goons" % Levels.ORDER[i])
+		assert_true(Levels.defAt(i).openers.size() in [0, Root.OPENER_SLOTS], "%s names both openers or neither" % Levels.ORDER[i])
+		for mode in featured: assert_false(mode in openers, "%s: an opener isn't featured too" % Levels.ORDER[i])
+		assert_eq(Root.modePath(i).size(), 5, "%s plays five modes" % Levels.ORDER[i])
 		assert_eq(Levels.defAt(i).featured.size(), 3, "%s names its three" % Levels.ORDER[i])
 	for region in Territories.ORDER: #five Crusher modes, five stops: a region plays each once
 		var crushers := {}
@@ -60,7 +66,7 @@ func test_unlock_chain():
 	var both = level(true, [M.GOONCRUSHER, M.SPRINT])
 	for mode in Root.modePath(both): assert_true(Root.isModeUnlocked(both, mode), "%s is open once Countdown is won" % M.find_key(mode))
 	for mode in [M.DEFENSE, M.GOONPOCALYPSE, M.BLACKOUT]: assert_false(Root.isModeUnlocked(both, mode), "%s isn't a Prairie Run mode" % M.find_key(mode))
-	assert_eq(Root.modeLockReason(both, M.DEFENSE), "Not On This Level")
+	assert_eq(Root.modeLockReason(both, M.DEFENSE), "Win All Five Modes Here")
 	var countdownOnly = level(true, [M.GOONCRUSHER]) #a save from when Countdown came first
 	assert_true(Root.isModeUnlocked(countdownOnly, M.MARATHON))
 	assert_true(Root.isModeUnlocked(countdownOnly, M.GOONCRUSHER), "a beaten mode stays open")
@@ -133,7 +139,7 @@ func test_a_featured_mode_opens_the_next_level():
 	SaveManager.currentLevelPassed()
 	assert_true(data.levels[1].unlocked, "a featured mode opens the next level")
 	assert_eq(data.selectedLevel, 1, "and it is selected")
-	assert_eq(data.gameMode, M.SPRINT, "starting from Sprint")
+	assert_eq(data.gameMode, Root.firstMode(1), "starting from its first opener")
 	assert_eq(SaveManager.openLeft(0), "")
 	SaveManager.playerData = keep
 
@@ -227,3 +233,40 @@ func test_summary_needs_a_fresh_press():
 	click.button_index = MOUSE_BUTTON_LEFT
 	click.pressed = true
 	assert_true(summary.isFreshPress(click), "a click")
+
+#a level names its own two openers (LevelDef.openers): the chain goes by slot, whatever the modes are
+func test_a_level_with_its_own_openers_chains_by_slot():
+	var id := "orchard"
+	var path := Root.modePath(level(true, [], id))
+	assert_eq(path.slice(0, 2), [M.SMASH, M.GOONCRUSHER], "Orchard Lanes opens on Smash Run, then Countdown")
+	assert_eq(Root.firstMode(level(true, [], id)), M.SMASH)
+	var fresh := level(true, [], id)
+	assert_true(Root.isModeUnlocked(fresh, M.SMASH), "the first opener is open with the level")
+	assert_false(Root.isModeUnlocked(fresh, M.GOONCRUSHER), "the second waits for the first")
+	assert_false(Root.isModeUnlocked(fresh, M.SPRINT), "Sprint isn't one of its modes")
+	assert_eq(Root.modeLockReason(fresh, M.GOONCRUSHER), "Beat Smash Run To Unlock")
+	var first := level(true, [M.SMASH], id)
+	assert_true(Root.isModeUnlocked(first, M.GOONCRUSHER))
+	assert_false(Root.isModeUnlocked(first, path[2]), "the featured modes wait for the second opener")
+	assert_eq(Root.modeLockReason(first, path[2]), "Beat Countdown To Unlock")
+	var both := level(true, [M.SMASH, M.GOONCRUSHER], id)
+	for mode in path: assert_true(Root.isModeUnlocked(both, mode), "%s is open" % M.find_key(mode))
+
+#Free Play: all five won opens every other mode on the level; it is never part of the chain
+func test_free_play_opens_when_all_five_are_won():
+	var path := Root.modePath(level(true, []))
+	var four := level(true, path.slice(0, 4))
+	assert_false(Root.freePlayOpen(four), "four of five isn't enough")
+	assert_false(Root.isModePlayable(four, M.DEFENSE))
+	var all := level(true, path)
+	assert_true(Root.freePlayOpen(all))
+	assert_false(Root.freePlayOpen(level(false, path)), "never on a locked level")
+	var free := Root.freePlayModes(all)
+	assert_eq(free.size(), M.size() - 5, "every mode the level doesn't play")
+	for mode in free:
+		assert_true(Root.isFreePlay(all, mode))
+		assert_true(Root.isModePlayable(all, mode), "%s can be started in Free Play" % M.find_key(mode))
+		assert_false(Root.isModeUnlocked(all, mode), "but it isn't one of the level's modes")
+		assert_true(ModeTiers.isOpen(all, mode, ModeTiers.HARD), "Free Play keeps no medals, so every tier is open")
+	for mode in path: assert_false(Root.isFreePlay(all, mode))
+	assert_eq(Root.modesBeaten(all), 5, "Free Play modes never count as beaten here")

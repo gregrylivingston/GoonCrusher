@@ -10,7 +10,7 @@ The first update since the 0.1 demo, and close to a rebuilt game. Old demo saves
 ### Headlines
 
 - **A road atlas instead of a level list.** 30 levels in six regions; the demo has the first two regions, The Wilds and Tribe Country: 10 levels.
-- **19 game modes in three kinds:** Crusher (goons), Trial (the course and the clock) and the Goon Cup (five rival drivers). The demo's levels feature 18 of them.
+- **19 game modes in three kinds:** Crusher (goons), Trial (the course and the clock) and the Goon Cup (five rival drivers). The demo's levels play all 19 between them.
 - **A new cast of 44 goons** in three factions, each with one trick of its own, a tell before it acts and a moment when it can be punished.
 - **Driving with more to it:** a handbrake, powerslides that charge a drift boost, weight that matters, a horn, and two signature traits per car.
 - **Prize games and gift boxes.** Crushing fills a gift box; each box holds a prize game. Eight games in all, three in the demo.
@@ -24,6 +24,9 @@ The first update since the 0.1 demo, and close to a rebuilt game. Old demo saves
 - Worlds are built from roads, rivers, fords, bridges, hedgerows, canyons and forests, and stream in as you drive.
 - Things break. Hit a fence, crate or hay bale fast enough and you go through it; too slow and it is a wall. A tag over the big ones shows the speed it takes.
 - Props do things: log piles roll, rock piles slide, beehives swarm, towers and cacti topple, sluice gates flood a channel, stills and TNT blow up. Goons flattened that way count as your crushes.
+- Bees are yours to let out: goons leave hives alone, and a swarm goes straight for the nearest goons, three of them, then is gone.
+- Farm gates swing. Half stand open, and some of those have a goon waiting to slam them shut as you drive up. Bump a shut gate gently and it swings open; hit it hard and it still smashes. A goon after you opens the one in its way.
+- Rolling logs and boulders are solid, and any log lying about rolls when you hit its side hard (its end is still a wall): it costs you, and flattens the goons in its way.
 - The Wilds has world events: a stampede and a flash flood. The Hay Wagon and the Bandit Barge join them (full game).
 - Water has depth: shallows slow you, wading depth drags and chips the hull, deep water hurts fast. Goons drown in it.
 - Tree crowns pass over the car and can hide goons.
@@ -31,7 +34,8 @@ The first update since the 0.1 demo, and close to a rebuilt game. Old demo saves
 
 ### Modes
 
-- Every level plays Sprint, then Countdown, then three featured modes, one of each kind.
+- Every level plays five modes picked for it: two simple openers, then three featured modes, one of each kind.
+- Win all five on a level and Free Play opens there: any other mode on that level, for coins only.
 - Crusher: Countdown, Sprint, Marathon, Defense, Goonpocalypse, Blackout, Bounty Hunt.
 - Trial (no goons): Rally Stage, Hot Lap, Drift Trial, Cone Course, Smash Run. Flat Out (full game).
 - Goon Cup (five rivals): Cannonball, Circuit Race, Demolition Derby, Knockout, Keep the Cup, Pursuit.
@@ -63,6 +67,8 @@ The first update since the 0.1 demo, and close to a rebuilt game. Old demo saves
 
 - Nine kinds of pickup: supplies, tune-ups, power-ups, gadgets, boosts, loot, casino, skill challenges and mode specials.
 - Gadgets (Fire) and boosts (Boost / Hop) sit in two slots with their own buttons. Buy a starting loadout in run setup.
+- Most of what goons drop is coins, however lucky your car; the better pickups stay a treat.
+- The Claw Crane is one play: when your grabs are gone you collect what you won.
 - Gift boxes come in five tiers, Cardboard to Diamond; better boxes play better versions of a game.
 - Demo prize games: Claw Crane, Hubcap Shuffle, Scratch Card. Goon Press, The Deal, Pachinko Drop, Slot Machine, Coin Pusher (full game).
 - All prize games share the same keys and end on a board that says what each prize did.
@@ -79,7 +85,7 @@ The first update since the 0.1 demo, and close to a rebuilt game. Old demo saves
 ### HUD and menus
 
 - Each car has its own dashboard: two dials in the bottom corners and one signature instrument.
-- A rear-view mirror holds the clock and the goal; two sun visors hold the gift box, radio, stars, coins and payout.
+- A rear-view mirror holds the clock and the goal, with your dice and clover hanging behind it; two sun visors hold the gift box, radio, stars, coins and payout.
 - Five system lamps on the dials show what is damaged.
 - Garage with driver cards; run setup with the road map, mode rows, tier switch and loadout.
 - Screens change behind a garage shutter. Amounts use the game's symbols.

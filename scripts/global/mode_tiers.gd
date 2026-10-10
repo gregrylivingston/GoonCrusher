@@ -14,28 +14,32 @@ const MEDAL_COLORS := [Color(0.2, 0.15, 0.1, 0.55), Color(0.85, 0.52, 0.26), Col
 
 const M := Root.gameModes
 
-## The goal, by tier (index 1-3). Countdown: the clock x the level's seconds. Goonpocalypse: survive this x
-## the level's seconds. Defense: hold the station this many seconds (not scaled by the level: its goons
+## The goal, by tier (index 1-3). Countdown: the clock x the level's Countdown seconds (countdownSeconds:
+## COUNTDOWN_BASE plus COUNTDOWN_SHARE of the level's seconds, so Easy on the last level is 2:30). Goonpocalypse: survive this x
+## the same seconds (pocalypseSeconds). Defense: hold the station this many seconds (not scaled by the level: its goons
 ## already come faster, and the barrier's wear grows with the square of the hold). Sprint and Marathon: the
 ## clock's slack x the level's. Sprint: the station's distance x the region's (index 0 is a Marathon leg, a
 ## little shorter than an Easy Sprint). Marathon: legs, few enough that the longest relay is about as long as a
 ## Hard Countdown.
 const CLOCK := [0.0, 1.0, 1.6, 2.2]
+const COUNTDOWN_BASE := 60.0
+const COUNTDOWN_SHARE := 0.17
 const POCALYPSE_TARGET := [0.0, 1.0, 1.75, 2.5]
-const DEFENSE_HOLD := [0.0, 150.0, 210.0, 270.0]
+const DEFENSE_HOLD := [0.0, 150.0, 180.0, 210.0]
 ## Defense spawns this much less often than the other modes: every lane spawns each round and the goons
 ## pile up at the walls, since one car can't crush them as fast as Countdown's spawners send them
 const DEFENSE_SPAWN_SCALE := 2.5
 const SLACK := [0.0, 0.7, 0.66, 0.62] #was 1.15 / 1 / 0.85: with the longer drives that left minutes on the clock
 const SPRINT_DISTANCE := [2.5, 2.875, 3.25, 3.75]
 const LEGS := [0, 2, 3, 4]
+const MARATHON_LEG := 0.68 #a Marathon leg, as a share of the leg the one-station races drive (SPRINT_DISTANCE[0])
 ## Rally Stage: its clock's slack x the level's, for bronze, silver and gold. No goons, so far tighter than a
 ## Sprint's. The stage is a Marathon leg long on every tier (SPRINT_DISTANCE[0]), so it is one course.
 const RALLY_SLACK := [0.0, 0.7, 0.56, 0.46]
 ## The score Trials (TrialScore): Smash Run's quota of breakables and Drift Trial's score, and their clocks.
 ## Cone Course: the clock for its gates (ConeCourse); a knocked cone takes a second off it.
-const SMASH_QUOTA := [0, 15, 25, 35]
-const SMASH_SECONDS := [0.0, 150.0, 150.0, 150.0]
+const SMASH_QUOTA := [0, 30, 50, 70]
+const SMASH_SECONDS := [0.0, 90.0, 90.0, 90.0]
 const DRIFT_TARGET := [0, 1500, 3000, 5000]
 const DRIFT_SECONDS := [0.0, 120.0, 120.0, 120.0]
 const CONES_SECONDS := [0.0, 90.0, 70.0, 55.0]
@@ -52,11 +56,11 @@ const FLATOUT_STOP_SPEED := 420.0
 const FLATOUT_PENALTY := 2.0
 const DERBY_HEALTH := [0.0, 80.0, 100.0, 120.0]
 const DERBY_BUMP := 1.5
-const DERBY_SECONDS := [0.0, 240.0, 240.0, 240.0]
+const DERBY_SECONDS := [0.0, 150.0, 150.0, 150.0]
 ## Keep the Cup: seconds of holding that win it, and its clock. Pursuit: the runner's health, its head start (px)
 ## and its pace as a share of the player's car's top speed; how much harder cars hit each other there.
 const CUP_HOLD := [0.0, 40.0, 55.0, 70.0]
-const CUP_SECONDS := [0.0, 240.0, 240.0, 240.0]
+const CUP_SECONDS := [0.0, 150.0, 150.0, 150.0]
 const RUNNER_HEALTH := [0.0, 45.0, 60.0, 75.0]
 const RUNNER_START := [0.0, 1600.0, 2200.0, 2800.0]
 const RUNNER_PACE := [0.0, 0.78, 0.86, 0.94]
@@ -65,7 +69,7 @@ const PURSUIT_BUMP := 2.5
 const LIGHT_SPAWN_SCALE := 3.0
 ## Bounty Hunt: marks to crush, and the clock's seconds for each one (the drive out to it and the fight)
 const BOUNTY_MARKS := [0, 3, 4, 5]
-const BOUNTY_MARK_SECONDS := [0.0, 80.0, 70.0, 60.0]
+const BOUNTY_MARK_SECONDS := [0.0, 60.0, 50.0, 45.0]
 
 ## The world, by tier: escalation speed x, giant odds + (percent points), spawn interval x
 const ESCALATION := [1.0, 1.0, 1.3, 1.6]
@@ -107,8 +111,8 @@ static func goalSeconds(mode: int, tier: int, levelSeconds: float, sprintSlack: 
 	if mode == M.RALLY: return levelSeconds * Level.SPRINT_DRIVE_FRACTION * sprintSlack * RALLY_SLACK[tier] * SPRINT_DISTANCE[NONE]
 	var sprint: float = levelSeconds * Level.SPRINT_DRIVE_FRACTION * sprintSlack * SLACK[tier]
 	match Modes.plays(mode):
-		M.GOONCRUSHER: return levelSeconds * CLOCK[tier]
-		M.GOONPOCALYPSE: return levelSeconds * POCALYPSE_TARGET[tier]
+		M.GOONCRUSHER: return countdownSeconds(levelSeconds, tier)
+		M.GOONPOCALYPSE: return pocalypseSeconds(levelSeconds, tier)
 		M.DEFENSE: return DEFENSE_HOLD[tier]
 		M.BOUNTY: return bountySeconds(tier)
 		M.SMASH: return SMASH_SECONDS[tier]
@@ -116,8 +120,16 @@ static func goalSeconds(mode: int, tier: int, levelSeconds: float, sprintSlack: 
 		M.DRIFT: return DRIFT_SECONDS[tier]
 		M.CONES: return CONES_SECONDS[EASY] #paid by the course, which is the same on every tier, not by its shrinking clock
 		M.SPRINT: return sprint * SPRINT_DISTANCE[tier]
-		M.MARATHON: return sprint * SPRINT_DISTANCE[NONE] * LEGS[tier]
+		M.MARATHON: return sprint * SPRINT_DISTANCE[NONE] * MARATHON_LEG * LEGS[tier]
 	return 0.0
+
+## Countdown's clock on a level and tier (Blackout plays it too)
+static func countdownSeconds(levelSeconds: float, tier: int) -> float:
+	return roundf((COUNTDOWN_BASE + levelSeconds * COUNTDOWN_SHARE) * CLOCK[clampTier(tier)])
+
+## The seconds of survival that beat Goonpocalypse on a level and tier
+static func pocalypseSeconds(levelSeconds: float, tier: int) -> float:
+	return roundf((COUNTDOWN_BASE + levelSeconds * COUNTDOWN_SHARE) * POCALYPSE_TARGET[clampTier(tier)])
 
 ## A score Trial's target on a tier (TrialScore): Smash Run's quota, Drift Trial's score
 static func trialTarget(mode: int, tier: int) -> int:
@@ -146,9 +158,9 @@ static func best(level: Dictionary, mode: int) -> int:
 	return clampi(t, NONE, HARD)
 
 ## Can this tier be started (the mode itself must be playable too: Root.isModePlayable)? Easy and Medium
-## are open with the mode; Hard once Medium is beaten.
+## are open with the mode; Hard once Medium is beaten. Free Play keeps no medals, so every tier is open there.
 static func isOpen(level: Dictionary, mode: int, tier: int) -> bool:
-	return tier <= MEDIUM || best(level, mode) >= MEDIUM
+	return tier <= MEDIUM || best(level, mode) >= MEDIUM || Root.isFreePlay(level, mode)
 
 static func lockReason(level: Dictionary, mode: int, tier: int) -> String:
 	return "" if isOpen(level, mode, tier) else "Beat Medium To Unlock Hard"
@@ -179,9 +191,9 @@ static func goalText(mode: int, tier: int, levelSeconds: float, sprintSlack := 1
 		M.CONES: return "Clear the gates in %s" % clock(CONES_SECONDS[tier])
 		M.RALLY: return "Beat the %s time over the stage" % MEDALS[tier].to_lower()
 		M.BOUNTY: return "Crush %d marks in %s" % [BOUNTY_MARKS[tier], clock(bountySeconds(tier))]
-		M.BLACKOUT: return "Survive %s of night" % clock(levelSeconds * CLOCK[tier])
-		M.GOONCRUSHER: return "Survive %s" % clock(levelSeconds * CLOCK[tier])
-		M.GOONPOCALYPSE: return "Survive %s" % clock(levelSeconds * POCALYPSE_TARGET[tier])
+		M.BLACKOUT: return "Survive %s of night" % clock(countdownSeconds(levelSeconds, tier))
+		M.GOONCRUSHER: return "Survive %s" % clock(countdownSeconds(levelSeconds, tier))
+		M.GOONPOCALYPSE: return "Survive %s" % clock(pocalypseSeconds(levelSeconds, tier))
 		M.DEFENSE: return "Hold the station for %s" % clock(DEFENSE_HOLD[tier])
 		M.SPRINT: return "Reach the station in about %s" % clock(snappedf(goalSeconds(mode, tier, levelSeconds, sprintSlack), 5.0))
 		M.MARATHON: return "Reach %d stations in about %s" % [LEGS[tier], clock(snappedf(goalSeconds(mode, tier, levelSeconds, sprintSlack), 5.0))]

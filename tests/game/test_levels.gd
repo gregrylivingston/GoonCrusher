@@ -276,7 +276,7 @@ func test_sprint_distance_grows_by_region():
 		assert_gt(d, last, "%s: a longer drive than the region before" % region)
 		last = d
 	assert_almost_eq(Territories.sprintDistance(&"wilds"), 20000.0, 0.01)
-	assert_almost_eq(Territories.sprintDistance(&"works"), 34000.0, 0.01)
+	assert_almost_eq(Territories.sprintDistance(&"works"), Territories.SPRINT_DISTANCE.y, 0.01)
 	assert_almost_eq(Level.sprintDistance(Levels.get_def(&"city")), Territories.sprintDistance(&"sprawl") * ModeTiers.SPRINT_DISTANCE[ModeTiers.NONE], 0.01, "a Marathon leg")
 
 func test_sprint_distance_grows_by_tier():

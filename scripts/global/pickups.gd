@@ -35,9 +35,10 @@ enum F { WILD, TRIBE, SCRAP }
 const TIER_WEIGHTS := [64.0, 26.0, 8.0, 1.6, 0.4]
 const DICE_DIVISOR := [0.0, 40.0, 25.0, 18.0, 12.0]
 ## Ordinary drops: before the tier roll, this share of plain goon drops is a single Coin. It starts at
-## ORDINARY_SHARE.x and eases to .y as droppable pickups open (ORDINARY_OPEN_SPAN of them), so the Coin stays
-## a big part of the mix however much is unlocked. Giants and bosses (bump > 0) skip it.
-const ORDINARY_SHARE := Vector2(0.5, 0.35)
+## ORDINARY_SHARE.x and eases to .y as droppable pickups open (ORDINARY_OPEN_SPAN of them). Both stay over a
+## half and Dice doesn't touch it, so however much is unlocked or upgraded a goon drops a Coin more often than
+## everything else put together. Giants and bosses (bump > 0) skip it.
+const ORDINARY_SHARE := Vector2(0.7, 0.6)
 const ORDINARY_OPEN_SPAN := 50.0
 ## Every PITY-th drop without a Rare or better is a Rare.
 const PITY := 25
@@ -60,7 +61,7 @@ const DATA := {
 	#---------------------------------------------------------------- the original 14
 	"fuel": {"start":true, "name":"Fuel Can", "kind":K.SUPPLY, "rarity":R.UNCOMMON, "w":32, "icon":"fuel", "scene":"res://scene/powerup/fuel.tscn", "ui":"fuelui", "fac":{F.SCRAP:1.4},
 		"text":"Adds 20 fuel."},
-	"health": {"price":{"coin":250}, "name":"Repair Kit", "kind":K.SUPPLY, "rarity":R.UNCOMMON, "w":15, "icon":"health", "scene":"res://scene/powerup/health.tscn", "ui":"healthui", "fac":{F.WILD:1.3},
+	"health": {"price":{"coin":500}, "name":"Repair Kit", "kind":K.SUPPLY, "rarity":R.UNCOMMON, "w":15, "icon":"health", "scene":"res://scene/powerup/health.tscn", "ui":"healthui", "fac":{F.WILD:1.3},
 		"text":"Patches up 20 hull."},
 	"coin": {"start":true, "name":"Coin", "kind":K.LOOT, "rarity":R.COMMON, "w":20, "icon":"coin", "scene":"res://scene/powerup/coin.tscn", "ui":"coinui",
 		"text":"+1 coin. Stars multiply what a run pays."},
@@ -84,7 +85,7 @@ const DATA := {
 		"text":"15 to 100 coins in one go."},
 	"gem": {"parent":"coin", "name":"Gem", "kind":K.LOOT, "rarity":R.UNCOMMON, "w":14, "icon":"gem", "scene":"res://scene/powerup/gem.tscn", "ui":"gemui",
 		"text":"+1 gem. Gems buy starting gadgets, boosts and unlocks, and are kept after the run."},
-	"slotmachine": {"parent":"deal", "price":{"coin":40000}, "name":"Slot Machine", "kind":K.CASINO, "rarity":R.EPIC, "w":10, "icon":"slotMachine", "scene":"res://scene/powerup/slotMachine.tscn", "ui":"slotmachineui", "ai":50,
+	"slotmachine": {"parent":"deal", "price":{"coin":80000}, "name":"Slot Machine", "kind":K.CASINO, "rarity":R.EPIC, "w":10, "icon":"slotMachine", "scene":"res://scene/powerup/slotMachine.tscn", "ui":"slotmachineui", "ai":50,
 		"text":"Opens the slot machine. Pairs pay twice, triples five times, and three stars are the jackpot. Bet run coins for better reels."},
 
 	#---------------------------------------------------------------- supplies
@@ -190,7 +191,7 @@ const DATA := {
 	#(Hubcap Shuffle, Goon Press, Pachinko Drop, Coin Pusher), the tickets (Scratch Card, Lottery Ticket,
 	#Prize Wheel) and the gambles (Mystery Box, Double or Nothing, The Deal, Slot Machine). The eight that
 	#are also gift box games (CrushPrizes.GAMES) are one unlock: it opens the drop and puts the game in the boxes.
-	"scratch": {"parent":"claw", "price":{"coin":3000}, "name":"Scratch Card", "kind":K.CASINO, "rarity":R.RARE, "w":6, "icon":"scratch", "ui":"coinui", "ai":18,
+	"scratch": {"parent":"claw", "price":{"coin":6000}, "name":"Scratch Card", "kind":K.CASINO, "rarity":R.RARE, "w":6, "icon":"scratch", "ui":"coinui", "ai":18,
 		"text":"Scratches itself in the HUD corner while you drive. Three of a kind pays that prize three times; two of a kind pays it once."},
 	"mystery": {"parent":"claw", "name":"Mystery Box", "kind":K.CASINO, "rarity":R.RARE, "w":6, "icon":"mystery", "ui":"buffui", "ai":20,
 		"text":"Any pickup from any kind. Its rarity is rolled again, with Dice."},
@@ -200,18 +201,18 @@ const DATA := {
 		"text":"Three numbers from 0 to 9, checked on the results ticket against the last digit of your crushes, top speed and coins. Each match pays 50; all three pay 500."},
 	"wheel": {"parent":"scratch", "name":"Prize Wheel", "kind":K.CASINO, "rarity":R.RARE, "w":0, "icon":"wheel", "ui":"coinui",
 		"text":"Found in the world. Drive across it and your speed sets the spin, from BUST to JACKPOT."},
-	"deal": {"parent":"double", "price":{"coin":18000}, "name":"The Deal", "kind":K.CASINO, "rarity":R.EPIC, "w":6, "icon":"deal", "ui":"slotmachineui", "ai":40,
+	"deal": {"parent":"double", "price":{"coin":36000}, "name":"The Deal", "kind":K.CASINO, "rarity":R.EPIC, "w":6, "icon":"deal", "ui":"slotmachineui", "ai":40,
 		"text":"A deck of twelve cards. Keep the card in your hand or redraw for the next one, up to three times; there is no going back. It can also come in a gift box."},
 	"claw": {"start":true, "name":"Claw Crane", "kind":K.CASINO, "rarity":R.RARE, "w":5, "icon":"claw", "ui":"slotmachineui", "ai":25, #the weakest prize game (CrushPrizes), so the cheapest (Rare) of them
-		"text":"The claw patrols over a heap of prizes: drop it when it is over the one you want. Prizes can slip on the way up. Run coins buy another grab."},
+		"text":"The claw patrols over a heap of prizes: drop it when it is over the one you want. Prizes can slip on the way up. One grab per game."},
 	#gift box games that goons don't drop (w 0): unlocking one only adds it to the boxes
-	"shuffle": {"parent":"claw", "price":{"coin":2000}, "name":"Hubcap Shuffle", "kind":K.CASINO, "rarity":R.RARE, "w":0, "icon":"hubcap", "ui":"slotmachineui",
+	"shuffle": {"parent":"claw", "price":{"coin":4000}, "name":"Hubcap Shuffle", "kind":K.CASINO, "rarity":R.RARE, "w":0, "icon":"hubcap", "ui":"slotmachineui",
 		"text":"A prize, a coin and some junk go under three hubcaps and they shuffle. Find the prize, then keep it or go again."},
-	"press": {"parent":"shuffle", "price":{"coin":6000}, "name":"Goon Press", "kind":K.CASINO, "rarity":R.RARE, "w":0, "icon":"wrecking", "ui":"slotmachineui",
+	"press": {"parent":"shuffle", "price":{"coin":12000}, "name":"Goon Press", "kind":K.CASINO, "rarity":R.RARE, "w":0, "icon":"wrecking", "ui":"slotmachineui",
 		"text":"Three slams on a fast conveyor: whatever is under the press is yours. Crates pay prizes, goons coins, bombs hurt."},
-	"pachinko": {"parent":"press", "price":{"coin":25000}, "name":"Pachinko Drop", "kind":K.CASINO, "rarity":R.EPIC, "w":0, "icon":"bullseye", "ui":"slotmachineui",
+	"pachinko": {"parent":"press", "price":{"coin":50000}, "name":"Pachinko Drop", "kind":K.CASINO, "rarity":R.EPIC, "w":0, "icon":"bullseye", "ui":"slotmachineui",
 		"text":"The dropper slides and swings by itself: time your drops, as many balls at once as you like. The outer cups pay best."},
-	"pusher": {"parent":"pachinko", "price":{"coin":60000, "gem":5}, "name":"Coin Pusher", "kind":K.CASINO, "rarity":R.EPIC, "w":0, "icon":"coinstack", "ui":"slotmachineui",
+	"pusher": {"parent":"pachinko", "price":{"coin":120000, "gem":5}, "name":"Coin Pusher", "kind":K.CASINO, "rarity":R.EPIC, "w":0, "icon":"coinstack", "ui":"slotmachineui",
 		"text":"Drop coins on the pile and push prizes over the ledge. Can pay several things at once."},
 
 	#---------------------------------------------------------------- skill challenges
@@ -429,7 +430,7 @@ static func pickWeighted(weights: Dictionary, roll: float) -> String:
 ## One drop: the tier (with Dice, the pity counter and `bump` tiers up for giants and bosses), then an
 ## item of that tier. Falls back a tier when nothing in it is allowed here.
 static func roll(dice: float, mode: int, night: bool, faction := -1, bump := 0) -> String:
-	if bump == 0 && randf() < ordinaryShare():
+	if bump == 0 && dropsSinceRare + 1 < PITY && randf() < ordinaryShare(): #a pity drop is never the ordinary Coin
 		dropsSinceRare += 1
 		return "coin"
 	var tier := pickTier(tierWeights(dice), randf())
