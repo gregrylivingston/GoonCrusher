@@ -1,6 +1,6 @@
 # Radio
 
-The game's music is a car radio (roadmap R-1, package 8). Three stations of in-house tracks play in runs and in the menus; Radio Off is a fourth choice. The player picks a station in the pause menu (in a run) or in Settings → Audio (anywhere). There is no driving key: changing station is rare, and the pause menu is one press away.
+The game's music is a car radio (roadmap R-1, package 8). One station of in-house tracks, GoonCrusher Radio, plays in runs and in the menus; Radio Off is the other choice (the author's call, 2026-10-10: no other stations). The player picks a station in the pause menu (in a run) or in Settings → Audio (anywhere). There is no driving key: changing station is rare, and the pause menu is one press away.
 
 This file has two halves: **for the audio author** (what to make, how to name and deliver it) and **for code** (how the `Radio` node plays it). Adding or replacing tracks never needs code: drop files in the right folder, let Godot import them, done.
 
@@ -13,12 +13,10 @@ This file has two halves: **for the audio author** (what to make, how to name an
 | Station | id (folder) | Feel | Has talk |
 |---|---|---|---|
 | **GoonCrusher Radio** | `gooncrusher` | Funny vocal tracks; a DJ between songs, call-ins, parody ads, goon traffic and weather. The game's personality. | Yes |
-| **Classical Lofi** | `classical_lofi` | Classical themes (public domain melodies, your own arrangements) over lofi beats. Calm, easy to drive to for an hour. | No: idents only |
-| **Lofi** | `lofi` | Plain lofi beats. The "I just want to drive" station. | No: idents only |
 
-The default for a new save is **GoonCrusher Radio**. A station with no songs yet is hidden from the pickers, so Classical Lofi and Lofi appear once their first songs go in.
+The default for a new save is **GoonCrusher Radio**. The code still reads any number of station folders (a station with no songs is hidden from the pickers), so a second station would need no code, but none is planned: Classical Lofi and Lofi were tried and dropped.
 
-**Songs so far** (lyrics, style prompts and ideas for more: `docs/RADIO_SONGS.md`): GoonCrusher Radio has *Crush Hour*, *Gooncrusher*, *Full Tank, Empty Head*, *My Baby Loves My Truck*, *Cheap Beer, Premium Gas*, *Trailer Park Superstar*, *Welcome to Nowhere*, *Gas Station Romance*, *She Left Me at the Truck Stop*, *No Brakes*, *Check Engine Light*, *There's a Goon on My Hood*, *Hot Black Coffee* and *Long Haul*. Between songs: nine ads (Goon-B-Gone, Grunt, Grunt and Hubcap, Pete's Pit Shop, Big Earl's Tire Barn, Gas N Go, Fender Bender Mutual, The Lucky Lug Nut, Suds City Car Wash, Rusty's Salvage) and twelve DJ talk segments from Dee Jay Crush, and nine idents (`docs/RADIO_SEGMENTS.md`).
+**Songs so far** (lyrics, style prompts and ideas for more: `docs/RADIO_SONGS.md`): GoonCrusher Radio has *Crush Hour*, *Gooncrusher*, *Full Tank, Empty Head*, *My Baby Loves My Truck*, *Cheap Beer, Premium Gas*, *Trailer Park Superstar*, *Welcome to Nowhere*, *Gas Station Romance*, *She Left Me at the Truck Stop*, *No Brakes*, *Check Engine Light*, *There's a Goon on My Hood*, *Hot Black Coffee* and *Long Haul*. Between songs: ten ads (Goon-B-Gone, Grunt, Grunt and Hubcap, Pete's Pit Shop, Big Earl's Tire Barn, Gas N Go, Fender Bender Mutual, The Lucky Lug Nut, Suds City Car Wash, Rusty's Salvage, Uncle Cletus Fireworks and Bait) and twelve DJ talk segments from Dee Jay Crush, and nine idents (`docs/RADIO_SEGMENTS.md`).
 
 ### Folder layout
 
@@ -33,14 +31,6 @@ sound/radio/
     idents/             3–8 s station IDs ("You're on GoonCrusher Radio!")
     talk/               15–60 s DJ segments
     ads/                20–40 s parody commercials
-  classical_lofi/
-    station.json
-    songs/
-    idents/
-  lofi/
-    station.json
-    songs/
-    idents/
 ```
 
 Empty or missing folders are fine; the station just skips that kind of segment. A station with no songs is hidden from the picker.
@@ -78,8 +68,6 @@ Enough that a 30-minute session doesn't repeat. The playlist is shuffled without
 | GoonCrusher Radio idents | 4 | 8 |
 | GoonCrusher Radio talk | 10 | 25 |
 | GoonCrusher Radio ads | 4 | 8 |
-| Each lofi station songs | 10 (~30 min) | 15–20 |
-| Each lofi station idents | 2 | 4 |
 
 ### `station.json`
 
@@ -132,10 +120,6 @@ After each song the radio rolls `segment_counts`: the next song straight away, o
 
 **Tone limits:** cartoon violence only (squish, splat, flat), no real people, brands or songs, no slurs, nothing you wouldn't put in a general-audience game. Keep each talk segment to one joke or one bit; long monologues make players switch station.
 
-### Classical Lofi and Lofi
-
-Music only. Idents are optional and gentle: a soft voice ("Classical Lofi") or a short chime, under 4 s. Classical Lofi should use melodies that are in the public domain (composers who died over 100 years ago, e.g. Bach, Mozart, Beethoven, Chopin, Satie, Debussy), in your own arrangement and recording; never sample someone else's recording.
-
 ### Adding a song
 
 1. Make it in Suno from lyrics and a style prompt (`docs/RADIO_SONGS.md` has the house style and template).
@@ -176,7 +160,7 @@ There is no driving key for the radio: changing station is rare, so it lives in 
 ### Signals and API
 
 ```gdscript
-Audio.radio.setStation(&"lofi")         # saves audio/station; the radio follows Settings.changed
+Audio.radio.setStation(&"gooncrusher")         # saves audio/station; the radio follows Settings.changed
 Audio.radio.cycleStation(1)             # next station, wrapping through Radio Off
 Audio.radio.stationIds()                # stations with songs, in order, then &"off"
 Audio.radio.stationOptions()            # [[id, name]] for an OptionRow

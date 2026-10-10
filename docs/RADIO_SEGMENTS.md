@@ -15,6 +15,7 @@ The record of every segment that plays between songs on GoonCrusher Radio: its f
 | The Lucky Lug Nut | `sound/radio/gooncrusher/ads/ad_slot_parlour.ogg` | 0:32 | ad (sung) |
 | Suds City Car Wash | `sound/radio/gooncrusher/ads/ad_car_wash.ogg` | 0:40 | ad (sung jingle) |
 | Rusty's Salvage | `sound/radio/gooncrusher/ads/ad_salvage.ogg` | 0:30 | ad (sung jingle) |
+| Uncle Cletus Fireworks and Bait | `sound/radio/gooncrusher/ads/ad_fireworks.ogg` | 0:29 | ad (sung jingle) |
 | Ident 01: "We don't brake for goons" | `sound/radio/gooncrusher/idents/ident_01.ogg` | 0:04 | ident (DJ voice) |
 | Ident 02 | `sound/radio/gooncrusher/idents/ident_02.ogg` | 0:05 | ident |
 | Ident 03 | `sound/radio/gooncrusher/idents/ident_03.ogg` | 0:04 | ident |
@@ -64,7 +65,7 @@ The first three ads (Goon-B-Gone, Grunt, Grunt and Hubcap, Pete's Pit Shop) came
 
 The second batch was written to these rules (each a different format: an auction chant, a sung jingle, a guided meditation, a lounge song; see the entries below). Four of five came out well enough to use. The fifth, a two-voice dialogue skit (SplatMaster 3000, a couple arguing in a car), did not: **dialogue skits don't work in Suno**. Make them with text-to-speech or skip them.
 
-The third batch went all in on what worked: five fully sung Suno jingles, each in a genre the station didn't have yet (doo-wop, gospel, barbershop a cappella, 1980s synth-pop, polka), about 30 seconds each, with sung endings instead of spoken punchlines. The author made them and edited the lyrics as he went; the lyrics below are the final ones.
+The third batch went all in on what worked: five fully sung Suno jingles, each in a genre the station didn't have yet (doo-wop, gospel, barbershop a cappella, 1980s synth-pop, polka), about 30 seconds each, with sung endings instead of spoken punchlines. The author made three (Suds City, Rusty's, Fireworks and Bait) and edited the lyrics as he went; the lyrics below are the final ones. Mama Dot's Diner (barbershop) and The Snooze Inn (synth-pop) were drafted but not made.
 
 ## The DJ: Dee Jay Crush
 
@@ -374,6 +375,38 @@ On Route Nine near the county line
 **Processing:** 30 s; −15.6 → −16.2 LUFS, Vorbis q4. Suno's download was named "Rusty's Second Life.mp3".
 
 **Note:** "even your wife" is the station's usual mild innuendo-level joke.
+
+## Uncle Cletus Fireworks and Bait
+
+A Midwest polka for a roadside shed that sells two things that shouldn't share a cooler. Third batch; drafted as Uncle Stosh's, renamed Uncle Cletus by the author, who also rewrote the last verse line and dropped the crowd's "HEY!"s.
+
+**Script**
+
+```
+[Verse]
+Down by the river where the county road bends
+Uncle Cletus got a shed and he's sellin' to friends
+Roman candles, worms in a cup
+Light 'em, bait 'em, Buy'em, sell'em, trade'em
+
+[Chorus]
+Fireworks and bait!
+Fireworks and bait!
+Don't mix up the coolers
+At Uncle Cletus Fireworks and Bait!
+```
+
+**Direction**
+
+| | |
+|---|---|
+| Format | A complete sung polka jingle. Max length 30 seconds. |
+| Voices | A cheerful Midwestern man in his 60s, with a beer-hall crowd behind him. |
+| Music | Oompah polka: accordion, tuba, clarinet, 140 BPM. |
+| Suno prompt (as drafted) | `cheerful male Midwestern polka singer, accordion, tuba, clarinet, oompah rhythm, gang vocal shouts, beer hall energy, 140 BPM, short radio jingle, ends with one big accordion chord and a firework pop` |
+| Sound effects | A firework whistle and pop at the very end. |
+
+**Processing:** 29 s; −16.3 → −16.1 LUFS, 0.4 s of tail silence trimmed, Vorbis q4. Suno's download was named "Fireworks and Bait.mp3".
 
 ## DJ: Morning show (`talk_morning_show`)
 
