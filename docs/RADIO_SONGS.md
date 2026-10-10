@@ -39,6 +39,7 @@ Fast, chaotic 2000s-style punk rock, aggressive distorted electric guitars, punc
 | No Brakes | `sound/radio/gooncrusher/songs/No Brakes.ogg` | 3:12 | punk-metal rage, 175 BPM |
 | Check Engine Light | `sound/radio/gooncrusher/songs/Check Engine Light.ogg` | 3:32 | Southern blues-punk, 150 BPM |
 | There's a Goon on My Hood | `sound/radio/gooncrusher/songs/There's a Goon on My Hood.ogg` | 2:51 | Southern punk with rockabilly swing, 180 BPM |
+| Hot Black Coffee | `sound/radio/gooncrusher/songs/Hot Black Coffee.ogg` | 2:43 | Southern boogie-punk / garage rock, 160 BPM |
 
 ### Crush Hour
 
@@ -1013,12 +1014,81 @@ There's a goon, goon, goon on my hood!
 
 **Note:** clean. Verse 3's Gas N Go is the gas station from the station's Gas N Go ad.
 
+### Hot Black Coffee
+
+Category 2: a trucker running on diner coffee, twenty-two hours awake. The author wrote verse 1 and the theme; written together in this session, with the author's edits (verse 3 and the bridge are his).
+
+**Style** (used as drafted):
+
+```
+Driving Southern boogie-punk and garage rock, 160 BPM, chugging fuzz guitar riff, honky-tonk piano, stomping live drums, walking bass, raspy wide-awake male vocal, catchy shout-along chorus, late-night truck stop diner humor, jittery caffeinated energy that keeps speeding up, short piano and guitar trade-off solo, polished video game soundtrack production with garage grit. No emo, no modern pop, no country ballad.
+```
+
+**Lyrics:**
+
+```
+[Intro: coffee pouring, engine turning over]
+
+[Verse 1]
+Diner off the exit with the blinkin' sign
+Waitress pours a refill, time after time
+Twenty-two hours I'm still goin' strong
+Got a thermos in the cupholder sloshin' along
+
+[Chorus]
+Hot black coffee in a styrofoam cup
+Ain't nothin' else gonna keep me up
+Four hundred miles and the sun's comin' up
+Hot black coffee, fill it up!
+
+[Verse 2]
+There's a coffee stain on my shirt
+Burned my tongue and it didn't even hurt
+Eyes wide open like a deer in the lights
+I ain't slept since Tuesday but I feel alright
+
+[Chorus]
+Hot black coffee in a styrofoam cup
+Ain't nothin' else gonna keep me up
+Four hundred miles and the sun's comin' up
+Hot black coffee, fill it up!
+
+[Verse 3]
+I passed in the left one two three four
+I didn't spill a drop and I'm thirsty for more
+Coffee in my left hand, wheel in my right
+I could ride the highway all day night
+
+[Piano and Guitar Solo]
+
+[Bridge]
+Doctor said son, you gotta slow down
+All that coffee's gonna make you twitch
+I said don't ya know doctor
+The coffees making me rich
+
+[Final Chorus]
+Hot black coffee in a styrofoam cup
+Ain't nothin' else gonna keep me up
+Four hundred miles and the sun's comin' up
+Hot black coffee, fill it up! (FILL IT UP!)
+
+Hot black coffee in a styrofoam cup
+Ain't nothin' else gonna keep me up
+Four hundred miles and the sun's comin' up
+Hot black coffee, fill it up! (FILL IT UP!)
+```
+
+**Processing:** −16.0 → −16.1 LUFS (true peak −5.2 dBTP), no tail silence to trim.
+
+**Note:** clean. No goons in it.
+
 ## Song categories
 
 The station's songs fall into three kinds (the author's breakdown). Keep new songs in one of them:
 
 1. **Goon-crushing driving rage, metal and punk:** Crush Hour, Gooncrusher, No Brakes (and There's a Goon on My Hood, between this and 2).
-2. **Small-town and country life with a big dose of driving,** metal-tinged country, blues or punk: Full Tank, Empty Head, Cheap Beer, Premium Gas, Trailer Park Superstar, My Baby Loves My Truck, Check Engine Light.
+2. **Small-town and country life with a big dose of driving,** metal-tinged country, blues or punk: Full Tank, Empty Head, Cheap Beer, Premium Gas, Trailer Park Superstar, My Baby Loves My Truck, Check Engine Light, Hot Black Coffee.
 3. **Highway romance and small towns are great,** the softest and most country: Welcome to Nowhere, Gas Station Romance, She Left Me at the Truck Stop.
 
 The voice in all three: a first-person working-class guy and his car, concrete everyday details (twenty bucks, a cracked windshield, the county line), the title as the chorus hook, and a deadpan punchline at the end of a verse. Goons are something he drives through, not the point of view.
