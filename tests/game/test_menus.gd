@@ -22,6 +22,8 @@ func test_prompts_name_the_key_or_button_for_the_device():
 	assert_eq(InputGlyphs.label("ui_menu", false), "Esc", "the Menu key is skipped for Esc")
 	assert_eq(InputGlyphs.label("ui_upgrade", false), "F")
 	assert_eq(InputGlyphs.label("ui_boost", false), "V")
+	assert_eq(InputGlyphs.label("ui_buy", false), "E", "buys an upgrade row; Space stays on Drive")
+	assert_eq(InputGlyphs.label("ui_buy", true), "A")
 	assert_eq(InputGlyphs.label("ui_up", false), "W", "WASD before the arrows")
 	assert_eq(InputGlyphs.label("ui_right", false), "D")
 	assert_eq(InputGlyphs.label("ui_upgrade", true), "Y")
@@ -91,7 +93,8 @@ func test_a_locked_driver_is_a_silhouette_with_a_price():
 	assert_true(card.isLocked())
 	assert_eq(card.portrait.modulate.r, 0.0, "silhouette")
 	assert_false(card.statLine.visible, "no stats on a locked card")
-	assert_false(card.upgradeButton.visible, "nothing to upgrade yet")
+	assert_eq(card.upgradeButton.text, "DETAILS", "its sheet can be read; nothing to upgrade yet")
+	assert_false(card.upgradeBadge.visible, "no count on a locked car")
 	assert_eq(card.traitList.get_child_count(), 2, "its features still show")
 	assert_true(card.mainButton.text == "UNLOCK" || card.mainButton.has_node("parts"), "UNLOCK, or NEED (coin) MORE in symbols")
 	assert_eq(card.priceLine.get_child_count(), 1, "the price shows where the stats would be, in symbols")
@@ -105,8 +108,16 @@ func test_an_owned_driver_shows_stats_and_drive():
 	card.setFocused(true)
 	assert_eq(card.mainButton.text, "DRIVE")
 	assert_almost_eq(card.portrait.position.x + card.portrait.size.x, DriverCard.SIZE.x, 0.5, "the portrait sits against the right edge")
-	assert_eq(card.upgradeButton.text, "", "the icon and its key, no word")
-	assert_eq(card.upgradeButton.tooltip_text, "Upgrades")
+	assert_eq(card.upgradeButton.text, "UPGRADES")
+	assert_eq(card.pickupsButton.text, "PICKUPS")
+	assert_eq(card.upgradeBadge.visible, DriverCard.affordableUpgrades(0) > 0, "the badge shows only when the bank covers an upgrade")
+	assert_eq(card.upgradeBadge.count, DriverCard.affordableUpgrades(0))
+	card.benchOpen = true
+	card.refresh()
+	assert_eq(card.upgradeButton.text, "DRIVERS", "in driver focus it goes back to the list")
+	assert_false(card.upgradeBadge.visible, "the bench shows what can be bought")
+	card.benchOpen = false
+	card.refresh()
 	assert_true(card.statLine.visible)
 	assert_true(card.progress.visible)
 	assert_eq(card.statRows.size(), 8, "every upgradeable stat")
@@ -137,7 +148,34 @@ func test_upgrades_asks_for_no_particular_stat():
 	card.upgradesRequested.connect(func(stat): asked.push_back(stat))
 	card.upgradeButton.pressed.emit()
 	assert_eq(asked, [-1])
+	var pickups = []
+	card.pickupsRequested.connect(func(): pickups.push_back(true))
+	card.pickupsButton.pressed.emit()
+	assert_eq(pickups.size(), 1, "Pickups asks for the Goonopedia's Pickups tab")
 	card.free()
+
+func test_a_count_badge_hides_at_zero():
+	var button = Button.new()
+	add_child(button)
+	var badge := CountBadge.on(button)
+	assert_false(badge.visible)
+	badge.setCount(3)
+	assert_true(badge.visible)
+	assert_eq(badge.label.text, "3")
+	badge.setCount(0)
+	assert_false(badge.visible, "no zero")
+	button.free()
+
+func test_the_bench_lists_every_stat_and_both_features():
+	var bench = DriverBench.new()
+	add_child(bench)
+	var infos = ["sedan", "semi", "racer"].map(func(id): return load("res://scene/car/%s/%s_info.tres" % [id, id]))
+	bench.setup(0, infos[0], infos)
+	assert_eq(bench.rows.size(), DriverCard.STATS.size(), "a row per stat")
+	assert_eq(bench.signature.get_child_count(), 2, "both signature features")
+	assert_true(bench.summary.text != "", "strong and weak against the other cars")
+	assert_eq(DriverBench.strongWeak(infos[0], [infos[0]]), "", "nothing to compare against yet")
+	bench.free()
 
 func test_car_progress_counts_levels_and_tiers():
 	var data := SaveManager.playerData

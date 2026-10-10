@@ -165,7 +165,7 @@ func unlockCar() -> bool:
 #upgrades each car can buy per stat. Saves from before the cap keep any levels above it (no refund).
 const MAX_UPGRADE_LEVEL := 20
 
-#how much the next upgrade will cost. `carIndex` -1 is the selected car (the Goonopedia's Cars tab names its own).
+#how much the next upgrade will cost. `carIndex` -1 is the selected car (the garage's bench, DriverBench, names its own).
 func requestStatCost(statString: Root.upgrade, carIndex := -1) -> int:
 	return upgradePrice(getUpgradeLevel(statString, carIndex), str(playerData.cars[playerData.selectedCar if carIndex < 0 else carIndex].name))
 

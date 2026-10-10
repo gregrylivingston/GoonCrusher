@@ -52,6 +52,7 @@ const BOOST_ZOOM := 0.02         #a drift boost pulls the zoom out this much per
 const GEAR_SPEED := 300.0        #px/s per gear, the controller's rule for car.gear
 const PITCH_IDLE := 0.85
 const PITCH_RANGE := 0.85        #added from the bottom of a gear to its top
+const PITCH_AFTER_SHIFT := 0.25  #share of PITCH_RANGE the note starts a gear at, after a shift up
 const PITCH_PER_GEAR := 0.12     #each higher gear starts a little higher (up to 4)
 const PITCH_LOAD := 0.08         #throttle on
 const PITCH_EASE := 7.0          #per second toward the target, so an upshift glides down
@@ -344,11 +345,12 @@ static func enginePitch(speed: float, throttle: float, reverse: bool) -> float:
 	var g := floorf(gears)
 	return PITCH_IDLE + PITCH_RANGE * (gears - g) + PITCH_PER_GEAR * minf(g, 4.0) + load
 
-## A geared car's pitch: up through the gear it is in, flat and stuttering on the limiter; N revs with the throttle
+## The pitch from the gear and how far the engine is through its band (OverheadCarBody2D.revShare): up through the gear it is in, flat and stuttering on the limiter; N revs with the throttle
 static func gearedPitch(gear: int, share: float, throttle: float, limited: bool) -> float:
 	var load := PITCH_LOAD * absf(throttle)
 	if gear == 0: return PITCH_IDLE + (PITCH_RANGE if throttle > 0.0 else 0.0) + load
-	var pitch := PITCH_IDLE + PITCH_RANGE * minf(share, 1.0) + PITCH_PER_GEAR * minf(maxi(gear, 1) - 1, 4.0) + load
+	var revs := lerpf(PITCH_AFTER_SHIFT if gear > 1 else 0.0, 1.0, clampf(share, -0.3, 1.0)) #a shift up drops the note, as the tach's needle drops
+	var pitch := PITCH_IDLE + PITCH_RANGE * maxf(revs, 0.0) + PITCH_PER_GEAR * minf(maxi(gear, 1) - 1, 4.0) + load
 	if limited && share >= 1.0 && throttle > 0.0: pitch -= 0.12 * absf(sin(Time.get_ticks_msec() * 0.03))
 	return pitch
 
@@ -386,7 +388,7 @@ func topSpeed() -> float:
 
 func engineSound(speed: float, throttle: float, reverse: bool, delta: float) -> void:
 	var player: AudioStreamPlayer2D = car.engineAudio
-	var target: float = gearedPitch(car.gear, car.rpmShare(), throttle, car.gear < car.gears)
+	var target: float = gearedPitch(car.gear, car.revShare(), throttle, car.gear < car.gears)
 	enginePitchNow = lerpf(enginePitchNow, target, 1.0 - exp(-PITCH_EASE * delta))
 	player.pitch_scale = maxf(enginePitchNow, 0.1)
 	player.volume_db = engineBaseDb + (0.0 if absf(throttle) > 0.1 else ENGINE_COAST_DB)

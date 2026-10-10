@@ -60,10 +60,12 @@ Run flows 1 to 6 under each of these:
 
 - Every bottom hint bar is clickable: the main menu (Back included), Goonopedia, pause, Deal, Claw and Pit Shop. Also the Q/E tab chips in Settings and Goonopedia.
 - Driver card:
-  - Upgrades opens the Goonopedia on that car with its Engine upgrade button focused. The stat rail ignores the mouse.
+  - Upgrades (F, or its button) opens the driver focus: the other drivers slide off, the card moves left and the bench slides in with the Engine row focused. The stat rail ignores the mouse.
+  - In driver focus: Up/Down move between rows, E buys (gold wash, the number pops, the coins count down), a stat the coins don't cover shakes, Space drives from any row, Down from Dice reaches Drive, A/D change driver and keep the row, and Upgrades, Back or Esc returns to the drivers. A locked driver's bench has no buy buttons and UNLOCK has the focus.
+  - The Upgrades and Pickups badges show how many the bank covers, hop every couple of seconds, pop when the number changes, hide at 0 and sit still with Reduce Motion. Pickups opens the Goonopedia on Pickups; neither badge shows through it.
   - Hovering a feature shows its full text.
   - Side cards show only their art; selecting one flips it to its front (a crossfade with Reduce Motion), and the old one flips back.
-  - Drive and Upgrades sit at the bottom right and follow the selected card.
+  - Upgrades, Drive and Pickups sit in a tray at the bottom centre and follow the selected card.
   - Unlock flashes.
 - The mouse wheel scrolls the carousels.
 - Run setup's road map:

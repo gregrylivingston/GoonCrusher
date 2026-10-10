@@ -12,9 +12,10 @@ class_name DriverCard extends Panel
 #  traits   the car's two signature features (CarTraits): icon, name, kind and its one-line `short`;
 #           hovering one shows its full text
 #Under the focused card, outside its frame, a pill says what this car has won (SaveManager.carProgress):
-#medals by tier and levels won. Its buttons, Drive (or Unlock) and Upgrades (its icon and key, which opens
-#the driver's page in the Goonopedia, where upgrades are bought), are `actions`, which main2 docks at the
-#screen's bottom right; only the focused card's show.
+#medals by tier and levels won. Its buttons are `actions`, which main2 docks in a tray at the bottom centre;
+#only the focused card's show: Upgrades (opens the driver focus, where upgrades are bought, and reads
+#DRIVERS while it is open; DETAILS on a locked car), Drive (or Unlock) and Pickups (the Goonopedia's Pickups
+#tab). Upgrades and Pickups carry a CountBadge: how many the bank could buy right now.
 #Locked drivers show as a silhouette with their unlock price over the foot of the art, and no stats.
 #Portraits sit against the right edge, clear of the rail: the art's drivers stand at the right of their
 #pictures, and some (sedan, van, racer) are cut off there.
@@ -22,6 +23,7 @@ class_name DriverCard extends Panel
 signal drivePressed
 signal unlockPressed
 signal upgradesRequested(stat: int) #-1 for no particular stat
+signal pickupsRequested
 signal selectRequested
 
 const SIZE := Vector2(380, 560)
@@ -35,7 +37,10 @@ const RAIL_PAD := Vector4(12, 16, 14, 14) #the rows' margins inside the rail: le
 const TRAIT_ROW := 44.0
 const TRAITS_Y := ART_HEIGHT + BAND_HEIGHT + 8
 const GAP := 10.0 #between the card and the progress pill under it
-const BUTTON_HEIGHT := 52.0
+const BUTTON_HEIGHT := 64.0
+const SIDE_BUTTON_WIDTH := 200.0
+const UPGRADE_ICON := preload("res://texture/icon/upgrade.svg")
+const PICKUPS_ICON := preload("res://texture/icon/gift.svg")
 const FLIP_SECONDS := 0.42
 const STATS := [
 	["engine", Root.upgrade.ENGINE, preload("res://texture/icon/engine.svg")],
@@ -92,6 +97,10 @@ var frame := Panel.new()
 var catcher := Button.new() #a click anywhere on a side card selects it
 var mainButton: Button
 var upgradeButton: Button
+var pickupsButton: Button
+var upgradeBadge: CountBadge
+var pickupsBadge: CountBadge
+var benchOpen := false #the driver focus is open (main2): Upgrades reads DRIVERS and goes back to the list
 var statRows: Array[Control] = [] #the rail's rows: icon, value and bar
 
 func _ready() -> void:
@@ -205,22 +214,22 @@ func _ready() -> void:
 	priceLine.mouse_filter = MOUSE_FILTER_IGNORE
 	lockList.add_child(priceLine)
 
-	actions.add_theme_constant_override("separation", 10)
+	actions.add_theme_constant_override("separation", 12)
 	actions.size = Vector2(SIZE.x, BUTTON_HEIGHT)
-	actions.grow_horizontal = Control.GROW_DIRECTION_BEGIN #an UNLOCK that needs more room grows leftward
 	add_child(actions) #until main2 docks it
+	upgradeButton = sideButton("UPGRADES", "ui_upgrade", UPGRADE_ICON)
+	upgradeButton.pressed.connect(func(): upgradesRequested.emit(-1))
+	upgradeBadge = CountBadge.on(upgradeButton)
 	mainButton = MenuTheme.button("DRIVE", PackedStringArray(["ui_accept"]), true)
 	mainButton.custom_minimum_size = Vector2(0, BUTTON_HEIGHT)
 	mainButton.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	mainButton.add_theme_font_size_override("font_size", 24)
+	mainButton.add_theme_font_size_override("font_size", 28)
 	mainButton.pressed.connect(onMainPressed)
 	actions.add_child(mainButton)
-	upgradeButton = MenuTheme.button("", PackedStringArray(["ui_upgrade"]), false, preload("res://texture/icon/upgrade.svg"))
-	upgradeButton.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	upgradeButton.custom_minimum_size = Vector2(112, BUTTON_HEIGHT)
-	upgradeButton.tooltip_text = "Upgrades"
-	upgradeButton.pressed.connect(func(): upgradesRequested.emit(-1))
-	actions.add_child(upgradeButton)
+	pickupsButton = sideButton("PICKUPS", "ui_codex", PICKUPS_ICON)
+	pickupsButton.tooltip_text = "Unlock pickups and prize games in the Goonopedia"
+	pickupsButton.pressed.connect(func(): pickupsRequested.emit())
+	pickupsBadge = CountBadge.on(pickupsButton, 0.35)
 
 	frame.mouse_filter = MOUSE_FILTER_IGNORE
 	frame.size = SIZE
@@ -234,6 +243,23 @@ func _ready() -> void:
 	add_child(catcher)
 	layoutFace()
 	setFocused(false)
+
+#Upgrades and Pickups, either side of Drive: an icon, a word and its key. The key (or a click) works them,
+#so the focus stays on the main button.
+func sideButton(text: String, action: String, icon: Texture2D) -> Button:
+	var b := MenuTheme.button(text, PackedStringArray([action]), false, icon)
+	b.custom_minimum_size = Vector2(SIDE_BUTTON_WIDTH, BUTTON_HEIGHT)
+	b.add_theme_font_size_override("font_size", 19)
+	b.focus_mode = Control.FOCUS_NONE
+	actions.add_child(b)
+	return b
+
+## How many of a car's stats the bank could buy the next level of right now, each on its own
+static func affordableUpgrades(carIndex: int) -> int:
+	var count := 0
+	for s in STATS:
+		if not SaveManager.isUpgradeMaxed(s[1], carIndex) && SaveManager.requestStatCost(s[1], carIndex) <= SaveManager.playerData.coin: count += 1
+	return count
 
 #a stat's row on the rail: icon and value side by side over a thin bar. Display only, so nothing in it
 #takes the mouse.
@@ -368,7 +394,10 @@ func refresh() -> void:
 		priceLine.add_child(row)
 	priceLine.visible = car.cost != 0 && not demoLocked
 	actions.visible = focused
-	upgradeButton.visible = not locked
+	upgradeButton.text = "DRIVERS" if benchOpen else ("DETAILS" if locked else "UPGRADES")
+	upgradeButton.tooltip_text = "Back to the drivers" if benchOpen else ("This driver's stats and features" if locked else "Buy upgrades for this driver")
+	upgradeBadge.setCount(affordableUpgrades(index) if focused && not locked && not benchOpen else 0)
+	pickupsBadge.setCount(Unlocks.buyableCount() if focused else 0)
 	var oldParts = mainButton.get_node_or_null("parts")
 	if oldParts:
 		mainButton.remove_child(oldParts)

@@ -51,6 +51,7 @@ static func ensureMenuActions() -> void:
 	addEvent("ui_cancel", pad(JOY_BUTTON_B))
 	addIfMissing("ui_upgrade", key(KEY_F), pad(JOY_BUTTON_Y)) #Upgrade in the garage, Gadget in run setup
 	addIfMissing("ui_records", key(KEY_R), pad(JOY_BUTTON_X))
+	addIfMissing("ui_buy", key(KEY_E), pad(JOY_BUTTON_A)) #buys the lit upgrade row in the garage's driver focus
 	addIfMissing("ui_codex", key(KEY_G), pad(JOY_BUTTON_BACK)) #the Goonopedia
 	addIfMissing("ui_boost", key(KEY_V), pad(JOY_BUTTON_RIGHT_STICK)) #run setup's Boost slot
 	addIfMissing("ui_region_prev", key(KEY_Z), trigger(JOY_AXIS_TRIGGER_LEFT)) #run setup's region tabs

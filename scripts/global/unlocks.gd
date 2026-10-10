@@ -118,6 +118,16 @@ static func canAfford(uid: String) -> bool:
 	var cost := price(uid)
 	return data() != null && data().coin >= int(cost.get("coin", 0)) && data().gem >= int(cost.get("gem", 0))
 
+## How many pickups and prize games the bank could buy right now, each on its own (the garage dock's badge)
+static func buyableCount() -> int:
+	var uids := []
+	for id in Pickups.DATA: uids.push_back("pickup:" + str(id))
+	for game in CrushPrizes.GAMES: uids.push_back("prize:" + str(game.id))
+	var count := 0
+	for uid in uids:
+		if state(uid) == S.READY && not price(uid).is_empty() && canAfford(uid): count += 1
+	return count
+
 ## Buys a READY unlock that has a price: spends the bank, opens it, and opens any child whose play
 ## condition is already met. False (nothing spent) when it can't be bought.
 static func buy(uid: String) -> bool:

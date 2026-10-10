@@ -2,8 +2,10 @@ extends CanvasLayer
 
 #The main menu, as cards (docs/UI.md).
 #  GARAGE     a carousel of driver cards (DriverCard). LB/RB or Left/Right picks a driver, Accept
-#             drives or unlocks, Upgrades opens the driver's page in the Goonopedia (where upgrades are
-#             bought), Records shows the driver's bests.
+#             drives or unlocks, Records shows the driver's bests. Upgrades opens the driver focus: the
+#             other drivers leave, the card moves to the left and its bench (DriverBench) opens beside it,
+#             where upgrades are bought (Up/Down, then E / A; Accept still drives); Upgrades or Back returns to the drivers. The
+#             dock under the card holds Upgrades, Drive and Pickups.
 #  RUN SETUP  the road map: six region tabs (Territories; Z/C or LT/RT), the region's five stops on a road
 #             (Q/E or LB/RB, 1-5), the five mode medallions under them (Left/Right), the tier chips
 #             (Up/Down; ModeTiers: Easy, Medium, Hard), the car strip (which cars have won this mode,
@@ -22,7 +24,10 @@ const CARD_SLOTS := {
 	-1: [Vector2(333, 246), 0.7], 1: [Vector2(1001, 246), 0.7],
 	-2: [Vector2(92, 290), 0.58], 2: [Vector2(1288, 290), 0.58],
 }
-const ACTION_DOCK_WIDTH := 280.0
+const DOCK_SIZE := Vector2(840, 84)  #the tray under the focused card: Upgrades, Drive, Pickups
+const DOCK_BOTTOM := 68.0            #its foot above the screen's, clear of the hint bar
+const FOCUS_CARD_POS := Vector2(80, 146) #the card in driver focus, with its bench at BENCH_POS
+const BENCH_POS := Vector2(512, 142)
 const POSTER_SIZE := Vector2(250, 140) #a stop on the road map
 const STOP_SPOTS := [Vector2(195, 262), Vector2(500, 214), Vector2(800, 262), Vector2(1100, 214), Vector2(1405, 262)] #stop centres, 1st to 5th
 const STOP_FOCUS_SCALE := 1.18
@@ -53,7 +58,10 @@ var ui := Control.new()
 var backgrounds: Array[TextureRect] = []
 var frontBackground := 0
 var garage := Control.new()
-var actionDock := Control.new() #the focused card's Drive and Upgrades, at the bottom right
+var actionDock := Panel.new() #the focused card's Upgrades, Drive and Pickups, in a tray at the bottom centre
+var focusOpen := false       #driver focus: the selected card at the left with its bench, the other drivers off screen
+var bench := DriverBench.new()
+var benchTween: Tween
 var setup := Control.new()
 var logo := Label.new()
 var cards: Array[DriverCard] = []
@@ -253,25 +261,34 @@ func buildGarage() -> void:
 		garage.add_child(card)
 		card.drivePressed.connect(goToSetup)
 		card.unlockPressed.connect(onUnlockPressed)
-		card.upgradesRequested.connect(openUpgrades)
+		card.upgradesRequested.connect(toggleFocus)
+		card.pickupsRequested.connect(openGoonopedia)
 		card.selectRequested.connect(selectCar.bind(i))
 		cards.push_back(card)
 		card.car = cars[i]
 		card.refresh()
-	#every card's Drive and Upgrades sit in one dock at the bottom right; only the focused card's show
-	actionDock.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
-	actionDock.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	actionDock.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	actionDock.offset_left = -24 - ACTION_DOCK_WIDTH
-	actionDock.offset_right = -24
-	actionDock.offset_top = -18 - DriverCard.BUTTON_HEIGHT
-	actionDock.offset_bottom = -18
+	bench.position = BENCH_POS
+	bench.visible = false
+	garage.add_child(bench)
+	#every card's Upgrades, Drive and Pickups sit in one tray at the bottom centre; only the focused card's show
+	var tray := MenuTheme.box(Color(HudTheme.PANEL, 0.92), Color(HudTheme.RIM, 0.6), 14, 2)
+	tray.border_width_top = 4
+	actionDock.add_theme_stylebox_override("panel", tray)
+	actionDock.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
+	actionDock.offset_left = -DOCK_SIZE.x / 2.0
+	actionDock.offset_right = DOCK_SIZE.x / 2.0
+	actionDock.offset_top = -DOCK_BOTTOM - DOCK_SIZE.y
+	actionDock.offset_bottom = -DOCK_BOTTOM
 	actionDock.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	garage.add_child(actionDock)
 	for card in cards:
 		card.remove_child(card.actions)
 		actionDock.add_child(card.actions)
 		card.actions.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		card.actions.offset_left = 12
+		card.actions.offset_right = -12
+		card.actions.offset_top = 11
+		card.actions.offset_bottom = -9
 
 func buildSetup() -> void:
 	setup.visible = false
@@ -746,6 +763,7 @@ func selectCar(index: int, animate := true) -> void:
 	Root.selectedCar = cars[index]
 	Root.playerCar = null #the menu shows a car from its CarInfo, without loading the car scene
 	Root.carInfo = cards[index].info
+	if focusOpen: refreshBench()
 	layoutCards(animate)
 	showBackground(Root.carInfo.backgroundPic, animate)
 	if Root.carInfo.introAudio.size() > 0:
@@ -761,6 +779,7 @@ func layoutCards(animate: bool) -> void:
 		var card = cards[i]
 		var offset = wrapi(i - selected + count / 2, 0, count) - count / 2
 		var slot = CARD_SLOTS.get(offset)
+		if focusOpen: slot = [FOCUS_CARD_POS, 1.0] if offset == 0 else null #the other drivers leave
 		var target: Vector2 = slot[0] if slot else Vector2(800 + signf(offset) * 1000 - 190, 300)
 		var scale: float = slot[1] if slot else 0.5
 		var tint = Color.WHITE if offset == 0 else (Color(0.6, 0.6, 0.6) if slot else Color(0.6, 0.6, 0.6, 0.0))
@@ -781,7 +800,13 @@ func layoutCards(animate: bool) -> void:
 			card.modulate = tint
 		card.visible = slot != null || animate
 	stackByDistance(garage, cards, selected)
-	if screen == Screen.GARAGE: cards[selected].mainButton.grab_focus()
+	if screen == Screen.GARAGE: focusGarage()
+
+#the garage's focus: the bench's row in driver focus (the one it was on last), else the dock's main button
+func focusGarage() -> void:
+	var button: Button = bench.focusButton() if focusOpen else null
+	if button == null: button = cards[SaveManager.playerData.selectedCar].mainButton
+	button.grab_focus()
 
 #draws the selected item last and the farthest first, by child order (z_index would also lift the
 #cards over overlays such as Settings)
@@ -810,6 +835,7 @@ func finishCarLoad(index: int, wait: bool) -> void:
 		pendingInfos.erase(index)
 		cards[index].setup(SaveManager.playerData.cars[index], ResourceLoader.load_threaded_get(path), index)
 	else: cards[index].setup(SaveManager.playerData.cars[index], load(path), index)
+	if focusOpen: refreshBench() #its strong and weak line is against every car loaded
 
 func showBackground(texture: Texture2D, animate := true) -> void:
 	var front = backgrounds[frontBackground]
@@ -822,11 +848,56 @@ func showBackground(texture: Texture2D, animate := true) -> void:
 	tween.tween_property(next, "modulate:a", 1.0, SLIDE_SECONDS if animate else 0.0)
 	tween.tween_property(front, "modulate:a", 0.0, SLIDE_SECONDS if animate else 0.0)
 
-#Upgrades (or a stat on the focused card): the driver's page in the Goonopedia, on that stat's upgrade
-func openUpgrades(stat := -1) -> void:
-	var index: int = SaveManager.playerData.selectedCar
-	if screen != Screen.GARAGE || cards[index].isLocked() || overlayOpen(): return
-	Goonopedia.openCar(self, index, stat).closed.connect(onOverlayClosed)
+#---------- driver focus ----------
+#Upgrades (F / Y, or the dock's button) opens it on the selected driver and closes it again: the other cards
+#drive off, the card skids to the left and its bench slides in beside it. Q/E still change driver.
+
+func toggleFocus(_stat := -1) -> void:
+	if screen != Screen.GARAGE || overlayOpen(): return
+	setFocusOpen(not focusOpen)
+
+func setFocusOpen(open: bool, animate := true) -> void:
+	if open == focusOpen: return
+	focusOpen = open
+	for card in cards: card.benchOpen = open
+	if open:
+		for i in cards.size(): #the strong and weak line compares every car
+			if cards[i].info == null && not pendingInfos.has(i): requestCarInfo(i)
+		refreshBench()
+	else:
+		for card in cards: card.mainButton.focus_neighbor_top = NodePath() #linked to the bench's last row while it was open
+	slideBench(animate)
+	layoutCards(animate)
+	statUpdatesUiUpdate()
+
+func refreshBench() -> void:
+	var card := cards[SaveManager.playerData.selectedCar]
+	if card.info == null: return
+	bench.setup(card.index, card.info, cards.filter(func(c): return c.info != null).map(func(c): return c.info))
+	bench.linkFocus(card.mainButton)
+
+#in from the right behind the card, and back out; a fade with Reduce Motion, at once in the harnesses
+func slideBench(animate: bool) -> void:
+	if benchTween: benchTween.kill()
+	var away := BENCH_POS + Vector2(1140, 0)
+	if not animate || Transition.instant():
+		bench.position = BENCH_POS
+		bench.modulate.a = 1.0
+		bench.visible = focusOpen
+		return
+	benchTween = create_tween()
+	if Settings.reduce_motion():
+		if not bench.visible: bench.modulate.a = 0.0
+		bench.position = BENCH_POS
+		bench.visible = true
+		benchTween.tween_property(bench, "modulate:a", 1.0 if focusOpen else 0.0, 0.15)
+	else:
+		if not bench.visible: bench.position = away
+		bench.modulate.a = 1.0
+		bench.visible = true
+		benchTween.tween_property(bench, "position", BENCH_POS if focusOpen else away, SLIDE_SECONDS + 0.06).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		Transition.sound("skid" if focusOpen else "whoosh", -14.0)
+	if not focusOpen: benchTween.tween_callback(bench.hide)
 
 func onUnlockPressed() -> void:
 	var before = SaveManager.playerData.coin
@@ -847,6 +918,7 @@ func goToSetup() -> void:
 	Transition.play(showSetup, "GOONCRUSHER", "RUN SETUP")
 
 func showSetup() -> void:
+	setFocusOpen(false, false) #back from run setup, the garage shows its drivers
 	screen = Screen.SETUP
 	SaveManager.setGameMode(defaultGameMode())
 	switchLayer(setup, garage)
@@ -862,7 +934,7 @@ func showGarage() -> void:
 	switchLayer(garage, setup)
 	showBackground(Root.carInfo.backgroundPic)
 	updateHints()
-	cards[SaveManager.playerData.selectedCar].mainButton.grab_focus()
+	focusGarage()
 
 func switchLayer(show: Control, hide: Control) -> void:
 	hide.visible = false
@@ -1036,9 +1108,14 @@ func _input(event: InputEvent) -> void:
 		return
 	var handled := true
 	if screen == Screen.GARAGE:
-		if event.is_action_pressed("ui_tab_prev") || event.is_action_pressed("ui_left"): selectCar(SaveManager.playerData.selectedCar - 1)
+		#on a bench row E (or A) buys it and Accept drives; E is also the next-driver key, so Buy is read first
+		var onRow := focusOpen && bench.rowFocused()
+		if onRow && event.is_action_pressed("ui_buy"): bench.buyUpgrade(bench.lastStat)
+		elif onRow && event.is_action_pressed("ui_accept"): cards[SaveManager.playerData.selectedCar].onMainPressed()
+		elif event.is_action_pressed("ui_tab_prev") || event.is_action_pressed("ui_left"): selectCar(SaveManager.playerData.selectedCar - 1)
 		elif event.is_action_pressed("ui_tab_next") || event.is_action_pressed("ui_right"): selectCar(SaveManager.playerData.selectedCar + 1)
-		elif event.is_action_pressed("ui_upgrade"): openUpgrades()
+		elif event.is_action_pressed("ui_upgrade"): toggleFocus()
+		elif focusOpen && (event.is_action_pressed("ui_cancel") || event.is_action_pressed("ui_menu")): setFocusOpen(false)
 		elif event.is_action_pressed("ui_records"): openRecords()
 		elif event.is_action_pressed("ui_codex"): openGoonopedia()
 		elif event.is_action_pressed("ui_menu"): openSettings()
@@ -1099,9 +1176,14 @@ func updateHints() -> void:
 		hints = [[["ui_region_prev", "ui_region_next"], "Region"], [["ui_tab_prev", "ui_tab_next"], "Stop"], [["ui_left", "ui_right"], "Mode"], [["ui_up", "ui_down"], "Tier"], [["ui_accept"], "Start"], [["ui_upgrade"], "Gadget"], [["ui_boost"], "Boost"], [["ui_records"], "Records"], [["ui_codex"], "Goonopedia"], [["ui_cancel"], "Back"]]
 	else:
 		var locked = cards[SaveManager.playerData.selectedCar].isLocked()
-		hints = [[["ui_tab_prev", "ui_tab_next"], "Driver"], [["ui_accept"], "Unlock" if locked else "Drive"]]
-		if not locked: hints.push_back([["ui_upgrade"], "Upgrades"])
-		hints.append_array([[["ui_records"], "Records"], [["ui_codex"], "Goonopedia"], [["ui_menu"], "Settings"]])
+		hints = [[["ui_left", "ui_right"] if focusOpen else ["ui_tab_prev", "ui_tab_next"], "Driver"]]
+		if focusOpen:
+			if locked: hints.push_back([["ui_accept"], "Unlock"])
+			else: hints.append_array([[["ui_up", "ui_down"], "Stat"], [["ui_buy"], "Buy"], [["ui_accept"], "Drive"]])
+			hints.append_array([[["ui_upgrade"], "Drivers"], [["ui_codex"], "Pickups"], [["ui_records"], "Records"], [["ui_cancel"], "Back"]])
+		else:
+			hints.append_array([[["ui_accept"], "Unlock" if locked else "Drive"], [["ui_upgrade"], "Details" if locked else "Upgrades"],
+				[["ui_codex"], "Pickups"], [["ui_records"], "Records"], [["ui_menu"], "Settings"]])
 	for hint in hints: hintBar.add_child(KeyHint.make(PackedStringArray(hint[0]), hint[1], 16, true))
 
 #---------- overlays and runs ----------
@@ -1119,7 +1201,7 @@ func onOverlayClosed() -> void:
 	statUpdatesUiUpdate() #the Goonopedia may have spent coins and gems on unlocks
 	if screen == Screen.SETUP: refreshSetup(false)
 	if screen == Screen.SETUP: startButton.grab_focus()
-	else: cards[SaveManager.playerData.selectedCar].mainButton.grab_focus()
+	else: focusGarage()
 
 func openRecords() -> void:
 	var scene = load("res://scene/player/menu/gameSummary.tscn").instantiate()
@@ -1158,6 +1240,7 @@ func statUpdatesUiUpdate() -> void:
 	gemsLabel.text = str(SaveManager.playerData.gem)
 	refreshLoadout()
 	for card in cards: card.refresh()
+	if focusOpen: bench.refresh()
 	updateHints()
 
 #run payout: the coins are already credited and saved; this only counts the display up

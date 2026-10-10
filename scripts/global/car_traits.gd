@@ -2,7 +2,7 @@ class_name CarTraits extends RefCounted
 
 #Each car's signature features (docs/CAR_ART.md, "Traits"). A car lists its trait ids in its CarInfo
 #(`traits`); the car reads them once in _ready (OverheadCarBody2D.hasTrait and the flags it caches for
-#integrate()), the garage card shows them as badges and the Goonopedia's Cars tab explains them.
+#integrate()), the garage card shows them as badges and the driver focus (DriverBench) explains them.
 #
 #kind: PHYSICS changes how the car drives, inside integrate(), so the AI driver's predictions follow it;
 #MECHANIC is a rule on top; ABILITY has its own button (the Ability action).

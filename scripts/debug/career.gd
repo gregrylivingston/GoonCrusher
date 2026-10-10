@@ -344,61 +344,54 @@ func goonopedia() -> Goonopedia:
 		if node is Goonopedia && not node.is_queued_for_deletion(): return node
 	return null
 
-## Buys one upgrade the way a player does: Upgrades on the garage card opens the driver's page in the
-## Goonopedia, then a click on the stat's upgrade button (or Up/Down to it and Accept), then Back.
+## Buys one upgrade the way a player does: Upgrades in the garage's dock opens the driver focus, then a click
+## on the stat's buy button on the bench (or Up/Down to it and Buy), then Back to the drivers.
 func upgrade(index: int, stat: int) -> bool:
 	var data := SaveManager.playerData
 	if not await selectCar(index): return false
-	var card: DriverCard = menu().cards[index]
+	var m := menu()
+	var card: DriverCard = m.cards[index]
 	await activate(card.upgradeButton, "ui_upgrade")
-	if not await waitFor(func(): return goonopedia() != null, 3.0, "Upgrades to open the driver's page"): return false
-	var page := goonopedia()
-	if page.tab != Goonopedia.Tab.CARS || page.shown == null || page.shown.kind != "car" || page.shown.key != index:
-		issue("ui", "Upgrades opened the Goonopedia on %s, not %s's card" % [Goonopedia.TAB_NAMES[page.tab], data.cars[index].name])
-		return await closeGoonopedia(false)
-	await waitFor(func(): return page.upgradeButton(stat) != null, 3.0, "the upgrade buttons to show")
-	var button := page.upgradeButton(stat)
+	if not await waitFor(func(): return m.focusOpen, 3.0, "Upgrades to open the driver focus"): return false
+	await think(0.3) #the bench slides in
 	var statName := String(DriverCard.STATS.filter(func(s): return s[1] == stat)[0][0])
-	if button == null:
-		issue("ui", "no %s upgrade button on %s's page" % [statName, data.cars[index].name])
-		return await closeGoonopedia(false)
+	var button: Button = m.bench.upgradeButton(stat)
+	if m.bench.index != index || button == null:
+		issue("ui", "no %s upgrade button on %s's bench (it shows car %d)" % [statName, data.cars[index].name, m.bench.index])
+		return await closeFocus(false)
 	var level := int(data.cars[index].upgrades.get(stat, 0))
 	var coins := data.coin
 	var cost := SaveManager.requestStatCost(stat, index)
-	if useMouse():
-		if not await wheelIntoView(page.detailScroll, button):
-			issue("mouse", "the mouse wheel couldn't bring the %s upgrade into view" % statName)
-			return await closeGoonopedia(false)
-		await click(button)
+	if useMouse(): await click(button)
 	else:
 		var buttons: Array[Button] = []
-		for s in DriverCard.STATS: buttons.push_back(page.upgradeButton(s[1]))
+		for s in DriverCard.STATS: buttons.push_back(m.bench.upgradeButton(s[1]))
 		var row := buttons.find(button)
 		for step in buttons.size():
 			var at := buttons.find(button.get_viewport().gui_get_focus_owner())
 			if at == row: break
 			if at < 0:
-				issue("ui", "no upgrade button has focus on the driver's page; keys can't choose one (focus on %s)" % focusName())
-				return await closeGoonopedia(false)
+				issue("ui", "no upgrade button has focus on the driver's bench; keys can't choose one (focus on %s)" % focusName())
+				return await closeFocus(false)
 			await press("ui_down" if row > at else "ui_up")
 			if buttons.find(button.get_viewport().gui_get_focus_owner()) == at:
 				issue("ui", "Up/Down didn't move between the upgrade buttons (stuck on %s)" % DriverCard.STATS[at][0])
-				return await closeGoonopedia(false)
-		await press("ui_accept")
+				return await closeFocus(false)
+		await press("ui_buy")
 	await think(0.2)
 	if int(data.cars[index].upgrades.get(stat, 0)) != level + 1 || data.coin != coins - cost:
 		issue("economy" if data.coin != coins else "block", "upgrading %s on %s: level %d -> %d, bank %d -> %d (cost %d)" % [
 			statName, data.cars[index].name, level, int(data.cars[index].upgrades.get(stat, 0)), coins, data.coin, cost])
-		return await closeGoonopedia(false)
+		return await closeFocus(false)
 	shopping.upgrades += 1
 	shopping.upgrade_coins += cost
 	note("CAREER_SHOP session=%d upgrade %s %s to %d for %d (bank %d)" % [session, data.cars[index].name, statName, level + 1, cost, data.coin])
-	return await closeGoonopedia(true)
+	return await closeFocus(true)
 
-## Back out of the Goonopedia; returns `result` once it has closed (false if it never does)
-func closeGoonopedia(result: bool) -> bool:
+## Back from the driver focus to the drivers; returns `result` once it has closed (false if it never does)
+func closeFocus(result: bool) -> bool:
 	await press("ui_cancel")
-	if not await waitFor(func(): return goonopedia() == null, 3.0, "Back to close the Goonopedia"): return false
+	if not await waitFor(func(): return menu() == null || not menu().focusOpen, 3.0, "Back to close the driver focus"): return false
 	return result
 
 func openSetup() -> bool:

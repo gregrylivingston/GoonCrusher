@@ -168,7 +168,7 @@ var gear: int = 0 #-1 R, 0 N, 1 up. An automatic's is only for show (the HUD and
 #toward the top (GEAR_CURVE), so every gear lasts long enough to shift by hand. Low gears pull
 #harder; at the top of any gear but the last the rev limiter cuts the push, and a gear far too high for the
 #speed bogs. Changing between forward gears cuts the push for a moment (the clutch); a shift up near the
-#redline (from SHIFT_KICK_FROM of the gear) earns a short push instead. Who shifts: the player by hand
+#redline (the top of the gear's band, from SHIFT_KICK_FROM) earns a short push instead. Who shifts: the player by hand
 #(ShiftUp / ShiftDown, down past N into R) unless the Automatic Gearbox setting is on; the AI and that
 #setting use autoGear. gearThrust() is read inside integrate(), so the AI's predictions follow it.
 var gears: int = 0          #forward gears; 0 is an automatic, as before gearboxes
@@ -181,7 +181,7 @@ const SHIFT_CUT_TICKS := 12     #a sloppy shift: a fifth of a second with no pus
 const SHIFT_KICK_TICKS := 45    #a well-timed one: three quarters of a second...
 const SHIFT_KICK := 1.5         #...of half again the push
 const POWER_BAND := Vector2(0.75, 1.0) #the push at the bottom and at the top of each gear: keep the revs up
-const SHIFT_KICK_FROM := 0.88  #share of a gear's range from which a shift up earns the kick
+const SHIFT_KICK_FROM := 0.8   #share of a gear's band (revShare) from which a shift up earns the kick: the top fifth of the revs
 const LOW_GEAR_PULL := 0.3     #first gear pulls this much harder than the top gear
 const BOG_BELOW := 0.55        #under this share of a gear's range (any gear but first) the engine bogs...
 const BOG_THRUST := 0.3        #...down to this share of its push at a standstill in second, halving each gear up (bogFloor)
@@ -1297,10 +1297,13 @@ func bestGear(speed: float) -> int:
 static func bogFloor(g: int) -> float:
 	return BOG_THRUST * pow(0.5, g - 2)
 
-## How far through its gear the engine is: 0 at the bottom, 1 at the limiter (R and N count from gear 1's span)
-func rpmShare() -> float:
-	var speed := velocity.length()
-	return speed / gearTop(gear)
+## How far the engine is through the band its gear works in: 0 where the gear below hands over (its limiter;
+## a standstill for first), 1 at this gear's own limiter. Under 0 the gear is too high for the speed. The
+## tach, the engine note and the shift kick read this; R and N count through first gear's band.
+func revShare() -> float:
+	var g := maxi(gear, 1)
+	var low := gearTop(g - 1) if g > 1 else 0.0
+	return (velocity.length() - low) / maxf(gearTop(g) - low, 1.0)
 
 ## The gear autoGear would choose from `g` at `speed`: one step up near the limiter, one down when bogging
 func autoGear(g: int, speed: float) -> int:
@@ -1319,7 +1322,7 @@ func shift(step: int) -> bool:
 	if to == -1 && velocity.dot(transform.x) > REVERSE_SHIFT_SPEED: return false #it won't go into R rolling forward
 	if to == gear: return false
 	var from := gear
-	var kicked := step > 0 && from >= 1 && rpmShare() >= SHIFT_KICK_FROM
+	var kicked := step > 0 && from >= 1 && revShare() >= SHIFT_KICK_FROM
 	setGear(to)
 	shiftCut = SHIFT_CUT_TICKS if from >= 1 && to >= 1 && not kicked else 0
 	shiftKick = SHIFT_KICK_TICKS if kicked else 0

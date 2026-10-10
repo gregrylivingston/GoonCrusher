@@ -1,10 +1,10 @@
 class_name Goonopedia extends Control
 
 #The Goonopedia (docs/UI.md): what's in the game, opened from the main menu with G / View.
-#Tabs GOONS, CARS, LEVELS, PICKUPS, MODES and SYSTEMS. Each tab is a grid of entries on the left and a
+#Tabs PICKUPS, LEVELS, MODES, GOONS and SYSTEMS (cars live in the garage: its driver focus, DriverBench). Each tab is a grid of entries on the left and a
 #detail card for the focused entry on the right. The entries and their numbers come from the game's own
-#tables (Goons.DATA, the save's cars and levels, Root.powerup, Root.gameModeDescription, the car's
-#systems), so new goons, cars and levels show up by themselves; only the plain-language text is written
+#tables (Goons.DATA, the save's levels, Root.powerup, Root.gameModeDescription, the car's
+#systems), so new goons and levels show up by themselves; only the plain-language text is written
 #here. A goon's DATA can carry "blurb" and "tip" strings to replace the text its verb gives it.
 #Goons show as silhouettes until the player crushes one (PlayerData.goonsCrushed, credited by gameSummary).
 #The Pickups tab is also where pickups are unlocked (Unlocks): each kind's tree in order, a locked tile
@@ -13,14 +13,13 @@ class_name Goonopedia extends Control
 signal closed
 
 #the pages with something to unlock come first; the Goonopedia opens on Pickups
-enum Tab { PICKUPS, CARS, LEVELS, MODES, GOONS, SYSTEMS }
-const TAB_NAMES := ["PICKUPS", "CARS", "LEVELS", "MODES", "GOONS", "SYSTEMS"]
+enum Tab { PICKUPS, LEVELS, MODES, GOONS, SYSTEMS }
+const TAB_NAMES := ["PICKUPS", "LEVELS", "MODES", "GOONS", "SYSTEMS"]
 const REVEAL_ALL := false #true shows every goon without crushing one first
 const ICON := preload("res://texture/icon/goonopedia.svg")
 const SHADOW := Color(0, 0, 0, 0.88) #silhouette tint for undiscovered goons and locked cars
 const LIST_WIDTH := 720.0
 const BUY_SOUND := preload("res://sound/fx/short-success-sound-glockenspie.mp3")
-const UPGRADE_ICON := preload("res://texture/icon/upgrade.svg")
 
 #---------- text ----------
 
@@ -72,26 +71,6 @@ const TRAIT_TEXT := {
 	"log": "Lies still as a log until you pass.", "flank": "Circles round to hit you from the side.",
 }
 
-#Root.upgrade -> [name, what it does]
-const PICKUP_TEXT := {
-	Root.upgrade.HEALTH: ["Repair Kit", "Patches up %d hull."],
-	Root.upgrade.FUEL: ["Fuel Can", "Adds %d fuel."],
-	Root.upgrade.ENGINE: ["Engine", "+%d Engine for this run: harder acceleration."],
-	Root.upgrade.STEERING: ["Steering", "+%d Steering for this run: the wheels turn further."],
-	Root.upgrade.TRACTION: ["Traction", "+%d Traction for this run: more grip and better brakes."],
-	Root.upgrade.ARMOR: ["Armor", "+%d Armor for this run: every hit does less damage."],
-	Root.upgrade.HEADLIGHTS: ["Headlights", "+%d Headlights for this run: you see further at night."],
-	Root.upgrade.OIL: ["Oil", "+%d Oil for this run: the engine burns less fuel."],
-	Root.upgrade.CLOVER: ["Clover", "+%d Clover for this run: crushed goons drop pickups more often."],
-	Root.upgrade.LUCK: ["Dice", "+%d Dice for this run: drops are more often purses, gems and slot machines."],
-	Root.upgrade.COIN: ["Coin", "+%d coin. Stars multiply what a run pays."],
-	Root.upgrade.PURSE: ["Purse", "+%d coins in one go."],
-	Root.upgrade.GEM: ["Gem", "+%d gem. Gems buy a gadget and boost for the next run, and unlocks."],
-	Root.upgrade.SLOTMACHINE: ["Slot Machine", "Opens the slot machine: three reels of prizes, free to spin."],
-}
-const STAT_UPGRADES := [Root.upgrade.ENGINE, Root.upgrade.STEERING, Root.upgrade.TRACTION, Root.upgrade.ARMOR,
-	Root.upgrade.HEADLIGHTS, Root.upgrade.OIL, Root.upgrade.CLOVER, Root.upgrade.LUCK]
-
 #Root.gameModes -> how a run in it is won and lost
 const MODE_RULES := {
 	Root.gameModes.GOONCRUSHER: "The clock counts down from the level's time. Still driving when it hits zero? You win.",
@@ -134,37 +113,11 @@ var tiles: Array[Button] = []
 var shown = null #the entry in the detail card
 var preview: GoonPreview
 var pending := {}        #resource path -> Callable(resource) to run once it has loaded on a worker thread
-var carInfos := {}       #car index -> CarInfo
-var focusStat := -2 #the upgrade button showCar wants focused once the car's info has loaded; -2 none
 
 static func open(parent: Node) -> Goonopedia:
 	var page = Goonopedia.new()
 	parent.add_child(page)
 	return page
-
-## The garage's Upgrades: the page opened on a car's card in the Cars tab, with the focus on `stat`'s
-## upgrade button (the first stat's for -1)
-static func openCar(parent: Node, carIndex: int, stat := -1) -> Goonopedia:
-	var page := open(parent)
-	page.showCar(carIndex, stat)
-	return page
-
-
-func showCar(carIndex: int, stat := -1) -> void:
-	setTab(Tab.CARS)
-	var b := tileFor(carIndex)
-	if b == null: return
-	b.grab_focus() #shows its card
-	focusStat = stat if stat >= 0 else Root.upgrade.ENGINE
-	focusUpgrade()
-
-#moves the focus to the upgrade button showCar asked for, once the card has it
-func focusUpgrade() -> void:
-	if focusStat == -2: return
-	var button := upgradeButton(focusStat)
-	if button == null: return
-	focusStat = -2
-	button.grab_focus()
 
 func _ready() -> void:
 	add_to_group("menuOverlay")
@@ -267,7 +220,6 @@ func setTab(value: int) -> void:
 	shown = null
 	match tab:
 		Tab.GOONS: buildGoons()
-		Tab.CARS: buildCars()
 		Tab.LEVELS: buildLevels()
 		Tab.PICKUPS: buildPickups()
 		Tab.MODES: buildModes()
@@ -281,7 +233,7 @@ func refreshBank() -> void:
 	for child in bankRow.get_children():
 		bankRow.remove_child(child)
 		child.queue_free()
-	if tab != Tab.PICKUPS && tab != Tab.CARS: return
+	if tab != Tab.PICKUPS: return
 	var data := SaveManager.playerData
 	var pill = PanelContainer.new() #a pill like the garage's bank, apart from the page's count
 	pill.add_theme_stylebox_override("panel", MenuTheme.box(Color(0, 0, 0, 0.35), Color(HudTheme.RIM, 0.55), 12, 2, Vector4(14, 3, 14, 3)))
@@ -548,51 +500,6 @@ func factRow(tag: String, text: String, color: Color) -> void:
 	row.add_child(label)
 	into.add_child(row)
 
-#a car's stats as statTable shows them, each with a button that buys its next upgrade (price, or MAX)
-func upgradeTable(index: int, rows: Array) -> void:
-	var table = GridContainer.new()
-	table.columns = 5
-	table.add_theme_constant_override("h_separation", 12)
-	table.add_theme_constant_override("v_separation", 6)
-	for i in DriverCard.STATS.size():
-		var stat: int = DriverCard.STATS[i][1]
-		var r: Array = rows[i]
-		table.add_child(MenuTheme.iconRect(r[4], 24))
-		var name = Label.new()
-		name.text = r[0]
-		name.theme_type_variation = "MutedLabel"
-		name.add_theme_font_size_override("font_size", 18)
-		name.custom_minimum_size.x = 120
-		table.add_child(name)
-		var barHolder = Control.new()
-		barHolder.custom_minimum_size = Vector2(180, 24)
-		var bar = DriverCard.StatBar.new()
-		bar.base = int(r[2])
-		bar.bought = int(r[3])
-		bar.position = Vector2(0, 9)
-		bar.size = Vector2(180, 7)
-		barHolder.add_child(bar)
-		table.add_child(barHolder)
-		var level: int = int(r[3])
-		var value := MenuTheme.symbolRow([str(int(r[2]) + level)], 20)
-		value.alignment = BoxContainer.ALIGNMENT_BEGIN
-		if level > 0: value.add_child(MenuTheme.symbolRow(["+%d" % level], 15, HudTheme.GOLD))
-		value.custom_minimum_size.x = 80
-		table.add_child(value)
-		var maxed := SaveManager.isUpgradeMaxed(stat, index)
-		var cost := SaveManager.requestStatCost(stat, index)
-		var affordable := not maxed && cost <= SaveManager.playerData.coin
-		var buy = MenuTheme.button("", PackedStringArray(), affordable)
-		buy.custom_minimum_size = Vector2(150, 36)
-		buy.disabled = maxed
-		buy.set_meta("stat", stat)
-		MenuTheme.setButtonParts(buy, ["MAX"] if maxed else [UPGRADE_ICON, {"coin": cost}], 17)
-		if not affordable && not maxed: buy.get_node("parts").modulate = Color(1, 1, 1, 0.55)
-		buy.tooltip_text = "" if maxed else "Next %s upgrade (%d / %d)" % [r[0], level + 1, SaveManager.MAX_UPGRADE_LEVEL]
-		buy.pressed.connect(buyUpgrade.bind(index, stat))
-		table.add_child(buy)
-	into.add_child(table)
-
 #rows of [label, value text] or [label, value text, bar 0-100, bonus 0-100, icon]
 func statTable(rows: Array) -> void:
 	var table = GridContainer.new()
@@ -637,7 +544,6 @@ func showDetail(entry: Dictionary) -> void:
 	clearDetail()
 	match entry.kind:
 		"goon": goonDetail(entry)
-		"car": carDetail(entry)
 		"level": levelDetail(entry)
 		"pickup": pickupDetail(entry)
 		"prize": prizeDetail(entry)
@@ -748,64 +654,7 @@ static func tip(d: Dictionary) -> String:
 	elif verb == &"rider" && d.get("front", 0.0) <= 0.0: text = "Hit it from any side."
 	return text
 
-#---------- cars ----------
-
-func buildCars() -> void:
-	var cars = SaveManager.playerData.cars
-	var owned = cars.filter(func(c): return c.cost == 0).size()
-	progressLabel.text = "CARS OWNED  %d / %d" % [owned, cars.size()]
-	section("DRIVERS", "%d / %d owned" % [owned, cars.size()])
-	var g = grid(4)
-	for i in cars.size():
-		var locked = isCarLocked(i)
-		var b = tile(g, {"kind": "car", "key": i, "inset": 6.0}, null, str(cars[i].name).capitalize(), Vector2(162, 170), locked)
-		if locked && not (Root.IS_DEMO && i >= Root.DEMO_CAR_COUNT):
-			addTileTag(b, [Unlocks.price("car:" + str(cars[i].name))], HudTheme.GOLD if Unlocks.canAfford("car:" + str(cars[i].name)) else HudTheme.MUTED)
-		b.pressed.connect(onCarTilePressed.bind(i))
-		loadThen(CarInfo.pathFor(cars[i].scene), onCarInfo.bind(i, b))
-
-## Accept on a car tile: buys a locked car, or moves to an owned car's first upgrade button
-func onCarTilePressed(index: int) -> void:
-	if isPickingClick(index): return
-	if isCarLocked(index):
-		buyCar(index)
-		return
-	var first := upgradeButton(Root.upgrade.ENGINE)
-	if first != null: first.grab_focus()
-
-func buyCar(index: int) -> void:
-	var car: Dictionary = SaveManager.playerData.cars[index]
-	var b := tileFor(index)
-	if not isCarLocked(index) || (Root.IS_DEMO && index >= Root.DEMO_CAR_COUNT): return
-	if not Unlocks.buy("car:" + str(car.name)):
-		if b: Juice.shake(b)
-		return
-	purchased()
-	setTab(Tab.CARS)
-	b = tileFor(index)
-	if b:
-		b.grab_focus()
-		Juice.flash(b, HudTheme.GOLD, 0.6, 18)
-		Juice.pop(b, 1.08, 0.4)
-
-## Buys the next level of a stat on a car (the garage's price and cap) and keeps the focus on its button
-func buyUpgrade(index: int, stat: int) -> void:
-	var button := upgradeButton(stat)
-	if not SaveManager.requestStatUpgrade(stat, index):
-		if button: Juice.shake(button)
-		return
-	purchased()
-	refreshIfShown("car", index)
-	button = upgradeButton(stat)
-	if button:
-		button.grab_focus()
-		Juice.flash(button.get_parent(), HudTheme.GOLD, 0.45, 10)
-
-## The upgrade button for a stat on the car card showing, or null
-func upgradeButton(stat: int) -> Button:
-	for b in detail.find_children("*", "Button", true, false):
-		if b.get_meta("stat", -1) == stat: return b
-	return null
+#---------- buying ----------
 
 ## After anything is bought here: the sound, the save, and the garage behind the page
 func purchased() -> void:
@@ -836,110 +685,6 @@ func unlockButton(cost: Dictionary, onPress: Callable) -> Button:
 	buy.pressed.connect(onPress)
 	into.add_child(buy)
 	return buy
-
-static func isCarLocked(index: int) -> bool:
-	return SaveManager.playerData.cars[index].cost != 0 || (Root.IS_DEMO && index >= Root.DEMO_CAR_COUNT)
-
-func onCarInfo(info: CarInfo, index: int, b) -> void:
-	carInfos[index] = info
-	if is_instance_valid(b):
-		setTileArt(info.profilePic, b)
-		b.get_node("caption").text = info.charName
-	refreshIfShown("car", index)
-	focusUpgrade()
-
-func carDetail(entry: Dictionary) -> void:
-	var index: int = entry.key
-	var car: Dictionary = SaveManager.playerData.cars[index]
-	var info: CarInfo = carInfos.get(index)
-	var locked = isCarLocked(index)
-	var panel = hero(250 if locked else 170) #an owned car's card needs the room for its upgrade rows
-	if info:
-		var back = heroPicture(panel, info.backgroundPic, TextureRect.STRETCH_KEEP_ASPECT_COVERED)
-		back.modulate = Color(0.55, 0.55, 0.58)
-		var face = heroPicture(panel, info.profilePic, TextureRect.STRETCH_KEEP_ASPECT_CENTERED, 8.0)
-		if locked: face.modulate = SHADOW
-	var status: Array
-	if Root.IS_DEMO && index >= Root.DEMO_CAR_COUNT: status = ["NOT IN DEMO", HudTheme.MUTED]
-	elif car.cost != 0: status = ["LOCKED", HudTheme.MUTED]
-	else: status = ["OWNED", HudTheme.OK]
-	var chips := [[str(car.name).capitalize().to_upper(), HudTheme.SKY], status]
-	if info && info.gears > 0: chips.insert(1, ["%d-SPEED MANUAL" % info.gears, HudTheme.GOLD]) #OverheadCarBody2D, "the gearbox"
-	titleRow((info.charName if info else str(car.name)).to_upper(), chips)
-	if info == null: return
-	paragraph(carTraits(info))
-	signatureRows(info)
-	if locked && not (Root.IS_DEMO && index >= Root.DEMO_CAR_COUNT):
-		unlockButton(Unlocks.price("car:" + str(car.name)), buyCar.bind(index))
-	var rows = []
-	var bought := 0
-	for s in DriverCard.STATS:
-		var base: int = info.get(s[0])
-		var level: int = car.upgrades.get(s[1], 0)
-		bought += level
-		rows.push_back([PICKUP_TEXT[s[1]][0], str(base + level) if level == 0 else "%d  (+%d)" % [base + level, level], base, level, s[2]])
-	if locked: statTable(rows)
-	else: upgradeTable(index, rows)
-	var records: Dictionary = car.records
-	var bestLine = "Upgrades bought: %d / %d" % [bought, DriverCard.STATS.size() * SaveManager.MAX_UPGRADE_LEVEL]
-	if records.get("goonsCrushed", 0) > 0:
-		bestLine += "     Best run: %d crushed, %s paid" % [records.goonsCrushed, DriverCard.formatCoins(records.coin)]
-	paragraph(bestLine, "MutedLabel")
-
-#the car's signature features (CarTraits): icon, name, what kind of feature it is, and what it does
-func signatureRows(info: CarInfo) -> void:
-	var ids := info.traits.filter(func(id): return CarTraits.has(id))
-	if ids.is_empty(): return
-	var head = Label.new()
-	head.text = "SIGNATURE"
-	head.theme_type_variation = "MutedLabel"
-	head.add_theme_font_size_override("font_size", 15)
-	into.add_child(head)
-	for id in ids:
-		var row = HBoxContainer.new()
-		row.add_theme_constant_override("separation", 14)
-		var icon := MenuTheme.iconRect(CarTraits.texture(id), 44)
-		icon.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-		row.add_child(icon)
-		var column = VBoxContainer.new()
-		column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		column.add_theme_constant_override("separation", 2)
-		var title = HBoxContainer.new()
-		title.add_theme_constant_override("separation", 10)
-		var name = Label.new()
-		name.text = CarTraits.displayName(id)
-		name.theme_type_variation = "GoldLabel"
-		name.add_theme_font_size_override("font_size", 21)
-		title.add_child(name)
-		var kind = chip(CarTraits.KIND_NAMES[CarTraits.kind(id)], CarTraits.color(id))
-		title.add_child(kind)
-		if CarTraits.kind(id) == CarTraits.Kind.ABILITY: title.add_child(chip(InputGlyphs.label("Ability"), HudTheme.GOLD))
-		column.add_child(title)
-		var text = Label.new()
-		text.text = CarTraits.DATA[id].text
-		text.theme_type_variation = "BodyLabel"
-		text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		text.custom_minimum_size.x = 200
-		column.add_child(text)
-		row.add_child(column)
-		into.add_child(row)
-
-#"Strong engine and armor. Weak headlights." against the average of every car whose info has loaded
-func carTraits(info: CarInfo) -> String:
-	if carInfos.size() < 2: return ""
-	var ratios = []
-	for s in DriverCard.STATS:
-		var total := 0.0
-		for i in carInfos: total += carInfos[i].get(s[0])
-		var mean = maxf(total / carInfos.size(), 1.0)
-		ratios.push_back([PICKUP_TEXT[s[1]][0].to_lower(), info.get(s[0]) / mean])
-	ratios.sort_custom(func(a, b): return a[1] > b[1])
-	var strong = ratios.filter(func(r): return r[1] >= 1.2).slice(0, 2).map(func(r): return r[0])
-	var weak = ratios.filter(func(r): return r[1] <= 0.8)
-	var parts = []
-	if not strong.is_empty(): parts.push_back("Strong " + " and ".join(strong) + ".")
-	if not weak.is_empty(): parts.push_back("Weak " + weak.back()[0] + ".")
-	return " ".join(parts) if not parts.is_empty() else "An all-rounder."
 
 #---------- levels ----------
 

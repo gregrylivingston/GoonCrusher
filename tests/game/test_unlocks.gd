@@ -179,32 +179,52 @@ func test_the_goonopedia_draws_each_kind_as_a_tree():
 				var a := Rect2(at[ids[i]], Goonopedia.TREE_TILE)
 				assert_false(a.intersects(Rect2(at[ids[j]], Goonopedia.TREE_TILE)), "%s and %s overlap" % [ids[i], ids[j]])
 
-func test_the_goonopedia_buys_pickups_cars_and_upgrades():
-	var semiEntry = Unlocks.carEntry("semi")
+func test_the_goonopedia_buys_pickups_and_the_bench_buys_upgrades():
 	var purse: int = Unlocks.pickupPrice("purse").coin
-	data().coin = purse + int(semiEntry.cost) + 1000
-	data().gem = int(semiEntry.gems)
+	data().coin = purse + 1000
 	var page = add_child_autofree(Goonopedia.new())
+	assert_false(Goonopedia.TAB_NAMES.has("CARS"), "cars live in the garage, not the Goonopedia")
 	page.buyPickup("purse")
 	assert_true(Unlocks.isPickupOpen("purse"), "a pickup bought on its tile")
-	assert_eq(data().coin, int(semiEntry.cost) + 1000)
-	page.setTab(Goonopedia.Tab.CARS)
-	var semi := data().cars.find(Unlocks.carEntry("semi"))
-	page.buyCar(semi)
-	assert_eq(data().cars[semi].cost, 0, "a car bought on the Cars tab")
-	assert_eq(data().gem, 0, "with its gems")
-	for i in 300: #the card's stats wait for the car's CarInfo, loaded on a worker
-		if page.carInfos.has(semi): break
-		await get_tree().process_frame
-	page.tileFor(semi).focus_entered.emit()
+	assert_eq(data().coin, 1000)
+	var bench: DriverBench = add_child_autofree(DriverBench.new())
+	var sedan := data().cars.find(Unlocks.carEntry("sedan"))
+	bench.setup(sedan, load("res://scene/car/sedan/sedan_info.tres"), [])
+	assert_true(bench.upgradeButton(Root.upgrade.ENGINE) != null, "an owned car's bench has a buy button per stat")
+	var level := int(data().cars[sedan].upgrades.get(Root.upgrade.ENGINE, 0))
 	var before: int = data().coin
-	page.buyUpgrade(semi, Root.upgrade.ENGINE)
-	assert_eq(int(data().cars[semi].upgrades.get(Root.upgrade.ENGINE, 0)), 1, "an upgrade bought on its card")
-	assert_eq(data().coin, before - SaveManager.upgradePrice(0, "semi"), "at the garage's price")
-	assert_true(page.upgradeButton(Root.upgrade.ENGINE) != null, "the card is rebuilt with its buttons")
+	var cost := SaveManager.upgradePrice(level, "sedan")
+	bench.upgradeButton(Root.upgrade.ENGINE).pressed.emit()
+	assert_eq(int(data().cars[sedan].upgrades.get(Root.upgrade.ENGINE, 0)), level + 1, "an upgrade bought on the bench")
+	assert_eq(data().coin, before - cost, "at the garage's price")
+	assert_eq(bench.rowFor(Root.upgrade.ENGINE).plus.text, "+%d" % (level + 1), "the row shows it")
 	var locked := data().cars.find(Unlocks.carEntry("ambulance"))
-	page.buyUpgrade(locked, Root.upgrade.ENGINE)
+	bench.setup(locked, load("res://scene/car/ambulance/ambulance_info.tres"), [])
+	assert_eq(bench.title.text, "STATS", "a locked car's sheet is read only")
+	assert_true(bench.upgradeButton(Root.upgrade.ENGINE) == null, "with no buy buttons")
+	bench.buyUpgrade(Root.upgrade.ENGINE)
 	assert_eq(int(data().cars[locked].upgrades.get(Root.upgrade.ENGINE, 0)), 0, "a locked car can't be upgraded")
+
+func test_the_dock_badges_count_what_the_bank_can_buy():
+	var sedan := data().cars.find(Unlocks.carEntry("sedan"))
+	data().cars[sedan].upgrades = {}
+	data().coin = 0
+	data().gem = 0
+	assert_eq(DriverCard.affordableUpgrades(sedan), 0, "nothing with an empty bank")
+	assert_eq(Unlocks.buyableCount(), 0)
+	data().coin = SaveManager.upgradePrice(0, "sedan")
+	assert_eq(DriverCard.affordableUpgrades(sedan), DriverCard.STATS.size(), "each stat counts on its own")
+	data().cars[sedan].upgrades[Root.upgrade.ENGINE] = SaveManager.MAX_UPGRADE_LEVEL
+	assert_eq(DriverCard.affordableUpgrades(sedan), DriverCard.STATS.size() - 1, "a maxed stat doesn't count")
+	data().coin = 10000000
+	data().gem = 1000
+	var ready := 0
+	for id in Pickups.DATA:
+		if Unlocks.state("pickup:" + str(id)) == Unlocks.S.READY && not Unlocks.pickupPrice(str(id)).is_empty(): ready += 1
+	for game in CrushPrizes.GAMES:
+		if Unlocks.state("prize:" + str(game.id)) == Unlocks.S.READY: ready += 1
+	assert_gt(ready, 0, "a new save has something ready to unlock")
+	assert_eq(Unlocks.buyableCount(), ready, "every ready pickup and prize game a full bank covers")
 
 func test_the_goonopedia_sells_prize_games_in_ladder_order():
 	data().coin = 100000

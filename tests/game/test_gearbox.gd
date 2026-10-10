@@ -87,7 +87,7 @@ func test_a_late_shift_kicks_and_an_early_one_cuts():
 	assert_eq(c.shiftCut, 0, "with no clutch cut")
 	assert_gt(c.gearThrust(2, c.gearTop(2) * 0.9), 1.0 + OverheadCarBody2D.LOW_GEAR_PULL * (c.gears - 2.0) / (c.gears - 1.0), "the kick is in the push")
 	c.shiftKick = 0
-	c.velocity = c.transform.x * c.gearTop(2) * 0.7 #partway through second
+	c.velocity = c.transform.x * lerpf(c.gearTop(1), c.gearTop(2), 0.4) #partway through second
 	assert_true(c.shift(1))
 	assert_eq(c.shiftKick, 0, "an early shift earns nothing...")
 	assert_eq(c.shiftCut, OverheadCarBody2D.SHIFT_CUT_TICKS, "...and the clutch cuts the push")
@@ -183,3 +183,36 @@ func test_every_car_climbs_through_its_gears():
 			for i in range(1, times.size()):
 				assert_gt(times[i] - times[i - 1], MIN_GEAR_SECONDS, "%s: gear %d lasts long enough to shift (%.2f s)" % [id, i, times[i] - times[i - 1]])
 	Root.worldMap = saved
+
+#the tach reads well in every gear of every car: a shift up at the limit lands near 2 and the revs climb to
+#about 6 before the next, never sitting in the red through a gear
+func test_the_tach_drops_on_a_shift_and_climbs_through_the_gear():
+	for id in ALL:
+		var c := car(id)
+		c._car_input.acceleration = 1.0
+		for g in range(1, c.shownGears() + 1):
+			c.gear = g
+			c.velocity = Vector2.RIGHT * c.gearTop(g) * 0.995
+			var high := HudDial.gearedRpm(c)
+			assert_true(high > 5.5 && high < HudDial.REDLINE, "%s gear %d reads %.1f at the top of the gear" % [id, g, high])
+			if g == 1: continue
+			c.velocity = Vector2.RIGHT * c.gearTop(g - 1)
+			var low := HudDial.gearedRpm(c)
+			assert_true(low > 1.5 && low < 2.5, "%s gear %d reads %.1f just after the shift up" % [id, g, low])
+			c.velocity = Vector2.RIGHT * lerpf(c.gearTop(g - 1), c.gearTop(g), 0.5)
+			assert_true(HudDial.gearedRpm(c) < 5.0, "%s gear %d is out of the red halfway through" % [id, g])
+		c.gear = c.shownGears()
+		c.velocity = Vector2.RIGHT * c.gearTop(c.gear) * 1.3 #Nitro past the last gear
+		assert_true(HudDial.gearedRpm(c) <= HudDial.RPM_LIMIT, "%s never reads past the limit" % id)
+
+func test_the_kick_needs_the_top_of_the_band():
+	var c := car("supercar")
+	c.setGear(5)
+	c.velocity = c.transform.x * lerpf(c.gearTop(4), c.gearTop(5), 0.5) #halfway through fifth: most of fifth's limit in speed, half its revs
+	c.shift(1)
+	assert_eq(c.shiftKick, 0, "half the band earns nothing")
+	c.setGear(5)
+	c.shiftCut = 0
+	c.velocity = c.transform.x * lerpf(c.gearTop(4), c.gearTop(5), 0.9)
+	c.shift(1)
+	assert_eq(c.shiftKick, OverheadCarBody2D.SHIFT_KICK_TICKS, "the top fifth does")

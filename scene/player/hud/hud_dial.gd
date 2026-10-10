@@ -13,6 +13,10 @@ const SWEEP := 135.0         #tach and speedometer run from -135 to +135 degrees
 const SMALL_SWEEP := 70.0    #fuel and hull run from -70 to +70
 const RPM_MAX := 8.0
 const REDLINE := 6.5
+const RPM_IDLE := 0.8
+const RPM_AFTER_SHIFT := 2.0 #where the needle lands after a shift up...
+const RPM_SHIFT := 6.0       #...and where it is when the gear runs out, just under the red
+const RPM_LIMIT := 7.2       #on the limiter
 const CRUSH_SPEED := 100.0   #px/s; goons die when hit faster than this (overhead_car_body_2d)
 const LOW := 25.0            #fuel and hull blink under this
 const FACE := Color(0.047, 0.039, 0.035, 0.86)
@@ -102,10 +106,15 @@ func _process(delta: float) -> void:
 #last; in N the throttle revs it freely
 static func gearedRpm(car) -> float:
 	if car.gear == 0: return 0.8 + (5.6 if car._car_input.acceleration > 0.0 else 0.0)
-	var r: float = car.rpmShare()
-	if car.velocity.length() < 5.0 && car._car_input.acceleration == 0.0: return 0.8
-	var rpm := 1.1 + 6.4 * minf(r, 1.0)
-	if r >= 1.0 && car.gear < car.gears && car._car_input.acceleration > 0.0: rpm -= 0.35 * absf(sin(Time.get_ticks_msec() * 0.03))
+	if car.velocity.length() < 5.0 && car._car_input.acceleration == 0.0: return RPM_IDLE
+	var share: float = car.revShare()
+	#a shift up lands at RPM_AFTER_SHIFT and the revs climb to RPM_SHIFT at the gear's limit; first gear climbs
+	#from idle. Too high a gear sags toward idle; on the limiter the needle sits in the red and stutters.
+	var low := RPM_AFTER_SHIFT if car.gear > 1 else RPM_IDLE + 0.3
+	var rpm := maxf(lerpf(low, RPM_SHIFT, minf(share, 1.0)), RPM_IDLE)
+	if share >= 1.0:
+		rpm = minf(RPM_SHIFT + (share - 1.0) * 8.0, RPM_LIMIT)
+		if car.gear < car.gears && car._car_input.acceleration > 0.0: rpm -= 0.3 * absf(sin(Time.get_ticks_msec() * 0.03))
 	return rpm
 
 #the gear's colour: gold, green near the redline of a gear you shift by hand (time to shift up), white
@@ -113,7 +122,7 @@ static func gearedRpm(car) -> float:
 static func gearColor(car) -> Color:
 	if car.gears <= 0 || car.gear < 1: return HudTheme.GOLD
 	if car.shiftKick > 0: return Color.WHITE
-	if car.isManual() && car.gear < car.gears && car.rpmShare() >= OverheadCarBody2D.SHIFT_KICK_FROM: return HudTheme.OK
+	if car.isManual() && car.gear < car.gears && car.revShare() >= OverheadCarBody2D.SHIFT_KICK_FROM: return HudTheme.OK
 	return HudTheme.GOLD
 
 static func gearText(car) -> String:

@@ -192,7 +192,7 @@ Every purchase must move the bank by its price and the stat by one level. Every 
   - `unlock_pace`: per kind of milestone (car, level, beat, pickup), how many and the first and last minute
   - `longest_runs_without_progress`, where this player stalls
   - per mode: runs, wins and coins per minute
-  - shopping totals (cars, upgrades and pickup unlocks bought through the Goonopedia, with their coins)
+  - shopping totals (cars and upgrades bought in the garage, upgrades on the driver focus's bench, and pickup unlocks bought through the Goonopedia, with their coins)
   - issues by kind (`block`, `ui`, `mouse`, `economy`, `progress`, `save`, `softlock`, `no_run`)
   - script errors
 
