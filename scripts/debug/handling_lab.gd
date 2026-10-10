@@ -1,9 +1,9 @@
 extends SceneTree
 
 #The handling lab: drives every car's real integrate() and the controller's steering through set
-#manoeuvres, with no level, and prints one row per car (docs/CAR_ART.md, "Handling").
+#maneuvers, with no level, and prints one row per car (docs/CAR_ART.md, "Handling").
 #  Godot_console.exe --headless --path . -s res://scripts/debug/handling_lab.gd [-- --up=0,20 --ground=grass,asphalt --cars=sedan,semi]
-#Columns: top speed and the time to 90% of it; ticks from centre to full lock; the turn rate at full
+#Columns: top speed and the time to 90% of it; ticks from center to full lock; the turn rate at full
 #lock after half a second at 200, 400 and 600 px/s and held at top speed; the radius and slip angle
 #and the share of top speed kept on a held full-lock circle; a 90 degree turn from top speed (time,
 #speed kept); the stop from top speed; the top speed in reverse.

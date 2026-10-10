@@ -7,7 +7,7 @@ extends CanvasLayer
 #             where upgrades are bought (Up/Down, then E / A; Accept still drives); Upgrades or Back returns to the drivers. The
 #             dock under the card holds Upgrades, Drive and Pickups.
 #  RUN SETUP  two steps. The road map picks the level: one region (Territories) at a time, its five stops
-#             on a winding road (Q/E, LB/RB, Left/Right or 1-5), each with a glyph per mode in the colour
+#             on a winding road (Q/E, LB/RB, Left/Right or 1-5), each with a glyph per mode in the color
 #             of the best medal won there and a bar under it for the current driver's own. A button at each
 #             end of the road leads to the region before and after (Z/C or LT/RT; locked until that region
 #             is open). SELECT, Accept or a click on the selected stop opens LEVEL OPTIONS
@@ -41,9 +41,9 @@ const BENCH_POS := Vector2(512, 142)
 const POSTER_SIZE := Vector2(204, 196) #a stop on the road map: its art, the name band, then a glyph per mode
 const POSTER_ART := 116.0
 const POSTER_BAND := 36.0
-const STOP_SPOTS := [Vector2(230, 470), Vector2(515, 258), Vector2(800, 484), Vector2(1085, 270), Vector2(1370, 470)] #stop centres, 1st to 5th
+const STOP_SPOTS := [Vector2(230, 470), Vector2(515, 258), Vector2(800, 484), Vector2(1085, 270), Vector2(1370, 470)] #stop centers, 1st to 5th
 const REGION_BUTTON := Vector2(124, 124) #the buttons at the road's ends: the region before and the one after
-const REGION_SPOTS := [Vector2(78, 296), Vector2(1522, 296)] #their centres; the road runs from one to the other
+const REGION_SPOTS := [Vector2(78, 296), Vector2(1522, 296)] #their centers; the road runs from one to the other
 const ROAD_BEND := 150.0 #the road's handles at each stop, flat, so it swings between them
 const STOP_FOCUS_SCALE := 1.14
 const LEVEL_BAND := Rect2(60, 152, 1480, 124) #Level Options, top section, under the title row: the level
@@ -65,7 +65,7 @@ const START_POS := Vector2(1404, 680)
 const SLOT_SIZE := 64.0
 const DRIVER_BUTTON := Rect2(554, 692, 296, 76)
 const LOCK_TEXT := Color(1.0, 0.62, 0.55)
-#a mode icon in one colour (a medal's): its light and dark kept as shades of the tint
+#a mode icon in one color (a medal's): its light and dark kept as shades of the tint
 const GLYPH_SHADER := "shader_type canvas_item;
 uniform vec4 tint : source_color = vec4(1.0);
 void fragment() {
@@ -102,7 +102,7 @@ var ui := Control.new()
 var backgrounds: Array[TextureRect] = []
 var frontBackground := 0
 var garage := Control.new()
-var actionDock := Panel.new() #the focused card's Upgrades, Drive and Pickups, in a tray at the bottom centre
+var actionDock := Panel.new() #the focused card's Upgrades, Drive and Pickups, in a tray at the bottom center
 var focusOpen := false       #driver focus: the selected card at the left with its bench, the other drivers off screen
 var bench := DriverBench.new()
 var benchTween: Tween
@@ -139,7 +139,7 @@ var stopButtons: Array[Button] = []
 var stakes := HBoxContainer.new() #under the tier switch: why it can't start, what a win opens, the first clear
 var recordsBox := HBoxContainer.new()
 var startBadge := PanelContainer.new() #on START: the gems the loadout will take
-var optionsPane: PanelContainer #the pane; its edge takes the mode's category colour
+var optionsPane: PanelContainer #the pane; its edge takes the mode's category color
 var paneBody: VBoxContainer
 var paneTween: Tween
 var shownPick := [] #[level, mode, tier] last drawn, so a change can pop
@@ -374,7 +374,7 @@ func buildGarage() -> void:
 	bench.position = BENCH_POS
 	bench.visible = false
 	garage.add_child(bench)
-	#every card's Upgrades, Drive and Pickups sit in one tray at the bottom centre; only the focused card's show
+	#every card's Upgrades, Drive and Pickups sit in one tray at the bottom center; only the focused card's show
 	var tray := MenuTheme.box(Color(HudTheme.PANEL, 0.92), Color(HudTheme.RIM, 0.6), 14, 2)
 	tray.border_width_top = 4
 	actionDock.add_theme_stylebox_override("panel", tray)
@@ -419,7 +419,7 @@ func buildSetup() -> void:
 	setup.add_child(backButton)
 	refreshLoadout()
 
-#run setup's first step: the region tabs, the road and its stops, and the highlighted level's panel
+#run setup's first step: the region buttons, the road and its stops
 func buildMap() -> void:
 	regionTitle.theme_type_variation = "GoldLabel"
 	regionTitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -827,9 +827,6 @@ static func slotPurchase(slot: String) -> String:
 		if s == slot: return id if buys else ""
 	return ""
 
-func loadoutChoice() -> String:
-	return slotChoice("loadout")
-
 func cycleLoadout() -> void:
 	cycleSlot("loadout")
 
@@ -1076,7 +1073,7 @@ func makeModeRow(slot: int) -> Button:
 	setMouseIgnore(row)
 	return b
 
-#a medal: a disc in the tier's colour once it is won (setMedal), a dark ring until then
+#a medal: a disc in the tier's color once it is won (setMedal), a dark ring until then
 static func medalDot(size: float) -> Panel:
 	var dot = Panel.new()
 	dot.custom_minimum_size = Vector2(size, size)
@@ -1187,7 +1184,7 @@ func makeRegionButton(side: int) -> Button:
 	setMouseIgnore(body)
 	return b
 
-#each end's button names the region it leads to, in that region's colour; no button past the first and
+#each end's button names the region it leads to, in that region's color; no button past the first and
 #last regions; a lock on a region that isn't open yet
 func refreshRegionButtons(region: int) -> void:
 	for side in 2:
@@ -1257,7 +1254,7 @@ func drawRoad() -> void:
 	road.draw_polyline(points, Color(0.13, 0.12, 0.11, 0.95), 30.0, true)
 	var length := curve.get_baked_length()
 	var at := 0.0
-	while at < length: #the centre line's dashes, laid along the curve
+	while at < length: #the center line's dashes, laid along the curve
 		road.draw_line(curve.sample_baked(at), curve.sample_baked(minf(at + 14.0, length)), Color(HudTheme.GOLD, 0.8), 3.0, true)
 		at += 30.0
 
@@ -1299,7 +1296,7 @@ func buildCarStrip() -> void:
 static func isCarOwned(index: int) -> bool:
 	return int(SaveManager.playerData.cars[index].cost) == 0 && not (Root.IS_DEMO && index >= Root.DEMO_CAR_COUNT)
 
-#which cars have won this mode here on this tier: in colour = cleared, dim = owned but not cleared,
+#which cars have won this mode here on this tier: in color = cleared, dim = owned but not cleared,
 #an outline = not owned; the current driver is bigger, over an orange bar
 func refreshCarStrip(index: int, mode: int, tier: int) -> void:
 	var cars = SaveManager.playerData.cars
@@ -1485,7 +1482,7 @@ func fillFacts(index: int) -> void:
 			var crop = AtlasTexture.new() #the goon without the frame's empty margin
 			crop.atlas = art
 			crop.region = Goonopedia.artBounds(art)
-			tile = factTile(crop, {"title": str(d.name).to_upper(), "line": Goonopedia.behaviour(d), "chips": [[Goonopedia.RANK_NAMES.get(d.rank, "GOON"), HudTheme.RIM]]})
+			tile = factTile(crop, {"title": str(d.name).to_upper(), "line": Goonopedia.behavior(d), "chips": [[Goonopedia.RANK_NAMES.get(d.rank, "GOON"), HudTheme.RIM]]})
 		else: tile = factTile(null, {"title": "???", "line": "Crush one to find out what it does.", "chips": []}, false, "?")
 		tile.pressed.connect(openGoonopedia)
 		goons.get_node("tiles").add_child(tile)
@@ -1510,7 +1507,7 @@ func fillFacts(index: int) -> void:
 		var feel := "slick" if info.grip <= 0.5 else ("slow" if info.friction >= 0.3 else ("fast" if info.friction <= 0.05 else ""))
 		var chips := [["Friction %.2f" % info.friction, HudTheme.MUTED], ["Grip %.1f" % info.grip, HudTheme.MUTED]]
 		if feel != "": chips.push_front([feel.to_upper(), {"slick": LOCK_TEXT, "slow": HudTheme.RIM, "fast": OPENS_TEXT}[feel]])
-		var line: String = {"fast": "Fast ground: the car keeps its speed.", "slow": "Slow ground: it drags the car down.", "slick": "Slick: the tyres let go easily."}.get(feel, "Ordinary ground.")
+		var line: String = {"fast": "Fast ground: the car keeps its speed.", "slow": "Slow ground: it drags the car down.", "slick": "Slick: the tires let go easily."}.get(feel, "Ordinary ground.")
 		var tile: Texture2D = load(path)
 		var swatch = AtlasTexture.new() #a corner of the tile
 		swatch.atlas = tile
@@ -1960,7 +1957,7 @@ func refreshSetup(animate := true) -> void:
 		refreshPoster(i, focused)
 	var top := 0
 	for poster in posters: top = maxi(top, poster.get_index())
-	map.move_child(posters[selected], top) #the selected stop over its neighbours
+	map.move_child(posters[selected], top) #the selected stop over its neighbors
 	map.visible = not optionsOpen
 	options.visible = optionsOpen
 	refreshRegionButtons(region)
@@ -2019,7 +2016,7 @@ func refreshSetup(animate := true) -> void:
 	var tier := SaveManager.getGameTier()
 	refreshCarStrip(selected, mode, tier)
 	modeTitle.text = Root.gameModeDescription[mode].name
-	#the pane's edge is the mode's category colour (a staple's is plain)
+	#the pane's edge is the mode's category color (a staple's is plain)
 	optionsPane.add_theme_stylebox_override("panel", MenuTheme.box(Color(HudTheme.PANEL, 0.94), PANEL_EDGE if mode in Root.STAPLE_MODES else Color(Modes.categoryColor(mode), 0.75), 16, 2, Vector4(26, 12, 26, 12)))
 	modeText.text = Modes.short(mode)
 	modeTitle.tooltip_text = "%s %s" % [Root.gameModeDescription[mode].description, Root.MODE_RULES.get(mode, "")]
@@ -2050,7 +2047,7 @@ func refreshPoster(index: int, isFocused: bool) -> void:
 	var car := str(SaveManager.playerData.cars[SaveManager.playerData.selectedCar].name)
 	var glyphs = poster.get_node("glyphs")
 	var order := modeOrder(index)
-	for i in order.size(): #a glyph per mode in the colour of the best medal won with it here; the bar is this driver's own
+	for i in order.size(): #a glyph per mode in the color of the best medal won with it here; the bar is this driver's own
 		var mode: int = order[i]
 		var cell = glyphs.get_child(i)
 		var playable: bool = open && Root.isModePlayable(level, mode)
@@ -2084,7 +2081,7 @@ func refreshModeRow(b: Button, mode: int, selected: bool, level: Dictionary, min
 	var hover = style.duplicate()
 	hover.border_color = HudTheme.GOLD if selected else Color(HudTheme.RIM, 0.8)
 	b.add_theme_stylebox_override("hover", hover)
-	#a featured mode's ring is its category's colour: Crusher, Trial or Goon Cup (Modes.CATEGORY_COLORS)
+	#a featured mode's ring is its category's color: Crusher, Trial or Goon Cup (Modes.CATEGORY_COLORS)
 	var staple: bool = mode in Root.STAPLE_MODES
 	var ring := Color(1, 1, 1, 0.25) if staple else Color(Modes.categoryColor(mode), 0.75)
 	b.get_node("row/disc").visible = built

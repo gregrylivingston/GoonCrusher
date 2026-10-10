@@ -1,7 +1,7 @@
 extends GameTest
 
 #The radio (docs/RADIO.md): shuffle bags, station scanning, segment scheduling and switching.
-#Behaviour is tested on a private Radio over tests/game/radio_fixture (tiny tones), so the tests
+#Behavior is tested on a private Radio over tests/game/radio_fixture (tiny tones), so the tests
 #don't depend on which songs ship; a few tests check the shipped stations in sound/radio/.
 #Headless: the radio schedules but never loads or plays. Nothing writes audio/station.
 

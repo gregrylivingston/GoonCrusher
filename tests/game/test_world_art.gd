@@ -10,12 +10,12 @@ const GROUNDS := ["grass", "moss", "dirt", "sand", "mud", "mudpit", "snow", "dee
 	"oil", "shallows", "water", "wade", "conveyor", "rock", "roof", "bridge", "gravel",
 	#Road Atlas landscapes (forest, coast, ghost town, salt flats, volcano, suburbs)
 	"needles", "beach", "salt", "ash", "tar", "lava", "basalt", "roof_timber", "roof_shingle", "lawn"]
-const EDGES := ["shore_foam", "cliff_lip", "canyon_rim", "mesa_lip", "kerb", "hedge", "scrapwall", "snow_ridge", "roof_edge",
+const EDGES := ["shore_foam", "cliff_lip", "canyon_rim", "mesa_lip", "curb", "hedge", "scrapwall", "snow_ridge", "roof_edge",
 	"basalt_lip", "timber_edge", "shingle_edge", "hedgerow", "treeline"]
 const STATION := ["station_lot", "station_wall", "station_roof", "station_lamp", "station_pump"]
 #the prop catalog of the world spec (section 6)
 const CATALOG := ["rock", "boulder", "rock_white", "rock_ice", "oak", "pine", "cypress", "log", "stump", "saguaro", "deadtree",
-	"carcass", "haybale", "fence", "hedge", "crate", "shack", "tent", "totem", "firepit", "tyres", "barricade", "barrel", "crane",
+	"carcass", "haybale", "fence", "hedge", "crate", "shack", "tent", "totem", "firepit", "tires", "barricade", "barrel", "crane",
 	"fortwall", "cabin", "snowcat", "wreck", "jersey", "cone", "gaspump", "sign", "billboard", "hydrant", "dumpster", "busstop",
 	"manhole", "streetglow", "scrapheap", "container", "tank", "landmark_wild", "landmark_tribe", "landmark_scrap", "reeds",
 	"tufts", "pebbles", "cracks", "bones", "paint", "oilstain"]

@@ -42,7 +42,7 @@ var tDuctTape := false
 var tCargoBay := false
 var tTopHeavy := false
 var tMeter := false
-var tCityTyres := false
+var tCityTires := false
 var tOffroad := false
 var tLoadedBed := false
 var tDownforce := false
@@ -194,7 +194,6 @@ const AUTO_UP := 0.97          #autoGear shifts up at this share of the gear's r
 const AUTO_DOWN := 0.7         #...and down below this share of the gear under it
 const REVERSE_SHIFT_SPEED := 40.0 #R only goes in below this px/s forward; faster, the lever stops at N
 var _car_input := CarInput.new()
-var _path_follow: OverheadCarPathFollow2D = null
 @onready var myController = $CarController
 @onready var bodyHull: Node = get_node_or_null("CollisionShape2D_body") #between the bumpers, so walls don't catch the flanks
 
@@ -244,7 +243,7 @@ func _ready():
 		if isManual(): announceGearbox()
 
 	#the camera follows even while the run is paused: the start (the loading door, then the 3-2-1) is all paused,
-	#and a paused camera keeps a stale view, so the car started off centre until GO
+	#and a paused camera keeps a stale view, so the car started off center until GO
 	if isPlayer: $Camera2D.process_mode = Node.PROCESS_MODE_ALWAYS
 	halfWidth = $carBodyArea/CollisionShape2D.shape.size.y / 2.0
 	var footprint: Vector2 = $carBodyArea/CollisionShape2D.shape.size
@@ -307,18 +306,8 @@ func makeHealthWarning():
 	resetHealthWarning()
 
 
-#the region tile's terrain, for show only: handling reads World.surfaceAt in integrate()
-var currentTerrain: Root.terrain
-func setTerrain(terrain: int): # Root.terrain
-	currentTerrain = terrain
-
-
 func _physics_process(delta):
-	if _path_follow:
-		_path_follow.provide_input(self)
-		pass
-	else:
-		_car_input = myController._provide_input(_car_input)
+	_car_input = myController._provide_input(_car_input)
 	_car_input.steering = clamp(_car_input.steering, -1.0, 1.0)
 	_car_input.acceleration = clamp(_car_input.acceleration, -1.0, 1.0)
 	if isDestroyed: _car_input.acceleration = 0.0
@@ -477,7 +466,7 @@ const HANDBRAKE_GRIP_HEAVY := 0.07  #...and at weight 100: heavy cars slide long
 const HANDBRAKE_CATCH_DOT := 0.34   #cos(70 degrees): the widest slide angle before the tires catch
 
 #--- handling traits (CarTraits): read inside integrate(), so the AI's predictions follow them ---
-const CITY_GRIP := 1.15         #City Tyres: on paved ground...
+const CITY_GRIP := 1.15         #City Tires: on paved ground...
 const CITY_DIRT_GRIP := 0.85    #...and on dirt and rough ground
 const OFFROAD_FRICTION := 0.3   #Off-Road: share of rough ground's extra friction it feels...
 const OFFROAD_GRIP := 0.6       #...and share of its lost grip it gets back
@@ -504,11 +493,11 @@ func effectiveWeight() -> int:
 static func isRough(surface: int) -> bool:
 	return surface != World.UNKNOWN && World.friction(surface) > World.GRASS_FRICTION
 
-## the ground's grip for this car (World.grip, with City Tyres and Off-Road; no tyre helps in deep water)
+## the ground's grip for this car (World.grip, with City Tires and Off-Road; no tire helps in deep water)
 func surfaceGrip(surface: int) -> float:
 	var g := World.grip(surface)
 	if World.isLethal(surface): return g
-	if tCityTyres:
+	if tCityTires:
 		if PAVED.has(surface): g *= CITY_GRIP
 		elif surface == Root.terrain.DIRT || isRough(surface): g *= CITY_DIRT_GRIP
 	if tOffroad && isRough(surface) && g < 1.0: g = lerpf(g, 1.0, OFFROAD_GRIP)
@@ -544,7 +533,7 @@ func yawLimit(speed: float) -> float:
 	var h := CarHandling.tune
 	return minf(h.yawAt(speed, steerStat, CarHandling.weightShare(weight)), speed * sin(h.wheelMax(steerStat)) / wheel_base)
 
-## px: the tightest circle the car drives at full lock at `speed`, before tyre slip
+## px: the tightest circle the car drives at full lock at `speed`, before tire slip
 func turnRadius(speed: float) -> float:
 	var steerStat: float = steering * conditionFactor("steering")
 	var h := CarHandling.tune
@@ -553,7 +542,7 @@ func turnRadius(speed: float) -> float:
 func handbrakeGrip() -> float:
 	return lerpf(HANDBRAKE_GRIP_LIGHT, HANDBRAKE_GRIP_HEAVY, CarHandling.weightShare(weight)) * (DRIFT_KING_GRIP if tDriftKing else 1.0)
 
-#friction on a surface for this car: the table's value with the off-road rule (armor ploughs through
+#friction on a surface for this car: the table's value with the off-road rule (armor plows through
 #soft ground); the car's own `friction` when no map is loaded. Read only, so integrate() stays pure.
 func groundFriction(surface: int) -> float:
 	if surface == World.UNKNOWN: return friction
@@ -573,8 +562,8 @@ static func conveyorPull(vel: Vector2, beltVelocity: Vector2) -> Vector2:
 	var along := vel.dot(dir)
 	return dir * (speed - along) * CONVEYOR_PULL if along < speed else Vector2.ZERO
 
-#Once a tick, with the car's position (docs/WORLD.md, "Water and the car"): water hurts the car with its
-#centre over it, World.hurt(surface) health a second before armor through damage() (WADE 2, deep
+#Once a tick, with the car's position (docs/WORLD.md, "Water"): water hurts the car with its
+#center over it, World.hurt(surface) health a second before armor through damage() (WADE 2, deep
 #WATER 33), while integrate() reads the same rows' drag and lost grip. A stock sedan flat out over a
 #300-400 px strip of deep water loses about 15-25 health; about 3 s in it wrecks the car, which counts as a
 #drowning (`drowned`). The water ignores shields and golden rides (they block hits, not the river); being
@@ -710,7 +699,7 @@ static func wallDamage(kind: int, speed: float, impact: float) -> float:
 	return 0.0
 
 #which system a hit wears, from the hit's normal and point in car space. The car faces +x and the
-#normal points from the obstacle to the car. Front centre: engine; front corners: lights; sides ahead
+#normal points from the obstacle to the car. Front center: engine; front corners: lights; sides ahead
 #of the middle: steering; sides behind it: tires; the rear: the tank.
 static func zoneForHit(localNormal: Vector2, localPoint: Vector2, carHalfWidth: float) -> String:
 	if localNormal.x < -0.6: return "lights" if absf(localPoint.y) > carHalfWidth * 0.45 else "engine"
@@ -750,7 +739,7 @@ func stopCarFX():
 #contact damage counts once per goon per GOON_BUMP_TICKS, not every tick the two touch, so a big goon
 #(a Scrap Gang van, a Thunderhoof) pressed against the car doesn't drain health per frame
 const GOON_BUMP_TICKS := 30
-#every goon contact chips the hull, crush or not (0.35 health before armour): crushing is cheap, never
+#every goon contact chips the hull, crush or not (0.35 health before armor): crushing is cheap, never
 #free. Keep it at most 5, or a Bubble Shield would spend a charge on every crush (blockedByPickup).
 const GOON_CONTACT_DAMAGE := 0.35
 var goonBumps := {}
@@ -799,7 +788,7 @@ func honk() -> void:
 #--- car against car (the Goon Cup's rivals, docs/GAMEPLAY_SUGGESTIONS.md package 18) -------------------
 const CAR_BOUNCE := 0.35         #how much of the closing speed comes back
 const CAR_BUMP_FREE := 180.0     #closing speed (px/s) under which a bump does no damage
-const CAR_BUMP_DAMAGE := 1.0 / 45.0 #health per px/s of closing speed above that, before armour
+const CAR_BUMP_DAMAGE := 1.0 / 45.0 #health per px/s of closing speed above that, before armor
 const CAR_NOSE_ARC := 0.9        #radians either side of a car's heading that count as its nose
 const CAR_NOSE_SHARE := 0.3      #a car struck on its nose takes this share: the one that lands the hit comes off best
 const CAR_WEIGHT_POWER := 0.25   #how much the weights' ratio counts for damage (the shove goes by weight in full)
@@ -809,7 +798,7 @@ var bumpedAt := -1               #the physics frame of this car's last bump: one
 ## Two cars met: they trade speed along the contact by weight (CarInfo.weight) and both take the knock.
 ## `normal` points from `other` to this car; `moving` is this car's velocity going in.
 ## The damage is the same for any car: by how fast they closed, by where each was struck (its nose takes
-## CAR_NOSE_SHARE of it, its flank or tail all of it) and a little by weight, and armour doesn't count
+## CAR_NOSE_SHARE of it, its flank or tail all of it) and a little by weight, and armor doesn't count
 ## (bumpShare, takeBump). So a quick car that turns onto a rival's flank beats a heavy one that can't.
 func bumpCar(other: OverheadCarBody2D, normal: Vector2, moving: Vector2) -> void:
 	var now := Engine.get_physics_frames()
@@ -835,7 +824,7 @@ func bumpCar(other: OverheadCarBody2D, normal: Vector2, moving: Vector2) -> void
 static func bumpShare(heading: float, toContact: Vector2) -> float:
 	return CAR_NOSE_SHARE if absf(Vector2.from_angle(heading).angle_to(toContact)) < CAR_NOSE_ARC else 1.0
 
-## Damage from another car, whatever this car's armour
+## Damage from another car, whatever this car's armor
 func takeBump(amount: float) -> void:
 	damage(amount / maxf(armorFactor(armor), 0.05))
 
@@ -887,12 +876,12 @@ var bodyRect := Rect2(-85, -41, 170, 82) #the footprint in car space, from carBo
 
 func slamGoons() -> void:
 	if not is_instance_valid(Root.spawnManager): return
-	var centre := bodyRect.get_center()
+	var center := bodyRect.get_center()
 	var half := bodyRect.size / 2.0
 	for goon in Root.spawnManager.goonsNear(global_position, half.x + 80.0):
 		if goon.dead || goon.collision_layer == 0: continue #buried, flying or riding: out of reach
 		var r: float = goon.bodyRadius * goon.scale.x
-		var local := to_local(goon.global_position) - centre
+		var local := to_local(goon.global_position) - center
 		var inX := half.x + r - absf(local.x)
 		var inY := half.y + r - absf(local.y)
 		if inX <= 0.0 || inY <= 0.0: continue
@@ -905,15 +894,15 @@ func slamGoons() -> void:
 		if into < SLAM_MIN_SPEED: continue
 		if goonBumpReady(goon) && not tPit: damage(GOON_CONTACT_DAMAGE) #PIT Maneuver: flank hits cost nothing...
 		crushHitVel = pointVel * (PIT_FLING if tPit else 1.0) #...and throw goons further
-		if not crushGoon(goon, pointVel.length()): wearSystem(zoneForHit(-normal, local + centre, halfWidth), GOON_SCUFF)
+		if not crushGoon(goon, pointVel.length()): wearSystem(zoneForHit(-normal, local + center, halfWidth), GOON_SCUFF)
 		crushHitVel = Vector2.ZERO
 
 #--- drift charge -------------------------------------------------------------------------------
 #Holding a powerslide (the handbrake, slipping past DRIFT_CHARGE_SLIP) charges; letting go of the
-#handbrake fires a speed boost along the nose, bigger after a longer slide. Sparks at the rear tyres show
+#handbrake fires a speed boost along the nose, bigger after a longer slide. Sparks at the rear tires show
 #the tier (blue, then orange). Counted in physics ticks; the AI never pulls the handbrake.
 const DRIFT_CHARGE_SLIP := 0.3   #rad between the nose and the travel
-const DRIFT_TIERS := [[40, 120.0, Color(0.45, 0.75, 1.0)], [100, 240.0, Color(1.0, 0.55, 0.15)]] #[ticks, boost px/s, spark colour]
+const DRIFT_TIERS := [[40, 120.0, Color(0.45, 0.75, 1.0)], [100, 240.0, Color(1.0, 0.55, 0.15)]] #[ticks, boost px/s, spark color]
 var driftCharge := 0             #ticks of the current slide
 
 const DRIFT_KING_TIER := [160, 380.0, Color(0.72, 0.42, 1.0)] #Drift King's third tier
@@ -1007,10 +996,10 @@ func activeCarEffects(delta):
 	sprite.position = shakeFrom.lerp(shakeTo, minf(float(vibrationSteps + 1) / vibrationFrequency, 1.0))
 
 
-	##FX and Audio (the player's squeal follows the tyres' slip: CarJuice)
+	##FX and Audio (the player's squeal follows the tires' slip: CarJuice)
 	if ( (_car_input.braking || _car_input.handbrake) && velocity.length() > 200.0) || ( velocity.length() > 500.0 && abs(_car_input.steering) > 0.2):
 		match Settings.get_value("gfx/tire_marks"):
-			1: for i in [tires[0], tires[1]]: createTiremarks(i, 6.0) #Short: rear tyres only
+			1: for i in [tires[0], tires[1]]: createTiremarks(i, 6.0) #Short: rear tires only
 			2: for i in tires: createTiremarks(i, 20.0)
 		if not tiresAudio.playing && not is_instance_valid(juice): tiresAudio.play()
 	else:
@@ -1081,26 +1070,6 @@ func _do_update_output(acceleration):
 		_highest_measured_speed = speed
 	var speed_factor = speed / _highest_measured_speed if _highest_measured_speed > 0 else 0
 	_update_output(speed_factor, abs(acceleration))
-
-func connectCarArea(carArea):
-	carArea.car_body_entered.connect(_on_overhead_car_area_2d_car_body_entered)
-	carArea.car_body_exited.connect(_on_overhead_car_area_2d_car_body_exited)
-
-
-#OverheadCarArea2D (the old sand-trap patches) no longer changes handling: ground friction comes from
-#World.surfaceAt in integrate(), and adding and subtracting here drifted whenever an enter and an exit
-#didn't pair up. Kept inert so the old scenes still load.
-func _on_overhead_car_area_2d_car_body_entered(_area: OverheadCarArea2D):
-	pass
-
-
-func _on_overhead_car_area_2d_car_body_exited(_area: OverheadCarArea2D):
-	pass
-
-
-func follow_path(path_follow: OverheadCarPathFollow2D):
-	_path_follow = path_follow
-
 
 var ui
 var powerupsCollected = 0
@@ -1184,12 +1153,6 @@ func playPurseRewardAudio():
 		await get_tree().create_timer(.25).timeout
 		$"AudioStream-Voice".play()
 
-func spendGems(numOfGems: int):
-	if gem >= numOfGems:
-		gem -= numOfGems
-		return true
-	else:
-		return false
 
 ## Health damage, armor applied once. `water` (soak): a shield or golden ride doesn't block it.
 func damage(damage: float, water := false):
@@ -1199,7 +1162,7 @@ func damage(damage: float, water := false):
 	updateDamageLook()
 	if health <= 0 && not defibrillate(): wreck()
 
-## Health ran out: wrecked, a drowning when its centre is over deep water
+## Health ran out: wrecked, a drowning when its center is over deep water
 func wreck() -> void:
 	if not isWrecked && deepTicks > 0: drowned = true
 	destroy()
@@ -1261,21 +1224,6 @@ func wreckSmoke() -> void:
 	Root.levelRoot.add_child(fx)
 	for i in 4: fx.burst(Vector2.ZERO, 7, Vector2.RIGHT.rotated(randf() * TAU) * 160.0, 320.0, 280.0, 1.8, i * 0.12)
 
-func playRandomFxSound():
-	var randomizer = randi_range(0,1)
-	if randomizer == 0: 
-		$"AudioStream-Crash".play()
-		await get_tree().create_timer(0.5).timeout
-		$"AudioStream-Crash".stop()
-	elif randomizer == 1: 
-		$"AudioStream-Tires".play()
-		await get_tree().create_timer(0.5).timeout
-		$"AudioStream-Tires".stop()
-	else: 
-		$"AudioStream-Engine".play()
-		await get_tree().create_timer(0.5).timeout
-		$"AudioStream-Engine".stop()
-		
 @onready var myLights = $headlamps
 func turnOnHeadlights(status: bool):
 	myLights.visible = status
@@ -1425,7 +1373,7 @@ var coinsSinceBet := 0    #Double or Nothing's stake
 var turboKit := false     #Turbo Kit: exhaust flames at full throttle
 var buffFx: CarBuffFx
 var crushFeel: CrushFeel  #the player's: camera, hit-stop and crush bonuses (scene/fx/crush_feel.gd)
-var juice: CarJuice       #the player's driving feel: lean, bounce, trails, engine and tyre sound (scene/fx/car_juice.gd)
+var juice: CarJuice       #the player's driving feel: lean, bounce, trails, engine and tire sound (scene/fx/car_juice.gd)
 var useWasDown := false
 var moveWasDown := false
 
@@ -1534,7 +1482,7 @@ func useMove() -> void:
 func crushBuffActive() -> bool:
 	return buffs.has("golden") || buffs.has("monster") || buffs.has("plow") || buffs.has("spikes")
 
-## True when a buff crushes this goon whatever its speed, armour or shell (Walker.tryCrush asks).
+## True when a buff crushes this goon whatever its speed, armor or shell (Walker.tryCrush asks).
 func crushOverride(goon: Node2D) -> bool:
 	if buffs.has("golden") || buffs.has("monster"): return true
 	var local := to_local(goon.global_position)
@@ -1554,7 +1502,7 @@ func blockedByPickup(amount: float) -> bool:
 		return true
 	return false
 
-## Damage that ignores armour and shields (a Hot Potato going off on the roof).
+## Damage that ignores armor and shields (a Hot Potato going off on the roof).
 func loseHealth(amount: float) -> void:
 	health -= amount
 	lastHurtTick = Engine.get_physics_frames()

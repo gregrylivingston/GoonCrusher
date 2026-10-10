@@ -274,14 +274,14 @@ def ffmpeg_run(machine, arguments, what):
 
 def master_args(alpha, light):
     """Resolve-ready video. ProRes 422 HQ, 4444 when the picture has transparency; --light is H.264 for small disks."""
-    colour = ["-color_primaries", "bt709", "-color_trc", "bt709", "-colorspace", "bt709"]
+    color = ["-color_primaries", "bt709", "-color_trc", "bt709", "-colorspace", "bt709"]
     if alpha:
-        return ["-c:v", "prores_ks", "-profile:v", "4", "-pix_fmt", "yuva444p10le", "-vendor", "apl0", *colour], ".mov"
+        return ["-c:v", "prores_ks", "-profile:v", "4", "-pix_fmt", "yuva444p10le", "-vendor", "apl0", *color], ".mov"
     if light:
         return ["-vf", "scale=out_color_matrix=bt709:out_range=tv", "-c:v", "libx264", "-crf", "14", "-preset", "medium",
-                "-pix_fmt", "yuv420p", *colour, "-color_range", "tv"], ".mp4"
+                "-pix_fmt", "yuv420p", *color, "-color_range", "tv"], ".mp4"
     return ["-vf", "scale=out_color_matrix=bt709:out_range=tv", "-c:v", "prores_ks", "-profile:v", "3", "-pix_fmt", "yuv422p10le",
-            "-vendor", "apl0", *colour, "-color_range", "tv"], ".mov"
+            "-vendor", "apl0", *color, "-color_range", "tv"], ".mov"
 
 
 def timecode(frame, fps, hours=1):
@@ -295,7 +295,7 @@ def write_markers(sidecar, path):
     """A marker list DaVinci Resolve imports (right-click the timeline in the media pool > Timelines > Import >
     Timeline Markers from EDL). Crushes close together become one marker."""
     fps = int(sidecar.get("fps", 60))
-    colours = {"crush": "ResolveColorRed", "pickup": "ResolveColorYellow", "bookmark": "ResolveColorGreen",
+    colors = {"crush": "ResolveColorRed", "pickup": "ResolveColorYellow", "bookmark": "ResolveColorGreen",
                "event": "ResolveColorBlue", "mark": "ResolveColorCyan"}
     merged = []
     for event in sidecar.get("events", []):
@@ -310,7 +310,7 @@ def write_markers(sidecar, path):
         name = event["kind"] + (f" x{event['count']}" if event["count"] > 1 else "") + (f" {event['label']}" if event["kind"] != "crush" and event.get("label") else "")
         start, end = timecode(event["frame"], fps), timecode(event["frame"] + 1, fps)
         lines += [f"{index:03d}  001      V     C        {start} {end} {start} {end}  ",
-                  f" |C:{colours.get(event['kind'], 'ResolveColorBlue')} |M:{name} |D:1", ""]
+                  f" |C:{colors.get(event['kind'], 'ResolveColorBlue')} |M:{name} |D:1", ""]
     Path(path).write_text("\n".join(lines), encoding="utf-8")
     return len(merged)
 
@@ -842,7 +842,7 @@ def cmd_gallery(args):
                 preview = thumbs / (main.stem + ".mp4")
                 if not preview.exists() or preview.stat().st_mtime < main.stat().st_mtime:
                     say(f"  preview for {main.name}")
-                    # transparent pieces are shown over grey, as an editor would see them on a neutral plate
+                    # transparent pieces are shown over gray, as an editor would see them on a neutral plate
                     vf = "scale=-2:360,format=yuv420p" if not meta.get("job", {}).get("alpha") else "split[a][b];[a]drawbox=c=0x777777:t=fill[bg];[bg][b]overlay,scale=-2:360,format=yuv420p"
                     try:
                         ffmpeg_run(machine, ["-i", str(main), "-filter_complex" if "split" in vf else "-vf", vf, "-c:v", "libx264", "-crf", "27", "-preset", "veryfast", "-an", "-movflags", "+faststart", str(preview)], "making a preview")
@@ -991,7 +991,7 @@ def main():
     p = commands.add_parser("stage", help="an interface piece, a title or a line-up on a plain backdrop (promo/stages/)")
     p.add_argument("stage", help="title, lineup, transition, keyart, safezone, endcard, menu or a res:// scene")
     p.add_argument("--set", action="append", metavar="key=value", help="what the stage shows, e.g. --set piece=results --set text=\"43 GOONS\"")
-    p.add_argument("--backdrop", default="clear", choices=["clear", "magenta", "grey", "black"])
+    p.add_argument("--backdrop", default="clear", choices=["clear", "magenta", "gray", "black"])
     p.add_argument("--seconds", type=float, default=4.0, help="0 = one still")
     p.add_argument("--lead", type=float, default=0.0)
     p.add_argument("--name")

@@ -47,7 +47,7 @@ const VERB_TEXT := {
 	&"spiky": ["Bristles and fires a ring of quills.", "Hit it fast. Crushing it slowly costs your tires."],
 	&"flyer": ["Circles overhead out of reach, and swoops at your lights. It lands to feed on crushed goons.", "Get it on the ground while it's feeding."],
 	&"herd": ["A herd that stampedes across your path and ignores you.", "It's heavy, so hit it fast."],
-	&"rider": ["Drives like a car.", "Head-on it's armoured. T-bone it."],
+	&"rider": ["Drives like a car.", "Head-on it's armored. T-bone it."],
 }
 #Scrap Gang riders: act -> what it does
 const ACT_TEXT := {
@@ -56,7 +56,7 @@ const ACT_TEXT := {
 	"bomb": "Lobs bombs where you're about to be.", "boost": "Rockets straight at you and explodes.", "saw": "Weaves in close with a buzzsaw.",
 	"shoot": "Keeps its distance and shoots along an aim line.", "magnet": "Drags your car toward it with a magnet.",
 }
-#DATA flags -> a line under the behaviour
+#DATA flags -> a line under the behavior
 const TRAIT_TEXT := {
 	"night": "Sleeps by day. At night it keeps out of your headlights.", "wander": "Ignores you until you get close.",
 	"shield": "Carries a front shield and turns slowly.", "deathFire": "Leaves fire where it dies.",
@@ -136,10 +136,6 @@ static func setTileArt(texture: Texture2D, b) -> void:
 #a goon card's animation, if the card is still showing
 static func setPreviewFrames(frames, shown) -> void:
 	if is_instance_valid(shown): shown.setFrames(frames)
-
-#the same for a TextureRect itself (a level card's banner)
-static func setTexture(texture: Texture2D, rect) -> void:
-	if is_instance_valid(rect) && texture: rect.texture = texture
 
 #a goon's frame cropped to a square around the goon, so it fills its tile
 static func setGoonTileArt(texture: Texture2D, b) -> void:
@@ -222,7 +218,7 @@ func goonDetail(entry: Dictionary) -> void:
 		paragraph(FACTION_TEXT[faction])
 		tipRow("Crush one to fill in this page.")
 		return
-	paragraph(behaviour(d))
+	paragraph(behavior(d))
 	tipRow(tip(d))
 	endShowcase()
 	var rows = [["Speed", "%d" % d.get("speed", 110), d.get("speed", 110) / 3.2]]
@@ -248,7 +244,7 @@ static func habitat(id: StringName) -> String:
 		return "Only appears when a %s is crushed." % " or ".join(parents.map(func(p): return Goons.DATA[p].name))
 	return "Found on " + ", ".join(d.biomes.map(func(t): return TERRAIN_NAMES[t] if t < TERRAIN_NAMES.size() else "?"))
 
-static func behaviour(d: Dictionary) -> String:
+static func behavior(d: Dictionary) -> String:
 	if d.has("blurb"): return d.blurb
 	var lines = []
 	var verbText = VERB_TEXT.get(d.get("verb", &"lunge"), ["Keeps you guessing.", ""])

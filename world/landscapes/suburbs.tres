@@ -7,7 +7,6 @@ script = ExtResource("1_land")
 id = &"suburbs"
 displayName = "Suburbs"
 grammar = &"city"
-text = "Houses, lawns, hedge and fence lines round the back yards, and pools. Cul-de-sacs off every street."
 features = {
 "buildingShare": 0.35,
 "parkShare": 0.35,
@@ -15,7 +14,6 @@ features = {
 "canalShare": 0.08,
 "canalWidth": 1040.0,
 "sidewalk": 110.0,
-"sideStreetChance": 0.7,
 "barrierCap": 0.35,
 "motifs": 0.4,
 "props": 12,

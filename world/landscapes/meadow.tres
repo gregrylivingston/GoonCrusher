@@ -7,7 +7,6 @@ script = ExtResource("1_land")
 id = &"meadow"
 displayName = "Meadow"
 grammar = &"meadow"
-text = "Open meadow cut by a creek. Ford it at the shallows; the deep pools drown."
 features = {
 "creekFrequency": 4e-05,
 "creekWidth": 1100.0,

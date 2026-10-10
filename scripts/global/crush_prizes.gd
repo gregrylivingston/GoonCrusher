@@ -1,16 +1,13 @@
 class_name CrushPrizes extends RefCounted
 ## Crush prizes (docs/PICKUPS.md, "Gift boxes"): every crush earns crush XP toward the next gift box. Each
 ## box holds one prize game, rolled among the games that are unlocked, and a higher box is a better tier
-## that favours stronger games and plays a better version of each. GameUI (playerRoot.gd) keeps the count
+## that favors stronger games and plays a better version of each. GameUI (playerRoot.gd) keeps the count
 ## and opens the box (GiftBox); the games read the tier.
 ##
 ## The XP each box needs grows (XP_BASE * level^XP_EXP), so boxes come more slowly as a run goes on and
 ## only a strong run reaches the top tiers. Leftover XP carries into the next box.
 
-## Prize games, weakest first. Measured with each game's own rolls, no bet and no Dice, every pickup open
-## (rarity points per play: Common 1, Uncommon 2, Rare 4, Epic 8, Legendary 16): Claw Crane 1.05 for an
-## average grab (2.67 aimed at the best prize), Scratch Card 2.12, The Deal 2.77 (old rules: one
-## card, your pick), Slot Machine 6.95 (three reels pay three things); the drafts are not measured yet.
+## Prize games, weakest first (their value per play has not been measured since the games were reworked).
 ## A game is in the boxes once its Casino pickup (`pickup`, Pickups.DATA) is unlocked: one unlock opens both,
 ## and the Casino tree's order, prices and place on the Pickups screen are the pickups'. A new save opens
 ## only the Claw Crane, the tree's root.
@@ -155,7 +152,7 @@ static func forced() -> String:
 			forcedGame = ""
 	return forcedGame
 
-## The game in a box of `tier`, among `open` game ids (weakest first). A Cardboard box favours the weakest
+## The game in a box of `tier`, among `open` game ids (weakest first). A Cardboard box favors the weakest
 ## open game and a Diamond box the strongest; the rest get less the further they are from that target.
 static func pickGame(tier: int, roll: float, open: Array) -> String:
 	if forced() != "": return forced()

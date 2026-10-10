@@ -7,7 +7,6 @@ script = ExtResource("1_land")
 id = &"highway"
 displayName = "Desert Highway"
 grammar = &"highway"
-text = "A highway runs east. Fast asphalt, oil slicks, barriers and pile-ups."
 features = {
 "warpFrequency": 4e-05,
 "warpAmplitude": 3000.0,

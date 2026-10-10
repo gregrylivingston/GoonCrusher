@@ -53,7 +53,7 @@ const DEFAULTS = {
 	"fuelHope": 1.15,          #fuel saving assumes this much more fuel turns up on the way
 	"carefulSpeed": 260.0,     #speed when going in for a pickup among rocks
 	"stationSpeed": 450.0,     #speed within 2500 px of the station's driveway
-	#deep water (WorldHooks): the car takes about 30 health a second with its centre over it (never planned through),
+	#deep water (WorldHooks): the car takes about 30 health a second with its center over it (never planned through),
 	#and the wading band and shallows before it are slow and slippery
 	"waterLookSeconds": 0.9,   #deep water this many seconds ahead along a plan's path costs...
 	"waterNearCost": 8.0,      #...this much per second of the plan, more the closer and faster
@@ -102,26 +102,15 @@ const SKILLS = {
 #every car that has a driver of its own, scene/car/<id>/<id>_driver.gd
 const CARS = ["sedan", "van", "taxi", "pickup", "police", "ambulance", "racer", "supercar", "semi"]
 
-#house styles: whole-driver tunings by name, from before each car had a driver
+#house styles: whole-driver tunings by name. HOUSE is what every driver is built on; the others are for comparing
 const PROFILES = {
 	"default": {},
-	#the driver as first tuned (2026-10-05), before notes on going forward, looking further and crushing
-	"v1": {"scanTicks": 6, "horizonTicks": 60, "lookaheadPx": 0.0, "maxHorizonTicks": 60, "probeSeconds": 0.0, "probeCost": 0.6,
-		"reverseCost": 0.0, "reverseIfBlocked": 0.4, "reverseWhenStopped": false, "recoverForward": false,
-		"crushReward": 0.0, "goonValue": 12.0, "goonTargetPx": 2500.0},
 	#plays for crushes: goons are worth more, meeting them pays, flanks matter less
 	"crusher": {"crushReward": 3.0, "goonValue": 24.0, "goonPackBonus": 6.0, "goonTargetPx": 3500.0, "flankCost": 0.5,
 		"reserveBase": 5.0, "reservePerSecond": 0.02},
-	#looks two seconds ahead and further past the plan
-	"farsight": {"horizonTicks": 120, "lookaheadPx": 2400.0, "maxHorizonTicks": 180, "probeSeconds": 2.0},
 	#keeps health: walls and flanks cost more, and it stops hunting sooner
 	"cautious": {"hitCost": 10.0, "flankCost": 3.0, "slowGoonCost": 3.0, "crushReward": 0.5, "reserveBase": 25.0,
 		"reservePerSecond": 0.08},
-	#pickups first: fuel, health and prizes are worth twice as much
-	"collector": {"pickupScale": 2.0, "goonValue": 10.0, "crushReward": 0.5},
-	#a new player: reacts 0.2 s late, misjudges close calls, looks less far ahead and chases goons
-	"rookie": {"reactionTicks": 12, "planSlop": 0.8, "lookaheadPx": 1000.0, "probeSeconds": 1.0, "goonValue": 18.0,
-		"reserveBase": 5.0, "reservePerSecond": 0.02},
 }
 
 #the driver script for a car: its own (AIDriver's child), or AIDriver for a car that has none

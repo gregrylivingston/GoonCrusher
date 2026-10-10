@@ -185,11 +185,3 @@ func test_in_run_choices_are_valid():
 	assert_eq(AIProfiles.parse(Personas.get_def("rookie").profile).skill, "rookie")
 	for id in Personas.DATA: assert_eq(AIProfiles.problemWith(Personas.get_def(id).profile), "", "%s drives a real spec" % id)
 
-func test_rookie_profile_is_imperfect_and_the_rest_unchanged():
-	var rookie := AIProfiles.resolve("rookie")
-	assert_true(rookie.reactionTicks > 0 && rookie.planSlop > 0.0, "the rookie reacts late and misjudges")
-	for name in AIProfiles.PROFILES:
-		if name == "rookie": continue
-		var p := AIProfiles.resolve(name)
-		assert_eq(p.reactionTicks, 0, "%s reacts at once" % name)
-		assert_eq(p.planSlop, 0.0, "%s plans without noise" % name)

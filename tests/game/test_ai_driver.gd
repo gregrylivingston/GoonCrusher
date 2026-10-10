@@ -57,15 +57,15 @@ func test_plan_keys():
 	assert_eq(AIDriver.keysFor(brake, 0, 300.0, INF), AIDriver.BRAKE, "brakes while moving")
 	assert_eq(AIDriver.keysFor(brake, 0, 30.0, INF), 0, "but never so long that it starts reversing")
 
-func test_steering_ramps_and_recentres():
+func test_steering_ramps_and_recenters():
 	var controller = load("res://scene/player/controller/playerCarController.gd")
 	var wheel = 0.0
 	for i in 5: wheel = controller.nextSteering(wheel, true, false, 0.1)
 	assert_almost_eq(wheel, -0.5, 0.0001, "holding left turns the wheel `rate` a tick")
 	wheel = controller.nextSteering(wheel, false, false, 0.1)
-	assert_almost_eq(wheel, -0.5 + 0.1 * CarHandling.tune.steerReturn, 0.0001, "letting go recentres it, faster")
+	assert_almost_eq(wheel, -0.5 + 0.1 * CarHandling.tune.steerReturn, 0.0001, "letting go recenters it, faster")
 	wheel = controller.nextSteering(-0.1, false, true, 0.1)
-	assert_almost_eq(wheel, 0.0, 0.0001, "counter-steering stops at the centre first")
+	assert_almost_eq(wheel, 0.0, 0.0001, "counter-steering stops at the center first")
 	assert_almost_eq(controller.steerToward(0.0, 0.4, 1.0), 0.4, 0.0001, "a stick held part way turns the wheel part way")
 
 func test_station_graph_shortest_first_hop():

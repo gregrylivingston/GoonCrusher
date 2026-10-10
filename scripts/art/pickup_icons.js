@@ -20,7 +20,7 @@ const C = (x, y, r, f, c, w = 2) => `<circle cx="${x}" cy="${y}" r="${r}" fill="
 const E = (x, y, rx, ry, f, c, w = 2) => `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="${f}" stroke="${c.s}" stroke-width="${w}"/>`;
 const R = (x, y, w, h, rx, f, c, sw = 2, tr = '') => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" fill="${f}" stroke="${c.s}" stroke-width="${sw}" stroke-linejoin="round"${tr ? ` transform="${tr}"` : ''}/>`;
 const L = (d, col, w = 2, extra = '') => `<path d="${d}" fill="none" stroke="${col}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" ${extra}/>`;
-//text as stroked glyphs: Godot's SVG importer (ThorVG) has no fonts. x is the centre, y the baseline.
+//text as stroked glyphs: Godot's SVG importer (ThorVG) has no fonts. x is the center, y the baseline.
 const GLYPHS = {'×':'M1 3 L9 11 M9 3 L1 11', '2':'M1 4 Q1 0 5 0 Q9 0 9 4 Q9 7 1 14 H9', '5':'M9 0 H2 L1 6 Q5 4 8 6 Q10 9 8 12 Q5 15 1 12',
   '?':'M1 4 Q1 0 5 0 Q9 0 9 4 Q9 7 5 8 V10 M5 13 V13.6', '$':'M8 2 Q5 0 3 1 Q0 3 3 6 L7 8 Q10 10 7 13 Q4 14 1 12 M5 -1 V15'};
 const T = (x, y, s, size, f) => { const k = size / 14, w = s.length * 11 * k - k; let out = '';
@@ -46,14 +46,14 @@ function sector(cx, cy, r0, r1, a0, a1) {
 const ring = (cx, cy, ro, ri) => `M${cx} ${cy - ro} a${ro} ${ro} 0 1 0 0.01 0 Z M${cx} ${cy - ri} a${ri} ${ri} 0 1 1 -0.01 0 Z`;
 const gem = (x, y, s) => `M${x - s} ${y - s * .35} L${x - s * .5} ${y - s} L${x + s * .5} ${y - s} L${x + s} ${y - s * .35} L${x} ${y + s} Z`;
 
-/* each icon: p = body palette, a / a2 = accent palettes, dc = detail colour on the top layer, hi = highlight stroke */
+/* each icon: p = body palette, a / a2 = accent palettes, dc = detail color on the top layer, hi = highlight stroke */
 const ICONS = {
   wrench: {p:'steel', dc:'#343a44', hi:'M24 12 A9 9 0 0 1 28 8', draw:c => G('rotate(-45 32 31) translate(0 1)', P('M21 15 A11 11 0 0 0 43 15 L43 6 L37 9 L37 16 L27 16 L27 9 L21 6 Z', c.b, c) + R(27.5, 24, 9, 30, 4.5, c.b, c) + C(32, 47, 2.4, c.d, c, 0))},
   sparkplug: {p:'cream', a:'steel', dc:'#b8a27a', hi:'M29 9 V22', draw:c => R(27, 5, 10, 22, 4, c.b, c) + L('M27 12 H37 M27 17 H37', c.d, 1.6) + P('M21 27 H43 L45 35 H19 Z', c.a, c) + R(25, 35, 14, 11, 2, c.a, c, 1.8) + L('M25 39 H39 M25 43 H39', c.s, 1.4) + L('M32 46 V54 H38 V51', c.s, 3)},
   tierod: {p:'steel', a:'crimson', hi:'M18 25 L44 33', draw:c => R(10, 26, 44, 9, 4.5, c.b, c, 2, 'rotate(18 32 31)') + C(11, 24, 8, c.a, c) + C(53, 38, 8, c.a, c) + C(11, 24, 3, c.s, c, 0) + C(53, 38, 3, c.s, c, 0)},
   tankpatch: {p:'red', a:'cream', dc:'#ffd2c8', hi:'M22 32 A10 10 0 0 1 25 24', draw:c => P('M32 5 C40 18 50 28 50 39 A18 18 0 0 1 14 39 C14 28 24 18 32 5 Z', c.b, c) + R(16, 33, 32, 11, 3, c.a, c, 1.8, 'rotate(-20 32 38)') + L('M25 36 L27 41 M31 34 L33 39 M37 32 L39 37', c.s, 1.4)},
   toolbox: {p:'red', a:'steel', hi:'M13 27 H30', draw:c => L('M24 24 V15 Q24 12 27 12 H37 Q40 12 40 15 V24', c.s, 7) + L('M24 24 V15 Q24 12 27 12 H37 Q40 12 40 15 V24', c.b, 3) + R(8, 23, 48, 31, 5, c.b, c) + L('M8 33 H56', c.s, 2) + R(27, 29, 10, 9, 2, c.a, c, 1.5)},
-  tyre: {p:'ink', a:'steel', dc:'#8e8e9c', hi:'M14 22 A20 20 0 0 1 24 11', draw:c => C(32, 31, 23, c.b, c) + `<circle cx="32" cy="31" r="19.5" fill="none" stroke="${c.d}" stroke-width="3" stroke-dasharray="4 4.2"/>` + C(32, 31, 11, c.a, c, 1.8) + C(32, 31, 3.5, c.s, c, 0)},
+  tire: {p:'ink', a:'steel', dc:'#8e8e9c', hi:'M14 22 A20 20 0 0 1 24 11', draw:c => C(32, 31, 23, c.b, c) + `<circle cx="32" cy="31" r="19.5" fill="none" stroke="${c.d}" stroke-width="3" stroke-dasharray="4 4.2"/>` + C(32, 31, 11, c.a, c, 1.8) + C(32, 31, 3.5, c.s, c, 0)},
   bulb: {p:'gold', a:'steel', dc:'#a86200', hi:'M23 16 A11 11 0 0 1 30 10', draw:c => P('M32 6 A16 16 0 0 1 42 34 Q39 37 39 41 H25 Q25 37 22 34 A16 16 0 0 1 32 6 Z', c.b, c) + L('M27 31 L29.5 23 L32 31 L34.5 23 L37 31', c.d, 2) + R(25, 41, 14, 12, 3, c.a, c, 1.8) + L('M25 45.5 H39 M25 49.5 H39', c.s, 1.4)},
   service: {p:'green', dc:'#fffdf6', hi:'M16 22 A17 17 0 0 1 24 13', draw:c => P(gearPts(32, 31, 25, 19, 9), c.b, c) + C(32, 31, 11, c.d, c, 1.8) + L('M32 25 V37 M26 31 H38', c.s, 3.4)},
   jerry: {p:'olive', a:'steel', dc:'#55722a', hi:'M15 22 V40', draw:c => P('M12 18 Q12 14 16 14 H40 L48 22 V52 Q48 54 46 54 H14 Q12 54 12 52 Z', c.b, c) + R(17, 18, 7, 5, 2, c.s, c, 0) + R(27, 18, 7, 5, 2, c.s, c, 0) + L('M19 30 L41 48 M41 30 L19 48', c.d, 3.2) + P('M40 15 L46 8 L53 14 L48 19 Z', c.a, c, 1.8)},
@@ -149,7 +149,7 @@ const ICONS = {
   trait_cargo_bay: {p:'wood', a:'gold', hi:'M10 34 H26', draw:c => R(6, 30, 26, 24, 2, c.b, c) + L('M6 38 H32 M6 46 H32', c.s, 1.6) + R(32, 12, 26, 24, 2, c.b, c) + L('M32 20 H58 M32 28 H58', c.s, 1.6) + C(45, 48, 7, c.a, c, 1.8) + L('M45 44 V52 M41 48 H49', c.s, 2.2)},
   trait_top_heavy: {p:'cream', a:'ink', hi:'M18 22 L36 12', draw:c => G('rotate(-24 32 34)', R(10, 16, 44, 26, 4, c.b, c) + R(16, 21, 10, 8, 2, c.s, c, 0) + C(18, 46, 6, c.a, c) + C(46, 46, 6, 'none', c, 1.4)) + L('M38 54 H60', c.s, 2.4)},
   trait_meter: {p:'gold', a:'ink', dc:'#7a4100', hi:'M12 18 H34', draw:c => R(8, 14, 48, 36, 5, c.b, c) + R(14, 20, 36, 18, 3, c.a, c, 1.6) + T(32, 34, '$', 12, '#7fffa0') + C(20, 44, 2.5, c.d, c, 0) + C(32, 44, 2.5, c.d, c, 0) + C(44, 44, 2.5, c.d, c, 0)},
-  trait_city_tyres: {p:'ink', a:'steel', dc:'#8e8e9c', hi:'M14 18 A18 18 0 0 1 22 10', draw:c => C(32, 26, 19, c.b, c) + `<circle cx="32" cy="26" r="15.5" fill="none" stroke="${c.d}" stroke-width="2.6" stroke-dasharray="3.5 3.5"/>` + C(32, 26, 8, c.a, c, 1.8) + R(4, 50, 56, 7, 2, c.a, c, 1.6) + L('M10 53.5 H18 M26 53.5 H34 M42 53.5 H50', '#ffd36b', 2)},
+  trait_city_tires: {p:'ink', a:'steel', dc:'#8e8e9c', hi:'M14 18 A18 18 0 0 1 22 10', draw:c => C(32, 26, 19, c.b, c) + `<circle cx="32" cy="26" r="15.5" fill="none" stroke="${c.d}" stroke-width="2.6" stroke-dasharray="3.5 3.5"/>` + C(32, 26, 8, c.a, c, 1.8) + R(4, 50, 56, 7, 2, c.a, c, 1.6) + L('M10 53.5 H18 M26 53.5 H34 M42 53.5 H50', '#ffd36b', 2)},
   trait_offroad: {p:'olive', a:'ink', a2:'steel', hi:'M10 44 L22 30', draw:c => P('M4 56 L22 30 L32 40 L42 26 L60 56 Z', c.b, c) + C(32, 24, 12, c.a, c) + C(32, 24, 5, c.a2, c, 1.6) + L('M22 10 L26 14 L22 18 L26 22 M42 10 L38 14 L42 18 L38 22', c.s, 2)},
   trait_loaded_bed: {p:'sky', a:'wood', hi:'M10 38 H50', draw:c => R(12, 12, 14, 12, 1.5, c.a, c, 1.8) + R(28, 8, 14, 16, 1.5, c.a, c, 1.8) + R(44, 14, 12, 10, 1.5, c.a, c, 1.8) + P('M6 24 H58 V44 Q58 48 54 48 H10 Q6 48 6 44 Z', c.b, c) + C(16, 52, 6, c.s, c, 0) + C(48, 52, 6, c.s, c, 0)},
   trait_downforce: {p:'crimson', a:'steel', hi:'M10 14 H52', draw:c => R(6, 10, 52, 9, 3, c.b, c) + R(16, 18, 6, 14, 1, c.a, c, 1.6) + R(42, 18, 6, 14, 1, c.a, c, 1.6) + P('M20 38 H26 V46 H30 L23 56 L16 46 H20 Z', c.b, c, 1.6) + P('M38 38 H44 V46 H48 L41 56 L34 46 H38 Z', c.b, c, 1.6)},

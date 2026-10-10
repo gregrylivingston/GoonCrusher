@@ -21,7 +21,6 @@ var segmentCounts: Array[float] = [0.4, 0.6, 0.0]
 var lastEmpty := false
 var weights := {"ident":1.0, "talk":1.0, "ad":1.0}
 var crossfade := 2.5
-var logo: String = ""
 var files := {}       #kind -> Array of paths
 var bags := {}        #kind -> RadioBag
 var rng := RandomNumberGenerator.new()
@@ -32,7 +31,6 @@ static func fromFolder(dir: String) -> RadioStation:
 	station.id = StringName(station.folder.get_file())
 	for kind in FOLDERS: station.files[kind] = listAudio(station.folder + "/" + FOLDERS[kind])
 	station.applyConfig(readJson(station.folder + "/station.json"))
-	if ResourceLoader.exists(station.folder + "/logo.svg"): station.logo = station.folder + "/logo.svg"
 	return station
 
 func applyConfig(config: Dictionary) -> void:

@@ -42,8 +42,8 @@ func test_it_cuts_inside_a_turn():
 	var c := semi()
 	c.trailer.follow(DT)
 	drive(c, 500.0, 1.2, 150) #a steady circle, radius about 420 px
-	var centre := c.global_position + c.global_transform.y * (500.0 / 1.2) #turning right: the centre is to the right
-	assert_gt(c.global_position.distance_to(centre), c.trailer.global_position.distance_to(centre) + 20.0, "the trailer's axles run inside the tractor's path")
+	var center := c.global_position + c.global_transform.y * (500.0 / 1.2) #turning right: the center is to the right
+	assert_gt(c.global_position.distance_to(center), c.trailer.global_position.distance_to(center) + 20.0, "the trailer's axles run inside the tractor's path")
 	assert_gt(fold(c), 0.2, "and it trails at an angle")
 	assert_almost_eq(c.trailer.global_position.distance_to(c.to_global(c.trailer.kingpin)), c.trailer.length, 1.0, "still hitched")
 

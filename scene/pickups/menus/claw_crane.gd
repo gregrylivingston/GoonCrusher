@@ -286,7 +286,7 @@ func stepPhysics(dt: float) -> void:
 		var v: Vector2 = ((p.pos - p.prev) * DAMP).limit_length(MAX_MOVE)
 		p.prev = p.pos
 		p.pos += v + Vector2(0, FALL * dt * dt)
-	prizes.sort_custom(func(a, b): return a.pos.x < b.pos.x) #sweep: only neighbours along x can touch
+	prizes.sort_custom(func(a, b): return a.pos.x < b.pos.x) #sweep: only neighbors along x can touch
 	for k in ITERATIONS:
 		for i in prizes.size():
 			var reach: float = prizes[i].pos.x + prizes[i].r + 26.0

@@ -1,8 +1,7 @@
 class_name GameTest extends Node
 
-#Minimal stand-in for GutTest, used by tests/game because GUT 9.0.0 (addons/gut) does not parse
-#on Godot 4.7 (its `Logger` class now shadows a native class). The assert names match GUT's,
-#so these tests can move back to `extends GutTest` once GUT is upgraded.
+#The game's small test base. The assert names match GUT's (GUT 9.0.0 does not parse on Godot 4.7,
+#so it is not in the repo).
 
 var failures: Array[String] = []
 var currentTest := ""

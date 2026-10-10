@@ -54,5 +54,3 @@ palette = {
 &"ice": Color(0.62, 0.78, 0.88, 1),
 &"rock": Color(0.42, 0.44, 0.5, 1)
 }
-nightTint = Color(0.06, 0.08, 0.16, 1)
-ambience = &"wind"

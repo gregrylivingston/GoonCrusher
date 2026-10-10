@@ -1,15 +1,13 @@
 class_name Goons extends RefCounted
-## Every goon: faction, regions, rank, behaviour (verb) and tuning. The art and shapes are baked into
+## Every goon: faction, regions, rank, behavior (verb) and tuning. The art and shapes are baked into
 ## scene/enemy/goons/<id>/ by scripts/art/bake_goons.py; everything you tune lives here. See docs/GOONS.md.
 
 enum faction { WILD, TRIBE, SCRAP }
 const FACTION_NAMES := ["Wild Things", "Goon Tribe", "Scrap Gang"]
 
-## Distance scoring: score = distance from the start in chunks × DISTANCE_WEIGHT (+ level index × LEVEL_WEIGHT
-## in factionFor, the fallback without a level) ± FACTION_JITTER. A level's districts use the same score for
-## their zone (Territories.zoneFor: below WILD_BELOW zone 0, below TRIBE_BELOW zone 1, else zone 2).
+## Distance scoring: score = distance from the start in chunks × DISTANCE_WEIGHT ± FACTION_JITTER. A level's
+## districts use it for their zone (Territories.zoneFor: below WILD_BELOW zone 0, below TRIBE_BELOW zone 1, else zone 2).
 const DISTANCE_WEIGHT := 0.35
-const LEVEL_WEIGHT := 0.3
 const FACTION_JITTER := 0.4
 const WILD_BELOW := 1.0
 const TRIBE_BELOW := 2.2
@@ -18,8 +16,7 @@ const CHUNK_PX := 5120.0
 ## and each goon's sprite is scaled 1 / ART_RES. test_goons.gd checks the baked scenes agree.
 const ART_RES := 2.0
 
-## Wave mix: chance (in %) that a spawn uses the region's goon 1, 2 or 3, by the region's wave (1-4).
-## Matches the HUD, which reveals goons 2 and 3 as the waves come.
+## Wave mix: chance (in %) that a spawn uses the region's goon 1, 2 or 3, by the run's wave (Region.wave; 4 and later use the last row).
 const WAVE_MIX := [[95, 5, 0], [70, 30, 0], [50, 30, 20], [40, 30, 30]]
 
 ## Mirrors Root.terrain (same order; test_goons.gd checks it), because an autoload's enum can't be used in a const.
@@ -151,7 +148,7 @@ const DATA := {
 }
 
 ## The six goon classes (docs/GOONS.md, "Classes"): the goons a region may field (Territories). A goon keeps
-## its faction (colours, goo, drops, the EMP's target, the crushed:<faction> counters); a class is only a list.
+## its faction (colors, goo, drops, the EMP's target, the crushed:<faction> counters); a class is only a list.
 ## The first three are the factions' own (every rank-1+ member; the Goonling is spawn-only); the three elite
 ## classes are themed squads drawn from every faction. A level's line-up (LevelDef.lineup) is 3-6 of its
 ## region's class.
@@ -191,40 +188,7 @@ static func scenePath(id: StringName) -> String:
 static func factionName(f: int) -> String:
 	return FACTION_NAMES[clampi(f, 0, FACTION_NAMES.size() - 1)]
 
-## Ids of a faction's goons that live in a terrain, sorted by rank (fodder first). Rank 0 never spawns from regions.
-static func pool(f: int, terrain: int) -> Array:
-	var out := []
-	for id in DATA:
-		var d: Dictionary = DATA[id]
-		if d.faction == f && d.rank > 0 && terrain in d.biomes: out.push_back(id)
-	out.sort_custom(func(a, b): return DATA[a].rank < DATA[b].rank)
-	return out
-
-## The faction holding a region `distancePx` from the start on level `levelIndex` (0 = first level).
-static func factionFor(distancePx: float, levelIndex: int, jitter: float) -> int:
-	var score := distancePx / CHUNK_PX * DISTANCE_WEIGHT + levelIndex * LEVEL_WEIGHT + jitter
-	if score < WILD_BELOW: return faction.WILD
-	if score < TRIBE_BELOW: return faction.TRIBE
-	return faction.SCRAP
-
-## A region's three goons: a fodder goon first, then two specials or heavies, all from one faction.
-## Falls back to the faction's lowest ranks when a terrain has few goons of a rank.
-static func regionGoons(f: int, terrain: int, rng: RandomNumberGenerator) -> Array:
-	var ids := pool(f, terrain)
-	if ids.is_empty(): ids = pool(faction.TRIBE, T.GRASS)
-	var low := ids.filter(func(id): return DATA[id].rank == 1)
-	var high := ids.filter(func(id): return DATA[id].rank >= 2)
-	if low.is_empty(): low = [ids[0]]
-	if high.is_empty(): high = ids
-	var first = low[rng.randi() % low.size()]
-	for i in range(high.size() - 1, 0, -1): #seeded shuffle, so a seeded run picks the same goons
-		var j := rng.randi() % (i + 1)
-		var swap = high[i]; high[i] = high[j]; high[j] = swap
-	var rest := high.filter(func(id): return id != first)
-	while rest.size() < 2: rest.push_back(ids[rng.randi() % ids.size()])
-	return [first, rest[0], rest[1]]
-
-## Which of a region's three goons to spawn, by its wave (WAVE_MIX).
+## Which of a region's three goons to spawn, by the run's wave (WAVE_MIX).
 static func pickSlot(wave: int, roll: float) -> int:
 	var mix: Array = WAVE_MIX[clampi(wave, 1, WAVE_MIX.size()) - 1]
 	var r := roll * 100.0

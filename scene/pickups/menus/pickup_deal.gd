@@ -18,7 +18,7 @@ const SMALL := Vector2(150, 205)
 const HAND_AT := Vector2(40, 36)
 const DECK_AT := Vector2(420, 60)
 const FLIP_TIME := 0.45
-## a card back's colour per kind of pickup (Pickups.K); the art is CardArt's
+## a card back's color per kind of pickup (Pickups.K); the art is CardArt's
 const BACKS := {
 	Pickups.K.SUPPLY: [Color("2f7d4f"), "res://texture/icon/toolbox.svg"],
 	Pickups.K.TUNE: [Color("8a5a1c"), "res://texture/icon/upgrade.svg"],

@@ -61,7 +61,7 @@ const LOGS := 5
 const LOG_DISTANCE := Vector2(260.0, 560.0) #px each log rolls
 const LOG_SPREAD := 0.55                    #radians either way of the release direction
 const LOG_SECONDS := 1.1
-const LOG_CRUSH := 64.0                     #px from a rolling log's centre line that flattens a goon
+const LOG_CRUSH := 64.0                     #px from a rolling log's center line that flattens a goon
 const LOG_CAR_DAMAGE := 6.0
 const WAVE_RADIUS := 340.0
 const SPINE_RANK := 1                       #a saguaro's spines flatten fodder only
@@ -82,11 +82,8 @@ const DROP_TIP := Vector2(265.0, -16.0)     #the jib's tip, crane-local px (worl
 const DROP_SECONDS := 0.7
 const DROP_BOX := Rect2(-240.0, -94.0, 480.0, 188.0) #the container, container-local px
 const DROP_CAR_DAMAGE := 10.0
-## Goons that release piles: the car must be this close to the pile, the goon this close to it, to try (the
-## "release" rows in Goons.DATA seeks carry the same numbers)
-const LURE_CAR := 900.0
-const LURE_GOON := 650.0
-const REACH := 150.0                        #px from the pile's centre where a goon can cut it loose
+## Goons that release piles: how close the car and the goon must be to try is in the "release" rows of Goons.DATA seeks
+const REACH := 150.0                        #px from the pile's center where a goon can cut it loose
 ## Roosts by prop id: how many Buzzards a crown holds, the ram (px/s into the trunk) that knocks them down, how
 ## long they lie stunned, and how far from the trunk they sit. Scarecrows (Orchard Lanes) join with a row here.
 const ROOSTS := {&"deadtree": {"perches": 3, "knock": 250.0, "stun": 1.5, "ring": 46.0},
@@ -355,12 +352,12 @@ static func fall(prop: Node2D, dir := Vector2.ZERO) -> void:
 	var sprite: Node2D = prop.get_node_or_null("Sprite2D")
 	if sprite: sprite.scale.y = absf(sprite.scale.y) * side
 	if side < 0.0: box = Rect2(box.position.x, -box.end.y, box.size.x, box.size.y)
-	var centre := prop.to_global(box.get_center())
-	for goon in goonsNear(centre, box.size.length() * 0.5 + 40.0):
+	var center := prop.to_global(box.get_center())
+	for goon in goonsNear(center, box.size.length() * 0.5 + 40.0):
 		if box.has_point(prop.to_local(goon.global_position)): flatten(goon, prop.global_position, &"crush", &"fall")
 	if is_instance_valid(car) && box.has_point(prop.to_local(car.global_position)): car.damage(float(def.get("damage", 8.0)))
 	if def.has("spines"): spines(prop.to_global(Vector2(0.0, box.end.y if side > 0.0 else box.position.y)), def.spines)
-	if PropReactions.current: PropReactions.current.puff(centre, Vector2.from_angle(prop.global_rotation + PI * 0.5 * side), 1.0, true)
+	if PropReactions.current: PropReactions.current.puff(center, Vector2.from_angle(prop.global_rotation + PI * 0.5 * side), 1.0, true)
 	if fx(): fx().label(prop.global_position, def.get("label", "FLATTENED"), 22)
 
 ## A ring of saguaro spines where the crown lands: fodder (rank SPINE_RANK or less) within `radius` is flattened
@@ -615,7 +612,7 @@ class Drop extends Node2D:
 #--- the Bandit den (R-6) ------------------------------------------------------------------------------
 
 const DEN_GROUP := &"prop_den"
-const DEN_REACH := 95.0   #px past a Bandit's body from the den's centre where it stashes (the hut's hull is ~75)
+const DEN_REACH := 95.0   #px past a Bandit's body from the den's center where it stashes (the hut's hull is ~75)
 const SACKS_SHOWN := 3    #the den's sack overlay has frames 0-3
 const STASH_META := &"denStash" #the TileManager's record: {den key: [{"scene": path}, ...]}
 

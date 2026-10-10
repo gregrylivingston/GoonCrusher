@@ -224,7 +224,7 @@ func onTyped(text: String) -> void:
 	var starts := commands.keys().filter(func(c): return c.begins_with(words[0]))
 	hint.text = "  ".join(starts) if not starts.is_empty() else "no such command (help lists them)"
 
-#output, coloured by line: an error red, a "-- group --" line gold, and the first word of an indented line (a
+#output, colored by line: an error red, a "-- group --" line gold, and the first word of an indented line (a
 #command in help, an id in a list) picked out
 func say(text: String, color := TEXT_COLOR) -> void:
 	if text == "": return
@@ -851,7 +851,7 @@ func cmdGive(args: Array) -> String:
 	var amount = parseAmount(args[1]) if args.size() > 1 else 1
 	if amount == null: return "Error: '%s' is not a number" % args[1]
 	var field = "currentGoonsCrushed" if args[0] == "crushed" else args[0]
-	car.reward(field, amount) #crushed past a goal opens the free slot machine, as crushing would
+	car.reward(field, amount) #through reward(), so the HUD hears of it as it would of a crush
 	return "%s is now %s" % [args[0], str(car[field])]
 
 func cmdPickup(args: Array) -> String:

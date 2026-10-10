@@ -2,7 +2,7 @@ class_name HudVisor extends Control
 
 #The sun visors either side of the mirror (docs/HUD.md, "The visors"): two low slabs flush with the top edge, framed
 #like the mirror in the dashboard's material.
-#  Left (PRIZE): the next gift box (CrushPrizes) in a ring that fills with crush XP, in its tier's colour, with the
+#  Left (PRIZE): the next gift box (CrushPrizes) in a ring that fills with crush XP, in its tier's color, with the
 #        XP still to go; then the radio: a little equaliser, and the song for a few seconds when one starts (the
 #        visor grows for it and shrinks back).
 #  Right (PAY): the star in a ring that fills as the run's wave runs down (Region.waveProgress: a star every wave,

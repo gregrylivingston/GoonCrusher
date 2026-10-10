@@ -1,5 +1,5 @@
 {
-	"about": "The launch trailer's gameplay shots, in beat order (promo/brief/beat_sheet.md). Film all: capture.py shot trailer_launch. One: capture.py shot trailer_launch crowd_plough",
+	"about": "The launch trailer's gameplay shots, in beat order (promo/brief/beat_sheet.md). Film all: capture.py shot trailer_launch. One: capture.py shot trailer_launch crowd_plow",
 	"defaults": {
 		"mode": "countdown",
 		"tier": "medium",
@@ -39,7 +39,7 @@
 			]
 		},
 		{
-			"id": "crowd_plough",
+			"id": "crowd_plow",
 			"level": "orchard",
 			"car": "pickup",
 			"time": "day",

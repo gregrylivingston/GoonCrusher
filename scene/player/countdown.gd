@@ -112,16 +112,16 @@ class StartLamps extends Control:
 			draw_circle(p, 6, Color("211c19"))
 			draw_circle(p - Vector2(1.5, 1.5), 2.2, Color("7b726b"))
 		for i in 4:
-			var centre = Vector2(w * 0.5 + (i - 1.5) * 100.0, 58.0)
+			var center = Vector2(w * 0.5 + (i - 1.5) * 100.0, 58.0)
 			var isGreen = i == 3
 			var on = green if isGreen else (i < lit && not green)
-			var colour: Color = GREEN if isGreen else AMBER
-			draw_circle(centre, 36, HudTheme.OUTLINE)
-			draw_circle(centre, 29, colour if on else colour.darkened(0.78))
+			var color: Color = GREEN if isGreen else AMBER
+			draw_circle(center, 36, HudTheme.OUTLINE)
+			draw_circle(center, 29, color if on else color.darkened(0.78))
 			if on:
 				var latest = green if isGreen else i == lit - 1
 				var boost = flash if latest else 0.0
-				for ring in 4: draw_circle(centre, 34 + ring * 12, Color(colour, (0.22 + 0.2 * boost) / (ring + 1)))
-				draw_circle(centre + Vector2(-9, -10), 7, Color(1, 1, 0.94, 0.75))
-			else: draw_circle(centre + Vector2(-9, -10), 6, Color(1, 0.95, 0.86, 0.08))
-			HudTheme.text(self, centre + Vector2(0, 58), ["3", "2", "1", "GO"][i], 15, HudTheme.TEXT if on else HudTheme.MUTED, HORIZONTAL_ALIGNMENT_CENTER, 4)
+				for ring in 4: draw_circle(center, 34 + ring * 12, Color(color, (0.22 + 0.2 * boost) / (ring + 1)))
+				draw_circle(center + Vector2(-9, -10), 7, Color(1, 1, 0.94, 0.75))
+			else: draw_circle(center + Vector2(-9, -10), 6, Color(1, 0.95, 0.86, 0.08))
+			HudTheme.text(self, center + Vector2(0, 58), ["3", "2", "1", "GO"][i], 15, HudTheme.TEXT if on else HudTheme.MUTED, HORIZONTAL_ALIGNMENT_CENTER, 4)

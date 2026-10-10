@@ -5,7 +5,6 @@ var explosionScene = preload("res://scene/fx/explosion.tscn") #loaded with the l
 const BEACON_MATERIAL := preload("res://shader/world_beacon.tres") #shared by every landmark's beacon: dim by day
 var explosions: ExplosionPool
 var playerCar: OverheadCarBody2D
-var playerController
 ## The level's LevelDef (Levels, res://world/levels/<id>.tres). Its clock, spawn tuning and start position
 ## are copied in when the level enters the tree (applyDef). Old scenes without one keep their own values.
 @export var def: LevelDef
@@ -52,7 +51,7 @@ const STATION_APPROACH_PX = 1500.0
 #clock, refuels, patches the car up and opens the pit shop; the last one wins.
 const MARATHON_TURN = PI / 3 #each leg heads off within this of the last leg's heading
 #a leg that would leave the map (WorldGen.CHUNK_LIMIT, less this margin of the leg's length for its y spread)
-#heads back toward the map's centre instead
+#heads back toward the map's center instead
 const MARATHON_EDGE_MARGIN = 0.3
 const MARATHON_HEAL = 35.0   #health restored at each station
 var leg := 1
@@ -266,10 +265,10 @@ var trial: TrialScore #Smash Run's and Drift Trial's score; null in every other 
 #Cone Course: the cones on the lot the world cleared at the start, and the car at the first lane
 func setupCones() -> void:
 	var map = $TileManager.worldMap
-	var centre: Vector2 = map.station if map.station != Vector2.INF else startPosition
-	course = ConeCourse.build(self, centre)
+	var center: Vector2 = map.station if map.station != Vector2.INF else startPosition
+	course = ConeCourse.build(self, center)
 	var car = Root.playerCar
-	car.global_position = centre + ConeCourse.START
+	car.global_position = center + ConeCourse.START
 	car.rotation = 0.0
 	car.velocity = Vector2.ZERO
 	startPosition = car.global_position
@@ -553,7 +552,7 @@ func stationReached(station: Node2D) -> void:
 	call_deferred("openPitShop")
 
 #the heading of a leg `distance` px long from `from`: the last heading plus `turn`, unless that leaves the
-#map; then toward the map's centre (plus the turn if that fits), which always does
+#map; then toward the map's center (plus the turn if that fits), which always does
 static func legHeadingFrom(from: Vector2, lastHeading: float, turn: float, distance: float) -> float:
 	if legFits(from, lastHeading + turn, distance): return lastHeading + turn
 	var home := (-from).angle()
@@ -677,6 +676,3 @@ func endLevel(levelCompleted: bool, reason):  #reason takes Root.endCondition
 #a pooled explosion at a world position
 func explode(worldPosition: Vector2) -> void:
 	explosions.explode(worldPosition)
-
-func getTileByCoordinates(coord: Vector2i):
-	return $TileManager.getTile(coord)

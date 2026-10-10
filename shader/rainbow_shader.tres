@@ -1,9 +1,0 @@
-[gd_resource type="ShaderMaterial" format=3 uid="uid://c4e4nqe6cks3c"]
-
-[ext_resource type="Shader" uid="uid://uy8ouqn14y1" path="res://shader/rainbowfill.gdshader" id="1_rainbow"]
-
-[resource]
-shader = ExtResource("1_rainbow")
-shader_parameter/strength = 1.0
-shader_parameter/speed = 0.3
-shader_parameter/angle = 358.135

@@ -72,8 +72,7 @@ func scan(root: String = ROOT) -> void:
 #stations the picker offers, in order, then Radio Off
 func stationIds() -> Array[StringName]:
 	var ids: Array[StringName] = []
-	for id in order:
-		if isStationOpen(id): ids.push_back(id)
+	ids.assign(order)
 	ids.push_back(OFF)
 	return ids
 
@@ -90,10 +89,6 @@ func stationName(id: StringName) -> String:
 func stationColor(id: StringName) -> Color:
 	if stations.has(id): return stations[id].color
 	return Color(1, 1, 1, 0.5)
-
-#package 12 hook: the unlock registry will answer this
-func isStationOpen(_id: StringName) -> bool:
-	return true
 
 func setStation(id: StringName) -> void:
 	Settings.set_value("audio/station", String(id))
@@ -120,12 +115,6 @@ func isOn() -> bool:
 #Radio Off and back (the now-playing card's right click)
 func toggle() -> void:
 	setStation(OFF if isOn() else (order[0] if not order.is_empty() else OFF))
-
-#steps through stationIds(), wrapping
-func cycleStation(direction: int = 1) -> void:
-	var ids = stationIds()
-	var index = maxi(0, ids.find(station))
-	setStation(ids[posmod(index + direction, ids.size())])
 
 func nowPlaying() -> Dictionary:
 	var info = lastSong.duplicate()

@@ -61,7 +61,7 @@ func test_only_the_weakest_game_starts_open():
 	Unlocks.allOpen = true
 	assert_eq(CrushPrizes.openGames().size(), CrushPrizes.GAMES.size(), "harnesses open every game")
 
-func test_higher_boxes_favour_stronger_games():
+func test_higher_boxes_favor_stronger_games():
 	var all := CrushPrizes.GAMES.map(func(g): return g.id)
 	var low := {}
 	var high := {}

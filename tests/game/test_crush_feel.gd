@@ -34,7 +34,7 @@ func spawnGoon(id: StringName, at := Vector2.ZERO, giant := false) -> Walker:
 	add_child_autofree(goon)
 	return goon
 
-const NOSE := Vector2(110, 0)  #a goon met dead centre by the bumper, in car space
+const NOSE := Vector2(110, 0)  #a goon met dead center by the bumper, in car space
 const CORNER := Vector2(110, 44)
 
 func styles(speed: float, local: Vector2, giant := false) -> Dictionary:

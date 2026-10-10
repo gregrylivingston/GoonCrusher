@@ -9,7 +9,7 @@ Length: ____   Music: ____ (list the songs with `capture.py song`)   Due: ____
 | # | Seconds | Beat | Footage | Notes |
 |---|---|---|---|---|
 | 1 | 0–4 | Cold open: the car hits a crowd | `cold_open` | no HUD, starts close and pulls back |
-| 2 | 4–7 | Title | `title_logo` over `crowd_plough` | |
+| 2 | 4–7 | Title | `title_logo` over `crowd_plow` | |
 | 3 | 7–14 | The idea: drive, crush, collect | hand drive: ____ | HUD on, so the counters read |
 | 4 | 14–17 | "43 GOONS" | `title_goons`, `lineup_goons` | |
 | 5 | 17–24 | The world: regions in quick cuts | `city_taxi`, `frozen_drift`, `semi_convoy`, `drive_through` | cut on the shutter: `wipe_shutter` |

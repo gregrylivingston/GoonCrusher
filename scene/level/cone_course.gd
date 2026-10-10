@@ -7,27 +7,27 @@ class_name ConeCourse extends RefCounted
 ## cone takes CONE_PENALTY seconds off the clock (Level.coneKnocked). Every number is a first guess.
 
 const CONE_SCENE := "res://world/art/props/cone.tscn"
-const LANES := [-800.0, 0.0, 800.0] #lane y from the lot's centre: all inside WorldGen.LOT_RECT
-const LANE_HALF := 2000.0 #a lane runs this far either side of the centre
+const LANES := [-800.0, 0.0, 800.0] #lane y from the lot's center: all inside WorldGen.LOT_RECT
+const LANE_HALF := 2000.0 #a lane runs this far either side of the center
 const PER_LANE := 10
 const SLALOM := 130.0     #each gate is this far up or down from its lane, in turn
-const GATE_HALF := 125.0  #a cone's distance from its gate's centre
+const GATE_HALF := 125.0  #a cone's distance from its gate's center
 const PASS_RADIUS := 105.0
 const CONE_PENALTY := 1.0 #seconds off the clock for a knocked cone
-const START := Vector2(-2450.0, -800.0) #the car, from the lot's centre: west of the first lane, facing down it
+const START := Vector2(-2450.0, -800.0) #the car, from the lot's center: west of the first lane, facing down it
 
-## Gate centres round the lot's `centre`, in order
-static func layout(centre: Vector2) -> PackedVector2Array:
+## Gate centers round the lot's `center`, in order
+static func layout(center: Vector2) -> PackedVector2Array:
 	var gates := PackedVector2Array()
 	for lane in LANES.size():
 		for g in PER_LANE:
 			var along := lerpf(-LANE_HALF, LANE_HALF, float(g) / (PER_LANE - 1)) * (1.0 if lane % 2 == 0 else -1.0)
-			gates.push_back(centre + Vector2(along, LANES[lane] + SLALOM * (1.0 if g % 2 == 0 else -1.0)))
+			gates.push_back(center + Vector2(along, LANES[lane] + SLALOM * (1.0 if g % 2 == 0 else -1.0)))
 	return gates
 
 ## Builds the level's course: the cones in the world and the Course that counts the gates
-static func build(level: Node, centre: Vector2) -> Course:
-	var gates := layout(centre)
+static func build(level: Node, center: Vector2) -> Course:
+	var gates := layout(center)
 	var scene: PackedScene = load(CONE_SCENE)
 	for gate in gates:
 		for side in [-1.0, 1.0]:

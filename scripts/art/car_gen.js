@@ -16,7 +16,7 @@ function fbm(x,y,seed,oct){ oct=oct||4; let f=0,amp=.5,fr=1,n=0; for(let i=0;i<o
 function smooth(a,b,x){ const t=Math.min(1,Math.max(0,(x-a)/(b-a))); return t*t*(3-2*t); }
 function clamp01(x){ return x<0?0:x>1?1:x; }
 
-/* ---------- colour ---------- */
+/* ---------- color ---------- */
 function hexRgb(h){ h=h.replace('#',''); const n=parseInt(h,16); return [n>>16&255,n>>8&255,n&255]; }
 function mixc(a,b,t){ return [a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t]; }
 function css(c,a){ return 'rgba('+(c[0]|0)+','+(c[1]|0)+','+(c[2]|0)+','+(a==null?1:a)+')'; }
@@ -61,7 +61,7 @@ function rrect(ctx,x,y,w,h,r,noBegin){ if(!noBegin) ctx.beginPath(); r=Math.min(
 /* ---------- car roster ----------
  Each part: y0/y1 front/rear, W width, rim = visible side band, pf/pr = corner squareness, tf/tr = nose/tail taper.
  Every feature listed in a car's feats is drawn on all of its sheets.
- side: the heights the side view adds (renderSide): sill, nose (top of the front face), hood (at the windscreen base),
+ side: the heights the side view adds (renderSide): sill, nose (top of the front face), hood (at the windshield base),
  belt (bottom of the side glass), roof, deck and tail (behind the back glass), corner radii, winR (where the side glass
  ends when there is no back glass, top-down y), box ([bottom, top] of a trailer or box part) and rim (steel, white, dark). */
 const CARS = {
@@ -91,7 +91,7 @@ pickup:{ name:'Pickup', driver:'Karen', cost:2500, seed:41, paint:'#2c5a94', cle
 	feats:['bed'],
 	side:{sill:15,nose:42,hood:52,belt:55,roof:84,deck:55,tail:54,noseR:9,tailR:4,roofR:9,rim:'steel'}},
 /* The semi is two cars that bake apart: the tractor (semi) and its trailer (semiTrailer), which the game
-   hitches at the fifth wheel (CarTrailer). Each is authored centred on its own axles: the tractor between its
+   hitches at the fifth wheel (CarTrailer). Each is authored centered on its own axles: the tractor between its
    steer axle and drive tandem, the trailer on its box. The tractor's frame runs on behind the cab, under
    where the trailer's nose sits: rails, the fifth-wheel plate (the kingpin at y 59), the drive tandem and
    mud flaps, so the mount shows as the trailer swings. The cab's back is 55 ahead of the kingpin: the
@@ -531,7 +531,7 @@ function drawDamage(C){
 	if(P){ if(st>=1&&P.f.length){ const [x,y]=P.f[dm.skew>0?0:P.f.length-1]; ctx.strokeStyle='rgba(30,30,30,.7)'; ctx.lineWidth=.35; ctx.beginPath(); ctx.moveTo(x-2.5,y-1); ctx.lineTo(x+1,y+.5); ctx.lineTo(x+2,y-2); ctx.moveTo(x,y); ctx.lineTo(x-1,y+2.4); ctx.stroke(); }
 		if(st===2){ for(const [x,y] of P.f){ ctx.beginPath(); ctx.arc(x,y,3.4,0,7); ctx.fillStyle='#0b0b0c'; ctx.fill(); ctx.fillStyle='rgba(230,235,240,.7)'; for(let k=0;k<3;k++){ ctx.beginPath(); const a=r()*6.28; ctx.moveTo(x+Math.cos(a)*3,y+Math.sin(a)*3); ctx.lineTo(x+Math.cos(a+.4)*1,y+Math.sin(a+.4)*1); ctx.lineTo(x+Math.cos(a+.7)*3,y+Math.sin(a+.7)*3); ctx.fill(); } }
 			for(const [x,y] of P.r){ ctx.fillStyle='rgba(20,6,6,.85)'; ctx.fillRect(x-4,y-2,8,4); ctx.fillStyle='rgba(200,40,30,.8)'; ctx.fillRect(x-4,y-2,2.5,2); } } }
-	/* shredded tyres */
+	/* shredded tires */
 	if(st===2){ for(const [y,x,w,l] of sp.wheels) for(const sd of [1,-1]){ const cx=sd*(x+w/2-1); ctx.fillStyle='#17161a'; for(let k=0;k<5;k++){ const yy=y-l/2+r()*l; ctx.beginPath(); ctx.moveTo(cx,yy); ctx.lineTo(cx+sd*(1.5+r()*3),yy+1+r()*2); ctx.lineTo(cx,yy+3); ctx.fill(); }
 		ctx.fillStyle='#8d9094'; ctx.fillRect(cx-sd*.4-.6,y-l*.3,1.2,l*.6); } }
 	if(ink){ ctx.save(); bodyClip(); ctx.restore(); }
@@ -590,7 +590,7 @@ function compose(out,sheets,mask,dmg){
 function geom(key){ const sp=CARS[key], p=sp.parts[0], pl=sp.parts[sp.parts.length-1], r=p.cabin?roofRect(p):null, L=lightPositions({sp,stage:0,dm:makeDamage(sp,0)}); let filler=null;
 	for(const q of sp.parts) if(q.filler){ const [sd,fy]=q.filler; filler=[sd*(hwAt(q,fy,false)+hwAt(q,fy,true))/2,fy]; }
 	return {roof:r, front:p.y0, rear:pl.y1, filler, wheels:sp.wheels, f:L.f, r:L.r, W:Math.max(...sp.parts.map(q=>q.W)), box:sp.parts[1]&&sp.parts[1].box?sp.parts[1]:null}; }
-/* the soft shadow on its own: centred, so it reads right whichever way the car turns */
+/* the soft shadow on its own: centered, so it reads right whichever way the car turns */
 function renderShadow(key,res){
 	const sp=CARS[key], cv=document.createElement('canvas'); cv.width=Math.round(boxOf(sp)[0]*res); cv.height=Math.round(boxOf(sp)[1]*res);
 	const ctx=cv.getContext('2d'); ctx.setTransform(res,0,0,res,cv.width/2,cv.height/2);
@@ -635,7 +635,7 @@ function sceneGeometry(key){
  The menu shows it (the level select's car strip; later driver cards and the results ticket). x runs along the car
  (x = -y of the top-down, so the car faces right) and z is the height above the ground, both in game units. Parts,
  cabin, doors, filler, wheels, lights, bumpers, mirrors, paint and feats are the top-down's; `side` adds the heights.
- renderSide fits each car into SIDE.W×SIDE.H with SIDE.PAD clear on every side, tyres on the bottom pad and centred
+ renderSide fits each car into SIDE.W×SIDE.H with SIDE.PAD clear on every side, tires on the bottom pad and centered
  across, draws it SIDE.SS times larger and halves it down, so the alpha edge stays clean for the menu's silhouette. */
 const SIDE={W:256,H:96,PAD:2,SS:4};
 const SIDE_RIMS={steel:[146,143,134],white:[206,202,190],dark:[62,63,68]};
@@ -713,7 +713,7 @@ function sideWeather(C){
 	for(const q of C.G) if(q.glass){ const dg=ctx.createLinearGradient(0,q.z0,0,q.z0+9); dg.addColorStop(0,'rgba(150,128,98,'+(.45*g.dirt)+')'); dg.addColorStop(1,'rgba(150,128,98,0)'); ctx.fillStyle=dg; ctx.fillRect(B.x0,q.z0-1,B.x1-B.x0,10); }
 	ctx.restore();
 }
-function sideTyre(C,wh){
+function sideTire(C,wh){
 	const ctx=C.ctx, x=wh.x, R=wh.R, kind=C.sp.side.rim||'steel', rim=SIDE_RIMS[kind], g=C.sp.grime, TAU=Math.PI*2;
 	ctx.beginPath(); ctx.arc(x,R,R,0,TAU); ctx.fillStyle='#17161a'; ctx.fill();
 	ctx.save(); ctx.beginPath(); ctx.arc(x,R,R,0,TAU); ctx.clip(); ctx.strokeStyle='#2a292e'; ctx.lineWidth=1.1;
@@ -726,7 +726,7 @@ function sideTyre(C,wh){
 	if(kind==='dark'){ ctx.strokeStyle='rgba(170,172,178,.75)'; ctx.lineWidth=1.3; for(let i=0;i<5;i++){ const a=i/5*TAU+.3; ctx.beginPath(); ctx.moveTo(x+Math.cos(a)*rr*.25,R+Math.sin(a)*rr*.25); ctx.lineTo(x+Math.cos(a)*rr*.88,R+Math.sin(a)*rr*.88); ctx.stroke(); } }
 	else { ctx.fillStyle='rgba(20,20,22,.7)'; for(let i=0;i<(kind==='white'?8:5);i++){ const a=i/(kind==='white'?8:5)*TAU+.2; ctx.beginPath(); ctx.arc(x+Math.cos(a)*rr*.62,R+Math.sin(a)*rr*.62,rr*(kind==='white'?.1:.13),0,TAU); ctx.fill(); } }
 	ctx.beginPath(); ctx.arc(x,R,rr*.26,0,TAU); ctx.fillStyle=css(shade(rim,kind==='dark'?.3:-.2)); ctx.fill();
-	/* dust caked on the lower tyre and rim */
+	/* dust caked on the lower tire and rim */
 	ctx.save(); ctx.beginPath(); ctx.arc(x,R,R,0,TAU); ctx.clip();
 	const dg=ctx.createLinearGradient(0,0,0,R*1.5); dg.addColorStop(0,'rgba(150,128,98,'+(.62*g.dirt)+')'); dg.addColorStop(1,'rgba(150,128,98,0)'); ctx.fillStyle=dg; ctx.fillRect(x-R,0,R*2,R*2);
 	ctx.restore();
@@ -819,13 +819,13 @@ function drawSide(C){
 	if(has('fuelTanks')){ rpoly(ctx,[[72,9,6],[72,22,6],[96,22,6],[96,9,6]]); ctx.fillStyle=chromeGrad(ctx,0,22,0,9); ctx.fill();
 		ctx.fillStyle='rgba(0,0,0,.45)'; ctx.fillRect(77,9,1,13); ctx.fillRect(90,9,1,13);
 		const dg=ctx.createLinearGradient(0,9,0,18); dg.addColorStop(0,'rgba(150,128,98,.6)'); dg.addColorStop(1,'rgba(150,128,98,0)'); ctx.fillStyle=dg; rpoly(ctx,[[72,9,6],[72,22,6],[96,22,6],[96,9,6]]); ctx.fill(); }
-	/* weathering, then the arches and tyres on top of it */
+	/* weathering, then the arches and tires on top of it */
 	if(!C.measure&&C.style==='A') sideWeather(C);
 	ctx.save(); C.bodyPath(); ctx.clip();
 	for(const wh of C.wheels){ ctx.beginPath(); ctx.arc(wh.x,wh.R,wh.R+2.6,0,TAU); ctx.fillStyle='#0e0e10'; ctx.fill(); }
 	for(const wh of C.wheels){ ctx.beginPath(); ctx.arc(wh.x,wh.R,wh.R+3.2,.06*Math.PI,.94*Math.PI); ctx.strokeStyle='rgba(255,255,255,.16)'; ctx.lineWidth=.9; ctx.stroke(); }
 	ctx.restore();
-	for(const wh of C.wheels) sideTyre(C,wh);
+	for(const wh of C.wheels) sideTire(C,wh);
 	/* mirrors and the roof kit */
 	const mx=-sp.mirrors, mz=f0.belt;
 	if(sp.truckMirrors){ ctx.strokeStyle='#2b2c2f'; ctx.lineWidth=1.2; ctx.beginPath(); ctx.moveTo(mx-2,mz+7); ctx.lineTo(mx+5,mz+9); ctx.stroke(); rpoly(ctx,[[mx+4,mz+3,1.2],[mx+4,mz+16,1.2],[mx+7.6,mz+16,1.2],[mx+7.6,mz+3,1.2]]); ctx.fillStyle='#232427'; ctx.fill(); }

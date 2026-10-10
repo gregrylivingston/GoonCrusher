@@ -138,27 +138,10 @@ static func chip(text: String, size := 15) -> PanelContainer:
 	chipPanel.add_child(label)
 	return chipPanel
 
-#a coin (or gem) price in a small orange chip
-static func priceChip(amount: String, icon: Texture2D = HudTheme.COIN_ICON, affordable := true) -> PanelContainer:
-	var chipPanel = PanelContainer.new()
-	chipPanel.theme_type_variation = "PriceChip"
-	chipPanel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var row = HBoxContainer.new()
-	row.add_theme_constant_override("separation", 4)
-	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var label = Label.new()
-	label.text = amount
-	label.add_theme_font_size_override("font_size", 15)
-	row.add_child(label)
-	if amount != "MAX": row.add_child(iconRect(icon, 18)) #the number, then its symbol: "504 (coin)"
-	chipPanel.add_child(row)
-	if not affordable: chipPanel.modulate = Color(1, 1, 1, 0.5)
-	return chipPanel
-
 #---------- symbols in place of words ----------
 #Prices and amounts read as numbers with the game's own symbols ("1,500 (coin)  3 (gem)"), not words.
 #A part is a String (a label), a Texture2D (an icon at the text's height) or a cost Dictionary {"coin": n,
-#"gem": n} (each amount followed by its symbol). `color` null keeps the label theme's colour.
+#"gem": n} (each amount followed by its symbol). `color` null keeps the label theme's color.
 
 ## The parts of a cost: [amount, icon, amount, icon]. `short` writes 10,000 and up as "10k" (tile corners).
 static func costParts(cost: Dictionary, short := false) -> Array:
@@ -205,7 +188,7 @@ static func symbolRow(parts: Array, fontSize := 18, color = null, outline := -1)
 	return row
 
 ## Shows `parts` centered on a button in place of its text (its key hint stays at the right end), in the
-## button's own font colour: dark on a primary button, dimmer while disabled
+## button's own font color: dark on a primary button, dimmer while disabled
 static func setButtonParts(b: Button, parts: Array, fontSize := 22) -> void:
 	var old = b.get_node_or_null("parts")
 	if old:

@@ -60,11 +60,11 @@ func _draw() -> void:
 		var p = Vector2(s.x * w, s.y * h)
 		if i % 12 == 0: draw_rect(Rect2(p, Vector2(1.5 + s.z * 0.5, 20 + s.z * 25)), Color(0.45, 0.23, 0.08, 0.09))
 		else: draw_rect(Rect2(p, Vector2(s.z, s.z)), Color(0.05, 0.035, 0.03, 0.18) if i % 3 else Color(0.5, 0.27, 0.11, 0.12))
-	var centre = Vector2(w / 2.0, h * labelAt)
-	if label != "": stencil(label, centre, labelSize)
+	var center = Vector2(w / 2.0, h * labelAt)
+	if label != "": stencil(label, center, labelSize)
 	if sub != "":
 		var subSize = maxi(14, labelSize / 6)
-		drawCentred(sub, Vector2(centre.x, centre.y - labelSize * 0.62), subSize, Color(1, 0.95, 0.86, 0.55), HudTheme.BOLD)
+		drawCentered(sub, Vector2(center.x, center.y - labelSize * 0.62), subSize, Color(1, 0.95, 0.86, 0.55), HudTheme.BOLD)
 	if lamps >= 0.0: drawLamps(Vector2(w / 2.0, h * labelAt + labelSize * 0.55))
 	#the rail
 	var rh = railHeight()
@@ -78,33 +78,33 @@ func _draw() -> void:
 	draw_rect(Rect2(0, h, w, 10), Color(0, 0, 0, 0.4)) #its shadow on whatever is below
 
 #spray-painted text: the letters, then flecks of overspray around them
-func stencil(text: String, centre: Vector2, fontSize: int) -> void:
-	drawStencil(self, text, centre, fontSize, STENCIL)
+func stencil(text: String, center: Vector2, fontSize: int) -> void:
+	drawStencil(self, text, center, fontSize, STENCIL)
 
-func drawCentred(text: String, centre: Vector2, fontSize: int, color: Color, font: Font) -> void:
+func drawCentered(text: String, center: Vector2, fontSize: int, color: Color, font: Font) -> void:
 	var textSize = font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fontSize)
-	draw_string(font, centre + Vector2(-textSize.x / 2.0, fontSize * 0.36), text, HORIZONTAL_ALIGNMENT_LEFT, -1, fontSize, color)
+	draw_string(font, center + Vector2(-textSize.x / 2.0, fontSize * 0.36), text, HORIZONTAL_ALIGNMENT_LEFT, -1, fontSize, color)
 
 #shared with Stamp and TapeBanner: stencilled letters (optionally outlined) with overspray flecks
-static func drawStencil(item: CanvasItem, text: String, centre: Vector2, fontSize: int, color: Color, outline := 0, outlineColor := HudTheme.OUTLINE) -> void:
+static func drawStencil(item: CanvasItem, text: String, center: Vector2, fontSize: int, color: Color, outline := 0, outlineColor := HudTheme.OUTLINE) -> void:
 	var span = STENCIL_FONT.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fontSize).x
-	var at = centre + Vector2(-span / 2.0, fontSize * 0.36)
+	var at = center + Vector2(-span / 2.0, fontSize * 0.36)
 	if outline > 0: item.draw_string_outline(STENCIL_FONT, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, fontSize, outline, outlineColor)
 	item.draw_string(STENCIL_FONT, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, fontSize, color)
 	var rng = RandomNumberGenerator.new()
 	rng.seed = hash(text)
-	for i in int(60 + fontSize): item.draw_rect(Rect2(centre + Vector2(rng.randf_range(-0.5, 0.5) * span, rng.randf_range(-0.6, 0.6) * fontSize), Vector2(2, 2)), Color(color, color.a * rng.randf_range(0.4, 1.0)))
+	for i in int(60 + fontSize): item.draw_rect(Rect2(center + Vector2(rng.randf_range(-0.5, 0.5) * span, rng.randf_range(-0.6, 0.6) * fontSize), Vector2(2, 2)), Color(color, color.a * rng.randf_range(0.4, 1.0)))
 
-func drawLamps(centre: Vector2) -> void:
+func drawLamps(center: Vector2) -> void:
 	var lampW = 46.0
 	var gap = 11.0
 	var total = LAMP_COUNT * lampW + (LAMP_COUNT - 1) * gap
 	var lit = int(clampf(lamps, 0.0, 1.0) * LAMP_COUNT + 0.0001)
 	for i in LAMP_COUNT:
-		var x = centre.x - total / 2.0 + i * (lampW + gap)
-		draw_rect(Rect2(x - 3, centre.y - 3, lampW + 6, 24), HudTheme.OUTLINE)
-		draw_rect(Rect2(x, centre.y, lampW, 18), HudTheme.GOLD if i < lit else HudTheme.TRACK)
-		if i < lit: draw_rect(Rect2(x + 4, centre.y + 3, lampW - 8, 4), Color(1, 0.95, 0.86, 0.5))
+		var x = center.x - total / 2.0 + i * (lampW + gap)
+		draw_rect(Rect2(x - 3, center.y - 3, lampW + 6, 24), HudTheme.OUTLINE)
+		draw_rect(Rect2(x, center.y, lampW, 18), HudTheme.GOLD if i < lit else HudTheme.TRACK)
+		if i < lit: draw_rect(Rect2(x + 4, center.y + 3, lampW - 8, 4), Color(1, 0.95, 0.86, 0.5))
 
 #black and orange diagonal stripes
 func hazard(rect: Rect2) -> void:

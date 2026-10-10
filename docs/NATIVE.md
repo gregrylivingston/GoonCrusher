@@ -1,79 +1,64 @@
 # Native code (GDExtension)
 
-GoonCrusher runs C++ through a GDExtension built with [godot-cpp](https://github.com/godotengine/godot-cpp). GDScript stays the main language; C++ is for hot loops that profile badly in GDScript. **The game needs the library:** every goon scene's root is a `GoonBody`, so without a built DLL no goon loads.
+GoonCrusher runs C++ through a GDExtension built with godot-cpp. GDScript stays the main language; C++ is for hot loops that profile badly in GDScript. **The game needs the library:** every goon scene's root is a `GoonBody`, so without a built DLL no goon loads.
 
 ## Layout
 
 | Path | What it is |
 |---|---|
-| `native/godot-cpp/` | Git submodule, pinned to godot-cpp `10.0.0-stable`. Built against the Godot 4.7 API (`api_version` in the SConstruct). |
-| `native/SConstruct` | Builds `libgooncrusher` and installs it into `bin/<platform>/`. |
-| `native/src/` | The extension's sources. `register_types.cpp` registers the classes below; `goon_native.*` is `GoonNative`, whose static `version()` the test checks. SCons leaves its `.obj` files here (ignored). |
-| `native/.gdignore` | Keeps Godot from scanning or exporting the C++ tree. |
-| `bin/gooncrusher.gdextension` | Tells Godot which DLL to load (`template_debug` for the editor and debug exports, `template_release` for release exports). Tracked. |
-| `bin/windows/*.dll` | Build output. **Gitignored**, so a fresh clone (or a new worktree) must build before the project loads the extension. |
+| `native/godot-cpp/` | Git submodule, pinned to godot-cpp `10.0.0-stable`, built against the Godot 4.7 API (`api_version` in the SConstruct) |
+| `native/SConstruct`, `native/src/` | The build and the sources; `register_types.cpp` registers the classes |
+| `bin/gooncrusher.gdextension` | Which DLL Godot loads: `template_debug` for the editor and debug exports, `template_release` for release exports. Tracked |
+| `bin/windows/*.dll` | Build output. **Gitignored: a fresh clone or a new worktree must build before the project loads** |
 
 ## Building
 
-Prerequisites: Python, SCons (`pip install scons`) and a C++ toolchain. On Windows that is Visual Studio Build Tools 2022 with the "Desktop development with C++" workload; SCons finds MSVC itself, so any shell works.
+Needs Python, SCons (`pip install scons`) and Visual Studio Build Tools 2022 with "Desktop development with C++". SCons finds MSVC itself.
 
 ```
-git submodule update --init native/godot-cpp
-cd native
-scons                           # debug DLL: editor, debug exports, tests
-scons target=template_release   # release DLL: release exports
+scripts\windows\build_native.bat      # from the project root: the submodule, then debug and release
 ```
 
-Or run `scripts\windows\build_native.bat` from the project root to do both. The first build compiles all of godot-cpp once per target (over 10 minutes each on the dev box with `-j4`); later builds only recompile `src/`. Add `-j4` to plain `scons` to use all 4 threads; the batch file does.
+or by hand: `git submodule update --init native/godot-cpp`, then in `native/` run `scons -j4` (debug) and `scons -j4 target=template_release`. The first build compiles all of godot-cpp once per target (over 10 minutes each on the dev box); later builds only recompile `src/`.
 
-The extension is `reloadable`, so the editor picks up a rebuilt debug DLL without restarting. A DLL the editor or a running game holds can still block the install step; close it and rebuild if SCons reports the file is in use.
+If SCons reports the DLL is in use, close the editor or the game and rebuild.
 
-## Using it from GDScript
-
-Registered classes are global, like built-ins: `GoonNative.version()`, `WorldGrid.new()`. Native methods and properties are bound in camelCase so GDScript reads the same as before (`goon.stateTime`, `grid.terrainAt(p)`).
-
-`tests/game/test_native.gd` fails when the DLL is missing or stale. When GDScript starts relying on new native API, bump `NATIVE_VERSION` in both `native/src/goon_native.cpp` and the test (now `"2"`). The same file holds every native class to the GDScript it replaced: same inputs, same outputs.
+**Exporting:** Godot ships the DLL that matches the export's target, so build `template_release` before a release export. The C++ runtime is linked statically; no redistributable is needed.
 
 ## What is native
 
-Each port followed a profile and kept the GDScript rule beside it, which the parity tests compare against.
+| Class | Does | Used by |
+|---|---|---|
+| `GoonBody` (`goon_body.*`), a `CharacterBody2D` | The goon tick's fields and the movement helpers the verbs call every tick (`chase`, `advance`, `faceTo`, `walkAnim`, `beginTick`, `tickTimers`...) | `Enemy extends GoonBody`, `Walker extends Enemy` |
+| `WorldGrid` (`world_grid.*`), a `RefCounted` | Terrain queries (`terrainAt`, `lethalAt`, `blockedAt`...) and WorldHooks' grid walks (`slideStep`, `nearLethal`, `lethalAhead`, `lineClear`, `bounce`) | `WorldMap.grid` mirrors the coarse map and every stored raster; `World`, `WorldHooks` and `GoonBody` answer from the current one (`WorldGrid.getCurrent()`) |
+| `WorldGenNative` (`world_gen_native.*`), static | `cutCrossings`, `barrierExtents`, `ihash` | the coarse map build, on its worker |
 
-| Class | Replaces | Used by | Gain (HD 620) |
-|---|---|---|---|
-| `GoonBody` (`goon_body.*`), a `CharacterBody2D` | Walker's per-tick fields and the helpers the verbs call every tick: `chase`, `advance` (the LOD check, `move_and_slide` and its contact scan, or the off-screen grid slide), `faceTo`, `play`, `walkAnim`, `setState`, `speedNow`, `distTo`, `lockOn`, `predict`, `touchedByCar`; the tick's state clock, staggered water check, cooldowns and `carSpin` (`beginTick`, `tickTimers`) | `Enemy extends GoonBody`, `Walker extends Enemy`; `walker.tscn`'s root is a `GoonBody` | goon script 62 → 30 µs per goon per tick |
-| `WorldGrid` (`world_grid.*`), a `RefCounted` | `WorldMap`'s terrain queries (`terrainAt`, `lethalAt`, `blockedAt`, `spawnableAt`, `wallAt`) and WorldHooks' grid walks (`slideStep`, `nearLethal`, `lethalAhead`, `lineClear`, `bounce`) | `WorldMap.grid` mirrors the coarse map and every stored raster; Root's `worldMap` setter makes it `World.grid` and `WorldGrid.getCurrent()`; World, WorldHooks and GoonBody answer from it | `slideStep` 14 → about 1 µs |
-| `WorldGenNative` (`world_gen_native.*`), static | `WorldGen.cutCrossings` (with `openCell`) and `barrierExtents`, plus `ihash` | the coarse build, on its worker | crossings 290–750 → 2–5 ms; map build 1.36–2.02 → 0.82–1.29 s |
+Registered classes are global, like built-ins, and bound in camelCase so GDScript reads as before.
 
-Rules that came with the moves:
-- **The GDScript stays.** `WorldMap.terrainAt` and friends, WorldHooks' bodies, `WorldGen.cutCrossingsGDScript` and `barrierExtentsGDScript` are the reference. Test stand-in maps (any `Root.worldMap` that isn't a `WorldMap`) have no grid, so World and WorldHooks run the GDScript, and `GoonBody` calls back `Walker._worldLethalAt` / `_worldSlideStep`.
-- **GoonBody calls GDScript only for rare events:** `_onCarContact(car)` when `advance` bumps the car (it has already done `touchedByCar` and reset `stuckTime`). Drowning stays in GDScript: `beginTick` returns true and `Walker` calls `drown()`.
-- **The LOD view is pushed, not read:** `SpawnManager` hands its `physicsView` to `GoonBody.setPhysicsView` every tick (and clears it on exit); `GoonBody.needsFullPhysics(point)` is the native check.
+## Rules
+
+- **The GDScript version stays, and parity is tested.** `WorldMap.terrainAt` and friends, WorldHooks' bodies, `WorldGen.cutCrossingsGDScript` and `barrierExtentsGDScript` are the reference; `test_native.gd` holds each native class to them (same inputs, same outputs). **A change to a rule goes in both.**
+- **Maps without a grid run the GDScript.** Test stand-in maps (any `Root.worldMap` that isn't a `WorldMap`) have no `WorldGrid`, so `World` and `WorldHooks` use their own bodies and `GoonBody` calls back `Walker._worldLethalAt` / `_worldSlideStep`.
 - **Two wall checks:** `World.isWall` and `GoonBody::advance` both treat `StaticBody2D` and `TileMap` colliders as walls. Change both together.
-- **Goons move in floating mode** (`Walker._ready`), like the car, not CharacterBody2D's default grounded (platformer) mode.
-- **`WorldGrid` is main-thread only** (the AI plans on the main thread too). `WorldGenNative` touches only its arguments, so it runs on the build's worker.
+- **Bump the version when GDScript relies on new native API:** `NATIVE_VERSION` in `native/src/goon_native.cpp` (`GoonNative.version()`) and in `test_native.gd`, so a stale DLL fails the test instead of misbehaving.
+- **`GoonBody` calls GDScript only for rare events:** `_onCarContact(car)` when `advance` bumps the car. Drowning stays in GDScript (`beginTick` returns true, `Walker` calls `drown()`).
+- **The LOD view is pushed, not read:** `SpawnManager` calls `GoonBody.setPhysicsView` every tick.
+- **Threads:** `WorldGrid` is main-thread only. `WorldGenNative` touches only its arguments, so it may run on the build's worker.
+- **Keep the game's rules when moving code:** physics stays per tick, goons move in floating mode, and the car's `integrate()` stays pure and in GDScript's reach, because the AI driver predicts with it.
 
 ## Adding a class
 
-1. Add `src/<name>.h/.cpp` with `GDCLASS(Name, Base)` and a `_bind_methods()` that binds what GDScript calls (`ClassDB::bind_method`, `bind_static_method`, `ADD_PROPERTY`, `ADD_SIGNAL`).
-2. Register it in `initialize_gooncrusher_module` with `GDREGISTER_CLASS(Name)`.
-3. Rebuild both targets.
-
-Keep the game's rules intact when moving code: physics stays per tick, and the car's `integrate()` must stay pure because the AI driver predicts with it (CLAUDE.md).
+1. Add `src/<name>.h/.cpp` with `GDCLASS(Name, Base)` and a `_bind_methods()` that binds what GDScript calls, in camelCase.
+2. Register it in `register_types.cpp` with `GDREGISTER_CLASS(Name)`.
+3. Keep the GDScript it replaces, and add a parity test to `tests/game/test_native.gd`.
+4. Bump `NATIVE_VERSION` in both places and rebuild both targets.
 
 ## What to port next
 
-Port only what a profile points at, and keep a GDScript version until the native one matches it (same seed, same output). Calls across the GDScript/C++ boundary cost about as much as a GDScript call, so batch the work: one call does a whole job (a pass, a helper with its engine calls), never one per cell.
-
-**The goon tick, profiled** (S4 night crowd on Low, 100–200 goons, `Time.get_ticks_usec` counters in `Walker`, 2026-10-07). Before: 62 µs per goon per tick: `move_and_slide` about 15–20 µs per on-screen call, `slideStep` 14 µs, the water check 17 µs per check, `faceTo` 7, the LOD check 3, `walkAnim` 3, the lure check 2.6, and the rest the verbs' own logic and their calls into Walker. After: 30 µs, of which `verb.tick` (verb logic plus `move_and_slide`) is 23. Goon script is now under a quarter of `physics_ms`; most of the rest is the physics server and other nodes.
-
-**The coarse build, profiled** (seed 1337, idle machine): after the crossings port, `sample` (every cell through `WorldField.sample`) 280–620 ms, the district steps 220–280 ms, `shareCaps` 65–250 ms, `connectIslands` 75–100 ms.
+Port only what a profile points at. Calls across the GDScript/C++ boundary cost about as much as a GDScript call, so one call must do a whole job (a pass, a helper with its engine calls), never one per cell.
 
 Candidates, in order:
-1. **`WorldField.sample`** (the coarse `sample` step, and the fine raster's inner loop: 6–9 ms per chunk idle, 16–25 ms in a run). The biggest remaining load cost, but its float math must match bit for bit or the rasters drift; port the whole field with a parity test over every grammar.
-2. **The rest of the coarse build:** `shareCaps`/`trimWindow`, `components`/`connectIslands`, `markStart`, `buildDistricts`/`districtTable`. Integer grid passes like `cutCrossings`, so they port the same way: arrays in, arrays out.
-3. **Verb logic.** A native verb means moving the whole state machine (21 verbs in `scene/enemy/goon_verbs.gd`), so do it only if crowds still miss the targets after cheaper changes (e.g. no collision for off-screen goons, which never use it).
-4. **`ChunkRecipe`** (7–12 ms per chunk on workers): streaming stays inside its budget, so it isn't urgent.
-
-## Exporting
-
-Godot exports the library named in `bin/gooncrusher.gdextension` for the export's target, so **build `template_release` before a release export** (and `template_debug` for a debug one). godot-cpp links the C++ runtime statically on Windows, so no MSVC redistributable is needed.
+1. **`WorldField.sample`:** the coarse build's sample step and the fine raster's inner loop; the biggest remaining load cost. Its float math must match bit for bit or the rasters drift.
+2. **The rest of the coarse build** (`shareCaps`, `connectIslands`, `markStart`, `buildDistricts`): integer grid passes like `cutCrossings`, arrays in, arrays out.
+3. **Verb logic** (`scene/enemy/goon_verbs.gd`): the whole state machine would move, and most of a crowd's physics time is now the physics server. Try no collision for off-screen goons first.
+4. **`ChunkRecipe`:** runs on workers inside its budget, so it isn't urgent.

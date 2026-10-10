@@ -32,7 +32,7 @@ const REACT := {
 	&"tank": SHAKE, &"landmark_wild": SHAKE, &"landmark_tribe": SHAKE, &"landmark_scrap": SHAKE,
 	&"rock": THUD, &"boulder": THUD, &"rock_white": THUD, &"rock_ice": THUD, &"rock_red": THUD, &"boulder_red": THUD,
 	&"stump": THUD, &"log": THUD, &"carcass": THUD,
-	&"hedge": SQUASH, &"haybale": SQUASH, &"tyres": SQUASH,
+	&"hedge": SQUASH, &"haybale": SQUASH, &"tires": SQUASH,
 	&"cone": KNOCK, &"hydrant": SPRAY,
 	&"logpile": SHAKE, &"watertower": SWAY, &"beehive": WOBBLE,
 	#Road Atlas props (docs/WORLD_ART.md)

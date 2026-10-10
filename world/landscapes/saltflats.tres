@@ -7,7 +7,6 @@ script = ExtResource("1_land")
 id = &"saltflats"
 displayName = "Salt Flats"
 grammar = &"highway"
-text = "White salt to the horizon, a few roads and almost no rocks. Top speed all the way."
 features = {
 "warpFrequency": 4e-05,
 "warpAmplitude": 3000.0,

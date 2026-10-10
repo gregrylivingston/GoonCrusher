@@ -355,7 +355,7 @@ func placeCar(where: String) -> void:
 					if (map.terrain[i] == Root.terrain.WATER) != (where == "water"): continue
 					for d in WorldGen.DIRS4:
 						if target == Vector2.INF && map.cellReachable(cell + d * 2) && map.cellPassable(cell + d):
-							target = WorldGen.cellCentre(cell + d)
+							target = WorldGen.cellCenter(cell + d)
 							car.rotation = Vector2(-d).angle()
 	if target == Vector2.INF: return
 	car.global_position = target

@@ -11,7 +11,7 @@ region = &"tribe"
 stop = 5
 featured = Array[StringName]([&"goonpocalypse", &"drift", &"derby"])
 order = 9
-blurb = "Haul roads link a terraced pit, a junk fort with gates and tyre camps. The Tribe digs here, and the mud pits swallow speed."
+blurb = "Haul roads link a terraced pit, a junk fort with gates and tire camps. The Tribe digs here, and the mud pits swallow speed."
 barrier = "The terraced pit and the junk fort's ring walls, with ramps and gates."
 surfaces = "Dirt haul roads, mud, concrete yards and mud pits that swallow speed. Barrels explode."
 startPosition = Vector2(2129, 1227)
@@ -32,7 +32,7 @@ features = {
 "fortChance": 0.25,
 "fortRadius": 2200.0,
 "fortGates": 3,
-"tyreCamps": 0.25,
+"tireCamps": 0.25,
 "campRadius": 1500.0,
 "rampWidth": 1000.0,
 "haulFrequency": 4.5e-05,
@@ -58,5 +58,3 @@ palette = {
 &"lot": Color(0.55, 0.54, 0.5, 1),
 &"mud": Color(0.36, 0.3, 0.22, 1)
 }
-nightTint = Color(0.07, 0.06, 0.06, 1)
-ambience = &"quarry"

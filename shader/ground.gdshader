@@ -3,12 +3,12 @@ shader_type canvas_item;
 // The run's ground (docs/WORLD.md, "Rendering"). Every ground quad of every chunk shares one material
 // (WorldSkin.groundMaterial). It reads the control ring: one RGBA8 texel per 128 px fine cell, addressed by
 // world cell modulo the ring's size, written by each chunk as it is applied (ChunkRecipe.control):
-//   R  material layer of the cell's surface (water and wall cells carry a neighbour's surface)
+//   R  material layer of the cell's surface (water and wall cells carry a neighbor's surface)
 //   G  water field, B wall field: 0.5 on the edge, below inside, FIELD_RANGE field units either way
 //   A  flags: 1 bridge deck (no water drawn), 2 rotate the material 90 degrees, 4 conveyor belt, 8 belt reversed;
 //      high 4 bits the district's tint code (0..15 -> TINT_LOW..TINT_HIGH brightness on the open ground), so
 //      district borders read faintly (blended across the warped cells, like the surfaces)
-// The fields are interpolated between cell centres, so water and wall edges are smooth and match the
+// The fields are interpolated between cell centers, so water and wall edges are smooth and match the
 // collision contours (marching squares over the same values).
 // gc_ground_quality 0: the nearest cell's material only, no macro noise, no water or belt animation.
 // gc_ground_quality 1: organic borders (four cells blended, the blend warped by the macro noise), macro

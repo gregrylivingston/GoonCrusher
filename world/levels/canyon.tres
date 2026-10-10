@@ -71,5 +71,3 @@ palette = {
 &"wall": Color(0.48, 0.28, 0.2, 1),
 &"wash": Color(0.72, 0.62, 0.46, 1)
 }
-nightTint = Color(0.1, 0.06, 0.08, 1)
-ambience = &"desert"

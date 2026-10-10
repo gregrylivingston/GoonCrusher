@@ -13,7 +13,6 @@ const INPUT_DELAY_MSEC = 500 #presses are ignored this long after the summary op
 const PRESS_ACTIONS = ["ui_accept", "ui_select", "ui_cancel", "Accelerate", "Brake"] #polled too, in case events don't reach this node
 const INK := Color(0.165, 0.102, 0.063)
 const FADED_INK := Color(0.42, 0.33, 0.25)
-const PAPER := Color(0.953, 0.906, 0.812)
 const STAMPS := {
 	Root.endCondition.SUCCESS: ["CLEARED", Color(0.17, 0.55, 0.26)],
 	Root.endCondition.ABANDONED: ["ABANDONED", Color(0.55, 0.38, 0.16)],
@@ -362,7 +361,7 @@ static func listed(names: Array, most: int) -> String:
 	if names.size() <= most: return ", ".join(names)
 	return "%s and %d more" % [", ".join(names.slice(0, most)), names.size() - most]
 
-#a centred line under the row before it that wraps inside the ticket (at most 3 lines), revealed in turn
+#a centered line under the row before it that wraps inside the ticket (at most 3 lines), revealed in turn
 func addWrapped(text: String) -> void:
 	var label = ink(text, 16, FADED_INK, HudTheme.BODY, true)
 	label.max_lines_visible = 3

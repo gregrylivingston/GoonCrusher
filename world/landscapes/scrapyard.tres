@@ -7,7 +7,6 @@ script = ExtResource("1_land")
 id = &"scrapyard"
 displayName = "Scrapyard"
 grammar = &"yard"
-text = "Scrap yard plots walled by scrap mountains, container rows and conveyor lanes."
 features = {
 "plotSize": 3,
 "scrapMountainShare": 0.25,
@@ -40,7 +39,7 @@ dressing = {
 &"tank": 1,
 &"crane": 2,
 &"wreck": 2,
-&"tyres": 3,
+&"tires": 3,
 &"barrel": 2,
 &"oilstain": 3
 }

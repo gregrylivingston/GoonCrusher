@@ -41,7 +41,7 @@ func step(dt: float, segs: Array) -> void:
 		var v: Vector2 = ((b.pos - b.prev) * damp).limit_length(MAX_MOVE)
 		b.prev = b.pos
 		b.pos += v + Vector2(0, gravity * dt * dt)
-	bodies.sort_custom(func(a, c): return a.pos.x < c.pos.x) #sweep: only neighbours along x can touch
+	bodies.sort_custom(func(a, c): return a.pos.x < c.pos.x) #sweep: only neighbors along x can touch
 	for k in iterations:
 		for i in bodies.size():
 			var reach: float = bodies[i].pos.x + bodies[i].r + maxR

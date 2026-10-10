@@ -1,5 +1,5 @@
 class_name WorldSkin extends RefCounted
-## The run's world art and the node pools the chunks are drawn with (docs/WORLD.md, "Rendering";
+## The run's world art and the node pools the chunks are drawn with (docs/WORLD.md, "The ground shader";
 ## docs/WORLD_ART.md for the art). Made once per level by the TileManager, on the main thread:
 ##   - the ground: one ShaderMaterial (shader/ground.gdshader) shared by every ground quad, the level's
 ##     materials as one Texture2DArray, the macro noise, and the control ring: an RGBA8 texture of RING x RING
@@ -20,7 +20,7 @@ const GROUND_SHADER := "res://shader/ground.gdshader"
 const DECOR_SHADER := "res://shader/world_decor.gdshader"
 const GLOW_SHADER := "res://shader/world_decor_glow.gdshader"
 const BREAKABLE := "res://scripts/world/breakable.gd"
-const STRIPS: Array[String] = ["shore_foam", "cliff_lip", "canyon_rim", "mesa_lip", "kerb", "snow_ridge", "hedge", "scrapwall", "roof_edge"]
+const STRIPS: Array[String] = ["shore_foam", "cliff_lip", "canyon_rim", "mesa_lip", "curb", "snow_ridge", "hedge", "scrapwall", "roof_edge"]
 ## Ground material by terrain id (Root.terrain order): every landscape's default (Landscape.materials overrides it)
 const MATERIAL_OF: Array[String] = ["grass", "sand", "mud", "water", "rock", "moss", "dirt", "snow", "asphalt", "ice",
 	"oil", "shallows", "wash", "conveyor", "mudpit", "deepsnow", "lot", "roof", "bridge", "wade"]
@@ -40,30 +40,30 @@ const CHAIN_PROPS := [&"fence", &"hedge", &"jersey", &"fortwall"]
 const FIELD_PROPS := {&"fence": "fenceDensity", &"hedge": "hedgeDensity"}
 ## Set pieces (ChunkRecipe.placeMotifs; heroes too, placeHeroes), chosen per zone from the landscape's, the
 ## region's and the level's motifs. members: [prop id, count (or [low, high]), radius px, shape, options]: shapes
-## "centre", "ring" (evenly round the radius), "disc" (scattered inside it), "grid" or "line" (turned to the field
+## "center", "ring" (evenly round the radius), "disc" (scattered inside it), "grid" or "line" (turned to the field
 ## lattice, `radius` apart), "pen" (count pieces round a square of half side `radius`, one gap); options
-## (optional) {"variants": [variant indices], "offset": px a line stands off the centre}. min: fewer members than
+## (optional) {"variants": [variant indices], "offset": px a line stands off the center}. min: fewer members than
 ## this that fit and the motif is skipped. Members are loaded with the level whether its dressing names them
 ## or not. All members of one placed motif share a group key (metadata `group`).
 const MOTIFS := {
-	&"camp": {"min": 3, "members": [["firepit", 1, 0.0, "centre"], ["tent", 3, 300.0, "ring"], ["totem", 1, 470.0, "ring"], ["crate", 1, 430.0, "disc"]]},
-	&"cabincamp": {"min": 2, "members": [["cabin", 1, 0.0, "centre"], ["firepit", 1, 340.0, "ring"], ["pine", 2, 560.0, "ring"]]},
-	&"wreckpile": {"min": 3, "members": [["wreck", 3, 330.0, "disc"], ["tyres", 2, 400.0, "disc"], ["barrel", 1, 380.0, "disc"]]},
-	&"junkyard": {"min": 3, "members": [["scrapheap", 1, 0.0, "centre"], ["container", 2, 580.0, "ring"], ["tyres", 2, 460.0, "disc"], ["barrel", 1, 430.0, "disc"]]},
+	&"camp": {"min": 3, "members": [["firepit", 1, 0.0, "center"], ["tent", 3, 300.0, "ring"], ["totem", 1, 470.0, "ring"], ["crate", 1, 430.0, "disc"]]},
+	&"cabincamp": {"min": 2, "members": [["cabin", 1, 0.0, "center"], ["firepit", 1, 340.0, "ring"], ["pine", 2, 560.0, "ring"]]},
+	&"wreckpile": {"min": 3, "members": [["wreck", 3, 330.0, "disc"], ["tires", 2, 400.0, "disc"], ["barrel", 1, 380.0, "disc"]]},
+	&"junkyard": {"min": 3, "members": [["scrapheap", 1, 0.0, "center"], ["container", 2, 580.0, "ring"], ["tires", 2, 460.0, "disc"], ["barrel", 1, 430.0, "disc"]]},
 	&"pinestand": {"min": 4, "members": [["pine", 7, 560.0, "disc"], ["stump", 1, 500.0, "disc"]]},
 	&"snowstand": {"min": 4, "members": [["pine_snow", 7, 560.0, "disc"], ["stump", 1, 500.0, "disc"]]},
-	&"rangerpost": {"min": 2, "members": [["ranger_tower", 1, 0.0, "centre"], ["cabin", 1, 480.0, "ring"], ["logpile", 2, 420.0, "disc"]]},
+	&"rangerpost": {"min": 2, "members": [["ranger_tower", 1, 0.0, "center"], ["cabin", 1, 480.0, "ring"], ["logpile", 2, 420.0, "disc"]]},
 	&"cypressgrove": {"min": 3, "members": [["cypress", 4, 470.0, "disc"], ["log", 1, 430.0, "disc"]]},
 	&"orchard": {"min": 4, "members": [["oak", 6, 400.0, "grid"]]},
-	&"boneyard": {"min": 3, "members": [["deadtree", 1, 0.0, "centre"], ["carcass", 2, 340.0, "disc"], ["rock_red", 2, 400.0, "disc"]]},
-	&"roadblock": {"min": 3, "members": [["barricade", 3, 300.0, "line"], ["cone", 2, 360.0, "disc"], ["tyres", 1, 380.0, "disc"]]},
+	&"boneyard": {"min": 3, "members": [["deadtree", 1, 0.0, "center"], ["carcass", 2, 340.0, "disc"], ["rock_red", 2, 400.0, "disc"]]},
+	&"roadblock": {"min": 3, "members": [["barricade", 3, 300.0, "line"], ["cone", 2, 360.0, "disc"], ["tires", 1, 380.0, "disc"]]},
 	&"pileup": {"min": 3, "members": [["wreck", 3, 300.0, "disc"], ["cone", 4, 420.0, "disc"], ["sign", 1, 420.0, "disc"]]},
 	#Region 1 (The Wilds): set pieces with jobs (docs/WORLD.md "Heroes")
 	&"cratestash": {"min": 2, "members": [["crate", 3, 115.0, "ring"]]},
 	&"warren": {"min": 3, "members": [["burrow", [3, 6], 420.0, "disc"]]},
-	&"apiary": {"min": 3, "members": [["honeyshed", 1, 0.0, "centre"], ["beehive", [3, 5], 175.0, "line", {"variants": [2, 3], "offset": 300.0}]]},
+	&"apiary": {"min": 3, "members": [["honeyshed", 1, 0.0, "center"], ["beehive", [3, 5], 175.0, "line", {"variants": [2, 3], "offset": 300.0}]]},
 	&"ranch": {"min": 5, "members": [["fence", 8, 330.0, "pen"], ["haybale", 2, 150.0, "disc"], ["bell", 1, 480.0, "ring"]]},
-	&"farmyard": {"min": 3, "members": [["den", 1, 0.0, "centre"], ["bell", 1, 380.0, "ring"], ["crate", 3, 340.0, "disc"]]},
+	&"farmyard": {"min": 3, "members": [["den", 1, 0.0, "center"], ["bell", 1, 380.0, "ring"], ["crate", 3, 340.0, "disc"]]},
 	&"pumpkinpatch": {"min": 5, "members": [["pumpkin", [6, 8], 150.0, "grid"]]},
 	&"loglanding": {"min": 3, "members": [["logpile", [3, 4], 300.0, "line"]]},
 	&"hivegrove": {"min": 3, "members": [["cypress", 4, 470.0, "disc"], ["beehive", 1, 330.0, "disc", {"variants": [0, 1]}]]},
@@ -118,7 +118,7 @@ var slotOwner := {} #ring slot (Vector2i) -> the chunk whose block is there
 var quadMesh: ArrayMesh
 var strips: Array[Texture2D] = []
 var stripNames: Array[String] = [] #STRIPS, then the landscape's wall strip if it is another
-var stripColors: Array[Color] = [] #each strip's Line2D colour: white, the lava's shore foam (Landscape.waterFoam)
+var stripColors: Array[Color] = [] #each strip's Line2D color: white, the lava's shore foam (Landscape.waterFoam)
 var decorMeshes := {}    #decor id -> QuadMesh
 var decorMaterials := {} #decor id -> ShaderMaterial
 var decorTextures := {}  #decor id -> Texture2D
@@ -200,7 +200,7 @@ func setupGround() -> void:
 	groundMaterial.set_shader_parameter("wall_tint", look.wallTint)
 	groundMaterial.set_shader_parameter("ctl_size", Vector2(CTL_SIZE))
 	groundMaterial.set_shader_parameter("organic", look.organic)
-	#lava (the landscape's own water look, art or not): the water layer glows in its colour
+	#lava (the landscape's own water look, art or not): the water layer glows in its color
 	groundMaterial.set_shader_parameter("water_glow", land.waterGlow if land.waterLook == &"lava" else Color(0, 0, 0, 0))
 	ctlImage = Image.create_empty(CTL_SIZE.x, CTL_SIZE.y, false, Image.FORMAT_RGBA8)
 	ctlImage.fill(Color(0, 1, 1, 0)) #nothing written yet: open ground of layer 0
@@ -257,7 +257,7 @@ func placeholderColor(name: String) -> Color:
 	return def.palette.get(&"ground", Color("#6b8c4d"))
 
 ## Writes a chunk's control block (42 x 22 RGBA8, apron included) into its ring slot, and its apron into
-## the neighbours' slots unless they hold their own chunk, so a seam next to an unloaded chunk still blends
+## the neighbors' slots unless they hold their own chunk, so a seam next to an unloaded chunk still blends
 func writeControl(chunk: Vector2i, control: PackedByteArray) -> void:
 	var img := Image.create_from_data(ChunkRecipe.RW, ChunkRecipe.RH, false, Image.FORMAT_RGBA8, control)
 	var slot := slotOf(chunk)
@@ -285,7 +285,7 @@ func flush() -> void:
 		ctlDirty = false
 		ctlTexture.update(ctlImage)
 
-## The edge strips (STRIPS, plus the skin's wall strip when it is another), each with its line colour
+## The edge strips (STRIPS, plus the skin's wall strip when it is another), each with its line color
 func setupStrips() -> void:
 	stripNames.assign(STRIPS)
 	if not look.wallStrip in stripNames && ResourceLoader.exists(EDGE_DIR + look.wallStrip + ".png"): stripNames.push_back(look.wallStrip)

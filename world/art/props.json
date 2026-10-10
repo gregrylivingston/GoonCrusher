@@ -5031,6 +5031,80 @@
    "solid": true,
    "scene": "res://world/art/props/tent.tscn"
   },
+  "tires": {
+   "class": "LOW",
+   "sizePx": [
+    99,
+    99
+   ],
+   "variants": [
+    "res://world/art/props/tires.png",
+    "res://world/art/props/tires_v1.png",
+    "res://world/art/props/tires_v2.png"
+   ],
+   "hull": [
+    [
+     -41.3,
+     -30.7
+    ],
+    [
+     -13.3,
+     -49.3
+    ],
+    [
+     22.7,
+     -42.7
+    ],
+    [
+     41.3,
+     -22.7
+    ],
+    [
+     49.3,
+     6.7
+    ],
+    [
+     41.3,
+     30.7
+    ],
+    [
+     13.3,
+     49.3
+    ],
+    [
+     -6.7,
+     49.3
+    ],
+    [
+     -26.7,
+     40
+    ],
+    [
+     -48,
+     8
+    ]
+   ],
+   "occluder": false,
+   "breakable": null,
+   "explosive": false,
+   "tags": {
+    "faction": [
+     "wild",
+     "tribe",
+     "scrap"
+    ],
+    "levels": [
+     "bayou",
+     "canyon",
+     "crusher",
+     "highway",
+     "prairie",
+     "quarry"
+    ]
+   },
+   "solid": true,
+   "scene": "res://world/art/props/tires.tscn"
+  },
   "tnt": {
    "class": "STATEFUL",
    "sizePx": [
@@ -5375,80 +5449,6 @@
     "cellTexels": 84,
     "blend": "mix"
    }
-  },
-  "tyres": {
-   "class": "LOW",
-   "sizePx": [
-    99,
-    99
-   ],
-   "variants": [
-    "res://world/art/props/tyres.png",
-    "res://world/art/props/tyres_v1.png",
-    "res://world/art/props/tyres_v2.png"
-   ],
-   "hull": [
-    [
-     -41.3,
-     -30.7
-    ],
-    [
-     -13.3,
-     -49.3
-    ],
-    [
-     22.7,
-     -42.7
-    ],
-    [
-     41.3,
-     -22.7
-    ],
-    [
-     49.3,
-     6.7
-    ],
-    [
-     41.3,
-     30.7
-    ],
-    [
-     13.3,
-     49.3
-    ],
-    [
-     -6.7,
-     49.3
-    ],
-    [
-     -26.7,
-     40
-    ],
-    [
-     -48,
-     8
-    ]
-   ],
-   "occluder": false,
-   "breakable": null,
-   "explosive": false,
-   "tags": {
-    "faction": [
-     "wild",
-     "tribe",
-     "scrap"
-    ],
-    "levels": [
-     "bayou",
-     "canyon",
-     "crusher",
-     "highway",
-     "prairie",
-     "quarry"
-    ]
-   },
-   "solid": true,
-   "scene": "res://world/art/props/tyres.tscn"
   },
   "wagon": {
    "class": "STATEFUL",

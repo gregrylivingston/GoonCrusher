@@ -198,7 +198,7 @@ class Verb extends RefCounted:
 
 #==================================================================================================
 ## Walks in and lunges. Options: night (sleeps by day, keeps out of the headlights), wander (ignores you
-## until you're close), shield (front armour, turns slowly), split (bursts into goonlings).
+## until you're close), shield (front armor, turns slowly), split (bursts into goonlings).
 class Lunge extends Verb:
 	var sleeps := false
 	var wanderDir := Vector2.RIGHT
@@ -606,7 +606,7 @@ class Slammer extends Verb:
 					g.cooldown = 1.6
 
 #==================================================================================================
-## Charges in a long straight line it can't turn out of; head-on it's armoured. Stunned after (Rammer, Tusker).
+## Charges in a long straight line it can't turn out of; head-on it's armored. Stunned after (Rammer, Tusker).
 class Charger extends Verb:
 	func frontArmorActive() -> bool: return g.state == &"attack"
 	func startWindup(car: Node2D, lead := 0.15) -> void:
@@ -873,7 +873,7 @@ class Striker extends Verb:
 		if g.stateTime >= g.atkT: endAttack()
 
 #==================================================================================================
-## Bristles and fires a ring of quills; crushing it slowly costs your tyres (Quill).
+## Bristles and fires a ring of quills; crushing it slowly costs your tires (Quill).
 class Spiky extends Verb:
 	func telegraphRadius() -> float: return 200.0
 	func windup(_delta: float, _car: Node2D) -> void:
@@ -1057,25 +1057,25 @@ class Herd extends Verb:
 	func spook(from: Vector2) -> void:
 		if g.dead || g.state == &"stun" || (g.state == &"drive" && g.stateTime < 0.5): return
 		var mates: Array = Root.spawnManager.packMates(g)
-		var centre := Vector2.ZERO
-		for o in mates: centre += o.global_position
-		centre /= maxf(mates.size(), 1.0)
-		var away := centre - from
+		var center := Vector2.ZERO
+		for o in mates: center += o.global_position
+		center /= maxf(mates.size(), 1.0)
+		var away := center - from
 		var to: Vector2 = away.normalized() if away.length() > 1.0 else Vector2.from_angle(randf() * TAU)
 		for o in mates:
 			if not is_instance_valid(o) || o.dead || not o.verb is Herd: continue
 			o.verb.dir = to
 			o.sprite.speed_scale = 1.0
 			o.setState(&"drive")
-		g.fx().dust(centre)
-		g.fx().label(centre, "STAMPEDE!", 24)
+		g.fx().dust(center)
+		g.fx().label(center, "STAMPEDE!", 24)
 	func onResist(car: Node2D, _speed: float) -> void:
 		g.bounceCar(car, g.attackDamage, g.sys, "STAMPEDE")
 	func onTouch(_car: Node2D) -> void: pass #a stampede doesn't stop for you
 
 #==================================================================================================
 ## The Scrap Gang: anything with wheels. Drives like a car (turn rate, acceleration) and does its act:
-## ram, swipe, tailgate, burn, oil, harpoon, bomb, boost, saw, shoot or magnet. Head-on it's armoured
+## ram, swipe, tailgate, burn, oil, harpoon, bomb, boost, saw, shoot or magnet. Head-on it's armored
 ## (front); T-bone it. docs/GOONS.md lists what each act does.
 class Rider extends Verb:
 	const ACCEL := 320.0

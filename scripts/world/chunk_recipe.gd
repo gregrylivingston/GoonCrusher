@@ -13,7 +13,7 @@ class_name ChunkRecipe extends RefCounted
 ## Writes job.recipe, a Dictionary in chunk-local px (the chunk's top-left corner is 0, 0):
 ##   control:  PackedByteArray, 42 x 22 RGBA8 (the chunk's 40 x 20 fine cells plus a one-cell apron) for the
 ##             ground shader: R the material layer of the cell's surface (water and wall cells take a
-##             neighbour's surface), G the water field and B the wall field (FIELD_RANGE units either way of
+##             neighbor's surface), G the water field and B the wall field (FIELD_RANGE units either way of
 ##             0.5, linear), A flags (FLAG_*, low 4 bits) and the district's tint code (high 4 bits, job.tints)
 ##   pieces:   Array of convex PackedVector2Array: the walls' collision (one StaticBody2D)
 ##   occluders: Array of open PackedVector2Array polylines along the walls, solid on the right (cull_mode 2)
@@ -112,7 +112,7 @@ var zones := PackedInt32Array()
 var tints := PackedByteArray()
 var majority := 0
 var rng := RandomNumberGenerator.new()
-var resPos := PackedVector2Array() #centres and radii of everything placed so far (props, pickups, spots)
+var resPos := PackedVector2Array() #centers and radii of everything placed so far (props, pickups, spots)
 var resRad := PackedFloat64Array()
 var origin := Vector2.ZERO
 #read from ctx once per recipe (the hot placement loops would look them up thousands of times)
@@ -281,7 +281,7 @@ func controlBytes(aux: PackedByteArray, coarseW: int) -> PackedByteArray:
 	var layerOf: PackedByteArray = ctx.layerOf
 	var mainLayer: int = ctx.get("mainLayer", 0)
 	#surface ids over the apron: own cells, the apron copying the nearest own cell; water and wall cells
-	#(-1 in layers) take a passable neighbour's surface below
+	#(-1 in layers) take a passable neighbor's surface below
 	var surf := PackedInt32Array()
 	surf.resize(RW * RH)
 	var layers := PackedInt32Array()
@@ -298,7 +298,7 @@ func controlBytes(aux: PackedByteArray, coarseW: int) -> PackedByteArray:
 				open.push_back(k)
 			else:
 				layers[k] = layerOf[t]
-	#a few dilation passes: each blocked cell takes the first of its +x, -x, +y, -y neighbours that had a layer
+	#a few dilation passes: each blocked cell takes the first of its +x, -x, +y, -y neighbors that had a layer
 	#before the pass (the rest keep the main ground)
 	for pass_ in 6:
 		if open.is_empty(): break
@@ -426,8 +426,8 @@ static func traceLoops(v: PackedFloat32Array, gw: int, gh: int, at0: Vector2, st
 			#edges: 0 top, 1 right, 2 bottom, 3 left
 			var segs: Array = []
 			if code == 5 || code == 10:
-				var centreIn := (a + b + c + d) * 0.25 < 0.0
-				if (code == 5) == centreIn: segs = [[0, 1], [2, 3]]
+				var centerIn := (a + b + c + d) * 0.25 < 0.0
+				if (code == 5) == centerIn: segs = [[0, 1], [2, 3]]
 				else: segs = [[0, 3], [1, 2]]
 			else:
 				var crossed: Array = []
@@ -532,7 +532,7 @@ static func onRectEdge(p: Vector2, r: Rect2) -> bool:
 #--- walls -----------------------------------------------------------------------------------------
 
 ## The walls' solid region inside the chunk as convex pieces: outer loops clipped to the chunk, holes cut out,
-## simplified (Douglas-Peucker, the points on the chunk's edge kept so neighbours meet), decomposed. The
+## simplified (Douglas-Peucker, the points on the chunk's edge kept so neighbors meet), decomposed. The
 ## simplification grows until the pieces fit MAX_PIECES. {pieces, level (index into SIMPLIFY)}
 func wallPieces(loops: Array) -> Dictionary:
 	var rect := Rect2(Vector2.ZERO, CHUNK)
@@ -661,7 +661,7 @@ static func isSimple(poly: PackedVector2Array) -> bool:
 			if Geometry2D.segment_intersects_segment(a, b, poly[j], poly[(j + 1) % n]) != null: return false
 	return true
 
-## Douglas-Peucker on a closed ring, keeping every point on the rect's edge (so the pieces of neighbouring
+## Douglas-Peucker on a closed ring, keeping every point on the rect's edge (so the pieces of neighboring
 ## chunks meet exactly where their contours cross the shared edge)
 static func simplifyRing(poly: PackedVector2Array, eps: float, rect: Rect2) -> PackedVector2Array:
 	var n := poly.size()
@@ -795,7 +795,7 @@ func trackAt(p: Vector2) -> bool:
 	var k := clampi(floori(p.y / FINE), 0, FH - 1) * FW + clampi(floori(p.x / FINE), 0, FW - 1)
 	return tracks[k] != 0 if not tracks.is_empty() else terrain[k] == DIRT
 
-## Bilinear raster field at a chunk-local point (centre of raster cell (i, j) at ((i - 0.5), (j - 0.5)) * FINE)
+## Bilinear raster field at a chunk-local point (center of raster cell (i, j) at ((i - 0.5), (j - 0.5)) * FINE)
 static func fieldAt(field: PackedFloat32Array, p: Vector2) -> float:
 	var u := p.x / FINE + 0.5
 	var v := p.y / FINE + 0.5
@@ -830,7 +830,7 @@ func isFree(p: Vector2, radius: float, upTo := -1) -> bool:
 			if Geometry2D.get_closest_point_to_segment(p, wallSegs[n], wallSegs[n + 1]).distance_to(p) < WALL_DRAW_HALF + PROP_GAP * 0.5 + radius: return false
 	return true
 
-var wallSegs := PackedVector2Array() #the field walls' centre lines, two points each
+var wallSegs := PackedVector2Array() #the field walls' center lines, two points each
 
 func resetReservations() -> void:
 	resPos.clear()
@@ -950,11 +950,11 @@ func placePickups() -> Array:
 	var r := RandomNumberGenerator.new()
 	r.seed = WorldGen.ihash(mapSeed, TAG_PICKUP, chunk.x, chunk.y)
 	var bit := 0
-	#a slot canyon's coin line (L-6: the risky way through pays): along its centre line, each chunk laying the
+	#a slot canyon's coin line (L-6: the risky way through pays): along its center line, each chunk laying the
 	#coins that fall inside it
 	for run in crossRuns:
 		if not run.get("slot", false): continue
-		var c: Vector2 = run.centre - origin
+		var c: Vector2 = run.center - origin
 		for k in COINS_PER_LINE:
 			var p: Vector2 = c + run.axis * (k - (COINS_PER_LINE - 1) * 0.5) * COIN_STEP
 			if not pickupFits(p, 60.0): continue
@@ -1155,7 +1155,7 @@ static func lacksBit(info: Dictionary, bit: int) -> bool:
 #Fences and hedges lie on the edges of a field lattice in world space: one lattice per FIELD_REGION square,
 #turned by an angle from the seed, so runs line up across chunks. Each lattice edge is a fence, a hedge or
 #nothing (ctx.fieldDensity from features "fenceDensity" and "hedgeDensity": the chance per edge), and every
-#run has a gap the car's width (a gate; two on long runs). A chunk places only the pieces whose centres are
+#run has a gap the car's width (a gate; two on long runs). A chunk places only the pieces whose centers are
 #inside it, in the dressing of the district there. Hedgerows get an oak at some corners; a lattice cell fenced
 #on PADDOCK_EDGES sides or more is a paddock with a few hay bales inside.
 const TAG_FIELD := 207
@@ -1168,7 +1168,7 @@ const CORNER_TREE := 0.45    #chance of an oak at the corner a hedgerow starts f
 const PADDOCK_EDGES := 3
 const PADDOCK_BALES := Vector2i(2, 4)
 
-## The lattice of a field region: [region, centre (world px), u axis, v axis], turned up to ctx.fieldAngle
+## The lattice of a field region: [region, center (world px), u axis, v axis], turned up to ctx.fieldAngle
 ## (features "fieldAngle", FIELD_ANGLE by default) from the world axes
 func fieldFrame(region: Vector2i) -> Array:
 	var ang := (WorldGen.hashf(mapSeed, TAG_FIELD, region.x, region.y) - 0.5) * 2.0 * float(ctx.get("fieldAngle", FIELD_ANGLE))
@@ -1202,20 +1202,20 @@ func placeFieldLines(wallsOnly := false) -> Array:
 	var placed: Array = [] #[local pos, rot, info]
 	for region in regions:
 		var frame := fieldFrame(region)
-		var centre: Vector2 = frame[1]
+		var center: Vector2 = frame[1]
 		var u: Vector2 = frame[2]
 		var v: Vector2 = frame[3]
 		#the lattice coordinates the chunk covers (its corners projected onto the axes)
 		var lo := Vector2(INF, INF)
 		var hi := Vector2(-INF, -INF)
 		for c in box:
-			var d: Vector2 = c - centre
+			var d: Vector2 = c - center
 			var q := Vector2(d.dot(u), d.dot(v)) / spacing
 			lo = lo.min(q)
 			hi = hi.max(q)
 		for a in range(floori(lo.x) - 1, ceili(hi.x) + 1):
 			for b in range(floori(lo.y) - 1, ceili(hi.y) + 1):
-				var at: Vector2 = centre + (u * a + v * b) * spacing
+				var at: Vector2 = center + (u * a + v * b) * spacing
 				for dir in 2:
 					var id := edgeKind(region, a, b, dir, dens)
 					if id == "" || not ctx.props.has(id): continue
@@ -1258,7 +1258,7 @@ func placeFieldLines(wallsOnly := false) -> Array:
 						var count := PADDOCK_BALES.x + posmod(WorldGen.ihash(mapSeed, TAG_FIELD + 4, a + region.x * 131, b + region.y * 131), PADDOCK_BALES.y - PADDOCK_BALES.x + 1)
 						for i in count:
 							var f := Vector2(WorldGen.hashf(mapSeed, TAG_FIELD + 5, a * 8 + i, b + region.x), WorldGen.hashf(mapSeed, TAG_FIELD + 6, b * 8 + i, a + region.y))
-							var w: Vector2 = centre + (u * (a + 0.25 + f.x * 0.5) + v * (b + 0.25 + f.y * 0.5)) * spacing
+							var w: Vector2 = center + (u * (a + 0.25 + f.x * 0.5) + v * (b + 0.25 + f.y * 0.5)) * spacing
 							if not fieldPieceHere(w, region, "haybale", tables): continue
 							var local := w - origin
 							var rot := u.angle() + (PI * 0.5 if i % 2 else 0.0)
@@ -1267,7 +1267,7 @@ func placeFieldLines(wallsOnly := false) -> Array:
 								if lacksBit(bale, bit): continue
 								out.push_back(propEntry("haybale", local, rot, i % maxi(int(bale.variants), 1), bit, bale.occluder))
 								reserve(local, bale.radius + PROP_GAP * 0.5)
-	#the pieces keep later props off their whole length, not only a disc round each centre (walls: wallSegs)
+	#the pieces keep later props off their whole length, not only a disc round each center (walls: wallSegs)
 	if wallsOnly: return out
 	for e in placed:
 		var axis: Vector2 = Vector2.from_angle(e[1]) * (e[2].w * 0.33)
@@ -1310,7 +1310,7 @@ static func clearOfPlaced(p: Vector2, radius: float, placed: Array) -> bool:
 #decor MultiMesh (the hedgerow atlas: straights, end caps; docs/WORLD_ART.md "Hedgerow"), so a dense lattice
 #costs almost no nodes. Each edge is cut into the same slots as a run of props; the gate slot gets a farm gate
 #(breakable) most of the time, and slots that don't fit (roads, tracks, water, reservations) are gaps. The
-#chunk holding a slot's centre owns it; consecutive owned slots make one box. Caps close a run at a gate, a
+#chunk holding a slot's center owns it; consecutive owned slots make one box. Caps close a run at a gate, a
 #gap or a lattice point no other hedgerow meets.
 const WALL_HALF := 50.0      #the collision box's half width (the art: an 80 px hedge on a 112 px base)
 const WALL_OCC_HALF := 40.0
@@ -1438,7 +1438,7 @@ func wallCell(p: Vector2, rot: float, sx: float, cell: int) -> void:
 	var s := sin(rot)
 	wallDecor.append_array([c * sx, -s, 0.0, p.x, s * sx, c, 0.0, p.y, (cell + 0.5) / 4.0, 0.0, 0.0, 0.0])
 
-## A set piece's member fits where the layout puts it: its centre in this chunk, the ground under the parts of its
+## A set piece's member fits where the layout puts it: its center in this chunk, the ground under the parts of its
 ## box inside the chunk open (as propFits), clear of the reservations made before the set piece (`upTo`)
 func setPieceFits(p: Vector2, rot: float, info: Dictionary, upTo := -1) -> bool:
 	if p.x < 0.0 || p.y < 0.0 || p.x >= CHUNK.x || p.y >= CHUNK.y: return false
@@ -1455,12 +1455,12 @@ func setPieceFits(p: Vector2, rot: float, info: Dictionary, upTo := -1) -> bool:
 #A fixed set piece PADDOCK_AHEAD px ahead of the start along +x (where Sprint goes; outside START_CORE): a
 #fenced paddock with its gate toward the start, a three-crate stash and two hay bales inside, a log pile at the
 #far corner above the dirt track that runs past it (WorldField.PADDOCK_TRACK_Y). It is laid out in world space
-#and each chunk places the members whose centres it holds, so it may straddle a seam; decorateChunk skips the
+#and each chunk places the members whose centers it holds, so it may straddle a seam; decorateChunk skips the
 #start's chunk, which is why the recipe builds it. features "homePaddock" (ctx.homePaddock) turns it on.
 const PADDOCK_AHEAD := 2600.0
 const PADDOCK_HALF := 480.0
 const TAG_PADDOCK := 217
-## [prop id, offset from the paddock's centre, rotation, in the crate stash's group]
+## [prop id, offset from the paddock's center, rotation, in the crate stash's group]
 const PADDOCK := [
 	["fence", Vector2(-317, -480), 0.0, false], ["fence", Vector2(0, -480), 0.0, false], ["fence", Vector2(317, -480), 0.0, false],
 	["fence", Vector2(-317, 480), 0.0, false], ["fence", Vector2(0, 480), 0.0, false], ["fence", Vector2(317, 480), 0.0, false],
@@ -1472,22 +1472,22 @@ const PADDOCK := [
 ]
 var paddockFrom := -1 #reservations before the paddock's own (its members check only those)
 
-## The paddock's centre (chunk-local), or INF when the level has none or it is nowhere near this chunk
-func paddockCentre() -> Vector2:
+## The paddock's center (chunk-local), or INF when the level has none or it is nowhere near this chunk
+func paddockCenter() -> Vector2:
 	if not ctx.get("homePaddock", false) || startAt == Vector2.INF: return Vector2.INF
 	var c: Vector2 = startAt + Vector2(PADDOCK_AHEAD, 0.0) - origin
 	return c if Rect2(Vector2.ZERO, CHUNK).grow(PADDOCK_HALF + 600.0).has_point(c) else Vector2.INF
 
 ## Keeps the spots and pickups off the paddock (placed before the props)
 func reservePaddock() -> void:
-	var c := paddockCentre()
+	var c := paddockCenter()
 	if c == Vector2.INF: return
 	paddockFrom = resPos.size()
 	reserve(c, PADDOCK_HALF + 250.0)
 
 func placeHomePaddock() -> Array:
 	var out: Array = []
-	var c := paddockCentre()
+	var c := paddockCenter()
 	if c == Vector2.INF: return out
 	var key := maxi(1, WorldGen.ihash(mapSeed, TAG_PADDOCK, 0, 0))
 	var fits: Array = []
@@ -1640,7 +1640,7 @@ func anchorSeeds(anchor: String) -> PackedVector2Array:
 		"ford", "pass", "bridge":
 			var reach := Rect2(Vector2.ZERO, CHUNK).grow(maxf(HERO_NEAR.y, PASS_NEAR.y) - 120.0)
 			for run in crossRuns:
-				if run.kind == anchor && reach.has_point(run.centre - origin): out.push_back(run.centre - origin)
+				if run.kind == anchor && reach.has_point(run.center - origin): out.push_back(run.center - origin)
 		"bank":
 			#dry cells BANK_CELLS steps (4-connected) from water, shallows or a deck: a breadth-first search from
 			#the wet cells (the water field's lake fbm is too rough a distance for this)
@@ -1773,7 +1773,7 @@ func roadAxis(p: Vector2, fallback: float) -> float:
 #--- motifs (package 14, P-5) ----------------------------------------------------------------------
 #Small set pieces placed before the scatter: ctx.motifs is {zone: {motif id: weight}} and ctx.motifDefs the
 #motifs (WorldSkin.MOTIFS): members in a ring, scattered in a disc, in a grid or a line turned to the field
-#lattice, or at the centre. Members keep MOTIF_GAP from each other instead of PROP_GAP; the motif keeps
+#lattice, or at the center. Members keep MOTIF_GAP from each other instead of PROP_GAP; the motif keeps
 #PROP_GAP from everything else. features "motifs" is how many a fully open chunk gets on average (ctx.motifsPerChunk).
 const MOTIF_GAP := 70.0
 const MOTIF_TRIES := 10
@@ -1804,10 +1804,10 @@ func placeMotifs() -> Array:
 			break
 	return out
 
-## A motif's members round centre c that fit: [[id, pos, rot, variants (the member's "variants" option, or
+## A motif's members round center c that fit: [[id, pos, rot, variants (the member's "variants" option, or
 ## []), a pen piece], ...]. A member is [id, count (an int, or [low, high]), radius px, shape, options]; options
-## (optional): "variants" (the variant indices it picks from) and "offset" (px a line stands off the centre,
-## across the lattice). Shapes: centre, ring, disc, grid, line, and pen (count pieces round a square of half
+## (optional): "variants" (the variant indices it picks from) and "offset" (px a line stands off the center,
+## across the lattice). Shapes: center, ring, disc, grid, line, and pen (count pieces round a square of half
 ## side `radius`, one left out as the gate; pen pieces touch end to end).
 func motifGroup(c: Vector2, def: Dictionary, mr: RandomNumberGenerator) -> Array:
 	var group: Array = []

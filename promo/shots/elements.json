@@ -1,5 +1,5 @@
 {
-	"about": "Pieces for the edit, with transparency (ProRes 4444): titles, the game's shutter as a wipe, line-ups, the HUD alone, prize games. backdrop: clear, magenta, grey or black.",
+	"about": "Pieces for the edit, with transparency (ProRes 4444): titles, the game's shutter as a wipe, line-ups, the HUD alone, prize games. backdrop: clear, magenta, gray or black.",
 	"defaults": {
 		"kind": "stage",
 		"backdrop": "clear",

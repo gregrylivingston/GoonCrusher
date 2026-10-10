@@ -1,11 +1,11 @@
 class_name GenericPickup extends Powerup
 
-#Every pickup that has no scene of its own (scripts/global/pickups.gd). Its icon, outline colour and
+#Every pickup that has no scene of its own (scripts/global/pickups.gd). Its icon, outline color and
 #effect come from Pickups.DATA by id; PickupEffects does what it does. Rarity shows as the outline
-#colour, and Rare or better also glow at night.
+#color, and Rare or better also glow at night.
 
 const NIGHT_GLOW_FROM := Pickups.R.RARE
-static var materials := {} #rarity -> a shared ShaderMaterial (the edge glow in that rarity's colour)
+static var materials := {} #rarity -> a shared ShaderMaterial (the edge glow in that rarity's color)
 
 var id := ""
 
@@ -42,7 +42,7 @@ func _process(_delta: float) -> void:
 	var night: bool = is_instance_valid(Root.spawnManager) && Root.spawnManager.isNight
 	if glow.visible != night: glow.visible = night
 
-## The edge-glow material in a rarity's colour. Common keeps the authored one; the others are made once
+## The edge-glow material in a rarity's color. Common keeps the authored one; the others are made once
 ## and shared, so every pickup of a rarity batches together.
 static func rarityMaterial(base: Material, r: int) -> Material:
 	if r == Pickups.R.COMMON || not base is ShaderMaterial: return base

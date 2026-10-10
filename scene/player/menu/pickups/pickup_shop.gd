@@ -18,7 +18,7 @@ const TABS := [
 	{"name": "LOOT", "kinds": [Pickups.K.LOOT]},
 	{"name": "SUPPLIES", "kinds": [Pickups.K.SUPPLY]},
 	{"name": "TUNE-UPS", "kinds": [Pickups.K.TUNE]},
-	{"name": "POWER-UPS", "kinds": [Pickups.K.BOOST, Pickups.K.MODE], "note": "Timed effects; their rings drain above the systems strip. Mode specials only drop in the mode they help."},
+	{"name": "POWER-UPS", "kinds": [Pickups.K.BOOST, Pickups.K.MODE], "note": "Timed effects; their rings drain on the HUD's items row. Mode specials only drop in the mode they help."},
 	{"name": "GADGETS", "kinds": [Pickups.K.GADGET, Pickups.K.MOVE], "note": "Two slots, each with its own button: one holds a gadget, the other a boost."},
 	{"name": "CASINO", "kinds": [Pickups.K.CASINO], "note": "Games of chance, weakest first. Goons drop most of them, and gift boxes hold the eight prize games among them."},
 	{"name": "SKILL", "kinds": [Pickups.K.SKILL]},
@@ -361,9 +361,6 @@ func tileFor(key) -> Button:
 static func sameKey(a, b) -> bool:
 	return typeof(a) == typeof(b) && a == b
 
-static func pickupKnown(id: String) -> bool:
-	return Unlocks.isPickupOpen(id) || Pickups.isDiscovered(id)
-
 ## A pickup's share of goon drops in `mode` (a Root.gameModes value; -1: the selected mode), before
 ## Dice, faction and the pity counter, counting night-only pickups as if it were night.
 static func dropShare(id: String, mode := -1) -> float:
@@ -417,14 +414,14 @@ func pickupDetail(entry: Dictionary) -> void:
 	if not factions.is_empty(): rows.push_back(["More from", ", ".join(factions.keys().map(func(f): return Goons.factionName(f)))])
 	if not rows.is_empty(): statTable(rows)
 	if boxed:
-		tipRow("Gift boxes hold this game. Crushing goons earns crush XP toward a box; each box holds one game you have unlocked, and higher boxes favour the stronger games.")
+		tipRow("Gift boxes hold this game. Crushing goons earns crush XP toward a box; each box holds one game you have unlocked, and higher boxes favor the stronger games.")
 		if d.get("w", 0) <= 0:
 			paragraph("Only in gift boxes: goons don't drop it.", "MutedLabel")
 			return
 	match d.kind:
 		Pickups.K.GADGET: tipRow("Gadgets wait in the slot above the systems strip. Press %s to fire one. A rarer gadget replaces the one you hold; a commoner one is sold for coins." % InputGlyphs.label("UseItem"))
 		Pickups.K.MOVE: tipRow("Boosts wait in their own slot, beside the gadget. Press %s to fire one. A rarer boost replaces the one you hold; a commoner one is sold for coins." % InputGlyphs.label("UseMove"))
-		Pickups.K.BOOST: tipRow("Up to four power-ups run at once; their rings drain above the systems strip.")
+		Pickups.K.BOOST: tipRow("Up to four power-ups run at once; their rings drain on the HUD's items row.")
 		_: tipRow("A crushed goon drops a pickup about %d%% of the time, plus about half a percent per point of Clover. Dice makes the drop rarer." % roundi(10.0 / 201.0 * 100.0))
 
 ## A locked pickup's way in: its price and a BUY button, or its play condition with a progress bar

@@ -12,9 +12,9 @@ const RING := 25.0
 const RING_PITCH := 60.0
 const TAG_SECONDS := 3.0 #a new power-up's ring shows its name this long
 
-var box := Vector2.ZERO        #centre of the held gadget's box
-var moveBox := Vector2.ZERO    #centre of the held boost's box
-var rings := Vector2.ZERO      #centre of the first ring
+var box := Vector2.ZERO        #center of the held gadget's box
+var moveBox := Vector2.ZERO    #center of the held boost's box
+var rings := Vector2.ZERO      #center of the first ring
 var shownKey := []
 
 func _ready() -> void:
@@ -76,7 +76,7 @@ func _draw() -> void:
 		draw_arc(c, RING - 2.0, 0.0, TAU, 32, HudTheme.TRACK, 5.0, true)
 		if left >= 120 || HudTheme.blinkOn(): HudTheme.arc(self, c, RING - 2.0, 0.0, 360.0 * fraction, col, 5.0)
 		HudTheme.icon(self, Pickups.texture(id), c, 30.0)
-		if car.buffTicks.get(id, left) - left < TAG_SECONDS * Pickups.TICKS: #new: its name, staggered so neighbours don't touch
+		if car.buffTicks.get(id, left) - left < TAG_SECONDS * Pickups.TICKS: #new: its name, staggered so neighbors don't touch
 			tag(c + Vector2(0, -RING - 9.0 - (i % 2) * 14.0), id)
 		HudTheme.text(self, c + Vector2(0, RING + 14.0), "%d" % ceili(left / float(Pickups.TICKS)), 13, HudTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER, 4)
 		i += 1
@@ -106,6 +106,6 @@ func drawAbility(at: Vector2, ready: float) -> void:
 	var keyName := InputGlyphs.label("Ability")
 	if keyName != "" && lit: HudTheme.text(self, at + Vector2(BOX * 0.5 + 8.0, 8.0), keyName, 16, HudTheme.GOLD, HORIZONTAL_ALIGNMENT_LEFT, 5)
 
-#a pickup's name tag, centred on `at` (the baseline)
+#a pickup's name tag, centered on `at` (the baseline)
 func tag(at: Vector2, id: String) -> void:
 	HudTheme.text(self, at, Pickups.shortName(id), Pickups.TAG_SIZE, HudTheme.MUTED, HORIZONTAL_ALIGNMENT_CENTER, 4, HudTheme.OUTLINE, HudTheme.BODY)

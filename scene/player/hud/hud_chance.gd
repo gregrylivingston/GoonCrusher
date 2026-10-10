@@ -203,7 +203,7 @@ func _draw() -> void:
 	deepDrawn = deepShown > 0.0
 	if deepDrawn: drawDeepWater(deepShown)
 
-#Deep water (docs/HUD.md): while the car's centre is over it (car.deepTicks), a red edge round the screen
+#Deep water (docs/HUD.md): while the car's center is over it (car.deepTicks), a red edge round the screen
 #and "DEEP WATER" under the toasts, pulsing (Reduce Flashing: steady), fading in and out over 1 / DEEP_FADE s.
 #Lava landscapes say "LAVA". Silent: CarJuice's splash and hiss are the cue going in.
 const DEEP_FADE := 4.0
@@ -275,25 +275,25 @@ func drawBeacons() -> void:
 	if PickupWorld.beacons.is_empty() || not is_instance_valid(Root.playerCar): return
 	var canvas := get_viewport().get_canvas_transform()
 	var screen := Rect2(Vector2.ZERO, size)
-	var inner := Rect2(Vector2(EDGE, 165.0), size - Vector2(EDGE * 2.0, 165.0 + 175.0)) #clear of the top panels and the dials
-	var centre := inner.get_center()
+	var inner := Rect2(Vector2(EDGE, 165.0), size - Vector2(EDGE * 2.0, 165.0 + 175.0)) #clear of the mirror, the visors and the dials
+	var center := inner.get_center()
 	for b in PickupWorld.beacons:
 		if not is_instance_valid(b[0]) || not b[0].is_inside_tree(): continue #freed since the last prune; spawns are deferred (it arrives next frame)
 		var p: Vector2 = canvas * b[0].global_position
 		if screen.grow(-10.0).has_point(p): continue
-		var dir := (p - centre).normalized()
+		var dir := (p - center).normalized()
 		var t := INF
 		if absf(dir.x) > 0.001: t = minf(t, (inner.size.x * 0.5) / absf(dir.x))
 		if absf(dir.y) > 0.001: t = minf(t, (inner.size.y * 0.5) / absf(dir.y))
-		var at := centre + dir * t
+		var at := center + dir * t
 		var col: Color = b[1]
 		draw_circle(at, 30.0, Color(0.055, 0.047, 0.043, 0.85))
 		draw_arc(at, 30.0, 0.0, TAU, 32, col, 3.0, true)
 		if b[2]: HudTheme.icon(self, b[2], at, 38.0)
 		var tip := at + dir * 44.0
 		draw_colored_polygon(PackedVector2Array([tip, at + dir * 32.0 + dir.orthogonal() * 10.0, at + dir * 32.0 - dir.orthogonal() * 10.0]), col)
-		var metres: float = Root.playerCar.global_position.distance_to(b[0].global_position) / 100.0
-		HudTheme.text(self, at + Vector2(0, 48.0), "%dm" % int(metres), 14, HudTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER, 4)
+		var meters: float = Root.playerCar.global_position.distance_to(b[0].global_position) / 100.0
+		HudTheme.text(self, at + Vector2(0, 48.0), "%dm" % int(meters), 14, HudTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER, 4)
 
 func drawShockwave(k: float) -> void:
 	var e := 1.0 - pow(1.0 - k, 3.0)
@@ -304,8 +304,7 @@ func drawShockwave(k: float) -> void:
 #The station (Sprint, Marathon, Defense), in its own blue (HudTheme.STATION) with the mode's icon. Off screen:
 #a pill on the screen edge pointing at it, with the distance. On screen: a tag over the driveway, which fades
 #as the car arrives. With HURRY_SECONDS left on a race clock the pill pulses; in Defense the pointer turns
-#red and shakes for a moment when a goon blows up at a pump (HudTheme.stationHit). It replaced the car's
-#old 3D-text arrow.
+#red and shakes for a moment when a goon blows up at a pump (HudTheme.stationHit).
 const HURRY_SECONDS := 15.0
 const STATION_PILL := Vector2(200.0, 56.0)
 var stationShown := false
@@ -365,13 +364,13 @@ func drawPointer(point: Vector2, label: String, col: Color, icon: Texture2D, pul
 		var fade := clampf((Root.playerCar.global_position.distance_to(point) - 400.0) / 600.0, 0.0, 1.0)
 		if fade > 0.0 || hit > 0.0: drawStationTag(target + shake, label, Color(col, maxf(fade, hit)), icon)
 		return
-	var inner := Rect2(Vector2(EDGE + 60.0, 190.0), size - Vector2((EDGE + 60.0) * 2.0, 190.0 + 300.0)) #clear of the top panels and the dials
-	var centre := inner.get_center()
-	var dir: Vector2 = (target - centre).normalized()
+	var inner := Rect2(Vector2(EDGE + 60.0, 190.0), size - Vector2((EDGE + 60.0) * 2.0, 190.0 + 300.0)) #clear of the mirror, the visors and the dials
+	var center := inner.get_center()
+	var dir: Vector2 = (target - center).normalized()
 	var t := INF
 	if absf(dir.x) > 0.001: t = minf(t, (inner.size.x * 0.5) / absf(dir.x))
 	if absf(dir.y) > 0.001: t = minf(t, (inner.size.y * 0.5) / absf(dir.y))
-	var at := centre + dir * t + shake
+	var at := center + dir * t + shake
 	var rect := Rect2(at - STATION_PILL * 0.5, STATION_PILL)
 	if not calm: rect = rect.grow(4.0 * pulse)
 	#the arrow starts where `dir` leaves the pill
@@ -385,7 +384,7 @@ func drawPointer(point: Vector2, label: String, col: Color, icon: Texture2D, pul
 
 #on screen: a small pill over the driveway with a notch pointing down at it
 func drawStationTag(at: Vector2, label: String, col: Color, icon: Texture2D) -> void:
-	col.a = snappedf(col.a, 0.1) #HudTheme.panel caches a box per colour
+	col.a = snappedf(col.a, 0.1) #HudTheme.panel caches a box per color
 	var w := HudTheme.textWidth(label, 16) + 58.0
 	var rect := Rect2(at + Vector2(-w * 0.5, -96.0), Vector2(w, 38.0))
 	var notch := at + Vector2(0.0, -40.0)

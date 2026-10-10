@@ -62,7 +62,7 @@ const STOPPED_SPEED = 60.0   #below this, reversing is always among the choices 
 const LETHAL_COST = 1000.0    #driving into deep water (it no longer wrecks the car at once, but it is never a way through)
 const SHALLOWS_COST = 0.3     #per second of a plan with a wheel in shallows: slow and slippery, never deadly
 const WADE_COST = 0.8         #per second of a plan with a wheel in wading depth: slower, slipperier, a little damage
-const WET_CORNER_SHARE = 0.3  #per second of a plan with a corner (not the centre) over deep water, this share of LETHAL_COST
+const WET_CORNER_SHARE = 0.3  #per second of a plan with a corner (not the center) over deep water, this share of LETHAL_COST
 
 const GOAL_RADIUS = {"gate":60.0, "pickup":70.0, "goon":80.0, "station":300.0, "roam":600.0, "patrol":600.0, "escape":300.0}
 const PURSE_QUANTITY = 10.0   #purse.tscn is a "coin" powerup with this quantity
@@ -375,11 +375,11 @@ func brakeDistance(toSpeed: float) -> float:
 	if car.velocity.length() <= toSpeed: return 0.0
 	var rollout := simulate(PLANS[9], 420) #seven seconds: a car on Nitro takes most of that to shed its speed
 	var path: PackedVector2Array = rollout.path
-	var travelled := 0.0
+	var traveled := 0.0
 	for i in range(1, path.size()):
-		travelled += path[i].distance_to(path[i - 1])
+		traveled += path[i].distance_to(path[i - 1])
 		if rollout.speeds[i] <= toSpeed: break
-	return travelled
+	return traveled
 
 func decide() -> void:
 	tick += 1
@@ -470,7 +470,7 @@ func updateGoal() -> void:
 		if AIRoute.isBlocked(route.terrainAt(pickup.global_position)) || wetPickup(pickup): continue
 		var value = pickupWorth(pickup, pickupValue(pickup.powerup, pickup.quantity, car.fuel, car.health, need) * p.pickupScale)
 		options.push_back({"kind":"pickup", "node":pickup, "value":value, "key":str(id), "type":pickup.powerup})
-	#goons only die by being crushed, so crushing is also the defence: every goon left alive joins
+	#goons only die by being crushed, so crushing is also the defense: every goon left alive joins
 	#the horde. Goons inside the turning circle are left to etaTo's loop penalty.
 	if is_instance_valid(Root.spawnManager) && not protecting():
 		var near: Array = []
@@ -479,11 +479,11 @@ func updateGoal() -> void:
 				if p.waterGoonPx > 0.0 && WorldHooks.nearLethal(g.global_position, p.waterGoonPx): continue #lured to the bank: let it swim
 				near.push_back(g)
 		for g in near:
-			var neighbours = 0
+			var neighbors = 0
 			if crushNeed(g) > topSpeed() * 0.95: continue #too tough for this car: leave it be
 			for other in near:
-				if other != g && other.global_position.distance_squared_to(g.global_position) < 350.0 * 350.0: neighbours += 1
-			var value = brief.goonWorth(g, goonValue(neighbours, p.goonValue, p.goonPackBonus))
+				if other != g && other.global_position.distance_squared_to(g.global_position) < 350.0 * 350.0: neighbors += 1
+			var value = brief.goonWorth(g, goonValue(neighbors, p.goonValue, p.goonPackBonus))
 			if isRaceMode(): value *= p.raceGoonScale
 			if value <= 0.0: continue
 			options.push_back({"kind":"goon", "node":g, "value":value, "key":str(g.get_instance_id())})
@@ -715,13 +715,13 @@ func pickRoamPoint() -> Vector2:
 		for dx in range(-ROAM_CELLS.x, ROAM_CELLS.x + 1, ROAM_STEP):
 			var cell = carCell + Vector2i(dx, dy)
 			if absi(dx) + absi(dy) <= ROAM_STEP || not map.cellReachable(cell): continue
-			var centre = WorldGen.cellCentre(cell)
+			var center = WorldGen.cellCenter(cell)
 			var score = randf()
 			#long straight runs: fresh goons spawn ahead and meet the bumper, the horde stays behind
-			if centre.distance_to(car.global_position) < p.roamMinPx: score -= 2.0
-			score += 1.5 * forward.dot((centre - car.global_position).normalized())
+			if center.distance_to(car.global_position) < p.roamMinPx: score -= 2.0
+			score += 1.5 * forward.dot((center - car.global_position).normalized())
 			if score > bestScore:
-				var spot = centre + Vector2(randf_range(-400, 400), randf_range(-400, 400))
+				var spot = center + Vector2(randf_range(-400, 400), randf_range(-400, 400))
 				if not AIRoute.isBlocked(route.terrainAt(spot)) && not nearWater(spot) && route.plan(car.global_position, spot).reached:
 					bestScore = score
 					best = spot
@@ -757,8 +757,8 @@ static func pickupValue(kind: String, quantity: float, fuel: float, health: floa
 	return 7.0 #+1 to another stat
 
 #crushing pays coins only through drops and milestone stars; a pack is worth more than one
-static func goonValue(neighbours: int, base := 12.0, pack := 4.0) -> float:
-	return base + pack * mini(neighbours, 6)
+static func goonValue(neighbors: int, base := 12.0, pack := 4.0) -> float:
+	return base + pack * mini(neighbors, 6)
 
 #Every crush costs health (the car's own GOON_CONTACT_DAMAGE on contact), so crushing is paid for out of a
 #budget: below the reserve the car stops hunting and steers around goons. Countdown keeps a reserve
@@ -876,7 +876,7 @@ func etaTo(point: Vector2) -> float:
 	return eta
 
 #the tightest circle the car drives at full lock (CarHandling: the lock when slow, the yaw ceiling when
-#fast); tyre slip widens it by about a third
+#fast); tire slip widens it by about a third
 func turnRadius() -> float:
 	return car.turnRadius(car.velocity.length()) * 1.3
 
@@ -1098,16 +1098,16 @@ func scoreRollout(rollout: Dictionary, target: Vector2) -> float:
 			if speeds[i] < CRUSH_SPEED: cost += p.slowGoonCost * segment * goonsNear(path[i])
 		var ground = footprintTerrain(path[i], headings[i])
 		if World.isLethal(ground):
-			#the car's centre over deep water (it hurts fast and drags it to a crawl) ends the plan. A corner over it (the
-			#footprint has a margin) is a near miss: very dear, but a plan that keeps the centre out still
+			#the car's center over deep water (it hurts fast and drags it to a crawl) ends the plan. A corner over it (the
+			#footprint has a margin) is a near miss: very dear, but a plan that keeps the center out still
 			#beats one that doesn't when every choice is wet (a car already on the edge). A car already in deep
 			#water (shoved or slid in: it survives a while now) pays for every wet moment instead, so the plan
 			#that gets it out soonest wins.
-			var centreWet: bool = World.lethalAt(path[i]) || World.lethalAt(path[i].lerp(path[i - 1], 0.5))
-			if centreWet && not startWet:
+			var centerWet: bool = World.lethalAt(path[i]) || World.lethalAt(path[i].lerp(path[i - 1], 0.5))
+			if centerWet && not startWet:
 				rollout.hitSeconds = i * segment
 				return LETHAL_COST * (2.0 - float(i) / last)
-			cost += LETHAL_COST * WET_CORNER_SHARE * segment * (2.0 if centreWet else 1.0)
+			cost += LETHAL_COST * WET_CORNER_SHARE * segment * (2.0 if centerWet else 1.0)
 		if ground == Root.terrain.SHALLOWS: cost += SHALLOWS_COST * segment
 		elif ground == Root.terrain.WADE: cost += WADE_COST * segment
 		cost += waterAheadCost(path[i - 1], path[i], speeds[i]) * segment
@@ -1143,8 +1143,8 @@ func scoreRollout(rollout: Dictionary, target: Vector2) -> float:
 		#where it ends up pointing, out to lookaheadPx from the start (or probeSeconds of travel at the
 		#end speed, if that is further). A wall there means the next plans must swerve or brake hard,
 		#so plans already steering clear of it win, well before the car gets close.
-		var travelled = path[0].distance_to(end)
-		var reach = maxf(400.0, maxf(p.lookaheadPx - travelled, endSpeed * p.probeSeconds))
+		var traveled = path[0].distance_to(end)
+		var reach = maxf(400.0, maxf(p.lookaheadPx - traveled, endSpeed * p.probeSeconds))
 		var heading = headings[last].normalized()
 		var clear = sweep(end, heading, heading * reach, false, endSpeed)
 		if clear < 1.0: cost += p.probeCost * (1.0 - clear)

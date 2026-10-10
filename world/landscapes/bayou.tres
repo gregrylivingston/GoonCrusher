@@ -7,7 +7,6 @@ script = ExtResource("1_land")
 id = &"bayou"
 displayName = "Bayou"
 grammar = &"bayou"
-text = "Lakes and braided channels. Boardwalks cross the deep water."
 features = {
 "lakeFrequency": 8.3e-05,
 "lakeThreshold": 0.42,

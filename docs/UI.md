@@ -1,193 +1,120 @@
 # Menus
 
-The menus use the same colors, fonts and pickup icons as the in-run HUD (`docs/HUD.md`), and every prompt shows the key or button for the device the player is using.
+Every menu is built in code from one theme, shows each prompt's key or button for the device in use, and works with the mouse alone, a pad alone or the keyboard alone. Layouts, sizes and wording are in the scripts.
 
 ## Shared parts (`scene/ui/`)
 
-| File | Class | What it does |
+| File | Class | Use it for |
 |---|---|---|
-| `menu_theme.gd` | `MenuTheme` | Builds the menus' `Theme` in code from `HudTheme`, so menus and HUD can't drift apart. Give a menu's root Control `theme = MenuTheme.theme()`. Also has helpers: `button(text, actions, primary, icon)`, `chip`, `priceChip`, `iconRect`, `box`, `addSounds`. `iconRect` returns a `CrispIcon` (`crisp_icon.gd`): the icon is resampled (Lanczos, cached) to the exact screen pixels it covers, instead of a blurry mipmap, and rebuilt when the window changes. Use it for any small menu icon. |
-| `input_glyphs.gd` | `InputGlyphs` | Tracks whether the player last used a controller (`usingPad`) and names an action's binding on that device (`label("ui_accept")` gives "Space" or "A"). Bindings come from `InputMap`, so rebinding shows up. `ensureMenuActions()` adds `ui_upgrade` (F / Y: Upgrades in the garage, the Gadget slot in run setup), `ui_buy` (E / A: buys the lit upgrade row in driver focus), `ui_boost` (V / RS), `ui_region_prev`/`ui_region_next` (Z / LT, C / RT: the road map's regions, Level Options' tiles), `ui_records` (R / X), `ui_pickups` (G / View), `ui_codex` (B / L3), and controller A/B on `ui_accept`/`ui_cancel`, which the project didn't bind. Every menu works from the left hand: it puts Space first on `ui_accept` (Enter still works) and WASD before the arrows (`keyFirst`), since a hint shows an action's first key. `digit(event)` reads the number keys (top row or keypad) that pick a road stop or a tab. |
-| `key_hint.gd` | `KeyHint` | One chip per action, then a label: `KeyHint.make(["ui_accept"], "Drive")`. It switches as soon as the player changes device, and hides when the action has no binding on that device. A clickable hint (`make(..., true)`, or a whole bottom bar from `KeyHint.bar([[actions, label], ...])`) fires its action on a click through `KeyHint.fire`, which `_input` handlers, the GUI and `is_action_just_pressed` polling all see: one action makes the whole hint a button, several make each chip its own. |
-| `juice.gd` | `Juice` | Short feedback tweens: `shake` (a no, with a buzz), `flash` (a fading colour wash over a Control), `pop` (scale up and settle), `rumble` (the shared shake), `dropIn` (an overlay arriving). |
-| `count_badge.gd` | `CountBadge` | The hopping count on a button's corner ("The dock", the Pickups tabs). |
-| `transitions/` | `Transition`, `ShutterDoor`, `GameHatch`, `TransitionFx` | Screen changes behind the garage shutter; see "Transitions" below. |
+| `menu_theme.gd` | `MenuTheme` | The menus' `Theme`, built from `HudTheme` so menus and HUD can't drift apart. Helpers: `button`, `chip`, `iconRect`, `box`, `addSounds`, and the symbol helpers below. |
+| `crisp_icon.gd` | `CrispIcon` | What `iconRect` returns: an icon resampled to the exact pixels it covers. Use it for any small menu icon. |
+| `input_glyphs.gd` | `InputGlyphs` | Which device was used last (`usingPad`) and an action's name on it (`label("ui_accept")`). Reads `InputMap`, so rebinding shows up. `ensureMenuActions()` adds the menu's own actions and pad A / B on accept and cancel. |
+| `key_hint.gd` | `KeyHint` | A key chip and a label per action: `KeyHint.make(["ui_accept"], "Drive")`. It switches with the device and hides when the action has no binding there. `KeyHint.bar([[actions, label], ...])` makes a clickable bottom bar. |
+| `juice.gd` | `Juice` | Short feedback tweens: `shake` (a no), `flash`, `pop`, `rumble` (the shared shake), `dropIn` (an overlay arriving). |
+| `count_badge.gd` | `CountBadge` | A count on a button's corner ("how many the bank covers"); hidden at 0. |
+| `transitions/` | `Transition` and friends | "Transitions" below. |
 
-**Theme variations.**
+The theme's variations (`PrimaryButton`, `TabButton`, the panels and labels) are in `MenuTheme.theme()`.
 
-- **Buttons:**
-  - `Button`: a list row with a faint fill, and an orange rim with gold text when focused or hovered. `MenuTheme.button` widens the right margin when it carries a key chip, so the text never runs under it.
-  - `PrimaryButton`: the one solid orange action per screen, with a gold focus ring.
-  - `TabButton`: settings pills.
-- **Panels:**
-  - `Panel`/`PanelContainer`: smoked glass with an orange rim.
-  - `InfoPanel`: blue rim.
-  - `QuietPanel`: faint rim.
-  - `CardPanel`, `KeyChip`, `PriceChip`, `BandPanel`.
-- **Labels:** `TitleLabel`, `GoldLabel`, `MutedLabel`, `BodyLabel`, `HintLabel`, `DarkLabel` (text on orange).
+## Rules for a new menu
 
-**Rules for a new menu.** One `PrimaryButton`. A `KeyHint` for every key that does something, and make bottom bars clickable (`KeyHint.bar`). Everything must work with the mouse alone: inside a clickable row, set every child that isn't the button to `MOUSE_FILTER_IGNORE` (a plain `Control` defaults to `STOP` and swallows the click). Never write "A" or "Enter" into a label. Build with the theme rather than per-node style overrides.
+1. `theme = MenuTheme.theme()` on the root Control. Build with the theme, not per-node style overrides.
+2. One `PrimaryButton` per screen.
+3. A `KeyHint` for every key that does something. **Never write "A" or "Enter" into a label.**
+4. A hint shows an action's first key, and the left hand comes first: Space on `ui_accept`, WASD before the arrows (`keyFirst`).
+5. **Mouse:** everything must work with the mouse alone. Bottom bars are clickable (`KeyHint.bar`). Inside a clickable row, set every child that isn't the button to `MOUSE_FILTER_IGNORE` (`main2.setMouseIgnore`): a plain `Control` defaults to `STOP` and swallows the click. A clickable hint fires its action through `KeyHint.fire`, which must never leave the action stuck pressed.
+6. **Pad:** everything must work on a pad alone, including with reassigned keys. Triggers are axes that send events while held: count only the first press (`main2.triggerEdge`).
+7. Honor Reduce Motion (fade instead of move) and Reduce Flashing.
+8. A full-screen overlay joins group `menuOverlay`, so the main menu ignores input under it. A pausing in-run menu joins `slotMachine`, so the harnesses tap through it.
 
 ### Symbols
 
-Amounts read as numbers followed by the game's symbols, not words: "1,500 (coin)  3 (gem)", not "1,500 coins and 3 gems". The helpers are in `MenuTheme`:
-- `symbolRow(parts, fontSize, color)`: a row of parts that ignores the mouse. A part is a String (a label), a Texture2D (an icon at the text's height) or a cost Dictionary `{"coin": n, "gem": n}`.
-- `costParts(cost, short)`: a cost as [amount, icon...]; `short` writes 10,000 and up as "10k" for tile corners.
-- `setButtonParts(button, parts)`: parts centered on a button in place of its text, in the button's own font colour (dark on a primary button); the key hint stays at the right end.
-- `priceChip` puts the number before the coin as well.
+Amounts read as numbers followed by the game's symbols, not words: "1,500 (coin)  3 (gem)". Use words only where there is no symbol (UNLOCK, NEED ... MORE, PLAY, MAX).
 
-Use words only where there is no symbol (UNLOCK, NEED ... MORE, PLAY, MAX).
+- `MenuTheme.symbolRow(parts, fontSize, color)`: a row that ignores the mouse. A part is a String, a Texture2D or a cost Dictionary `{"coin": n, "gem": n}`.
+- `costParts(cost, short)`: a cost as parts; `short` abbreviates large amounts for tile corners.
+- `setButtonParts(button, parts)`: parts on a button in place of its text.
 
-## Transitions (`scene/ui/transitions/`)
+## Transitions
 
-One language for every screen change: a corrugated **garage shutter** for screens, with **tire smoke and skid marks** wherever the car (or a panel acting like one) moves.
+One language for every screen change (`scene/ui/transitions/`): a corrugated garage shutter for screens, tire smoke and skid marks wherever the car, or a panel acting like one, moves.
 
-| Moment | What happens | Where |
+| Moment | Use | Example |
 |---|---|---|
-| Garage <-> Run setup | Full slam: the door drops (240 ms, gravity), lands with a thud, an 8 px shake, dust and chips, bounces, the screen swaps behind it, then it rolls up (450 ms, rattle). | `main2.goToSetup/goToGarage` -> `Transition.play` |
-| Start a run | The door slams over run setup with the level's name stencilled on it; 12 lamps light with load progress. The scene changes behind it; the run waits paused while the world builds (the TileManager keeps streaming), then the door rolls up with smoke pouring from under the rail on the car revving (`Level.burnout`: a rev and a squeal, and no cloud off the car's tail, which hid the car and the semi's trailer), and the usual 3-2-1 starts the run. The player's camera keeps following while the run is paused (`process_mode` Always), so the car is centred from the moment the door rises. | `main2.startLevel`, `Level.holdUnderShutter/revealRun`, `playerRoot.addCountdown` |
-| Pause | A half shutter drops from the top with the card hanging from its rail on two straps; the card swings once. Continue rolls the door up and takes the card with it. | `pauseMenu.intro/outro` |
-| Prize games (Claw Crane, Hubcap Shuffle, Goon Press, The Deal, Pachinko Drop, Slot Machine, Coin Pusher, Pit Shop) | The panel skids in from the right and brakes (rubber marks, brake puffs), then a hatch shutter over it rolls up to reveal the game. Leaving the winnings board: the hatch slams and the panel peels out left in smoke, then the quick countdown. A game closed because another pausing screen follows at once (`close(false)`) leaves instantly. | `GameHatch`, `PickupMenu.close` |
-| Results | WRECKED: a wall of tire smoke, the ticket skids in from the left. Every other ending: the shutter slams over the run and the ticket prints up out of its rail in six pushes. | `gameSummary.intro` |
-| Back to the menu | The ticket pulls back into the rail, a door carries across the scene change (`Transition.carry`), and the garage rolls it up before counting the payout in. | `gameSummary.outro`, `main2._ready` |
-| Overlays | The Goonopedia, Pickups, Settings, Level Options and the records ticket drop in a little and settle with a clank. | `Juice.dropIn`, `gameSummary.intro` |
-| Countdown (start lamps) | A drag-strip lamp rack: three ambers a second apart with a relay clunk, green on GO with a tire chirp and a puff off the car. At run start it drops in on its rail (`dropIn`); on resumes it is simply there. The run stays paused for the three steps and unpauses on GO; back from a prize game the lamps step every 0.25 s (`QUICK_STEP`, `PickupMenu.resumeRun`). | `countdown.gd/.tscn`, `playerRoot.addCountdown` |
-| Slot prizes (payout chute) | After Collect the hatch slams, the won symbols drop out of a chute under its rail (4 / 8 / 16 by Slot Celebration), bounce once and fly to the payout, then the panel peels out. Paid before it starts. | `PayoutChute`, `GameHatch.leave(whileShut)` |
-| Gift box | A gold flash on the left visor; the box drops in, rattles, pops its lid on the prize game (name and tier) and opens it after 1 s (Accelerate or a click skips). | `playerRoot.checkGiftBox`, `GiftBox` |
-| Wave survived | The right visor flashes and the wave's star flies to its ring. Entering a district shows nothing (docs/HUD.md, "The visors"); only the capture kit's stages post a `RoadSign` now. | `playerRoot.waveSurvived` |
-| Milestones | Goonpocalypse target: a TARGET SMASHED stamp. Marathon station: a "STATION - LEG n OF m" banner. First crush of a goon: a NEW GOON banner. The newer modes post their own (a gate or checkpoint passed, a lap, a mark down, a rival out or wrecked). Lottery match: a MATCH! stamp on the ticket. Nightfall: a NIGHT FALLS banner and a headlight clunk. | `Stamp`, `TapeBanner` |
-| HUD and results | Toasts drop in with an overshoot and a rim flash, legendary ones get a stamp; the Nuke is an orange shockwave (no white-out); the station is an edge pill; blinks hold steady under Reduce Flashing; world labels use the HUD font; results rows slide in and the stamp lands like `Stamp`; reels settle with a clank; the wreck rolls smoke and shakes the camera. | `HudChance`, `HudTheme.blinkOn`, `GoonFx`, `gameSummary`, `SlotMachine` |
+| A real scene or screen change | `await Transition.play(swap)`: slam, run `swap` behind the door, roll up | `main2.goToSetup` |
+| Loading | `Transition.close(title, sub)` stays down with progress lamps; `Transition.carry()` picks a door up across `change_scene` | `main2.startLevel`, `Level.holdUnderShutter/revealRun`, `gameSummary.outro` |
+| An overlay | `Juice.dropIn`; pause uses a half shutter | Goonopedia, Settings, `pauseMenu.intro` |
+| An in-run game | `GameHatch`: the panel skids in under a hatch | `PickupMenu` |
+| Run start and resume | The start lamps; quick after a prize game | `countdown.gd`, `PickupMenu.resumeRun` |
+| A milestone in a run | `TapeBanner.post(text)` (they queue), `Stamp.slam(...)` | `Level`, `SpawnManager` |
 
 **Rules.**
 
-- **One sound family:** thud, clank, rattle, screech, skid, hiss, whoosh, pop, rev. They are synthesised by `scripts/art/transition_sounds.py` into `sound/ui/transition/`: change the script and re-run it, never edit the WAVs. Play one with `Transition.sound(name, db)`.
-- **One shake strength:** `Juice.rumble`, 8 px for a full slam, 4 for a half door or a brake, 2 for a landing; it decays in under 0.25 s and never touches the HUD.
+- **Rewards are never credited by a transition or an animation.** Pay first, then play it.
 - **Full slams only for real scene changes.** Overlays get a half door, a hatch or a drop.
-- **Rewards are never credited by a transition:** the slot machine pays its reels before its outro starts.
-- **Settings:** puff counts scale with Exhaust Smoke (`gfx/smoke`: off, x0.4, full) and marks with Tire Marks; Reduce Motion fades a still door in and out (150 ms each) with no shake, smoke or skids.
-- **Harnesses:** headless runs, `--bench` and `--playtest` skip every transition (`Transition.instant()`): nothing is drawn, swaps run at once and timings are unchanged.
-- `Transition.busy()` is true while a door is moving or down; the main menu ignores input then. The door lives on the tree root at layer 90, above RunView, so it survives `change_scene`. In-run doors (pause, hatch, results) live in their own CanvasLayer instead, because a run may render inside RunView's SubViewport.
+- **One sound family** (`Transition.sound(name, db)`) and one shake (`Juice.rumble`). The sounds are synthesised by `scripts/art/transition_sounds.py` into `sound/ui/transition/`: change the script and re-run it, never edit the WAVs.
+- **Settings:** smoke follows Exhaust Smoke, marks Tire Marks; Reduce Motion fades a still door.
+- **Harnesses:** headless runs, `--bench` and `--playtest` skip every transition (`Transition.instant()`): swaps run at once. Code must not depend on a transition's timing.
+- `Transition.busy()` is true while a door is moving or down; menus ignore input then.
+- The menu's door lives on the tree root above RunView, so it survives `change_scene`. In-run doors live in their own CanvasLayer, because a run may render inside RunView's SubViewport.
+- The run waits paused behind the loading door until the world is built. A door must not be freed or re-opened mid-load, and the level always starts the lamps however the door goes.
+
+**To add a transition:** use a row above. For a new effect, add it to `transitions/` with a `Transition.instant()` path and a Reduce Motion path, take sounds from the family, and cover it in `tests/game/test_transitions.gd`.
 
 ## Main menu (`scene/player/menu/main/`)
 
-`main2.tscn` holds only the voice player and the version label; `main2.gd` builds the rest in code. It has two screens.
+`main2.tscn` holds only the voice player and the version label; `main2.gd` builds the rest. The save holds every selection; the menu only draws it. Its header comment lists the keys.
 
-**Garage.** A carousel of `DriverCard`s: the selected card is in the middle, with two on each side, scaled down and dimmed. Side cards show their back, only the background art and the portrait standing at its foot; selecting a card flips it over to its front (it squeezes to an edge with a little tilt, swaps faces, then opens out with a flash and an overshoot; `DriverCard.flip`, a crossfade with Reduce Motion), and the card it left flips back. The focused card's Upgrades, Drive and Pickups sit in a tray at the bottom centre, under the card (`main2.actionDock`, which holds every card's `actions`; see "The dock"). What is on a card is under "Driver card".
-
-- **Choosing a driver:** LB/RB, Q/E, Left/Right or the mouse wheel picks a driver; clicking a side card selects it.
-- **Accept:** drives an owned car, or unlocks a locked one for its price (a gold flash; a shake if it can't be afforded). Entry cars cost coins; advanced ones coins and gems, and the button says what is short ("NEED 3 MORE GEMS"; docs/PICKUPS.md, "Unlocks").
-- **Upgrades (F / Y, or the Upgrades button):** opens the driver focus (below), where upgrades are bought. The same key closes it.
-- **Pickups (G / View, or the Pickups button):** opens the Pickups screen (below).
-- **Goonopedia (B / L3, or the book button in the top bar):** opens the Goonopedia.
-- **Records (R / X):** opens the driver's records ticket.
-- **Esc / Menu:** opens Settings in the garage. In run setup Esc goes back (it is both `ui_cancel` and `ui_menu`, and `main2._input` reads Back first); Settings is the gear button there, or Start on a pad.
-- **Corners:** top left, Quit, Settings and the Goonopedia (`main2.barButton`), then the radio; top right, the bank; bottom left, level with the hint bar, Discord and Wishlist.
-- **Radio:** a `NowPlaying` card shows the song and station (270 wide in the garage, clear of the logo, 330 in run setup: `main2.switchLayer`); a click skips to the next song (or turns the radio on) and a right click turns it on or off. Mouse only; with keys or a pad it's in Settings → Audio and the pause menu (docs/RADIO.md).
-
-**The dock.** One tray (`DOCK_SIZE`), in the same place in the list and in driver focus: **Upgrades** on the left, the one primary button **Drive** (or UNLOCK / NEED ... MORE) in the middle, **Pickups** on the right, each with its key chip. Upgrades and Pickups are worked by their keys or a click and never take the focus. Each carries a `CountBadge` (`scene/ui/count_badge.gd`) on its top right corner:
-- **Upgrades:** the stats on this car whose next level the coins cover now, 0 to 8 (`DriverCard.affordableUpgrades`).
-- **Pickups:** the pickups and prize games that are ready and that the bank covers (`Unlocks.buyableCount`).
-- Each is counted on its own, so one purchase can lower a count by more than one. A badge is hidden at 0. It hops every 2.2 s (the two are offset), swells and settles when its number changes, and sits still with Reduce Motion. It is tween-driven.
-- On a locked car Upgrades reads DETAILS and has no badge. In driver focus it reads DRIVERS and has no badge.
-
-**Driver focus** (`main2.toggleFocus`, `setFocusOpen`; `driver_bench.gd`, `DriverBench`). Upgrades clears the other drivers off the screen (they flip to their backs and slide off both edges), moves the focused card to the left (`FOCUS_CARD_POS`) and slides its bench in from the right (`BENCH_POS`; a fade with Reduce Motion, at once in the harnesses). The bench, top to bottom:
-- **Head:** UPGRADES, the car's strong and weak stats against the other cars' averages (`DriverBench.strongWeak`), and "N / 160 bought".
-- **Eight stat rows:** icon, name and what the stat does (`DriverCard.STAT_TEXT`), a bar against 100 (cream for the base stat, gold for upgrades bought), the value with a gold +N, the level out of 20, and a buy button with the next level's price in symbols: solid orange when the coins cover it, dim when they don't, MAX at the cap.
-- **Signature:** both features with their full text (`signatureBlock`), and the car's best run.
-
-Up/Down move between the buy buttons (only the button shows the focus; the row is remembered from driver to driver), Buy (E / A, `ui_buy`) or a click buys (`DriverBench.buyUpgrade`, `SaveManager.requestStatUpgrade`: the buy sound, a gold wash over the row, the bar's new part glows and the number pops; a shake when the coins are short), and Accept on the keyboard (Space) drives from any row; Down from the last row reaches Drive, which is how a pad gets there, since its A buys on a row. Left/Right, LB/RB, Q and the wheel change driver (E buys on a row, so the hint shows A/D). Upgrades, Back or Esc returns to the drivers; going to run setup closes it. A locked car's bench is read only (STATS, no buttons) and the dock's UNLOCK has the focus.
-
-**Driver card** (`driver_card.gd`). A 380 x 560 card. Its front, top to bottom: the driver's portrait over the car's background art, against the card's right edge (the drivers stand at the right of their pictures, and the sedan's, van's and racer's are cut off there), a "6-SPEED MANUAL" chip in its top right corner on a manual car (docs/CAR_ART.md, "Gearbox"), and the eight stats in a black rail against the card's left edge that runs down into the name band and ends in a cut corner, edged in orange (`DriverCard.StatRail`; one row each: icon and value over a 3 px bar against 100, cream for the car's base stat, gold for upgrades bought; display only, with no hover or click); the name band, with the name right of the rail and the car type and weight class at its right end; and, on every card, locked or not, the car's two signature features (`DriverCard.traitLine`, docs/CAR_ART.md "Traits"): the icon, the name, the kind in its colour (sky for physics, gold for mechanics, orange for abilities, with the Ability key) and the one-line `short` text; hovering one shows its full text. Its buttons are in the dock. Under the focused card, outside its frame, a pill shows the car's progress (`SaveManager.carProgress`, from `meta.carClears`): a bronze, silver and gold star with how many level-and-mode wins it has on Easy, Medium and Hard or harder, and "N / 30 levels won" (levels it has won any mode on; the demo counts all 30), or "Not raced yet". Locked drivers are silhouettes that still show their features, with no stats and a lock and the price in symbols (or "Not in the demo") on a smoked strip over the foot of the art (`priceLine`: "10,000 (coin)  5 (gem)", gold when the bank covers it). The focused locked card's button says UNLOCK, or "NEED 7,000 (coin) 1 (gem) MORE" (disabled) when short; Upgrades reads DETAILS.
-
-**Run setup** has two steps: the road map picks the level, then Level Options picks the mode and tier (`main2.optionsOpen`, `openOptions`, `closeOptions`).
-
-*The road map.* One region at a time (`Territories`): its name in its colour and its blurb at the top, and its five stops as posters along a winding road (`main2.roadCurve`, a `Curve2D` through `STOP_SPOTS`; Q/E or LB/RB, A/D, the number keys 1-5, the mouse wheel, or a click on a stop; the selected stop is bigger). A **region button** sits at each end of the road (`regionButtons`, `makeRegionButton`): the one at the start leads to the region before, the one at the end to the region after, each showing its key (Z / C or LT / RT, `ui_region_prev` / `ui_region_next`) and the region's name. A region that isn't open yet (its first stop locked, or not in the demo: `isRegionOpen`) shows a lock and shakes when pressed; the first region has no button before it and the last none after. Q/E walk on into the next region at either end only when it is open. Each poster has its art, its name band and a **glyph per mode** (`Root.modePath`): the mode's icon (`HudTheme.MODE_ICONS`) drawn in one colour by a small shader (`GLYPH_SHADER`, shared `glyphMaterials`), in the colour of the best medal any car has won there (grey when open, faint when locked), over a **bar** in the colour of the current driver's own medal (`SaveManager.carClearTier`). A chip at the top right names the current driver, and a legend explains the glyph and the bar. **SELECT**, a round button at the bottom right where START is on the next step (`main2.roundPrimary`) (Accept, or a click on the selected stop) opens Level Options; on a locked level it reads LOCKED, with what opens the level under it. **BACK** at the bottom left, beside the links (Esc / B, `main2.onBackPressed`) returns to the garage; it sits in the same place in Level Options, where it returns to the road map. The road map says nothing else about a level: that is in Level Options.
-
-*Level Options* drops in over the road map (`Juice.dropIn`) for that level, over a scrim that keeps the level's art out from under the text. Its **title row** is on the sections' left edge (`TITLE_ROW`): the level's name, the region's name and **a button per stop** (`stopButtons`; 1-5 or a click opens that level's options without the road map, `optionsStop`; a locked stop is dim and shakes). The screen is three sections on one grid (x 60 to 1540, 48 px apart and 48 px clear of the hint bar: it is an arcade screen and wants the white space): the level (`LEVEL_BAND`); the mode rows and the pane, the same height (`MODE_LIST_POS`, `OPTIONS_PANE`; the built rows share it); and the records and the launch plate (`RECORDS_PANEL`, `LAUNCH_PLATE`). All four panels use one box style. Top to bottom:
-
-- **The level**, in a band across the top (`LEVEL_BAND`): its poster, then its facts as groups of tiles (`main2.fillFacts`, capped by `FACT_CAPS`): GOONS (the line-up, `LevelRoster.lineupFor`; a goon not crushed yet is a question mark; the tag reads GOONS ELITE in an elite region), GROUND (a swatch of each surface from `baseTerrain` and `accents`), PROPS (the level's field props, heroes and dressing, from `props.json`; a long prop shows its middle, `squarish`) and RULES (`levelRules`, from `LevelDef.rules`: the night's share of each day, Dazed Heavies, Oak Coins and its events, the likeliest first; `EVENT_FACTS` has their words). The tile Z/C has walked to, or the one under the mouse, fills the card at the band's right end (`showFact`): its name, chips for what matters (a goon's rank; FAST, SLOW or SLICK with the friction and grip from `World.TERRAIN`; "Smashes at" a speed or SOLID, Pays coins, Blocks light; RULE or EVENT) and one line; with no tile it shows the level's blurb. A click on a goon's tile opens the Goonopedia.
-- **A row per mode**, down the left (`main2.makeModeRow`, `refreshModeRow`): the mode's icon in a ring (a lock while it can't be started), its name on one line, and at the right three medals (`medalDot`, `setMedal`: a disc in bronze, silver or gold once that tier is beaten) over a bar for the current driver's own. A mode that isn't built yet is a slim row reading "Coming soon".
-- **One pane** for the selected mode (`OPTIONS_PANE`): its name with a few words about it at the right end (`Modes.short`; the full description and win rule, `Root.gameModeDescription` and `Root.MODE_RULES`, are the name's tooltip); the **tier switch**, Easy, Medium and Hard (`ModeTiers`, Hard locked until Medium is beaten; `main2.refreshTiers`), each segment with its medal, its goal as a number (`ModeTiers.goalText`: "Survive 4:00", "Reach the station in about 2:40"; the races' clocks come from the route once the world is built, so theirs is the planned drive's, `goalSeconds`) and its win bonus, so the three compare at a glance; under it one line (`stakes`): why the run can't start, in red, or what a win opens, in green (`main2.opensText`: Countdown behind Sprint, the featured modes behind Countdown, the next level behind a road mode, on Medium at a finale), and the first-clear bonus still to earn (or "First clear paid"); and the **car strip**, the 9 cars' side views (`CarInfo.sidePic`) for the selected level, mode and tier (`main2.refreshCarStrip`): a car in colour has won there on that tier or harder, a dim car is owned but hasn't won, an outline (a small edge shader) is a car not owned yet, the current driver is bigger over an orange bar, and the label counts the cars cleared (`carsCleared`) or reads FULL GARAGE in gold (`isFullGarage`); a click on an owned car makes it the driver.
-- **The records here**, bottom left (`RECORDS_PANEL`, `main2.refreshRecords`): the current driver's best medal on this level and mode, beside the best by any car and who holds it (`meta.carClears`), with the record book's line where the mode keeps one (`recordText`: a fixed course's best time, Goonpocalypse's time and score). The save keeps no per-level time for Sprint, Countdown or Marathon, so those show medals only. Q/E changes the driver and the panel with it.
-- **The launch plate**, bottom right (`main2.buildLaunch`), four items evenly spaced, left to right: the **driver** pill (the car, the name; Q/E, LB/RB or a click takes the next car owned, `stepDriver`), the two round **loadout slots**, Gadget (F / Y) then Boost (V / RS), each showing its pickup's icon (or a plus) with what it holds written to its right (`refreshLoadout`: the pickup's name over "x3 2 (gem)", or GADGET over "from 1 (gem)"), and a round **START** (`roundPrimary`, Accept) with a badge for the gems the loadout will take. The road map's driver chip hides here.
-
-It opens on the mode and tier last used, so a repeat run is Accept, Accept. The pane's edge takes the mode's category colour. Changing the mode or the level slides the pane's content in from the right as it fades up (`main2.slidePane`), and changing the tier pops its segment (neither with Reduce Motion). The slots buy a consumable to start with for each of the car's slots: Gadget cycles a gadget for the Fire slot (`Pickups.LOADOUT`, 1 to 4 gems) and Boost a boost for the Boost slot (`Pickups.BOOST_LOADOUT`: Hop 1, Nitro 2, Jump Jets 4). Only unlocked gadgets and boosts are offered (`Pickups.openLoadout`). Each skips what the gems can't cover alongside the other slot's choice, and its tooltip gives the pickup's text and the key that fires it in the run. The choices are kept in `meta.records.loadout` and `meta.records.boostLoadout` and paid at Start, the gadget first (`slotPurchase`). A second into the run a toast names each one and its key ("AIR HORN x3 - PRESS E"). G / View opens Pickups from here too; closing it refreshes the setup and the bank. The hint bar shows only Mode, Tier, Level Info, Records and Pickups: the buttons show their own keys.
-
-- **Mode rows:** there are five (`MODE_SLOTS`): Sprint, Countdown and the level's three featured modes (`Root.modePath`, `main2.modeOrder`), so the rows change with the level; a featured mode's ring is its category's colour (Crusher, Trial, Goon Cup: `Modes.CATEGORY_COLORS`). A built mode that can't be started yet shows a lock; the reason ("Beat Countdown To Unlock") is its tooltip. The reason a mode or tier can't be started also shows under the tier switch (`main2.lockReason`; a locked tier says so on its own segment), and Start reads LOCKED or COMING SOON (a mode that isn't built yet, `Root.MODE_AVAILABLE`).
-- **Focus and keys:** SELECT on the road map and START in Level Options hold the focus (`main2.focusSetup`), so Accept always goes on; nothing else in Level Options takes it. There W/S (Up/Down) pick the mode (`stepMode`, the rows wrap), A/D (Left/Right) the tier (`stepTier`), Z/C (LT/RT, `ui_region_prev` / `ui_region_next`) walk the level's tiles (`stepFact`: a white ring on the tile and its card beside them; past either end is no tile and the blurb; with Shift, a group at a time), 1-5 open another stop of the region, Q/E the driver, F the gadget, V the boost, Esc back, R records, G Pickups. The mouse does all of it by clicking.
-
-**Loading.** Cards load their `CarInfo` (portrait, background, intro lines) on a worker thread only when they come into view; level posters do the same. This keeps the menu light on the HD 620.
-
-**Mouse.** Every hint in the bottom bar is a button, the region buttons, stops, SELECT, BACK, the level's tiles, mode rows, the tier switch, the car strip, the driver, the two slots and START click, and the wheel steps the garage's drivers and the road map's stops.
-
-**Input handling.** Navigation runs in `_input`, before the GUI, so Left/Right switch cards instead of moving focus. Up/Down go to the GUI, which is how the bench's rows are chosen in driver focus. The menu ignores input while `Settings.menu_open` is set or a node in group `menuOverlay` (the records ticket) is open.
-
-**Other scripts call these:** `startLevel(path)` (bench), `animateCoins(from, to)` and `statUpdatesUiUpdate()` (SaveManager), and `add_child(menu)` (settings, dialogs).
-
-## Pickups (`scene/player/menu/pickups/pickup_shop.gd`, `PickupShop`)
-
-Where pickups and prize games are unlocked, opened with G / View or the dock's Pickups button from the garage or run setup. A full-screen overlay on the same frame as the Goonopedia (`CodexPage`, below): tiles on the left, a card for the focused tile on the right, the bank in the header.
-
-- **Tabs:** seven (`PickupShop.TABS`): Loot, Supplies, Tune-ups, Power-ups (with the Mode Specials), Gadgets (with the Boosts), Casino (which includes the gift box games) and Skill. LB/RB or Q/E step through them, 1-7 pick one, and they click. Each shows its starter's icon, its name over "open / all", and a `CountBadge` for what the bank covers there (`isBuyable`, the same rule as `Unlocks.buyableCount`, so the tabs' badges add up to the dock's). The kinds themselves (`Pickups.K`) are unchanged: a gadget and a boost still have a slot each, and mode specials still drop only in their mode.
-- **Where it opens:** on the first tab with something the bank can buy, else the first with something to work toward (`startTab`), with the focus on that tile (`firstFocus`); every tab change does the same. So Pickups, then Accept, buys the first thing on offer.
-- **A tab:** the kinds' names and a note, then their unlock trees side by side (two kinds get a name each over their columns, and the tiles narrow to fit; `buildPickupTree(kinds)`): starters on the top row, each pickup's children on the row below, spread over the columns their leaves take (`placeTreeNode`), with elbow lines from parent to child (`drawTreeEdges`: gold to an unlocked pickup, cream to one that can be unlocked or worked toward now, dashed to a "???" or from a prerequisite that is still locked). A pickup that needs several others (`after`: the Toolbox) sits under the middle of them with a line from each. A tree deeper than the panel closes its rows up to fit (`TREE_HEIGHT`). The stick, D-pad or WASD move between tiles.
-- **Tiles** follow the unlock states (`Unlocks.state`): an open pickup shows in full; one whose parent is open shows dimmed, with its price (or PLAY, or FULL GAME in the demo) in the tile's corner, gold when the bank covers it; the rest are "???".
-- **Buying:** Accept on a focused tile buys it (`buyPickup`, `Unlocks.buy`: the garage's sound, a gold flash and a pop; a shake when it can't be bought). With the mouse, the click that focuses a tile only shows it (`isPickingClick`: the tile focused when the button went down); a second click, or the card's gold UNLOCK button (under the picture; NEED ... MORE when short), buys. The tab is rebuilt in place and the bought tile keeps the focus, so its children come into view.
-- **The card:** rarity and kind chips, the registry's text, what it leads to, share of goon drops in the selected mode (`PickupShop.dropShare(id, mode)`), duration, uses, modes, night-only and the factions that drop more of it; for a locked pickup its price and UNLOCK button, or its play condition and progress. The gift box games (docs/PICKUPS.md, "Casino and the gift box games") carry a PRIZE GAME chip and a tip about gift boxes, and the four that goons don't drop say so.
-- **Header:** pickups open, and the bank in a pill, in symbols (`CodexPage.refreshBank`).
-
-## Goonopedia (`scene/player/menu/goonopedia/goonopedia.gd`)
-
-A reference to the game's content, opened from the main menu with B / L3 or the book button in the top bar. It's a full-screen overlay (group `menuOverlay`), built in code like the main menu. Two pill tabs (LB/RB, Q/E, or 1-2): **Goons, Systems**. Pickups are on their own screen (above), cars in the garage's driver focus, and levels and modes in run setup (Level Options). Each tab is a grid of tiles on the left and a detail card for the focused tile on the right. Back closes it and emits `closed`.
-
-**The shared frame** (`codex_page.gd`, `CodexPage`). The Goonopedia and the Pickups screen both extend it. It builds the header, the tab row, the tile panel and the detail card, handles the tab keys, Back and the page's own key (`closeAction`), and holds the helpers both use (`section`, `grid`, `tile`, `showcase`, `titleRow`, `paragraph`, `tipRow`, `factRow`, `statTable`). A page sets `title`, `icon`, `listWidth`, `hints` and `sellsThings` (the bank in the header) in `_init`, and supplies `tabNames()`, `buildTab(index)`, `drawDetail(entry)`, and `startTab()` and `firstFocus()` if the defaults (the first tab, the first tile) won't do.
-
-**Where the content comes from.** Nothing is listed by hand, so new content shows up by itself:
-
-| Tab | Entries | Numbers |
+| Screen | Built by | Notes |
 |---|---|---|
-| Goons | `Goons.DATA`, grouped by faction | speed, damage, crush speed, head-on armour, the system it wears, pack size, the classes it plays in (`Goons.classesOf`), biomes, and the player's crush count |
-| Systems | the car's systems | `CONDITION_FLOOR` and the goons whose attack wears each one |
+| Garage | `main2.buildGarage`, `driver_card.gd` (`DriverCard`) | Driver cards; the dock (`actionDock`) holds the focused card's buttons |
+| Driver focus | `main2.setFocusOpen`, `driver_bench.gd` (`DriverBench`) | The bench beside the card, where upgrades are bought |
+| Run setup: road map | `main2.buildMap`, `makePoster` | One region at a time, five stops |
+| Run setup: Level Options | `main2.buildOptions`, `buildLaunch`, `refreshSetup` | Mode, tier, driver, loadout, START |
+| Pickups | `pickups/pickup_shop.gd` (`PickupShop`) | A `CodexPage` |
+| Goonopedia | `goonopedia/goonopedia.gd` | A `CodexPage` |
 
-**Card layout.** Objects (goons, pickups, systems) get a `showcase`: a square art panel with a soft glow in the faction or rarity colour, and the name, chips, text and tip in a column beside it; `endShowcase()` sends the rest (the stat table) back to full width. The card helpers (`titleRow`, `paragraph`, `tipRow`, `factRow`, `statTable`) add to `into`, which is the showcase's column or the card. Goon tiles are cropped to the goon's visible pixels (`artBounds`, `Image.get_used_rect`, cached), and the animated preview zooms to the idle frame's bounds, capped at 2× the baked pixels so small goons stay sharp. Pickup and icon art stays near its 96 px import size.
+- **Input** runs in `main2._input`, before the GUI, so Left/Right switch cards instead of moving focus. It returns early while `Settings.menu_open`, a `menuOverlay` or `Transition.busy()`.
+- Cards and posters load their art on a worker thread only when they come into view.
+- **Other scripts call:** `startLevel(path)` (bench), `animateCoins` and `statUpdatesUiUpdate()` (SaveManager), `add_child(menu)`; the career harness reads `lockReason` and presses `loadoutButton`.
 
-Only the plain-language text lives in the script: `VERB_TEXT` (behaviour and tip per verb), `ACT_TEXT` (Scrap Gang acts), `TRAIT_TEXT` (DATA flags), `SYSTEMS`. A goon's DATA can carry `"blurb"` and `"tip"` strings to override its verb's text. `test_goonopedia.gd` fails if a goon uses a verb or act with no text.
+### Driver card
 
-**Discovery.** Goons show as silhouettes named "???" until the player crushes one; the card then shows their faction, rank and habitat. Every crush the car makes is counted per goon id (`crushedById`), and `gameSummary` adds the run's counts to `PlayerData.goonsCrushed` (save version 3) and names first-time goons on the ticket ("New in the Goonopedia: ..."). Goons the car kills another way count too: blasts, a kicked shell, and a drowning within 3 s of the car touching the goon (`SpawnManager.creditCrush`). Set `REVEAL_ALL` to show everything.
+`STATS` and `STAT_TEXT` are the one list of stats, which the bench and the pause menu reuse. A card's buttons (`actions`) are re-parented into the dock; the side buttons never take the focus, and their badges count what the bank covers (`affordableUpgrades`, `Unlocks.buyableCount`).
+
+### Driver focus
+
+On a bench row Buy (`ui_buy`, E / pad A) buys and Accept still drives, so `main2._input` reads Buy first. Because pad A buys on a row, Down from the last row reaches Drive: keep that path when changing the bench's focus (`linkFocus`). E is also next-driver elsewhere, so the hint shows A/D here.
+
+### Run setup
+
+- Mode order, unlocks and what a win opens are not the menu's rules: it asks `Root.modePath`, `Root.isModePlayable`, `ModeTiers` and `SaveManager` (CLAUDE.md "Flow", docs/MODES.md).
+- SELECT on the road map and START in Level Options hold the focus (`focusSetup`), so Accept always goes on; nothing else there takes it.
+- Esc is both `ui_cancel` and `ui_menu`: in run setup Back is read first, so Esc never opens Settings there (the gear button and Start on a pad do).
+- The level's fact tiles are generated from the `LevelDef`, `props.json` and `World.TERRAIN` (`fillFacts`); only `EVENT_FACTS` holds words.
+- The loadout slots sell only unlocked gadgets and boosts (`Pickups.openLoadout`) and are paid at Start, the gadget first (`slotPurchase`); choices are kept in `meta.records.loadout` and `boostLoadout`.
+
+## Pickups
+
+`PickupShop` is where pickups and prize games are unlocked (rules: docs/PICKUPS.md, "Unlocks"). Tabs are `PickupShop.TABS`, each drawing its kinds' unlock trees from `Pickups.DATA`. It opens on the first tile the bank can buy, so Pickups then Accept buys. With the mouse, the click that focuses a tile only shows it (`isPickingClick`); a second click or the card's button buys.
+
+## Goonopedia
+
+Two tabs, Goons and Systems, generated from `Goons.DATA` and the car's systems. Only plain-language text lives in the script (`VERB_TEXT`, `ACT_TEXT`, `TRAIT_TEXT`, `SYSTEMS`); a goon's DATA may override it with `"blurb"` and `"tip"`. `test_goonopedia.gd` fails if a goon uses a verb or act with no text. Goons are silhouettes until crushed (`PlayerData.goonsCrushed`; `REVEAL_ALL` shows everything).
+
+**`CodexPage`** (`goonopedia/codex_page.gd`) is the frame both pages extend: header, tab row, tile panel, detail card, the tab keys and Back. A page sets `title`, `icon`, `listWidth`, `hints` and `sellsThings` in `_init` and supplies `tabNames()`, `buildTab(index)`, `drawDetail(entry)`, and `startTab()` / `firstFocus()` if the defaults won't do. Use it for any new reference or shop page.
 
 ## In-run menus
 
-- **Pause** (`pauseMenu.gd`). A card hanging from a half shutter ("Transitions"): Continue (Esc / Menu), Settings, a Radio row (left/right turn it on or off, a Skip song button beside it, the song under it; docs/RADIO.md), Abandon run (it says how many coins the run keeps), and Quit game. These are separate buttons, and with Confirm Abandon / Quit on, each asks for a second press. Under them are the mode, clock and crush count, and the car's stats with a gold +N for what pickups added.
-- **Results** (`gameSummary.gd`). A torn paper ticket.
-  - **Reveal:** rows appear one at a time (time, then the mode's own row: Goonpocalypse score, Marathon stations reached or Defense barrier, then top speed, crushes, coins, powerups, gems, slot machines). The first fresh press speeds the reveal up and the next one continues; `isFreshPress` is covered by `test_progression.gd`.
-  - **Payout:** a won run first gets a "Win bonus (tier)" row (`ModeTiers.winBonus`), then (coins + bonus) × the star multiplier (1 + 0.1 a star, at most ×3; the label gives the star count) = paid, from `Level.runPayout`. The first win of a tier adds a "First clear (medal)" row with its coins and gems (`ModeTiers.firstClear`), paid outside the multiplier. The header names the tier ("MEDIUM SPRINT - ...").
-  - **Car clears:** a win credits the run's car on that tier and the tiers below (`SaveManager.creditCarClear`, `meta.carClears`). A car's first clear of a tier adds a "New car clear (driver)" row with a NEW CAR badge and its coins (10% of the tier's first-clear coins × the level step), and the ninth car to clear a mode, level and tier adds a "Full Garage (tier)" row with a FULL GARAGE badge and its gems (1 / 2 / 4). Both are paid with the first-clear bonus, outside the multiplier. Amounts in these rows are symbols (`addSymbolRow`, `MenuTheme.symbolRow`).
-  - **What opens next:** a featured-mode win that opened the next level adds a "Road open" row naming it (and its region after a finale: "Mudlick Marsh, Tribe Country"; `roadText`). After any win a footer note says what is left here to open the next level ("Win Marathon, Rally Stage or Cannonball here", naming the level's featured modes that can be played; "... on Medium here" at a finale) or that it just opened (`nextLevelNote`, `Root.openLeftText`). The ticket credits the run's own level, mode and tier, not the menu's selection.
-  - **Unlocks:** pickups that play opened this run get an "Unlocked" row with a NEW PICKUP badge and their count, and the names wrap on a line under it (`addWrapped`, at most 8 then "and N more"; `Unlocks.refresh`, after `Unlocks.countRun` adds the run to `meta.lifetime`). The footer note wraps to two lines under the button and shortens its lists (`listed`). With nothing new, the footer says when the next unlock can be bought in Pickups.
-  - **Badges:** a beaten record gets a NEW BEST badge (in Goonpocalypse the time and score rows too, from `SaveManager.recordGoonpocalypse`), then a stamp lands (WRECKED, OUT OF GAS, TIME'S UP, ABANDONED, OVERRUN, CLEARED, or SURVIVED for a Goonpocalypse run past its target). The stamp moves down by a row when the mode adds one.
-  - **Saving:** the payout and records are saved when the ticket opens.
-- **Records.** The same ticket with `isGameSummary = false`, showing the selected driver's bests, plus the longest Goonpocalypse and its best score once there is one. A level's own records are in Level Options' records panel.
-- **Countdown** (`scene/player/countdown.tscn`): the start lamps ("Transitions").
-- **Prize games** (`PickupMenu`; the games themselves are in docs/PICKUPS.md, "Prize games"). The seven prize games and Marathon's Pit Shop share one frame: a dimmed screen and one `CardPanel` of the same size for every game (title, subtitle, a 640 x 420 stage, a status line, clickable key hints). The keys are the same in every game: E (X) acts, WASD moves or picks, Q (Y) rejects, redraws or retries; the action key held as a game opens counts only once released. Each ends on the winnings board, which lists every prize and what it did; the action key or a click leaves through the quick countdown. They pause the run and join group `slotMachine` so the harnesses tap through them. New prize games extend `PickupMenu` and draw on its stage.
-- **Settings** (`settings/*`; the options are in docs/PERFORMANCE.md). It uses `MenuTheme`, pill tabs with LB/RB (Q/E) chips, an orange-rimmed focused row, orange slider fills, and footer buttons with their keys.
+| Menu | Script | Notes |
+|---|---|---|
+| Pause | `scene/player/menu/pauseMenu.gd` | Abandon and Quit are separate buttons; with Confirm Abandon / Quit on, each needs a second press |
+| Results and Records | `scene/player/menu/gameSummary.gd` | One ticket; `isGameSummary = false` shows a driver's records from the menu |
+| Prize games, Pit Shop | `PickupMenu` (`scene/pickups/menus/`) | docs/PICKUPS.md, "Prize games". A key held as a game opens counts only once released |
+| Settings | `scene/player/menu/settings/` | docs/PERFORMANCE.md |
+
+- **Results:** the payout and records are saved when the ticket opens, before any row animates. It credits the run's own level, mode and tier (`Level.runLevel`, `runMode`, `tier`), not the menu's selection. The first fresh press speeds the reveal up and the next continues (`isFreshPress`).
 
 ## Tests
 
-`tests/game/test_menus.gd` covers:
-
-- prompt labels on both devices and switching between them, the left-hand keys going first, the number keys
-- driver cards (silhouette and price for locked cars, stats and Drive for owned ones, two features each), the dock's buttons and count badges, the bench's rows and features, and the progress pill's counts
-- coin formatting
-- pause having separate Abandon and Quit buttons
-- the records ticket
-
-`tests/game/test_goonopedia.gd` covers the Goonopedia and the Pickups card: one tile per goon, silhouettes until crushed, every tab and card building, every verb and act having words, crush crediting, a level's region, class and line-up rows, drop shares adding up to 100% in every mode, and that levels and modes are not described there.
-
-`tests/game/test_transitions.gd` covers the transitions and `tests/game/test_loadout.gd` the loadout slots.
-
-None of these tests write the save.
-
-## Not done yet
-
-- **Per-car card skins:** the HUD has per-car dashboards (`HudSkin`, docs/HUD.md "Dashboards"); the driver cards don't use them.
-- **Car Paint** (`gameplay/car_paint`) could also be a toggle on the driver card.
+`tests/game/test_menus.gd`, `test_goonopedia.gd`, `test_transitions.gd`, `test_loadout.gd`. None writes the save. What they can't see is in docs/TEST_SCOPE_TRANSITIONS.md.

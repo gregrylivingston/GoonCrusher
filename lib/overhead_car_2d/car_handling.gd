@@ -27,7 +27,7 @@ var wheelLow := 34.0         #degrees of full lock at steering 0 (sets the turn 
 var wheelHigh := 44.0        #...and with an endless steering stat
 
 #--- the wheel (playerCarController.steerToward) ---
-var steerTimeSlow := 0.20    #seconds from centre to full lock at steering 0...
+var steerTimeSlow := 0.20    #seconds from center to full lock at steering 0...
 var steerTimeFast := 0.06    #...and with an endless steering stat
 var steerLight := 0.85       #the time's weight multiplier at weight 0...
 var steerHeavy := 1.3        #...and at weight 100
@@ -42,7 +42,7 @@ var gripBlendFrom := 60.0
 var gripBlendTo := 260.0
 var gripLight := 1.15        #grip's weight multiplier at weight 0...
 var gripHeavy := 0.8         #...and at weight 100: heavy cars carry their momentum wider
-var turnScrub := 0.08        #speed lost per radian the travel is swung round (tyres scrubbing)
+var turnScrub := 0.08        #speed lost per radian the travel is swung round (tires scrubbing)
 var thrustSteerCut := 0.12   #share of the engine's push lost at full lock
 
 #--- longitudinal ---

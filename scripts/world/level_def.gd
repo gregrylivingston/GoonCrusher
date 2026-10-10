@@ -9,7 +9,7 @@ class_name LevelDef extends Resource
 
 @export var id: StringName
 @export var displayName: String
-## The level's art in run setup. One path, so the art phase can swap the placeholder posters.
+## The level's art in run setup.
 @export_file("*.png") var poster: String
 ## Its region (Territories.ORDER) and its stop on the region's road (1-5; 5 is the finale)
 @export var region: StringName = &"wilds"
@@ -77,10 +77,8 @@ class_name LevelDef extends Resource
 @export var pickupsPerChunk: int = 3
 
 @export_group("Look")
-## ground colours for the shader fallback: name -> Color
+## ground colors for the shader fallback: name -> Color
 @export var palette: Dictionary = {}
-@export var nightTint := Color.BLACK
-@export var ambience: StringName = &""
 
 ## The thin level scene that sets this def
 func scenePath() -> String:

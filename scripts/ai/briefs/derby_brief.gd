@@ -25,7 +25,7 @@ func objective() -> Dictionary:
 		if score < best:
 			best = score
 			prey = other
-	if prey == null: return {"kind":"gate", "pos":arena.centre, "value":200.0, "key":"ram"}
+	if prey == null: return {"kind":"gate", "pos":arena.center, "value":200.0, "key":"ram"}
 	var at: Vector2 = d.leadPoint(prey)
 	if not arena.inside(at): at = prey.global_position
 	return {"kind":"gate", "pos":at, "value":200.0, "key":"ram"}

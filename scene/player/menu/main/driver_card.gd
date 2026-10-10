@@ -12,7 +12,7 @@ class_name DriverCard extends Panel
 #  traits   the car's two signature features (CarTraits): icon, name, kind and its one-line `short`;
 #           hovering one shows its full text
 #Under the focused card, outside its frame, a pill says what this car has won (SaveManager.carProgress):
-#medals by tier and levels won. Its buttons are `actions`, which main2 docks in a tray at the bottom centre;
+#medals by tier and levels won. Its buttons are `actions`, which main2 docks in a tray at the bottom center;
 #only the focused card's show: Upgrades (opens the driver focus, where upgrades are bought, and reads
 #DRIVERS while it is open; DETAILS on a locked car), Drive (or Unlock) and Pickups (the Pickups screen, PickupShop;
 #tab). Upgrades and Pickups carry a CountBadge: how many the bank could buy right now.
@@ -71,7 +71,7 @@ var focused := false
 var demoLocked := false
 var showingFront := false
 
-var flipper := Control.new() #the card's faces and frame, turned by `flip` about the card's centre
+var flipper := Control.new() #the card's faces and frame, turned by `flip` about the card's center
 var flipTween: Tween
 
 var art := TextureRect.new()

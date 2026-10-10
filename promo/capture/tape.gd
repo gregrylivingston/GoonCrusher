@@ -1,6 +1,6 @@
 class_name Tape extends RefCounted
 
-#A taped drive (docs/PROMO.md, "Hand drives"): what a person held on each physics tick of a run, so the same
+#A taped drive (docs/PROMO.md, "Hand drives and replays"): what a person held on each physics tick of a run, so the same
 #run can be played again and filmed offline at any size. Input in this game is actions held or not (a stick
 #is a strength), so a tape is the list of changes:
 #  line 1          a JSON object: what was played (level, car, mode, tier, seed ...), "ticks", "bookmarks"

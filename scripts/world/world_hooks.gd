@@ -1,5 +1,5 @@
 class_name WorldHooks extends RefCounted
-## Small world rules the goons, their FX and the AI driver share (docs/WORLD.md, "Gameplay hooks"). Static
+## Small world rules the goons, their FX and the AI driver share (docs/WORLD.md, "Goon and FX hooks"). Static
 ## and pure: every query is a grid read through World (World.terrainAt and friends, O(1) array reads on the
 ## live WorldMap), never a physics query, so 250 goons and a planner can call them every tick. Without a map
 ## (the menu, tests without a stand-in) nothing is a wall or lethal, so every rule here is a no-op.

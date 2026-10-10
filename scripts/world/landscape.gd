@@ -9,8 +9,6 @@ class_name Landscape extends Resource
 @export var displayName: String
 ## The layout generator (WorldField grammar): meadow, bayou, canyon, quarry, mountain, highway, city or yard
 @export var grammar: StringName = &"meadow"
-## What the landscape means for the player (not shown anywhere since the Goonopedia's Levels tab went)
-@export_multiline var text: String
 
 @export_group("World")
 ## Generator parameters a level that sets none uses (LevelDef.features)

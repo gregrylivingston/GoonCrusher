@@ -45,14 +45,10 @@ func test_legacy_volume_curve():
 	assert_eq(Settings.legacy_volume(-500.0), 0.0, "the old mute")
 	assert_almost_eq(Settings.legacy_volume(-12.0), 0.5, 0.05)
 
-func test_plain_text_and_reduce_motion_override_presets():
+func test_plain_text_overrides_presets():
 	Settings.apply_preset(Settings.Tier.HIGH, false)
 	Settings.set_value("access/plain_text", true, false)
 	assert_eq(Settings.text_quality(), 0)
-	Settings.set_value("access/reduce_motion", true, false)
-	assert_eq(Settings.celebration_level(), 1)
-	Settings.set_value("access/reduce_flashing", true, false)
-	assert_eq(Settings.celebration_level(), 0)
 
 func test_adapter_id_matches_across_renderers():
 	var vulkan = Settings.adapterId("Intel(R) HD Graphics 620", "Intel")

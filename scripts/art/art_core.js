@@ -1,4 +1,4 @@
-/* GoonCrusher shared art helpers: seeded random, integer hash, value noise, fbm, colour maths, overhead-lit
+/* GoonCrusher shared art helpers: seeded random, integer hash, value noise, fbm, color maths, overhead-lit
    volumes, the grime pattern and the alpha-mask convex hull. Copied from car_gen.js and goon_gen.js (which keep
    their own copies so their output never changes) and extended with periodic noise so ground tiles and edge
    strips are seamless. Used by world_gen.js (docs/WORLD_ART.md). Pure: no Math.random, no Date. */
@@ -32,7 +32,7 @@ function ease(t){ return smooth(0,1,t); }
 function lerp(a,b,t){ return a+(b-a)*t; }
 function clamp01(x){ return x<0?0:x>1?1:x; }
 
-/* ---------- colour ---------- */
+/* ---------- color ---------- */
 function hexRgb(h){ h=h.replace('#',''); const n=parseInt(h,16); return [n>>16&255,n>>8&255,n&255]; }
 function mixc(a,b,t){ return [a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t]; }
 function css(c,a){ return 'rgba('+(c[0]|0)+','+(c[1]|0)+','+(c[2]|0)+','+(a==null?1:a)+')'; }
@@ -59,7 +59,7 @@ function facetRock(ctx,x,y,r,col,seed,base,o){ o=o||{}; const Rr=rng(seed), N=ba
 		ctx.fillStyle=Rr()>.5?'rgba(255,255,255,.07)':'rgba(0,0,0,.12)'; ctx.fill(); }
 	if(o.lichen!==false){ ctx.fillStyle=o.lichen||'rgba(110,130,80,.35)'; for(let i=0;i<3;i++){ ell(ctx,x+(Rr()-.5)*r,y+(Rr()-.5)*r,r*.18,r*.12); ctx.fill(); } }
 	return pts; }
-/* the Scrap Gang tyre (goon_gen.js tire) */
+/* the Scrap Gang tire (goon_gen.js tire) */
 function tire(ctx,x,y,w,h,t,spin){ ctx.save(); ctx.beginPath(); rr(ctx,x-w/2,y-h/2,w,h,Math.min(w,h)*.32); ctx.fillStyle='#1b1a1c'; ctx.fill(); ctx.clip();
 	ctx.strokeStyle='rgba(120,118,115,.5)'; ctx.lineWidth=Math.max(.6,h*.07); const step=h/4, off=((t*spin)%1)*step; for(let y2=y-h/2-step+off;y2<y+h/2+step;y2+=step){ ctx.beginPath(); ctx.moveTo(x-w/2,y2); ctx.lineTo(x+w/2,y2+step*.35); ctx.stroke(); } ctx.restore(); }
 
@@ -75,7 +75,7 @@ function grimeTile(){ if(GRIME_T) return GRIME_T; const n=128, P=12, c=document.
 
 /* ---------- hull ---------- */
 /* convex hull of the pixels with alpha > cut (the soft shadow stays below it), reduced to at most max vertices by
-   dropping the vertex that removes the least area, returned in game px around the canvas centre (bake_goons.html) */
+   dropping the vertex that removes the least area, returned in game px around the canvas center (bake_goons.html) */
 function hull(cv,res,o){ o=o||{}; const cut=o.cut==null?140:o.cut, max=o.max||10, w=cv.width, h=cv.height, data=cv.getContext('2d').getImageData(0,0,w,h).data, pts=[];
 	for(let y=0;y<h;y++){ let first=-1,last=-1; for(let x=0;x<w;x++) if(data[(y*w+x)*4+3]>cut){ if(first<0) first=x; last=x; } if(first>=0){ pts.push([first,y]); pts.push([last+1,y]); pts.push([first,y+1]); pts.push([last+1,y+1]); } }
 	if(pts.length<3) return [];
@@ -91,7 +91,7 @@ function hull(cv,res,o){ o=o||{}; const cut=o.cut==null?140:o.cut, max=o.max||10
 		poly.splice(best,1); }
 	return poly.map(p=>[+((p[0]-w/2)/res).toFixed(1),+((p[1]-h/2)/res).toFixed(1)]);
 }
-/* bounding box of the pixels with alpha > cut, in game px around the centre */
+/* bounding box of the pixels with alpha > cut, in game px around the center */
 function bounds(cv,res,cut){ cut=cut==null?140:cut; const w=cv.width,h=cv.height,d=cv.getContext('2d').getImageData(0,0,w,h).data; let x0=w,y0=h,x1=-1,y1=-1;
 	for(let y=0;y<h;y++) for(let x=0;x<w;x++) if(d[(y*w+x)*4+3]>cut){ if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; }
 	if(x1<0) return [0,0]; return [Math.round((x1-x0+1)/res),Math.round((y1-y0+1)/res)]; }

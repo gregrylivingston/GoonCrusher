@@ -2,9 +2,9 @@ class_name CardArt extends RefCounted
 
 #Card backs painted from the game's own art (The Deal; docs/PICKUPS.md, "Prize games"): a patch of world
 #ground with props, cars and goons laid out on it, a little scene for each kind of pickup, so the back says
-#what kind of card it is without saying how rare. The kind's colour frames it and its name and emblem sit on
+#what kind of card it is without saying how rare. The kind's color frames it and its name and emblem sit on
 #a banner. Everything is drawn through `base` (the caller's canvas transform, e.g. a card mid-flip).
-#Layers are [art, centre (fraction of the card), width (fraction of the card's width), rotation]; art names
+#Layers are [art, center (fraction of the card), width (fraction of the card's width), rotation]; art names
 #are a prop (world/art/props), "car", a goon id ("goon:grunt"), an icon ("icon:coin") or "trail" (a
 #nitro streak). `seed` picks the car and goons and nudges the layout, so a card always looks the same.
 
@@ -20,7 +20,7 @@ const GOONS := ["grunt", "goonling", "rat", "gremlin", "yipper", "bandit", "skin
 ## per kind (Pickups.K): ground, layers, emblem icon
 const SCENES := {
 	Pickups.K.SUPPLY: ["lot", [["station:station_pump", Vector2(0.27, 0.27), 0.34, 0.0], ["barrel", Vector2(0.78, 0.2), 0.2, 0.3], ["barrel", Vector2(0.86, 0.36), 0.17, 0.0], ["car", Vector2(0.58, 0.58), 0.34, 0.2]], "toolbox"],
-	Pickups.K.TUNE: ["asphalt", [["container", Vector2(0.3, 0.24), 0.55, 0.0], ["tyres", Vector2(0.82, 0.2), 0.24, 0.0], ["car", Vector2(0.45, 0.62), 0.34, -0.15], ["icon:upgrade", Vector2(0.78, 0.5), 0.24, 0.0]], "upgrade"],
+	Pickups.K.TUNE: ["asphalt", [["container", Vector2(0.3, 0.24), 0.55, 0.0], ["tires", Vector2(0.82, 0.2), 0.24, 0.0], ["car", Vector2(0.45, 0.62), 0.34, -0.15], ["icon:upgrade", Vector2(0.78, 0.5), 0.24, 0.0]], "upgrade"],
 	Pickups.K.BOOST: ["asphalt", [["trail", Vector2(0.5, 0.78), 0.3, 0.0], ["car", Vector2(0.5, 0.42), 0.36, 0.0], ["cone", Vector2(0.15, 0.25), 0.14, 0.0], ["cone", Vector2(0.85, 0.6), 0.14, 0.0]], "nitro"],
 	Pickups.K.GADGET: ["dirt", [["goon", Vector2(0.24, 0.24), 0.36, -0.4], ["goon", Vector2(0.78, 0.3), 0.36, 0.5], ["goon", Vector2(0.66, 0.68), 0.36, 2.2], ["icon:mine", Vector2(0.4, 0.55), 0.26, 0.0]], "mine"],
 	Pickups.K.LOOT: ["grass", [["crate", Vector2(0.3, 0.3), 0.32, 0.2], ["icon:coin", Vector2(0.62, 0.22), 0.14, 0.0], ["icon:coin", Vector2(0.75, 0.4), 0.14, 0.0], ["icon:coinstack", Vector2(0.28, 0.66), 0.2, 0.0], ["icon:purse", Vector2(0.64, 0.6), 0.3, 0.0]], "coin"],
@@ -65,17 +65,17 @@ static func drawBack(c: CanvasItem, base: Transform2D, kind: int, at: Vector2, s
 	for layer in sc[1]:
 		n += 1
 		var name: String = layer[0]
-		var centre: Vector2 = at + size * (layer[1] as Vector2) + Vector2(sin(seed * 1.7 + n) * 4.0, cos(seed * 1.3 + n) * 4.0)
+		var center: Vector2 = at + size * (layer[1] as Vector2) + Vector2(sin(seed * 1.7 + n) * 4.0, cos(seed * 1.3 + n) * 4.0)
 		var w: float = size.x * layer[2]
 		if name == "trail":
 			for i in 3:
-				var x := centre.x + (i - 1) * w * 0.25
-				c.draw_line(Vector2(x, centre.y - size.y * 0.2), Vector2(x, centre.y + size.y * 0.12), Color(1.0, 0.6 - i * 0.1, 0.15, 0.55), w * 0.16, true)
+				var x := center.x + (i - 1) * w * 0.25
+				c.draw_line(Vector2(x, center.y - size.y * 0.2), Vector2(x, center.y + size.y * 0.12), Color(1.0, 0.6 - i * 0.1, 0.15, 0.55), w * 0.16, true)
 			continue
 		var tex := texture(artPath(name, seed, n))
 		if tex == null: continue
 		var h := w * tex.get_height() / tex.get_width()
-		c.draw_set_transform_matrix(base * Transform2D(layer[3] + sin(seed + n) * 0.08, centre))
+		c.draw_set_transform_matrix(base * Transform2D(layer[3] + sin(seed + n) * 0.08, center))
 		c.draw_texture_rect(tex, Rect2(-w * 0.5, -h * 0.5, w, h), false, Color(0, 0, 0, 0.45) if name == "shadow" else Color.WHITE)
 	c.draw_set_transform_matrix(base)
 	#a darker foot for the banner, the banner, the emblem, the frame

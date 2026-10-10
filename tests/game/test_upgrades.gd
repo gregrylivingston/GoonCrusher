@@ -65,7 +65,7 @@ func test_traction_adds_grip_with_diminishing_returns():
 	assert_gt(h.grip(800.0, 25, 0.5) - stock, h.grip(800.0, 150, 0.5) - h.grip(800.0, 125, 0.5), "the first points count most")
 	assert_gt(h.gripFastHigh * h.gripLight, h.grip(800.0, 100000, 0.0), "never past the ceiling")
 	assert_gt(h.grip(800.0, 25, 0.0), h.grip(800.0, 25, 1.0), "heavy cars grip less, so they slide wider")
-	assert_gt(h.grip(50.0, 0, 0.5), h.grip(800.0, 0, 0.5), "slow, the tyres hold")
+	assert_gt(h.grip(50.0, 0, 0.5), h.grip(800.0, 0, 0.5), "slow, the tires hold")
 	assert_almost_eq(CarHandling.share(-100), 0.0, 0.0001, "a negative stat counts as 0")
 
 func test_powerups_stop_at_the_stat_cap():
@@ -92,7 +92,7 @@ func test_upgrades_stop_at_the_max_level():
 	assert_false(SaveManager.dirty, "nothing was saved")
 
 #fixing luck put COIN back into the walker's table; its weight must not crowd out fuel and health
-func test_walker_drops_still_favour_fuel_and_health():
+func test_walker_drops_still_favor_fuel_and_health():
 	var walker = Walker.new()
 	var weights = Root.luckAdjustedWeights(walker.powerupDropDict, 1)
 	walker.free()

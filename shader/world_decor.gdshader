@@ -8,7 +8,7 @@ shader_type canvas_item;
 
 uniform float cells = 4.0;
 uniform float bend = 0.0;          // world px a corner moves right under the car
-uniform float bend_radius = 110.0; // world px from the car's centre where the push fades out
+uniform float bend_radius = 110.0; // world px from the car's center where the push fades out
 global uniform vec2 gc_car_pos;
 global uniform int gc_ground_quality;
 

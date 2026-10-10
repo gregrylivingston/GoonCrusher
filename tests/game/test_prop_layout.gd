@@ -164,7 +164,7 @@ func waterWithin(map: WorldMap, w: Vector2, r: float) -> bool:
 			if t == Root.terrain.WATER || t == Root.terrain.SHALLOWS || t == Root.terrain.BRIDGE: return true
 	return false
 
-## A crossing (a ford when `ford`, else a pass) whose cell centre is within r
+## A crossing (a ford when `ford`, else a pass) whose cell center is within r
 func crossingWithin(map: WorldMap, w: Vector2, r: float, ford: bool) -> bool:
 	var c := WorldGen.cellOf(w)
 	var cells := ceili(r / WorldGen.CELL) + 1
@@ -172,7 +172,7 @@ func crossingWithin(map: WorldMap, w: Vector2, r: float, ford: bool) -> bool:
 		for dx in range(-cells, cells + 1):
 			var cell := c + Vector2i(dx, dy)
 			var i := map.cellIndex(cell)
-			if i < 0 || map.flags[i] & WorldGen.CROSSING == 0 || WorldGen.cellCentre(cell).distance_to(w) > r: continue
+			if i < 0 || map.flags[i] & WorldGen.CROSSING == 0 || WorldGen.cellCenter(cell).distance_to(w) > r: continue
 			if (map.terrain[i] == Root.terrain.SHALLOWS) == ford: return true
 	return false
 
@@ -230,7 +230,7 @@ class FakeManager extends Node2D:
 
 func test_the_home_paddock_stands_ahead_of_the_start():
 	var def := Levels.get_def(&"prairie")
-	var centre := def.startPosition + Vector2(ChunkRecipe.PADDOCK_AHEAD, 0.0)
+	var center := def.startPosition + Vector2(ChunkRecipe.PADDOCK_AHEAD, 0.0)
 	for worldSeed in [1, 2, 3]:
 		var counts := {}
 		var stash := {}
@@ -241,8 +241,8 @@ func test_the_home_paddock_stands_ahead_of_the_start():
 			var origin := Vector2(entry[0]) * ChunkRecipe.CHUNK
 			for p in entry[1].props:
 				var w: Vector2 = origin + p[1]
-				if p[0] == "logpile" && w.distance_to(centre + Vector2(680, -600)) < 10.0: counts.logpile = counts.get("logpile", 0) + 1
-				if w.distance_to(centre) > ChunkRecipe.PADDOCK_HALF + 120.0: continue
+				if p[0] == "logpile" && w.distance_to(center + Vector2(680, -600)) < 10.0: counts.logpile = counts.get("logpile", 0) + 1
+				if w.distance_to(center) > ChunkRecipe.PADDOCK_HALF + 120.0: continue
 				counts[p[0]] = counts.get(p[0], 0) + 1
 				if p[0] == "crate" && p[6] != 0: stash[p[6]] = stash.get(p[6], 0) + 1
 		var label := "seed %d: %s" % [worldSeed, counts]
@@ -310,9 +310,9 @@ func test_bayou_mixes_fords_and_bridges():
 	for i in map.crossings:
 		if map.terrain[i] != Root.terrain.SHALLOWS || checked >= 4: continue
 		var cell := Vector2i(i % WorldGen.W, i / WorldGen.W)
-		var centre := WorldGen.cellCentre(cell)
-		map.buildNow(WorldGen.chunkOf(centre))
-		assert_false(map.lethalAt(centre), "the ford at %s is passable" % centre)
+		var center := WorldGen.cellCenter(cell)
+		map.buildNow(WorldGen.chunkOf(center))
+		assert_false(map.lethalAt(center), "the ford at %s is passable" % center)
 		checked += 1
 	assert_gt(checked, 0, "fords to check")
 
@@ -331,8 +331,8 @@ func test_canyon_slots_are_narrow_and_hold_a_coin_line():
 	for i in map.crossings:
 		if map.flags[i] & WorldGen.CROSSING == 0 || map.terrain[i] == Root.terrain.SHALLOWS || map.terrain[i] == Root.terrain.BRIDGE: continue
 		var cell := Vector2i(i % WorldGen.W, i / WorldGen.W)
-		var centre := WorldGen.cellCentre(cell)
-		if absf(centre.x) > 50000.0 || absf(centre.y) > 25000.0: continue
+		var center := WorldGen.cellCenter(cell)
+		if absf(center.x) > 50000.0 || absf(center.y) > 25000.0: continue
 		var root := WorldGen.crossingRoot(map.flags, i)
 		if seen.has(root): continue
 		seen[root] = true
@@ -340,13 +340,13 @@ func test_canyon_slots_are_narrow_and_hold_a_coin_line():
 		if slot: slots += 1
 		else: passes += 1
 		if slots + passes > 40: break
-		#the open width across the way through, at the crossing's first cell's centre
+		#the open width across the way through, at the crossing's first cell's center
 		var across := Vector2.DOWN if map.flags[i] & WorldGen.CROSS_X != 0 else Vector2.RIGHT
-		map.buildNow(WorldGen.chunkOf(centre))
+		map.buildNow(WorldGen.chunkOf(center))
 		var width := 0.0
 		for s in [-1.0, 1.0]:
 			for d in range(32, 1400, 32):
-				var q: Vector2 = centre + across * s * d
+				var q: Vector2 = center + across * s * d
 				map.buildNow(WorldGen.chunkOf(q))
 				if map.blockedAt(q):
 					width += d
@@ -355,10 +355,10 @@ func test_canyon_slots_are_narrow_and_hold_a_coin_line():
 		if slot && width < def.features.passWidth * 0.75: narrow += 1
 		if not slot && width >= def.features.slotWidth * 1.4: wide += 1
 		if slot && coins == 0:
-			var chunk := WorldGen.chunkOf(centre)
+			var chunk := WorldGen.chunkOf(center)
 			var recipe := map.recipeOf(chunk)
 			for p in recipe.get("pickups", []):
-				if p[0] == "coin" && (Vector2(chunk) * ChunkRecipe.CHUNK + p[1]).distance_to(centre) < WorldGen.CELL * 2.0: coins += 1
+				if p[0] == "coin" && (Vector2(chunk) * ChunkRecipe.CHUNK + p[1]).distance_to(center) < WorldGen.CELL * 2.0: coins += 1
 	assert_gt(slots, 0, "Red Canyon has slot canyons")
 	assert_gt(passes, 0, "and wide passes")
 	assert_between(float(slots) / (slots + passes), 0.1, 0.55, "about 30%% are slots (%d of %d)" % [slots, slots + passes])

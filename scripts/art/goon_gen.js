@@ -1,7 +1,7 @@
 /* GoonCrusher goon art generator. Every goon is a design entry of about 15 numbers (bottom of this file) drawn by one of
    eleven rigs. bake_goons.py opens bake_goons.html in headless Edge, which calls GoonArt.bake for each frame.
    Units are game pixels; every goon faces up (-y), like the cars. See docs/GOONS.md. */
-/* Light comes from straight overhead and the contact shadow is centred: goons turn all the time, so nothing
+/* Light comes from straight overhead and the contact shadow is centered: goons turn all the time, so nothing
    in a frame may imply a sun direction. Frames are baked once and blitted, exactly as the game would use them. */
 (function(){
 "use strict";
@@ -639,7 +639,7 @@ splitter:{kind:'blob',R:21,box:104,body:'#6b5a3e',seed:37,shadowR:28},
 goonling:{kind:'biped',R:10,box:72,head:.74,cloth:'#6b5a48',hat:'none',tool:'none',seed:39,stride:1.2},
 };
 
-/* ---------- Wild Things (tier 1): mutant wildlife, natural colours, no gear ---------- */
+/* ---------- Wild Things (tier 1): mutant wildlife, natural colors, no gear ---------- */
 Object.assign(D,{
 jackalope:{kind:'beast',R:12,box:96,len:1.15,wid:.72,fur:'#b39a74',furry:true,ears:'long',antlers:'small',tail:'puff',hop:true,headR:.5,seed:51},
 tusker:{kind:'beast',R:16,box:110,len:1.35,wid:.74,fur:'#5b4636',bristle:true,tusks:true,snout:1.35,ears:'pointy',tail:'stub',hoof:true,headR:.5,seed:52},

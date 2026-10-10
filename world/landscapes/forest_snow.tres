@@ -7,7 +7,6 @@ script = ExtResource("1_land")
 id = &"forest_snow"
 displayName = "Snowy Pine Forest"
 grammar = &"meadow"
-text = "Snowed-in pines and clearings round a frozen creek. Deep drifts drag at the wheels."
 features = {
 "creekFrequency": 4e-05,
 "creekWidth": 1100.0,

@@ -104,15 +104,14 @@ static func hurt(t: int) -> float: return _hurt[t] if t >= 0 && t < _hurt.size()
 static func routeWeight(t: int) -> float: return def(t).routeWeight
 static func letter(t: int) -> String: return def(t).letter if t >= 0 && t < TERRAIN.size() else "?"
 
-## The off-road rule: friction above grass is softened by armor (heavy cars plough through), at most
+## The off-road rule: friction above grass is softened by armor (heavy cars plow through), at most
 ## OFFROAD_ARMOR_MAX of the extra. f_eff = 0.13 + (f - 0.13) * (1 - clamp(armor / 200, 0, 0.35)).
 static func effectiveFriction(f: float, armor: float) -> float:
 	if f <= GRASS_FRICTION: return f
 	return GRASS_FRICTION + (f - GRASS_FRICTION) * (1.0 - clampf(armor / OFFROAD_ARMOR_SCALE, 0.0, OFFROAD_ARMOR_MAX))
 
-## Something the car and goons bounce off: rocks, walls, station buildings (StaticBody2D) and the
-## terrain TileMaps' collision. GoonBody::advance (native/src/goon_body.cpp) makes the same check for goons;
-## moving terrain to TileMapLayer must update both.
+## Something the car and goons bounce off: rocks, walls, station buildings (StaticBody2D or TileMap).
+## GoonBody::advance (native/src/goon_body.cpp) makes the same check for goons: change both together.
 static func isWall(collider: Object) -> bool:
 	return collider is StaticBody2D || collider is TileMap
 

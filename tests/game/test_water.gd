@@ -1,6 +1,6 @@
 extends GameTest
 
-#Water and the car (docs/WORLD.md, "Water and the car"): wading depth (WADE) and deep WATER hurt the car
+#Water and the car (docs/WORLD.md, "Water"): wading depth (WADE) and deep WATER hurt the car
 #through damage() once a tick and drag it through their rows in integrate(); a stock sedan crosses a short
 #strip of deep water flat out and survives, and sitting in it wrecks the car as a drowning. Goons still drown
 #in deep water and wade slowly through WADE. The raster puts a wading band inside deep water on grammars with
@@ -197,7 +197,7 @@ func test_armor_softens_the_water():
 		armored.checkGround(Vector2.ZERO)
 	assert_gt(armored.health, bare.health + 5.0, "armor applies once, through damage()")
 
-func test_deep_water_drags_and_no_tyre_trait_swims():
+func test_deep_water_drags_and_no_tire_trait_swims():
 	var car := sedan()
 	flat(Root.terrain.GRASS)
 	var dry: Vector2 = car.integrate(Vector2.ZERO, Vector2.RIGHT, Vector2(600, 0), throttle(), DT)[1]
@@ -292,7 +292,7 @@ func fineCounts(levelId: StringName, worldSeed := 1) -> Dictionary:
 				if maxi(absi(dx), absi(dy)) != r: continue
 				var c := start + Vector2i(dx, dy)
 				if not WorldGen.inMap(c): continue
-				if map.terrain[c.y * WorldGen.W + c.x] == Root.terrain.WATER: chunks[WorldGen.chunkOf(WorldGen.cellCentre(c))] = true
+				if map.terrain[c.y * WorldGen.W + c.x] == Root.terrain.WATER: chunks[WorldGen.chunkOf(WorldGen.cellCenter(c))] = true
 		if chunks.size() >= 4: break
 	var counts := {}
 	for chunk in chunks:
@@ -327,7 +327,7 @@ func test_the_native_grid_answers_wading_depth_like_gdscript():
 		for dx in range(-r, r + 1):
 			for dy in [-r, r]:
 				var c := start + Vector2i(dx, dy)
-				if WorldGen.inMap(c) && map.terrain[c.y * WorldGen.W + c.x] == Root.terrain.WATER: chunk = WorldGen.chunkOf(WorldGen.cellCentre(c))
+				if WorldGen.inMap(c) && map.terrain[c.y * WorldGen.W + c.x] == Root.terrain.WATER: chunk = WorldGen.chunkOf(WorldGen.cellCenter(c))
 			if chunk.x != 999: break
 		if chunk.x != 999: break
 	assert_ne(chunk, Vector2i(999, 999), "deep water near the start")

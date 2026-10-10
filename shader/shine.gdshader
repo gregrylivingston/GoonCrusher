@@ -22,7 +22,7 @@ void vertex() {
 	}
 }
 
-bool hasContraryNeighbour(vec2 uv, vec2 texture_pixel_size, sampler2D texture) {
+bool hasContraryNeighbor(vec2 uv, vec2 texture_pixel_size, sampler2D texture) {
 	for (float i = -ceil(width); i <= ceil(width); i++) {
 		float x = abs(i) > width ? width * sign(i) : i;
 		float offset;
@@ -50,7 +50,7 @@ bool hasContraryNeighbour(vec2 uv, vec2 texture_pixel_size, sampler2D texture) {
 
 // Simple outline: two fixed rings of samples at the full and half outline width instead of every
 // texel inside the diamond (24 taps instead of up to 61). The outline keeps its width.
-bool hasContraryNeighbourFast(vec2 uv, vec2 texture_pixel_size, sampler2D texture) {
+bool hasContraryNeighborFast(vec2 uv, vec2 texture_pixel_size, sampler2D texture) {
 	for (int k = 0; k < 16; k++) {
 		float a = float(k) * 0.39269908; // TAU / 16
 		vec2 dir = vec2(cos(a), sin(a));
@@ -83,7 +83,7 @@ void fragment() {
 		COLOR = texture(TEXTURE, uv);
 	}
 	
-	bool edge = (COLOR.a > 0.0) == inside && (gc_pickup_fx == 0 ? hasContraryNeighbourFast(uv, TEXTURE_PIXEL_SIZE, TEXTURE) : hasContraryNeighbour(uv, TEXTURE_PIXEL_SIZE, TEXTURE));
+	bool edge = (COLOR.a > 0.0) == inside && (gc_pickup_fx == 0 ? hasContraryNeighborFast(uv, TEXTURE_PIXEL_SIZE, TEXTURE) : hasContraryNeighbor(uv, TEXTURE_PIXEL_SIZE, TEXTURE));
 	if (edge) {
 		COLOR.rgb = inside ? mix(COLOR.rgb, color.rgb, color.a) : color.rgb;
 		COLOR.a += (1.0 - COLOR.a) * color.a;

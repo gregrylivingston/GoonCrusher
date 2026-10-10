@@ -27,7 +27,7 @@ const DATA := {
 	&"meter": {"name":"The Meter", "kind":Kind.MECHANIC,
 		"short":"Fast, clean driving earns fares",
 		"text":"Above 300 px/s with no wall hits, the meter runs and pays coins as you go, faster the longer it runs. Stop or hit a wall and it resets."},
-	&"city_tyres": {"name":"City Tyres", "kind":Kind.PHYSICS,
+	&"city_tires": {"name":"City Tires", "kind":Kind.PHYSICS,
 		"short":"Grips on pavement, slips on dirt",
 		"text":"More grip on asphalt, lots, bridges and wash; less on dirt, sand, mud, snow and shallows."},
 	&"offroad": {"name":"Off-Road Suspension", "kind":Kind.PHYSICS,

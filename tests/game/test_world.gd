@@ -199,7 +199,7 @@ func test_off_road_rule():
 	assert_almost_eq(World.effectiveFriction(0.5, 500.0), 0.13 + 0.37 * 0.65, 0.0001, "still 35%")
 	assert_almost_eq(World.effectiveFriction(0.5, -10.0), 0.5, 0.0001, "negative armor doesn't add friction")
 
-func test_soft_ground_slows_the_car_and_armor_ploughs_through():
+func test_soft_ground_slows_the_car_and_armor_plows_through():
 	var car = makeCar()
 	useMap(Root.terrain.GRASS)
 	var onGrass = coast(car, 60, 400.0, input()).length()

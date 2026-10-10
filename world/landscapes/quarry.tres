@@ -7,7 +7,6 @@ script = ExtResource("1_land")
 id = &"quarry"
 displayName = "Quarry"
 grammar = &"quarry"
-text = "Haul roads between the pit, the junk fort and the tyre camps. Mind the mud pits."
 features = {
 "pieceCells": 10.0,
 "pitChance": 0.3,
@@ -16,7 +15,7 @@ features = {
 "fortChance": 0.25,
 "fortRadius": 2200.0,
 "fortGates": 3,
-"tyreCamps": 0.25,
+"tireCamps": 0.25,
 "campRadius": 1500.0,
 "rampWidth": 1000.0,
 "haulFrequency": 4.5e-05,
@@ -40,7 +39,7 @@ dressing = {
 &"boulder": 2,
 &"stump": 1,
 &"tufts": 4,
-&"tyres": 3,
+&"tires": 3,
 &"crane": 1,
 &"shack": 2,
 &"barricade": 1,

@@ -21,7 +21,7 @@ static func make(actionList: PackedStringArray, label := "", size := 15, canClic
 	hint.clickable = canClick
 	return hint
 
-#a centred row of clickable hints from [[actions], label] pairs: the bottom bar of a menu
+#a centered row of clickable hints from [[actions], label] pairs: the bottom bar of a menu
 static func bar(list: Array, size := 16, separation := 26) -> HBoxContainer:
 	var row = HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -52,11 +52,6 @@ func _ready() -> void:
 func _input(event: InputEvent) -> void:
 	InputGlyphs.note(event)
 	if int(InputGlyphs.usingPad) != shownPad: rebuild()
-
-func setText(value: String) -> void:
-	text = value
-	shownPad = -1
-	rebuild()
 
 func rebuild() -> void:
 	shownPad = int(InputGlyphs.usingPad)

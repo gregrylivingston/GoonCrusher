@@ -4,7 +4,7 @@ class_name WorldGen extends RefCounted
 ##
 ## buildCoarse(job): the whole level as a coarse map of W x H cells of CELL px (4 x 2 per chunk), built
 ##   once per run. Per cell: a terrain id, FLAG bits, a district id and an aux byte (the conveyor
-##   direction). It samples the level grammar's pure fields (WorldField) at every cell centre, then applies
+##   direction). It samples the level grammar's pure fields (WorldField) at every cell center, then applies
 ##   the guarantees in order: barrier share caps, the start bubble, crossings (no continuous barrier runs
 ##   more than MAX_RUN cells without one), connectivity (pockets under POCKET cells filled, larger islands
 ##   joined), the objectives (the station in the start component on clear cells; Defense's straight
@@ -12,16 +12,16 @@ class_name WorldGen extends RefCounted
 ##   per district, and finally an AStarGrid2D over the passable cells with the route to the station.
 ##
 ## fineRaster(job): one chunk's fine map, FINE_W x FINE_H cells of FINE px, sampled from the same fields
-##   with a one-cell apron (FIELD_W x FIELD_H) so neighbouring chunks agree. The fine fields are clamped to
-##   the coarse map so the two never disagree about passability: between the centres of two 4-adjacent
-##   passable coarse cells the fine map is always open (at least 2 x 448 px wide), the centre of a blocked
+##   with a one-cell apron (FIELD_W x FIELD_H) so neighboring chunks agree. The fine fields are clamped to
+##   the coarse map so the two never disagree about passability: between the centers of two 4-adjacent
+##   passable coarse cells the fine map is always open (at least 2 x 448 px wide), the center of a blocked
 ##   cell is always blocked, crossings (fords, bridges, passes) are opened at their full width.
 ##
 ## Random streams are ihash(seed, TAG, a, b): an integer mixer, so a run is the same for the same seed.
 
 const CHUNK_PX := Vector2(5120, 2560)
 const MAP_CHUNKS := Vector2i(96, 96) #chunk (0,0) is map cell (48,48); chunks -48..47
-const CHUNK_LIMIT := 45 #objectives stay within this many chunks of the centre on each axis
+const CHUNK_LIMIT := 45 #objectives stay within this many chunks of the center on each axis
 const CELL := 1280.0
 const W := 384
 const H := 192
@@ -40,16 +40,16 @@ const BLOCKED := 1   #water or wall: A*, spawns and objectives keep out
 const LETHAL := 2    #deep water
 const CROSSING := 4  #a ford, bridge or pass cut through a barrier
 const RESERVED := 8  #start bubble, objectives, set pieces, map edge: later passes leave it alone
-const CROSS_X := 16  #a crossing travelled along x
+const CROSS_X := 16  #a crossing traveled along x
 const CROSS_Y := 32  #...along y
 const FILL := 64     #a pocket filled in: the fine map fills it too
 const START := 128   #in the start's component (reachable from the start)
 
-const BAND := 0.4         #fields below this at a cell centre block the coarse cell; also the shallows band
+const BAND := 0.4         #fields below this at a cell center block the coarse cell; also the shallows band
 const WADE_DEPTH := 0.35  #the outer band of deep water (field 0 to -this, about 224 px) is wading depth (WADE) where WorldField.wade
-const WADE_STEEP := 2.0   #...where water pillars and filled pockets fall this much faster, so they stay deep round a blocked cell's centre
+const WADE_STEEP := 2.0   #...where water pillars and filled pockets fall this much faster, so they stay deep round a blocked cell's center
 const A_LO := 0.3         #fine fields stay above (coarse envelope - A_LO): open corridors 896 px wide
-const PILLAR_PX := 160.0  #fine fields are blocked within this of a blocked coarse cell's centre
+const PILLAR_PX := 160.0  #fine fields are blocked within this of a blocked coarse cell's center
 const MAX_RUN := 4        #barrier cells in a row before a crossing (spacing 5120 px)
 const MAX_CUT := 4        #thickest barrier a crossing is cut through, in cells
 const SHORT_BARRIER := 8  #barriers no longer than this (cells) are driven round, not cut
@@ -64,7 +64,7 @@ const LANDMARK_SEARCH := 10 #cells round a district's centroid its landmark may 
 const DEFENSE_LANE_PX := 4000.0
 const DEFENSE_LANES := 3
 const LANE_HALF_PX := 1000.0 #cells this close to a lane's line are cleared
-const LOT_RECT := Rect2(-2600, -1400, 5300, 2800) #around the station (chunk centre): the lot, 2000 px of approach east, room behind
+const LOT_RECT := Rect2(-2600, -1400, 5300, 2800) #around the station (chunk center): the lot, 2000 px of approach east, room behind
 
 const DIRS4: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
 const DIRS8: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1), Vector2i(1, 1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(-1, -1)]
@@ -114,7 +114,7 @@ static func hashf(mapSeed: int, tag: int, a: int, b: int) -> float:
 static func cellOf(p: Vector2) -> Vector2i:
 	return Vector2i(floori((p.x - ORIGIN.x) / CELL), floori((p.y - ORIGIN.y) / CELL))
 
-static func cellCentre(c: Vector2i) -> Vector2:
+static func cellCenter(c: Vector2i) -> Vector2:
 	return ORIGIN + (Vector2(c) + Vector2(0.5, 0.5)) * CELL
 
 static func inMap(c: Vector2i) -> bool:
@@ -123,25 +123,25 @@ static func inMap(c: Vector2i) -> bool:
 static func chunkOf(p: Vector2) -> Vector2i:
 	return Vector2i(floori(p.x / CHUNK_PX.x), floori(p.y / CHUNK_PX.y))
 
-static func chunkCentre(chunk: Vector2i) -> Vector2:
+static func chunkCenter(chunk: Vector2i) -> Vector2:
 	return (Vector2(chunk) + Vector2(0.5, 0.5)) * CHUNK_PX
 
 ## The coarse cells of a chunk: its top-left cell
 static func chunkCell(chunk: Vector2i) -> Vector2i:
 	return Vector2i(chunk.x * 4 + W / 2, chunk.y * 2 + H / 2)
 
-## The chunks exactly `ring` steps (Chebyshev) from centre, in a fixed order
-static func ringChunks(centre: Vector2i, ring: int) -> Array[Vector2i]:
+## The chunks exactly `ring` steps (Chebyshev) from center, in a fixed order
+static func ringChunks(center: Vector2i, ring: int) -> Array[Vector2i]:
 	var chunks: Array[Vector2i] = []
 	if ring == 0:
-		chunks.push_back(centre)
+		chunks.push_back(center)
 		return chunks
 	for x in range(-ring, ring + 1):
-		chunks.push_back(centre + Vector2i(x, -ring))
-		chunks.push_back(centre + Vector2i(x, ring))
+		chunks.push_back(center + Vector2i(x, -ring))
+		chunks.push_back(center + Vector2i(x, ring))
 	for y in range(-ring + 1, ring):
-		chunks.push_back(centre + Vector2i(-ring, y))
-		chunks.push_back(centre + Vector2i(ring, y))
+		chunks.push_back(center + Vector2i(-ring, y))
+		chunks.push_back(center + Vector2i(ring, y))
 	return chunks
 
 #--- the build state (one instance per coarse job) -----------------------------------------------
@@ -154,7 +154,7 @@ var terrain := PackedByteArray()
 var flags := PackedByteArray()
 var surf := PackedByteArray()
 var aux := PackedByteArray()
-var cover := PackedByteArray() #how much of a blocked cell the barrier really covers, 0..255 (from its field at the centre)
+var cover := PackedByteArray() #how much of a blocked cell the barrier really covers, 0..255 (from its field at the center)
 var district := PackedInt32Array()
 var shortBarrier := PackedByteArray()
 var comp := PackedInt32Array()
@@ -170,7 +170,7 @@ var districtCount := 0
 ## Job keys: seed (int), def (LevelDef.snapshot() plus "_main"), objective ("sprint", "defense" or ""),
 ## stationOffset (Vector2, px from the start, for "sprint"), weights (PackedFloat32Array: A* weight per
 ## terrain id). Writes job.result: terrain, flags, aux, district (PackedInt32Array), districts (Array of
-## {id, cells, centroid, seedCell, neighbours, inStart}), crossings, station (Vector2, INF without one),
+## {id, cells, centroid, seedCell, neighbors, inStart}), crossings, station (Vector2, INF without one),
 ## stationChunk, lanes (Array of Vector2 mouths), route (PackedVector2Array), routeLength, astar
 ## (AStarGrid2D), startCell, ms (timings).
 static func buildCoarse(job: Dictionary) -> void:
@@ -233,7 +233,7 @@ func run(job: Dictionary) -> void:
 		"ms": {"sample": (t1 - t0) / 1000.0, "rules": (t2 - t1) / 1000.0, "districts": (t3 - t2) / 1000.0, "astar": (t4 - t3) / 1000.0, "total": (t4 - t0) / 1000.0, "steps": steps},
 	}
 
-## A field value at a cell centre as the share of the cell its barrier covers (0..255): 1 deep inside
+## A field value at a cell center as the share of the cell its barrier covers (0..255): 1 deep inside
 ## (-1 unit, 640 px), half on the edge, none a unit outside
 static func coverOf(fieldValue: float) -> int:
 	return int(clampf(0.5 - fieldValue * 0.5, 0.0, 1.0) * 255.0)
@@ -241,7 +241,7 @@ static func coverOf(fieldValue: float) -> int:
 func isBlocked(i: int) -> bool:
 	return flags[i] & BLOCKED != 0
 
-#every cell centre through the grammar's fields
+#every cell center through the grammar's fields
 func sampleCells() -> void:
 	var n := W * H
 	terrain.resize(n)
@@ -297,7 +297,7 @@ func grammarPost() -> void:
 			for piece in field.piecesIn(rect):
 				reserveDisc(piece[1], piece[2] + 600.0)
 				#each ramp or gate is a crossing through the ring: the gap is narrower than a cell, so the
-				#cells its centre line runs through are opened, or the coarse ring could stay shut
+				#cells its center line runs through are opened, or the coarse ring could stay shut
 				for k in piece[4]:
 					var dir := Vector2.from_angle(piece[3] + k * TAU / piece[4])
 					var how := CROSS_X if absf(dir.x) > absf(dir.y) else CROSS_Y
@@ -314,12 +314,12 @@ func grammarPost() -> void:
 static func isEdge(cell: Vector2i) -> bool:
 	return cell.x < EDGE_CELLS || cell.y < EDGE_CELLS || cell.x >= W - EDGE_CELLS || cell.y >= H - EDGE_CELLS
 
-func reserveDisc(centre: Vector2, radius: float) -> void:
-	var lo := cellOf(centre - Vector2(radius, radius))
-	var hi := cellOf(centre + Vector2(radius, radius))
+func reserveDisc(center: Vector2, radius: float) -> void:
+	var lo := cellOf(center - Vector2(radius, radius))
+	var hi := cellOf(center + Vector2(radius, radius))
 	for cy in range(maxi(lo.y, 0), mini(hi.y, H - 1) + 1):
 		for cx in range(maxi(lo.x, 0), mini(hi.x, W - 1) + 1):
-			if cellCentre(Vector2i(cx, cy)).distance_to(centre) < radius + CELL * 0.5: flags[cy * W + cx] |= RESERVED
+			if cellCenter(Vector2i(cx, cy)).distance_to(center) < radius + CELL * 0.5: flags[cy * W + cx] |= RESERVED
 
 ## Opens a blocked cell: a crossing (how = CROSS_X or CROSS_Y: a ford or bridge over water, a pass through a
 ## wall) or a plain clearing (how = 0: share caps, the start bubble, objectives)
@@ -339,7 +339,7 @@ func openCell(i: int, how: int) -> void:
 #Hard barriers may cover at most field.barrierCap of any 3x3-chunk window (chunk-aligned, every chunk
 #offset), measured by `cover` (what the barrier really covers, not whole coarse cells: a creek 1100 px
 #wide blocks a full row of cells but covers 86% of it). Over the cap, cells are removed from blob edges
-#first (the most blocked neighbours), so lakes and mesas shrink before thin barriers get holes. Reserved
+#first (the most blocked neighbors), so lakes and mesas shrink before thin barriers get holes. Reserved
 #cells (set pieces, the map edge) don't count.
 func shareCaps() -> void:
 	var maxCells := int(floor(field.barrierCap * WINDOW.x * WINDOW.y * 255.0))
@@ -402,7 +402,7 @@ func startBubble() -> void:
 	var hi := cellOf(startPos + Vector2(radius, radius))
 	for cy in range(maxi(lo.y, 0), mini(hi.y, H - 1) + 1):
 		for cx in range(maxi(lo.x, 0), mini(hi.x, W - 1) + 1):
-			if cellCentre(Vector2i(cx, cy)).distance_to(startPos) >= radius: continue
+			if cellCenter(Vector2i(cx, cy)).distance_to(startPos) >= radius: continue
 			var i := cy * W + cx
 			if isEdge(Vector2i(cx, cy)): continue
 			openCell(i, 0)
@@ -412,7 +412,7 @@ func startBubble() -> void:
 
 #Along every continuous barrier, a crossing at least every MAX_RUN cells. alongX scans the map column by
 #column for barriers that run along x (each column holds a vertical run of barrier cells; runs that touch
-#the previous column's, diagonally included, continue its count) and cuts crossings travelled along y; the
+#the previous column's, diagonally included, continue its count) and cuts crossings traveled along y; the
 #other pass does the same for barriers along y. A crossing goes through a run at most MAX_CUT cells thick
 #with open ground on both sides; a thicker stretch keeps counting until a thin one comes.
 #The build runs it natively (WorldGenNative.cutCrossings, docs/NATIVE.md: it was the build's slowest step);
@@ -488,7 +488,7 @@ static func runsChain(p0: int, p1: int, a0: int, a1: int) -> bool:
 func nearCrossing(o: int, a0: int, a1: int, alongX: bool) -> bool:
 	return crossingNear(flags, o, a0, a1, alongX)
 
-## Whether a crossing touches a run (8-neighbours): the barrier already has a way through here
+## Whether a crossing touches a run (8-neighbors): the barrier already has a way through here
 static func crossingNear(flagArray: PackedByteArray, o: int, a0: int, a1: int, alongX: bool) -> bool:
 	for a in range(a0 - 1, a1 + 2):
 		for d in range(-1, 2):
@@ -666,21 +666,21 @@ func markStart() -> void:
 
 #--- objectives --------------------------------------------------------------------------------------
 
-## The cells of the station lot rect around a chunk's centre
+## The cells of the station lot rect around a chunk's center
 static func lotCells(chunk: Vector2i) -> PackedInt32Array:
 	var out := PackedInt32Array()
-	var centre := chunkCentre(chunk)
-	var lo := cellOf(centre + LOT_RECT.position)
-	var hi := cellOf(centre + LOT_RECT.end - Vector2.ONE)
+	var center := chunkCenter(chunk)
+	var lo := cellOf(center + LOT_RECT.position)
+	var hi := cellOf(center + LOT_RECT.end - Vector2.ONE)
 	for cy in range(lo.y, hi.y + 1):
 		for cx in range(lo.x, hi.x + 1):
 			if inMap(Vector2i(cx, cy)): out.push_back(cy * W + cx)
 	return out
 
-## The four cells round a chunk's centre (the station's footprint): all passable, and in the start component
+## The four cells round a chunk's center (the station's footprint): all passable, and in the start component
 ## when needStart
 static func stationCoreOk(flagArray: PackedByteArray, chunk: Vector2i, needStart: bool) -> bool:
-	var c := chunkCell(chunk) + Vector2i(1, 0) #the cell left of and above the centre corner
+	var c := chunkCell(chunk) + Vector2i(1, 0) #the cell left of and above the center corner
 	for d in [Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)]:
 		var cell: Vector2i = c + d
 		if not inMap(cell): return false
@@ -697,8 +697,8 @@ static func lotClear(flagArray: PackedByteArray, chunk: Vector2i) -> bool:
 	return true
 
 ## The chunk for a station near `desired`: the nearest chunk (square rings outward, clamped to CHUNK_LIMIT)
-## whose centre cells are passable and reachable (START) and whose lot rect is clear; failing that within
-## three more rings, the nearest with a good centre. Never `forbidden`. {chunk, clear}
+## whose center cells are passable and reachable (START) and whose lot rect is clear; failing that within
+## three more rings, the nearest with a good center. Never `forbidden`. {chunk, clear}
 ## With an `origin` (the start, or Marathon's last station), only chunks at least STATION_MIN_SHARE as far
 ## from it as `desired` count: the nearest good chunk could lie back toward the start, which once put a
 ## Crusher Sprint station 11,812 px out instead of 32,000. If none qualifies, any chunk does, as before.
@@ -710,12 +710,12 @@ static func findStationChunk(flagArray: PackedByteArray, desired: Vector2i, forb
 	return findStationChunkFrom(flagArray, desired, forbidden, needStart, NO_CHUNK, 0.0, true)
 
 ## findStationChunk's search. Chunks closer to `origin` than `minShare` of desired's distance are skipped;
-## {chunk: NO_CHUNK} when nothing qualifies, unless `orCentre` (then the clamped centre, as before)
-static func findStationChunkFrom(flagArray: PackedByteArray, desired: Vector2i, forbidden: Vector2i, needStart: bool, origin: Vector2i, minShare: float, orCentre := false) -> Dictionary:
+## {chunk: NO_CHUNK} when nothing qualifies, unless `orCenter` (then the clamped center, as before)
+static func findStationChunkFrom(flagArray: PackedByteArray, desired: Vector2i, forbidden: Vector2i, needStart: bool, origin: Vector2i, minShare: float, orCenter := false) -> Dictionary:
 	var limit := Vector2i(CHUNK_LIMIT, CHUNK_LIMIT)
-	var centre := desired.clamp(-limit, limit)
+	var center := desired.clamp(-limit, limit)
 	var minDistance := 0.0
-	if origin != NO_CHUNK: minDistance = Vector2(centre - origin).length() * minShare
+	if origin != NO_CHUNK: minDistance = Vector2(center - origin).length() * minShare
 	var fallback := NO_CHUNK
 	var fallbackRing := -1
 	for ring in range(0, 2 * CHUNK_LIMIT + 1):
@@ -723,11 +723,11 @@ static func findStationChunkFrom(flagArray: PackedByteArray, desired: Vector2i, 
 		var best := NO_CHUNK
 		var bestDistance := INF
 		var bestPlainDistance := INF
-		for chunk in ringChunks(centre, ring):
+		for chunk in ringChunks(center, ring):
 			if chunk == forbidden || absi(chunk.x) > CHUNK_LIMIT || absi(chunk.y) > CHUNK_LIMIT: continue
 			if minDistance > 0.0 && Vector2(chunk - origin).length() < minDistance: continue
 			if not stationCoreOk(flagArray, chunk, needStart): continue
-			var distance := float((chunk - centre).length_squared())
+			var distance := float((chunk - center).length_squared())
 			if fallbackRing < 0 && distance < bestPlainDistance:
 				bestPlainDistance = distance
 				fallback = chunk
@@ -736,13 +736,13 @@ static func findStationChunkFrom(flagArray: PackedByteArray, desired: Vector2i, 
 				bestDistance = distance
 		if best != NO_CHUNK: return {"chunk": best, "clear": true}
 		if fallback != NO_CHUNK && fallbackRing < 0: fallbackRing = ring
-	return {"chunk": fallback if fallback != NO_CHUNK else (centre if orCentre else NO_CHUNK), "clear": false}
+	return {"chunk": fallback if fallback != NO_CHUNK else (center if orCenter else NO_CHUNK), "clear": false}
 
 func placeSprintStation(offset: Vector2) -> void:
 	var startChunk := chunkOf(startPos)
 	var found := findStationChunk(flags, chunkOf(startPos + offset), startChunk, true, startChunk)
 	stationChunk = found.chunk
-	station = chunkCentre(stationChunk)
+	station = chunkCenter(stationChunk)
 	clearLot(stationChunk)
 
 func clearLot(chunk: Vector2i) -> void:
@@ -757,7 +757,7 @@ func placeDefense() -> void:
 	var startChunk := chunkOf(startPos)
 	var found := findStationChunk(flags, startChunk, NO_CHUNK)
 	stationChunk = found.chunk
-	station = chunkCentre(stationChunk)
+	station = chunkCenter(stationChunk)
 	clearLot(stationChunk)
 	var turn := hashf(seedValue, TAG_LANE, 0, 0) * TAU
 	for k in DEFENSE_LANES:
@@ -769,7 +769,7 @@ func placeDefense() -> void:
 		var hi := cellOf(Vector2(maxf(from.x, to.x), maxf(from.y, to.y)) + Vector2.ONE * LANE_HALF_PX)
 		for cy in range(maxi(lo.y, 0), mini(hi.y, H - 1) + 1):
 			for cx in range(maxi(lo.x, 0), mini(hi.x, W - 1) + 1):
-				var c := cellCentre(Vector2i(cx, cy))
+				var c := cellCenter(Vector2i(cx, cy))
 				if Geometry2D.get_closest_point_to_segment(c, from, to).distance_to(c) > LANE_HALF_PX: continue
 				var i := cy * W + cx
 				if isEdge(Vector2i(cx, cy)): continue
@@ -834,8 +834,8 @@ func flood(queue: PackedInt32Array) -> void:
 			district[i + W] = id
 			queue.push_back(i + W)
 
-## Every district's neighbouring districts (4-adjacent passable cells), as Array of Dictionary sets
-func districtNeighbours() -> Array:
+## Every district's neighboring districts (4-adjacent passable cells), as Array of Dictionary sets
+func districtNeighbors() -> Array:
 	var out: Array = []
 	for d in districtCount: out.push_back({})
 	for i in W * H:
@@ -853,17 +853,17 @@ func districtNeighbours() -> Array:
 				out[e][d] = true
 	return out
 
-#Every district of the start component gets at least two exits (neighbouring districts): a district with
+#Every district of the start component gets at least two exits (neighboring districts): a district with
 #fewer gets the shortest straight cut (at most MAX_CUT cells) from its edge to a district it doesn't
 #border yet.
 func repairExits() -> void:
-	var neighbours := districtNeighbours()
+	var neighbors := districtNeighbors()
 	var members: Array = []
 	for d in districtCount: members.push_back(PackedInt32Array())
 	for i in W * H:
 		if district[i] >= 0: members[district[i]].push_back(i)
 	for d in districtCount:
-		if neighbours[d].size() >= 2: continue
+		if neighbors[d].size() >= 2: continue
 		var cells: PackedInt32Array = members[d]
 		if cells.is_empty() || flags[cells[0]] & START == 0: continue
 		var bestLength := MAX_CUT + 1
@@ -880,7 +880,7 @@ func repairExits() -> void:
 						if flags[j] & RESERVED != 0: break
 						continue
 					var e := district[j]
-					if step > 1 && e >= 0 && e != d && not neighbours[d].has(e) && step - 1 < bestLength:
+					if step > 1 && e >= 0 && e != d && not neighbors[d].has(e) && step - 1 < bestLength:
 						bestLength = step - 1
 						bestFrom = i
 						bestDir = dir
@@ -893,12 +893,12 @@ func repairExits() -> void:
 			var j := c.y * W + c.x
 			openCell(j, CROSS_X if bestDir.x != 0 else CROSS_Y)
 			district[j] = d
-		neighbours[d][target] = true
-		neighbours[target][d] = true
+		neighbors[d][target] = true
+		neighbors[target][d] = true
 
-## The district table: id, cell count, centroid (px), seed cell, neighbour ids, whether it is reachable
+## The district table: id, cell count, centroid (px), seed cell, neighbor ids, whether it is reachable
 func districtTable() -> Array:
-	var neighbours := districtNeighbours()
+	var neighbors := districtNeighbors()
 	var sums: Array = []
 	for d in districtCount: sums.push_back([0, Vector2.ZERO, -1, false])
 	for i in W * H:
@@ -906,21 +906,21 @@ func districtTable() -> Array:
 		if d < 0: continue
 		var entry: Array = sums[d]
 		entry[0] += 1
-		entry[1] += cellCentre(Vector2i(i % W, i / W))
+		entry[1] += cellCenter(Vector2i(i % W, i / W))
 		if entry[2] < 0: entry[2] = i
 		if flags[i] & START != 0: entry[3] = true
 	var table: Array = []
 	for d in districtCount:
 		var entry: Array = sums[d]
-		var ids := PackedInt32Array(neighbours[d].keys())
+		var ids := PackedInt32Array(neighbors[d].keys())
 		ids.sort()
 		var centroid: Vector2 = entry[1] / maxf(entry[0], 1.0)
 		table.push_back({"id": d, "cells": entry[0], "centroid": centroid,
-			"firstCell": entry[2], "neighbours": ids, "inStart": entry[3], "landmark": landmarkCell(d, centroid)})
+			"firstCell": entry[2], "neighbors": ids, "inStart": entry[3], "landmark": landmarkCell(d, centroid)})
 	return table
 
-## Where a district's landmark stands: the centre of the open cell nearest its centroid (in the district,
-## not reserved, all eight neighbours passable, so it never narrows a way through), searched in growing
+## Where a district's landmark stands: the center of the open cell nearest its centroid (in the district,
+## not reserved, all eight neighbors passable, so it never narrows a way through), searched in growing
 ## squares; INF when none is near enough. ChunkRecipe finds the exact spot round it.
 func landmarkCell(d: int, centroid: Vector2) -> Vector2:
 	var c := cellOf(centroid)
@@ -937,7 +937,7 @@ func landmarkCell(d: int, centroid: Vector2) -> Vector2:
 					if flags[i + n.y * W + n.x] & BLOCKED != 0:
 						open = false
 						break
-				if open: return cellCentre(cell)
+				if open: return cellCenter(cell)
 	return Vector2.INF
 
 #--- routing -----------------------------------------------------------------------------------------
@@ -961,7 +961,7 @@ static func makeAStar(terrainArray: PackedByteArray, flagArray: PackedByteArray,
 			if weight > 0.0 && weight != 1.0: grid.set_point_weight_scale(c, weight)
 	return grid
 
-## The A* route from a to b on the coarse map: {points (a, the cell centres between, b), length (px),
+## The A* route from a to b on the coarse map: {points (a, the cell centers between, b), length (px),
 ## reached}. A start inside a blocked cell still gets a way out. Never shorter than a.distance_to(b).
 static func routeBetween(grid: AStarGrid2D, a: Vector2, b: Vector2) -> Dictionary:
 	var ca := cellOf(a)
@@ -973,7 +973,7 @@ static func routeBetween(grid: AStarGrid2D, a: Vector2, b: Vector2) -> Dictionar
 	var ids := grid.get_id_path(ca, cb, true)
 	if startSolid: grid.set_point_solid(ca, true)
 	points.push_back(a)
-	for id in ids: points.push_back(cellCentre(id))
+	for id in ids: points.push_back(cellCenter(id))
 	var reached := not ids.is_empty() && ids[ids.size() - 1] == cb
 	if reached: points.push_back(b)
 	var length := 0.0
@@ -984,7 +984,7 @@ static func routeBetween(grid: AStarGrid2D, a: Vector2, b: Vector2) -> Dictionar
 
 ## Job keys: chunk (Vector2i), seed, def (as for buildCoarse), terrain and flags (the coarse map's arrays,
 ## read only). Writes job.result: chunk, terrain (FINE_W x FINE_H terrain ids), water and wall (FIELD_W x
-## FIELD_H signed fields at the fine cell centres, apron included: negative inside deep water / a wall;
+## FIELD_H signed fields at the fine cell centers, apron included: negative inside deep water / a wall;
 ## the water under a bridge stays negative), usec.
 static func fineRaster(job: Dictionary) -> void:
 	var t0 := Time.get_ticks_usec()
@@ -1052,7 +1052,7 @@ static func fineRaster(job: Dictionary) -> void:
 	var colTx := PackedFloat64Array()
 	var colAx := PackedFloat64Array() #1 - tx
 	var colL := PackedInt32Array()    #i0 - lo.x
-	var colOwn := PackedInt32Array()  #the nearest coarse centre's x
+	var colOwn := PackedInt32Array()  #the nearest coarse center's x
 	for i in FIELD_W:
 		var x := origin.x + (i - 0.5) * FINE
 		var u := (x - ORIGIN.x) / CELL - 0.5
@@ -1087,11 +1087,11 @@ static func fineRaster(job: Dictionary) -> void:
 			var waterField := maxf(v.x, cw - A_LO)
 			var wallField := maxf(v.y, ch - A_LO)
 			var t := int(v.z)
-			#the nearest centre: a blocked cell is always blocked round its centre
+			#the nearest center: a blocked cell is always blocked round its center
 			var ownX := colOwn[i]
 			var ownKind := kind[rowOwn + ownX]
 			if ownKind != 0:
-				var oc := cellCentre(Vector2i(ownX, ownY))
+				var oc := cellCenter(Vector2i(ownX, ownY))
 				var pillar := -0.5 + sqrt((x - oc.x) * (x - oc.x) + (y - oc.y) * (y - oc.y)) / (PILLAR_PX * 2.0)
 				if ownKind == 1: waterField = minf(waterField, minf(pillar, pillar * steep))
 				else: wallField = minf(wallField, pillar)
@@ -1103,7 +1103,7 @@ static func fineRaster(job: Dictionary) -> void:
 				var fh := fillH[l] * w00 + fillH[l + 1] * w10 + fillH[l + LOCAL_W] * w01 + fillH[l + LOCAL_W + 1] * w11
 				waterField = minf(waterField, minf(fw + 0.7, (fw + 0.7) * steep))
 				wallField = minf(wallField, fh + 0.7)
-				#crossings in this cell or a 4-neighbour open their full width
+				#crossings in this cell or a 4-neighbor open their full width
 				var own := Vector2i(ownX, ownY)
 				for k in 5:
 					var cell: Vector2i = own + SELF_AND_DIRS4[k]
@@ -1111,7 +1111,7 @@ static func fineRaster(job: Dictionary) -> void:
 					var idx := cell.y * W + cell.x
 					var fl := coarseFlags[idx]
 					if fl & CROSSING == 0: continue
-					var c := cellCentre(cell)
+					var c := cellCenter(cell)
 					var along := absf(x - c.x) if fl & CROSS_X != 0 else absf(y - c.y)
 					var across := absf(y - c.y) if fl & CROSS_X != 0 else absf(x - c.x)
 					if along >= CELL: continue
@@ -1150,7 +1150,7 @@ static func fineRaster(job: Dictionary) -> void:
 		"tracks": tracks, "usec": Time.get_ticks_usec() - t0}
 
 ## The crossings round a chunk (its raster's LOCAL_W x LOCAL_H coarse cells from `lo`), one entry per crossing
-## (cells grouped by crossingRoot): {centre (world px, the mean of its cells there), axis (the way through:
+## (cells grouped by crossingRoot): {center (world px, the mean of its cells there), axis (the way through:
 ## RIGHT or DOWN), kind ("ford", "bridge" or "pass"), slot (a slot canyon), cells}. The recipe anchors heroes
 ## to them (fords, passes) and lays a coin line through a slot.
 static func crossingRuns(coarseFlags: PackedByteArray, coarseTerrain: PackedByteArray, lo: Vector2i, mapSeed: int, slotShare: float) -> Array:
@@ -1167,15 +1167,15 @@ static func crossingRuns(coarseFlags: PackedByteArray, coarseTerrain: PackedByte
 			if run.is_empty():
 				var t := coarseTerrain[idx]
 				var kind := "ford" if t == SHALLOWS else ("bridge" if t == BRIDGE else "pass")
-				run = {"centre": Vector2.ZERO, "axis": Vector2.RIGHT if fl & CROSS_X != 0 else Vector2.DOWN, "kind": kind,
+				run = {"center": Vector2.ZERO, "axis": Vector2.RIGHT if fl & CROSS_X != 0 else Vector2.DOWN, "kind": kind,
 					"slot": kind == "pass" && isSlot(mapSeed, coarseFlags, idx, slotShare), "cells": 0}
 				runs[root] = run
-			run.centre += cellCentre(c)
+			run.center += cellCenter(c)
 			run.cells += 1
 	var out: Array = []
 	for root in runs:
 		var run: Dictionary = runs[root]
-		run.centre /= float(run.cells)
+		run.center /= float(run.cells)
 		out.push_back(run)
 	return out
 
@@ -1183,13 +1183,13 @@ static func crossingRuns(coarseFlags: PackedByteArray, coarseTerrain: PackedByte
 
 ## The coarse map as text: one character per cell from the terrain table's letters ('+' a pass, '#'
 ## nothing reachable), `marks` (Vector2i cell -> one character) on top. Main thread (reads World).
-static func ascii(result: Dictionary, centre: Vector2i, w: int, h: int, marks := {}) -> PackedStringArray:
+static func ascii(result: Dictionary, center: Vector2i, w: int, h: int, marks := {}) -> PackedStringArray:
 	var lines := PackedStringArray()
 	var terrainArray: PackedByteArray = result.terrain
 	var flagArray: PackedByteArray = result.flags
-	for cy in range(centre.y - h / 2, centre.y - h / 2 + h):
+	for cy in range(center.y - h / 2, center.y - h / 2 + h):
 		var line := ""
-		for cx in range(centre.x - w / 2, centre.x - w / 2 + w):
+		for cx in range(center.x - w / 2, center.x - w / 2 + w):
 			var c := Vector2i(cx, cy)
 			if marks.has(c):
 				line += marks[c]

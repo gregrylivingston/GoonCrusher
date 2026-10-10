@@ -16,7 +16,7 @@ using namespace godot;
 
 Rect2 GoonBody::physics_view;
 
-// StringNames are made once the library is initialised and freed before it unloads (register_types.cpp)
+// StringNames are made once the library is initialized and freed before it unloads (register_types.cpp)
 namespace {
 struct Names {
 	StringName move = "move";

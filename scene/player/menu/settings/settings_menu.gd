@@ -133,7 +133,7 @@ func graphicsRows() -> Array:
 			"info":"Smoke puffs from the exhaust. Low makes fewer, smaller, shorter puffs.",
 			"perf":"Medium. Full keeps about 35 large see-through puffs per car on screen."},
 		{"type":"choice", "key":"gfx/tire_marks", "label":"Tire Marks", "options":[[0, "Off"], [1, "Short"], [2, "Full"]],
-			"info":"Skid marks on the ground. Short: rear tyres only, gone after 6 seconds. Full: all tyres, 20 seconds.",
+			"info":"Skid marks on the ground. Short: rear tires only, gone after 6 seconds. Full: all tires, 20 seconds.",
 			"perf":"Small."},
 		{"type":"choice", "key":"gfx/damage_fx", "label":"Damage Effects", "options":[[1, "Low"], [2, "Full"]],
 			"info":"Effects from a damaged car. Low: engine smoke only. Full: also flames, a fuel drip trail and sparks from a wrecked wheel. Dents and flickering headlights always show, because they tell you what is broken.",
@@ -144,9 +144,6 @@ func graphicsRows() -> Array:
 		{"type":"choice", "key":"gfx/ground", "label":"Ground Detail", "options":[[0, "Simple"], [1, "Full"]],
 			"info":"Full blends the ground's surfaces into each other with natural borders and moves water and conveyor belts. Simple draws each patch of ground with one surface.",
 			"perf":"Small to medium: the ground covers the whole screen."},
-		{"type":"choice", "key":"gfx/celebration", "label":"Slot Celebration", "options":[[0, "Minimal"], [1, "Reduced"], [2, "Full"]],
-			"info":"How many prizes pour out of the slot machine's chute after Collect: 4, 8 or 16. Reels, prizes and claiming are the same at every level.",
-			"perf":"Tiny: at most 16 icons."},
 		{"type":"choice", "key":"gfx/reward_fx", "label":"Reward Pop-ups", "options":[[0, "Minimal"], [1, "Reduced"], [2, "Full"]],
 			"info":"How many collected rewards fly to the HUD at once (3, 10 or 20). Every reward is counted the moment you collect it, whatever this is set to.",
 			"perf":"Small to medium during purses and crowds."},
@@ -154,7 +151,7 @@ func graphicsRows() -> Array:
 			"info":"What a crush leaves: Minimal is a flattened goon and a few bits; Reduced adds the squash, goo spatter and a few goons flung by fast hits; Full flings more goons and adds impact bursts. Crushes, combos and rewards count the same at every level.",
 			"perf":"Small, more in big crowds."},
 		{"type":"choice", "key":"gfx/driving_fx", "label":"Driving Effects", "options":[[0, "Minimal"], [1, "Reduced"], [2, "Full"]],
-			"info":"What your driving kicks up: dust, spray and clods off the ground, tyre smoke in slides and sparks. Minimal keeps a few sparks only; Reduced makes about half. The car's lean, bounce and sounds are the same at every level.",
+			"info":"What your driving kicks up: dust, spray and clods off the ground, tire smoke in slides and sparks. Minimal keeps a few sparks only; Reduced makes about half. The car's lean, bounce and sounds are the same at every level.",
 			"perf":"Small: at most 128 puffs and 48 sparks, drawn by two nodes."},
 		{"type":"choice", "key":"audio_perf/max_sfx", "label":"Max Sound Effects", "options":[[8, "8"], [12, "12"], [24, "24"]],
 			"info":"How many goon, pickup and crush sounds can play at once. Engine, crash and voice sounds are separate and always play.",
@@ -195,13 +192,13 @@ func controlRows() -> Array:
 func accessibilityRows() -> Array:
 	return [
 		{"type":"choice", "key":"access/reduce_motion", "label":"Reduce Motion", "options":onOff(),
-			"info":"Stops the 3D text wobble, freezes rainbow fills, makes the giant marker steady, turns off car shake and crush screen shake, fades screen transitions, banners, signs and stamps instead of sliding or slamming them (no smoke or shake) and limits slot celebrations to Reduced. Camera zoom at speed is unchanged.", "perf":"Slightly faster"},
+			"info":"Stops the 3D text wobble, freezes rainbow fills, makes the giant marker steady, turns off car shake and crush screen shake, fades screen transitions, banners, signs and stamps instead of sliding or slamming them (no smoke or shake). Camera zoom at speed is unchanged.", "perf":"Slightly faster"},
 		{"type":"choice", "key":"access/reduce_flashing", "label":"Reduce Flashing", "options":onOff(),
-			"info":"Minimal slot celebrations, HUD warnings that hold steady instead of blinking, no toast rim flash, a slower giant pulse and no over-bright giant glow.", "perf":"Slightly faster"},
+			"info":"HUD warnings that hold steady instead of blinking, no toast rim flash, a slower giant pulse and no over-bright giant glow.", "perf":"Slightly faster"},
 		{"type":"choice", "key":"access/giant_style", "label":"Giant Marker Style", "options":[[0, "Pulse"], [1, "Steady"], [2, "Tint + ground ring"]],
 			"info":"How giants are marked. Giants are always bigger than other goons. New giants use the new style.", "perf":"None"},
-		{"type":"choice", "key":"access/giant_color", "label":"Giant Marker Colour", "options":[[0, "Red"], [1, "Yellow"], [2, "Cyan"], [3, "Magenta"], [4, "White"]],
-			"info":"Colour of the giant marker. Yellow or Cyan are easier to tell apart with red-green colour blindness.", "perf":"None"},
+		{"type":"choice", "key":"access/giant_color", "label":"Giant Marker Color", "options":[[0, "Red"], [1, "Yellow"], [2, "Cyan"], [3, "Magenta"], [4, "White"]],
+			"info":"Color of the giant marker. Yellow or Cyan are easier to tell apart with red-green color blindness.", "perf":"None"},
 		{"type":"choice", "key":"access/plain_text", "label":"Plain Text", "options":onOff(),
 			"info":"Draws all 3D text flat, whatever Text Effects is set to.", "perf":"Faster in menus"},
 		{"type":"choice", "key":"access/car_shake", "label":"Car Shake", "options":onOff(),
@@ -429,7 +426,7 @@ func onActivated(row: OptionRow) -> void:
 func startCapture(row: OptionRow) -> void:
 	capturingRow = row
 	var what = "a controller button or stick" if row.slot == 2 else "a key"
-	captureDialog = SettingsDialog.make("Press %s for %s" % [what, row.def.label], ["Cancel"], 5.0, "Cancelling in %d s")
+	captureDialog = SettingsDialog.make("Press %s for %s" % [what, row.def.label], ["Cancel"], 5.0, "Canceling in %d s")
 	captureDialog.chosen.connect(func(_i): capturingRow = null)
 	add_child(captureDialog)
 

@@ -7,7 +7,7 @@ class_name Personas extends RefCounted
 #reads the save, the persona's own run history and a RandomNumberGenerator, so it can be unit tested.
 #  rookie    a new player: drives sloppily, follows the obvious path, clicks with the mouse, buys whatever
 #            is cheap the moment it can, never spends gems. Shows the first hours and where people stall.
-#  grinder   an optimiser: the best AI driver, plays whatever pays most per minute once the path is
+#  grinder   an optimizer: the best AI driver, plays whatever pays most per minute once the path is
 #            blocked, saves for cars, puts upgrades into the stats that win runs. Shows the fastest
 #            progression and any run or purchase that pays far more than the rest.
 #  explorer  a completionist: plays the least-played level, mode and car, buys every car to try it,
@@ -55,7 +55,7 @@ static func get_def(id: String) -> Dictionary:
 #---------- the garage ----------
 
 ## The next thing to buy, or {} when done shopping: {"unlock": car index}, {"upgrade": stat, "car": car index}
-## or {"pickup": id} (unlocked in the Goonopedia). Called again after each purchase, with the bank updated.
+## or {"pickup": id} (unlocked on the Pickups screen). Called again after each purchase, with the bank updated.
 static func nextPurchase(persona: Dictionary, data: PlayerData, history: Array, rng: RandomNumberGenerator) -> Dictionary:
 	var cheapestLocked := -1
 	for i in data.cars.size():

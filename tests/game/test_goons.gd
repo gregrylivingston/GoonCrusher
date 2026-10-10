@@ -1,9 +1,7 @@
 extends GameTest
 
-#The goon roster (docs/GOONS.md): every registry entry has baked art and a known verb, every faction can fill
-#a region on every terrain, the fallback factionFor rises by distance and level, and crush rules hold.
+#The goon roster (docs/GOONS.md): every registry entry has baked art and a known verb, and crush rules hold.
 
-const PLAYABLE := [Goons.T.GRASS, Goons.T.SAND, Goons.T.MUD, Goons.T.MOSS, Goons.T.DIRT, Goons.T.SNOW]
 const VERBS := [&"lunge", &"dodger", &"lobber", &"shooter", &"trapper", &"bomber", &"hitcher", &"turtle", &"boss", &"burrow",
 	&"pack", &"roller", &"slammer", &"charger", &"hopper", &"thief", &"striker", &"spiky", &"flyer", &"herd", &"rider"]
 const ANIMS := {&"walk": 8, &"idle": 4, &"windup": 4, &"attack": 6, &"special": 8, &"stun": 4}
@@ -39,25 +37,6 @@ func test_every_goon_has_baked_art_and_a_known_verb():
 		for anim in ANIMS: assert_eq(frames.get_frame_count(anim), ANIMS[anim], "%s: %s frames" % [id, anim])
 		assert_almost_eq(goon.get_node("Sprite").scale.x, 1.0 / Goons.ART_RES, 0.001, "%s: baked at Goons.ART_RES" % id)
 		goon.free()
-
-func test_every_faction_fills_a_region_on_every_terrain():
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 7
-	for f in [Goons.faction.WILD, Goons.faction.TRIBE, Goons.faction.SCRAP]:
-		for t in PLAYABLE:
-			assert_true(Goons.pool(f, t).size() >= 3, "%s on terrain %d has 3+ goons" % [Goons.factionName(f), t])
-			var three := Goons.regionGoons(f, t, rng)
-			assert_eq(three.size(), 3, "three goons")
-			for id in three:
-				assert_eq(Goons.DATA[id].faction, f, "%s belongs to %s" % [id, Goons.factionName(f)])
-				assert_true(t in Goons.DATA[id].biomes, "%s lives on terrain %d" % [id, t])
-			assert_eq(Goons.DATA[three[0]].rank, Goons.pool(f, t).map(func(id): return Goons.DATA[id].rank).min(), "the first goon is the faction's lowest rank there")
-
-func test_factions_rise_with_distance_and_level():
-	assert_eq(Goons.factionFor(0.0, 0, 0.0), Goons.faction.WILD, "the start of level 1 is wild")
-	assert_eq(Goons.factionFor(Goons.CHUNK_PX * 4.0, 0, 0.0), Goons.faction.TRIBE, "four chunks out is tribal")
-	assert_eq(Goons.factionFor(Goons.CHUNK_PX * 8.0, 0, 0.0), Goons.faction.SCRAP, "far out is the Scrap Gang")
-	assert_eq(Goons.factionFor(0.0, 7, 0.0), Goons.faction.TRIBE, "the start of the last level is already tribal")
 
 func test_waves_bring_goons_two_and_three():
 	for i in 50: assert_true(Goons.pickSlot(1, i / 50.0) < 2, "wave 1 never spawns goon 3")

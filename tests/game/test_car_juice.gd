@@ -58,18 +58,8 @@ func test_the_spring_settles_and_overshoots_once():
 	for i in 120:
 		x = CarJuice.spring(x.x, x.y, 0.0, CarJuice.LEAN_SPRING, CarJuice.LEAN_DAMP, 1.0 / 60.0)
 		if x.x < 0.0: crossed = true
-	assert_true(crossed, "under-damped: a lean that lets go swings past centre")
+	assert_true(crossed, "under-damped: a lean that lets go swings past center")
 	assert_gt(0.02, absf(x.x), "and settles within two seconds")
-
-func test_engine_pitch_climbs_through_a_gear_and_drops_at_the_shift():
-	var low := CarJuice.enginePitch(20.0, 1.0, false)
-	var high := CarJuice.enginePitch(CarJuice.GEAR_SPEED - 1.0, 1.0, false)
-	var shifted := CarJuice.enginePitch(CarJuice.GEAR_SPEED + 1.0, 1.0, false)
-	assert_gt(high, low, "revs climb in a gear")
-	assert_gt(high - 0.4, shifted, "and fall at the shift")
-	assert_gt(shifted, low, "each gear starts higher than the last")
-	assert_gt(CarJuice.enginePitch(400.0, 1.0, false), CarJuice.enginePitch(400.0, 0.0, false), "throttle adds load")
-	assert_eq(CarJuice.gearOf(650.0), 3, "the controller's gear rule")
 
 func test_squeal_follows_slip():
 	assert_eq(CarJuice.squeal(0.05, 600.0, false, false), 0.0, "gripping: silent")
@@ -90,7 +80,7 @@ func test_surfaces_have_the_right_trails():
 	assert_eq(CarJuice.trailKind(surface("SHALLOWS")), CarJuice.Kind.SPRAY, "shallows: spray")
 	assert_eq(CarJuice.trailKind(surface("WADE")), CarJuice.Kind.SPRAY, "wading depth: spray")
 	assert_eq(CarJuice.trailKind(surface("WATER")), CarJuice.Kind.SPRAY, "deep water: spray")
-	assert_eq(CarJuice.trailKind(surface("ASPHALT")), -1, "asphalt: only tyre smoke in a slide")
+	assert_eq(CarJuice.trailKind(surface("ASPHALT")), -1, "asphalt: only tire smoke in a slide")
 	assert_true(CarJuice.isRough(surface("MUD")) && not CarJuice.isRough(surface("ASPHALT")), "a road to mud bumps")
 
 func test_the_player_car_has_juice_and_its_pools_follow_the_setting():

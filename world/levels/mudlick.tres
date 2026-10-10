@@ -40,5 +40,3 @@ palette = {
 &"water": Color(0.18, 0.3, 0.28, 1),
 &"shallows": Color(0.3, 0.4, 0.33, 1)
 }
-nightTint = Color(0.04, 0.08, 0.07, 1)
-ambience = &"bayou"

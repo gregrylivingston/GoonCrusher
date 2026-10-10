@@ -5,7 +5,7 @@ class_name CarTrailer extends CharacterBody2D
 #Its origin is the middle of its rear axles and it faces +x. It is not part of integrate(), so the AI's
 #predictions drive the tractor alone.
 #
-#It pivots on the kingpin with its own turn rate, which its tyres pull toward the rate at which they
+#It pivots on the kingpin with its own turn rate, which its tires pull toward the rate at which they
 #wouldn't slide sideways (CarHandling.trailerGrip a tick, less on ice and oil). So the trailer cuts inside
 #a corner, lags into a flick and swings past it after, and pushed backwards it folds (jackknifes) unless
 #the driver steers it straight. The fold stops at trailerJackknife degrees, where it drags the tractor.
@@ -98,7 +98,7 @@ func setDamage(look: PackedFloat32Array) -> void:
 
 ## One physics tick, after the tractor has moved. The trailer pivots on the kingpin with its own turn
 ## rate, `spin`. The rate at which its axles wouldn't slide sideways is the kingpin's sideways speed over
-## `length`; the tyres pull `spin` toward that by trailerGrip (times the ground's grip) each tick. Full
+## `length`; the tires pull `spin` toward that by trailerGrip (times the ground's grip) each tick. Full
 ## grip is a trailer on rails; less keeps some of its swing, so it lags into a turn and overshoots out of it.
 func follow(delta: float) -> void:
 	var h := CarHandling.tune
@@ -176,12 +176,12 @@ func syncLights() -> void:
 ## the swing, are crushed like the car's flanks (OverheadCarBody2D.slamGoons)
 func slamGoons() -> void:
 	if not is_instance_valid(Root.spawnManager) || bodyRect.size == Vector2.ZERO: return
-	var centre := bodyRect.get_center()
+	var center := bodyRect.get_center()
 	var half := bodyRect.size / 2.0
-	for goon in Root.spawnManager.goonsNear(to_global(centre), half.x + 80.0):
+	for goon in Root.spawnManager.goonsNear(to_global(center), half.x + 80.0):
 		if goon.dead || goon.collision_layer == 0: continue
 		var r: float = goon.bodyRadius * goon.scale.x
-		var local := to_local(goon.global_position) - centre
+		var local := to_local(goon.global_position) - center
 		var inX := half.x + r - absf(local.x)
 		var inY := half.y + r - absf(local.y)
 		if inX <= 0.0 || inY <= 0.0: continue

@@ -8,7 +8,7 @@ class_name DirectorCamera extends Camera2D
 #  zoom    the zoom held, or [from, to] for a push in or pull back over `seconds`
 #  seconds how long a zoom change or a pan takes (default 4)
 #  lead    follow: how far ahead of the car the camera looks, as seconds of the car's speed (default 0)
-#  offset  [x, y] in screen px (at 900 px on the frame's short side): where the car sits off centre, e.g.
+#  offset  [x, y] in screen px (at 900 px on the frame's short side): where the car sits off center, e.g.
 #          [0, 200] keeps it low in a vertical frame
 #  ahead   tripod and pan: where the camera stands, px ahead of the car when the rig starts (default 900)
 #  side    tripod and pan: px to the car's right (default 0)
@@ -74,7 +74,7 @@ func _process(delta: float) -> void:
 	var share := smoothstep(0.0, 1.0, clampf(age / seconds, 0.0, 1.0))
 	var z := lerpf(zoomFrom, zoomTo, share)
 	zoom = Vector2(z, z)
-	var shift := screenOffset / z #screen px to world px: the car sits `screenOffset` from the centre
+	var shift := screenOffset / z #screen px to world px: the car sits `screenOffset` from the center
 	match rig:
 		"follow":
 			if not is_instance_valid(car): return

@@ -1,6 +1,6 @@
 extends AIDriver
 
-#Andrew's driver (the taxi: The Meter, City Tyres). The meter pays while the car stays above its speed
+#Andrew's driver (the taxi: The Meter, City Tires). The meter pays while the car stays above its speed
 #with no wall hits (CarTraitRig.METER_SPEED), so fuel saving never takes it below that, and walls cost
 #it more than they cost anyone else.
 

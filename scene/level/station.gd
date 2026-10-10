@@ -123,7 +123,7 @@ func tintBarrier() -> void:
 
 #--- the driveway ---------------------------------------------------------------------------------
 
-## Where the car has to go: the driveway's centre (the HUD points here, the AI aims here)
+## Where the car has to go: the driveway's center (the HUD points here, the AI aims here)
 func drivewayPoint() -> Vector2:
 	return $driveway/CollisionShape2D.global_position
 

@@ -7,7 +7,6 @@ script = ExtResource("1_land")
 id = &"coast"
 displayName = "Coast"
 grammar = &"bayou"
-text = "Lagoons, inlets and sandbars along the shore. Piers and boardwalks cross the deep water."
 features = {
 "lakeFrequency": 8.3e-05,
 "lakeThreshold": 0.38,

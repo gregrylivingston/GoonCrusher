@@ -6,7 +6,6 @@ class_name CleanFeed
 #  off:     no HUD at all; screens that open later (a prize game, the results) still show
 #Applied to a run's HUD once it is ready; `restore` puts back what `apply` hid.
 
-const MODES := ["full", "minimal", "off"]
 const HIDDEN := &"cleanFeedHidden"
 const MINIMAL_HIDES := ["VersionTracker", "Mirror", "TopCenter", "Objective"]
 

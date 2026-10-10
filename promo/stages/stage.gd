@@ -18,11 +18,11 @@ extends Node
 #  safezone    a guide to lay over a tall or square edit: the area the platform's own buttons and captions
 #              leave clear ("platform": shorts, reels, tiktok or all). A still; never part of a delivery.
 #  endcard     the logo over "call" (default WISHLIST ON STEAM) with the Steam mark; "sub": a smaller line
-#job.backdrop: "clear" (transparent), "magenta" (a key colour nothing in the game uses), "grey", "black".
+#job.backdrop: "clear" (transparent), "magenta" (a key color nothing in the game uses), "gray", "black".
 
 const TEXT_SHADER := preload("res://shader/3dtext.gdshader")
 const TITLE_FONT := preload("res://style/font/Tektur/Tektur-Black.ttf")
-const BACKDROPS := {"magenta": Color(1, 0, 1), "grey": Color(0.467, 0.467, 0.467), "black": Color.BLACK}
+const BACKDROPS := {"magenta": Color(1, 0, 1), "gray": Color(0.467, 0.467, 0.467), "black": Color.BLACK}
 const CARS := ["sedan", "taxi", "pickup", "police", "ambulance", "van", "racer", "supercar", "semi"]
 
 var job := {}
@@ -115,7 +115,7 @@ func lineup() -> void:
 			node.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 			node.position = Vector2(8, 8)
 			node.size = room
-		else: #a walking goon: scaled to the cell, standing on its centre
+		else: #a walking goon: scaled to the cell, standing on its center
 			var frame: Vector2 = node.get_meta(&"frameSize", Vector2(128, 128))
 			var fit := minf(room.x / frame.x, room.y / frame.y) * 0.9
 			node.scale = Vector2(fit, fit)

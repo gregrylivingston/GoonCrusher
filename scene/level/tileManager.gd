@@ -151,9 +151,9 @@ func buildWorld() -> void:
 		def.id, worldSeed, def.grammar, worldMap.buildMs.total, Time.get_ticks_msec() - started, worldMap.districts.size(),
 		worldMap.crossings.size(), skinMs, worldMap.fineStats.usec / 1000.0, recipe.get("usec", 0) / 1000.0, ",".join(skin.layers)])
 
-## A station lot (world px) round a chunk's centre
+## A station lot (world px) round a chunk's center
 static func lotRect(chunk: Vector2i) -> Rect2:
-	return Rect2(WorldGen.chunkCentre(chunk) + WorldGen.LOT_RECT.position, WorldGen.LOT_RECT.size)
+	return Rect2(WorldGen.chunkCenter(chunk) + WorldGen.LOT_RECT.position, WorldGen.LOT_RECT.size)
 
 #The generator placed the station (WorldGen: in the start's component, on clear cells) and measured the
 #route to it; every station is pinned.
@@ -190,7 +190,7 @@ func startChunkOf() -> Vector2i:
 
 const NO_CHUNK = WorldGen.NO_CHUNK
 
-#A station: placed at the chunk's centre and pinned, its lot reserved (no props or pickups; a chunk already
+#A station: placed at the chunk's center and pinned, its lot reserved (no props or pickups; a chunk already
 #applied there is applied again without them). A lot reserved during the run (Marathon's later stations)
 #also drops the recipes already built round it, so they are built again with the lot kept clear, as the
 #first station's are (props kept their margin from it, decorateChunk's spots stay out of it).
@@ -207,14 +207,14 @@ func pinChunk(chunk: Vector2i, myScene) -> void:
 			for y in range(lo.y, hi.y + 1):
 				for x in range(lo.x, hi.x + 1):
 					var c := Vector2i(x, y)
-					#a neighbour on screen keeps its recipe (its props and pickups in the lot are skipped as it applies)
+					#a neighbor on screen keeps its recipe (its props and pickups in the lot are skipped as it applies)
 					if c == chunk || not views.has(c): worldMap.forget(c)
 	if views.has(chunk):
 		unloadChunk(chunk, true)
 		loadChunk(chunk, chunk == playerChunk)
 	if myScene != null:
 		stationNodes[chunk] = myScene
-		myScene.position = WorldGen.chunkCentre(chunk)
+		myScene.position = WorldGen.chunkCenter(chunk)
 		objectLayer.add_child(myScene)
 
 #the chunk unloads by distance again, its station with it
@@ -226,14 +226,6 @@ var playerCell := Vector2i(-99999, -99999) #the car's coarse cell, for district 
 
 func chunkOf(worldPosition: Vector2) -> Vector2i:
 	return Vector2i(floori(worldPosition.x / tilesize.x), floori(worldPosition.y / tilesize.y))
-
-## A chunk at a glance (WorldMap.chunkTile): {"terrain", "region"}. Outside the map is water.
-func tileAt(chunk: Vector2i) -> Dictionary:
-	if worldMap == null: return {"terrain":Root.terrain.WATER, "region":-2}
-	return worldMap.chunkTile(chunk)
-
-func getTile(coordinates) -> Dictionary:
-	return tileAt(chunkOf(Vector2(coordinates)))
 
 #--- the taken set and the chunk props' hooks ---------------------------------------------------------
 

@@ -12,7 +12,7 @@
 	const ANIMS = ["walk", "idle", "windup", "attack", "special", "stun"];
 	const png = cv => cv.toDataURL("image/png");
 
-	//convex hull of the solid pixels (alpha > 140 skips the soft shadow), in game px around the centre
+	//convex hull of the solid pixels (alpha > 140 skips the soft shadow), in game px around the center
 	function hull(cv, res){
 		const w = cv.width, h = cv.height, data = cv.getContext("2d").getImageData(0, 0, w, h).data, pts = [];
 		for(let y = 0; y < h; y += 1) for(let x = 0; x < w; x += 1) if(data[(y * w + x) * 4 + 3] > 140) pts.push([x, y]);

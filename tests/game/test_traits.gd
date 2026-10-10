@@ -47,7 +47,7 @@ func test_downforce_grips_harder_with_speed():
 	assert_gt(fast, 1.4, "glued at speed")
 	assert_gt(1.0, slow, "loose at a crawl")
 
-func test_city_tyres_love_pavement():
+func test_city_tires_love_pavement():
 	var c := car("taxi")
 	assert_gt(c.surfaceGrip(T.ASPHALT), World.grip(T.ASPHALT), "more grip on asphalt")
 	assert_gt(World.grip(T.DIRT), c.surfaceGrip(T.DIRT), "less on dirt")

@@ -62,7 +62,7 @@ func _ready() -> void:
 	top.material = unshaded
 	top.draw.connect(drawTop)
 	add_child(top)
-	#a tyre print: dark band with tread bars, laid across each crush decal along the car's heading
+	#a tire print: dark band with tread bars, laid across each crush decal along the car's heading
 	var img := Image.create(32, 10, false, Image.FORMAT_RGBA8)
 	for x in 32:
 		for y in 10:
@@ -76,7 +76,7 @@ func telegraph(owner: Walker, kind: String, duration: float, radius: float) -> v
 	telegraphs.push_back({"owner": weakref(owner), "kind": kind, "t": 0.0, "T": maxf(duration, 0.05), "r": radius, "pos": owner.lockPos})
 
 ## Floating text over the world. `size` is the font size before the pop; `col` (default: the HUD's text
-## colour) tints it, e.g. gold for a crush bonus.
+## color) tints it, e.g. gold for a crush bonus.
 func label(pos: Vector2, text: String, size := 18, col := Color.TRANSPARENT) -> void:
 	if labels.size() >= MAX_LABELS: labels.pop_front()
 	labels.push_back({"pos": pos + Vector2(0, -30), "text": text, "age": 0.0, "size": size, "col": HudTheme.TEXT if col.a == 0.0 else col})
@@ -121,7 +121,7 @@ func nearestDecal(pos: Vector2, maxDist: float):
 				best = s.global_position
 	return best
 
-## Bits in the faction's colours. With a direction, two in three spray along it at up to `power` px/s (the
+## Bits in the faction's colors. With a direction, two in three spray along it at up to `power` px/s (the
 ## car's speed); the rest scatter all round.
 func bits(pos: Vector2, faction: int, dir := Vector2.ZERO, power := 0.0, count := 7) -> void:
 	var cols = [[Color("#8a7050"), Color("#5b4636")], [Color("#9a8aa8"), ORANGE, Color("#3a3046")], [Color("#8d8f8c"), Color("#2aa6a1"), Color("#4a4c4f")]][clampi(faction, 0, 2)]
@@ -181,7 +181,7 @@ static func deathStyle(speed: float, local: Vector2, giant: bool, roll: float) -
 		if pick < 0.0: return k
 	return &"splat"
 
-## A goon crushed by the car or killed by a blast (`from`: the blast's centre, else INF)
+## A goon crushed by the car or killed by a blast (`from`: the blast's center, else INF)
 func crushed(goon: Walker, cause: StringName, from: Vector2) -> void:
 	var car = Root.playerCar
 	var hasCar := is_instance_valid(car)
@@ -242,7 +242,7 @@ static func frameTexture(spr: AnimatedSprite2D) -> Texture2D:
 	if spr == null || spr.sprite_frames == null || not spr.sprite_frames.has_animation(spr.animation): return null
 	return spr.sprite_frames.get_frame_texture(spr.animation, spr.frame)
 
-## Along the line of the hit: the way the car is travelling, deflected a little toward the side of the
+## Along the line of the hit: the way the car is traveling, deflected a little toward the side of the
 ## bumper that hit it (at most about 20 degrees, on the corner)
 static func shoveDir(car: Node2D, local: Vector2) -> Vector2:
 	var travel: Vector2 = car.velocity.normalized() if car.velocity.length() > 1.0 else Vector2.from_angle(car.rotation)
@@ -413,7 +413,7 @@ func stepHood(c: Dictionary, s: Sprite2D, delta: float) -> bool:
 	if c.t < c.T: return false
 	if randf() < 0.5: #slides off the side it sat on
 		throwOff(c, &"shove", (heading * 0.6 + heading.orthogonal() * (signf(c.local.y) if c.local.y != 0.0 else 1.0)).normalized(), speed * 0.7)
-	else: #under the wheels: flattened with a tyre print
+	else: #under the wheels: flattened with a tire print
 		c.treadHeading = car.rotation
 		layDown(c, car.to_global(Vector2(-CAR_HALF.x * 0.2, c.local.y)), heading, true)
 		label(s.global_position, "SQUISH", 16)

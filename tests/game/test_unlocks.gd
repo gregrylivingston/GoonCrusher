@@ -297,8 +297,8 @@ func test_the_demo_can_unlock_the_casino_trees_first_tier():
 
 func test_the_toolbox_needs_all_four_system_parts():
 	data().coin = 1000000
-	assert_eq(Pickups.displayName("tyre"), "Spare Tire")
-	var parts := ["tyre", "bulb", "sparkplug", "tierod"]
+	assert_eq(Pickups.displayName("tire"), "Spare Tire")
+	var parts := ["tire", "bulb", "sparkplug", "tierod"]
 	assert_eq(Unlocks.prerequisites("toolbox"), parts)
 	assert_eq(Unlocks.state("pickup:toolbox"), Unlocks.S.HIDDEN, "hidden until the Wrench and a part are open")
 	Unlocks.grant("pickup:wrench")

@@ -7,7 +7,6 @@ script = ExtResource("1_land")
 id = &"city"
 displayName = "City"
 grammar = &"city"
-text = "A street grid between buildings, parks, lots and canals. Bridges cross at the streets."
 features = {
 "buildingShare": 0.45,
 "parkShare": 0.2,
@@ -15,7 +14,6 @@ features = {
 "canalShare": 0.1,
 "canalWidth": 1040.0,
 "sidewalk": 110.0,
-"sideStreetChance": 0.5,
 "barrierCap": 0.35,
 "motifs": 0.4,
 "props": 12

@@ -24,7 +24,6 @@ enum Drops { ALL, PLACED, NONE }
 const CATEGORY_ORDER := [Category.CRUSHER, Category.TRIAL, Category.CUP]
 const CATEGORY_NAMES := ["Crusher", "Trial", "Goon Cup"]
 const CATEGORY_COLORS := [Color("#f17d69"), Color("#6ab3f2"), Color("#e6b83c")]
-const CATEGORY_BLURBS := ["Goons are the point.", "No goons. You against the course.", "You against the other drivers."]
 
 ## Mode ids in Root.gameModes order (Unlocks.MODE_KEYS, LevelDef.featured, `--mode=`)
 const IDS := ["countdown", "sprint", "marathon", "defense", "goonpocalypse", "blackout", "bounty", "rally", "flatout",
@@ -78,7 +77,7 @@ const DATA := {
 		"rules": "Finish in a paying place."},
 	M.DERBY: {"name": "DEMOLITION DERBY", "category": Category.CUP, "rivals": true, "map": Map.FIXED, "pickups": Drops.PLACED, "kinds": ["supply", "move"], "boxes": false, "record": "score", "goons": "none",
 		"description": "Six cars inside a painted line and no rules. Hit them fast and anywhere but the nose; use the trees, the rocks and the nitro.",
-		"rules": "Be the last car running. A hit hurts by speed and by where it lands, not by armour; outside the line costs health."},
+		"rules": "Be the last car running. A hit hurts by speed and by where it lands, not by armor; outside the line costs health."},
 	M.KNOCKOUT: {"name": "KNOCKOUT", "category": Category.CUP, "rivals": true, "map": Map.FIXED, "pickups": Drops.PLACED, "kinds": ["boost", "gadget"], "boxes": false, "record": "wins", "goons": "none",
 		"description": "Last place is cut at the end of every lap until one car is left.",
 		"rules": "Be the one left."},

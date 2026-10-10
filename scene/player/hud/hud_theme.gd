@@ -80,7 +80,7 @@ static func conditionColor(value: float) -> Color:
 	return BAD
 
 #on/off phase shared by everything that blinks, so blinking lamps stay in step. With Reduce Flashing
-#nothing blinks: every warning holds steady (on), which still reads as a warning in its colour.
+#nothing blinks: every warning holds steady (on), which still reads as a warning in its color.
 static func blinkOn() -> bool:
 	if Settings.get_value("access/reduce_flashing"): return true
 	return Time.get_ticks_msec() % 700 < 430
@@ -106,7 +106,7 @@ static func textWidth(value: String, fontSize: int, font: Font = BOLD) -> float:
 	return font.get_string_size(value, HORIZONTAL_ALIGNMENT_LEFT, -1, fontSize).x
 
 #the smoked, rimmed backing every HUD panel shares
-#with no rim or radius given it takes the dashboard's (HudSkin): the car's rim colour and corner shape
+#with no rim or radius given it takes the dashboard's (HudSkin): the car's rim color and corner shape
 static func panel(item: CanvasItem, rect: Rect2, rim := Color(0, 0, 0, 0), radius := -1, fill := PANEL) -> void:
 	if rim.a == 0.0: rim = Color(HudSkin.current().rim, 0.55)
 	if radius < 0: radius = HudSkin.current().radius

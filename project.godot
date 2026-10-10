@@ -42,10 +42,6 @@ window/size/viewport_height=900
 window/size/mode=3
 window/stretch/mode="canvas_items"
 
-[editor_plugins]
-
-enabled=PackedStringArray("res://addons/gut/plugin.cfg", "res://addons/rmsmartshape/plugin.cfg")
-
 [input]
 
 ui_left={

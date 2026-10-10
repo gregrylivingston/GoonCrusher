@@ -39,7 +39,7 @@ static func flash(item: Control, color := HudTheme.GOLD, seconds := 0.45, radius
 	tween.tween_property(wash, "modulate:a", 0.0, seconds)
 	tween.tween_callback(wash.queue_free)
 
-#scales up from its centre and settles with a small overshoot
+#scales up from its center and settles with a small overshoot
 static func pop(item: Control, peak := 1.3, seconds := 0.3) -> void:
 	item.pivot_offset = item.size / 2.0
 	item.scale = Vector2(peak, peak)

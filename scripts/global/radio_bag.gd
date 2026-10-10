@@ -12,9 +12,6 @@ func _init(source: Array = [], generator: RandomNumberGenerator = null):
 	items = source.duplicate()
 	rng = generator if generator else RandomNumberGenerator.new()
 
-func isEmpty() -> bool:
-	return items.is_empty()
-
 func next():
 	if items.is_empty(): return null
 	if pending.is_empty(): refill()

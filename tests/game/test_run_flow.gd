@@ -32,9 +32,9 @@ func test_station_search_prefers_a_clear_lot():
 	var flags := openFlags()
 	assert_eq(WorldGen.findStationChunk(flags, Vector2i(3, 2), NO_CHUNK).chunk, Vector2i(3, 2), "open ground: the desired chunk")
 	assert_true(WorldGen.findStationChunk(flags, Vector2i(3, 2), NO_CHUNK).clear)
-	assert_eq(WorldGen.findStationChunk(flags, Vector2i(3, 2), Vector2i(3, 2)).chunk.distance_to(Vector2i(3, 2)), 1.0, "the forbidden chunk is skipped for a neighbour")
+	assert_eq(WorldGen.findStationChunk(flags, Vector2i(3, 2), Vector2i(3, 2)).chunk.distance_to(Vector2i(3, 2)), 1.0, "the forbidden chunk is skipped for a neighbor")
 	assert_eq(WorldGen.findStationChunk(flags, Vector2i(900, 0), NO_CHUNK).chunk, Vector2i(WorldGen.CHUNK_LIMIT, 0), "far-off chunks are clamped into the map first")
-	#a barrier through the lot's approach: the desired chunk's centre is open but its lot is not
+	#a barrier through the lot's approach: the desired chunk's center is open but its lot is not
 	var c := WorldGen.chunkCell(Vector2i(3, 2))
 	flags[(c.y + 1) * WorldGen.W + c.x + 4] = WorldGen.BLOCKED
 	var found := WorldGen.findStationChunk(flags, Vector2i(3, 2), NO_CHUNK)
@@ -46,7 +46,7 @@ func test_station_search_prefers_a_clear_lot():
 	var picked := WorldGen.findStationChunk(island, Vector2i(3, 2), NO_CHUNK)
 	assert_false(picked.clear, "nothing reachable: no clear lot")
 
-#a chunk where no station can stand: its four centre cells (WorldGen.stationCoreOk) blocked
+#a chunk where no station can stand: its four center cells (WorldGen.stationCoreOk) blocked
 func blockCore(flags: PackedByteArray, chunk: Vector2i) -> void:
 	var c := WorldGen.chunkCell(chunk) + Vector2i(1, 0)
 	for d in [Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)]:

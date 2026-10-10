@@ -3,7 +3,7 @@ class_name HudMirror extends Control
 #The rear-view mirror at the top of the screen (docs/HUD.md, "The mirror"): its glass holds the mode and the run
 #clock on the left (TopCenter: ModeLabel and Timer) and the mode's goal on the right (Objective), which it lays
 #out and restyles but does not own. Its frame is the car's dashboard's (HudSkin.mirror): a plain mirror, the
-#cab's with its licence card, a camera screen... The semi has no mirror, so it gets a low console flush with the
+#cab's with its license card, a camera screen... The semi has no mirror, so it gets a low console flush with the
 #top edge. Dice (the luck stat, as pips: 18 is three sixes) and a clover (the clover stat, as its number) hang
 #from the middle of it, each die and the clover on its own string, and swing as the car turns; their pickups fly to them.
 #The frame is drawn once; the charms and anything that moves are on a child CanvasItem that redraws on change.
@@ -199,7 +199,7 @@ func _draw() -> void:
 			var at := Vector2(g.end.x - 64, g.position.y + 2)
 			draw_polyline(PackedVector2Array([at, at + Vector2(14, 16), at + Vector2(7, 26), at + Vector2(27, 40)]), Color(1, 1, 1, 0.42), 1.3, true)
 			draw_line(at + Vector2(7, 26), at + Vector2(-8, 33), Color(1, 1, 1, 0.3), 1.0, true)
-		&"checker": #a checker band along the bottom of the glass, and the driver's licence hanging off the end
+		&"checker": #a checker band along the bottom of the glass, and the driver's license hanging off the end
 			var x := g.position.x + 10.0
 			while x < g.end.x - 14.0:
 				draw_rect(Rect2(x, g.end.y - 7, 8, 4), s.rim)

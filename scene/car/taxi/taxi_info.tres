@@ -23,7 +23,7 @@
 [resource]
 script = ExtResource("18_m31ly")
 carId = "taxi"
-traits = Array[StringName]([&"meter", &"city_tyres"])
+traits = Array[StringName]([&"meter", &"city_tires"])
 redline = 6.0
 hudSkin = &"hack"
 weight = 45

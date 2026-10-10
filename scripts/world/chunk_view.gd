@@ -29,7 +29,7 @@ var occluders: Array = []
 var lines: Array = []
 var mmis: Array = []   #[decor id, node]
 var props: Array = []  #[prop id, node, pooled]
-var objects: Node2D    #the chunk's own node (at its centre): props, pickups, decorateChunk's extras
+var objects: Node2D    #the chunk's own node (at its center): props, pickups, decorateChunk's extras
 var extras: Node2D
 var releaseStage := 0
 ## The longest single step of each stage so far (a prop, a pickup, the ground...), in usec: the apply budget's floor

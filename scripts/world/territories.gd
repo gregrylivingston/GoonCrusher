@@ -1,10 +1,10 @@
 class_name Territories extends RefCounted
 ## The six regions of the road atlas (docs/WORLD.md, "Regions"). The code name is Territories because the Region
 ## autoload already means a run's districts. A region is who lives there: its goon class (Goons.CLASSES), the
-## props it lays over each landscape, its landmark, the first words of its district names, its colour and an
+## props it lays over each landscape, its landmark, the first words of its district names, its color and an
 ## elite strength step. Its five levels (LevelDef.region, LevelDef.stop) can sit in different landscapes.
 ##
-##   name, color     the menus' name and colour
+##   name, color     the menus' name and color
 ##   class           its goon class (Goons.CLASSES); every level's line-up comes from it
 ##   landmark        the prop every district's landmark is (props.json, with a beacon; WorldSkin.LANDMARKS)
 ##   nameFirst       district names' first words; the landscape gives the second (Landscape.nameSecond)
@@ -41,7 +41,7 @@ const DATA := {
 	&"raiders": {"name": "Raider Road", "color": Color("#e07a52"), "class": &"scrap", "demo": false,
 		"landmark": &"landmark_scrap",
 		"nameFirst": ["Rust", "Sprocket", "Gearhead", "Scrapper", "Chrome", "Piston", "Rivet", "Junker", "Sawtooth", "Busted"],
-		"dressing": [{&"tyres": 1, &"wreck": 1}, {&"tyres": 2, &"wreck": 2, &"barrel": 1, &"barricade": 1}, {&"tyres": 2, &"wreck": 3, &"barrel": 2, &"barricade": 2, &"scrapheap": 1}],
+		"dressing": [{&"tires": 1, &"wreck": 1}, {&"tires": 2, &"wreck": 2, &"barrel": 1, &"barricade": 1}, {&"tires": 2, &"wreck": 3, &"barrel": 2, &"barricade": 2, &"scrapheap": 1}],
 		"motifs": [{}, {&"wreckpile": 1}, {&"wreckpile": 2, &"roadblock": 1}],
 		"step": {"speed": 1.0, "damage": 1.0, "crush": 1.0},
 		"blurb": "The open road and the towns along it. The Scrap Gang rides everything with wheels."},
@@ -113,8 +113,8 @@ static func levelsOf(id: StringName) -> Array:
 static func regionAt(levelIndex: int) -> StringName:
 	return ORDER[clampi(levelIndex / STOPS, 0, ORDER.size() - 1)]
 
-## How far out a district is: zone 0 near the start, 1, then 2 far out, scored by distance as Goons.factionFor
-## scores factions without the level term (Goons.WILD_BELOW, Goons.TRIBE_BELOW)
+## How far out a district is: zone 0 near the start, 1, then 2 far out, scored by distance (Goons.DISTANCE_WEIGHT,
+## WILD_BELOW, TRIBE_BELOW)
 static func zoneFor(distancePx: float, jitter: float) -> int:
 	var score := distancePx / Goons.CHUNK_PX * Goons.DISTANCE_WEIGHT + jitter
 	if score < Goons.WILD_BELOW: return 0

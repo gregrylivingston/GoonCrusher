@@ -90,7 +90,7 @@ func test_director_camera_rigs():
 	assert_eq(camera.global_position, Vector2(1100, 50), "a tripod doesn't follow")
 	camera.setRig({"rig": "follow", "zoom": 0.5, "smooth": 1.0, "offset": [0, 100]})
 	camera._process(0.016)
-	assert_almost_eq(camera.global_position.y, 50.0 - 100.0 / 0.5, 0.01, "an offset sits the car off centre by that many screen px")
+	assert_almost_eq(camera.global_position.y, 50.0 - 100.0 / 0.5, 0.01, "an offset sits the car off center by that many screen px")
 	camera.free()
 	car.free()
 

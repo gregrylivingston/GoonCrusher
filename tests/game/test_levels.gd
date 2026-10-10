@@ -254,7 +254,7 @@ func test_level_rules_weigh_events_and_night():
 	assert_eq(PickupWorld.pickEvent(["truck"], {"rings": 3}), "", "an open event weighing 0 never starts")
 	assert_true(PickupWorld.pickEvent(open, {}) in open, "no weights: any open event")
 	assert_eq(PickupWorld.pickEvent([], {}), "")
-	assert_eq(Levels.get_def(&"saltflats").rules.events.rings, 3, "Salt Flats favour Ring Runs")
+	assert_eq(Levels.get_def(&"saltflats").rules.events.rings, 3, "Salt Flats favor Ring Runs")
 	assert_eq(Levels.get_def(&"culdesac").rules.nightShare, 0.75, "Cul-de-Sac is mostly night")
 	assert_eq(Levels.get_def(&"prairie").rules.nightShare, 0.25, "Prairie Run's opener is seen in daylight")
 

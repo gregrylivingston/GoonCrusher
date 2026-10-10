@@ -1,14 +1,13 @@
 """AI driver tournament: plays several AI profiles on the same seeds and ranks them per mode.
 
-    python scripts/ai/tournament.py --profiles default,v1,crusher --runs 6
-    python scripts/ai/tournament.py --profiles "default,default+horizonTicks=120" --modes sprint --runs 10
+    python scripts/ai/tournament.py --profiles auto,alt --runs 6
+    python scripts/ai/tournament.py --profiles "auto,auto+horizonTicks=120" --modes sprint --runs 10
 
 Profiles are AIProfiles specs (scripts/ai/ai_profiles.gd): a name, optionally followed by
 +key=value overrides. Every profile plays every mode on the same seeds (--seed, --seed+1, ...), so
 they meet the same maps. Each profile x mode is one headless Godot process (--parallel at a time);
-its log and CSV go to %APPDATA%/GoonCrusher/playtest/. The score is recomputed here from each
-run's fields (run_score, the same formula as runScore in scripts/debug/playtest.gd), so an old
-tournament can be ranked again under a new score:
+its log and CSV go to %APPDATA%/GoonCrusher/playtest/. The score is each run's `score` column
+(runScore in scripts/debug/playtest.gd). To rank a finished tournament again:
     python scripts/ai/tournament.py --rerank %APPDATA%/GoonCrusher/playtest/tournament_round1.csv
 docs/AI_DRIVER.md explains the rest.
 """

@@ -34,7 +34,7 @@ const JUNK_TINT := Color(1.0, 0.55, 0.5)
 static var junkTextures := {}
 
 var root := Control.new()
-var centre: CenterContainer
+var center: CenterContainer
 var card := PanelContainer.new()
 var body := VBoxContainer.new()
 var stage := Control.new()
@@ -75,11 +75,11 @@ func _ready() -> void:
 	dim.color = Color(0, 0, 0, 0.6)
 	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	root.add_child(dim)
-	centre = CenterContainer.new()
-	centre.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	root.add_child(centre)
+	center = CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	root.add_child(center)
 	card.theme_type_variation = "CardPanel"
-	centre.add_child(card)
+	center.add_child(card)
 	body.add_theme_constant_override("separation", 10)
 	card.add_child(body)
 	stage.custom_minimum_size = STAGE
@@ -105,7 +105,7 @@ func _ready() -> void:
 	body.add_child(info)
 	body.add_child(hintRow)
 	if not lab:
-		hatch = GameHatch.attach(self, centre, card, hatchLabel)
+		hatch = GameHatch.attach(self, center, card, hatchLabel)
 		hatch.enter(0.0)
 
 ## The game's setup: call title(), then fill the stage (addStage() is called for it if build doesn't).

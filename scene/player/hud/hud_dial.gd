@@ -33,7 +33,7 @@ const WING_TO := 40.0        #...up to this (full)
 const RIBBON_BOX := 92.0     #a ribbon's readout box, at its right end
 const RIBBON_ROW := 62.0     #a ribbon's height; the fuel or hull bar and the lamps are a row under it
 const MONITOR := Vector2(210, 94) #the heart monitor, beside the speedometer
-const CRACK := [Vector2(-66, -61), Vector2(-49, -34), Vector2(-58, -20), Vector2(-35, -8)] #face units from the centre
+const CRACK := [Vector2(-66, -61), Vector2(-49, -34), Vector2(-58, -20), Vector2(-35, -8)] #face units from the center
 const SCREEN := Color(0.016, 0.078, 0.047, 0.95) #the heart monitor
 
 const FUEL_ICON := preload("res://texture/icon/fuel.svg")
@@ -60,7 +60,7 @@ var beat := 0.0              #the heart monitor's trace, in beats
 var shownValue := 0.0        #the needle eases toward its target, frame-rate independent
 var wingShown := 0.0         #fuel or hull, eased the same way
 var shownKey := []
-var readout := 0             #speedometer digits, refreshed 10 times a second like the old HUD
+var readout := 0             #speedometer digits, refreshed 10 times a second
 var readoutTimer := 0.0
 var lastStats := {}
 var landsAt := {}            #system id -> msec when its pickup flyer arrives
@@ -236,7 +236,7 @@ func setRevScale(car) -> void:
 	queue_redraw()
 	needle.queue_redraw()
 
-#the gear's colour: gold, green near the redline of a gear you shift by hand (time to shift up), white
+#the gear's color: gold, green near the redline of a gear you shift by hand (time to shift up), white
 #while a well-timed shift's push lasts
 static func gearColor(car) -> Color:
 	if car.gears <= 0 || car.gear < 1: return HudTheme.GOLD
@@ -249,7 +249,7 @@ static func gearText(car) -> String:
 	if car.gear == 0: return "N"
 	return str(car.gear)
 
-#the fuel tank leaks once the damage model wears it below half (see docs/HUD.md)
+#the fuel tank leaks once the damage model wears it below half (see docs/CAR_ART.md)
 func leaking(car) -> bool:
 	return kind == Kind.TACH && car.condition.tank < 50.0
 
@@ -304,7 +304,7 @@ func speedUnit() -> String:
 func ink() -> Color:
 	return skin.text.lerp(skin.glow, 0.4) if night && not skin.light else skin.text
 
-#the gear number's colour on this dash: the skin's accent where the HUD's gold would be, a darker green on a light face
+#the gear number's color on this dash: the skin's accent where the HUD's gold would be, a darker green on a light face
 func gearInk(car) -> Color:
 	var color := gearColor(car)
 	if color == HudTheme.GOLD: return skin.accent
@@ -538,7 +538,7 @@ static func heartbeat(p: float) -> float:
 
 #---------- needle, readouts, fuel or hull, lamps ----------
 
-#the needle: from the hub disc's edge where the hub holds a readout, through the centre otherwise
+#the needle: from the hub disc's edge where the hub holds a readout, through the center otherwise
 func drawPointer(degrees: float, length: float, color: Color, width: float) -> void:
 	var disc := hasHubDisc()
 	var hub := HUB * unit if disc else 10 * unit

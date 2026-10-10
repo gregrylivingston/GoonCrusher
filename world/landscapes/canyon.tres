@@ -7,7 +7,6 @@ script = ExtResource("1_land")
 id = &"canyon"
 displayName = "Canyon"
 grammar = &"canyon"
-text = "Canyon walls and mesas. Passes open every chunk; wash lanes run fast."
 features = {
 "ridgeFrequency": 4.5e-05,
 "wallWidth": 1400.0,

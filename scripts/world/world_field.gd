@@ -111,13 +111,11 @@ var n2: FastNoiseLite
 var n3: FastNoiseLite
 var n4: FastNoiseLite
 var n5: FastNoiseLite
-var n6: FastNoiseLite
 var f1 := 0.0
 var f2 := 0.0
 var f3 := 0.0
 var f4 := 0.0
 var f5 := 0.0
-var f6 := 0.0
 #grammar parameters
 var halfA := 0.0 #creek / channel / wall / range / road half-width
 var halfB := 0.0 #pool / track / wash / branch half-width
@@ -142,7 +140,7 @@ const LATTICE_OFFSET := 200 #index = coarse cell + LATTICE_OFFSET; the map spans
 #cached set piece (quarry): the macro cell last looked up and what is there
 var _pieceCell := Vector2i(1 << 30, 0)
 var _pieceType := 0
-var _pieceCentre := Vector2.ZERO
+var _pieceCenter := Vector2.ZERO
 var _pieceRot := 0.0
 const PIECE_NONE := 0
 const PIECE_PIT := 1
@@ -217,7 +215,7 @@ func setup(mapSeed: int, def: Dictionary) -> void:
 			threshB = feat("fortRadius", 2200.0)
 			threshC = feat("campRadius", 1500.0)
 			halfB = feat("rampWidth", 1000.0) / 2.0
-			chance = PackedFloat32Array([feat("pitChance", 0.3), feat("fortChance", 0.25), feat("tyreCamps", 0.25)])
+			chance = PackedFloat32Array([feat("pitChance", 0.3), feat("fortChance", 0.25), feat("tireCamps", 0.25)])
 			spacingB = 2560.0 #mud pit lattice
 			halfC = feat("mudPitRadius", 200.0)
 			passHalf = feat("passWidth", 1300.0) / 2.0
@@ -416,7 +414,7 @@ func mountain(x: float, y: float) -> Vector3:
 	return Vector3(BIG, fh, s)
 
 #Goon Quarry: noise ground and haul roads (n1's zero lines), with one set piece slot per spacingA-px macro
-#cell: a terraced pit (a ring wall with ramps), a junk fort (a ring wall with gates) or a tyre camp (open,
+#cell: a terraced pit (a ring wall with ramps), a junk fort (a ring wall with gates) or a tire camp (open,
 #reserved for props). Small mud pits sit on a 2560 px lattice.
 func quarry(x: float, y: float) -> Vector3:
 	var s := -1 #the plain ground (a haul road's dirt or the base), worked out last unless something covers it
@@ -424,8 +422,8 @@ func quarry(x: float, y: float) -> Vector3:
 	var fh := BIG
 	lookupPiece(floori(x / spacingA), floori(y / spacingA))
 	if _pieceType != PIECE_NONE:
-		var dx := x - _pieceCentre.x
-		var dy := y - _pieceCentre.y
+		var dx := x - _pieceCenter.x
+		var dy := y - _pieceCenter.y
 		var r := sqrt(dx * dx + dy * dy)
 		match _pieceType:
 			PIECE_PIT:
@@ -443,7 +441,7 @@ func quarry(x: float, y: float) -> Vector3:
 	if s < 0: s = DIRT if haul else surfaceBase(x, y)
 	return Vector3(BIG, fh, s)
 
-var _mudPits := {} #lattice cell -> its mud pit's centre, or INF for none
+var _mudPits := {} #lattice cell -> its mud pit's center, or INF for none
 
 ## The mud pit of a lattice cell (at most one, never on a haul road), cached
 func mudPit(gx: int, gy: int) -> Vector2:
@@ -468,7 +466,7 @@ func ringWall(r: float, dx: float, dy: float, r0: float, t: float, gates: int) -
 		if da * r0 < halfB: return BIG
 	return fh
 
-## The set piece of quarry macro cell (mx, my), cached in _piece*: its type, centre and rotation
+## The set piece of quarry macro cell (mx, my), cached in _piece*: its type, center and rotation
 func lookupPiece(mx: int, my: int) -> void:
 	var cell := Vector2i(mx, my)
 	if cell == _pieceCell: return
@@ -482,14 +480,14 @@ func lookupPiece(mx: int, my: int) -> void:
 	if type == PIECE_NONE: return
 	var radius: float = [0.0, threshA, threshB, threshC][type]
 	var room := maxf(spacingA * 0.5 - radius - 900.0, 0.0)
-	var centre := Vector2((mx + 0.5) * spacingA, (my + 0.5) * spacingA)
-	centre += Vector2(WorldGen.hashf(worldSeed, TAG_PIECE + 1000, mx, my) * 2.0 - 1.0, WorldGen.hashf(worldSeed, TAG_PIECE + 2000, mx, my) * 2.0 - 1.0) * room
-	if centre.distance_to(start) < radius + START_CLEAR + 1500.0: return #never on the start
+	var center := Vector2((mx + 0.5) * spacingA, (my + 0.5) * spacingA)
+	center += Vector2(WorldGen.hashf(worldSeed, TAG_PIECE + 1000, mx, my) * 2.0 - 1.0, WorldGen.hashf(worldSeed, TAG_PIECE + 2000, mx, my) * 2.0 - 1.0) * room
+	if center.distance_to(start) < radius + START_CLEAR + 1500.0: return #never on the start
 	_pieceType = type
-	_pieceCentre = centre
+	_pieceCenter = center
 	_pieceRot = WorldGen.hashf(worldSeed, TAG_PIECE + 3000, mx, my) * TAU
 
-## Every quarry set piece whose reservation touches the rect: Array of [type, centre, radius, rotation, gates]
+## Every quarry set piece whose reservation touches the rect: Array of [type, center, radius, rotation, gates]
 func piecesIn(rect: Rect2) -> Array:
 	var out := []
 	if grammar != Grammar.QUARRY: return out
@@ -498,7 +496,7 @@ func piecesIn(rect: Rect2) -> Array:
 			lookupPiece(mx, my)
 			if _pieceType != PIECE_NONE:
 				var gates: int = [0, int(feat("pitRamps", 2)), int(feat("fortGates", 3)), 0][_pieceType]
-				out.push_back([_pieceType, _pieceCentre, [0.0, threshA, threshB, threshC][_pieceType], _pieceRot, gates])
+				out.push_back([_pieceType, _pieceCenter, [0.0, threshA, threshB, threshC][_pieceType], _pieceRot, gates])
 	return out
 
 #Route Nowhere: highways run along +x every spacingA px of y, each warped by n1 and passing its row's
@@ -507,7 +505,7 @@ func piecesIn(rect: Rect2) -> Array:
 #beside the highways every spacingC px.
 func highway(x: float, y: float) -> Vector3:
 	var s := -1 #the base ground, worked out last unless a road or lot covers it
-	#the nearest highway row, and its neighbour only when the point is near the halfway line (the warp is
+	#the nearest highway row, and its neighbor only when the point is near the halfway line (the warp is
 	#under halfC px)
 	var rowF := (y - start.y) / spacingA
 	var k0 := roundi(rowF)
@@ -555,7 +553,7 @@ func hasBranch(j: int) -> bool:
 func branchX(y: float, j: int) -> float:
 	return start.x + (j + 0.5) * spacingB + halfC * 0.5 * n2.get_noise_2d(j * 7919.0, y)
 
-## The centre of gas station lot i beside highway k
+## The center of gas station lot i beside highway k
 func gasStation(i: int, k: int) -> Vector2:
 	var gx := start.x + (i + 0.5) * spacingC
 	var side := 1.0 if WorldGen.hashf(worldSeed, TAG_GAS, i, k) < 0.5 else -1.0
@@ -575,8 +573,8 @@ func buildLattice(colTag: int, rowTag: int) -> void:
 		var row := latticeLine(c, rowTag)
 		rowFlag[i] = 0
 		if row:
-			var centreY := (c + 0.5) * CELL
-			var canal := WorldGen.hashf(worldSeed, TAG_CANAL, c, 0) < chance[3] && absf(centreY - start.y) > 6000.0
+			var centerY := (c + 0.5) * CELL
+			var canal := WorldGen.hashf(worldSeed, TAG_CANAL, c, 0) < chance[3] && absf(centerY - start.y) > 6000.0
 			rowFlag[i] = 2 if canal else 1
 	buildNearest()
 

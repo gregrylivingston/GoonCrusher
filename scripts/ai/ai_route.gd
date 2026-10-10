@@ -57,7 +57,7 @@ func terrainAt(worldPosition: Vector2) -> int:
 func cellOf(worldPosition: Vector2) -> Vector2i:
 	return Vector2i(floori((worldPosition.x - origin.x) / cellPx.x), floori((worldPosition.y - origin.y) / cellPx.y))
 
-func cellCentre(cell: Vector2i) -> Vector2:
+func cellCenter(cell: Vector2i) -> Vector2:
 	return origin + (Vector2(cell) + Vector2(0.5, 0.5)) * cellPx
 
 const LINE_STEP := 256.0 #px between samples: two per fine-raster cell pair, so a narrow channel isn't skipped
@@ -74,7 +74,7 @@ func lineIsClear(a: Vector2, b: Vector2, margin: float = 300.0) -> bool:
 		if isBlocked(terrainAt(p)) || isBlocked(terrainAt(p + side)) || isBlocked(terrainAt(p - side)): return false
 	return true
 
-#world points from `from` towards `to` through land, the first being the start cell's centre.
+#world points from `from` towards `to` through land, the first being the start cell's center.
 #Empty when the start is cut off. `reached` in the result says whether the path ends at `to` (an
 #island station gives a partial path to the closest reachable cell).
 func plan(from: Vector2, to: Vector2) -> Dictionary:
@@ -86,7 +86,7 @@ func plan(from: Vector2, to: Vector2) -> Dictionary:
 	var ids = grid.get_id_path(a, b, true)
 	if startSolid: grid.set_point_solid(a, true)
 	var points = PackedVector2Array()
-	for id in ids: points.push_back(cellCentre(id))
+	for id in ids: points.push_back(cellCenter(id))
 	return {"points":points, "reached":not ids.is_empty() && ids[ids.size() - 1] == b}
 
 #length in px of a polyline

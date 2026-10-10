@@ -1,6 +1,6 @@
 extends GameTest
 
-#The world's gameplay hooks (docs/WORLD.md "Gameplay hooks", docs/GOONS.md): goons against the grid
+#The world's gameplay hooks (docs/WORLD.md "Goon and FX hooks", docs/GOONS.md): goons against the grid
 #(WorldHooks.slideStep, drowning and its crush credit), tethers and hazards near water, shells and shots
 #against walls, breakable and explosive props (BreakableProp), prop groups for goon spawns, and the AI
 #driver's water margin.

@@ -78,8 +78,8 @@ static func steerTarget(left: bool, right: bool) -> float:
 	return -1.0 if left else (1.0 if right else 0.0)
 
 #The wheel moves toward `target` (-1 to 1) by `rate` a tick (OverheadCarBody2D.steerRate: the steering
-#stat and weight). Heading back toward the centre (letting go, easing off, or counter-steering) is
-#CarHandling.steerReturn times quicker, and stops at the centre before turning the other way.
+#stat and weight). Heading back toward the center (letting go, easing off, or counter-steering) is
+#CarHandling.steerReturn times quicker, and stops at the center before turning the other way.
 static func steerToward(steering: float, target: float, rate: float) -> float:
 	if steering != 0.0 && signf(target - steering) != signf(steering):
 		return move_toward(steering, target if target * steering > 0.0 else 0.0, rate * CarHandling.tune.steerReturn)

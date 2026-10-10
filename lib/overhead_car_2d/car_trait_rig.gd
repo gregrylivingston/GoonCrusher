@@ -37,7 +37,6 @@ var meterFare := 0             #coins this fare has paid so far, for the taximet
 const TAPE_WAIT := 180         #ticks clean before it starts patching
 const TAPE_CAP := 60.0         #condition it patches back up to
 const TAPE_STEP := 1.0         #condition per patch, every 30 ticks
-var lastPatch := 0
 
 #--- Loaded Bed (the pickup) ---
 const BED_MAX := 5

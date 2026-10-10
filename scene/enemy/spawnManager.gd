@@ -340,7 +340,6 @@ func openRun() -> void:
 		spawnOffscreen(true)
 
 var timeCount: float = 0
-var mySpawners
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):

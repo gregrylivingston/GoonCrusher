@@ -350,23 +350,6 @@ func tipRow(text: String) -> void:
 	row.add_child(label)
 	into.add_child(row)
 
-#a chip naming a fact and its text (a level's barrier, its surfaces); nothing for empty text
-func factRow(tag: String, text: String, color: Color) -> void:
-	if text == "": return
-	var row = HBoxContainer.new()
-	row.add_theme_constant_override("separation", 10)
-	var c = chip(tag, color)
-	c.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	c.custom_minimum_size.x = 112
-	row.add_child(c)
-	var label = Label.new()
-	label.text = text
-	label.theme_type_variation = "BodyLabel"
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(label)
-	into.add_child(row)
-
 #rows of [label, value text] or [label, value text, bar 0-100, bonus 0-100, icon]
 func statTable(rows: Array) -> void:
 	var table = GridContainer.new()
@@ -411,10 +394,6 @@ func showDetail(entry: Dictionary) -> void:
 	clearDetail()
 	drawDetail(entry)
 
-#redraws the detail card if it's still showing `entry` (after something it shows has loaded)
-func refreshIfShown(kind: String, key) -> void:
-	if shown != null && shown.kind == kind && shown.key == key: showDetail(shown)
-
 #---------- input ----------
 
 func _input(event: InputEvent) -> void:
@@ -438,7 +417,7 @@ func closePage() -> void:
 
 #a soft round glow in `color` behind a showcase's art
 class Glow extends Control:
-	static var falloff: GradientTexture2D #white fading out from the centre, tinted per glow
+	static var falloff: GradientTexture2D #white fading out from the center, tinted per glow
 	var color := Color.WHITE
 
 	func _draw() -> void:

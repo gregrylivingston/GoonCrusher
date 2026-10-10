@@ -27,7 +27,7 @@ static func pulse(landsAt: Dictionary, id: String, now: int) -> float:
 	if not landsAt.has(id) || now < landsAt[id] || now > landsAt[id] + PULSE_MS: return -1.0
 	return float(now - landsAt[id]) / PULSE_MS
 
-## The rating's three parts as [from, to, colour], each 0-1 of 100: what the run started with, what pickups added,
+## The rating's three parts as [from, to, color], each 0-1 of 100: what the run started with, what pickups added,
 ## what damage takes off
 static func spans(car, id: String) -> Array:
 	var stat: String = SYSTEMS[id].stat
@@ -48,7 +48,7 @@ static func line(item: CanvasItem, car, id: String, at: Vector2, length: float, 
 		if upright: item.draw_rect(Rect2(at.x, at.y - to, thick, maxf(1.0, to - from)), span[2])
 		else: item.draw_rect(Rect2(at.x + from, at.y, maxf(1.0, to - from), thick), span[2])
 
-## One lamp, centred on `at`; `u` is the dial's unit (a lamp is about 26 across)
+## One lamp, centered on `at`; `u` is the dial's unit (a lamp is about 26 across)
 static func draw(item: CanvasItem, skin: HudSkin, car, id: String, at: Vector2, u: float, now: int, landsAt: Dictionary) -> void:
 	var system: Dictionary = SYSTEMS[id]
 	var condition: float = car.condition[id]

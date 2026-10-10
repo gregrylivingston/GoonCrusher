@@ -3,14 +3,14 @@ class_name CarJuice extends Node2D
 ## (CrushFeel). The player's car owns one. It is show only: it reads the car each physics tick after the car
 ## has moved and never writes its velocity, input or stats, so handling and the AI's predictions are unchanged.
 ##   - D-1 lean: the body leans out of a turn (it slides out and narrows, the shadow goes the other way) and
-##     tips onto two wheels in a hard one, with squealing smoke off the outer tyres and a bounce when it lands.
+##     tips onto two wheels in a hard one, with squealing smoke off the outer tires and a bounce when it lands.
 ##   - D-2 weight: the nose dips under braking and the tail squats on launch and boost (both read from the
 ##     car's measured acceleration), bumps on Hop and Jump Jets landings, wall hits and ground changes, and a
 ##     camera jolt on wall hits scaled by speed (through CrushFeel's kick and trauma).
 ##   - D-3 ground: dust, spray and clods per surface
-##     (World.surfaceAt), tyre smoke in slides, wall-scrape sparks, and a flame and glow when a drift boost fires;
+##     (World.surfaceAt), tire smoke in slides, wall-scrape sparks, and a flame and glow when a drift boost fires;
 ##     in water a bow wave off the nose, and over deep water the car settles in, tinted, with bubbles (water()).
-##   - D-4 sound: engine pitch through the gears (the controller's gear rule), tyre squeal from slip and a
+##   - D-4 sound: engine pitch through the gears (the controller's gear rule), tire squeal from slip and a
 ##     backfire pop on lift-off.
 ## Reduce Motion drops the jolts and bounces and calms the lean; Car Shake Off drops the bounces;
 ## Driving Effects (gfx/driving_fx) sizes the particles. Particles are pooled, drawn by two nodes.
@@ -49,7 +49,6 @@ const WALL_MIN_FORCE := 120.0    #px/s into the wall before a hit jolts anything
 const BOOST_ZOOM := 0.02         #a drift boost pulls the zoom out this much per tier; updateCameraZoom eases it back
 
 #--- sound (D-4) ---
-const GEAR_SPEED := 300.0        #px/s per gear for enginePitch and gearOf (not the gearbox: that is CarInfo.gears)
 const PITCH_IDLE := 0.85
 const PITCH_RANGE := 0.85        #added from the bottom of a gear to its top
 const PITCH_AFTER_SHIFT := 0.25  #share of PITCH_RANGE the note starts a gear at, after a shift up
@@ -65,7 +64,7 @@ const BACKFIRE_GAP := 0.8        #seconds between pops
 
 #--- ground and sparks (D-3) ---
 enum Kind { PUFF, BITS, SPRAY }
-## Per surface name (World.TERRAIN): [colour, amount, kind]. Missing surfaces leave no trail.
+## Per surface name (World.TERRAIN): [color, amount, kind]. Missing surfaces leave no trail.
 const TRAILS := {
 	"SAND": [Color(0.86, 0.76, 0.55, 0.5), 1.0, Kind.PUFF],
 	"DIRT": [Color(0.6, 0.47, 0.32, 0.45), 0.8, Kind.PUFF],
@@ -93,9 +92,9 @@ const SINK_SHADOW := 0.85        #share of the shadow gone fully sunk
 const BUBBLE_RATE := 0.6         #bubbles per tick fully sunk (times the trail rate)
 const LAVA_SPRAY := Color(1.0, 0.55, 0.15, 0.9) #a lava landscape's deep "water" throws embers instead
 const LAVA_TINT := Color(1.0, 0.55, 0.4)
-const SMOKE := Color(0.82, 0.82, 0.84, 0.45) #tyre smoke in a slide or up on two wheels
+const SMOKE := Color(0.82, 0.82, 0.84, 0.45) #tire smoke in a slide or up on two wheels
 const SPARK := Color(1.0, 0.75, 0.35)
-const SLIDE_SMOKE_SLIP := 0.35   #rad of slip before the tyres smoke
+const SLIDE_SMOKE_SLIP := 0.35   #rad of slip before the tires smoke
 const ROUGH_FRICTION := 0.25     #surfaces at least this draggy count as rough ground for bumps
 const TRAIL_MIN_SPEED := 120.0
 ## Per Driving Effects level (Minimal, Reduced, Full): [dust pool, spark pool, trail rate]
@@ -227,7 +226,7 @@ func _physics_process(delta: float) -> void:
 	heightVel = sprung.y
 	placeBody()
 
-	#ground: a bump between road and rough ground, and the trail off the tyres
+	#ground: a bump between road and rough ground, and the trail off the tires
 	var surface := World.surfaceAt(car.global_position)
 	if surface != lastSurface && lastSurface != -1 && surface != World.UNKNOWN && lastSurface != World.UNKNOWN:
 		if isRough(surface) != isRough(lastSurface) && speed > 200.0: bump(BUMP_GROUND * minf(speed / 600.0, 1.5))
@@ -337,14 +336,6 @@ static func slipAngle(vel: Vector2, rotation: float) -> float:
 	var a := absf(angle_difference(vel.angle(), rotation))
 	return PI - a if a > PI / 2.0 else a
 
-## The engine's pitch: it climbs through each gear and drops at the shift
-static func enginePitch(speed: float, throttle: float, reverse: bool) -> float:
-	var load := PITCH_LOAD * absf(throttle)
-	if reverse: return PITCH_IDLE + PITCH_RANGE * clampf(speed / GEAR_SPEED, 0.0, 1.0) + load
-	var gears := speed / GEAR_SPEED
-	var g := floorf(gears)
-	return PITCH_IDLE + PITCH_RANGE * (gears - g) + PITCH_PER_GEAR * minf(g, 4.0) + load
-
 ## The pitch from the gear and how far the engine is through its band (OverheadCarBody2D.revShare): up through the gear it is in, flat and stuttering on the limiter; N revs with the throttle
 static func gearedPitch(gear: int, share: float, throttle: float, limited: bool) -> float:
 	var load := PITCH_LOAD * absf(throttle)
@@ -354,10 +345,7 @@ static func gearedPitch(gear: int, share: float, throttle: float, limited: bool)
 	if limited && share >= 1.0 && throttle > 0.0: pitch -= 0.12 * absf(sin(Time.get_ticks_msec() * 0.03))
 	return pitch
 
-static func gearOf(speed: float) -> int:
-	return int(speed / GEAR_SPEED) + 1
-
-## How hard the tyres squeal, 0 to 1: slip at speed, a locked brake, or two wheels
+## How hard the tires squeal, 0 to 1: slip at speed, a locked brake, or two wheels
 static func squeal(slip: float, speed: float, braking: bool, onTwoWheels: bool) -> float:
 	var s := clampf((slip - 0.12) / 0.5, 0.0, 1.0) * clampf((speed - 120.0) / 250.0, 0.0, 1.0)
 	if braking && speed > 200.0: s = maxf(s, 0.2 + 0.4 * clampf((speed - 200.0) / 300.0, 0.0, 1.0))
@@ -423,7 +411,7 @@ func squealSound(silent: bool, amount: float, charge: int) -> void:
 func rearTires() -> Array:
 	return car.tires.filter(func(t): return car.to_local(t.global_position).x < 0.0)
 
-## The tyres on the inside of the lean: the ones that lift on two wheels
+## The tires on the inside of the lean: the ones that lift on two wheels
 func innerTires() -> Array:
 	return car.tires.filter(func(t): return car.to_local(t.global_position).y * lean < 0.0)
 
@@ -456,7 +444,7 @@ func trailFor(surface: int) -> Array:
 	if lava && World.isLethal(surface): return [LAVA_SPRAY, 1.0, Kind.SPRAY]
 	return trailBySurface.get(surface, [SMOKE, 1.0, Kind.PUFF])
 
-## A burst of the surface's trail (or tyre smoke on hard ground) at `at`, or under the car
+## A burst of the surface's trail (or tire smoke on hard ground) at `at`, or under the car
 func groundBurst(surface: int, count: int, at := Vector2.INF) -> void:
 	if level[0] == 0: return
 	if at == Vector2.INF: at = car.global_position

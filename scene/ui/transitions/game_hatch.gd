@@ -78,9 +78,8 @@ func landed() -> void:
 	for f in [0.1, 0.3, 0.5, 0.7, 0.9]: fx.burst(Vector2(r.position.x + r.size.x * f, r.end.y), 4, Vector2(140, -30), 160.0, 80.0, 0.9)
 	for y in [r.position.y + 30, r.end.y - 14]: fx.mark(Vector2(r.end.x - 20, y), Vector2(screen().x + 10, y), 9.0, 0.5, 1.1)
 
-#slams the hatch and peels the panel out; await it, then close the menu. `whileShut` runs (and is
-#awaited) between the slam and the peel: the slot machine pours its prizes out of the chute then.
-func leave(whileShut := Callable()) -> void:
+#slams the hatch and peels the panel out; await it, then close the menu
+func leave() -> void:
 	if Transition.instant() || not is_instance_valid(door): return
 	if Settings.reduce_motion():
 		var fade = stage.create_tween()
@@ -96,7 +95,6 @@ func leave(whileShut := Callable()) -> void:
 		Juice.rumble(stage, "position", 4.0, 0.12))
 	t.tween_interval(0.12)
 	await t.finished
-	if whileShut.is_valid(): await whileShut.call()
 	var peel = stage.create_tween()
 	peel.tween_callback(peelSmoke)
 	peel.tween_property(stage, "position:x", -size.x * 1.15, PEEL_SECONDS).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)

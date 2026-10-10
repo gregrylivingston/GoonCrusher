@@ -7,7 +7,6 @@ script = ExtResource("1_land")
 id = &"volcano"
 displayName = "Volcano"
 grammar = &"canyon"
-text = "Ash plains and basalt walls. Tar pools bog you down; lava burns a car out in seconds."
 features = {
 "ridgeFrequency": 4.5e-05,
 "wallWidth": 1400.0,

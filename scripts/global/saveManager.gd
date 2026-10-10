@@ -4,7 +4,7 @@ extends Node
 #The demo and the full game share this file: load_data() merges each save with the current defaults
 #(migrate()) before anything reads it.
 
-const SAVE_VERSION := 12 #12: the mode menu (Modes: each level features three modes, any of which opens the next; openDueLevels). 11: most tree roots start locked (keepOldStarters). 10: the gift box games joined the Casino tree (mergePrizeUnlocks). 6: the unlock system (Unlocks, meta.unlocks, meta.lifetime, car gem prices). 7: mode tiers (ModeTiers).
+const SAVE_VERSION := 13 #13: the pickup "tyre" is "tire" (RENAMED_PICKUPS). 12: the mode menu (Modes: each level features three modes, any of which opens the next; openDueLevels). 11: most tree roots start locked (keepOldStarters). 10: the gift box games joined the Casino tree (mergePrizeUnlocks). 6: the unlock system (Unlocks, meta.unlocks, meta.lifetime, car gem prices). 7: mode tiers (ModeTiers).
 #8: the road atlas (30 levels in 6 regions, the Marathon road, meta.carClears). 9: the "audi" became the "supercar".
 #Saves older than FIRST_KEPT_VERSION start over (the author's call when the unlocks went in, and again for the road
 #atlas): the old file is copied beside the save as <name>.v<version>.tres, then a new save replaces it.
@@ -64,6 +64,7 @@ func migrate() -> bool:
 	for section in defaults.meta:
 		if not playerData.meta.get(section) is Dictionary: playerData.meta[section] = {}
 	for old in RENAMED_CARS: renameCar(old, RENAMED_CARS[old])
+	for old in RENAMED_PICKUPS: renamePickup(old, RENAMED_PICKUPS[old])
 	if playerData.saveVersion >= FIRST_KEPT_VERSION && playerData.saveVersion < 10: mergePrizeUnlocks()
 	if playerData.saveVersion >= FIRST_KEPT_VERSION && playerData.saveVersion < 11: keepOldStarters()
 	for defaultCar in defaults.cars:
@@ -115,6 +116,17 @@ func mergePrizeUnlocks() -> void:
 		if unlocks.has("prize:" + game): unlocks["pickup:" + PRIZE_PICKUPS[game]] = true
 		unlocks.erase("prize:" + game)
 	unlocks["pickup:slotmachine"] = true
+
+#pickups whose id changed: old id -> new id (version 13)
+const RENAMED_PICKUPS := {"tyre": "tire"}
+
+#moves a renamed pickup's unlock and its discovery to the new id
+func renamePickup(old: String, new: String) -> void:
+	for pair in [["unlocks", "pickup:"], ["pickups", ""]]:
+		var section = playerData.meta.get(pair[0], {})
+		if section is Dictionary && section.has(pair[1] + old):
+			section[pair[1] + new] = section[pair[1] + old]
+			section.erase(pair[1] + old)
 
 #cars whose id changed: old name -> new name (version 9)
 const RENAMED_CARS := {"audi": "supercar"}
@@ -225,34 +237,6 @@ func requestStatUpgrade(statString: Root.upgrade, carIndex := -1) -> bool:
 #gets a car's upgrade value for a specific upgrade type (-1: the selected car)
 func getUpgradeLevel(upgradeType:Root.upgrade, carIndex := -1) -> int:
 	return playerData.cars[playerData.selectedCar if carIndex < 0 else carIndex].upgrades.get(upgradeType, 0)
-
-func selectNextLevel():
-	if playerData.selectedLevel < playerData.levels.size() - 1:
-		playerData.selectedLevel += 1
-	else: playerData.selectedLevel = 0
-	save_character_data()
-	return playerData.levels[playerData.selectedLevel]
-
-func selectPreviousLevel():
-	if playerData.selectedLevel > 0:playerData.selectedLevel -= 1
-	else: playerData.selectedLevel = playerData.levels.size() - 1
-	save_character_data()
-	return playerData.levels[playerData.selectedLevel]
-
-
-func selectNextCar():
-	if playerData.selectedCar < playerData.cars.size() - 1:
-		playerData.selectedCar += 1
-	else: playerData.selectedCar = 0
-	save_character_data()
-	return playerData.cars[playerData.selectedCar]
-
-func selectPreviousCar():
-	if playerData.selectedCar > 0: playerData.selectedCar -= 1
-	else: playerData.selectedCar = playerData.cars.size() - 1
-	save_character_data()
-	return playerData.cars[playerData.selectedCar]
-
 
 #A won run: the mode is beaten on the RUN's level on the run's tier (and the tiers below it), and the run's car
 #clears it there (meta.carClears). The run's level, mode and tier come from the level that ran (Level.runLevel,

@@ -7,7 +7,7 @@ class_name Derby extends Node2D
 ## wins: Level.rivalWrecked ends it when no rival is left.
 ##
 ## What keeps a heavy car from simply winning (OverheadCarBody2D.bumpCar): a hit hurts by how fast the cars
-## close and where it lands, not by armour; a car struck on its nose takes NOSE_SHARE of it, so the one that
+## close and where it lands, not by armor; a car struck on its nose takes NOSE_SHARE of it, so the one that
 ## turns quicker and arrives faster does the damage. Repair Kits and Nitro lie at fixed spots (PADS) and come
 ## back RESPAWN seconds after they are taken; the obstacles are there for the quick cars to use.
 ## Every number is a first guess.
@@ -19,7 +19,7 @@ const LINE := Color(1.0, 0.78, 0.2, 0.8)
 const PADS := [[900.0, "nitro"], [1900.0, "health"], [2700.0, "nitro"], [1500.0, "health"], [2300.0, "nitro"], [2900.0, "health"], [1100.0, "nitro"], [2100.0, "health"]] #[px from the middle, pickup id], spread round the circle
 const RESPAWN := 18.0      #seconds before a taken pickup comes back
 
-var centre := Vector2.ZERO
+var center := Vector2.ZERO
 var pads: Array = []       #[spot, pickup id, the pickup node or null, seconds until it comes back]
 
 ## Dry ground a car can stand on, as near `spot` as a few steps toward the middle find
@@ -32,7 +32,7 @@ static func settle(spot: Vector2, middle: Vector2) -> Vector2:
 ## Puts the player and the rivals on the starting ring, lays the pickups and returns the arena
 static func build(level: Node, at: Vector2) -> Derby:
 	var derby := Derby.new()
-	derby.centre = at
+	derby.center = at
 	derby.z_index = 1
 	level.add_child(derby)
 	var cars: Array = [Root.playerCar] + level.rivals.cars
@@ -52,7 +52,7 @@ static func build(level: Node, at: Vector2) -> Derby:
 	return derby
 
 func inside(point: Vector2) -> bool:
-	return point.distance_squared_to(centre) < RADIUS * RADIUS
+	return point.distance_squared_to(center) < RADIUS * RADIUS
 
 func _physics_process(delta: float) -> void:
 	var level = Root.levelRoot
@@ -70,4 +70,4 @@ func _physics_process(delta: float) -> void:
 		pad[3] = RESPAWN
 
 func _draw() -> void:
-	draw_arc(centre, RADIUS, 0.0, TAU, 160, LINE, 20.0)
+	draw_arc(center, RADIUS, 0.0, TAU, 160, LINE, 20.0)

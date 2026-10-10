@@ -40,7 +40,7 @@ const DEATH_SOUND_RANGE := 1400.0 #px from the car: about a screen at the widest
 
 var isGiant: bool = false
 var def: Dictionary
-var killedFrom := Vector2.INF #a blast's centre, set just before it kills the goon, which is flung away from it
+var killedFrom := Vector2.INF #a blast's center, set just before it kills the goon, which is flung away from it
 var verb #GoonVerbs.Verb
 
 #tuning, from Goons.DATA (speed and turnRate live on GoonBody)
@@ -128,7 +128,7 @@ static func levelRule(key: String) -> bool:
 
 const RING_TEXTURE = preload("res://texture/fx/circle_05.png")
 
-#Giant Marker Style "Tint + ground ring": a ring in the marker colour under the giant
+#Giant Marker Style "Tint + ground ring": a ring in the marker color under the giant
 func addGroundRing() -> void:
 	var ring = Sprite2D.new()
 	ring.texture = RING_TEXTURE
@@ -381,7 +381,7 @@ func destroy(cause: StringName = &"crush"):
 	queue_free()
 
 ## What GoonFx drops later: Pickups rolls it then (Root.getPowerupFromWeights), by this goon's faction.
-## Giants and bosses drop one rarity tier up. powerupDropDict is the pre-rarity table, kept for reference.
+## Giants and bosses drop one rarity tier up. powerupDropDict is the pre-rarity table (the thief's interest still rolls it, GoonVerbs).
 func dropTable() -> Dictionary:
 	var bump := 1 if isGiant || def.get("verb", &"") == &"boss" else 0
 	return {Pickups.ROLL: {"faction": def.get("faction", -1), "bump": bump}}

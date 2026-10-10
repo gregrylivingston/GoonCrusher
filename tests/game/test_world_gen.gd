@@ -103,8 +103,8 @@ func checkCrossings(map: WorldMap, label: String) -> void:
 				cur.push_back([a0, a1, count])
 			prev = cur
 
-#Fine rasters never disagree with the coarse map: the fine cells round a passable coarse cell's centre are
-#passable, round a blocked one's blocked; the walk between two adjacent passable centres is open
+#Fine rasters never disagree with the coarse map: the fine cells round a passable coarse cell's center are
+#passable, round a blocked one's blocked; the walk between two adjacent passable centers is open
 func checkFineAgrees(map: WorldMap, def: LevelDef, worldSeed: int, label: String) -> void:
 	var chunks: Array[Vector2i] = [WorldGen.chunkOf(def.startPosition)]
 	if map.station != Vector2.INF: chunks.push_back(map.stationChunk)
@@ -116,12 +116,12 @@ func checkFineAgrees(map: WorldMap, def: LevelDef, worldSeed: int, label: String
 		for k in 8:
 			var cell := base + Vector2i(k % 4, k / 4)
 			var i := cell.y * WorldGen.W + cell.x
-			var centre := WorldGen.cellCentre(cell)
+			var center := WorldGen.cellCenter(cell)
 			var blocked := map.flags[i] & WorldGen.BLOCKED != 0
 			for d in [Vector2(-64, -64), Vector2(64, -64), Vector2(-64, 64), Vector2(64, 64)]:
-				var fineBlocked := map.blockedAt(centre + d)
+				var fineBlocked := map.blockedAt(center + d)
 				if fineBlocked != blocked:
-					fail("%s: chunk %s cell %s is %s in the coarse map but fine terrain %d" % [label, chunk, cell, "blocked" if blocked else "open", map.terrainAt(centre + d)])
+					fail("%s: chunk %s cell %s is %s in the coarse map but fine terrain %d" % [label, chunk, cell, "blocked" if blocked else "open", map.terrainAt(center + d)])
 					return
 			if blocked: continue
 			for step in [Vector2i(1, 0), Vector2i(0, 1)]:
@@ -129,7 +129,7 @@ func checkFineAgrees(map: WorldMap, def: LevelDef, worldSeed: int, label: String
 				if next.x >= base.x + 4 || next.y >= base.y + 2: continue #stay inside the raster
 				if map.flags[next.y * WorldGen.W + next.x] & WorldGen.BLOCKED != 0: continue
 				for t in 11:
-					var p := centre + Vector2(step) * WorldGen.CELL * t / 10.0
+					var p := center + Vector2(step) * WorldGen.CELL * t / 10.0
 					if map.blockedAt(p):
 						fail("%s: the way between passable cells %s and %s is blocked at %s" % [label, cell, next, p])
 						return
@@ -151,8 +151,8 @@ func checkDistricts(map: WorldMap, def: LevelDef, label: String) -> void:
 		if not d.goons.is_empty() && d.faction != Goons.DATA[d.goons[0]].faction:
 			fail("%s: district %d's faction isn't its first goon's" % [label, d.id])
 			problems += 1
-		if d.inStart && d.neighbours.size() < 2:
-			fail("%s: district %d (%d cells) has %d exits" % [label, d.id, d.cells, d.neighbours.size()])
+		if d.inStart && d.neighbors.size() < 2:
+			fail("%s: district %d (%d cells) has %d exits" % [label, d.id, d.cells, d.neighbors.size()])
 			problems += 1
 		if d.name == "": problems += 1
 		if problems > 3: return
@@ -204,7 +204,7 @@ func test_same_seed_same_world():
 		assert_true(other.terrain != a.terrain, "%s: another seed, another world" % id)
 
 func test_chunk_edges_agree():
-	#a raster's apron samples the same fields as its neighbour's edge cells
+	#a raster's apron samples the same fields as its neighbor's edge cells
 	var map := WorldMap.build(4, Levels.get_def(&"bayou"))
 	var a := Vector2i(2, 1)
 	var b := Vector2i(3, 1)

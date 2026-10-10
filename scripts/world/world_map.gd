@@ -27,7 +27,7 @@ const CHUNK_Y := 2560.0
 const WATER := 3
 const HILLS := 4
 
-const CENTRE_FIRST: Array[int] = [1, 2, 5, 6, 0, 3, 4, 7] #a chunk's 8 coarse cells (row-major, 4 x 2), middle ones first
+const CENTER_FIRST: Array[int] = [1, 2, 5, 6, 0, 3, 4, 7] #a chunk's 8 coarse cells (row-major, 4 x 2), middle ones first
 
 var worldSeed := 0
 var def: LevelDef
@@ -38,7 +38,7 @@ var terrain := PackedByteArray()
 var flags := PackedByteArray()
 var aux := PackedByteArray()
 var district := PackedInt32Array()
-var districts: Array = [] #id -> {id, cells, centroid, neighbours, inStart, zone, faction, goons, name, tint, giantism}
+var districts: Array = [] #id -> {id, cells, centroid, neighbors, inStart, zone, faction, goons, name, tint, giantism}
 var crossings := PackedInt32Array()
 var cover := PackedByteArray() #share of each blocked cell its barrier really covers (0..255)
 var astar: AStarGrid2D
@@ -434,7 +434,7 @@ func chunkTile(chunk: Vector2i) -> Dictionary:
 	var walls := 0
 	var best := -1
 	var region := -2
-	for k in CENTRE_FIRST: #the district at the chunk's middle, else any
+	for k in CENTER_FIRST: #the district at the chunk's middle, else any
 		var i := (base.y + k / 4) * W + base.x + k % 4
 		if district[i] >= 0:
 			region = district[i]

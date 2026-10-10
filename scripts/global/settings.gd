@@ -30,7 +30,6 @@ const PRESET := {
 	"gfx/tire_marks":      [0, 1, 2, 2],
 	"gfx/damage_fx":       [1, 2, 2, 2],     #car damage effects: smoke only, everything
 	"gfx/pickup_fx":       [0, 0, 1, 1],
-	"gfx/celebration":     [0, 1, 2, 2],
 	"gfx/reward_fx":       [0, 1, 2, 2],
 	"gfx/crush_fx":        [0, 1, 2, 2],        #crush effects (CrushFeel, GoonFx): minimal, reduced, full
 	"gfx/driving_fx":      [0, 1, 2, 2],        #driving effects (CarJuice): ground trails, sparks
@@ -67,7 +66,6 @@ const DEFAULTS := {
 	"gfx/tire_marks": 2,
 	"gfx/damage_fx": 2,
 	"gfx/pickup_fx": 1,
-	"gfx/celebration": 2,
 	"gfx/reward_fx": 2,
 	"gfx/crush_fx": 2,
 	"gfx/driving_fx": 2,
@@ -124,7 +122,6 @@ const OPTIONS := {
 	"gfx/tire_marks": [0, 1, 2],
 	"gfx/damage_fx": [1, 2],
 	"gfx/pickup_fx": [0, 1],
-	"gfx/celebration": [0, 1, 2],
 	"gfx/reward_fx": [0, 1, 2],
 	"gfx/crush_fx": [0, 1, 2],
 	"gfx/driving_fx": [0, 1, 2],
@@ -285,12 +282,6 @@ func get_tier_name() -> String:
 func text_quality() -> int:
 	if get_value("access/plain_text"): return 0
 	return get_value("gfx/text_fx")
-
-func celebration_level() -> int:
-	var level = get_value("gfx/celebration")
-	if get_value("access/reduce_flashing"): level = 0
-	elif get_value("access/reduce_motion"): level = min(level, 1)
-	return level
 
 func reduce_motion() -> bool:
 	return get_value("access/reduce_motion")
@@ -583,7 +574,7 @@ func applyShaderGlobals() -> void:
 	RenderingServer.global_shader_parameter_set("gc_giant_style", style)
 	var tint: Color = GIANT_COLORS[get_value("access/giant_color")]
 	if get_value("access/reduce_flashing"):
-		#hue-preserving 0-1 colour: clamping the HDR tint instead would turn giants white
+		#hue-preserving 0-1 color: clamping the HDR tint instead would turn giants white
 		var peak = maxf(tint.r, maxf(tint.g, tint.b))
 		tint = Color(tint.r / peak, tint.g / peak, tint.b / peak)
 	RenderingServer.global_shader_parameter_set("gc_giant_color", tint)
@@ -881,9 +872,6 @@ func restart() -> void:
 
 
 #--- helpers --------------------------------------------------------------------------------
-
-func args_has(flag: String) -> bool:
-	return OS.get_cmdline_args().has(flag) || OS.get_cmdline_user_args().has(flag)
 
 func cliWindowSize() -> Vector2i:
 	for arg in OS.get_cmdline_user_args():

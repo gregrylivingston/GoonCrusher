@@ -7,7 +7,6 @@ script = ExtResource("1_land")
 id = &"ghosttown"
 displayName = "Ghost Town"
 grammar = &"city"
-text = "Small blocks on wide dirt streets, timber fronts and boardwalks. The streets are still fast."
 features = {
 "buildingShare": 0.3,
 "parkShare": 0.1,
@@ -15,7 +14,6 @@ features = {
 "canalShare": 0.05,
 "canalWidth": 1040.0,
 "sidewalk": 60.0,
-"sideStreetChance": 0.5,
 "barrierCap": 0.35,
 "motifs": 0.4,
 "props": 12

@@ -5,7 +5,7 @@ class_name Landscapes extends RefCounted
 ## (forcedId; playtests, benchmarks and the world preview).
 
 const DIR := "res://world/landscapes/"
-## Today's eight, then the six new ones in wave order, and the snowy pines
+## The order tools and tests list landscapes in
 const ORDER: Array[StringName] = [&"meadow", &"bayou", &"canyon", &"quarry", &"mountain", &"highway", &"city", &"scrapyard",
 	&"forest", &"forest_snow", &"coast", &"ghosttown", &"saltflats", &"volcano", &"suburbs"]
 

@@ -15,7 +15,6 @@ class_name Unlocks extends RefCounted
 ## their own: each is open with its Casino pickup. Reserved for later: paint, station.
 
 enum S { HIDDEN, SHOWN, READY, OPEN }
-const STATE_NAMES := ["Hidden", "Shown", "Ready", "Open"]
 
 ## Price ranges by rarity: [fewest coins, most coins, fewest gems, most gems]. Inside a rarity no two
 ## pickups cost the same: they are spread over the range (evenly by ratio), shallowest in their trees first,

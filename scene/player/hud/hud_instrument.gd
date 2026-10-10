@@ -9,7 +9,6 @@ const SIZE := Vector2(200, 96)
 const KINDS: Array[StringName] = [&"beater", &"meter", &"radar", &"defib", &"load", &"bed", &"tilt", &"shift"]
 const OFFSETS := [300.0, -104.0, 500.0, -8.0] #from the bottom left corner; a skin may give its own (HudSkin.instrumentAt)
 const ODO_START := 187402    #the beater's odometer, in tenths of a mile
-const DIM := Color(1, 1, 1, 0.14)
 const LIGHTBAR := [Color(1.0, 0.18, 0.18), Color.WHITE, Color(0.184, 0.482, 1.0)]
 const CRATE := Color(0.66, 0.46, 0.23)
 const CRATE_EDGE := Color(0.37, 0.25, 0.11)

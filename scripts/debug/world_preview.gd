@@ -55,9 +55,9 @@ static func preview(def: LevelDef, worldSeed: int, w: int, h: int, objective: St
 	if here >= 0:
 		var d: Dictionary = map.districts[here]
 		print("  start district %d '%s' zone=%d faction=%s goons=%s" % [here, d.name, d.zone, Goons.factionName(d.faction), d.goons])
-	var centre := startCell
-	if map.station != Vector2.INF && objective == "sprint": centre = (startCell + WorldGen.cellOf(map.station)) / 2
-	for line in WorldGen.ascii({"terrain": map.terrain, "flags": map.flags}, centre, w, h, marks): print("  |" + line + "|")
+	var center := startCell
+	if map.station != Vector2.INF && objective == "sprint": center = (startCell + WorldGen.cellOf(map.station)) / 2
+	for line in WorldGen.ascii({"terrain": map.terrain, "flags": map.flags}, center, w, h, marks): print("  |" + line + "|")
 	if fineCount > 0:
 		var total := 0
 		var worst := 0

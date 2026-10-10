@@ -13,7 +13,7 @@ extends Node
 #counting-down clock from running out, so long benchmarks are not cut short by the Countdown win;
 #with it the run can end, and BENCH_RUN_ENDED is printed (the bench then stops driving).
 #--level=<id|index|path> plays another level than the scenario's: a level id or scene basename
-#(prairie, level_grass_1; resolved under scene/level/levels/ as <arg>.tscn or level_<arg>.tscn), an
+#(prairie, level_prairie; resolved under scene/level/levels/ as <arg>.tscn or level_<arg>.tscn), an
 #index into the save's level list, or a res:// path.
 #Writes a per-frame CSV and a summary row to user://bench/. Saves are redirected to a scratch
 #copy, so a benchmark never changes player progress. Columns include chunk_ms (main-thread chunk
@@ -349,7 +349,7 @@ func moveCar() -> void:
 					if water != (at == "water"): continue
 					for d in WorldGen.DIRS4:
 						if target == Vector2.INF && map.cellReachable(cell + d * 2) && map.cellPassable(cell + d):
-							target = WorldGen.cellCentre(cell + d)
+							target = WorldGen.cellCenter(cell + d)
 							car.rotation = Vector2(-d).angle()
 	if target == Vector2.INF: return
 	car.global_position = target

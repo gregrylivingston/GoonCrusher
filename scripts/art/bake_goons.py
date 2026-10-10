@@ -6,7 +6,7 @@ light occluder and the eye positions taken from the art.
 	python scripts/art/bake_goons.py grunt hubcap  # just these
 
 Needs Microsoft Edge (or Chrome via --browser). Run Godot's --import afterwards so the new PNGs get their
-.import files (see docs/GOONS.md). Behaviour and tuning live in scripts/global/goons.gd, not here.
+.import files (see docs/GOONS.md). Behavior and tuning live in scripts/global/goons.gd, not here.
 """
 import base64, json, math, os, re, subprocess, sys, html, argparse, pathlib
 

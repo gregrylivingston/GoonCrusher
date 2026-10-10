@@ -158,7 +158,7 @@ func test_every_mode_of_the_menu_is_built():
 		assert_true(pad[0] < Derby.RADIUS, "a pickup lies inside the line")
 		assert_true(Pickups.has(pad[1]), "%s is a pickup" % pad[1])
 
-func test_a_car_hit_is_about_speed_and_where_it_lands_not_armour():
+func test_a_car_hit_is_about_speed_and_where_it_lands_not_armor():
 	var car := OverheadCarBody2D
 	assert_eq(car.bumpShare(0.0, Vector2.RIGHT), car.CAR_NOSE_SHARE, "struck on the nose: most of it shrugged off")
 	assert_eq(car.bumpShare(0.0, Vector2.UP), 1.0, "on the flank: all of it")

@@ -24,14 +24,14 @@ const ROW_GAP := 30.0
 const CUP_TOP := 346.0
 const CUPS := 7
 const CUP_W := 640.0 / CUPS
-## each cup's prize floor, outer to centre and back: rarer at the edges
+## each cup's prize floor, outer to center and back: rarer at the edges
 const CUP_TIERS := [Pickups.R.RARE, Pickups.R.UNCOMMON, Pickups.R.COMMON, Pickups.R.COMMON, Pickups.R.COMMON, Pickups.R.UNCOMMON, Pickups.R.RARE]
 const NUDGE := 160.0       #px/s sideways
 const STEP := 1.0 / 240.0
 
 var tier := 0
 var physics := PrizePhysics.new()
-var pegs: Array = []       #peg centres
+var pegs: Array = []       #peg centers
 var walls: Array = []      #static segments: cup dividers, the floor, the sides
 var cups: Array = []       #prize id per cup
 var dropX := 320.0

@@ -88,7 +88,7 @@ func drawStage() -> void:
 	var c := stage.size * 0.5
 	var col := CrushPrizes.tierColor(tier)
 	var calm := Settings.reduce_motion()
-	#a glow and, once open, slow rays in the box's colour
+	#a glow and, once open, slow rays in the box's color
 	stage.draw_circle(c, SIZE * 0.72, Color(col, 0.18))
 	if popped:
 		var spin := 0.0 if calm else t * 0.6

@@ -32,9 +32,9 @@ func test_native_library_loads():
 #a map with water and walls, and the 3 x 3 chunks round its start rasterised
 func builtMap() -> WorldMap:
 	var map := WorldMap.build(1337, Levels.get_def(&"canyon"))
-	var centre := WorldGen.chunkOf(map.startPosition)
+	var center := WorldGen.chunkOf(map.startPosition)
 	for dy in range(-1, 2):
-		for dx in range(-1, 2): map.buildNow(centre + Vector2i(dx, dy))
+		for dx in range(-1, 2): map.buildNow(center + Vector2i(dx, dy))
 	return map
 
 #points over the rasterised chunks and the coarse map round them, plus chunk and cell edges

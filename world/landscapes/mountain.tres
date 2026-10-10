@@ -7,7 +7,6 @@ script = ExtResource("1_land")
 id = &"mountain"
 displayName = "Mountain"
 grammar = &"mountain"
-text = "Ranges with passes, frozen lakes and deep snow. Ice gives no grip."
 features = {
 "ridgeFrequency": 4e-05,
 "rangeWidth": 1700.0,
