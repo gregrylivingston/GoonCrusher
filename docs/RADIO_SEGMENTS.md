@@ -37,6 +37,17 @@ The record of every segment that plays between songs on GoonCrusher Radio: its f
 | DJ: Station promo | `sound/radio/gooncrusher/talk/talk_station_promo.ogg` | 0:18 | talk |
 | DJ: DJ confession | `sound/radio/gooncrusher/talk/talk_dj_confession.ogg` | 0:25 | talk |
 | DJ: Contest | `sound/radio/gooncrusher/talk/talk_contest.ogg` | 0:17 | talk |
+| DJ: Horoscope | `sound/radio/gooncrusher/talk/talk_horoscope.ogg` | 0:24 | talk |
+| DJ: Goon of the Week | `sound/radio/gooncrusher/talk/talk_goon_of_the_week.ogg` | 0:22 | talk |
+| DJ: Driving school | `sound/radio/gooncrusher/talk/talk_drift_tip.ogg` | 0:21 | talk |
+| DJ: Fuel report | `sound/radio/gooncrusher/talk/talk_fuel_report.ogg` | 0:19 | talk |
+| DJ: This day in history | `sound/radio/gooncrusher/talk/talk_history.ogg` | 0:16 | talk |
+| DJ: Our sponsors | `sound/radio/gooncrusher/talk/talk_sponsors.ogg` | 0:18 | talk |
+| DJ: Long-distance dedication | `sound/radio/gooncrusher/talk/talk_dedication.ogg` | 0:20 | talk |
+| DJ: Breaking news | `sound/radio/gooncrusher/talk/talk_breaking_news.ogg` | 0:13 | talk |
+| DJ: Coffee break | `sound/radio/gooncrusher/talk/talk_coffee.ogg` | 0:15 | talk |
+| DJ: Prize patrol | `sound/radio/gooncrusher/talk/talk_prize_patrol.ogg` | 0:20 | talk |
+| DJ: Investment advice | `sound/radio/gooncrusher/talk/talk_star_report.ogg` | 0:21 | talk |
 
 **Segment odds:** `station.json` has `segment_counts` at `[1, 1, 1]`, and a gap is never empty twice in a row: after each song, a quarter of the time the next song plays straight away, 3/8 of the time one segment plays, and 3/8 of the time two segments of different kinds play back to back (so three songs never play in a row). Kinds are picked by weight (ident 3, talk 4, ad 2), and tuning in always opens with an ident. That's about 1.1 segments per song: DJ talk about every 7 minutes, an ident about every 8 (plus every tune-in), an ad about every 12, and Skip song in the pause menu drops whatever segments were queued.
 
@@ -561,6 +572,151 @@ It's contest time on Goon Crusher Radio! Be the hundredth caller and win absolut
 ```
 
 Max length 25 seconds. Mood: a contest with no prize, announced at full volume.
+
+## DJ talk, second batch
+
+Eleven more segments for Dee Jay Crush, voiced with the same ElevenLabs voice and settings and downloaded in this order (2026-10-10). The scripts below are the drafts; the author changed a few lines while voicing, so the audio may differ slightly. A twelfth, Ask Dee Jay (a listener asking about the noise the car makes when it hits things), was drafted and skipped. Three teach real mechanics (driving school, prize patrol, investment advice). None refer to a time of day, a level or what just played.
+
+## DJ: Horoscope (`talk_horoscope`)
+
+```
+(dreamy, mystical late-night astrologer voice)
+It's time for your Goon Crusher horoscope.
+Aries. Today you will meet someone new. In the road. Briefly.
+Taurus. A Grunt from your past will try to get back into your life. Do not slow down.
+Gemini. Your lucky number is ninety. Miles an hour.
+(dropping the voice, normal and quick) And for all the goons out there, the stars say, honestly, stay home.
+```
+
+Max length 30 seconds. A mystic voice that drops at the end.
+
+## DJ: Goon of the Week (`talk_goon_of_the_week`)
+
+```
+(soft, heartfelt animal-shelter appeal)
+It's time for Goon of the Week.
+This week, meet Gary. Gary is a Grunt. He's three, he loves long walks down the center line, and he has never once looked both ways.
+Gary is looking for a forever home. Somewhere far from the highway.
+(beat, gently) Please. For Gary.
+(beat, brisk) Anyway, Gary's on Route Nine if you want to say hi. Say it fast.
+```
+
+Max length 30 seconds. A heartfelt animal-shelter appeal.
+
+## DJ: Driving school (`talk_drift_tip`)
+
+```
+(fast, hyped driving-instructor energy)
+Goon Crusher driving school, lesson one. The handbrake.
+Pull it at speed and the back end swings out, and now you're sliding sideways like a hero.
+Hold that slide and it charges up. Let go, and boom, you're boosted out the other side.
+And here's the secret. The back of the car crushes too.
+(proud, slower) That's not a mistake. That's a technique.
+```
+
+Max length 30 seconds. A hyped instructor. A real tip: holding a handbrake slide charges a boost fired on release, and the back of the car crushes (docs/GOONS.md, "Crush feel").
+
+## DJ: Fuel report (`talk_fuel_report`)
+
+```
+(dry, flat monotone, like reading farm commodity prices)
+Here's the Goon Crusher fuel report.
+Regular is up two cents. Premium is up four. Diesel is holding steady, and so is Big Earl.
+Goon prices remain at zero, as they have since the beginning of time.
+(perking up for one line) Keep an eye on that needle, folks. An empty tank is a short trip.
+(back to flat) That's the fuel report.
+```
+
+Max length 25 seconds. Read flat, like farm commodity prices. Big Earl is from the tire ad.
+
+## DJ: This day in history (`talk_history`)
+
+```
+(grand, slow documentary-narrator voice)
+This day in Goon Crusher history.
+On this day, the very first goon walked into the very first road. Witnesses say he looked both ways. He just didn't look very far.
+(beat) Shortly after that, the very first car was invented.
+(back to normal, cheerful) Coincidence? Historians say yes. (beat) We say no.
+```
+
+Max length 30 seconds. A documentary narrator.
+
+## DJ: Our sponsors (`talk_sponsors`)
+
+```
+(fast, cheery thank-you-to-our-sponsors read)
+Goon Crusher Radio is brought to you by our sponsors!
+Suds City Car Wash, for when the goon is still on the hood.
+Rusty's Salvage, for when the goon is in the engine.
+And Uncle Cletus Fireworks and Bait. (beat, unsure) We're still not sure what that one's for.
+(warm) Support the folks who support us!
+```
+
+Max length 25 seconds. A thank-you read naming three of the station's ads.
+
+## DJ: Long-distance dedication (`talk_dedication`)
+
+```
+(soft, sweet, late-night dedication voice)
+We've got a long-distance dedication.
+This one's from a trucker out on Raider Road, to his wife back home.
+He says, Honey, I'm three states out, I miss you, and I'm sorry about the mailbox.
+(beat, tender) He'd also like to apologize to the mailbox.
+(warmer) Keep it rolling, big guy. She's waiting up.
+```
+
+Max length 30 seconds. Soft and sweet, in the spirit of *Long Haul*. Raider Road is a road-atlas region.
+
+## DJ: Breaking news (`talk_breaking_news`)
+
+```
+(urgent breaking-news voice, fast and serious)
+This just in to the Goon Crusher newsroom.
+Goons have been spotted in the road.
+(beat) Officials are calling it, and I quote, every single day.
+Experts recommend drivers keep doing exactly what they're doing.
+(beat, sign-off) More at eleven. (quick) Also at eleven fifteen. It's goons all day.
+```
+
+Max length 25 seconds. Urgent delivery for news that never changes.
+
+## DJ: Coffee break (`talk_coffee`)
+
+```
+(happy and a little too wired, talking fast)
+Quick coffee break here in the Goon Crusher studio. That's cup number nine. Or nineteen.
+The doctor says I have to cut back, so I got a smaller mug.
+(beat, proud) Now I just refill it twice as fast.
+(very fast, all in one breath) Anyway we've got more music coming up right now right after this right now here we go.
+```
+
+Max length 25 seconds. Wired. The doctor joke cut from *Hot Black Coffee*.
+
+## DJ: Prize patrol (`talk_prize_patrol`)
+
+```
+(excited game-show host)
+It's the Goon Crusher prize patrol!
+Every goon you crush counts toward a gift box, and when it drops, there's a prize game inside.
+A claw crane. A slot machine. Maybe even a coin pusher, if you've been extra good.
+(beat, sly) So crush a little more. For the prizes. That's the only reason. Obviously.
+```
+
+Max length 30 seconds. A game-show host. A real tip: crushes earn gift boxes, each holding a prize game (docs/PICKUPS.md, "Gift boxes").
+
+## DJ: Investment advice (`talk_star_report`)
+
+```
+(calm, measured, like a financial advisor on a call-in show)
+A word on your investments, from Goon Crusher Radio.
+Every minute you stay out there, you earn a star. And every star makes your payout bigger, up to three times bigger.
+(leaning in) So the smart money says, stay out longer.
+(beat) This is not financial advice. (beat) It's better. It's goon advice.
+```
+
+Max length 25 seconds. A calm financial advisor. A real tip: a star every minute, and stars raise the payout up to ×3 (`Root.computePayout`).
+
+**Processing (second batch):** about −24 → −16 LUFS, Vorbis q3, 13–24 s each.
 
 ## Ident 01 (`ident_01`)
 
