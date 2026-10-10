@@ -70,6 +70,24 @@ func test_the_mirror_holds_the_clock_and_the_goal():
 	assert_true(hud.get_child(0) == mirror, "drawn under them")
 	hud.free()
 
+#each die and the clover hangs on its own string with its own period, and they rest apart
+func test_charms_swing_apart():
+	var periods := {}
+	for charm in HudMirror.CHARMS: periods[charm[2]] = true
+	assert_eq(periods.size(), HudMirror.CHARMS.size(), "no two charms share a period")
+	assert_eq(HudMirror.CHARMS.size(), HudMirror.DICE_SHOWN + 1, "three dice and the clover")
+	var mirror := HudMirror.new()
+	add_child(mirror)
+	for i in HudMirror.CHARMS.size():
+		for j in i:
+			assert_true(mirror.charmPoint(i, true).distance_to(mirror.charmPoint(j, true)) >= 12.0, "charms %d and %d rest apart" % [i, j])
+	mirror.free()
+	assert_eq(HudMirror.diceFor(1), 1)
+	assert_eq(HudMirror.diceFor(6), 1)
+	assert_eq(HudMirror.diceFor(7), 2)
+	assert_eq(HudMirror.diceFor(18), 3)
+	assert_eq(HudMirror.diceFor(50), 3)
+
 #the dice show luck in pips: a die for every six, three at most
 func test_mirror_names():
 	var known := [&"", &"crack", &"checker", &"lights", &"clinic", &"console", &"keys", &"convex", &"screen"]

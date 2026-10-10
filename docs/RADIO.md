@@ -139,7 +139,7 @@ After each song the radio rolls `segment_counts`: the next song straight away, o
 | Shuffle bag | `scripts/global/radio_bag.gd` (class `RadioBag`) |
 | Playback, scheduling, crossfade, loading | `scripts/global/radio.gd` (class `Radio`), a child the `Audio` autoload makes: `Audio.radio` |
 | On/Off and Skip | An `OptionRow` on `audio/station` (GoonCrusher Radio or Radio Off): in the pause menu (`pauseMenu.gd` `radioRow()`, with a **Skip song** button beside it and the song under it) and in Settings → Audio |
-| Now-playing card | `scene/ui/radio/now_playing.gd` (class `NowPlaying`): in the HUD above the tachometer, shown for 5 s at each song or station change; pinned under the icon bar in the main menu, where a click skips to the next song (or tunes in when off) and a right click turns the radio on or off |
+| Now-playing card | `scene/ui/radio/now_playing.gd` (class `NowPlaying`): pinned under the icon bar in the main menu, where a click skips to the next song (or tunes in when off) and a right click turns the radio on or off |
 | Setting | `audio/station` in `Settings.DEFAULTS` (`"gooncrusher"`; `"off"` is Radio Off) |
 | Ducking and pause muffle | `sound/new_audio_bus_layout.tres`, Music bus effects 0 (compressor) and 1 (low-pass) |
 | Shuffle memory | `user://radio.json` (per machine, not in the save): each bag's place in its cycle, saved at every song and on exit, restored at startup (`Radio.saveState`, `loadState`; `RadioBag.state`, `restore`). Songs added since are shuffled into the cycle; songs removed are dropped. Never written headless. |

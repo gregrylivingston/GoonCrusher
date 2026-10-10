@@ -1,23 +1,21 @@
 # In-run HUD
 
-The HUD is `scene/player/playerRoot.tscn` (class `GameUI`): an instrument cluster sunk into each bottom corner, the held items along the bottom edge between them, a rear-view mirror with the clock and the goal at top center, and slim panels in the top corners. Damage shows on the car itself (docs/CAR_ART.md).
+The HUD is `scene/player/playerRoot.tscn` (class `GameUI`): an instrument cluster sunk into each bottom corner, the held items along the bottom edge between them, a rear-view mirror with the clock and the goal at top center, and a sun visor in each top corner. Damage shows on the car itself (docs/CAR_ART.md).
 
 ## Layout (1600 x 900 canvas)
 
 | Node | Script | Anchor | Shows |
 |---|---|---|---|
-| `TopLeft/CrushPill` | `hud_crush.gd` | top left | The next gift box (docs/PICKUPS.md, "Gift boxes"): its tier in its colour, a crush XP bar and the XP still to go. Prize pickups fly to its box (`slotmachineui`). |
-| `TopLeft/RegionChip` | `hud_region.gd` | top left | District name, goon size (giantism) and the run's wave ring: "Wave n: survive m:ss for a star". Waves are one clock for the whole run (`Region.wave`, `waveProgress`), with no cap. |
+| `LeftVisor` | `hud_visor.gd` | top left | The next gift box (docs/PICKUPS.md, "Gift boxes") in a ring that fills with crush XP, in its tier's colour, with the XP still to go; then the radio's equaliser and, for 5 s at each new song or station change, the song (docs/RADIO.md). Prize pickups fly to the box (`slotmachineui`). |
 | `Mirror` (added in code) | `hud_mirror.gd` | top center | The rear-view mirror: the frame behind the clock and the goal, and the dice and clover hanging from it (below). |
 | `TopCenter/ModeLabel`, `TopCenter/Timer` | `Timer.gd` (unchanged) | on the mirror, left | Mode name and run clock. `Timer` keeps group `runTimer`. |
 | `Objective` | `hud_objective.gd` | on the mirror, right | The mode's goal, in every mode, with its icon: Countdown "SURVIVE THE CLOCK", Sprint "REACH THE STATION" and Marathon "STATION n OF 5" with the distance in the station's blue, Defense the BASE bar and percent (it flashes red when a goon blows up at a pump), Goonpocalypse the score and time to the star. |
-| `TopRight` | `hud_payout.gd` | top right | Pause button, coins x the star multiplier (1 + 0.1 a star up to ×3, shown by the star) = payout (`Root.computePayout`), gems. |
+| `RightVisor` | `hud_visor.gd` | top right | The star in a ring that fills as the wave runs down, with the star multiplier (1 + 0.1 a star up to x3) and the time to the next star; then the coins and what the run pays (`Root.computePayout`). Gems slide out under it for 3 s when one is picked up. |
 | `Tach` | `hud_dial.gd` | bottom left corner, two thirds on screen | Tachometer with the gear (`car.gear`) in its hub, the fuel as an arc round its inner side, the engine and tank lamps and the horn lamp on its face. Its look is the car's dashboard (below). |
 | `Speedo` | `hud_dial.gd` | bottom right corner, two thirds on screen | Speedometer with the speed in its hub, the hull as an arc round its inner side, and the steering, lights and tires lamps on its face. |
 | `Instrument` (added in code) | `hud_instrument.gd` | bottom edge, just inside the tachometer's fuel arc | The car's signature instrument (below). Hidden on the house dash. |
 | `Items` (added in code) | `hud_items.gd` | bottom edge, between the dials | The held gadget (charges, the Fire key) and the held boost beside it (charges, the Boost key), small counters left of them (star fragments, lottery tickets, a parcel, barricades, and from the car's traits: Cargo Bay's second gadget, the Meter's multiplier, the Loaded Bed's crates), the semi's Drop the Load box after the boost (lit when ready, filling while it restocks, with the Ability key), and a ring per timed power-up (right) that drains clockwise and blinks in its last 2 s. Groups `itemui`, `moveui`, `buffui`, and `clockui` (on `TopCenter`). |
-| `NowPlaying` (added in code) | `scene/ui/radio/now_playing.gd` | bottom left, above the tachometer and the instrument | The radio: song, artist and station, sliding in for 5 s at each new song or station change (docs/RADIO.md). Hidden otherwise. |
-| `HudChance` (added in code) | `hud_chance.gd` | full screen, not HUD-scaled | Rare-pickup toasts under the clock, the Scratch Card and Double or Nothing under the payout, the Crush Combo under the crush pill, edge-of-screen beacons for events and supply drops, the station pointer, the Goon Nuke's flash, the deep-water warning. Redraws only while one shows. |
+| `HudChance` (added in code) | `hud_chance.gd` | full screen, not HUD-scaled | Rare-pickup toasts under the clock, the Scratch Card and Double or Nothing under the right visor, the Crush Combo under the left visor, edge-of-screen beacons for events and supply drops, the station pointer, the Goon Nuke's flash, the deep-water warning. Redraws only while one shows. |
 
 **The station** (Sprint, Marathon, Defense) has its own colour, `HudTheme.STATION` (sky blue; nothing else on the HUD is blue). `HudChance.drawStation`: off screen, a pill on the screen edge (clear of the top panels and the dials) with the mode's icon, "STATION" (Defense: "BASE"), the distance (`HudTheme.stationDistance`: one decimal under 10, in the Speed Units' mi or km) and an arrow; on screen, a tag over the driveway (`station.drivewayPoint`) that fades as the car arrives. With 15 s left on a race clock the pill pulses (Reduce Motion: no swelling; Reduce Flashing: a steady white rim). In Defense the pointer and the objective turn red for 1.2 s when a goon blows up at a pump (`HudTheme.stationHit`, `station.lastHitMsec`), and the pointer shakes unless Reduce Motion.
 
@@ -61,7 +59,7 @@ Each car has its own dashboard: a `HudSkin` (`hud_skin.gd`), named in `CarInfo.h
 
 **To add a dashboard:** add an entry to `HudSkin.SKINS` (only what differs from the house look), name it in the car's `<car>_info.tres` (`hudSkin`), and, for a new instrument, add its kind to `HudInstrument.KINDS` with a branch in `_process` (its redraw key) and `_draw`. The items row drops its own counter for a trait an instrument already shows (`hud_items.gd`).
 
-- **HUD Scale:** every node above is a direct child of PlayerRoot, so `applyHudScale()` scales each one about its anchor. The crush pill and region chip sit inside `TopLeft` because their animations (`NewGoonCrushBonus` and `NewWave`) move and scale them, and HUD Scale would fight that if they were direct children.
+- **HUD Scale:** every node above is a direct child of PlayerRoot, so `applyHudScale()` scales each one about its anchor.
 - **Speedometer scale:** the speedometer scales to the car. `HudDial.speedScaleFor(car)` takes the car's flat-out speed (engine force against drag and friction, the same terms as `_physics_process`), adds 10%, and rounds up to a multiple of 40, from 80 to 320. The sedan gets 0–120 MPH and the police car 0–160. The green arc starts at 10 MPH, the speed where hitting a goon crushes it.
 
 ## Rendering and cost
@@ -81,9 +79,9 @@ The widgets draw with `_draw()`, and each one redraws only when its numbers chan
 | headlights, engine, steering, traction, oil | Its lamp on the tachometer or the speedometer. The lamp pulses and shows "+1" as the icon arrives (`RewardFlyers.FLIGHT_SECONDS` after the stat changes). |
 | health, armor | The hull's icon, by the speedometer |
 | fuel | The fuel's icon, by the tachometer |
-| coin (and purse), gem | The coin icon in the payout and the gem pill |
+| coin (and purse), gem | The coin on the right visor, and the gem tab under it |
 | luck, clover | The mirror's dice and clover |
-| currentGoonsCrushed, slotmachine | The crush pill |
+| currentGoonsCrushed, slotmachine | The gift box on the left visor |
 
 `tests/game/test_hud.gd` checks that every powerup scene has a target inside the HUD.
 
@@ -91,8 +89,18 @@ The widgets draw with `_draw()`, and each one redraws only when its numbers chan
 
 `HudMirror` (`hud_mirror.gd`) is a 540 x 92 frame hanging 14 px under the top edge. It does not own the clock or the goal: it lays `TopCenter` and `Objective` out on its glass (clock left, goal right, `HudMirror.apply`), turns off the goal's own panel (`HudObjective.framed`) and dresses the clock in the dashboard's font and colour. Its dressing is the skin's (`HudSkin.mirror`): the beater's crack, the taxi's checker band and licence card, the police car's light strip (in step with its lightbar at night), the ambulance's white frame with a monitor-green clock, the pickup's keys, the van's blind-spot mirror, the Track cars' camera screen. The semi has no rear-view mirror, so it gets a console: 62 px tall, flush with the top edge, with no mode name over the clock.
 
-- **Dice and clover:** both hang from the middle of the frame and swing as the car turns (not with Reduce Motion). The dice are the luck stat in pips, a die for every six and three at most (18 is three sixes; above that the number is under them). The clover has the clover stat on it. Their pickups fly to them.
+- **Dice and clover:** each die and the clover hangs on its own string from the middle of the frame (`HudMirror.CHARMS`: where it rests, its string, its period). Each is its own pendulum, pulled by the car's turning, and no two share a period, so they swing apart and may overlap; at rest they fan out so each can be seen. A stat that rises kicks its charm. They hang still with Reduce Motion. The dice are the luck stat in pips, a die for every six and three at most (18 is three sixes; above that the number is under them). The clover has the clover stat on it. Their pickups fly to them.
 - **Hurry:** in the last 15 s of a clock that loses the run when it runs out, the frame pulses red (`HudMirror.hurry`; steady with Reduce Flashing).
+
+## The visors
+
+`HudVisor` (`hud_visor.gd`, `kind` PRIZE or PAY) draws the two slabs either side of the mirror: 330 x 58, flush with the top edge, framed like the mirror in the dashboard's material (`HudSkin.frameColor`, `corner`) round a dark inset. They replaced the crush pill, the district chip, the payout panel with its pause button, the gem pill and the radio card.
+
+- **Left:** the gift box's ring and XP, then the radio. Between songs the visor is 164 px wide with only the equaliser (which dances while a station plays); a new song or a station change opens it to 330 for 5 s with the title and the station.
+- **Right:** the star's ring is the run's wave (`Region.waveProgress`, one clock for the whole run: districts never restart it, `test_the_wave_clock_ignores_districts`), so a full ring is the next star. The big gold number is the payout; the coin count beside the coin gives way when a long payout needs the room.
+- **Gems** show only when one is picked up: a tab under the right visor for 3 s (`GEM_SECONDS`), where the gem lands.
+- **No pause button:** Esc / Start and losing focus pause (`GameUI.openPause`).
+- **No district on the HUD:** entering a district changes who spawns (`Region.updatePlayerRegion`) and nothing else; the district chip and its road sign are gone.
 
 ## System lamps
 
@@ -118,4 +126,3 @@ The Crush Combo readout (`HudChance.showCombo(count, coins, sources)`) counts ev
 
 ## Later
 
-- **Region faction:** the region chip doesn't show the district's faction yet (`Region.factionName()`).
