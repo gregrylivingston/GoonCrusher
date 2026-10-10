@@ -1,6 +1,6 @@
 extends GameTest
 
-#Fixed courses and the featured modes built on them (Course, BountyHunt, Modes; GAMEPLAY_SUGGESTIONS package 18):
+#Fixed courses and the featured modes built on them (Course, BountyHunt, Modes; docs/MODES.md):
 #the seed and checkpoint rules, the record book and what a Trial switches off. Nothing is written:
 #SaveManager.playerData is swapped for a test copy and restored.
 

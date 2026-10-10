@@ -1,5 +1,5 @@
 class_name PropReactions extends Node2D
-## How props answer the car (package 14, docs/WORLD.md "Prop reactions"). One per run, made by the TileManager;
+## How props answer the car (docs/WORLD.md "Prop reactions"). One per run, made by the TileManager;
 ## show only, apart from knocking cones over (they stop being walls).
 ##   - Canopies: a layered prop (trees, the crane's jib; docs/WORLD_ART.md "Layered props") draws its canopy
 ##     above the car and goons (CANOPY_Z). It fades to FADE_ALPHA while the player's car is under it, so the

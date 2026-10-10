@@ -102,19 +102,9 @@ Options, output files and the lines to grep (`CAREER_*`) are in the header of `s
 
 ## Status and what is next
 
-Every personality, skill and brief number is a first guess: nothing has been tuned by tournament.
-
-1. **More seeds before tuning** the goon modes and Cone Course: one seed is noise.
-2. **Mode numbers the AI exposed:** Drift Trial's Easy target falls in seconds (`ModeTiers.DRIFT_TARGET`); Pursuit's runner may be too soft (`ModeTiers.RUNNER_*`).
-3. **Weak modes:** Cone Course (the planner clips cones it didn't predict), Demolition Derby (it doesn't guard its own flanks), Keep the Cup (the chaser doesn't cut the holder off).
-4. **Tune by tournament,** per car and mode family, on levels with different ground.
-5. **Rivals:** place awareness in races; the cost of six planners on the low-end target.
-6. **Housekeeping:** routes weighted per car; split `ai_driver.gd`; move the pattern drivers in `bench.gd` and `promo/capture/session.gd` onto `CarDriver`; retire the unused house styles; scenario tests on small hand-built maps.
+Every personality, skill and brief number is a first guess. Open work and the driver's limits: `docs/roadmap/ROADMAP_TECH.md`.
 
 ## Limits
 
-- **Defense:** it hunts goons by their threat to the pumps but doesn't guard lanes or park to refuel.
-- **Pickups:** valued by their registry `ai` worth; no plan for events, and gadget use is a few crowd rules. Pickups near deep water are skipped, which leaves fuel behind on water levels.
-- **Not predicted:** the drift boost a release fires, shift slop, the kick and the cut.
-- **Horizon:** under a second of simulation plus a straight sweep; a pocket of walls can cost 10–20 s.
-- **CPU:** simulating plans is most of the cost, so `ai` can lower the frame rate. Each rival is a full planner (a far one plans half as often, `AIDriver.scanEvery`); six on the low-end target is unmeasured.
+- **CPU:** simulating plans is most of the cost, so `ai` can lower the frame rate. Each rival is a full planner (a far one plans half as often, `AIDriver.scanEvery`).
+- **Horizon:** under a second of simulation plus a straight sweep.

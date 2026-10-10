@@ -1,7 +1,7 @@
 extends GameTest
 
 #Mode unlock chain, mode availability, payouts and the summary's input rule
-#(GAMEPLAY_SUGGESTIONS T0-6, T0-7, T0-9). Nothing is written: SaveManager.playerData is swapped
+#Nothing is written: SaveManager.playerData is swapped
 #for a test copy and restored.
 
 const M = Root.gameModes

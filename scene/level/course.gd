@@ -1,5 +1,5 @@
 class_name Course extends Node2D
-## A course (docs/GAMEPLAY_SUGGESTIONS.md, package 18): the checkpoints or gates of a fixed-map mode
+## A course (docs/MODES.md): the checkpoints or gates of a fixed-map mode
 ## (Modes.isFixedMap), which the cars must pass in order. The world seed is fixed per level and mode (seedFor,
 ## TileManager.buildWorld), so the course is the same every run and its times compare. Three shapes use it:
 ##   a stage     checkpoints along the world's route from the start to the station (setup): Rally Stage, Flat Out.

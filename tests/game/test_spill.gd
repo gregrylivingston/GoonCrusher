@@ -1,6 +1,6 @@
 extends GameTest
 
-#Interactive props (package 14, P-4; docs/WORLD.md "Interactive props"): log piles roll logs that flatten goons
+#Interactive props (docs/WORLD.md "Interactive props"): log piles roll logs that flatten goons
 #and settle as props, water towers flood goons flat, billboards topple away from the car, hives let a swarm
 #loose, cranes drop their container once, goons whose seeks say so cut a pile loose at the car, blasts set spills
 #off, and the TileManager remembers what spilled.

@@ -1,5 +1,5 @@
 class_name CarJuice extends Node2D
-## Driving juice (package 13, docs/CAR_ART.md "Driving feel"): how the car itself feels, apart from crushes
+## Driving juice (docs/CAR_ART.md "Driving feel"): how the car itself feels, apart from crushes
 ## (CrushFeel). The player's car owns one. It is show only: it reads the car each physics tick after the car
 ## has moved and never writes its velocity, input or stats, so handling and the AI's predictions are unchanged.
 ##   - D-1 lean: the body leans out of a turn (it slides out and narrows, the shadow goes the other way) and

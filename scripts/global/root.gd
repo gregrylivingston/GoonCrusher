@@ -166,7 +166,7 @@ static func modeLockReason(level: Dictionary, mode: int) -> String:
 	return "Beat Sprint To Unlock" if mode == gameModes.GOONCRUSHER else "Beat Countdown To Unlock"
 
 #coins a run pays: its coins times the star multiplier, x1 plus STAR_BONUS a star, up to STAR_MULT_MAX (20 stars).
-#Was coins x stars, which paid six-figure runs by the sixth level (career playtests, docs/GAMEPLAY_SUGGESTIONS.md);
+#Was coins x stars, which paid six-figure runs by the sixth level (career playtests);
 #uncapped, a 15-minute Goonpocalypse (a star a minute and ever more coins) still paid 33,000-50,000.
 const STAR_BONUS := 0.1
 const STAR_MULT_MAX := 3.0

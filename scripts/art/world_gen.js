@@ -868,7 +868,7 @@ landmark_scrap:{cls:'TALL',box:[460,460],n:1,shadow:14,grime:.3,tags:{faction:['
 			c.fillStyle=css(shade(C('#1c2226'),sh*.5)); c.fillRect(-46,-50+k*6,92,40); c.strokeStyle='rgba(0,0,0,.35)'; c.lineWidth=2; c.beginPath(); c.moveTo(-60,10); c.lineTo(60,30); c.stroke(); rust(c,20,60,40,300+k); c.restore(); }
 		limb(c,[0,0],[0,-150],6,'#6d6f72'); c.beginPath(); c.moveTo(0,-150); c.lineTo(56,-138); c.lineTo(48,-124); c.lineTo(0,-128); c.closePath(); c.fillStyle=css(C(TEAL),.9); c.fill(); crown(c,0,0,230,.08,.2); },
 	beacon(c){ glowAt(c,0,-150,90,'#5fe0d6',.5); glowAt(c,0,-150,26,'#d8fffb',.95); glowAt(c,0,0,150,'#3fb8b0',.16); }},
-/* interactive props (package 14, P-4): Spill (scripts/world/spill.gd) says what comes out of each */
+/* interactive props: Spill (scripts/world/spill.gd) says what comes out of each */
 logpile:{cls:'STATEFUL',box:[320,220],n:2,shadow:7,grime:.2,occluder:true,core(c){ c.fillStyle='#000'; c.beginPath(); rr(c,-140,-80,280,160,20); c.fill(); },
 	draw(c,R,v){ const L=270, W=50;
 		for(let k=0;k<3;k++){ const y=-62+k*62; c.save(); c.translate(0,y); c.beginPath(); rr(c,-L/2,-W/2,L,W,W*.42);

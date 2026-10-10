@@ -30,7 +30,7 @@ const TOP_TIER := 4
 ## The XP box `level` (1, 2, 3...) needs on its own: 120, 634, 1678, 3346, 5704... (2026-10-09: was
 ## 50 * level^2; prize games came too often). AI playtests (Countdown and
 ## Goonpocalypse, 3-4 min) make 150-1300 XP, 2-7.5 per crush as giants and combos pile up: 1-3 boxes a run,
-## fewer than the old crush goals gave the same runs (2-4). A human's pace is for package 1 to check.
+## fewer than the old crush goals gave the same runs (2-4). A human's pace has not been checked.
 const XP_BASE := 120.0
 const XP_EXP := 2.4
 

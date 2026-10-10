@@ -30,9 +30,3 @@ What a person must look at, because the automated tests and harnesses skip trans
 - `--bench` and `--playtest` wait on no transition (`Transition.instant()`); watch a longer playtest for softlocks around the start lamps.
 - Frame times on the low-end box: the shutter slam, the reveal smoke, the wreck smoke wall, a jackpot chute, the Nuke ring.
 - Leak warnings at exit: check whether the cached transition textures add to them.
-
-## Open risks
-
-- The loading door racing the menu (docs/UI.md, "Transitions") has no automated test.
-- Transition sounds are synthesised placeholders; listen to them in context.
-- Effect timings are first-pass values, not tuned by hand.

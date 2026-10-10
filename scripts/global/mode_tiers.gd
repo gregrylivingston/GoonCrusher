@@ -1,11 +1,10 @@
 class_name ModeTiers extends RefCounted
-## Easy, Medium and Hard: three completions for every mode on every level (docs/GAMEPLAY_SUGGESTIONS.md,
-## package 1, B-1). The player picks the tier in run setup (PlayerData.gameTier). A harder tier sets a longer
+## Easy, Medium and Hard: three completions for every mode on every level (docs/MODES.md). The player picks the tier in run setup (PlayerData.gameTier). A harder tier sets a longer
 ## or stricter goal and a tougher world. Beating a tier credits the ones below it; Hard opens once Medium is
 ## beaten. The save keeps the best tier per mode per level in the level entry's `tiers` (SaveManager.passTier);
 ## `gamemodeBeat` stays the "beaten on any tier" flag the unlock chain reads.
 ##
-## Every number here is a first guess, re-fitted with career playtests (package 1, B-4).
+## Every number here is a first guess, to be fitted with career playtests (docs/roadmap/ROADMAP_BALANCE.md).
 
 enum { NONE, EASY, MEDIUM, HARD }
 const TIERS := [EASY, MEDIUM, HARD]
@@ -73,7 +72,7 @@ const ESCALATION := [1.0, 1.0, 1.3, 1.6]
 const GIANT_ODDS := [0, 0, 8, 16]
 const SPAWN_TIMER := [1.0, 1.0, 0.9, 0.8]
 
-## Win pay (B-2): coins a minute of the goal by mode (goalSeconds), x the tier's risk and x the level's step,
+## Win pay: coins a minute of the goal by mode (goalSeconds), x the tier's risk and x the level's step,
 ## added to the run's coins before the star multiplier (Root.computePayout). Racing and Defense earn few coins
 ## on the way, so they get more a minute. Paid by the goal's length, not per run: a flat bonus made a one-minute
 ## Hard Sprint pay 1,575 coins a minute (career playtests, 2026-10-08).

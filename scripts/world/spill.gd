@@ -1,5 +1,5 @@
 class_name Spill extends RefCounted
-## Interactive props (package 14, P-4; docs/WORLD.md "Interactive props"): props that let something loose when
+## Interactive props (docs/WORLD.md "Interactive props"): props that let something loose when
 ## they go. One hook, `release`, called when a prop in DEFS breaks (BreakableProp.smashNode: the car at its
 ## smash speed, a goon cutting it loose, or a blast), plus the crane, which drops its container when rammed
 ## hard (PropReactions). What comes out by kind:

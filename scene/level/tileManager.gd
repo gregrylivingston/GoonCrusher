@@ -60,7 +60,7 @@ var edgeLayer: Node2D
 var decorLayer: Node2D
 var wallLayer: Node2D
 var objectLayer: Node2D
-var reactions: PropReactions #canopies over the car, props answering hits (package 14)
+var reactions: PropReactions #canopies over the car, props answering hits
 
 ## Main-thread ms spent applying and releasing chunks since the bench last read it (bench.gd chunk_ms)
 var chunkMs := 0.0

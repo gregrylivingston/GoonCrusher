@@ -6,7 +6,7 @@ class_name BountyHunt extends Node
 ## A mark is a giant from the level's line-up, weakest first, with a red ring under it and an escort. It is never
 ## swept (the "bounty" meta, SpawnManager.despawnSweep). Only a death the car caused counts (Walker.deathCause):
 ## a mark that drowns or blows itself up is replaced by another.
-## Every number is a first guess (docs/GAMEPLAY_SUGGESTIONS.md, package 18).
+## Every number is a first guess (docs/MODES.md).
 
 const FIRST_DISTANCE := 3200.0 #px from the car to the first mark
 const STEP_DISTANCE := 500.0   #each later mark is this much further

@@ -38,17 +38,7 @@ Open for the author before launch (Steam's content survey asks about language, s
 - **Gas Station Romance:** "Texaco" is a real brand (a re-take could say "the Gas-N-Go"), and "buying cigarettes".
 - **Rusty's Salvage** (ad, `segments.md`): "even your wife", mild innuendo.
 
-## Ideas for the next songs
-
-An older brainstorm: several (surf, ska, the lullaby) fall outside the three categories, so check an idea against them first.
-
-- **Goonling Lullaby (Don't Cross the Road):** the variation song. A slow country waltz with pedal steel, sung deadpan by a goon parent warning their kid about the road ("Your uncle tried it Tuesday / Now he's a puddle on the overpass"). It breaks the tempo on purpose; the set already has its slower songs (house style), so it would need one of them to go, or to be the station's single novelty track.
-- **Route Nowhere:** surf rock with twangy reverb guitar; a road with no end and no brakes.
-- **Hubcap Rodeo:** rockabilly; the Scrap Gang's wheels as rodeo bulls.
-- **Pit Stop Romance:** ska-punk; falling for the Pit Shop mechanic between legs of a Marathon.
-- **Night Shift:** 80s arena rock; headlights on, Nightcrawlers out.
-- **Wild Things:** garage rock chant; the critters (Jackalopes, Tuskers, Buzzards) as a rival gang.
-- **Foreman's Lament:** metal parody from the goons' side; the Foreman rallying the Tribe for one more charge.
+Ideas for more songs: `docs/roadmap/ROADMAP_AUDIO.md`.
 
 ## Songs in the game
 

@@ -1151,7 +1151,7 @@ func nextBit(info: Dictionary, id := "", hero := false) -> int:
 static func lacksBit(info: Dictionary, bit: int) -> bool:
 	return bit < 0 && info.get("paying", false)
 
-#--- field lines (package 14, P-3) -----------------------------------------------------------------
+#--- field lines -----------------------------------------------------------------
 #Fences and hedges lie on the edges of a field lattice in world space: one lattice per FIELD_REGION square,
 #turned by an angle from the seed, so runs line up across chunks. Each lattice edge is a fence, a hedge or
 #nothing (ctx.fieldDensity from features "fenceDensity" and "hedgeDensity": the chance per edge), and every
@@ -1770,7 +1770,7 @@ func roadAxis(p: Vector2, fallback: float) -> float:
 			bestRot = rot
 	return bestRot if best >= 5 else fallback
 
-#--- motifs (package 14, P-5) ----------------------------------------------------------------------
+#--- motifs ----------------------------------------------------------------------
 #Small set pieces placed before the scatter: ctx.motifs is {zone: {motif id: weight}} and ctx.motifDefs the
 #motifs (WorldSkin.MOTIFS): members in a ring, scattered in a disc, in a grid or a line turned to the field
 #lattice, or at the center. Members keep MOTIF_GAP from each other instead of PROP_GAP; the motif keeps

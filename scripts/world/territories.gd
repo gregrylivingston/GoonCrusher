@@ -16,7 +16,7 @@ class_name Territories extends RefCounted
 ##   step            the elite strength step, applied when a goon spawns (Walker): speed, damage and the crush
 ##                   speed needed, as multipliers. The factions' regions are x1.
 ##   demo            in the demo
-## Every number is a placeholder for the pacing pass (docs/GAMEPLAY_SUGGESTIONS.md).
+## Every number is a placeholder for the pacing pass (docs/roadmap/).
 
 const ORDER: Array[StringName] = [&"wilds", &"tribe", &"raiders", &"hunting", &"sprawl", &"works"]
 const STOPS := 5 #levels per region; the 5th is its finale

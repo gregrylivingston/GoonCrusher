@@ -1,6 +1,6 @@
 extends GameTest
 
-#How props are laid out (package 14, P-3 and P-5; docs/WORLD.md "Props and decor"): fences and hedges only as
+#How props are laid out (docs/WORLD.md "Props and decor"): fences and hedges only as
 #field lines square to their region's lattice, motifs as tight clusters, road barriers along the road, the
 #level tables (motifs, field densities, no dead feature keys), and the skin loading what motifs and spills need.
 

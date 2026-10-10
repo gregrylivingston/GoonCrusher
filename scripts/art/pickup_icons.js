@@ -177,7 +177,7 @@ function icon(key) {
 if (typeof module !== 'undefined' && require.main === module) {
   const fs = require('fs'), path = require('path');
   const dir = path.join(__dirname, '..', '..', 'texture', 'icon');
-  const skip = new Set(['idol', 'glass', 'moon', 'bargain', 'sack']); //curses are on hold (GAMEPLAY_SUGGESTIONS "Maybe")
+  const skip = new Set(['idol', 'glass', 'moon', 'bargain', 'sack']); //curses are on hold (docs/roadmap/ROADMAP_PICKUPS.md)
   const importTemplate = fs.readFileSync(path.join(dir, 'coin.svg.import'), 'utf8')
     .split('\n').filter(line => !/^(uid|path|dest_files)=/.test(line)).join('\n');
   let n = 0;

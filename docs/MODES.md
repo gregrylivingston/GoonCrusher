@@ -1,6 +1,6 @@
 # Game modes
 
-What is left to do on the modes: docs/GAMEPLAY_SUGGESTIONS.md, package 18 (it links the approved design plan). How the AI plays each mode: docs/AI_DRIVER.md.
+What is left to do on the modes: `docs/roadmap/ROADMAP_MODES.md` (it links the approved design plan). How the AI plays each mode: docs/AI_DRIVER.md.
 
 ## Where it lives
 

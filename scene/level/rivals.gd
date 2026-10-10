@@ -1,5 +1,5 @@
 class_name Rivals extends Node
-## The Goon Cup's other drivers (docs/GAMEPLAY_SUGGESTIONS.md, package 18): the garage's other cars on the map,
+## The Goon Cup's other drivers (docs/MODES.md): the garage's other cars on the map,
 ## each a real car scene with `isPlayer` off and its own car's AIDriver holding its keys (SKILL by tier). A rival has no camera, HUD,
 ## rewards or spawners; it doesn't burn fuel or collect pickups, goons ignore it (they hunt Root.playerCar), and
 ## a wrecked one is simply gone. Cars bump each other (OverheadCarBody2D.bumpCar). Level adds one of these in

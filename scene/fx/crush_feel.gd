@@ -9,7 +9,7 @@ class_name CrushFeel extends Node
 ##     menu (a pickup event, the slot machine) ends it at once, so nothing that pops up runs slowed.
 ##     The Hit-Stop setting; never under the harnesses, Transition.instant().
 ##   - a crush tick that rises in pitch with the Crush Combo, a thud and rumble for giants.
-##   - the crush bonuses (T2-6): a multi-crush, a drift crush, giant slayer and boss crush pay coins here,
+##   - the crush bonuses: a multi-crush, a drift crush, giant slayer and boss crush pay coins here,
 ##     at once; labels and sounds are only for show. A new best combo for the car is announced once a run.
 
 const TRAUMA_GOON := 0.13

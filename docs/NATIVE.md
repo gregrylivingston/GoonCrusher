@@ -57,8 +57,4 @@ Registered classes are global, like built-ins, and bound in camelCase so GDScrip
 
 Port only what a profile points at. Calls across the GDScript/C++ boundary cost about as much as a GDScript call, so one call must do a whole job (a pass, a helper with its engine calls), never one per cell.
 
-Candidates, in order:
-1. **`WorldField.sample`:** the coarse build's sample step and the fine raster's inner loop; the biggest remaining load cost. Its float math must match bit for bit or the rasters drift.
-2. **The rest of the coarse build** (`shareCaps`, `connectIslands`, `markStart`, `buildDistricts`): integer grid passes like `cutCrossings`, arrays in, arrays out.
-3. **Verb logic** (`scene/enemy/goon_verbs.gd`): the whole state machine would move, and most of a crowd's physics time is now the physics server. Try no collision for off-screen goons first.
-4. **`ChunkRecipe`:** runs on workers inside its budget, so it isn't urgent.
+The candidates, in order: `docs/roadmap/ROADMAP_TECH.md`.

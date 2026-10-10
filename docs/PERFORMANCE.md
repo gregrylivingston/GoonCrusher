@@ -62,10 +62,7 @@ S1 is the idle menu (3D text fill), S2 a day drive (terrain, streaming), S3 nigh
 
 ## Known slow
 
-No numbers are kept here: everything measured predates the road atlas, the 19 modes, the rivals and the new HUD, and must be re-run.
+No numbers are kept here: measure again (`docs/roadmap/ROADMAP_TECH.md` lists what, and what to try).
 
-- **Night crowds miss the S4 targets on Low and Potato.** Above about 160 goons physics takes most of the frame, and most of that is the physics server, not goon script. Next steps, in order: no collision for off-screen goons, a lower cap on Low and Potato, native verbs (docs/NATIVE.md, "What to port next").
-- **Level load:** the world build is still mostly GDScript; `WorldField.sample` is the next port.
-- **Unmeasured:** the Goon Cup's rivals (each a car and an AI planner; docs/AI_DRIVER.md, "Limits"), Crush and Driving Effects in a crowd, 4K, V-Sync on.
+- **Night crowds:** above about 160 goons physics takes most of the frame, and most of that is the physics server, not goon script.
 - **Measured and dropped:** a goon texture atlas (fewer draw calls, no time saved); physics interpolation (no effect at 60 Hz).
-- **Open:** should Low or Potato default to 720p?

@@ -1,6 +1,6 @@
 extends GameTest
 
-#Mode tiers (ModeTiers; GAMEPLAY_SUGGESTIONS package 1, B-1 and B-2): Easy, Medium and Hard per mode and level,
+#Mode tiers (ModeTiers; docs/MODES.md): Easy, Medium and Hard per mode and level,
 #what each pays, how the save keeps them and the unlock condition that counts them. Nothing is written:
 #SaveManager.playerData is swapped for a test copy and restored.
 

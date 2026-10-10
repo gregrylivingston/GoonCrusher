@@ -785,7 +785,7 @@ func honk() -> void:
 		if absf(forward.angle_to(to)) > HORN_CONE: continue
 		Gadgets.stun(goon, HORN_STUN, to.normalized() * HORN_PUSH)
 
-#--- car against car (the Goon Cup's rivals, docs/GAMEPLAY_SUGGESTIONS.md package 18) -------------------
+#--- car against car (the Goon Cup's rivals, docs/MODES.md) -------------------
 const CAR_BOUNCE := 0.35         #how much of the closing speed comes back
 const CAR_BUMP_FREE := 180.0     #closing speed (px/s) under which a bump does no damage
 const CAR_BUMP_DAMAGE := 1.0 / 45.0 #health per px/s of closing speed above that, before armor

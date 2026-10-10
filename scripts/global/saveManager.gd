@@ -212,7 +212,7 @@ func requestStatCost(statString: Root.upgrade, carIndex := -1) -> int:
 
 ## An upgrade from `level` to the next: (level + 1)^1.6 x 15, x the car's scale. An upgrade is +1 to the stat
 ## on any car, so it is worth most on the entry cars' low stats; the advanced cars' upgrades are the long
-## coin sink instead (package 1, B-4).
+## coin sink instead.
 const UPGRADE_COST_SCALE := {"sedan": 1.0, "van": 1.0, "taxi": 1.2, "pickup": 1.2, "semi": 1.6, "supercar": 1.8,
 	"racer": 1.8, "police": 2.2, "ambulance": 2.5}
 static func upgradePrice(level: int, carName: String) -> int:

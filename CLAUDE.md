@@ -6,7 +6,8 @@ This file is the map and the rules. The code and data files are the source of tr
 
 | Doc | Covers |
 |---|---|
-| `docs/GAMEPLAY_SUGGESTIONS.md` | The roadmap: open work, decisions that constrain it, questions for the author. The one home for open work. |
+| `docs/roadmap/` | Everything not built yet: `ROADMAP.md` (the 0.3 demo release list, decisions, open questions) and one `ROADMAP_<AREA>.md` per area. The one home for open work. |
+| `CHANGELOG.md`, `promo/marketing/` | What changed for players, by version; feature fact sheets and post templates built on it. |
 | `docs/MODES.md` | Game modes, tiers, level unlocks, endings and pay. |
 | `docs/WORLD.md`, `docs/WORLD_ART.md` | Levels, landscapes, regions, the generator, chunks, terrain, water, props; the generated world art and its bake. |
 | `docs/GOONS.md` | Goons: registry, classes, verbs, crush rules, effects, bake. |
@@ -98,4 +99,4 @@ This file is the map and the rules. The code and data files are the source of tr
 - `randi() % n - 1` indexing in `Region.gd` and `gameSummary.gd` looks wrong but works (index -1 wraps).
 - **Style:** tabs, camelCase (some snake_case), `Root.*` globals, `$Node` paths. American English everywhere: game text, comments, identifiers and file names (tire, color, center, gray). No empty `_process`/`_ready` stubs. Connect autoload signals to methods, not lambdas. Comments say what the code does and why, not what it used to do.
 
-Open work and known issues: `docs/GAMEPLAY_SUGGESTIONS.md`. Nothing has been tuned by hand yet.
+Open work and known issues: `docs/roadmap/`. Nothing has been tuned by hand yet. When a feature lands, delete its roadmap item and add a player-facing line to `CHANGELOG.md`.

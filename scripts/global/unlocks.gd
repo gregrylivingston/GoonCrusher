@@ -20,7 +20,7 @@ enum S { HIDDEN, SHOWN, READY, OPEN }
 ## pickups cost the same: they are spread over the range (evenly by ratio), shallowest in their trees first,
 ## so a tree's root is its rarity's cheapest and there is always something a little dearer to save for
 ## (buildPrices). Commons run from pocket change up; Legendaries cost gems only. A pickup with a play
-## condition (`needs`) costs nothing: it opens when the condition is met. Placeholders until package 1.
+## condition (`needs`) costs nothing: it opens when the condition is met. Placeholders (docs/roadmap/ROADMAP_BALANCE.md).
 const PRICE_RANGE := [[20, 1000, 0, 0], [1200, 4500, 0, 0], [5000, 12000, 0, 0], [15000, 30000, 3, 6], [0, 0, 12, 18]]
 static var prices := {} #pickup id -> its price, built once (Pickups.DATA is constant)
 ## The demo opens Commons and Uncommons, every tree's root, and the Casino tree's first tier:

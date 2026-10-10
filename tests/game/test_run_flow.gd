@@ -1,6 +1,6 @@
 extends GameTest
 
-#Run flow (GAMEPLAY_SUGGESTIONS T0-2..T0-5): objectives are placed on land inside the map, the
+#Run flow: objectives are placed on land inside the map, the
 #Sprint clock comes from the station distance, a run ends once, and the clock ends the run.
 
 var timerScript = load("res://scene/player/Timer.gd")

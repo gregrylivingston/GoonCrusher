@@ -50,6 +50,6 @@ A job of kind `stage` puts one thing on a backdrop; `clear` makes the root trans
 ## Known limits
 
 - The `.avi` that carries the sound has a 4 GB limit, about 5 minutes of run. Replay long drives in stretches.
-- `"layer": "hud"` and an isolated results ticket leave the odd world-space marker that draws on its own layer.
-- The Steam sizes in `capture.py`'s `PROFILES` and the safe zones in `stage.gd` are from memory: check them before a final export.
-- A filmer can't build the native library; publishing a prebuilt pair per commit for `doctor --native` is the author's job and isn't automated.
+- A filmer can't build the native library; the author publishes a prebuilt pair for `doctor --native`.
+
+Open work on the kit: `docs/roadmap/ROADMAP_TECH.md`.

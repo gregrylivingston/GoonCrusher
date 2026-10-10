@@ -287,7 +287,8 @@ The native `WorldGrid` needs no change for a new value (it reads the ids and `Wo
 
 ## Known issues
 
-- **Worker speed:** the map build and the recipes are mostly GDScript; `WorldField.sample` is the next native port and must match bit for bit (docs/NATIVE.md).
-- **Bumper-only car collision:** the car's shape is a front and a rear polygon, so its middle can wedge on prop and wall corners. Keep props either touching a wall or a car's width from it.
+Traps for anyone working here; open work is in `docs/roadmap/ROADMAP_WORLD.md`.
+
 - **Islands** no cut reaches stay on the map; nothing may be placed there.
-- Pickups past bit 31 in a chunk have no taken bit and come back on a reload.
+- **Keep props either touching a wall or a car's width from it,** so a car can't wedge between them.
+- **Pickups past bit 31 in a chunk** have no taken bit and come back on a reload.

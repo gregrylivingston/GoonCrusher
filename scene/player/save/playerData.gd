@@ -46,7 +46,7 @@ class_name PlayerData extends Resource
 	},
 	{	"name":"semi",
 		"cost":15000,
-		"gems":3, #advanced cars also cost gems (fitted to the career playtests, package 1 B-4)
+		"gems":3, #advanced cars also cost gems (fitted to the career playtests)
 		"upgrades":{},
 		"records":{"time":0,"gem":0,"coin":0,"speed":0,"goonsCrushed":0,"slotMachines":0,"powerups":0,"score":0,"combo":0,},
 		"scene":"res://scene/car/semi/semi.tscn",

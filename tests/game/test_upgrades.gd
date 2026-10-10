@@ -1,6 +1,6 @@
 extends GameTest
 
-#Every paid upgrade must do what its label says (GAMEPLAY_SUGGESTIONS T0-8). Nothing is written:
+#Every paid upgrade must do what its label says. Nothing is written:
 #SaveManager.playerData is swapped for a test copy and restored.
 
 var original: PlayerData
