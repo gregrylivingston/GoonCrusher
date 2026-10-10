@@ -50,7 +50,7 @@ const ROUTE_FACTOR = {&"meadow": 1.08, &"bayou": 1.12, &"canyon": 1.15, &"quarry
 const ROUTE_FACTOR_DEFAULT = 1.1
 const STATION_APPROACH_PX = 1500.0
 
-#Marathon: a relay of Sprint-length legs (ModeTiers.LEGS by tier). Each station but the last adds that leg's
+#Marathon: a relay of short legs (ModeTiers.MARATHON_LEG) (ModeTiers.LEGS by tier). Each station but the last adds that leg's
 #clock, refuels, patches the car up and opens the pit shop; the last one wins.
 const MARATHON_TURN = PI / 3 #each leg heads off within this of the last leg's heading
 #a leg that would leave the map (WorldGen.CHUNK_LIMIT, less this margin of the leg's length for its y spread)
@@ -106,6 +106,7 @@ func applyDef() -> void:
 func slack() -> float:
 	var byTier: Array = ModeTiers.SLACK
 	if runMode == Root.gameModes.RALLY: byTier = ModeTiers.RALLY_SLACK
+	elif runMode == Root.gameModes.MARATHON: byTier = ModeTiers.MARATHON_SLACK
 	elif runMode == Root.gameModes.HOTLAP: byTier = ModeTiers.HOTLAP_SLACK
 	elif runMode == Root.gameModes.FLATOUT: byTier = ModeTiers.FLATOUT_SLACK
 	return (def.sprintSlack if def else sprintSlack(levelSeconds)) * byTier[tier]
@@ -472,6 +473,45 @@ func runPayout(won: bool) -> int:
 	var pay := Root.computePayout(car.coin + (winBonus() if won else 0), car.star)
 	return roundi(pay * car.traitRig.payoutBonus()) if car.traitRig else pay #Loaded Bed's crates
 
+#--- the run's rank (RunRank) ---------------------------------------------------------------------
+
+## How much of the mode's own goal the run has reached: 1 is the goal. The score or the marks out of the target,
+## the cup's seconds, the gates and laps of a course, the stations of a Marathon, the way to the station, else
+## the share of the clock survived. Goonpocalypse goes on past 1.
+func goalProgress() -> float:
+	if Modes.running() == Root.gameModes.GOONPOCALYPSE: return elapsed / maxf(pocalypseTarget(), 1.0)
+	if isWon(): return 1.0
+	if trial: return clampf(float(trial.score) / maxf(trial.target, 1.0), 0.0, 1.0)
+	if bounty: return clampf(float(bounty.caught) / maxf(bounty.total, 1.0), 0.0, 1.0)
+	if cup: return clampf(cup.playerSeconds() / maxf(cup.need, 1.0), 0.0, 1.0)
+	if course && course.total() > 0:
+		return clampf(float(course.lap * course.total() + course.next) / (course.total() * maxi(course.laps, 1)), 0.0, 1.0)
+	if runMode == Root.gameModes.DERBY && rivals: return clampf(float(wrecks) / maxf(rivals.field() - 1, 1.0), 0.0, 1.0)
+	if runMode == Root.gameModes.PURSUIT: return 0.0 #the runner got away
+	if Modes.running() == Root.gameModes.MARATHON: return clampf(float(leg - 1) / maxf(legs(), 1.0), 0.0, 1.0)
+	if timeUpCondition(runMode) == Root.endCondition.SUCCESS: return clampf(elapsed / maxf(elapsed + seconds, 1.0), 0.0, 1.0)
+	if is_instance_valid(Root.station) && is_instance_valid(Root.playerCar):
+		var whole := startPosition.distance_to(Root.station.global_position)
+		return clampf(1.0 - Root.playerCar.global_position.distance_to(Root.station.global_position) / maxf(whole, 1.0), 0.0, 1.0)
+	return 0.0
+
+## What RunRank grades: the run as it stands (the results ticket and the playtest harness read it once it has ended)
+func rankStats() -> Dictionary:
+	var car = Root.playerCar
+	if not is_instance_valid(car): return {}
+	var survival: bool = Modes.running() == Root.gameModes.GOONPOCALYPSE || runMode == Root.gameModes.KEEPCUP || timeUpCondition(runMode) == Root.endCondition.SUCCESS
+	return {"won": isWon(), "progress": goalProgress(), "timed": not survival, "time": elapsed,
+		"crushed": car.currentGoonsCrushed, "giants": car.giantsCrushed, "combo": car.bestCombo,
+		"speed": float(car._highest_measured_speed), "paid": runPayout(isWon()), "fuel": car.fuel}
+
+## The par key of this run (RunRank.parKey): its level, mode and tier
+func parKey() -> String:
+	return RunRank.parKey(str(def.id) if def else "", Modes.idOf(runMode), tier)
+
+## The run's score and rank (RunRank.grade) against the par for its level, mode and tier
+func runRank() -> Dictionary:
+	return RunRank.grade(rankStats(), RunRank.parFor(str(def.id) if def else "", Modes.idOf(runMode), tier), tier)
+
 #--- Goonpocalypse ------------------------------------------------------------------------------
 
 func pocalypseTarget() -> float:
@@ -662,7 +702,8 @@ func newSpawner( spawnerPosition: Vector2, parent: Node = null ):
 #Every ending (car NOHEALTH/NOGAS, station SUCCESS, clock SUCCESS/NOTIME, abandon) comes here.
 #Only the first counts: later calls, such as a car's pending NOGAS timer firing after the summary
 #paused the tree (SceneTreeTimers run while paused), return at once.
-func endLevel(levelCompleted: bool, reason):  #reason takes Root.endCondition
+#`then` skips the ticket and goes straight on once the run is paid ("retry": the pause menu's Restart).
+func endLevel(levelCompleted: bool, reason, then := ""):  #reason takes Root.endCondition
 	if hasEnded: return
 	if targetReached: levelCompleted = true #Goonpocalypse ends in a wreck, but surviving the target beat it
 	hasEnded = true
@@ -675,7 +716,8 @@ func endLevel(levelCompleted: bool, reason):  #reason takes Root.endCondition
 		"%.0f/%.0f rival %.0f" % [cup.playerSeconds(), cup.need, cup.rivalBest()] if cup else "-"])
 	if is_instance_valid(Root.playerCar): Root.playerCar.isDestroyed = true
 	var gameSummary = load("res://scene/player/menu/gameSummary.tscn").instantiate()
-	gameSummary.reason = reason 
+	gameSummary.reason = reason
+	gameSummary.autoAction = then
 	if levelCompleted: gameSummary.levelCompleted = true #no win jingle: the radio plays on
 	add_child( gameSummary )
 	get_tree().paused = true

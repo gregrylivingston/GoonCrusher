@@ -29,11 +29,12 @@ var playerRoot: GameUI #this is basically the inlevel UI
 var isRunActive: bool = false
 var earnedCoins: int #the last run's payout, already credited and saved by gameSummary; main2 only animates it
 var earnedGems: int
+var menuReturn := "" #"options": the menu opens on Level Options, not the garage (the results ticket sets it; main2 clears it)
 
 #--- demo build and progression ----------------------------------------------------------------
 #Every demo gate reads IS_DEMO, so the Steam demo is built from the same code by flipping it.
 const IS_DEMO := false
-const GAME_VERSION := "0.1"
+const GAME_VERSION := "0.29"
 const DEMO_CAR_COUNT := 3 #the demo offers the first 3 cars and the first 2 regions (10 levels)
 const DEMO_LEVEL_COUNT := 10
 #modes that are finished enough to play. An unavailable mode shows "Coming soon" whatever its

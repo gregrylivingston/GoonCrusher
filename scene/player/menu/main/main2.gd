@@ -171,6 +171,10 @@ func _ready():
 	buildUi()
 	shownCoins = SaveManager.playerData.coin
 	selectCar(SaveManager.playerData.selectedCar, false)
+	#the results ticket's Level Options (gameSummary.act): straight back to run setup for the level just played
+	var toOptions := Root.menuReturn == "options" && not cards[SaveManager.playerData.selectedCar].isLocked()
+	Root.menuReturn = ""
+	if toOptions: showSetup(true)
 	#a door carried over from the run's results (Transition.carry), taken now: a loading door made after
 	#this point (startLevel during the frame awaited below) must never be mistaken for it
 	var returningDoor: Transition = Transition.active if Transition.busy() else null
@@ -644,28 +648,19 @@ static func paneRule() -> ColorRect:
 #Fire slot (Pickups.LOADOUT, kept in meta.records.loadout) and a boost for the Boost slot
 #(Pickups.BOOST_LOADOUT, meta.records.boostLoadout). Each button says which key fires it in the run.
 #The gems are spent when the run starts, the gadget's first.
-const SLOTS := ["loadout", "boostLoadout"]
+const SLOTS := RunLauncher.SLOTS
 var loadoutButton: Button #the gadget's (the career harness presses it)
 var boostButton: Button
 
 static func slotPrices(slot: String) -> Dictionary:
-	return Pickups.openLoadout(Pickups.LOADOUT if slot == "loadout" else Pickups.BOOST_LOADOUT) #only unlocked ones are sold
+	return RunLauncher.slotPrices(slot)
 
 static func slotChoice(slot: String) -> String:
-	var id: String = SaveManager.playerData.meta.get("records", {}).get(slot, "")
-	return id if slotPrices(slot).has(id) else ""
+	return RunLauncher.slotChoice(slot)
 
-## What the slot will really buy at Start: its choice, or "" when the gems left after the slots before
-## it don't cover it
+## What the slot will really buy at Start (RunLauncher.slotPurchase)
 static func slotPurchase(slot: String) -> String:
-	var gems: int = SaveManager.playerData.gem
-	for s in SLOTS:
-		var id := slotChoice(s)
-		var cost: int = slotPrices(s).get(id, 0)
-		var buys := id != "" && gems >= cost
-		if buys: gems -= cost
-		if s == slot: return id if buys else ""
-	return ""
+	return RunLauncher.slotPurchase(slot)
 
 func cycleLoadout() -> void:
 	cycleSlot("loadout")
@@ -1276,7 +1271,9 @@ func refreshRecords(index: int, mode: int) -> void:
 	var who := ", ".join(holders.slice(0, 3).map(driverOf)) + (" +%d" % (holders.size() - 3) if holders.size() > 3 else "")
 	var bestBook := ""
 	for i in holders: bestBook = recordText(index, mode, str(cars[i].name)) if bestBook == "" else bestBook
-	recordsBox.add_child(recordColumn("BEST BY ANY CAR", bestTier, who + ("  -  " + bestBook if bestBook != "" else "")))
+	var rank := SaveManager.bestRank(index, mode)
+	if not rank.is_empty(): bestBook += ("  -  " if bestBook != "" else "") + "Rank %d %s" % [rank.rank, RunRank.title(rank.rank)]
+	recordsBox.add_child(recordColumn("BEST BY ANY CAR", bestTier, who + ("  -  " + bestBook if bestBook != "" && who != "" else bestBook)))
 
 func driverOf(carIndex: int) -> String:
 	var card := cards[carIndex]
@@ -2002,14 +1999,7 @@ func refreshFreeRow(level: Dictionary, mode: int) -> void:
 func onStartPressed() -> void:
 	var index = SaveManager.playerData.selectedLevel
 	if screen == Screen.SETUP && optionsOpen && isLevelSelectable(index) && Root.isModePlayable(selectedLevelForModes(), SaveManager.getGameMode()) && ModeTiers.isOpen(selectedLevelForModes(), SaveManager.getGameMode(), SaveManager.getGameTier()):
-		var gadget := slotPurchase("loadout")
-		var boost := slotPurchase("boostLoadout") #worked out before either is paid for
-		if gadget != "":
-			SaveManager.playerData.gem -= Pickups.LOADOUT[gadget]
-			Pickups.loadout = gadget #the car takes both in _ready
-		if boost != "":
-			SaveManager.playerData.gem -= Pickups.BOOST_LOADOUT[boost]
-			Pickups.boostLoadout = boost
+		RunLauncher.buyLoadout()
 		startLevel(levelScene(index))
 
 #the mode shown when run setup opens: the saved one if it can be started here, else the level's first
@@ -2189,29 +2179,11 @@ func openRecords() -> void:
 	scene.tree_exited.connect(onOverlayClosed) #the ticket had focus on its Continue button
 	add_child(scene)
 
-#loads the level on a worker thread behind the shutter, which shows the level's name and lights its
-#lamps with load progress; the level rolls it up once its world is built (Level.revealRun)
+#loads the level behind the shutter (RunLauncher.start), which shows the level's name
 func startLevel(path: String) -> void:
 	if loadingLevel: return
 	loadingLevel = true
-	Region.resetRegions()
-	SaveManager.flush()
-	var door = Transition.close(levelName(SaveManager.playerData.selectedLevel).to_upper(), "LOADING", 0.0)
-	ResourceLoader.load_threaded_request(path)
-	var carScene = Root.selectedCar.scene #the menu only loaded the car's CarInfo; levelRoot instantiates the scene
-	if not ResourceLoader.has_cached(carScene): ResourceLoader.load_threaded_request(carScene)
-	var progress = []
-	while ResourceLoader.load_threaded_get_status(path, progress) == ResourceLoader.THREAD_LOAD_IN_PROGRESS 			|| ResourceLoader.load_threaded_get_status(carScene) == ResourceLoader.THREAD_LOAD_IN_PROGRESS:
-		if not progress.is_empty() && is_instance_valid(door): door.progress = maxf(door.progress, progress[0] * 0.5)
-		await get_tree().process_frame
-	if ResourceLoader.load_threaded_get_status(carScene) == ResourceLoader.THREAD_LOAD_LOADED:
-		Root.selectedCarScene = ResourceLoader.load_threaded_get(carScene) #held so the cache keeps it
-	if is_instance_valid(door):
-		door.progress = 0.5
-		if not door.isShut: await door.shut #change scenes only once the slam has landed
-	var scene = ResourceLoader.load_threaded_get(path)
-	if scene: get_tree().change_scene_to_node(RunView.wrap(scene.instantiate()))
-	else: get_tree().change_scene_to_file(path)
+	RunLauncher.start(self, path, levelName(SaveManager.playerData.selectedLevel).to_upper())
 
 #coins, gems, prices and lock states after anything that spends or earns
 func statUpdatesUiUpdate() -> void:

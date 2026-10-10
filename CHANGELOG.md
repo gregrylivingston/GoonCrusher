@@ -9,6 +9,9 @@ The first update since the 0.1 demo, and close to a rebuilt game. Old demo saves
 
 ### Headlines
 
+- **A new results screen.** The run freezes where it ended and the camera pulls back, so you see what happened; the ticket prints beside the world instead of over it.
+- **Run rank.** Every run gets a score and one of 25 ranks, from Goon up to GoonCrusher, with your best for each mode on each level kept.
+- **Retry without the menu.** The results have Retry, Next, Level Options and Garage, and the pause menu has Restart. Going back to the menu lands on Level Options for the level you just played.
 - **A road atlas instead of a level list.** 30 levels in six regions; the demo has the first two regions, The Wilds and Tribe Country: 10 levels.
 - **19 game modes in three kinds:** Crusher (goons), Trial (the course and the clock) and the Goon Cup (five rival drivers). The demo's levels play all 19 between them.
 - **A new cast of 44 goons** in three factions, each with one trick of its own, a tell before it acts and a moment when it can be punished.
@@ -85,7 +88,7 @@ The first update since the 0.1 demo, and close to a rebuilt game. Old demo saves
 ### HUD and menus
 
 - Each car has its own dashboard: two dials in the bottom corners and one signature instrument.
-- A rear-view mirror holds the clock and the goal, with your dice and clover hanging behind it: they swing in the turns, and hop and jiggle on their strings when you brake hard, pull away or hit something; two sun visors hold the gift box, radio, stars, coins and payout.
+- A rear-view mirror holds the clock and the goal, with your dice and clover hanging behind it: they swing in the turns, and hop and jiggle on their strings when you brake hard, pull away or hit something. Some drivers hang their own things beside them: the sedan's pine tree, the taxi's beads and evil eye, the pickup's cross; two sun visors hold the gift box, radio, stars, coins and payout.
 - Five system lamps on the dials show what is damaged.
 - Every dashboard starts a run clean. The glass on the dials and the mirror cracks further as the hull drops, and mends when you repair.
 - Garage with driver cards; run setup with the road map, mode rows, tier switch and loadout.

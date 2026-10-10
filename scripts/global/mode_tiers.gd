@@ -19,8 +19,8 @@ const M := Root.gameModes
 ## the same seconds (pocalypseSeconds). Defense: hold the station this many seconds (not scaled by the level: its goons
 ## already come faster, and the barrier's wear grows with the square of the hold). Sprint and Marathon: the
 ## clock's slack x the level's. Sprint: the station's distance x the region's (index 0 is a Marathon leg, a
-## little shorter than an Easy Sprint). Marathon: legs, few enough that the longest relay is about as long as a
-## Hard Countdown.
+## little shorter than an Easy Sprint). Marathon: legs, each MARATHON_LEG of that leg, on a
+## tighter clock (MARATHON_SLACK).
 const CLOCK := [0.0, 1.0, 1.6, 2.2]
 const COUNTDOWN_BASE := 60.0
 const COUNTDOWN_SHARE := 0.17
@@ -31,8 +31,9 @@ const DEFENSE_HOLD := [0.0, 150.0, 180.0, 210.0]
 const DEFENSE_SPAWN_SCALE := 2.5
 const SLACK := [0.0, 0.7, 0.66, 0.62] #was 1.15 / 1 / 0.85: with the longer drives that left minutes on the clock
 const SPRINT_DISTANCE := [2.5, 2.875, 3.25, 3.75]
-const LEGS := [0, 2, 3, 4]
-const MARATHON_LEG := 0.68 #a Marathon leg, as a share of the leg the one-station races drive (SPRINT_DISTANCE[0])
+const LEGS := [0, 4, 5, 6]
+const MARATHON_SLACK := [0.0, 0.55, 0.51, 0.47] #tighter than a Sprint's: every station refuels and repairs
+const MARATHON_LEG := 0.45 #a Marathon leg, as a share of the leg the one-station races drive (SPRINT_DISTANCE[0])
 ## Rally Stage: its clock's slack x the level's, for bronze, silver and gold. No goons, so far tighter than a
 ## Sprint's. The stage is a Marathon leg long on every tier (SPRINT_DISTANCE[0]), so it is one course.
 const RALLY_SLACK := [0.0, 0.7, 0.56, 0.46]
@@ -120,7 +121,7 @@ static func goalSeconds(mode: int, tier: int, levelSeconds: float, sprintSlack: 
 		M.DRIFT: return DRIFT_SECONDS[tier]
 		M.CONES: return CONES_SECONDS[EASY] #paid by the course, which is the same on every tier, not by its shrinking clock
 		M.SPRINT: return sprint * SPRINT_DISTANCE[tier]
-		M.MARATHON: return sprint * SPRINT_DISTANCE[NONE] * MARATHON_LEG * LEGS[tier]
+		M.MARATHON: return sprint / SLACK[tier] * MARATHON_SLACK[tier] * SPRINT_DISTANCE[NONE] * MARATHON_LEG * LEGS[tier]
 	return 0.0
 
 ## Countdown's clock on a level and tier (Blackout plays it too)

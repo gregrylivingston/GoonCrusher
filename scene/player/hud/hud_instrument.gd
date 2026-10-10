@@ -12,8 +12,6 @@ const ODO_START := 187402    #the beater's odometer, in tenths of a mile
 const LIGHTBAR := [Color(1.0, 0.18, 0.18), Color.WHITE, Color(0.184, 0.482, 1.0)]
 const CRATE := Color(0.66, 0.46, 0.23)
 const CRATE_EDGE := Color(0.37, 0.25, 0.11)
-const TREE := [Vector2(0, 0), Vector2(-11, 15), Vector2(-5, 15), Vector2(-16, 29), Vector2(-4, 29), Vector2(-4, 39), Vector2(4, 39), Vector2(4, 29),
-	Vector2(16, 29), Vector2(5, 15), Vector2(11, 15)]
 
 var skin: HudSkin = HudSkin.named(&"house")
 var kind: StringName = &""
@@ -21,7 +19,6 @@ var set := false
 var shownKey := []
 var odo := 0.0               #px driven this run (the beater)
 var fastest := 0.0           #px/s, the run's best (the radar)
-var swing := 0.0             #radians the air freshener hangs off plumb
 var lean := 0.0              #degrees the tilt gauge shows
 var rough := false           #on ground that lights the 4x4 lamp
 
@@ -55,8 +52,7 @@ func _process(delta: float) -> void:
 	match kind:
 		&"beater":
 			odo += speed * delta
-			swing = lerpf(swing, 0.0 if calm else clampf(-car.spinRate * 0.2, -0.35, 0.35), 1.0 - exp(-delta * 4.0))
-			key = [int(odo / 1000.0), car.secondWindUsed, car.condition.engine < HudDial.SCUFFED, car.condition.engine < HudDial.WORN && HudTheme.blinkOn(), snappedf(swing, 0.02)]
+			key = [int(odo / 1000.0), car.secondWindUsed, car.condition.engine < HudDial.SCUFFED, car.condition.engine < HudDial.WORN && HudTheme.blinkOn()]
 		&"meter":
 			if rig: key = [rig.meterFare, rig.meterMult, rig.meterTicks > 0]
 		&"radar":
@@ -144,7 +140,7 @@ func _draw() -> void:
 		&"tilt": drawTilt(car)
 		&"shift": drawShift(car)
 
-#the sedan: an odometer that keeps counting, a check-engine lamp that comes on as the engine wears, Second Wind's lamp and an air freshener
+#the sedan: an odometer that keeps counting, a check-engine lamp that comes on as the engine wears and Second Wind's lamp
 func drawBeater(car) -> void:
 	var s := skin
 	s.write(self, Vector2(10, 14), "ODOMETER", 10, s.muted, HORIZONTAL_ALIGNMENT_LEFT, 0)
@@ -158,12 +154,6 @@ func drawBeater(car) -> void:
 	var worn: bool = car.condition.engine < HudDial.WORN
 	lamp(Rect2(8, 62, 92, 26), "CHECK ENGINE", s.bad if worn else s.warn, car.condition.engine < HudDial.SCUFFED && (not worn || HudTheme.blinkOn()))
 	if car.tSecondWind: lamp(Rect2(106, 62, 86, 26), "2ND WIND", s.ok, not car.secondWindUsed)
-	draw_set_transform(Vector2(180, -4), swing)
-	draw_line(Vector2.ZERO, Vector2(0, 10), Color(0.55, 0.51, 0.47), 1.2, true)
-	var tree := PackedVector2Array()
-	for point in TREE: tree.push_back(point + Vector2(0, 9))
-	draw_colored_polygon(tree, Color(0.18, 0.56, 0.29))
-	draw_set_transform(Vector2.ZERO)
 
 #the taxi: The Meter's fare so far, its rate, and the HIRED lamp while it runs
 func drawMeter(rig: CarTraitRig) -> void:

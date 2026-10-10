@@ -29,6 +29,12 @@ What is left to do on the modes: `docs/roadmap/ROADMAP_MODES.md` (it links the a
 - **A fixed-map mode** takes its world seed from the level and mode (`Course.seedFor`), so records compare like with like.
 - Every run with a course, a score or marks prints a `RUN_GOAL` line when it ends, for the harnesses' logs.
 
+## Run rank
+
+Every run gets a score and one of 25 ranks, shown on the results (`RunRank`, `Level.runRank`). Each part of the score (the mode's goal, carnage, style, haul) is measured against a par for the run's level, mode and tier, so every mode shares one ladder; the tier scales the total, and a lost run tops out mid-ladder. The best score of a mode on a level is kept in `meta.records.rank` (`SaveManager.recordRank`) and shown in Level Options; Free Play is ranked but not recorded.
+
+Par is what the AI drivers do: play the runs with a `--tag` that starts with `par`, then `scripts/debug/bake_run_par.gd` writes `world/run_par.json` (its header has the commands). A level, mode and tier with nothing baked takes the mode's mean over the levels that have one. Re-bake after a balance change; the playtest CSV's `run_score` and `run_rank` columns show the spread.
+
 ## Trying a mode
 
 `-- --console="start maxed;play derby hard"`, or the same two commands in the console (`start maxed` first, so it plays on a scratch save; bare `play` lists the mode ids).

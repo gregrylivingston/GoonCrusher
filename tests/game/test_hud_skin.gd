@@ -124,6 +124,22 @@ func test_charms_bounce():
 func test_mirror_names():
 	var known := [&"", &"checker", &"lights", &"clinic", &"console", &"keys", &"convex", &"screen"]
 	for id in HudSkin.SKINS: assert_true(known.has(HudSkin.named(id).mirror), "%s: mirror '%s'" % [id, HudSkin.named(id).mirror])
+	#a dashboard's own hangs are ones the mirror can draw, each with a string of its own that swings out of step
+	var periods := {}
+	for charm in HudMirror.CHARMS + HudMirror.HANGS: periods[charm[2]] = true
+	assert_eq(periods.size(), HudMirror.CHARMS.size() + HudMirror.HANGS.size(), "no hang shares a period")
+	for id in HudSkin.SKINS:
+		var skin := HudSkin.named(id)
+		assert_true(skin.hangs.size() <= HudMirror.HANGS.size(), "%s: a string for every hang" % id)
+		assert_true(skin.mirror != &"console" || skin.hangs.is_empty(), "%s: nothing hangs from a console" % id)
+		for hang in skin.hangs: assert_true(HudMirror.HANG_KINDS.has(hang), "%s: hang '%s'" % [id, hang])
+	var full := HudMirror.new()
+	add_child(full)
+	full.strings = HudMirror.CHARMS + HudMirror.HANGS
+	for i in full.strings.size():
+		assert_gt(full.charmPoint(i, true).y, full.body().end.y + 8.0, "string %d hangs under the frame" % i)
+		for j in i: assert_true(full.charmPoint(i, true).distance_to(full.charmPoint(j, true)) >= 12.0, "strings %d and %d rest apart" % [i, j])
+	full.free()
 	assert_eq(HudMirror.PIPS.size(), 7)
 	for face in range(1, 7): assert_eq(HudMirror.PIPS[face].size(), face, "a %d has %d pips" % [face, face])
 

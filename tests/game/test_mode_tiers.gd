@@ -103,7 +103,7 @@ func test_the_level_reads_its_tier():
 	assert_eq(level.tier, ModeTiers.HARD)
 	assert_eq(level.runMode, M.MARATHON)
 	assert_eq(level.legs(), ModeTiers.LEGS[ModeTiers.HARD])
-	assert_almost_eq(level.slack(), def.sprintSlack * ModeTiers.SLACK[ModeTiers.HARD], 0.0001)
+	assert_almost_eq(level.slack(), def.sprintSlack * ModeTiers.MARATHON_SLACK[ModeTiers.HARD], 0.0001)
 	assert_almost_eq(level.get_node("SpawnManager").escalationSpeed, def.escalationSpeed * ModeTiers.ESCALATION[ModeTiers.HARD], 0.0001)
 	level.free()
 

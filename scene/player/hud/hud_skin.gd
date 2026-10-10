@@ -48,17 +48,18 @@ var hullMonitor := false                         #the hull is a heart monitor be
 var lamp := Lamp.RING                             #how the system lamps are drawn
 var radius := 12                                 #corner radius of the HUD's panels
 var mirror: StringName = &""                     #HudMirror's dressing: checker, lights, clinic, console, keys, convex, screen
+var hangs := []                                  #what this driver hangs from the mirror beside the dice and the clover (HudMirror.HANG_KINDS)
 var instrument: StringName = &""                 #HudInstrument's kind
 var instrumentAt := []                           #its [left, top, right, bottom] offsets, where it can't sit in its usual bay
 var rects := {}                                  #HudDial.Kind -> [left, top, right, bottom] offsets, where a cluster is not a sunken dial
 
 const SKINS := {
 	&"house": {},
-	&"beater": {"instrument":&"beater"},
+	&"beater": {"instrument":&"beater", "hangs":[&"tree"]},
 	&"hack": {"bezel":Bezel.CHECKER, "face":Color(0.05, 0.05, 0.05, 0.9), "hub":Color(0.08, 0.08, 0.08), "rim":Color(0.965, 0.761, 0.102),
 		"text":Color.WHITE, "muted":Color(0.79, 0.76, 0.66), "needle":Color(0.965, 0.761, 0.102), "track":Color(0.165, 0.165, 0.165),
 		"accent":Color(0.965, 0.761, 0.102), "glow":Color(0.965, 0.761, 0.102), "bold":SAIRA, "body":SAIRA_BODY, "numScale":1.25, "taper":true,
-		"radius":4, "lamp":Lamp.TILE, "mirror":&"checker", "instrument":&"meter"},
+		"radius":4, "lamp":Lamp.TILE, "mirror":&"checker", "hangs":[&"tree", &"beads", &"nazar"], "instrument":&"meter"},
 	&"interceptor": {"face":Color(0.02, 0.027, 0.051, 0.9), "hub":Color(0.067, 0.082, 0.102), "rim":Color(0.184, 0.482, 1.0),
 		"text":Color.WHITE, "muted":Color(0.56, 0.706, 1.0), "needle":Color.WHITE, "tip":HudTheme.BAD, "track":Color(0.075, 0.11, 0.2),
 		"accent":Color.WHITE, "glow":Color(0.184, 0.482, 1.0), "bold":SAIRA, "body":SAIRA_BODY, "numScale":1.25, "minor":10,
@@ -74,12 +75,12 @@ const SKINS := {
 		"sweep":84.0, "tachUnits":10, "econ":Vector2(1.2, 1.8), "radius":10, "lamp":Lamp.GAUGE, "mirror":&"console", "instrument":&"load"},
 	&"truck": {"style":Style.RIBBON, "face":Color(0.09, 0.094, 0.055, 0.95), "house":Color(0.204, 0.216, 0.122, 0.94), "rim":Color(0.4, 0.416, 0.255),
 		"text":Color(0.945, 0.902, 0.784), "muted":Color(0.72, 0.68, 0.533), "needle":Color(1.0, 0.353, 0.122), "track":Color(0.165, 0.173, 0.106),
-		"accent":Color(1.0, 0.827, 0.42), "glow":Color(0.8, 0.9, 0.4), "bold":ROKKITT, "weight":800, "numScale":1.15, "radius":8, "lamp":Lamp.PILL, "mirror":&"keys", "instrument":&"bed",
+		"accent":Color(1.0, 0.827, 0.42), "glow":Color(0.8, 0.9, 0.4), "bold":ROKKITT, "weight":800, "numScale":1.15, "radius":8, "lamp":Lamp.PILL, "mirror":&"keys", "hangs":[&"cross"], "instrument":&"bed",
 		"instrumentAt":[16.0, -220.0, 216.0, -124.0], "rects":{0:[16.0, -116.0, 388.0, -8.0], 1:[-388.0, -116.0, -16.0, -8.0]}},
 	&"delivery": {"bezel":Bezel.SQUARE, "face":Color(0.055, 0.07, 0.078, 0.95), "house":Color(0.169, 0.188, 0.2, 0.94), "hub":Color(0.09, 0.11, 0.122),
 		"rim":Color(0.36, 0.404, 0.43), "text":Color(0.85, 0.94, 0.89), "muted":Color(0.56, 0.64, 0.604), "needle":Color(1.0, 0.54, 0.122),
 		"track":Color(0.122, 0.15, 0.16), "accent":Color(0.85, 0.94, 0.89), "glow":Color(0.3, 1.0, 0.6), "bold":SAIRA, "body":SAIRA_BODY,
-		"numScale":1.25, "sweep":78.0, "radius":2, "lamp":Lamp.LCD, "mirror":&"convex", "instrument":&"tilt"},
+		"numScale":1.25, "sweep":78.0, "radius":2, "lamp":Lamp.LCD, "mirror":&"convex", "hangs":[&"permit"], "instrument":&"tilt"},
 	&"track_racer": {"style":Style.BAR, "face":Color(0.043, 0.039, 0.078, 0.92), "hub":Color(0.086, 0.075, 0.165), "rim":Color(1.0, 0.17, 0.84),
 		"text":Color(0.957, 0.95, 1.0), "muted":Color(0.616, 0.592, 0.77), "track":Color(0.133, 0.122, 0.22), "accent":Color(1.0, 0.17, 0.84),
 		"glow":Color(1.0, 0.17, 0.84), "bold":MICHROMA, "body":MICHROMA, "numScale":0.8, "rimWidth":1.5, "radius":20, "lamp":Lamp.LED, "mirror":&"screen", "instrument":&"shift"},

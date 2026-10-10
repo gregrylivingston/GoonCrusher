@@ -1,38 +1,76 @@
 extends CanvasLayer
 
-#The end of a run, printed as a ticket (docs/UI.md), and the same ticket for a driver's records.
-#Results: rows reveal one at a time (a fresh press speeds that up, the next one continues), new
-#bests get a badge, the payout is coins x the star multiplier (Root.computePayout) and a stamp says how it ended.
+#The end of a run (docs/UI.md, "Results"), and the same ticket for a driver's records.
+#Results: the run freezes where it ended and the camera pulls back, the stamp says how it ended, then the ticket
+#prints in on the right while the world stays in view on the left. Its rows reveal one at a time (Accept or a
+#click shows the rest at once), new bests get a badge, the payout is coins x the star multiplier
+#(Root.computePayout), and the run's score rolls up a 25-step ladder to its rank (RunRank). The buttons go on
+#from here: Retry, Next, Level Options or the garage.
 #The payout and records are saved when the ticket opens, so quitting here can't lose the run.
 
 var isGameSummary: bool = true #false: the selected driver's records, opened from the main menu
 var levelCompleted: bool = false #did the player successfully complete their run.
 var reason #why did I win or lose.  this is an enum, Root.endCondition
+var autoAction := "" #Level.endLevel's `then`: pay the run and go straight on, with no ticket (the pause menu's Restart)
 
+const MENU_SCENE := "res://scene/player/menu/main/main2.tscn"
 const INPUT_DELAY_MSEC = 500 #presses are ignored this long after the summary opens
-const PRESS_ACTIONS = ["ui_accept", "ui_select", "ui_cancel", "Accelerate", "Brake"] #polled too, in case events don't reach this node
+const PRESS_ACTIONS = ["ui_accept", "ui_select", "ui_cancel"] #polled too, in case events don't reach this node
 const INK := Color(0.165, 0.102, 0.063)
 const FADED_INK := Color(0.42, 0.33, 0.25)
+const WIN_INK := Color(0.12, 0.42, 0.19)
+const LOSS_INK := Color(0.6, 0.13, 0.09)
+const STAMP_GOOD := Color(0.17, 0.55, 0.26)
+const STAMP_BAD := Color(0.78, 0.14, 0.11)
 const STAMPS := {
-	Root.endCondition.SUCCESS: ["CLEARED", Color(0.17, 0.55, 0.26)],
+	Root.endCondition.SUCCESS: ["CLEARED", STAMP_GOOD],
 	Root.endCondition.ABANDONED: ["ABANDONED", Color(0.55, 0.38, 0.16)],
-	Root.endCondition.NOGAS: ["OUT OF GAS", Color(0.78, 0.14, 0.11)],
-	Root.endCondition.NOTIME: ["TIME'S UP", Color(0.78, 0.14, 0.11)],
-	Root.endCondition.NOHEALTH: ["WRECKED", Color(0.78, 0.14, 0.11)],
-	Root.endCondition.BASEDESTROYED: ["OVERRUN", Color(0.78, 0.14, 0.11)],
-	Root.endCondition.OUTRUN: ["OUTRUN", Color(0.78, 0.14, 0.11)],
+	Root.endCondition.NOGAS: ["OUT OF GAS", STAMP_BAD],
+	Root.endCondition.NOTIME: ["TIME'S UP", STAMP_BAD],
+	Root.endCondition.NOHEALTH: ["WRECKED", STAMP_BAD],
+	Root.endCondition.BASEDESTROYED: ["OVERRUN", STAMP_BAD],
+	Root.endCondition.OUTRUN: ["OUTRUN", STAMP_BAD],
 }
+#the layout, on the 1600 x 900 canvas: the results ticket on the right, the world on the left
+const TICKET_AT := Vector2(1010, 24)
+const TICKET_WIDTH := 540.0
+const TICKET_MAX_HEIGHT := 852.0 #a longer ticket is scaled down to fit
+const RECORDS_AT := Vector2(540, 34)
+const RECORDS_SIZE := Vector2(520, 730)
+const STAMP_AT := Vector2(80, 64)
+const RANK_AT := Vector2(70, 486)
+const ACTIONS_AT := Vector2(70, 766)
+const FOOTER_AT := Vector2(70, 840)
+const PULL_BACK := 0.72 #the camera's zoom as the run ends, as a share of where it was: more of the map round the car
+const PULL_SECONDS := 0.9
+const STEP_SECONDS := 0.16 #between one row printing and the next
+#the buttons: what each says, and its own key when it isn't the primary one (which takes Accept)
+const ACTION_TEXT := {"retry": "RETRY", "next": "NEXT", "options": "LEVEL OPTIONS", "garage": "GARAGE"}
+const ACTION_KEYS := {"retry": "ui_records", "options": "ui_cancel", "garage": "ui_upgrade"}
 
-var summaryTimer: float = -2.0
+var summaryTimer: float = 0.0
 var summaryComplete: bool = false
-var summaryTimerLength: float = 0.5
+var revealHeld := false #the ticket is still on its way in: nothing prints yet
 var openedAtMsec := Time.get_ticks_msec()
 var continued := false
 var freshPress := false
-var reveal: Array[Control] = [] #hidden until advanceSummary shows them, in order
-var rows := VBoxContainer.new()
-var continueButton: Button
+var reveal: Array[Control] = [] #unseen until advanceSummary shows them, in order
+var rows := VBoxContainer.new() #the mode's own result (results), or every row (records)
+var stats := GridContainer.new() #the run's numbers, two to a line
+var bonuses := VBoxContainer.new() #what the run earned on top of its payout
+var news := HFlowContainer.new() #what the run opened, as chips
+var continueButton: Button #the primary button (the harnesses and tests press it)
+var buttons := {} #action -> Button
+var primary := ""
+var actionBar: HBoxContainer
+var footer: VBoxContainer #under the buttons, shown with them
 var stamp: Control
+var dim: Control
+#the run this ticket is for: Retry plays it again, Level Options goes back to it
+var runLevel := 0
+var runMode := 0
+var runTier: int = ModeTiers.EASY
+var nextUp := {} #the run the Next button starts (nextRun); {} when there is none
 
 func _ready():
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
@@ -41,50 +79,104 @@ func _ready():
 	if not isGameSummary: add_to_group("menuOverlay")
 	if isGameSummary: buildGameSummary()
 	else: buildAchievementSummary()
+	if autoAction != "":
+		hideHud()
+		get_node("ticketRoot").visible = false
+		act.call_deferred(autoAction)
+		return
 	intro()
 
 func _process(delta):
-	if isGameSummary && not summaryComplete:
+	if isGameSummary && not summaryComplete && not revealHeld:
 		summaryTimer += delta
-		if summaryTimer > summaryTimerLength:
-			if advanceSummary():
-				summaryTimer = 0.0
-				$AudioStreamPlayer2_lowImpact.play()
+		if summaryTimer > STEP_SECONDS:
+			summaryTimer = 0.0
+			if advanceSummary(): $AudioStreamPlayer2_lowImpact.play()
 			else: summaryComplete = true
+	var late: bool = Time.get_ticks_msec() - openedAtMsec >= INPUT_DELAY_MSEC
 	for action in PRESS_ACTIONS:
 		if InputMap.has_action(action) && Input.is_action_just_pressed(action): freshPress = true
-	if freshPress:
-		freshPress = false
-		if Time.get_ticks_msec() - openedAtMsec >= INPUT_DELAY_MSEC: onFreshPress()
+	var pressed := freshPress && late
+	freshPress = false
+	if continued: return
+	if not isGameSummary:
+		if pressed: closeRecords()
+		return
+	if not summaryComplete:
+		if pressed: finishReveal()
+		return
+	if not late: return
+	#the buttons take Accept and clicks themselves; polled as well, in case events don't reach this node
+	if Input.is_action_just_pressed("ui_accept"):
+		var focused = buttons.find_key(get_viewport().gui_get_focus_owner())
+		act(focused if focused != null else primary)
+		return
+	for kind in buttons:
+		var key: String = ACTION_KEYS.get(kind, "")
+		if key != "" && InputMap.has_action(key) && Input.is_action_just_pressed(key):
+			act(kind)
+			return
 
+#Records: any fresh press closes them. Results: while the ticket is still printing, Accept, Back or a click
+#shows the rest of it, and is taken here so it can't also press the button that gets the focus. Driving keys
+#do nothing, so a foot still on the gas can't pick an action.
 func _input(event):
-	if isFreshPress(event): freshPress = true
+	if not isFreshPress(event): return
+	if not isGameSummary:
+		freshPress = true
+		return
+	if summaryComplete || continued: return
+	var counts: bool = event is InputEventMouseButton
+	for action in PRESS_ACTIONS:
+		if InputMap.has_action(action) && event.is_action(action): counts = true
+	if not counts: return
+	freshPress = true
+	get_viewport().set_input_as_handled()
 
-#only a fresh press counts (not a key still held from driving, not key repeat), and only after
-#INPUT_DELAY_MSEC: the first one speeds the reveal up, one after the reveal continues
-func onFreshPress():
-	if isGameSummary && not summaryComplete:
-		if summaryTimerLength != 0.1:
-			summaryTimerLength = 0.1
-			summaryTimer = 1.0
-	else: _on_continue_pressed()
-
+#only a fresh press counts (not a key still held from driving, not key repeat)
 static func isFreshPress(event: InputEvent) -> bool:
 	if event is InputEventKey: return event.is_pressed() && not event.is_echo()
 	if event is InputEventMouseButton: return event.is_pressed() && (event as InputEventMouseButton).button_index <= MOUSE_BUTTON_MIDDLE #not the wheel
 	return event is InputEventJoypadButton && event.is_pressed()
 
-#shows the next hidden part of the ticket; false when everything is showing
-func advanceSummary():
+#shows the next unseen part of the ticket; false when everything is showing
+func advanceSummary() -> bool:
 	while not reveal.is_empty():
 		var next = reveal.pop_front()
 		if not is_instance_valid(next): continue
-		next.visible = true
-		if next == stamp: slam(stamp)
-		elif next != continueButton: arrive(next)
-		if next == continueButton: continueButton.grab_focus()
+		showPart(next, true)
 		return true
 	return false
+
+#one part of the ticket coming into view: printed in (animated) or simply there
+func showPart(part: Control, animated: bool) -> void:
+	if part == actionBar:
+		actionBar.visible = true
+		footer.visible = true
+		continueButton.grab_focus()
+		return
+	if part == rankBox:
+		rankBox.modulate.a = 1.0
+		if animated && not Transition.instant() && not Settings.reduce_motion(): rollRank()
+		else: landRank(false)
+		return
+	if part == payoutBlock: countBank(animated)
+	if animated: arrive(part)
+	else: part.modulate.a = 1.0
+
+#everything still to come, at once: the ticket in place, every row, the rank, the buttons
+func finishReveal() -> void:
+	settleIntro()
+	while not reveal.is_empty():
+		var next = reveal.pop_front()
+		if is_instance_valid(next): showPart(next, false)
+	landRank(false)
+	summaryComplete = true
+
+#a part of the ticket that prints in later: it keeps its place in the layout, unseen
+func conceal(part: Control) -> void:
+	part.modulate.a = 0.0
+	reveal.push_back(part)
 
 #---------- results ----------
 
@@ -136,16 +228,23 @@ func reasonLine() -> String:
 			"Barrier Down. Goons Everywhere.",
 			"They Got Through. Hold It Longer Next Time.",
 		],
+		Root.endCondition.OUTRUN:[
+			"Outrun. All You Saw Was Tail Lights.",
+			"Beaten To The Line. Gooned.",
+			"Too Slow. Someone Else Took It.",
+		],
 	}
 	var lines: Array = reasonDict.get(reason, ["Run Over"])
 	return lines[randi() % lines.size()]
 
 func buildGameSummary():
-	Root.playerRoot.visible = false
 	var level = Root.levelRoot
 	var progressNote := ""
 	var levelIndex: int = level.runLevel #the save's selection may move on to the next level or mode below
 	var gameMode: int = level.runMode
+	runLevel = levelIndex
+	runMode = gameMode
+	runTier = level.tier
 	#a Goonpocalypse run that survived its target beat the mode, even when it was abandoned afterwards
 	var won: bool = levelCompleted && (reason != Root.endCondition.ABANDONED || level.targetReached)
 	var firstClear := {"coin": 0, "gem": 0}
@@ -163,11 +262,13 @@ func buildGameSummary():
 		level.firstClear = firstClear
 		progressNote = nextLevelNote(levelIndex, nextWasOpen)
 		if not nextWasOpen && levelIndex + 1 < SaveManager.playerData.levels.size() && SaveManager.playerData.levels[levelIndex + 1].unlocked: roadOpened = roadText(levelIndex + 1)
+		nextUp = nextRun(levelIndex, gameMode, level.tier)
 	elif not won:
 		$AudioStreamPlayer_highImpact.play()
 	var records = SaveManager.getCarByName(car.carId).records
 	var mode = Root.gameModeDescription[gameMode].name
-	var body = buildTicket("%s%s %s  -  %s  -  %s" % ["FREE PLAY  -  " if level.freePlay else "", ModeTiers.NAMES[level.tier].to_upper(), mode, SaveManager.playerData.levels[levelIndex].name.to_upper(), car.charName.to_upper()], reasonLine())
+	var body = buildTicket("%s%s %s  -  %s  -  %s" % ["FREE PLAY  -  " if level.freePlay else "", ModeTiers.NAMES[level.tier].to_upper(), mode, SaveManager.playerData.levels[levelIndex].name.to_upper(), car.charName.to_upper()],
+		reasonLine(), WIN_INK if won else LOSS_INK, TICKET_AT, Vector2(TICKET_WIDTH, 0))
 
 	#records: compare before updating, so a beaten record gets its badge
 	var crushed = car.currentGoonsCrushed
@@ -175,11 +276,13 @@ func buildGameSummary():
 	var lottery = PickupEffects.payLottery(car, topSpeed) #before the payout, so stars multiply it
 	var bonus: int = level.winBonus() if won else 0
 	var paid: int = level.runPayout(won)
+	var grade: Dictionary = level.runRank() #after the lottery, so it grades what the run really paid
 	var powerups = car.powerupsCollected
 	var timer = get_tree().get_first_node_in_group("runTimer")
 	var newBest = {"time": false, "score": false}
 	if gameMode == Root.gameModes.GOONPOCALYPSE && counts:
 		newBest = SaveManager.recordGoonpocalypse(levelIndex, car.carId, int(level.elapsed), level.runScore())
+	#the mode's own result first
 	if level.course: #a fixed course: the stage time goes in the record book when the stage is won
 		var stage := {"time": false}
 		var lapped: bool = gameMode == Root.gameModes.HOTLAP #its record is the best lap, not the run
@@ -209,25 +312,32 @@ func buildGameSummary():
 			if level.bounty: addRow("Marks", "%d / %d" % [level.bounty.caught, level.bounty.total], false)
 		Root.gameModes.DEFENSE:
 			if is_instance_valid(Root.station): addRow("Barrier", "%d%%" % ceili(100.0 * Root.station.barrier / Root.station.BARRIER_MAX), false)
-	addRow("Top speed", Settings.speed_text(car._highest_measured_speed), topSpeed > records.speed)
-	addRow("Goons crushed", str(crushed), crushed > records.goonsCrushed)
-	addRow("Coins", str(car.coin), false)
-	addRow("Powerups", str(powerups), powerups > records.powerups)
-	addRow("Gems", str(car.gem), car.gem > records.gem)
-	addRow("Slot machines", str(car.slotMachines), car.slotMachines > records.slotMachines)
+	#then the run's numbers, two to a line: the ones that happened
+	body.add_child(Dashes.new())
+	stats.columns = 2
+	stats.add_theme_constant_override("h_separation", 24)
+	stats.add_theme_constant_override("v_separation", 0)
+	body.add_child(stats)
+	addStat("Top speed", Settings.speed_text(car._highest_measured_speed), topSpeed > records.speed)
+	addStat("Goons", str(crushed), crushed > records.goonsCrushed)
+	if car.bestCombo >= 3: addStat("Combo", str(car.bestCombo), car.bestCombo > records.get("combo", 0))
+	if powerups > 0: addStat("Powerups", str(powerups), powerups > records.powerups)
+	if car.gem > 0: addStat("Gems", str(car.gem), car.gem > records.gem)
+	if car.slotMachines > 0: addStat("Slots", str(car.slotMachines), car.slotMachines > records.slotMachines)
 	if not car.lotteryTickets.is_empty():
-		addRow("Lottery", "+%d  (%d matched)" % lottery, false)
-		if lottery[1] > 0: rows.get_child(rows.get_child_count() - 1).set_meta("stamp", "MATCH!")
-	if car.bestCombo >= 3: addRow("Best combo", str(car.bestCombo), car.bestCombo > records.get("combo", 0))
-	if bonus > 0: addRow("Win bonus  (%s)" % ModeTiers.NAMES[level.tier], "+%s" % DriverCard.formatCoins(bonus), false)
-	addPayout(body, car.coin + bonus, car.star, paid, paid > records.coin)
+		var lotteryRow := makeRow("Lottery", "+%d  (%d matched)" % lottery, false, "", 16, 18, 28)
+		if lottery[1] > 0: lotteryRow.set_meta("stamp", "MATCH!")
+		body.add_child(lotteryRow)
+		conceal(lotteryRow)
+	addPayout(body, car.coin, bonus, car.star, paid, paid > records.coin)
+	bonuses.add_theme_constant_override("separation", 0)
+	body.add_child(bonuses)
 	var medalClear := {"coin": firstClear.coin - carClear.coin, "gem": firstClear.gem - carClear.gem}
 	if medalClear.coin > 0 || medalClear.gem > 0:
-		addSymbolRow("First clear  (%s medal)" % ModeTiers.MEDALS[level.tier], ["+", medalClear], true, ModeTiers.MEDALS[level.tier].to_upper())
-	if carClear.coin > 0: addSymbolRow("New car clear  (%s)" % car.charName, ["+", {"coin": carClear.coin}], true, "NEW CAR")
+		addBonus("First clear  (%s medal)" % ModeTiers.MEDALS[level.tier], ["+", medalClear], ModeTiers.MEDALS[level.tier].to_upper())
+	if carClear.coin > 0: addBonus("New car clear  (%s)" % car.charName, ["+", {"coin": carClear.coin}], "NEW CAR")
 	if not carClear.fullGarage.is_empty():
-		addSymbolRow("Full Garage  (%s)" % ", ".join(carClear.fullGarage.map(func(t): return ModeTiers.NAMES[t])), ["+", {"gem": carClear.gem}], true, "FULL GARAGE")
-	if roadOpened != "": addRow("Road open", roadOpened, true, "NEW ROAD")
+		addBonus("Full Garage  (%s)" % ", ".join(carClear.fullGarage.map(func(t): return ModeTiers.NAMES[t])), ["+", {"gem": carClear.gem}], "FULL GARAGE")
 	records.goonsCrushed = maxi(records.goonsCrushed, crushed)
 	records.speed = maxi(records.speed, topSpeed)
 	records.coin = maxi(records.coin, paid)
@@ -235,38 +345,54 @@ func buildGameSummary():
 	records.gem = maxi(records.gem, car.gem)
 	records.slotMachines = maxi(records.slotMachines, car.slotMachines)
 	records.combo = maxi(records.get("combo", 0), car.bestCombo)
+	var ranked := {"best": false, "before": int(SaveManager.bestRank(levelIndex, gameMode).get("score", 0))}
+	if counts: ranked = SaveManager.recordRank(levelIndex, gameMode, str(car.carId), level.tier, grade.score, grade.rank)
 	var discovered = Goonopedia.creditCrushes(car.crushedById)
 	if counts: Unlocks.countRun(won, gameMode, level.nightsSeen, car.giantsCrushed, Root.playerRoot.boxLevel if is_instance_valid(Root.playerRoot) else 0)
 	if OS.is_debug_build(): RunLog.append(car, level, reason, paid)
 
 	var blueprinted = PickupEffects.creditBlueprints(car) #free garage upgrades, however the run ended
 
-	#pay now and save, so quitting from the summary can't lose the run; the menu only animates it
+	#pay now and save, so quitting from the summary can't lose the run; the ticket and the menu only animate it
 	SaveManager.addCoins(paid + firstClear.coin)
 	SaveManager.addGems(car.gem + firstClear.gem)
+	bankTo = SaveManager.playerData.coin
+	bankFrom = bankTo - paid - firstClear.coin
+	setBank(bankFrom)
 	var unlocked := Unlocks.refresh() #after the crushes and records are in, so their conditions count
-	if not unlocked.is_empty(): #the count on the row, the names wrapped under it: a long list once ran the ticket off the screen
-		addRow("Unlocked", str(unlocked.size()), true, "NEW PICKUP")
-		addWrapped(listed(unlocked.map(Pickups.displayName), 8))
 	Root.earnedCoins = paid + firstClear.coin
 	Root.earnedGems = car.gem + firstClear.gem
 	SaveManager.save_character_data()
 	SaveManager.flush()
-	var stampInfo = STAMPS.get(reason, ["GAME OVER", Color(0.78, 0.14, 0.11)])
-	if level.targetReached: stampInfo = ["SURVIVED", Color(0.17, 0.55, 0.26)]
-	stamp = makeStamp(stampInfo[0], stampInfo[1])
-	if rows.get_child_count() > 7: stamp.position.y += 40 * (rows.get_child_count() - 7) #stays under the payout
-	reveal.push_back(stamp)
-	addContinue("CONTINUE", "Any button speeds up the count")
-	var notes = []
-	if progressNote != "": notes.push_back(progressNote)
-	if not discovered.is_empty(): notes.push_back("New in the Goonopedia: " + listed(discovered, 4))
-	if not blueprinted.is_empty(): notes.push_back("Blueprint: a free upgrade to " + listed(blueprinted, 4))
+
+	#what the run opened, as chips under the money
+	news.add_theme_constant_override("h_separation", 6)
+	news.add_theme_constant_override("v_separation", 5)
+	if roadOpened != "": addChip("Road open: " + roadOpened)
+	if not unlocked.is_empty(): addChip("New pickup: " + listed(unlocked.map(Pickups.displayName), 3))
+	if not discovered.is_empty(): addChip("Goonopedia: " + listed(discovered, 3))
+	if not blueprinted.is_empty(): addChip("Blueprint: " + listed(blueprinted, 3))
 	var next := Unlocks.nextUnlock()
-	if unlocked.is_empty() && not next.is_empty() && Unlocks.canAfford(next.uid): notes.push_back("Ready to unlock in Pickups: " + next.name)
-	var advice = Settings.take_advisor_message()
-	if advice != "": notes.push_back(advice)
-	if not notes.is_empty(): addFooterNote("   -   ".join(notes))
+	if unlocked.is_empty() && not next.is_empty() && Unlocks.canAfford(next.uid): addChip("Ready to unlock: " + str(next.name), FADED_INK)
+	if news.get_child_count() > 0:
+		var gap = Control.new()
+		gap.custom_minimum_size.y = 6
+		body.add_child(gap)
+		body.add_child(news)
+		conceal(news)
+	if progressNote != "": body.add_child(wrapped(progressNote))
+
+	var stampInfo = STAMPS.get(reason, ["GAME OVER", STAMP_BAD])
+	if level.targetReached: stampInfo = ["SURVIVED", STAMP_GOOD]
+	stamp = makeStamp(stampInfo[0], stampInfo[1])
+	buildRank(grade, ranked, counts)
+	conceal(rankBox)
+	var kinds := ["retry", "options", "garage"]
+	if won: kinds = ["next", "retry", "options", "garage"] if not nextUp.is_empty() else ["options", "retry", "garage"]
+	addActions(kinds)
+	reveal.push_back(actionBar)
+	addFooter(Settings.take_advisor_message())
+	fitTicket()
 
 #the road a won Marathon opened: the next level's name, and its region's when it starts a new one
 static func roadText(index: int) -> String:
@@ -285,12 +411,27 @@ static func nextLevelNote(index: int, wasOpen: bool) -> String:
 	if left == "": return "%s is open" % nextName
 	return "%s to open %s" % [left, nextName]
 
+## The run the Next button starts after a win of `mode` at level `index`: the first mode on that level's path
+## that isn't won yet and can be started, else the first such mode on the next level when it is open. On the
+## run's tier where that is open there, else the highest that is. {} when there is nothing to go on to.
+static func nextRun(index: int, mode: int, tier: int) -> Dictionary:
+	var levels: Array = SaveManager.playerData.levels
+	for at in [index, index + 1]:
+		if at >= levels.size() || not levels[at].get("unlocked", false) || (Root.IS_DEMO && at >= Root.DEMO_LEVEL_COUNT): continue
+		var level: Dictionary = levels[at]
+		for m in Root.modePath(level):
+			if (at == index && m == mode) || level.get("gamemodeBeat", {}).get(m, false) || not Root.isModePlayable(level, m): continue
+			var t := ModeTiers.clampTier(tier)
+			while t > ModeTiers.EASY && not ModeTiers.isOpen(level, m, t): t -= 1
+			return {"level": at, "mode": m, "tier": t}
+	return {}
+
 #---------- records ----------
 
 func buildAchievementSummary():
 	var info: CarInfo = Root.carInfo
 	var records = SaveManager.getCarByName(info.carId).records
-	buildTicket("RECORDS  -  %s  -  %s" % [info.charName.to_upper(), info.carId.to_upper()], "Best of every run with this driver")
+	buildTicket("RECORDS  -  %s  -  %s" % [info.charName.to_upper(), info.carId.to_upper()], "Best of every run with this driver", LOSS_INK, RECORDS_AT, RECORDS_SIZE)
 	addRow("Best payout", DriverCard.formatCoins(records.coin), false)
 	addRow("Top speed", Settings.speed_text(records.speed * 10.0), false)
 	addRow("Goons crushed", str(records.goonsCrushed), false)
@@ -298,52 +439,91 @@ func buildAchievementSummary():
 	addRow("Gems", str(records.gem), false)
 	addRow("Slot machines", str(records.slotMachines), false)
 	if records.get("combo", 0) >= 3: addRow("Best combo", str(records.combo), false)
+	if int(records.get("rank", 0)) > 0: addRow("Best run rank", "%d  %s" % [int(records.rank), RunRank.title(int(records.rank))], false)
 	if records.get("time", 0) > 0: addRow("Longest Goonpocalypse", "%d:%02d" % [records.time / 60, records.time % 60], false)
 	if records.get("score", 0) > 0: addRow("Goonpocalypse score", str(records.score), false)
 	var life: Dictionary = SaveManager.playerData.meta.get("lifetime", {})
 	if int(life.get("boxes", 0)) > 0: addRow("Gift boxes (every driver)", "%d  (best run %d)" % [int(life.boxes), int(life.get("bestBox", 0))], false)
 	var medals := ModeTiers.clears(SaveManager.playerData.levels, ModeTiers.EASY)
 	if medals > 0: addRow("Medals (every driver)", "%d  /  %d gold" % [medals, ModeTiers.clears(SaveManager.playerData.levels, ModeTiers.HARD)], false)
-	addContinue("CLOSE", "")
-	for part in reveal: part.visible = true
+	continueButton = MenuTheme.button("CLOSE", PackedStringArray(["ui_accept"]), true)
+	continueButton.position = Vector2(640, 786)
+	continueButton.size = Vector2(320, 66)
+	continueButton.pressed.connect(closeRecords)
+	get_node("ticketRoot").add_child(continueButton)
+	for part in reveal: part.modulate.a = 1.0
 	reveal.clear()
 	summaryComplete = true
 	continueButton.grab_focus()
 
+func closeRecords() -> void:
+	if continued: return
+	continued = true
+	await outro()
+	queue_free()
+
 #---------- the ticket ----------
 
-#the dimmed screen, the paper and its header; returns the column the rows go in
-func buildTicket(subtitle: String, line: String) -> VBoxContainer:
+#the dimmed screen, the paper and its header; returns the column the rows go in. The paper grows down from
+#`at` to fit what it holds, starting at `size` (the records ticket keeps a full sheet).
+func buildTicket(subtitle: String, line: String, lineColor: Color, at: Vector2, size: Vector2) -> VBoxContainer:
 	var root = Control.new()
 	root.name = "ticketRoot"
 	root.theme = MenuTheme.theme()
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(root)
-	var dim = ColorRect.new()
-	dim.color = Color(0, 0, 0, 0.62)
-	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	dim = makeDim()
 	root.add_child(dim)
-	var paper = TicketPaper.new()
-	paper.name = "ticket"
-	paper.position = Vector2(540, 34)
-	paper.size = Vector2(520, 730)
-	root.add_child(paper)
-	var margin = MarginContainer.new()
-	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	for side in ["left", "right"]: margin.add_theme_constant_override("margin_" + side, 38)
-	margin.add_theme_constant_override("margin_top", 34)
-	margin.add_theme_constant_override("margin_bottom", 30)
-	paper.add_child(margin)
+	var sheet = TicketPaper.new()
+	sheet.name = "ticket"
+	sheet.position = at
+	sheet.custom_minimum_size = size
+	sheet.size = size
+	for side in ["left", "right"]: sheet.add_theme_constant_override("margin_" + side, 38)
+	sheet.add_theme_constant_override("margin_top", 30)
+	sheet.add_theme_constant_override("margin_bottom", 28)
+	root.add_child(sheet)
 	var body = VBoxContainer.new()
-	body.add_theme_constant_override("separation", 6)
-	margin.add_child(body)
-	body.add_child(ink("GOONCRUSHER", 34, INK, HudTheme.BOLD, true))
-	body.add_child(ink(subtitle, 15, FADED_INK, HudTheme.BODY, true))
-	body.add_child(ink(line, 19, Color(0.6, 0.13, 0.09), HudTheme.BOLD, true))
+	body.add_theme_constant_override("separation", 4)
+	sheet.add_child(body)
+	body.add_child(ink("GOONCRUSHER", 32, INK, HudTheme.BOLD, true))
+	body.add_child(ink(subtitle, 14, FADED_INK, HudTheme.BODY, true))
+	body.add_child(ink(line, 18, lineColor, HudTheme.BOLD, true))
 	body.add_child(Dashes.new())
-	rows.add_theme_constant_override("separation", 2)
+	rows.add_theme_constant_override("separation", 0)
 	body.add_child(rows)
 	return body
+
+#Records: an even dim. Results: light over the world on the left, dark behind the ticket on the right.
+func makeDim() -> Control:
+	if not isGameSummary:
+		var flat = ColorRect.new()
+		flat.color = Color(0, 0, 0, 0.62)
+		flat.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		return flat
+	var gradient = Gradient.new()
+	gradient.offsets = PackedFloat32Array([0.0, 0.5, 0.66, 1.0])
+	gradient.colors = PackedColorArray([Color(0, 0, 0, 0.3), Color(0, 0, 0, 0.2), Color(0, 0, 0, 0.6), Color(0, 0, 0, 0.7)])
+	var texture = GradientTexture2D.new()
+	texture.gradient = gradient
+	texture.width = 64
+	texture.height = 4
+	var shade = TextureRect.new()
+	shade.texture = texture
+	shade.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	shade.stretch_mode = TextureRect.STRETCH_SCALE
+	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	return shade
+
+#a ticket too long for the screen (a win with every bonus) is scaled down from its top right corner
+func fitTicket() -> void:
+	await get_tree().process_frame #the containers have sized it by now
+	if not is_inside_tree(): return
+	var sheet = paper()
+	if sheet.size.y <= TICKET_MAX_HEIGHT: return
+	sheet.pivot_offset = Vector2(sheet.size.x, 0)
+	sheet.scale = Vector2.ONE * (TICKET_MAX_HEIGHT / sheet.size.y)
 
 func ink(text: String, size: int, color: Color, font: Font, centered := false) -> Label:
 	var label = Label.new()
@@ -357,88 +537,146 @@ func ink(text: String, size: int, color: Color, font: Font, centered := false) -
 		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	return label
 
+#text over the world, outlined so it reads on any ground
+func chalk(text: String, size: int, color: Color) -> Label:
+	var label = Label.new()
+	label.text = text
+	label.add_theme_font_override("font", HudTheme.BOLD)
+	label.add_theme_font_size_override("font_size", size)
+	label.add_theme_color_override("font_color", color)
+	label.add_theme_color_override("font_outline_color", HudTheme.OUTLINE)
+	label.add_theme_constant_override("outline_size", maxi(6, size / 6))
+	return label
+
 #"a, b, c and 5 more": keeps a list short enough for one line or two
 static func listed(names: Array, most: int) -> String:
 	if names.size() <= most: return ", ".join(names)
 	return "%s and %d more" % [", ".join(names.slice(0, most)), names.size() - most]
 
-#a centered line under the row before it that wraps inside the ticket (at most 3 lines), revealed in turn
-func addWrapped(text: String) -> void:
-	var label = ink(text, 16, FADED_INK, HudTheme.BODY, true)
+#a centered line in faded ink that wraps inside the ticket (at most 3 lines)
+func wrapped(text: String) -> Label:
+	var label = ink(text, 15, FADED_INK, HudTheme.BODY, true)
 	label.max_lines_visible = 3
-	label.visible = false
-	rows.add_child(label)
-	reveal.push_back(label)
+	return label
 
-#"TOP SPEED ........ 61 MPH", with a NEW BEST badge when a record fell
-func addRow(name: String, value: String, isBest: bool, badgeText := "NEW BEST") -> void:
+#a small badge in the ticket's gold ("NEW BEST")
+func badge(text: String, size := 13) -> PanelContainer:
+	var panel = PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", MenuTheme.box(HudTheme.GAIN, Color(0, 0, 0, 0), 6, 0, Vector4(7, 0, 7, 0)))
+	panel.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	panel.add_child(ink(text, size, INK, HudTheme.BOLD))
+	panel.name = "badge"
+	return panel
+
+#"TOP SPEED ........ 61 MPH", with a badge when a record fell
+func makeRow(name: String, value: String, isBest: bool, badgeText: String, nameSize: int, valueSize: int, height: float) -> HBoxContainer:
 	var row = HBoxContainer.new()
-	row.add_theme_constant_override("separation", 8)
-	row.custom_minimum_size.y = 38
-	row.add_child(ink(name.to_upper(), 20, INK, HudTheme.BODY))
-	if isBest:
-		var badge = PanelContainer.new()
-		badge.add_theme_stylebox_override("panel", MenuTheme.box(HudTheme.GAIN, Color(0, 0, 0, 0), 6, 0, Vector4(7, 0, 7, 0)))
-		badge.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		badge.add_child(ink(badgeText, 13, INK, HudTheme.BOLD))
-		badge.name = "badge"
-		row.add_child(badge)
+	row.add_theme_constant_override("separation", 6)
+	row.custom_minimum_size.y = height
+	row.add_child(ink(name.to_upper(), nameSize, INK, HudTheme.BODY))
+	if isBest: row.add_child(badge(badgeText, maxi(10, nameSize - 6)))
 	var dots = Dots.new()
 	dots.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(dots)
-	row.add_child(ink(value, 22, INK, HudTheme.BOLD))
-	row.visible = false
-	rows.add_child(row)
-	reveal.push_back(row)
+	row.add_child(ink(value, valueSize, INK, HudTheme.BOLD))
+	return row
 
-#a row whose value is amounts with the game's symbols ("+30 (coin)"; MenuTheme.symbolRow parts), in ink
-func addSymbolRow(name: String, parts: Array, isBest: bool, badgeText := "NEW BEST") -> void:
-	addRow(name, "", isBest, badgeText)
-	var row: HBoxContainer = rows.get_child(rows.get_child_count() - 1)
+#a full-width row in the ticket's first group: the mode's own result (or, for records, every row)
+func addRow(name: String, value: String, isBest: bool, badgeText := "NEW BEST") -> void:
+	var row := makeRow(name, value, isBest, badgeText, 19, 21, 33)
+	rows.add_child(row)
+	conceal(row)
+
+#one of the run's numbers, half the ticket wide
+func addStat(name: String, value: String, isBest: bool) -> void:
+	var cell := makeRow(name, value, isBest, "BEST", 16, 18, 28)
+	cell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	stats.add_child(cell)
+	conceal(cell)
+
+#a bonus row whose value is amounts with the game's symbols ("+30 (coin)"; MenuTheme.symbolRow parts), in ink
+func addBonus(name: String, parts: Array, badgeText: String) -> void:
+	var row := makeRow(name, "", true, badgeText, 16, 18, 28)
 	var value := row.get_child(row.get_child_count() - 1)
 	row.remove_child(value)
 	value.queue_free()
-	var symbols := MenuTheme.symbolRow(parts, 22, INK, 0)
+	var symbols := MenuTheme.symbolRow(parts, 19, INK, 0)
 	symbols.alignment = BoxContainer.ALIGNMENT_END
 	row.add_child(symbols)
+	bonuses.add_child(row)
+	conceal(row)
 
-func addPayout(body: VBoxContainer, coin: int, star: int, paid: int, isBest: bool) -> void:
-	var block = VBoxContainer.new()
-	block.add_theme_constant_override("separation", 0)
-	block.add_child(Dashes.new())
-	var sum = HBoxContainer.new()
-	sum.add_child(ink("COINS x STARS (%d)" % maxi(0, star), 20, INK, HudTheme.BODY))
+#a chip of news: one thing the run opened
+func addChip(text: String, color := WIN_INK) -> void:
+	var panel = PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", MenuTheme.box(Color(0, 0, 0, 0), color, 5, 2, Vector4(8, 1, 8, 1)))
+	var label = ink(text.to_upper(), 13, color, HudTheme.BOLD)
+	var widest := TICKET_WIDTH - 96.0
+	if HudTheme.BOLD.get_string_size(label.text, HORIZONTAL_ALIGNMENT_LEFT, -1, 13).x > widest: #a long list is cut short, never wider than the ticket
+		label.custom_minimum_size.x = widest
+		label.clip_text = true
+		label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	panel.add_child(label)
+	news.add_child(panel)
+
+#the money: the win bonus, coins x stars, what the run paid, and the bank counting up to its new total
+var payoutBlock: VBoxContainer
+var bankLabel: Label
+var bankFrom := 0
+var bankTo := 0
+var bankTween: Tween
+
+func addPayout(body: VBoxContainer, coin: int, bonus: int, star: int, paid: int, isBest: bool) -> void:
+	payoutBlock = VBoxContainer.new()
+	payoutBlock.add_theme_constant_override("separation", 0)
+	payoutBlock.add_child(Dashes.new())
+	if bonus > 0: payoutBlock.add_child(makeRow("Win bonus  (%s)" % ModeTiers.NAMES[runTier], "+%s" % DriverCard.formatCoins(bonus), false, "", 16, 18, 26))
+	payoutBlock.add_child(makeRow("Coins x stars (%d)" % maxi(0, star), "%s x %s" % [DriverCard.formatCoins(coin + bonus), Root.multiplierText(star)], false, "", 16, 18, 26))
+	var total = HBoxContainer.new()
+	total.add_child(ink("PAID", 24, INK, HudTheme.BOLD))
+	if isBest: total.add_child(badge("NEW BEST"))
 	var gap = Control.new()
 	gap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	sum.add_child(gap)
-	sum.add_child(ink("%s x %s" % [DriverCard.formatCoins(coin), Root.multiplierText(star)], 22, INK, HudTheme.BOLD))
-	block.add_child(sum)
-	var total = HBoxContainer.new()
-	total.add_child(ink("PAID", 26, INK, HudTheme.BOLD))
-	if isBest:
-		var badge = PanelContainer.new()
-		badge.add_theme_stylebox_override("panel", MenuTheme.box(HudTheme.GAIN, Color(0, 0, 0, 0), 6, 0, Vector4(7, 0, 7, 0)))
-		badge.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		badge.add_child(ink("NEW BEST", 13, INK, HudTheme.BOLD))
-		badge.name = "badge"
-		total.add_child(badge)
-	var gap2 = Control.new()
-	gap2.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	total.add_child(gap2)
-	total.add_child(ink(DriverCard.formatCoins(paid), 58, Color(0.72, 0.34, 0.06), HudTheme.BOLD))
-	block.add_child(total)
-	block.visible = false
-	body.add_child(block)
-	reveal.push_back(block)
+	total.add_child(gap)
+	total.add_child(ink(DriverCard.formatCoins(paid), 52, Color(0.72, 0.34, 0.06), HudTheme.BOLD))
+	payoutBlock.add_child(total)
+	var bank = HBoxContainer.new()
+	bank.add_theme_constant_override("separation", 6)
+	bank.add_child(ink("BANK", 16, FADED_INK, HudTheme.BODY))
+	var space = Control.new()
+	space.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	bank.add_child(space)
+	bankLabel = ink("", 18, FADED_INK, HudTheme.BOLD)
+	bank.add_child(bankLabel)
+	var coinIcon := MenuTheme.iconRect(HudTheme.COIN_ICON, 20)
+	coinIcon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	bank.add_child(coinIcon)
+	payoutBlock.add_child(bank)
+	body.add_child(payoutBlock)
+	conceal(payoutBlock)
 
+func setBank(amount: int) -> void:
+	if is_instance_valid(bankLabel): bankLabel.text = DriverCard.formatCoins(amount)
+
+#the bank was credited when the ticket opened; this only shows it
+func countBank(animated: bool) -> void:
+	if bankTween: bankTween.kill()
+	if not animated || bankTo == bankFrom || Transition.instant():
+		setBank(bankTo)
+		return
+	bankTween = create_tween()
+	bankTween.tween_interval(0.25)
+	bankTween.tween_method(setBank, bankFrom, bankTo, 0.7).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+
+#how the run ended, stamped on the world at the top left
 func makeStamp(text: String, color: Color) -> Control:
 	var holder = PanelContainer.new()
-	holder.add_theme_stylebox_override("panel", MenuTheme.box(Color(0, 0, 0, 0), color, 12, 6, Vector4(20, 2, 20, 2)))
+	holder.add_theme_stylebox_override("panel", MenuTheme.box(Color(0, 0, 0, 0.35), color, 12, 6, Vector4(20, 2, 20, 2)))
 	holder.add_child(ink(text, 60, color, HudTheme.BOLD))
-	holder.modulate.a = 0.86
-	holder.position = Vector2(640, 600) #in the space under the payout
-	holder.rotation = deg_to_rad(-13)
-	holder.visible = false
+	holder.modulate.a = 0.92
+	holder.position = STAMP_AT
+	holder.rotation = deg_to_rad(-8)
+	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	get_node("ticketRoot").add_child(holder)
 	return holder
 
@@ -448,7 +686,7 @@ func slam(target: Control) -> void:
 	target.pivot_offset = target.size * 0.5
 	if Settings.reduce_motion():
 		target.modulate.a = 0.0
-		target.create_tween().tween_property(target, "modulate:a", 0.86, Transition.FADE_SECONDS)
+		target.create_tween().tween_property(target, "modulate:a", 0.92, Transition.FADE_SECONDS)
 		return
 	target.scale = Vector2(1.4, 1.4)
 	var t = target.create_tween()
@@ -462,68 +700,205 @@ func arrive(row: Control) -> void:
 	row.modulate.a = 0.0
 	var fade = row.create_tween()
 	fade.tween_property(row, "modulate:a", 1.0, 0.18)
-	var badge = row.find_child("badge", true, false)
+	var mark = row.find_child("badge", true, false)
 	if Settings.reduce_motion(): return
 	await get_tree().process_frame #the container has placed it by now
 	if not is_instance_valid(row): return
 	var home = row.position.x
 	row.position.x = home - 6.0
 	row.create_tween().tween_property(row, "position:x", home, 0.18).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	if badge: Juice.pop(badge, 1.2, 0.25)
+	if mark: Juice.pop(mark, 1.2, 0.25)
 	if row.has_meta("stamp"): #a lottery match
 		var at = row.get_global_rect()
-		Stamp.slam(get_node("ticketRoot"), row.get_meta("stamp"), Vector2(at.end.x + 70.0, at.get_center().y), Color(0.17, 0.55, 0.26), 30, -1.0, -0.15)
+		Stamp.slam(get_node("ticketRoot"), row.get_meta("stamp"), Vector2(at.position.x - 60.0, at.get_center().y), STAMP_GOOD, 30, -1.0, -0.15)
 
-func addContinue(text: String, note: String) -> void:
-	var root = get_node("ticketRoot")
-	continueButton = MenuTheme.button(text, PackedStringArray(["ui_accept"]), true)
-	continueButton.position = Vector2(640, 786)
-	continueButton.size = Vector2(320, 66)
-	continueButton.pressed.connect(_on_continue_pressed)
-	continueButton.visible = false
-	root.add_child(continueButton)
-	reveal.push_back(continueButton)
-	if note != "": addFooterNote(note)
+#---------- the rank (RunRank) ----------
+#Over the world, bottom left: the run's score and where it lands on the ladder. The title rolls up from rank 1
+#and stops on the run's own.
 
-func addFooterNote(text: String) -> void:
-	var label = Label.new()
-	label.theme_type_variation = "HintLabel"
-	label.text = text
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART #wraps under the button instead of running off the screen
-	label.max_lines_visible = 2
-	label.position = Vector2(300, 856)
-	label.size = Vector2(1000, 30)
-	get_node("ticketRoot").add_child(label)
+var rankBox: VBoxContainer
+var rankTag: Label
+var rankTitle: Label
+var rankScore: Label
+var rankPips: Pips
+var rankExtras: Array[Control] = [] #shown when the roll lands: the best here or a NEW BEST badge, and the highlight
+var rankGrade := {}
+var rankTween: Tween
+var rankShown := 0
+var rankLanded := false
 
-func _on_continue_pressed():
+func buildRank(grade: Dictionary, ranked: Dictionary, counts: bool) -> void:
+	rankGrade = grade
+	rankBox = VBoxContainer.new()
+	rankBox.position = RANK_AT
+	rankBox.add_theme_constant_override("separation", -2)
+	rankBox.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	rankTag = chalk("RUN RANK", 20, HudTheme.GOLD)
+	rankBox.add_child(rankTag)
+	rankTitle = chalk(RunRank.title(1).to_upper(), 66, HudTheme.TEXT)
+	rankBox.add_child(rankTitle)
+	var line = HBoxContainer.new()
+	line.add_theme_constant_override("separation", 14)
+	rankScore = chalk("SCORE 0", 26, HudTheme.TEXT)
+	line.add_child(rankScore)
+	if ranked.best && counts:
+		var mark := badge("NEW BEST", 15)
+		line.add_child(mark)
+		rankExtras.push_back(mark)
+	elif int(ranked.before) > 0:
+		var best := chalk("BEST HERE %d" % int(ranked.before), 20, HudTheme.MUTED)
+		best.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		line.add_child(best)
+		rankExtras.push_back(best)
+	rankBox.add_child(line)
+	var gap = Control.new()
+	gap.custom_minimum_size.y = 10
+	rankBox.add_child(gap)
+	rankPips = Pips.new()
+	rankBox.add_child(rankPips)
+	if str(grade.highlight) != "":
+		var gap2 = Control.new()
+		gap2.custom_minimum_size.y = 8
+		rankBox.add_child(gap2)
+		var note := chalk(str(grade.highlight).to_upper(), 22, HudTheme.GOLD)
+		rankBox.add_child(note)
+		rankExtras.push_back(note)
+	for extra in rankExtras: extra.modulate.a = 0.0
+	get_node("ticketRoot").add_child(rankBox)
+
+#the roll: up the ladder a rank at a time, slowing as it nears the run's own
+func rollRank() -> void:
+	var seconds: float = 0.4 + 0.04 * int(rankGrade.rank)
+	summaryTimer = -seconds #the buttons wait for it
+	rankTween = create_tween()
+	rankTween.tween_method(setRoll, 0.0, 1.0, seconds).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	rankTween.tween_callback(landRank.bind(true))
+
+func setRoll(k: float) -> void:
+	var rank: int = 1 + int(k * (int(rankGrade.rank) - 1))
+	rankScore.text = "SCORE %d" % int(k * int(rankGrade.score))
+	rankPips.setLit(rank)
+	if rank == rankShown: return
+	rankShown = rank
+	rankTitle.text = RunRank.title(rank).to_upper()
+	$AudioStreamPlayer2_lowImpact.play()
+
+func landRank(animated: bool) -> void:
+	if rankLanded || rankBox == null: return
+	rankLanded = true
+	if rankTween: rankTween.kill()
+	var rank: int = rankGrade.rank
+	rankBox.modulate.a = 1.0
+	rankTag.text = "RUN RANK  %d OF %d" % [rank, RunRank.RANKS]
+	rankTitle.text = RunRank.title(rank).to_upper()
+	rankScore.text = "SCORE %d" % int(rankGrade.score)
+	rankPips.setLit(rank)
+	for extra in rankExtras: extra.modulate.a = 1.0
+	if not animated: return
+	Transition.sound("clank", -5.0)
+	rankTitle.pivot_offset = Vector2(0, rankTitle.size.y * 0.5)
+	Juice.pop(rankTitle, 1.12, 0.3)
+	for extra in rankExtras: Juice.pop(extra, 1.2, 0.25)
+
+#---------- the buttons ----------
+
+#the row of actions, the first one the primary button; each of the others has its own key
+func addActions(kinds: Array) -> void:
+	actionBar = HBoxContainer.new()
+	actionBar.position = ACTIONS_AT
+	actionBar.add_theme_constant_override("separation", 12)
+	primary = kinds[0]
+	for kind in kinds:
+		var isPrimary: bool = kind == primary
+		var text: String = ACTION_TEXT[kind]
+		if kind == "next": text = "NEXT:  %s" % nextText()
+		var b := MenuTheme.button(text, PackedStringArray(["ui_accept" if isPrimary else ACTION_KEYS[kind]]), isPrimary)
+		b.custom_minimum_size = Vector2(0, 64)
+		b.add_theme_font_size_override("font_size", 24 if isPrimary else 20)
+		b.pressed.connect(act.bind(kind))
+		actionBar.add_child(b)
+		buttons[kind] = b
+	continueButton = buttons[primary]
+	actionBar.visible = false
+	get_node("ticketRoot").add_child(actionBar)
+
+#what Next goes on to: the mode, and the level when it is another one
+func nextText() -> String:
+	var mode: String = Root.gameModeDescription[nextUp.mode].name
+	return mode if nextUp.level == runLevel else "%s, %s" % [RunLauncher.levelName(nextUp.level).to_upper(), mode]
+
+#under the buttons: what a new run will take for the gadget and boost, and the graphics advisor's note
+func addFooter(advice: String) -> void:
+	var column = VBoxContainer.new()
+	footer = column
+	column.visible = false
+	column.position = FOOTER_AT
+	column.size.x = 900
+	column.add_theme_constant_override("separation", 0)
+	column.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var cost := RunLauncher.loadoutCost()
+	if cost > 0:
+		var line := MenuTheme.symbolRow(["A new run starts with your gadget and boost:", {"gem": cost}], 16, HudTheme.MUTED)
+		line.alignment = BoxContainer.ALIGNMENT_BEGIN
+		column.add_child(line)
+	if advice != "":
+		var label = Label.new()
+		label.theme_type_variation = "HintLabel"
+		label.text = advice
+		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		label.max_lines_visible = 2
+		label.custom_minimum_size.x = 900
+		column.add_child(label)
+	get_node("ticketRoot").add_child(column)
+
+## One of the buttons. "retry" plays the run again and "next" the run after it (nextRun), both straight from
+## here; "options" goes to the menu's Level Options for this level; anything else to the garage.
+func act(kind: String) -> void:
 	if continued: return
 	continued = true
+	layer = Transition.LAYER - 1 #under the shutter, which now covers the ticket
+	if kind == "retry" || kind == "next":
+		var run: Dictionary = nextUp if kind == "next" && not nextUp.is_empty() else {"level": runLevel, "mode": runMode, "tier": runTier}
+		RunLauncher.select(run.level, run.mode, run.tier)
+		RunLauncher.buyLoadout()
+		RunLauncher.start(self, RunLauncher.levelScene(run.level), RunLauncher.levelName(run.level).to_upper())
+		return
+	if kind == "options":
+		RunLauncher.select(runLevel, runMode, runTier)
+		Root.menuReturn = "options"
 	await outro()
 	queue_free()
-	if isGameSummary:
-		get_tree().paused = false
-		get_tree().change_scene_to_file("res://scene/player/menu/main/main2.tscn")
+	get_tree().paused = false
+	get_tree().change_scene_to_file(MENU_SCENE)
+
+func _on_continue_pressed():
+	if isGameSummary: act(primary)
+	else: closeRecords()
 
 #---------- in and out (Transition, docs/UI.md) ----------
-#Results: a wreck ends in tire smoke and the ticket skids in from the left; every other ending
-#slams the garage shutter over the run and the ticket feeds up out of its rail. Leaving pulls the
-#ticket back in and carries the door (or slams one) across to the menu, which rolls it up.
+#Results: the run is frozen where it ended. The camera pulls back to show more of the map, the stamp lands on
+#the world, then the HUD goes and the ticket skids in from the right. Leaving slams the shutter over it all:
+#the menu rolls it up, and a new run loads behind it.
 #Records (from the menu) just drop in and lift out.
 
-var door: ShutterDoor
 var fx: TransitionFx
+var introTween: Tween
 
 func paper() -> Control:
 	return get_node("ticketRoot/ticket")
 
+func hideHud() -> void:
+	if isGameSummary && is_instance_valid(Root.playerRoot): Root.playerRoot.visible = false
+
 func intro() -> void:
-	if Transition.instant(): return
 	var root: Control = get_node("ticketRoot")
 	var sheet = paper()
 	var home = sheet.position
-	var dim: ColorRect = root.get_child(0)
+	if Transition.instant():
+		hideHud()
+		return
 	if Settings.reduce_motion():
+		hideHud()
 		root.modulate.a = 0.0
 		create_tween().tween_property(root, "modulate:a", 1.0, Transition.FADE_SECONDS)
 		return
@@ -536,78 +911,77 @@ func intro() -> void:
 		Transition.sound("clank", -10.0)
 		return
 	var screen = get_viewport().get_visible_rect().size
+	revealHeld = true
 	fx = TransitionFx.new()
 	fx.autoFree = false
 	root.add_child(fx)
 	root.move_child(fx, 1)
-	if reason == Root.endCondition.NOHEALTH:
-		#a spin-out: a wall of tire smoke, then the ticket skids in and brakes
+	dim.modulate.a = 0.0
+	stamp.visible = false
+	sheet.position.x = screen.x + 40
+	sheet.set_meta("home", home)
+	pullBack()
+	if reason == Root.endCondition.NOHEALTH: #a spin-out: a screech and a puff of tire smoke where the car stopped
 		Transition.sound("screech", -2.0)
-		dim.color.a = 0.0
-		create_tween().tween_property(dim, "color:a", 0.62, 0.5)
-		fx.smokeWall(screen, 0.3)
-		sheet.position = Vector2(-sheet.size.x - 40, home.y)
-		sheet.pivot_offset = sheet.size / 2.0
-		sheet.rotation = -0.25
-		var t = create_tween()
-		t.tween_interval(0.3)
-		t.tween_property(sheet, "position:x", home.x, 0.45).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-		t.parallel().tween_property(sheet, "rotation", -0.02, 0.45).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-		t.tween_callback(func():
-			Transition.sound("skid", -4.0)
-			Juice.rumble(root, "position", 2.0, 0.12)
-			for y in [home.y + 60, home.y + sheet.size.y - 60]: fx.mark(Vector2(0, y), Vector2(home.x + 20, y), 9.0, 0.6, 1.3))
-		return
-	#the shutter slams over the run, then the ticket prints up out of its rail
-	door = ShutterDoor.new()
-	door.size = screen
-	door.labelSize = 150
-	door.label = "GOONCRUSHER"
-	door.sub = "RUN OVER"
-	door.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	root.add_child(door)
-	root.move_child(door, 1)
-	door.position.y = -screen.y - 12
-	sheet.position.y = screen.y + 20
-	Transition.sound("whoosh", -6.0)
-	var t = create_tween()
-	t.tween_property(door, "position:y", 0.0, 0.26).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	t.tween_callback(func():
-		Transition.sound("thud")
-		Transition.sound("clank", -4.0)
-		Juice.rumble(root, "position", Transition.SHAKE, 0.22)
-		fx.dustLine(0, screen.x, screen.y - 4, 32, 14))
-	t.tween_property(door, "position:y", -12.0, 0.045)
-	t.tween_property(door, "position:y", 0.0, 0.045)
-	t.tween_interval(0.15)
-	for step in 6: #a receipt printer: six short pushes
-		t.tween_property(sheet, "position:y", lerpf(screen.y + 20, home.y, (step + 1) / 6.0), 0.09).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-		t.tween_interval(0.02)
+		fx.burst(screen * 0.5, 10)
+	introTween = create_tween()
+	introTween.tween_interval(0.5)
+	introTween.tween_callback(func():
+		stamp.visible = true
+		slam(stamp))
+	introTween.tween_interval(0.4)
+	introTween.tween_callback(func():
+		hideHud()
+		Transition.sound("whoosh", -8.0))
+	introTween.tween_property(dim, "modulate:a", 1.0, 0.25)
+	introTween.parallel().tween_property(sheet, "position:x", home.x, 0.34).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	introTween.tween_callback(func():
+		Transition.sound("skid" if reason == Root.endCondition.NOHEALTH else "clank", -6.0)
+		Juice.rumble(root, "position", 2.0, 0.12)
+		revealHeld = false)
+
+#the intro cut short: everything where it ends up
+func settleIntro() -> void:
+	if not revealHeld: return
+	revealHeld = false
+	if introTween: introTween.kill()
+	var sheet = paper()
+	sheet.position = sheet.get_meta("home", sheet.position)
+	dim.modulate.a = 1.0
+	stamp.visible = true
+	stamp.scale = Vector2.ONE
+	hideHud()
+
+#The camera eases back from the car, so the end of the run is seen with the map round it. The run is paused,
+#so the world is a still; the car's camera runs while paused, and the chunks the wider view uncovers keep
+#streaming in (as they do behind the loading shutter: Level.holdUnderShutter).
+func pullBack() -> void:
+	var car = Root.playerCar
+	var camera: Camera2D = car.get_node_or_null("Camera2D") if is_instance_valid(car) else null
+	if camera == null: return
+	var tiles = Root.levelRoot.get_node_or_null("TileManager") if is_instance_valid(Root.levelRoot) else null
+	if tiles: tiles.process_mode = Node.PROCESS_MODE_ALWAYS
+	create_tween().tween_property(camera, "zoom", camera.zoom * PULL_BACK, PULL_SECONDS).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 
 func outro() -> void:
 	if Transition.instant():
 		if isGameSummary: Transition.carry()
 		return
-	var sheet = paper()
 	if not isGameSummary:
+		var sheet = paper()
 		var t = create_tween().set_parallel()
 		t.tween_property(sheet, "position:y", sheet.position.y - 80, 0.14).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 		t.tween_property(get_node("ticketRoot"), "modulate:a", 0.0, 0.14)
 		await t.finished
 		return
-	if is_instance_valid(door) && not Settings.reduce_motion():
-		var screen = get_viewport().get_visible_rect().size
-		var t = create_tween()
-		for step in 4: t.tween_property(sheet, "position:y", lerpf(sheet.position.y, screen.y + 20, (step + 1) / 4.0), 0.07)
-		await t.finished
-		Transition.carry("GOONCRUSHER", "RUN OVER")
-		return
 	var shutter = Transition.close("GOONCRUSHER", "RUN OVER")
 	if not shutter.isShut: await shutter.shut
 
-#cream paper with a zigzag torn edge top and bottom, and a soft shadow
-class TicketPaper extends Control:
+#cream paper with a zigzag torn edge top and bottom, and a soft shadow; it grows to fit what it holds
+class TicketPaper extends MarginContainer:
 	const TOOTH := 12.0
+	func _init() -> void:
+		resized.connect(queue_redraw)
 	func _draw() -> void:
 		var points = PackedVector2Array()
 		var w = size.x
@@ -624,7 +998,7 @@ class TicketPaper extends Control:
 #a dashed rule across the ticket
 class Dashes extends Control:
 	func _init() -> void:
-		custom_minimum_size.y = 16
+		custom_minimum_size.y = 14
 	func _draw() -> void:
 		var x = 0.0
 		while x < size.x:
@@ -638,3 +1012,19 @@ class Dots extends Control:
 		while x < size.x - 4:
 			draw_circle(Vector2(x, size.y * 0.66), 1.4, Color(0.72, 0.65, 0.56))
 			x += 7.0
+
+#the ladder as 25 pips, lit up to the run's rank
+class Pips extends Control:
+	var lit := 0
+	func _init() -> void:
+		custom_minimum_size = Vector2(RunRank.RANKS * 22.0, 12)
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+	func setLit(count: int) -> void:
+		if count == lit: return
+		lit = count
+		queue_redraw()
+	func _draw() -> void:
+		for i in RunRank.RANKS:
+			var at := Rect2(i * 22.0, 0, 18, 12)
+			draw_rect(at.grow(2), Color(HudTheme.OUTLINE, 0.8))
+			draw_rect(at, HudTheme.GOLD if i < lit else Color(1, 1, 1, 0.28))

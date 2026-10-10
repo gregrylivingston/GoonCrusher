@@ -42,7 +42,7 @@ One language for every screen change (`scene/ui/transitions/`): a corrugated gar
 | Moment | Use | Example |
 |---|---|---|
 | A real scene or screen change | `await Transition.play(swap)`: slam, run `swap` behind the door, roll up | `main2.goToSetup` |
-| Loading | `Transition.close(title, sub)` stays down with progress lamps; `Transition.carry()` picks a door up across `change_scene` | `main2.startLevel`, `Level.holdUnderShutter/revealRun`, `gameSummary.outro` |
+| Loading | `Transition.close(title, sub)` stays down with progress lamps; `Transition.carry()` picks a door up across `change_scene` | `RunLauncher.start` (the menu's START, the results' Retry and Next), `Level.holdUnderShutter/revealRun`, `gameSummary.outro` |
 | An overlay | `Juice.dropIn`; pause uses a half shutter | Goonopedia, Settings, `pauseMenu.intro` |
 | An in-run game | `GameHatch`: the panel skids in under a hatch | `PickupMenu` |
 | Run start and resume | The start lamps; quick after a prize game | `countdown.gd`, `PickupMenu.resumeRun` |
@@ -121,11 +121,13 @@ Two tabs, Goons and Systems, generated from `Goons.DATA` and the car's systems. 
 | Menu | Script | Notes |
 |---|---|---|
 | Pause | `scene/player/menu/pauseMenu.gd` | Abandon and Quit are separate buttons; with Confirm Abandon / Quit on, each needs a second press |
-| Results and Records | `scene/player/menu/gameSummary.gd` | One ticket; `isGameSummary = false` shows a driver's records from the menu |
+| Results and Records | `scene/player/menu/gameSummary.gd` | One ticket; `isGameSummary = false` shows a driver's records from the menu. Results put it on the right and leave the world in view |
 | Prize games, Pit Shop | `PickupMenu` (`scene/pickups/menus/`) | docs/PICKUPS.md, "Prize games". A key held as a game opens counts only once released |
 | Settings | `scene/player/menu/settings/` | docs/PERFORMANCE.md |
 
-- **Results:** the payout and records are saved when the ticket opens, before any row animates. It credits the run's own level, mode and tier (`Level.runLevel`, `runMode`, `tier`), not the menu's selection. The first fresh press speeds the reveal up and the next continues (`isFreshPress`).
+- **Results:** the payout and records are saved when the ticket opens, before any row animates. It credits the run's own level, mode and tier (`Level.runLevel`, `runMode`, `tier`), not the menu's selection. The run pauses where it ended: the camera pulls back, the stamp lands on the world, then the ticket comes in and its rows print (`reveal`). Accept, Back or a click shows the rest at once; driving keys do nothing, so a foot on the gas can't pick an action.
+- **Results' buttons** (`gameSummary.act`): Retry and Next (`nextRun`) start a run straight from the ticket through `RunLauncher`, which also charges the gadget and boost again; Level Options sets `Root.menuReturn` so the menu opens on run setup for the run's level, mode and tier; Garage is the old Continue. The first button is the primary one and takes Accept; the others have a key each (`ACTION_KEYS`). The pause card's Restart ends the run as abandoned and retries with no ticket (`Level.endLevel`'s `then`).
+- **Run rank** (docs/MODES.md): the score and its place on the ladder sit over the world, and roll up when the rows are done.
 
 ## Tests
 

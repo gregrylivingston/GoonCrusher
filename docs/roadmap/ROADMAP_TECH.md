@@ -5,7 +5,7 @@ How they work today: `docs/AI_DRIVER.md`, `docs/PERFORMANCE.md`, `docs/NATIVE.md
 ## Planned
 
 ### Release build
-- **[0.3 need] The 0.3 demo build:** `Root.GAME_VERSION` (still "0.1"), `Root.IS_DEMO` on, the native `template_release` DLL built, the 4.7.2 export templates installed, a clean export run on a second machine. S.
+- **[0.3 need] The 0.3 demo build:** `Root.GAME_VERSION`, `Root.IS_DEMO` on, the native `template_release` DLL built, the 4.7.2 export templates installed, a clean export run on a second machine. S.
 - **[0.3 need] Old saves:** a 0.1 demo save is backed up and replaced (`SaveManager.FIRST_KEPT_VERSION`). Try it with a real 0.1 save, and say so in the store update. S.
 - **[0.3 want] `settings` in the save** is legacy (read once by `Settings.import_legacy_volume()`): delete it one release after launch.
 

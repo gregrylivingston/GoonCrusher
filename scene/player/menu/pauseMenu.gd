@@ -1,6 +1,6 @@
 extends CanvasLayer
 
-#The pause card (docs/UI.md): Continue, Settings, the radio (on or off, and Skip), Abandon run and Quit game, then
+#The pause card (docs/UI.md): Continue, Settings, the radio (on or off, and Skip), Restart run, Abandon run and Quit game, then
 #this run's numbers and the car's stats with what pickups added. Opened by GameUI.openPause; built in code with MenuTheme.
 
 const SETTINGS_ICON := preload("res://texture/icon/settings.svg")
@@ -9,6 +9,7 @@ const STATS := DriverCard.STATS
 
 var continueButton: Button
 var abandonButton: Button
+var restartButton: Button
 var quitButton: Button
 var radioLine: Label
 var skipButton: Button
@@ -79,6 +80,11 @@ func build() -> void:
 	settingsButton.pressed.connect(_on_settings_pressed)
 	body.add_child(settingsButton)
 	body.add_child(radioRow())
+	restartButton = MenuTheme.button("Restart run", PackedStringArray(), false)
+	restartButton.custom_minimum_size = Vector2(0, 58)
+	restartButton.tooltip_text = "End this run, keep its coins and start it again"
+	restartButton.pressed.connect(_on_restart_pressed)
+	body.add_child(restartButton)
 	abandonButton = MenuTheme.button(abandonText(), PackedStringArray(), false)
 	abandonButton.custom_minimum_size = Vector2(0, 58)
 	abandonButton.pressed.connect(_on_abandon_pressed)
@@ -296,6 +302,15 @@ func _on_abandon_pressed():
 		else: #no run to end (the level is gone, or it already ended and paid): just leave
 			get_tree().paused = false
 			get_tree().change_scene_to_file("res://scene/player/menu/main/main2.tscn")
+
+#restarting ends the run like abandoning it (the run is paid and saved), then starts it again with no ticket
+func _on_restart_pressed():
+	if is_queued_for_deletion(): return
+	if not is_instance_valid(Root.levelRoot) || not Root.levelRoot.has_method("endLevel") || Root.levelRoot.hasEnded: return
+	if confirmed(restartButton, "Restart run", "Press again to restart this run"):
+		Settings.set_menu_context(false)
+		queue_free()
+		Root.levelRoot.endLevel(false, Root.endCondition.ABANDONED, "retry")
 
 #with Confirm Abandon / Quit on, the first press only arms the button for 3 seconds
 func confirmed(button: Button, label: String, armedLabel: String) -> bool:

@@ -5,7 +5,8 @@ class_name HudMirror extends Control
 #out and restyles but does not own. Its frame is the car's dashboard's (HudSkin.mirror): a plain mirror, the
 #cab's with its license card, a camera screen... The semi has no mirror, so it gets a low console flush with the
 #top edge. Dice (the luck stat, as pips: 18 is three sixes) and a clover (the clover stat, as its number) hang
-#from the top of it, each die and the clover on its own string that runs down behind the frame. They are heavy:
+#from the top of it, each die and the clover on its own string that runs down behind the frame, and beside them
+#whatever that driver hangs there (HudSkin.hangs: the sedan's air freshener, the pickup's cross). They are heavy:
 #they swing slowly as the car turns, lift while it brakes or pulls away, and hop and jiggle on their strings when
 #it hits something; their pickups fly to them. The frame is drawn once. What moves is on two child CanvasItems that redraw
 #on change: `charms` behind the frame (a charm that swings high goes behind the mirror) and `front` over it.
@@ -24,6 +25,17 @@ const CLOVER_SCALE := 1.4    #the clover's size, against the 15 px number it was
 #they rest fanned out so each can be seen.
 const CHARMS := [[-0.06, 30.0, 1.15, 0.3], [-0.27, 50.0, 1.6, 0.38], [-0.5, 38.0, 1.35, 0.33], [0.27, 42.0, 1.8, 0.42]]
 const CLOVER := 3            #its place in CHARMS
+#the strings for a dashboard's own hangs (HudSkin.hangs: an air freshener, a cross...), in the same form. They say
+#nothing the player needs, so they hang nearly plumb in a bunch behind the dice and the clover, and they are the
+#heavy ones: slow periods, a long swing that takes its time dying down, a small hop.
+const HANGS := [[0.13, 14.0, 2.1, 0.5], [-0.17, 22.0, 2.45, 0.56], [0.2, 60.0, 2.8, 0.62]]
+const HANG_DAMPING := 0.45   #against DAMPING: they keep swinging
+const HANG_LEAN := 1.7       #how much further than a charm a turn swings them
+const HANG_HOP := 0.45       #share of a charm's hop a jolt gives them
+const HANG_THROW := 2.2      #and how much harder it throws them sideways
+const HANG_KINDS: Array[StringName] = [&"tree", &"cross", &"beads", &"nazar", &"permit"]
+const TREE := [Vector2(0, 0), Vector2(-11, 15), Vector2(-5, 15), Vector2(-16, 29), Vector2(-4, 29), Vector2(-4, 39), Vector2(4, 39), Vector2(4, 29),
+	Vector2(16, 29), Vector2(5, 15), Vector2(11, 15)]
 const LEAN := 0.26           #radians a hard turn swings them
 const DAMPING := 1.1         #how fast a swing dies down
 const KICK := 2.6            #radians a second a charm jumps when its stat rises
@@ -52,6 +64,7 @@ var charms := Control.new() #behind the frame
 var front := Control.new()  #over it
 var markers := {}
 var set := false
+var strings: Array = CHARMS   #every string on this mirror: CHARMS, then one of HANGS for each of the skin's hangs
 var angles: Array[float] = [] #each charm's angle off plumb
 var speeds: Array[float] = []
 var drops: Array[float] = []  #each charm's place along its string: 0 hanging, negative riding up
@@ -107,13 +120,13 @@ func hook() -> Vector2:
 #where charm `i`'s string ends: swinging, or (`resting`) hanging still
 func charmPoint(i: int, resting := false) -> Vector2:
 	var still := resting || angles.is_empty()
-	var angle: float = CHARMS[i][0] if still else angles[i]
-	return hook() + Vector2(sin(angle), cos(angle)) * (body().size.y + CHARMS[i][1] + (0.0 if still else drops[i]))
+	var angle: float = strings[i][0] if still else angles[i]
+	return hook() + Vector2(sin(angle), cos(angle)) * (body().size.y + strings[i][1] + (0.0 if still else drops[i]))
 
 #how far charm `i` is turned on its string: it follows its swing, and lags when it is thrown
 func charmTilt(i: int) -> float:
 	if angles.is_empty(): return 0.0
-	return -(angles[i] - CHARMS[i][0]) * TILT - speeds[i] * TILT_SPEED
+	return -(angles[i] - strings[i][0]) * TILT - speeds[i] * TILT_SPEED
 
 ## Dice shown for a luck stat: a die for every six, DICE_SHOWN at most
 static func diceFor(luck: int) -> int:
@@ -122,6 +135,8 @@ static func diceFor(luck: int) -> int:
 #the dashboard's mirror: its frame, and the clock and the goal laid out on its glass and dressed to match
 func apply() -> void:
 	skin = HudSkin.current()
+	strings = CHARMS + HANGS.slice(0, skin.hangs.size())
+	if angles.size() != strings.size(): restCharms()
 	var middle := body().get_center().y
 	var top: Control = get_parent().get_node_or_null("TopCenter")
 	if top:
@@ -199,16 +214,17 @@ func swingCharms(car, delta: float) -> void:
 	jolt(change)
 	for i in CHARMS.size():
 		if (kickClover if i == CLOVER else kickDice): speeds[i] += KICK * (1.0 if i % 2 == 0 else -1.0)
+	#(a skin's hangs have no stat to kick them)
 	stepCharms(clampf(-car.spinRate * 0.25, -LEAN, LEAN), accel, delta)
 
 func restCharms() -> void:
-	angles.resize(CHARMS.size())
-	speeds.resize(CHARMS.size())
-	drops.resize(CHARMS.size())
-	dropSpeeds.resize(CHARMS.size())
+	angles.resize(strings.size())
+	speeds.resize(strings.size())
+	drops.resize(strings.size())
+	dropSpeeds.resize(strings.size())
 	accel = 0.0
-	for i in CHARMS.size():
-		angles[i] = CHARMS[i][0]
+	for i in strings.size():
+		angles[i] = strings[i][0]
 		speeds[i] = 0.0
 		drops[i] = 0.0
 		dropSpeeds[i] = 0.0
@@ -220,10 +236,11 @@ func jolt(change: Vector2) -> void:
 	var hit := minf(change.length(), JOLT_MAX) - JOLT_MIN
 	if hit <= 0.0: return
 	var side := clampf(change.y, -JOLT_MAX, JOLT_MAX)
-	for i in CHARMS.size():
-		var own := 0.7 + 0.15 * i
-		dropSpeeds[i] -= hit * JOLT_HOP * own
-		speeds[i] += (-side * own + hit * 0.6 * (1.0 if i % 2 == 0 else -1.0)) * JOLT_SWING
+	for i in strings.size():
+		var own := 0.7 + 0.15 * (i % CHARMS.size())
+		var heavy := i >= CHARMS.size()
+		dropSpeeds[i] -= hit * JOLT_HOP * own * (HANG_HOP if heavy else 1.0)
+		speeds[i] += (-side * own + hit * 0.6 * (1.0 if i % 2 == 0 else -1.0)) * JOLT_SWING * (HANG_THROW if heavy else 1.0)
 
 ## One frame of the charms: `lean` is the angle the car's turn holds them at, `along` its acceleration (px/s²)
 func stepCharms(lean: float, along: float, delta: float) -> void:
@@ -231,11 +248,14 @@ func stepCharms(lean: float, along: float, delta: float) -> void:
 	var lift := -minf(absf(along) / LIFT_ACCEL, 1.0) * LIFT
 	var steps := maxi(1, ceili(delta * 120.0)) #small steps keep a long frame from flinging them
 	var dt := delta / steps
-	for i in CHARMS.size():
-		var pull: float = pow(TAU / CHARMS[i][2], 2.0)
-		var spring: float = pow(TAU / CHARMS[i][3], 2.0)
+	for i in strings.size():
+		var pull: float = pow(TAU / strings[i][2], 2.0)
+		var spring: float = pow(TAU / strings[i][3], 2.0)
+		var heavy := i >= CHARMS.size()
+		var held := lean * (HANG_LEAN if heavy else 1.0)
+		var damping := HANG_DAMPING if heavy else DAMPING
 		for step in steps:
-			speeds[i] += (-pull * (angles[i] - CHARMS[i][0] - lean) - DAMPING * speeds[i]) * dt
+			speeds[i] += (-pull * (angles[i] - strings[i][0] - held) - damping * speeds[i]) * dt
 			angles[i] = clampf(angles[i] + speeds[i] * dt, -1.45, 1.45)
 			dropSpeeds[i] += (-spring * (drops[i] - lift) - BOUNCE_DAMP * dropSpeeds[i]) * dt
 			drops[i] += dropSpeeds[i] * dt
@@ -336,8 +356,14 @@ func drawFront() -> void:
 func drawCharms() -> void:
 	var car = Root.playerCar
 	if not is_instance_valid(car): return
-	#the dice: the luck stat in pips, a die for every six, each on its own string
 	var origin := hook()
+	for n in mini(skin.hangs.size(), strings.size() - CHARMS.size()): #the dashboard's own, under the dice and the clover
+		var at := charmPoint(CHARMS.size() + n)
+		charms.draw_line(origin, at, skin.muted, 1.6, true)
+		charms.draw_set_transform(at, charmTilt(CHARMS.size() + n))
+		drawHang(skin.hangs[n])
+		charms.draw_set_transform(Vector2.ZERO)
+	#the dice: the luck stat in pips, a die for every six, each on its own string
 	var luck: int = maxi(car.luck, 1)
 	var count := diceFor(luck)
 	var lowest := origin
@@ -365,3 +391,43 @@ func drawCharms() -> void:
 		charms.draw_circle(heart + leaf * k, 6.8 * k, LEAF)
 	HudTheme.text(charms, heart + Vector2(0, 5.5 * k), str(car.clover), int(15 * k), Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, 5)
 	charms.draw_set_transform(Vector2.ZERO)
+
+#one of a dashboard's hangs, from the end of its string down
+func drawHang(kind: StringName) -> void:
+	var ink := Color(0.1, 0.09, 0.08)
+	match kind:
+		&"tree": #a pine tree air freshener
+			var green := Color(0.18, 0.56, 0.29)
+			var tree := PackedVector2Array(TREE)
+			charms.draw_colored_polygon(tree, green)
+			tree.push_back(TREE[0])
+			charms.draw_polyline(tree, green.darkened(0.5), 1.5, true)
+			charms.draw_circle(Vector2(0, 7), 1.6, green.darkened(0.5))
+		&"cross":
+			var gold := Color(0.86, 0.69, 0.27)
+			charms.draw_rect(Rect2(-5, -1, 10, 38), ink)
+			charms.draw_rect(Rect2(-13, 8, 26, 10), ink)
+			charms.draw_rect(Rect2(-3, 1, 6, 34), gold)
+			charms.draw_rect(Rect2(-11, 10, 22, 6), gold)
+			charms.draw_line(Vector2(-1.5, 3), Vector2(-1.5, 33), gold.lightened(0.4), 1.0)
+		&"beads": #a loop of worry beads and its tassel
+			var loop := Vector2(0, 12)
+			for i in 12:
+				var bead := loop + Vector2.from_angle(TAU * i / 12.0) * 11.0
+				charms.draw_circle(bead, 3.6, ink)
+				charms.draw_circle(bead, 2.6, Color(0.87, 0.5, 0.13))
+			charms.draw_circle(loop + Vector2(0, 14), 4.0, ink)
+			charms.draw_circle(loop + Vector2(0, 14), 3.0, Color(0.93, 0.9, 0.8))
+			for strand in [-2.5, 0.0, 2.5]: charms.draw_line(loop + Vector2(0, 17), loop + Vector2(strand, 32), Color(0.8, 0.15, 0.13), 2.0, true)
+		&"nazar": #an evil eye bead
+			var eye := Vector2(0, 11)
+			charms.draw_circle(eye, 12.0, ink)
+			charms.draw_circle(eye, 11.0, Color(0.09, 0.2, 0.66))
+			charms.draw_circle(eye, 7.0, Color(0.95, 0.96, 0.98))
+			charms.draw_circle(eye, 4.6, Color(0.36, 0.72, 0.93))
+			charms.draw_circle(eye, 2.2, ink)
+		&"permit": #a parking permit
+			var tag := Rect2(-12, 0, 24, 34)
+			HudTheme.panel(charms, tag, ink, 4, Color(0.13, 0.36, 0.72))
+			charms.draw_circle(Vector2(0, 6), 2.6, ink)
+			HudTheme.text(charms, Vector2(0, 28), "P", 17, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, 0)

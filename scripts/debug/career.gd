@@ -757,13 +757,56 @@ func readResults() -> bool:
 	await press("ui_accept") #speeds the count up
 	if not await waitFor(func(): return ticket.summaryComplete, 20.0, "the results ticket to finish counting", ticket): return false
 	await think(0.4)
-	if is_instance_valid(ticket):
-		if useMouse() && is_instance_valid(ticket.continueButton) && ticket.continueButton.is_visible_in_tree(): await click(ticket.continueButton)
-		else: await press("ui_accept")
-	if not await waitFor(menuReady, 30.0, "Continue on the results to reach the garage"): return false
+	var retries := 0
+	while is_instance_valid(ticket) && not standalone && retries < MAX_RETRIES && not runRow.get("won", false) && rng.randf() < RETRY_CHANCE:
+		retries += 1
+		ticket = await retryRun(ticket)
+		if ticket == null: return false
+	if is_instance_valid(ticket): #Level Options: its button, or Back
+		var options: Button = ticket.buttons.get("options")
+		if useMouse() && is_instance_valid(options) && options.is_visible_in_tree(): await click(options)
+		else: await press("ui_cancel")
+	if not await waitFor(func(): return menuReady() && menu().screen == SETUP && menu().optionsOpen, 30.0, "Level Options on the results to reach run setup"): return false
+	var data := SaveManager.playerData
+	if data.selectedLevel != runPlan.level || data.gameMode != runPlan.mode || SaveManager.getGameTier() != runPlan.tier:
+		issue("ui", "Level Options came back on level %d mode %d tier %d after a run of level %d mode %d tier %d" % [data.selectedLevel, data.gameMode, SaveManager.getGameTier(), runPlan.level, runPlan.mode, runPlan.tier])
 	runActive = false
 	checkRun()
 	return true
+
+#a lost run is tried again from the results this often, at most MAX_RETRIES times in a row
+const RETRY_CHANCE := 0.35
+const MAX_RETRIES := 2
+
+## Retry on the results ticket (its button, or its key): the finished run is checked, then the same run starts
+## again without the menu and is driven to its own ticket, which is returned (null on a block).
+func retryRun(ticket: Node) -> Node:
+	var data := SaveManager.playerData
+	var button: Button = ticket.buttons.get("retry")
+	if not is_instance_valid(button):
+		issue("ui", "the results of a lost run have no Retry button")
+		return null
+	checkRun()
+	bankBefore = {"coin": data.coin, "gem": data.gem, "gadget_cost": RunLauncher.loadoutCost()} #what Retry will take for the gadget and boost
+	runRow = {}
+	runTime = 0.0
+	pauseAt = INF
+	abandonThisRun = false
+	var old: int = Root.levelRoot.get_instance_id() #the id, not the node: the old level is freed while this waits
+	note("CAREER_RETRY session=%d %s %s bank=%d gems=%d" % [session, Levels.ORDER[runPlan.level], Root.gameModeDescription[runPlan.mode].name, data.coin, data.gem])
+	if useMouse() && button.is_visible_in_tree(): await click(button)
+	else: await press("ui_accept" if ticket.primary == "retry" else "ui_records")
+	if not await waitFor(func(): return is_instance_valid(Root.levelRoot) && Root.levelRoot.get_instance_id() != old && Root.levelRoot.is_inside_tree() && Root.levelRoot.clockReady, 120.0, "the run to start again after Retry"):
+		runActive = false
+		return null
+	if not await playRun(): return null
+	var next := summary()
+	if not await waitFor(func(): return not runRow.is_empty(), 10.0, "the playtest to record the retried run"): return null
+	await think(0.7)
+	await press("ui_accept") #shows the whole ticket
+	if not await waitFor(func(): return next.summaryComplete, 20.0, "the results ticket to finish counting after a retry", next): return null
+	await think(0.4)
+	return next
 
 ## The checks after each run: the bank grew by the payout, gems by the run's gems less the gadget, a win
 ## marked the mode beaten (and with enough beaten, opened the next level), and the save on disk matches.

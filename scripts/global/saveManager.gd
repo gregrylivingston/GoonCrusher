@@ -419,6 +419,28 @@ func recordCourse(levelIndex: int, mode: int, carName: String, seconds: float, s
 	save_character_data()
 	return {"time": true}
 
+#--- run ranks (meta.records.rank) ---------------------------------------------------------------
+#records.rank[level id][mode id] = {"score", "rank", "car", "tier"}: the best-scoring run of a mode on a level
+#(RunRank), by any car. Each car's own best rank is in its records ("rank").
+
+## The best-ranked run of a mode on a level; {} when there is none
+func bestRank(levelIndex: int, mode: int) -> Dictionary:
+	if levelIndex < 0 || levelIndex >= playerData.levels.size(): return {}
+	var byLevel: Dictionary = playerData.meta.get("records", {}).get("rank", {})
+	return byLevel.get(levelKey(playerData.levels[levelIndex]), {}).get(Modes.idOf(mode), {})
+
+## Records a run's score and rank. Returns {"best": did it beat the level's best for the mode, "before": the
+## score it had to beat (0 when there was none)}.
+func recordRank(levelIndex: int, mode: int, carName: String, tier: int, score: int, rank: int) -> Dictionary:
+	var before := int(bestRank(levelIndex, mode).get("score", 0))
+	var records = getCarByName(carName).records
+	records.rank = maxi(int(records.get("rank", 0)), rank)
+	if score > before:
+		var byLevel: Dictionary = playerData.meta.records.get_or_add("rank", {})
+		byLevel.get_or_add(levelKey(playerData.levels[levelIndex]), {})[Modes.idOf(mode)] = {"score": score, "rank": rank, "car": carName, "tier": tier}
+	save_character_data()
+	return {"best": score > before, "before": before}
+
 #--- per-level records (meta.records) -----------------------------------------------------------
 #Keyed by the level's id (Levels.ORDER), so reordering levels keeps them, then by car.
 

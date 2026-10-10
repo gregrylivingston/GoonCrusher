@@ -28,7 +28,8 @@ const COLUMNS = ["run", "level", "mode", "car", "profile", "seed", "upgrades", "
 	"end_fuel", "end_health", "distance_px", "avg_speed", "top_speed", "eco_seconds", "stuck", "escapes", "ai_ms", "goals",
 	"pk_supply", "pk_tune", "pk_boost", "pk_gadget", "pk_loot", "pk_casino", "pk_skill", "pk_mode", "pk_move", "persona", "session",
 	"tier", "win_bonus", "first_clear", "first_clear_gem", "damage_water",
-	"progress", "place", "field", "overshot", "personality", "ai_shifts"]
+	"progress", "place", "field", "overshot", "personality", "ai_shifts",
+	"par_key", "giants", "combo", "run_score", "run_rank"] #the run's rank (RunRank), and what bake_run_par.gd bakes par from
 
 var options := {}
 var jobs: Array = []
@@ -488,6 +489,12 @@ func recordRun() -> void:
 	row.personality = driver.personality if is_instance_valid(driver) else ""
 	row.ai_shifts = driver.stats.get("shifts", 0) if is_instance_valid(driver) else 0
 	row.score = snappedf(runScore(row), 0.1)
+	var graded: Dictionary = level.runRank()
+	row.par_key = level.parKey()
+	row.giants = car.giantsCrushed
+	row.combo = car.bestCombo
+	row.run_score = graded.score
+	row.run_rank = graded.rank
 	if career: career.onRunRecorded(row) #adds persona and session
 	results.push_back(row.duplicate())
 	print("PLAYTEST_RESULT " + JSON.stringify(row))
