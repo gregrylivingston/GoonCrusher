@@ -13,6 +13,8 @@ The record of every segment that plays between songs on GoonCrusher Radio: its f
 | Gas N Go | `sound/radio/gooncrusher/ads/ad_gas_n_go.ogg` | 0:30 | ad (sung jingle) |
 | Fender Bender Mutual | `sound/radio/gooncrusher/ads/ad_insurance.ogg` | 1:02 | ad |
 | The Lucky Lug Nut | `sound/radio/gooncrusher/ads/ad_slot_parlour.ogg` | 0:32 | ad (sung) |
+| Suds City Car Wash | `sound/radio/gooncrusher/ads/ad_car_wash.ogg` | 0:40 | ad (sung jingle) |
+| Rusty's Salvage | `sound/radio/gooncrusher/ads/ad_salvage.ogg` | 0:30 | ad (sung jingle) |
 | Ident 01: "We don't brake for goons" | `sound/radio/gooncrusher/idents/ident_01.ogg` | 0:04 | ident (DJ voice) |
 | Ident 02 | `sound/radio/gooncrusher/idents/ident_02.ogg` | 0:05 | ident |
 | Ident 03 | `sound/radio/gooncrusher/idents/ident_03.ogg` | 0:04 | ident |
@@ -61,6 +63,8 @@ The first three ads (Goon-B-Gone, Grunt, Grunt and Hubcap, Pete's Pit Shop) came
 - **Tool:** for one consistent spoken voice (the DJ), ElevenLabs with a fixed voice and settings works; Suno is better for sung and music-driven pieces. If spoken ads still converge, a text-to-speech tool with picked voices (and the music bed from Suno, mixed under) gives full control of who speaks.
 
 The second batch was written to these rules (each a different format: an auction chant, a sung jingle, a guided meditation, a lounge song; see the entries below). Four of five came out well enough to use. The fifth, a two-voice dialogue skit (SplatMaster 3000, a couple arguing in a car), did not: **dialogue skits don't work in Suno**. Make them with text-to-speech or skip them.
+
+The third batch went all in on what worked: five fully sung Suno jingles, each in a genre the station didn't have yet (doo-wop, gospel, barbershop a cappella, 1980s synth-pop, polka), about 30 seconds each, with sung endings instead of spoken punchlines. The author made them and edited the lyrics as he went; the lyrics below are the final ones.
 
 ## The DJ: Dee Jay Crush
 
@@ -295,6 +299,81 @@ Win big
 | Sound effects | A slot-reel whir on "Spinning reels"; a lever clunk and a little bell on "hear it ring"; one sad coin clink after "medium". |
 
 **Processing:** 32 s; −16.8 → −16.0 LUFS, Vorbis q4.
+
+## Suds City Car Wash
+
+A 1960s doo-wop jingle for a car wash that gets the goon off your hood (a nod to *There's a Goon on My Hood*). Third batch; the author's edits to the chorus and tag.
+
+**Script**
+
+```
+[Intro, group harmony]
+Shoo-bop, shoo-bop, suds-a-doo
+
+[Verse]
+There's a goon on your bumper and grime on your grille
+Bugs on the windshield and he's hangin' there still
+Pull on in, put it in neutral, baby
+We'll wash all your troubles away
+
+[Chorus]
+Suds City, Suds City
+Soap,  wax and a rinse
+Suds City (shoo-bop)
+Just two dollars and twenty cents
+
+[Tag]
+Now with hot wax
+(deep bass voice, slow) and cold wax too
+```
+
+**Direction**
+
+| | |
+|---|---|
+| Format | A complete sung regional radio jingle, no speaking. Max length 30 seconds. |
+| Voices | A male doo-wop group: a high falsetto lead, close harmonies, and a deep bass singer for the last line. |
+| Music | Slow doo-wop shuffle: upright bass, light drums, piano triplets, 130 BPM. |
+| Suno prompt | `1960s doo-wop vocal group, male falsetto lead, close street-corner harmonies, deep bass voice singer, slow shuffle, 130 BPM, upright bass, light drums, piano triplets, regional radio jingle, short, ends on a low bass vocal line` |
+| Sound effects | Spraying water and a squeaky sponge under the verse. |
+
+**Processing:** 40 s; −15.8 → −16.1 LUFS, Vorbis q4. Suno's download was named "Suds City.mp3".
+
+## Rusty's Salvage
+
+A junkyard as a Sunday gospel number. Third batch; the author switched the lead to a man and rewrote the end of the chorus (the choir's "Can I get a tow truck? / Amen" ending was dropped).
+
+**Script**
+
+```
+[Verse, Male lead, preaching it]
+When your axle's broken and your engine's gone
+And your fender's in a ditch while the goons hang on
+Don't you cry, don't you weep
+Bring it down to Rusty's, we'll take it cheap
+
+[Chorus, full choir answering]
+Rusty's! (Rusty's!)
+Every car gets a second life
+Rusty's! (Rusty's!)
+Bring in any trade-in, even your wife
+Rusty's Salvage,
+On Route Nine near the county line
+```
+
+**Direction**
+
+| | |
+|---|---|
+| Format | A complete sung gospel jingle with call and response. Max length 30 seconds. |
+| Voices | A preaching male gospel lead and a big church choir answering. |
+| Music | Sunday gospel: Hammond organ, handclaps, tambourine, piano, 100 BPM. |
+| Suno prompt (as drafted, with a female lead; the take has a male lead) | `powerful female gospel lead singer, full church choir call and response, Sunday gospel, Hammond organ, handclaps, tambourine, piano, 100 BPM, joyful and huge, short radio jingle, ends on a big held choir amen` |
+| Sound effects | A car crusher's crunch under the first line. |
+
+**Processing:** 30 s; −15.6 → −16.2 LUFS, Vorbis q4. Suno's download was named "Rusty's Second Life.mp3".
+
+**Note:** "even your wife" is the station's usual mild innuendo-level joke.
 
 ## DJ: Morning show (`talk_morning_show`)
 
