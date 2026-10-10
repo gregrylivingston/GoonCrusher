@@ -18,7 +18,7 @@ This file has two halves: **for the audio author** (what to make, how to name an
 
 The default for a new save is **GoonCrusher Radio**. A station with no songs yet is hidden from the pickers, so Classical Lofi and Lofi appear once their first songs go in.
 
-**Songs so far** (lyrics, style prompts and ideas for more: `docs/RADIO_SONGS.md`): GoonCrusher Radio has *Crush Hour*, *Gooncrusher*, *Full Tank, Empty Head*, *My Baby Loves My Truck*, *Cheap Beer, Premium Gas*, *Trailer Park Superstar*, *Welcome to Nowhere*, *Gas Station Romance*, *She Left Me at the Truck Stop*, *No Brakes*, *Check Engine Light*, *There's a Goon on My Hood* and *Hot Black Coffee*. Between songs: seven ads (Goon-B-Gone, Grunt, Grunt and Hubcap, Pete's Pit Shop, Big Earl's Tire Barn, Gas N Go, Fender Bender Mutual, The Lucky Lug Nut) and twelve DJ talk segments from Dee Jay Crush, and nine idents (`docs/RADIO_SEGMENTS.md`).
+**Songs so far** (lyrics, style prompts and ideas for more: `docs/RADIO_SONGS.md`): GoonCrusher Radio has *Crush Hour*, *Gooncrusher*, *Full Tank, Empty Head*, *My Baby Loves My Truck*, *Cheap Beer, Premium Gas*, *Trailer Park Superstar*, *Welcome to Nowhere*, *Gas Station Romance*, *She Left Me at the Truck Stop*, *No Brakes*, *Check Engine Light*, *There's a Goon on My Hood*, *Hot Black Coffee* and *Long Haul*. Between songs: seven ads (Goon-B-Gone, Grunt, Grunt and Hubcap, Pete's Pit Shop, Big Earl's Tire Barn, Gas N Go, Fender Bender Mutual, The Lucky Lug Nut) and twelve DJ talk segments from Dee Jay Crush, and nine idents (`docs/RADIO_SEGMENTS.md`).
 
 ### Folder layout
 

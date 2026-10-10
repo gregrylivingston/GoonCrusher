@@ -1,0 +1,19 @@
+[remap]
+
+importer="oggvorbisstr"
+type="AudioStreamOggVorbis"
+uid="uid://bvy2n5d8ng4aa"
+path="res://.godot/imported/Long Haul.ogg-b00eb01037d10be8a3830ed5a664ab3b.oggvorbisstr"
+
+[deps]
+
+source_file="res://sound/radio/gooncrusher/songs/Long Haul.ogg"
+dest_files=["res://.godot/imported/Long Haul.ogg-b00eb01037d10be8a3830ed5a664ab3b.oggvorbisstr"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

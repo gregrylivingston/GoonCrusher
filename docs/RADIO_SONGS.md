@@ -40,6 +40,7 @@ Fast, chaotic 2000s-style punk rock, aggressive distorted electric guitars, punc
 | Check Engine Light | `sound/radio/gooncrusher/songs/Check Engine Light.ogg` | 3:32 | Southern blues-punk, 150 BPM |
 | There's a Goon on My Hood | `sound/radio/gooncrusher/songs/There's a Goon on My Hood.ogg` | 2:51 | Southern punk with rockabilly swing, 180 BPM |
 | Hot Black Coffee | `sound/radio/gooncrusher/songs/Hot Black Coffee.ogg` | 2:43 | Southern boogie-punk / garage rock, 160 BPM |
+| Long Haul | `sound/radio/gooncrusher/songs/Long Haul.ogg` | 3:36 | heartland country-rock with a punk edge, 120 BPM: a slow song |
 
 ### Crush Hour
 
@@ -1083,13 +1084,85 @@ Hot black coffee, fill it up! (FILL IT UP!)
 
 **Note:** clean. No goons in it.
 
+### Long Haul
+
+Category 3: a trucker's love song, three states from home with her picture on the dash. The author wrote the chorus and verse 1; written together in this session, with the author's edits.
+
+**Style** (as drafted; the take may have used a tweaked version):
+
+```
+Heartland country-rock with a punk edge, 120 BPM, warm overdriven electric guitar, steel guitar swells, steady rolling drums like highway miles, melodic bass, warm raspy sincere male vocal, big singalong chorus that lifts on the last pass, trucker love song, long-distance longing, slow melodic guitar solo, polished video game soundtrack production with garage grit. No emo, no modern pop, no sappy ballad.
+```
+
+**Lyrics:**
+
+```
+[Intro: air brakes hiss, a slow guitar picks up]
+
+[Verse 1]
+Left on a Monday with the sun still down
+Kissed you on the porch and I left town
+Three states later, fourteen counties to go
+Got your picture on the dash and the radio low
+
+[Chorus]
+I'm in it for the long haul
+Eighteen wheels and I'm givin' it all
+Every mile I'm thinking of you
+Every mile I'm comin' home to you
+
+[Verse 2]
+Truck stop payphone, quarter in the slot
+You said the dog misses me a lot
+Hot cup of coffee, some pancakes and eggs
+Six hundred miles on a tired pair of legs
+
+[Chorus]
+I'm in it for the long haul
+Eighteen wheels and I'm givin' it all
+Every mile I'm thinking of you
+Every mile I'm comin' home to you
+
+[Verse 3]
+Wreck on the shoulder past the Kansas line
+I didn't slow down, baby, they'll be fine
+Rain on the windshield, wipers keepin' time
+I'm counting the miles until you're all mine
+
+[Bridge]
+Some men got money, some men got a plan
+I got a diesel and a wedding band
+And when I pull into that gravel drive
+I'll know there ain't no man more lucky alive
+
+[Chorus]
+I'm in it for the long haul
+Eighteen wheels and I'm givin' it all
+Every mile I'm thinking of you
+Every mile I'm comin' home to you
+
+[Guitar Solo: slow, melodic]
+
+[Final Chorus]
+I'm in it for the long haul
+Eighteen wheels and I'm givin' it all
+Every mile I'm thinking of you
+Every mile I'm comin' home to you
+
+[Outro: two blasts of the air horn]
+```
+
+**Processing:** −16.0 → −16.1 LUFS (true peak −5.7 dBTP), no tail silence to trim. Suno's download was named "long haul (Add Vocal).mp3".
+
+**Note:** clean. No goons in it (verse 3's wreck replaced the drafted goons on the shoulder).
+
 ## Song categories
 
 The station's songs fall into three kinds (the author's breakdown). Keep new songs in one of them:
 
 1. **Goon-crushing driving rage, metal and punk:** Crush Hour, Gooncrusher, No Brakes (and There's a Goon on My Hood, between this and 2).
 2. **Small-town and country life with a big dose of driving,** metal-tinged country, blues or punk: Full Tank, Empty Head, Cheap Beer, Premium Gas, Trailer Park Superstar, My Baby Loves My Truck, Check Engine Light, Hot Black Coffee.
-3. **Highway romance and small towns are great,** the softest and most country: Welcome to Nowhere, Gas Station Romance, She Left Me at the Truck Stop.
+3. **Highway romance and small towns are great,** the softest and most country: Welcome to Nowhere, Gas Station Romance, She Left Me at the Truck Stop, Long Haul.
 
 The voice in all three: a first-person working-class guy and his car, concrete everyday details (twenty bucks, a cracked windshield, the county line), the title as the chorus hook, and a deadpan punchline at the end of a verse. Goons are something he drives through, not the point of view.
 
