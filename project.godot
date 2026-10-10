@@ -32,6 +32,7 @@ Audio="*res://scripts/global/Audio.tscn"
 Region="*res://scripts/global/Region.gd"
 Bench="*res://scripts/debug/bench.gd"
 Playtest="*res://scripts/debug/playtest.gd"
+Capture="*res://scripts/debug/capture.gd"
 Console="*res://scripts/debug/dev_console.gd"
 
 [display]

@@ -106,6 +106,7 @@ const DEFAULTS := {
 	"access/screen_shake": 2,
 	"access/hit_stop": true,
 	"access/hud_scale": 1.0,
+	"access/classic_dash": false,
 }
 
 #allowed values for enumerated keys; numeric keys not listed here are clamped by RANGES

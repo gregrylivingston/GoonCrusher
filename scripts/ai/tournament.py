@@ -22,7 +22,7 @@ import subprocess
 import sys
 import time
 
-DEFAULT_GODOT = r"C:/Users/Greg/Downloads/Godot_v4.7.2-stable_win64.exe/Godot_v4.7.2-stable_win64_console.exe"
+DEFAULT_GODOT = os.path.expanduser("~/Downloads/Godot_v4.7.2-stable_win64.exe/Godot_v4.7.2-stable_win64_console.exe")
 PROJECT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 USER_DIR = os.path.join(os.environ.get("APPDATA", ""), "GoonCrusher", "playtest")
 
@@ -35,17 +35,8 @@ def number(row, key):
 
 
 def run_score(row):
-    """Coins, since payout buys cars and upgrades, plus the mode's own result (runScore in playtest.gd)."""
-    clock = max(number(row, "clock"), 1.0)
-    coins = 30.0 * math.log10(1.0 + max(number(row, "payout"), 0.0))
-    won = row.get("won") == "true"
-    if row["mode"] == "gooncrusher":
-        return coins + 50.0 * min(number(row, "level_time") / clock, 1.0)
-    if row["mode"] in ("sprint", "marathon"):
-        if won:
-            return coins + 50.0 + 25.0 * number(row, "time_left") / clock
-        return coins + 25.0 * min(max(1.0 - number(row, "station_left_px") / max(number(row, "station_px"), 1.0), 0.0), 1.0)
-    return coins + 50.0 * min(number(row, "level_time") / 300.0, 1.0)
+    """The run's score as the harness worked it out (runScore in playtest.gd: coins plus the mode's own result)."""
+    return number(row, "score")
 
 
 def leaderboard(rows, profiles):
@@ -76,7 +67,7 @@ def leaderboard(rows, profiles):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--profiles", default="cautious,default", help="comma-separated AIProfiles specs")
+    parser.add_argument("--profiles", default="auto,alt", help="comma-separated AIProfiles specs (auto: the car's first personality; alt: its second; name@skill; a house style)")
     parser.add_argument("--modes", default="countdown,sprint,goonpocalypse")
     parser.add_argument("--level", default="prairie", help="comma-separated level ids (Levels.ORDER) or 0-based indices")
     parser.add_argument("--car", default="sedan", help="comma-separated cars")

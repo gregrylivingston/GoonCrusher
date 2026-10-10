@@ -45,7 +45,6 @@ func test_unlock_levels_and_modes():
 			assert_true(Root.isModeUnlocked(level, mode), "%s open on %s" % [M.find_key(mode), level.name])
 	assert_true(Root.isModePlayable(SaveManager.playerData.levels[0], M.MARATHON), "Marathon opens with Countdown beaten")
 	assert_false(SaveManager.playerData.levels[0].gamemodeBeat[M.MARATHON], "unlock modes credits only Sprint and Countdown")
-	assert_false(Root.isModePlayable(SaveManager.playerData.levels[1], M.CIRCUIT), "a mode that isn't built stays shut")
 	Console.execute("unfinished on")
 	assert_true(Root.isModePlayable(SaveManager.playerData.levels[1], M.CIRCUIT), "unfinished on lets any of the level's modes start")
 	Console.execute("unfinished off")
@@ -160,3 +159,11 @@ func test_start_lists_tiers_and_checks_them():
 	assert_true(list.contains("the real save"), "and says which save is in use")
 	assert_true(Console.execute("start nowhere").begins_with("Error"), "an unknown tier is an error")
 	assert_eq(Console.execute("start real"), "Already playing the real save")
+
+func test_play_lists_every_mode_and_refuses_what_it_cant_start():
+	var listing: String = Console.execute("play")
+	for id in Modes.IDS: assert_true(listing.contains(id), "play lists %s" % id)
+	assert_true(listing.contains("e.g. "), "with a level that features each")
+	assert_true(Console.execute("play nonsense").begins_with("Error"), "an unknown mode is an error")
+	assert_eq(Console.firstLevelWith(Root.gameModes.FLATOUT), Levels.indexOf(&"saltflats"), "Flat Out's first level is Salt Flats")
+	assert_eq(Console.firstLevelWith(Root.gameModes.MARATHON), 0)

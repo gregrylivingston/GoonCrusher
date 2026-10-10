@@ -1,6 +1,6 @@
 class_name Rivals extends Node
 ## The Goon Cup's other drivers (docs/GAMEPLAY_SUGGESTIONS.md, package 18): the garage's other cars on the map,
-## each a real car scene with `isPlayer` off and an AIDriver holding its keys. A rival has no camera, HUD,
+## each a real car scene with `isPlayer` off and its own car's AIDriver holding its keys (SKILL by tier). A rival has no camera, HUD,
 ## rewards or spawners; it doesn't burn fuel or collect pickups, goons ignore it (they hunt Root.playerCar), and
 ## a wrecked one is simply gone. Cars bump each other (OverheadCarBody2D.bumpCar). Level adds one of these in
 ## a mode with rivals (Modes.hasRivals) and the mode's rules read it: Cannonball's places are finishOrder.
@@ -13,6 +13,9 @@ const ENGINE_DB := -14.0            #a rival's engine under the player's own
 ## A rival's top pace as a share of the player's car's top speed, by tier: on Easy the field can be outrun,
 ## on Hard it is as quick as you are (and it has no goons after it and no tank to run dry)
 const PACE := [0.0, 0.82, 0.92, 1.02]
+## How well a rival works its keys, by tier (AIProfiles.SKILLS): on Easy they react late, misjudge close calls
+## and fluff their shifts; on Hard they don't. Each drives its own car's driver and first personality.
+const SKILL := ["ace", "rookie", "regular", "ace"]
 const PLACE_WORDS := ["", "1ST", "2ND", "3RD", "4TH", "5TH", "6TH", "7TH", "8TH"]
 
 var pace := INF             #the field's pace cap, px/s (the holder of the cup gets a share of it: KeepCup)
@@ -83,7 +86,7 @@ func spawn(count: int = COUNT, share: float = -1.0) -> void:
 		level.add_child(car)
 		var engine = car.get_node_or_null("AudioStream-Engine")
 		if engine: engine.volume_db += ENGINE_DB
-		AIDriver.attach(car, {"profile": AIProfiles.BEST}).paceCap = pace
+		AIDriver.attach(car, {"profile": "auto@" + SKILL[ModeTiers.clampTier(level.tier)]}).paceCap = pace
 		cars.push_back(car)
 		names[car.get_instance_id()] = driverName(car, id)
 		car.tree_exiting.connect(onRivalGone.bind(car))

@@ -85,7 +85,7 @@ static func land(car) -> void:
 	for goon in Root.spawnManager.goonsNear(car.global_position, r): CarBuffFx.kill(goon)
 	Root.spawnManager.fx.ring(car.global_position, r)
 
-## The AI driver (playtests) uses a gadget when the moment is right. True on the tick it decides to.
+## An AI driver's rule for the Fire button (AIDriver.pressButtons): true on the tick the moment is right.
 static func aiWantsUse(car) -> bool:
 	if Engine.get_physics_frames() % AI_EVERY != 0 || not is_instance_valid(Root.spawnManager): return false
 	var sm = Root.spawnManager

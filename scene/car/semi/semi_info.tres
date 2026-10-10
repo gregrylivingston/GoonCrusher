@@ -21,6 +21,7 @@ carId = "semi"
 traits = Array[StringName]([&"unstoppable", &"drop_load"])
 gears = 10
 redline = 2.4
+hudSkin = &"rig"
 weight = 100
 charName = "Tiffany"
 profilePic = ExtResource("12_ka7te")

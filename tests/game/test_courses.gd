@@ -127,3 +127,43 @@ func test_pursuit_and_the_cup_ask_more_on_harder_tiers():
 	assert_gt(KeepCup.STEAL_PX, KeepCup.PICK_PX)
 	for mode in [M.PURSUIT, M.KEEPCUP]: assert_true(Modes.hasRivals(mode) && Root.isModeAvailable(mode), "%s is built, with rivals" % M.find_key(mode))
 	assert_eq(Modes.plays(M.PURSUIT), M.SPRINT, "the runner makes for the station")
+
+#a stand-in for the world's routes: every pair of points connects by a straight line
+class FlatMap:
+	func routeBetween(a: Vector2, b: Vector2) -> Dictionary:
+		return {"points": PackedVector2Array([a, b]), "length": a.distance_to(b), "reached": true}
+
+class NoRoutes:
+	func routeBetween(a: Vector2, b: Vector2) -> Dictionary:
+		return {"points": PackedVector2Array([a]), "length": a.distance_to(b), "reached": false}
+
+func test_a_loop_comes_back_to_the_start():
+	var loop := Course.loopRoute(FlatMap.new(), Vector2(100, 100), 5000.0)
+	assert_false(loop.is_empty())
+	assert_eq(loop.route[0], Vector2(100, 100), "out from the start")
+	assert_eq(loop.route[loop.route.size() - 1], Vector2(100, 100), "and back to it")
+	assert_true(absf(loop.length - 15000.0) < 1.0, "three legs of 5,000 px: an equilateral loop")
+	assert_true(Course.loopRoute(NoRoutes.new(), Vector2.ZERO).is_empty(), "no loop where the legs don't connect")
+
+func test_every_mode_of_the_menu_is_built():
+	for mode in M.values(): assert_true(Root.isModeAvailable(mode), "%s can be played" % M.find_key(mode))
+	for i in Levels.count(): assert_eq(Root.roadModes(i), Root.featuredModes(i), "%s: all three featured modes open the road" % Levels.ORDER[i])
+	for mode in [M.CIRCUIT, M.KNOCKOUT, M.DERBY]: assert_true(Modes.hasRivals(mode) && not Modes.hasGoons(mode), "%s: rivals and no goons" % M.find_key(mode))
+	for tier in range(ModeTiers.EASY, ModeTiers.HARD):
+		assert_gt(ModeTiers.HOTLAP_SLACK[tier], ModeTiers.HOTLAP_SLACK[tier + 1], "a quicker lap to beat")
+		assert_gt(ModeTiers.FLATOUT_SLACK[tier], ModeTiers.FLATOUT_SLACK[tier + 1])
+		assert_gt(ModeTiers.DERBY_HEALTH[tier + 1], ModeTiers.DERBY_HEALTH[tier], "tougher rivals")
+	assert_gt(Derby.RADIUS, Derby.RING * 2.0, "the cars start well inside the line")
+	for pad in Derby.PADS:
+		assert_true(pad[0] < Derby.RADIUS, "a pickup lies inside the line")
+		assert_true(Pickups.has(pad[1]), "%s is a pickup" % pad[1])
+
+func test_a_car_hit_is_about_speed_and_where_it_lands_not_armour():
+	var car := OverheadCarBody2D
+	assert_eq(car.bumpShare(0.0, Vector2.RIGHT), car.CAR_NOSE_SHARE, "struck on the nose: most of it shrugged off")
+	assert_eq(car.bumpShare(0.0, Vector2.UP), 1.0, "on the flank: all of it")
+	assert_eq(car.bumpShare(0.0, Vector2.LEFT), 1.0, "on the tail too")
+	assert_eq(car.bumpShare(PI / 2.0, Vector2.DOWN), car.CAR_NOSE_SHARE, "whichever way it faces")
+	assert_true(car.CAR_WEIGHT_POWER < 0.5, "weight counts for little of the damage")
+	var heavy := pow(2.8 / 1.4, car.CAR_WEIGHT_POWER) #a semi against a racer
+	assert_true(heavy < 1.25, "a car twice the weight takes under a quarter less (x%.2f the other way)" % heavy)

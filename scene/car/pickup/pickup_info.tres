@@ -23,6 +23,7 @@ script = ExtResource("16_kjd4j")
 carId = "pickup"
 traits = Array[StringName]([&"offroad", &"loaded_bed"])
 redline = 5.5
+hudSkin = &"truck"
 weight = 65
 charName = "Karen"
 profilePic = ExtResource("15_vw14w")

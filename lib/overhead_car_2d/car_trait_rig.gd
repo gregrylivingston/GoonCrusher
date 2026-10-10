@@ -31,6 +31,7 @@ const METER_MAX := 3
 var meterPx := 0.0
 var meterTicks := 0
 var meterMult := 1
+var meterFare := 0             #coins this fare has paid so far, for the taximeter (HudInstrument)
 
 #--- Duct Tape (the sedan) ---
 const TAPE_WAIT := 180         #ticks clean before it starts patching
@@ -127,11 +128,13 @@ func tickMeter(speed: float, delta: float) -> void:
 	while meterPx >= METER_PX:
 		meterPx -= METER_PX
 		car.reward("coin", meterMult)
+		meterFare += meterMult
 
 func resetMeter() -> void:
 	meterPx = 0.0
 	meterTicks = 0
 	meterMult = 1
+	meterFare = 0
 
 #--- Duct Tape ---
 
@@ -140,6 +143,13 @@ func tickTape(now: int, speed: float) -> void:
 	for system in car.condition:
 		var c: float = car.condition[system]
 		if c < TAPE_CAP: car.setCondition(system, minf(TAPE_CAP, c + TAPE_STEP))
+
+## Duct Tape is patching right now: clean for long enough, moving, and something still under the cap (the HUD's tape strip)
+func taping() -> bool:
+	if not car.tDuctTape || car.isDestroyed || car.velocity.length() < 50.0 || Engine.get_physics_frames() - car.lastHurtTick < TAPE_WAIT: return false
+	for system in car.condition:
+		if car.condition[system] < TAPE_CAP: return true
+	return false
 
 #--- Low Clearance ---
 

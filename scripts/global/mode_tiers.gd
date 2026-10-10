@@ -46,13 +46,14 @@ const CUP_PLACE := [0, 3, 2, 1]
 ## than its field. Flat Out's clock slack (it has nitro) and the speed over which crossing the line costs
 ## FLATOUT_PENALTY seconds. Demolition Derby: a rival's health, how hard cars hit, and the clock.
 const HOTLAP_LAPS := 3
+const HOTLAP_SLACK := [0.0, 0.36, 0.3, 0.26] #the lap the tier asks for, as a share of a Sprint clock round the loop
 const CIRCUIT_LAPS := 3
 const FLATOUT_SLACK := [0.0, 0.62, 0.5, 0.42]
 const FLATOUT_STOP_SPEED := 420.0
 const FLATOUT_PENALTY := 2.0
-const DERBY_HEALTH := [0.0, 55.0, 75.0, 100.0]
-const DERBY_BUMP := 3.0
-const DERBY_SECONDS := [0.0, 180.0, 180.0, 180.0]
+const DERBY_HEALTH := [0.0, 80.0, 100.0, 120.0]
+const DERBY_BUMP := 1.5
+const DERBY_SECONDS := [0.0, 240.0, 240.0, 240.0]
 ## Keep the Cup: seconds of holding that win it, and its clock. Pursuit: the runner's health, its head start (px)
 ## and its pace as a share of the player's car's top speed; how much harder cars hit each other there.
 const CUP_HOLD := [0.0, 40.0, 55.0, 70.0]

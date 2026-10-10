@@ -33,6 +33,7 @@ var oil: int = 1
 var headlights: int = 1
 var weight: int = 50 #0-100, never upgraded: how the car carries its mass (CarHandling)
 var traits: Array[StringName] = [] #signature features (CarTraits), from `info`
+var hudSkin: StringName = &"" #its dashboard (HudSkin), from `info`
 
 #Trait flags, cached in _ready because integrate() reads them every tick (CarTraits; docs/CAR_ART.md "Traits").
 #Rules that aren't handling live in traitRig (CarTraitRig), which also holds the state these read.
@@ -799,11 +800,17 @@ func honk() -> void:
 const CAR_BOUNCE := 0.35         #how much of the closing speed comes back
 const CAR_BUMP_FREE := 180.0     #closing speed (px/s) under which a bump does no damage
 const CAR_BUMP_DAMAGE := 1.0 / 45.0 #health per px/s of closing speed above that, before armour
+const CAR_NOSE_ARC := 0.9        #radians either side of a car's heading that count as its nose
+const CAR_NOSE_SHARE := 0.3      #a car struck on its nose takes this share: the one that lands the hit comes off best
+const CAR_WEIGHT_POWER := 0.25   #how much the weights' ratio counts for damage (the shove goes by weight in full)
 static var carBumpScale := 1.0   #a mode's own (Demolition Derby raises it)
 var bumpedAt := -1               #the physics frame of this car's last bump: one response per contact, not one each
 
 ## Two cars met: they trade speed along the contact by weight (CarInfo.weight) and both take the knock.
 ## `normal` points from `other` to this car; `moving` is this car's velocity going in.
+## The damage is the same for any car: by how fast they closed, by where each was struck (its nose takes
+## CAR_NOSE_SHARE of it, its flank or tail all of it) and a little by weight, and armour doesn't count
+## (bumpShare, takeBump). So a quick car that turns onto a rival's flank beats a heavy one that can't.
 func bumpCar(other: OverheadCarBody2D, normal: Vector2, moving: Vector2) -> void:
 	var now := Engine.get_physics_frames()
 	if bumpedAt == now || other.bumpedAt == now: return #the other car already answered this contact
@@ -818,11 +825,19 @@ func bumpCar(other: OverheadCarBody2D, normal: Vector2, moving: Vector2) -> void
 	other.velocity -= normal * impulse / theirs
 	var hurt := maxf(closing - CAR_BUMP_FREE, 0.0) * CAR_BUMP_DAMAGE * carBumpScale
 	if hurt > 0.0:
-		damage(hurt * theirs / mine) #the lighter car comes off worse
-		other.damage(hurt * mine / theirs)
+		takeBump(hurt * bumpShare(rotation, -normal) * pow(theirs / mine, CAR_WEIGHT_POWER))
+		other.takeBump(hurt * bumpShare(other.rotation, normal) * pow(mine / theirs, CAR_WEIGHT_POWER))
 	if isPlayer || other.isPlayer:
 		Settings.vibrate(0.4, 0.6, 0.12)
 		if is_instance_valid(crushFeel): crushFeel.kick += normal * minf(closing / 40.0, 14.0)
+
+## The share of a bump a car takes when the contact lies `toContact` from it: its nose shrugs most of it off
+static func bumpShare(heading: float, toContact: Vector2) -> float:
+	return CAR_NOSE_SHARE if absf(Vector2.from_angle(heading).angle_to(toContact)) < CAR_NOSE_ARC else 1.0
+
+## Damage from another car, whatever this car's armour
+func takeBump(amount: float) -> void:
+	damage(amount / maxf(armorFactor(armor), 0.05))
 
 func crushGoon(collider, speed := -1.0) -> bool:
 	if not is_instance_valid(collider) || collider.isDying(): return true
@@ -1347,9 +1362,12 @@ func autoGear(g: int, speed: float) -> int:
 	if g > 1 && speed < gearTop(g - 1) * AUTO_DOWN: return g - 1
 	return g
 
-## Shifted by the player: a geared car with the Automatic Gearbox setting off, and no AI at the wheel
+## Shifted by hand: a geared car with the Automatic Gearbox setting off, or with a driver at the wheel that
+## works the lever itself (CarDriver.shiftsByHand)
 func isManual() -> bool:
-	return gears > 0 && not Settings.get_value("gameplay/auto_gearbox") && (myController == null || myController.driver == null)
+	if gears <= 0: return false
+	if myController != null && myController.driver != null: return myController.driver.shiftsByHand()
+	return not Settings.get_value("gameplay/auto_gearbox")
 
 ## One step of the lever (+1 up, -1 down; down past N is R). Returns whether the gear changed.
 func shift(step: int) -> bool:
@@ -1450,15 +1468,16 @@ func tickPickups() -> void:
 	if airborneTicks > 0:
 		airborneTicks -= 1
 		if airborneTicks == 0: Gadgets.land(self)
-	var ai = myController.driver
-	var down := heldItem != "" && not isDestroyed && (Gadgets.aiWantsUse(self) if ai else actionDown("UseItem"))
+	var down := heldItem != "" && not isDestroyed && actionDown("UseItem")
 	if down && not useWasDown && not PickupEffects.useTakenByPrompt(): useItem()
 	useWasDown = down
-	down = moveItem != "" && not isDestroyed && (Gadgets.aiWantsMove(self) if ai else actionDown("UseMove"))
+	down = moveItem != "" && not isDestroyed && actionDown("UseMove")
 	if down && not moveWasDown: useMove()
 	moveWasDown = down
 
+#is a button of this car's held: the player's, or its driver's when one is at the wheel (CarDriver)
 func actionDown(action: String) -> bool:
+	if myController != null && myController.driver != null: return myController.driver.isPressed(action)
 	return not Settings.menu_open && InputMap.has_action(action) && Input.is_action_pressed(action)
 
 ## Takes a gadget into the Fire slot, or a boost (Pickups.K.MOVE) into the Boost slot. The same item adds

@@ -102,7 +102,8 @@ func applyDef() -> void:
 #Sprint and Marathon slack: the def's (else the old curve over the level's seconds), x the tier's
 func slack() -> float:
 	var byTier: Array = ModeTiers.SLACK
-	if runMode in [Root.gameModes.RALLY, Root.gameModes.HOTLAP]: byTier = ModeTiers.RALLY_SLACK
+	if runMode == Root.gameModes.RALLY: byTier = ModeTiers.RALLY_SLACK
+	elif runMode == Root.gameModes.HOTLAP: byTier = ModeTiers.HOTLAP_SLACK
 	elif runMode == Root.gameModes.FLATOUT: byTier = ModeTiers.FLATOUT_SLACK
 	return (def.sprintSlack if def else sprintSlack(levelSeconds)) * byTier[tier]
 
@@ -218,7 +219,7 @@ func setupLoop() -> void:
 	course.setupLoop(loop, startPosition, count)
 	var lapSeconds := sprintSeconds(driveLength(loop.length), levelSeconds, slack())
 	lapTarget = lapSeconds
-	seconds = lapSeconds * count * (1.6 if runMode == Root.gameModes.HOTLAP else 1.0)
+	seconds = lapSeconds * count * (2.5 if runMode == Root.gameModes.HOTLAP else 1.0) #room for three laps that miss the target
 
 ## A car finished a lap of the loop (Course)
 func lapDone(car: Node, lapsDone: int) -> void:
@@ -313,9 +314,7 @@ func onWorldReady() -> void:
 			add_child(trial)
 		Root.gameModes.CONES: setupCones()
 		Root.gameModes.HOTLAP, Root.gameModes.CIRCUIT, Root.gameModes.KNOCKOUT: setupLoop()
-		Root.gameModes.DERBY:
-			var map = $TileManager.worldMap
-			derby = Derby.build(self, map.station if map.station != Vector2.INF else startPosition)
+		Root.gameModes.DERBY: derby = Derby.build(self, startPosition) #on the level's own ground, props and all
 	if Modes.isFixedMap(runMode) && is_instance_valid(Root.station):
 		course = Course.new()
 		add_child(course)

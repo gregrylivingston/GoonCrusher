@@ -1,0 +1,83 @@
+{
+	"about": "The Steam page's screenshots: one still each (seconds 0). capture.py shot steam_screens",
+	"defaults": {
+		"mode": "countdown",
+		"tier": "medium",
+		"driver": "ai",
+		"god": true,
+		"upgrades": 10,
+		"hud": "full",
+		"seconds": 0,
+		"profiles": [
+			"wide1080",
+			"wide4k"
+		]
+	},
+	"shots": [
+		{
+			"id": "01_crowd",
+			"level": "prairie",
+			"car": "sedan",
+			"time": "day",
+			"lead": 14,
+			"crowd": {
+				"spawnTimer": 1.0,
+				"progress": 150
+			}
+		},
+		{
+			"id": "02_night",
+			"level": "quarry",
+			"car": "police",
+			"time": "night",
+			"lead": 16,
+			"crowd": {
+				"spawnTimer": 1.0,
+				"progress": 200
+			}
+		},
+		{
+			"id": "03_city",
+			"level": "city",
+			"car": "taxi",
+			"time": "day",
+			"lead": 15
+		},
+		{
+			"id": "04_ice",
+			"level": "frozenlake",
+			"car": "supercar",
+			"time": "day",
+			"lead": 12
+		},
+		{
+			"id": "05_semi",
+			"level": "highway",
+			"car": "semi",
+			"time": "day",
+			"lead": 14
+		},
+		{
+			"id": "06_works",
+			"level": "tankfarm",
+			"car": "van",
+			"time": "night",
+			"lead": 15
+		},
+		{
+			"id": "07_bayou",
+			"level": "bayou",
+			"car": "pickup",
+			"time": "day",
+			"lead": 13
+		},
+		{
+			"id": "08_canyon_clean",
+			"level": "canyon",
+			"car": "racer",
+			"time": "day",
+			"lead": 12,
+			"hud": "off"
+		}
+	]
+}

@@ -212,6 +212,8 @@ func accessibilityRows() -> Array:
 			"info":"A split-second freeze (about 1/20 s) when you crush a giant, a boss or a crowd at once.", "perf":"None"},
 		{"type":"slider", "key":"access/hud_scale", "label":"HUD Scale", "min":0.8, "max":1.3, "step":0.05, "format":percent,
 			"info":"Size of the in-run HUD: counters, region panel, gift box bar and the car's bars. The view of the world is unchanged.", "perf":"None"},
+		{"type":"choice", "key":"access/classic_dash", "label":"Classic Dashboard", "options":onOff(),
+			"info":"Every car gets the same orange dials in place of its own dashboard, with no signature instrument.", "perf":"None"},
 	]
 
 func audioRow(bus: String, label: String) -> Dictionary:

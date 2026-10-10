@@ -45,11 +45,13 @@ var shutAtMsec := 0
 
 #---------- the static API ----------
 
-#no drawing and no waiting: headless runs and the bench / playtest harnesses
+#no drawing and no waiting: headless runs and the bench / playtest / capture harnesses
+static var forceShown := false #the capture kit films the doors themselves (promo/stages/stage.gd)
 static func instant() -> bool:
 	if DisplayServer.get_name() == "headless": return true
+	if forceShown: return false
 	var root = (Engine.get_main_loop() as SceneTree).root
-	return root.has_node("Bench") || root.has_node("Playtest")
+	return root.has_node("Bench") || root.has_node("Playtest") || root.has_node("Capture")
 
 static func reducedMotion() -> bool:
 	return Settings.reduce_motion()

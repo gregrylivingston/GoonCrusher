@@ -78,11 +78,15 @@ Run flows 1 to 6 under each of these:
   - It opens with the focus on START, on the mode and tier last used, and START keeps the focus: Accept always starts the run.
   - W/S change mode (the rows wrap), A/D change tier, and both work by clicking a mode row or a tier of the switch.
   - Z/C (LT/RT; a held trigger steps once) walk the level's tiles: a white ring marks the tile and the card beside them describes it; one step past the last tile shows the level's blurb again. Opening another level starts with no tile.
-  - The pane shows the selected tier only: its goal as a number under GOAL (or, in red, why it can't be started) and its win bonus and first-clear bonus (or "First clear paid") under PAYS.
+  - Each tier of the switch shows its medal, its goal and its win bonus; a locked Hard reads "Beat Medium first". The line under the switch shows why the run can't start (red) or what a win opens (green: Countdown, the featured modes, the next level, "on Medium" at a finale), then the first-clear bonus or "First clear paid".
+  - The stop buttons under the title and the keys 1-5 open another level of the region in place; a locked stop is dim and does nothing. The mode falls back to one the new level can start.
+  - Shift+Z/C jump a group of tiles at a time. Unknown goons are question marks; the RULES tiles show the night's share and the level's events.
+  - Mode rows: medals fill bronze, silver, gold; each row is one line (its name); a mode that isn't built is a slim "Coming soon" row.
+  - The records panel (bottom left) follows the mode and Q/E: the driver's medal here beside the best by any car and who holds it; a fixed-course mode and Goonpocalypse add their time or score.
+  - START's badge shows the gems the gadget and boost will take, and goes away with none chosen. The three sections line up on both edges with even gaps, and the mode rows end level with the pane.
+  - Road map: SELECT is the round button at the bottom right; on a locked stop it reads LOCKED with what opens it beside it. The radio is beside the top-left buttons in the garage too and clear of the logo.
   - Q/E (LB/RB) or a click on the driver pill change the driver among the cars owned; the car strip, the mode rows' bars and the pill follow. The road map's driver chip is hidden here and back on the road map.
   - The level's tiles: goons (silhouettes until crushed), ground swatches, props. The mouse on one fills the card beside them; leaving brings back the card of the tile Z/C walked to, or the level's blurb. A click on a goon's tile opens the Goonopedia.
-  - The round slots show the chosen pickup's icon (a plus when empty) and their captions the name, uses and gem price. START is round and reads LOCKED or COMING SOON on two lines when it can't start.
-  - The radio sits beside the top-left buttons in run setup and under them in the garage; it never covers the logo or a level's title.
   - The car strip: cleared cars in colour, owned-but-not-cleared dim, unowned as outlines, the driver bigger over an orange bar. It updates with the mode and tier. "FULL GARAGE" shows in gold when all 9 have won. Clicking an owned car makes it the driver; clicking an unowned one does nothing.
 - The mode rows and the tier switch have hover states.
 - Check that a synthetic action fired by a click never leaves an action stuck "pressed" (`KeyHint.fire`).

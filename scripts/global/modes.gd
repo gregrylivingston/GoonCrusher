@@ -32,14 +32,14 @@ const IDS := ["countdown", "sprint", "marathon", "defense", "goonpocalypse", "bl
 
 const DATA := {
 	M.GOONCRUSHER: {"name": "COUNTDOWN", "category": Category.CRUSHER, "map": Map.RANDOM, "pickups": Drops.ALL, "boxes": true, "record": "crushes", "goons": "full",
-		"description": "Survive the countdown while crushing increasing powerful waves of goon.",
-		"rules": "The clock counts down from the level's time. Still driving when it hits zero? You win."},
+		"description": "Survive the countdown while crushing ever stronger waves of goons.",
+		"rules": "Still driving when the clock hits zero? You win."},
 	M.SPRINT: {"name": "SPRINT", "category": Category.CRUSHER, "map": Map.RANDOM, "pickups": Drops.ALL, "boxes": true, "record": "time", "goons": "full",
-		"description": "Race against the goons, rocks, and clocks to reach the finish line.",
-		"rules": "Reach the gas station before the clock runs out. The further away the station, the more time you get."},
+		"description": "Race the goons, the rocks and the clock to the gas station.",
+		"rules": "The further away the station, the more time you get."},
 	M.MARATHON: {"name": "MARATHON", "category": Category.CRUSHER, "map": Map.RANDOM, "pickups": Drops.ALL, "boxes": true, "record": "time", "goons": "full",
-		"description": "A relay of stations. Each one refuels you, patches you up and adds time. Reach the last.",
-		"rules": "A relay of stations against the clock. Each one refuels and repairs you, and its pit shop sells pickups for run coins."},
+		"description": "A relay of stations against the clock. Reach the last.",
+		"rules": "Each one refuels and repairs you, adds time, and its pit shop sells pickups for run coins."},
 	M.DEFENSE: {"name": "DEFENSE", "category": Category.CRUSHER, "map": Map.RANDOM, "pickups": Drops.ALL, "boxes": true, "record": "score", "goons": "full",
 		"description": "Hold the station until the clock runs out. Goons march on its pumps and blow up when they reach them: crush them before they get there.",
 		"rules": "Barricade Kits patch the station's walls and Sentry Turrets help guard them."},
@@ -48,7 +48,7 @@ const DATA := {
 		"rules": "No finish line. The clock counts up, and the run lasts as long as you do."},
 	M.BLACKOUT: {"name": "BLACKOUT", "category": Category.CRUSHER, "plays": M.GOONCRUSHER, "map": Map.RANDOM, "pickups": Drops.ALL, "boxes": true, "record": "crushes", "goons": "full",
 		"description": "The sun never comes up. Survive the countdown with nothing but your headlights to show the goons.",
-		"rules": "Night falls at the start and stays. Still driving when the clock hits zero? You win."},
+		"rules": "Still driving when the clock hits zero? You win."},
 	M.BOUNTY: {"name": "BOUNTY HUNT", "category": Category.CRUSHER, "map": Map.RANDOM, "pickups": Drops.ALL, "boxes": true, "record": "time", "goons": "full",
 		"description": "Marked goons, one per district, each tougher than the last. The pointer shows the next mark.",
 		"rules": "Crush every mark before the clock runs out."},
@@ -76,9 +76,9 @@ const DATA := {
 	M.CIRCUIT: {"name": "CIRCUIT RACE", "category": Category.CUP, "rivals": true, "map": Map.FIXED, "pickups": Drops.PLACED, "kinds": ["boost", "gadget"], "boxes": false, "record": "time", "goons": "none",
 		"description": "Three laps of a track cut through the level, against five rivals.",
 		"rules": "Finish in a paying place."},
-	M.DERBY: {"name": "DEMOLITION DERBY", "category": Category.CUP, "rivals": true, "map": Map.FIXED, "pickups": Drops.PLACED, "kinds": ["repair", "armor", "gadget"], "boxes": true, "record": "score", "goons": "none",
-		"description": "Six cars on a lot and no rules. Hits hurt far more here, and leaving the painted line costs health.",
-		"rules": "Be the last car running."},
+	M.DERBY: {"name": "DEMOLITION DERBY", "category": Category.CUP, "rivals": true, "map": Map.FIXED, "pickups": Drops.PLACED, "kinds": ["supply", "move"], "boxes": false, "record": "score", "goons": "none",
+		"description": "Six cars inside a painted line and no rules. Hit them fast and anywhere but the nose; use the trees, the rocks and the nitro.",
+		"rules": "Be the last car running. A hit hurts by speed and by where it lands, not by armour; outside the line costs health."},
 	M.KNOCKOUT: {"name": "KNOCKOUT", "category": Category.CUP, "rivals": true, "map": Map.FIXED, "pickups": Drops.PLACED, "kinds": ["boost", "gadget"], "boxes": false, "record": "wins", "goons": "none",
 		"description": "Last place is cut at the end of every lap until one car is left.",
 		"rules": "Be the one left."},
@@ -92,6 +92,19 @@ const DATA := {
 
 ## The featured modes of a level whose def names none (a def from before the mode menu, a test's stand-in)
 const DEFAULT_FEATURED := [M.MARATHON, M.RALLY, M.CANNONBALL]
+
+## A few words for a mode's row in run setup
+const SHORT := {
+	M.GOONCRUSHER: "Outlast the clock", M.SPRINT: "Race the clock to the station", M.MARATHON: "Station to station",
+	M.DEFENSE: "Hold the station", M.GOONPOCALYPSE: "Endless, for a score", M.BLACKOUT: "Countdown in the dark",
+	M.BOUNTY: "Hunt the marked goons", M.RALLY: "A marked stage, on the clock", M.FLATOUT: "Flat out, then stop",
+	M.HOTLAP: "Three laps, best one counts", M.DRIFT: "Score the slides", M.CONES: "Gates and a slalom",
+	M.SMASH: "Break the quota", M.CANNONBALL: "Five rivals, any route", M.CIRCUIT: "Three laps, five rivals",
+	M.DERBY: "Last car running", M.KNOCKOUT: "Last place goes out", M.KEEPCUP: "Hold the cup", M.PURSUIT: "Outrun the pack",
+}
+
+static func short(mode: int) -> String:
+	return SHORT.get(mode, "")
 
 static func get_def(mode: int) -> Dictionary:
 	return DATA.get(mode, {})

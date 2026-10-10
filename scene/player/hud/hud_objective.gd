@@ -55,7 +55,7 @@ func _draw() -> void:
 	var level = Root.levelRoot
 	if not is_instance_valid(level): return
 	var hit := HudTheme.stationHit() if mode == Root.gameModes.DEFENSE else 0.0
-	HudTheme.panel(self, Rect2(Vector2.ZERO, size), Color(HudTheme.BAD, 0.4 + 0.6 * hit) if hit > 0.0 else Color(HudTheme.RIM, 0.55))
+	HudTheme.panel(self, Rect2(Vector2.ZERO, size), Color(HudTheme.BAD, 0.4 + 0.6 * hit) if hit > 0.0 else Color(0, 0, 0, 0))
 	var mid = size.x * 0.5
 	var icon: Texture2D = HudTheme.MODE_ICONS.get(mode)
 	if icon && mode != Root.gameModes.GOONPOCALYPSE: HudTheme.icon(self, icon, Vector2(22, size.y * 0.5), 26)

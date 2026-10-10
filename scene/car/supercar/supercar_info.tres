@@ -20,6 +20,7 @@ carId = "supercar"
 traits = Array[StringName]([&"downforce", &"low_clearance"])
 gears = 7
 redline = 8.5
+hudSkin = &"track_super"
 weight = 30
 charName = "Snake"
 profilePic = ExtResource("11_ivnrd")

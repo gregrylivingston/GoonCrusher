@@ -1,0 +1,19 @@
+{
+ "prairie": [
+  {
+   "seed": 3,
+   "score": 67.9,
+   "crushed": 14
+  },
+  {
+   "seed": 1,
+   "score": 60.3,
+   "crushed": 16
+  },
+  {
+   "seed": 2,
+   "score": -68.7,
+   "crushed": 11
+  }
+ ]
+}

@@ -1,7 +1,7 @@
 class_name Personas extends RefCounted
 
 #The three players a career playtest can be (docs/AI_DRIVER.md, "Career playtests"). A persona is how a
-#player drives (an AIProfiles spec), how they spend coins and gems, which runs they pick, which input device
+#player drives (an AIProfiles spec: each car's own driver, at the persona's skill and choice of personality), how they spend coins and gems, which runs they pick, which input device
 #they use in the menus and how much of the game around the runs they poke at. The career harness
 #(scripts/debug/career.gd) carries the decisions out through the real menus; everything here is pure: it
 #reads the save, the persona's own run history and a RandomNumberGenerator, so it can be unit tested.
@@ -18,7 +18,7 @@ const U := Root.upgrade
 
 const DATA := {
 	"rookie": {
-		"name": "Rookie", "profile": "rookie", "device": "mouse",
+		"name": "Rookie", "profile": "auto@rookie", "device": "mouse",
 		"shop": "impulse",       #cheapest affordable things first, no saving
 		"runs": "path",          #the newest level and its next unbeaten mode
 		"car": "newest",         #drives the car bought last
@@ -30,7 +30,7 @@ const DATA := {
 		"tierCap": 2,            #the hardest tier (ModeTiers) it goes for: Medium
 	},
 	"grinder": {
-		"name": "Grinder", "profile": "cautious", "device": "keys",
+		"name": "Grinder", "profile": "auto", "device": "keys",
 		"shop": "focused", "runs": "payout", "car": "strongest",
 		"overlays": 0.0, "pause": 0.0, "abandon": 0.0,
 		"bet": "rich", "gems": true, "deal": "worth", "claw": "rarest", "pit": "supplies",
@@ -38,7 +38,7 @@ const DATA := {
 		"stats": [U.ENGINE, U.ARMOR, U.OIL, U.TRACTION, U.STEERING, U.CLOVER, U.LUCK, U.HEADLIGHTS],
 	},
 	"explorer": {
-		"name": "Explorer", "profile": "crusher", "device": "mixed",
+		"name": "Explorer", "profile": "alt@regular", "device": "mixed",
 		"shop": "variety", "runs": "coverage", "car": "least",
 		"overlays": 1.0, "pause": 0.5, "abandon": 0.06,
 		"bet": "random", "gems": true, "deal": "new", "claw": "random", "pit": "all",

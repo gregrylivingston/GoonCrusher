@@ -9,6 +9,7 @@ func _ready():
 	$VersionTracker.text = Root.versionText()
 	%ModeLabel.text = Root.gameModeDescription[SaveManager.playerData.gameMode].name
 	addPickupWidgets()
+	addInstrument()
 	addNowPlaying()
 	setupHudScale()
 	add_child(HudChance.new()) #toasts, the scratch card, beacons: over everything, not HUD-scaled
@@ -38,10 +39,11 @@ func openPause() -> void:
 	get_tree().paused = true
 	add_child( load("res://scene/player/menu/pauseMenu.tscn").instantiate() )
 
-#car.reward() calls this when a stat changes; the systems strip shows stats, so redraw it now
-func updateStats(): $Systems.queue_redraw()
+#car.reward() calls this when a stat changes; the dials' lamps show stats, so redraw them now
+func updateStats():
+	for dial in [$Tach, $Speedo]: dial.needle.queue_redraw()
 
-#the held gadget and the timed power-up rings, above the systems strip (hud_items.gd)
+#the held gadget and the timed power-up rings, along the bottom edge between the dials (hud_items.gd)
 func addPickupWidgets() -> void:
 	var items = HudItems.new()
 	items.name = "Items"
@@ -52,9 +54,21 @@ func addPickupWidgets() -> void:
 	items.anchor_bottom = 1.0
 	items.offset_left = -300.0
 	items.offset_right = 300.0
-	items.offset_top = -124.0
-	items.offset_bottom = -50.0
+	items.offset_top = -80.0
+	items.offset_bottom = -6.0
 	add_child(items)
+
+#the car's signature instrument, on the bottom edge just inside the tachometer's fuel arc (hud_instrument.gd); hidden on the house dash
+func addInstrument() -> void:
+	var instrument = HudInstrument.new()
+	instrument.name = "Instrument"
+	instrument.anchor_top = 1.0
+	instrument.anchor_bottom = 1.0
+	instrument.offset_left = HudInstrument.OFFSETS[0]
+	instrument.offset_top = HudInstrument.OFFSETS[1]
+	instrument.offset_right = HudInstrument.OFFSETS[2]
+	instrument.offset_bottom = HudInstrument.OFFSETS[3]
+	add_child(instrument)
 
 #the radio's now-playing card, above the tachometer; shows for a few seconds at each song (docs/RADIO.md)
 func addNowPlaying() -> void:
@@ -64,8 +78,8 @@ func addNowPlaying() -> void:
 	card.anchor_bottom = 1.0
 	card.offset_left = 32.0
 	card.offset_right = 32.0 + NowPlaying.SIZE.x
-	card.offset_top = -334.0
-	card.offset_bottom = -334.0 + NowPlaying.SIZE.y
+	card.offset_top = -292.0
+	card.offset_bottom = -292.0 + NowPlaying.SIZE.y
 	add_child(card)
 
 #HUD Scale (Accessibility). Each authored HUD control is scaled about its point nearest its anchor,

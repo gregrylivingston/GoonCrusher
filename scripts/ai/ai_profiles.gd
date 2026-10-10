@@ -1,12 +1,18 @@
 class_name AIProfiles extends RefCounted
 
-#The AI driver's tuning, as named profiles (docs/AI_DRIVER.md, "Profiles and tournaments").
-#A profile lists only what it changes from DEFAULTS. A spec string can add overrides on top:
-#  "crusher"                         a named profile
-#  "crusher+horizonTicks=120"        that profile with one value changed
-#  "default+crushReward=3+flankCost=0.5"
-#Values go through str_to_var, so numbers and true/false work as written. Profiles are compared
-#with the playtest harness (--profiles=a,b) or scripts/ai/tournament.py.
+#The AI driver's tuning (docs/AI_DRIVER.md, "Who is driving"). Every number the driver weighs is a key of
+#DEFAULTS; a driver's own set is built in layers, each listing only what it changes (build()):
+#  DEFAULTS -> the house style (HOUSE) -> the car's driver (its tuning()) -> a personality of that car
+#  -> the mode's brief (ModeBrief.tuning) -> a skill (SKILLS) -> overrides from the spec
+#A spec string names the personality, the skill and any overrides:
+#  "auto"                      the car's first personality, driven by an ace (BEST)
+#  "alt"                       its second personality
+#  "showoff@rookie"            a personality by name (the racer's), at a skill
+#  "@regular"                  the first personality at a skill
+#  "crusher"                   a house style by name instead of HOUSE, with no personality on top
+#  "auto+horizonTicks=120"     any of them with a value changed ("+key=value", through str_to_var)
+#A personality another car owns falls back to the car's first, so one spec can drive a whole field.
+#Specs are compared with the playtest harness (--profiles=a,b) or scripts/ai/tournament.py.
 
 const DEFAULTS = {
 	#planning
@@ -61,14 +67,42 @@ const DEFAULTS = {
 	#Defense: the base is the objective
 	"defenseRingPx": 2500.0,   #goons further than this from the base are left alone
 	"defenseThreat": 3.0,      #a goon at the base's walls is worth this many times more than one at defenseRingPx
-	#human imperfection (the rookie persona, scripts/ai/personas.gd); 0 drives as well as the driver can
+	#the handbrake (Space): a powerslide for a turn too tight to steer, and what Drift Trial scores
+	"handbrakeFrom": 320.0,    #handbrake plans are weighed above this speed...
+	"handbrakeTurn": 1.1,      #...when the aim is at least this many radians off the nose (0: never pulls it)
+	"driftReward": 0.0,        #seconds taken off a plan per second it holds a slide (the boost on release; Drift Trial)
+	#the gearbox (the racer, the supercar, the semi)
+	"shiftByHand": true,       #works the lever itself on a geared car: a shift near the redline earns the kick
+	"shiftAt": 0.9,            #shifts up at this share of the gear's band (the kick wants 0.8 or more)
+	"shiftSlop": 0.0,          #each shift's point is off by up to this much: early ones cut the push, late ones sit on the limiter
+	#the buttons
+	"hornGoons": 2,            #honks at this many goons ahead that it is too slow to crush (0: never)
+	"nitroStraightPx": 1400.0, #with no goons about, Nitro is lit with this much straight, clear road to the aim
+	#the car's own quirks (each car's driver, scene/car/<car>/<car>_driver.gd)
+	"trailerCost": 3.0,        #cost of a plan that drags the trailer through a rock or wall
+	"tipCost": 5.0,            #the van: cost of a plan that keeps it up on two wheels until it rolls
+	#human imperfection (SKILLS); 0 drives as well as the driver can
 	"reactionTicks": 0,        #the keys reach the car this many ticks after the driver chooses them
 	"planSlop": 0.0,           #up to this many seconds of noise on each plan's cost: close calls go either way, some wrong
 }
 
-#the profile the game and the harnesses use when none is named (tournament winner, docs/AI_DRIVER.md)
-const BEST := "cautious"
+#the spec the game and the harnesses use when none is named: the car's own driver, first personality, an ace
+const BEST := "auto"
+#the style every car's driver and personality is built on (the tournament winner of the single-driver days)
+const HOUSE := "cautious"
 
+#How well the keys are worked, apart from what the driver wants: the Goon Cup's rivals get one by tier
+#(Rivals.SKILL), the career personas by who they are (Personas).
+const SKILLS = {
+	"ace": {},
+	"regular": {"reactionTicks": 5, "planSlop": 0.3, "shiftSlop": 0.12},
+	"rookie": {"reactionTicks": 12, "planSlop": 0.8, "lookaheadPx": 1000.0, "probeSeconds": 1.0, "shiftAt": 0.75, "shiftSlop": 0.35},
+}
+
+#every car that has a driver of its own, scene/car/<id>/<id>_driver.gd
+const CARS = ["sedan", "van", "taxi", "pickup", "police", "ambulance", "racer", "supercar", "semi"]
+
+#house styles: whole-driver tunings by name, from before each car had a driver
 const PROFILES = {
 	"default": {},
 	#the driver as first tuned (2026-10-05), before notes on going forward, looking further and crushing
@@ -90,7 +124,70 @@ const PROFILES = {
 		"reserveBase": 5.0, "reservePerSecond": 0.02},
 }
 
-#the full parameter set for a spec ("name" or "name+key=value+..."); unknown names and keys are errors
+#the driver script for a car: its own (AIDriver's child), or AIDriver for a car that has none
+static func driverScript(carId: String) -> Script:
+	var path := "res://scene/car/%s/%s_driver.gd" % [carId, carId]
+	return load(path) if carId != "" && ResourceLoader.exists(path) else load("res://scripts/ai/ai_driver.gd")
+
+#a car's personalities (name -> overlay; the first is its default), read from its driver script
+static func personalitiesOf(carId: String) -> Dictionary:
+	var driver = driverScript(carId).new()
+	var out: Dictionary = driver.personalities()
+	driver.free()
+	return out
+
+#"showoff@rookie+hitCost=4" -> {"name": "showoff", "skill": "rookie", "overrides": ["hitCost=4"]}
+static func parse(spec: String) -> Dictionary:
+	var parts := spec.strip_edges().split("+")
+	var head := parts[0].strip_edges()
+	if head.contains(":"): head = head.get_slice(":", 1) #"racer:showoff": the car is whichever it is attached to
+	var overrides: Array = []
+	for i in range(1, parts.size()): overrides.push_back(parts[i])
+	return {"name": head.get_slice("@", 0), "skill": head.get_slice("@", 1) if head.contains("@") else "ace", "overrides": overrides}
+
+#"" when a spec is sound, else what is wrong with it (the harnesses check before a run starts)
+static func problemWith(spec: String) -> String:
+	var parts := parse(spec)
+	if not SKILLS.has(parts.skill): return "AI skill '%s' doesn't exist (have %s)" % [parts.skill, ", ".join(SKILLS.keys())]
+	for pair in parts.overrides:
+		var kv = pair.split("=", true, 1)
+		if kv.size() != 2 || not DEFAULTS.has(kv[0]): return "AI override '%s' is not key=value with a known key" % pair
+	if parts.name in ["", "auto", "alt"] || PROFILES.has(parts.name): return ""
+	for carId in CARS:
+		if personalitiesOf(carId).has(parts.name): return ""
+	return "AI spec '%s' names no personality or style" % parts.name
+
+#A driver's whole parameter set: the layers in the order of the header. `personalities` and `carTuning` are the
+#car's driver's own, `briefTuning` the mode's.
+static func build(spec: String, personalities: Dictionary = {}, carTuning: Dictionary = {}, briefTuning: Dictionary = {}) -> Dictionary:
+	var parts := parse(spec)
+	var params = DEFAULTS.duplicate()
+	var style := HOUSE
+	var personality := {}
+	if PROFILES.has(parts.name): style = parts.name
+	else: personality = personalities.get(personalityName(spec, personalities), {})
+	params.merge(PROFILES[style], true)
+	params.merge(carTuning, true)
+	params.merge(personality, true)
+	params.merge(briefTuning, true)
+	params.merge(SKILLS.get(parts.skill, {}), true)
+	for pair in parts.overrides:
+		var kv = pair.split("=", true, 1)
+		if kv.size() != 2 || not DEFAULTS.has(kv[0]):
+			push_error("AI override '%s' is not key=value with a known key" % pair)
+			continue
+		params[kv[0]] = str_to_var(kv[1])
+	return params
+
+#the personality a spec picks from a car's set ("" for a house style or a car with none), for logs and name plates
+static func personalityName(spec: String, personalities: Dictionary) -> String:
+	var parts := parse(spec)
+	var names: Array = personalities.keys()
+	if PROFILES.has(parts.name) || names.is_empty(): return ""
+	if personalities.has(parts.name): return parts.name
+	return names[1] if parts.name == "alt" && names.size() > 1 else names[0]
+
+#a house style alone ("name" or "name+key=value+..."), on DEFAULTS; unknown names and keys are errors
 static func resolve(spec: String) -> Dictionary:
 	var params = DEFAULTS.duplicate()
 	if spec.strip_edges() == "": return params

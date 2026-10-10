@@ -182,8 +182,8 @@ func test_in_run_choices_are_valid():
 			if g != "": assert_true(Pickups.LOADOUT[g] <= gems, "%s's gadget is affordable" % id)
 			var b := Personas.chooseBoost(persona, gems, rng())
 			if b != "": assert_true(Pickups.BOOST_LOADOUT[b] <= gems, "%s's boost is affordable" % id)
-	assert_eq(Personas.get_def("rookie").profile, "rookie")
-	for id in Personas.DATA: assert_true(AIProfiles.PROFILES.has(Personas.get_def(id).profile), "%s drives a real profile" % id)
+	assert_eq(AIProfiles.parse(Personas.get_def("rookie").profile).skill, "rookie")
+	for id in Personas.DATA: assert_eq(AIProfiles.problemWith(Personas.get_def(id).profile), "", "%s drives a real spec" % id)
 
 func test_rookie_profile_is_imperfect_and_the_rest_unchanged():
 	var rookie := AIProfiles.resolve("rookie")

@@ -106,7 +106,10 @@ static func textWidth(value: String, fontSize: int, font: Font = BOLD) -> float:
 	return font.get_string_size(value, HORIZONTAL_ALIGNMENT_LEFT, -1, fontSize).x
 
 #the smoked, rimmed backing every HUD panel shares
-static func panel(item: CanvasItem, rect: Rect2, rim := Color(RIM, 0.55), radius := 12, fill := PANEL) -> void:
+#with no rim or radius given it takes the dashboard's (HudSkin): the car's rim colour and corner shape
+static func panel(item: CanvasItem, rect: Rect2, rim := Color(0, 0, 0, 0), radius := -1, fill := PANEL) -> void:
+	if rim.a == 0.0: rim = Color(HudSkin.current().rim, 0.55)
+	if radius < 0: radius = HudSkin.current().radius
 	var key = rim.to_html() + str(radius) + fill.to_html()
 	if not boxes.has(key):
 		var box = StyleBoxFlat.new()

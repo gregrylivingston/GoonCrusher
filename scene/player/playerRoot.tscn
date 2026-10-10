@@ -7,7 +7,6 @@
 [ext_resource type="Script" path="res://scene/player/hud/hud_region.gd" id="6_region"]
 [ext_resource type="Script" path="res://scene/player/hud/hud_payout.gd" id="7_payout"]
 [ext_resource type="Script" path="res://scene/player/hud/hud_dial.gd" id="8_dial"]
-[ext_resource type="Script" path="res://scene/player/hud/hud_systems.gd" id="9_systems"]
 [ext_resource type="Script" path="res://scene/player/hud/hud_objective.gd" id="10_objective"]
 [ext_resource type="PackedScene" uid="uid://c6ebkh5b1f4nr" path="res://scene/player/versionTracker.tscn" id="18_2aufu"]
 
@@ -230,28 +229,14 @@ layout_mode = 3
 anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
-offset_left = 32.0
-offset_top = -256.0
-offset_right = 268.0
-offset_bottom = -20.0
+offset_left = -24.0
+offset_top = -158.0
+offset_right = 212.0
+offset_bottom = 78.0
 grow_vertical = 0
 mouse_filter = 2
 script = ExtResource("8_dial")
 kind = 0
-
-[node name="Fuel" type="Control" parent="."]
-layout_mode = 3
-anchors_preset = 2
-anchor_top = 1.0
-anchor_bottom = 1.0
-offset_left = 276.0
-offset_top = -149.0
-offset_right = 404.0
-offset_bottom = -21.0
-grow_vertical = 0
-mouse_filter = 2
-script = ExtResource("8_dial")
-kind = 2
 flyerGroups = PackedStringArray("fuelui")
 
 [node name="Speedo" type="Control" parent="."]
@@ -261,48 +246,16 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -268.0
-offset_top = -256.0
-offset_right = -32.0
-offset_bottom = -20.0
+offset_left = -212.0
+offset_top = -158.0
+offset_right = 24.0
+offset_bottom = 78.0
 grow_horizontal = 0
 grow_vertical = 0
 mouse_filter = 2
 script = ExtResource("8_dial")
 kind = 1
-
-[node name="Hull" type="Control" parent="."]
-layout_mode = 3
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -404.0
-offset_top = -149.0
-offset_right = -276.0
-offset_bottom = -21.0
-grow_horizontal = 0
-grow_vertical = 0
-mouse_filter = 2
-script = ExtResource("8_dial")
-kind = 3
 flyerGroups = PackedStringArray("healthui", "armorui")
-
-[node name="Systems" type="Control" parent="."]
-layout_mode = 3
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -200.0
-offset_top = -44.0
-offset_right = 200.0
-grow_horizontal = 2
-grow_vertical = 0
-mouse_filter = 2
-script = ExtResource("9_systems")
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="."]
 libraries = {
