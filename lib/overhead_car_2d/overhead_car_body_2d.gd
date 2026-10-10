@@ -164,14 +164,15 @@ class CarInput:
 var gear: int = 0 #-1 R, 0 N, 1 up. An automatic's is only for show (the HUD and the engine note, from speed)
 
 #--- the gearbox (CarInfo.gears; docs/CAR_ART.md, "Gearbox") ---
-#A geared car has `gears` forward gears, each covering gearSpan px/s more than the one below. Low gears pull
+#A geared car has `gears` forward gears, each topping out at gearTop(g) px/s: long low gears, closer together
+#toward the top (GEAR_CURVE), so every gear lasts long enough to shift by hand. Low gears pull
 #harder; at the top of any gear but the last the rev limiter cuts the push, and a gear far too high for the
 #speed bogs. Changing between forward gears cuts the push for a moment (the clutch); a shift up near the
 #redline (from SHIFT_KICK_FROM of the gear) earns a short push instead. Who shifts: the player by hand
 #(ShiftUp / ShiftDown, down past N into R) unless the Automatic Gearbox setting is on; the AI and that
 #setting use autoGear. gearThrust() is read inside integrate(), so the AI's predictions follow it.
 var gears: int = 0          #forward gears; 0 is an automatic, as before gearboxes
-var gearSpan := 300.0       #px/s each gear covers (setupGearbox)
+var gearTops := PackedFloat32Array() #px/s at each gear's limiter, gear 1 first (setupGearbox)
 var shiftCut := 0           #ticks left of the clutch's cut after a shift between forward gears
 var shiftKick := 0          #ticks left of a well-timed shift's push
 signal shifted(gear: int, kicked: bool)
@@ -179,12 +180,14 @@ const GEAR_FOR_SPEED := 99 #CarInput.gear left unset: whichever gear suits the s
 const SHIFT_CUT_TICKS := 12     #a sloppy shift: a fifth of a second with no push
 const SHIFT_KICK_TICKS := 45    #a well-timed one: three quarters of a second...
 const SHIFT_KICK := 1.5         #...of half again the push
-const POWER_BAND := Vector2(0.8, 1.15) #the push at the bottom and at the top of each gear: keep the revs up
+const POWER_BAND := Vector2(0.75, 1.0) #the push at the bottom and at the top of each gear: keep the revs up
 const SHIFT_KICK_FROM := 0.88  #share of a gear's range from which a shift up earns the kick
-const LOW_GEAR_PULL := 0.6     #first gear pulls this much harder than the top gear
+const LOW_GEAR_PULL := 0.3     #first gear pulls this much harder than the top gear
 const BOG_BELOW := 0.55        #under this share of a gear's range (any gear but first) the engine bogs...
 const BOG_THRUST := 0.3        #...down to this share of its push at a standstill in second, halving each gear up (bogFloor)
-const TOP_GEAR_REACH := 0.6    #gearSpan = cruising top speed / (gears - this): the last gear runs past it
+const LAST_SHIFT := 0.8        #the second-to-last gear's limiter sits at this share of the cruising top speed...
+const GEAR_CURVE := 0.55       #gear g of n tops out at (g / (n - 1)) ^ this of the second-to-last gear's limit: under 1, low gears are longer
+const AUTO_SHOWN_GEARS := 5    #...and an automatic shows this many gears, spread the same way (the HUD and the engine note)
 const AUTO_UP := 0.97          #autoGear shifts up at this share of the gear's range...
 const AUTO_DOWN := 0.7         #...and down below this share of the gear under it
 const REVERSE_SHIFT_SPEED := 40.0 #R only goes in below this px/s forward; faster, the lever stops at N
@@ -1245,11 +1248,24 @@ func outOfFuel():
 	Root.levelRoot.endLevel(false, Root.endCondition.NOGAS)
 	
 ## Gear spacing from the car's cruising top speed (its engine, with upgrades, against drag on grass), once
-## the run's stats are in. Pickups and Nitro can push past it: the last gear has no limiter.
+## the run's stats are in: the second-to-last gear tops out at LAST_SHIFT of it, so the last gear is in reach
+## while the car is still gaining speed well. Pickups and Nitro can push past it: the last gear has no limiter.
+## An automatic gets the same spacing for the gears it shows.
 func setupGearbox() -> void:
-	if gears <= 0: return
-	gearSpan = cruiseTop(engine) / (gears - TOP_GEAR_REACH)
-	gear = 1
+	var n := shownGears()
+	var top := cruiseTop(engine)
+	gearTops.resize(n)
+	for g in range(1, n): gearTops[g - 1] = top * LAST_SHIFT * pow(float(g) / (n - 1), GEAR_CURVE)
+	gearTops[n - 1] = top
+	if gears > 0: gear = 1
+
+## The speed at gear `g`'s limiter (the last gear's is the cruising top speed, and it has no limiter)
+func gearTop(g: int) -> float:
+	return gearTops[clampi(g, 1, gearTops.size()) - 1] if not gearTops.is_empty() else 300.0 * maxi(g, 1)
+
+## The gears a car has (a manual) or shows (an automatic)
+func shownGears() -> int:
+	return gears if gears > 0 else AUTO_SHOWN_GEARS
 
 ## Top speed on grass for an engine stat: thrust against drag and ground friction
 func cruiseTop(engineStat: float) -> float:
@@ -1261,7 +1277,7 @@ func cruiseTop(engineStat: float) -> float:
 func gearThrust(g: int, speed: float) -> float:
 	if g < 0: return 1.0 #reverse keeps its own cap (CarHandling.reverseTop)
 	if g == 0 || shiftCut > 0: return 0.0
-	var r := speed / (gearSpan * g)
+	var r := speed / gearTop(g)
 	if g < gears && r >= 1.0: return 0.0 #the rev limiter
 	var thrust := 1.0 + LOW_GEAR_PULL * float(gears - g) / maxf(gears - 1, 1)
 	if g < gears: thrust *= lerpf(POWER_BAND.x, POWER_BAND.y, clampf(r, 0.0, 1.0)) #the top gear stays flat, so the top speed matches an automatic's
@@ -1271,7 +1287,10 @@ func gearThrust(g: int, speed: float) -> float:
 
 ## The gear that suits `speed`: the lowest one still under its limiter
 func bestGear(speed: float) -> int:
-	return clampi(int(speed / gearSpan) + 1, 1, gears)
+	var n := shownGears()
+	for g in range(1, n):
+		if speed < gearTop(g): return g
+	return n
 
 ## A gear's share of its push at a standstill: BOG_THRUST in second, half that in third and so on, so
 ## pulling away in fifth barely moves the car and first is by far the best start
@@ -1281,14 +1300,13 @@ static func bogFloor(g: int) -> float:
 ## How far through its gear the engine is: 0 at the bottom, 1 at the limiter (R and N count from gear 1's span)
 func rpmShare() -> float:
 	var speed := velocity.length()
-	if gear <= 0: return speed / gearSpan
-	return speed / (gearSpan * gear)
+	return speed / gearTop(gear)
 
 ## The gear autoGear would choose from `g` at `speed`: one step up near the limiter, one down when bogging
 func autoGear(g: int, speed: float) -> int:
 	if g < 1: return 1
-	if g < gears && speed >= gearSpan * g * AUTO_UP: return g + 1
-	if g > 1 && speed < gearSpan * (g - 1) * AUTO_DOWN: return g - 1
+	if g < gears && speed >= gearTop(g) * AUTO_UP: return g + 1
+	if g > 1 && speed < gearTop(g - 1) * AUTO_DOWN: return g - 1
 	return g
 
 ## Shifted by the player: a geared car with the Automatic Gearbox setting off, and no AI at the wheel

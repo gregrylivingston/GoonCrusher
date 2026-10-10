@@ -386,11 +386,11 @@ func topSpeed() -> float:
 
 func engineSound(speed: float, throttle: float, reverse: bool, delta: float) -> void:
 	var player: AudioStreamPlayer2D = car.engineAudio
-	var target: float = enginePitch(speed, throttle, reverse) if car.gears <= 0 else gearedPitch(car.gear, car.rpmShare(), throttle, car.gear < car.gears)
+	var target: float = gearedPitch(car.gear, car.rpmShare(), throttle, car.gear < car.gears)
 	enginePitchNow = lerpf(enginePitchNow, target, 1.0 - exp(-PITCH_EASE * delta))
 	player.pitch_scale = maxf(enginePitchNow, 0.1)
 	player.volume_db = engineBaseDb + (0.0 if absf(throttle) > 0.1 else ENGINE_COAST_DB)
-	var gear: int = gearOf(speed) if car.gears <= 0 else car.gear
+	var gear: int = car.gear
 	if gear > lastGear && gear > 1 && throttle > 0.5 && not reverse: pitchVel -= 0.35 * motion #the squat of a shift
 	lastGear = gear
 	backfireCooldown = maxf(0.0, backfireCooldown - delta)

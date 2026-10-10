@@ -826,7 +826,7 @@ func simulate(candidate: Dictionary, ticks: int) -> Dictionary:
 		input.braking = false
 		if held & ACCEL:
 			input.acceleration = 1.0
-			gear = car.autoGear(gear, vel.length()) if car.gears > 0 else int(vel.length()) / 300 + 1
+			gear = car.autoGear(gear, vel.length()) if car.gears > 0 else car.bestGear(vel.length())
 		steering = clampf(CONTROLLER.nextSteering(steering, (held & LEFT) != 0, (held & RIGHT) != 0, steerRate), -1.0, 1.0)
 		if held & BRAKE:
 			if vel.length() < 10 || gear == -1:

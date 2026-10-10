@@ -25,7 +25,7 @@ func _provide_input(_input):
 	if pressed("Accelerate"):
 		if car.gear < 1:car.setForwardCollisionMode(true)
 		_input.acceleration = 1.0
-		car.gear = int(car.velocity.length())/300 + 1 #the HUD tachometer shows car.gear
+		car.gear = car.bestGear(car.velocity.length()) #only for show (the tach, the engine note), spread over the car's top speed
 		_input.braking = false
 	else:
 		_input.acceleration = 0.0

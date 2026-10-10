@@ -13,7 +13,6 @@ const SWEEP := 135.0         #tach and speedometer run from -135 to +135 degrees
 const SMALL_SWEEP := 70.0    #fuel and hull run from -70 to +70
 const RPM_MAX := 8.0
 const REDLINE := 6.5
-const GEAR_SPAN := 300.0     #px/s per gear, as in playerCarController
 const CRUSH_SPEED := 100.0   #px/s; goons die when hit faster than this (overhead_car_body_2d)
 const LOW := 25.0            #fuel and hull blink under this
 const FACE := Color(0.047, 0.039, 0.035, 0.86)
@@ -72,9 +71,7 @@ func setSpeedScale() -> void:
 func targetValue(car) -> float:
 	match kind:
 		Kind.TACH:
-			var px = car.velocity.length()
-			if car.gears > 0: return gearedRpm(car)
-			return 0.8 if px < 5.0 else 1.1 + 6.6 * fmod(px, GEAR_SPAN) / GEAR_SPAN
+			return gearedRpm(car)
 		Kind.SPEEDO: return car.velocity.length() * unitsPerPx()
 		Kind.FUEL: return clampf(car.fuel, 0.0, 100.0)
 		_: return clampf(car.health, 0.0, 100.0)
@@ -101,7 +98,7 @@ func _process(delta: float) -> void:
 		shownKey = key
 		needle.queue_redraw()
 
-#a geared car's revs: through the gear it is in, bouncing off the limiter at the top of any gear but the
+#the revs: through the gear the car is in (an automatic's shown gear too), bouncing off the limiter at the top of any gear but the
 #last; in N the throttle revs it freely
 static func gearedRpm(car) -> float:
 	if car.gear == 0: return 0.8 + (5.6 if car._car_input.acceleration > 0.0 else 0.0)
