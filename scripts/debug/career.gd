@@ -23,7 +23,6 @@ class_name CareerPilot extends Node
 const MENU_SCENE := "res://scene/player/menu/main/main2.tscn"
 const GARAGE := 0 #main2.Screen
 const SETUP := 1
-const MODE_ORDER := Root.MODE_PATH #the medallions, left to right (main2.MODE_ORDER)
 const SOFTLOCK_MS := 10000
 
 var playtest: Node #the Playtest autoload, which records the runs (null under autopilot)
@@ -405,7 +404,7 @@ func openSetup() -> bool:
 	await activate(card.mainButton, "ui_accept")
 	return await waitFor(func(): return menu() != null && menu().screen == SETUP && not Transition.busy(), 5.0, "Drive to open run setup")
 
-## Run setup's road map: the region's tab (a click, or Z / C), then the stop (a click, or Q / E)
+## Run setup's road map: the region (the buttons at the road's ends, or Z / C), then the stop (a click, or Q / E)
 func selectLevel(index: int) -> bool:
 	var m := menu()
 	var data := SaveManager.playerData
@@ -415,8 +414,8 @@ func selectLevel(index: int) -> bool:
 		var before := data.selectedLevel
 		var at: int = before / Territories.STOPS
 		if at != region:
-			if useMouse(): await click(m.regionTabs[region])
-			else: await press("ui_region_next" if wrapi(region - at, 0, Territories.ORDER.size()) <= Territories.ORDER.size() / 2 else "ui_region_prev")
+			if useMouse(): await click(m.regionButtons[1 if region > at else 0]) #the buttons at the road's ends, a region at a time
+			else: await press("ui_region_next" if region > at else "ui_region_prev")
 		else:
 			var stop: Control = m.posters[index].get_node("catcher")
 			if useMouse() && stop.is_visible_in_tree(): await click(stop)
@@ -437,6 +436,10 @@ func openOptions() -> bool:
 
 func selectMode(mode: int) -> bool:
 	var m := menu()
+	var MODE_ORDER: Array = m.modeOrder() #the medallions, left to right: the selected level's modes
+	if mode not in MODE_ORDER:
+		issue("block", "%s isn't a mode of %s" % [Root.gameModeDescription[mode].name, Levels.ORDER[SaveManager.playerData.selectedLevel]])
+		return false
 	for step in MODE_ORDER.size() + 1:
 		if SaveManager.playerData.gameMode == mode: return true
 		var before := SaveManager.playerData.gameMode

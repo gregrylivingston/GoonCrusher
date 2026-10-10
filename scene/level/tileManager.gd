@@ -100,7 +100,7 @@ func buildWorld() -> void:
 	var def := levelDef()
 	var objective := ""
 	var offset := Vector2.ZERO
-	var mode: int = SaveManager.playerData.gameMode
+	var mode: int = Modes.running()
 	match mode:
 		Root.gameModes.SPRINT, Root.gameModes.MARATHON:
 			objective = "sprint"
@@ -148,7 +148,7 @@ static func lotRect(chunk: Vector2i) -> Rect2:
 #The generator placed the station (WorldGen: in the start's component, on clear cells) and measured the
 #route to it; every station is pinned.
 func placeStations() -> void:
-	match SaveManager.playerData.gameMode:
+	match Modes.running():
 		Root.gameModes.SPRINT, Root.gameModes.MARATHON, Root.gameModes.DEFENSE:
 			var chunk := worldMap.stationChunk
 			if chunk == WorldGen.NO_CHUNK: chunk = worldMap.findStationChunk(startChunkOf(), WorldGen.NO_CHUNK)

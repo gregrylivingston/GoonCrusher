@@ -70,4 +70,4 @@ func test_levels_and_modes_are_described_in_run_setup_not_here():
 	for i in Levels.count():
 		var def := Levels.defAt(i)
 		assert_true(def.barrier != "" && def.surfaces != "", "%s: barrier and surfaces text for Level Options" % def.id)
-	for mode in Root.MODE_PATH: assert_true(Root.MODE_RULES.get(mode, "") != "", "mode %d: a win rule for Level Options" % mode)
+	for mode in Root.gameModes.values(): assert_true(Root.MODE_RULES.get(mode, "") != "", "mode %d: a win rule for Level Options" % mode)

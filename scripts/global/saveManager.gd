@@ -4,7 +4,7 @@ extends Node
 #The demo and the full game share this file: load_data() merges each save with the current defaults
 #(migrate()) before anything reads it.
 
-const SAVE_VERSION := 11 #11: most tree roots start locked (keepOldStarters). 10: the gift box games joined the Casino tree (mergePrizeUnlocks). 6: the unlock system (Unlocks, meta.unlocks, meta.lifetime, car gem prices). 7: mode tiers (ModeTiers).
+const SAVE_VERSION := 12 #12: the mode menu (Modes: each level features three modes, any of which opens the next; openDueLevels). 11: most tree roots start locked (keepOldStarters). 10: the gift box games joined the Casino tree (mergePrizeUnlocks). 6: the unlock system (Unlocks, meta.unlocks, meta.lifetime, car gem prices). 7: mode tiers (ModeTiers).
 #8: the road atlas (30 levels in 6 regions, the Marathon road, meta.carClears). 9: the "audi" became the "supercar".
 #Saves older than FIRST_KEPT_VERSION start over (the author's call when the unlocks went in, and again for the road
 #atlas): the old file is copied beside the save as <name>.v<version>.tres, then a new save replaces it.
@@ -82,12 +82,19 @@ func migrate() -> bool:
 			if not car.records.has(key): car.records[key] = 0
 	#levels were not saved before version 1, so older saves get the defaults here
 	playerData.levels = mergeLevels(playerData.levels)
+	if playerData.saveVersion < 12: openDueLevels()
 	playerData.selectedCar = clampi(playerData.selectedCar, 0, playerData.cars.size() - 1)
 	playerData.selectedLevel = clampi(playerData.selectedLevel, 0, playerData.levels.size() - 1)
 	playerData.gameMode = clampi(playerData.gameMode, 0, Root.gameModes.size() - 1)
 	playerData.gameTier = ModeTiers.clampTier(playerData.gameTier)
 	playerData.saveVersion = SAVE_VERSION
 	return before != var_to_str([playerData.cars, playerData.levels, playerData.saveVersion, playerData.selectedCar, playerData.selectedLevel, playerData.gameMode, playerData.gameTier, playerData.meta])
+
+#version 12: the next level opens on any of a level's featured modes (it was the Marathon everywhere), so a save
+#that had already won one of them gets the level it is now owed
+func openDueLevels() -> void:
+	for i in playerData.levels.size() - 1:
+		if playerData.levels[i].unlocked && Root.opensNextLevel(playerData.levels[i]): playerData.levels[i + 1].unlocked = true
 
 #version 11: only the Fuel Can, the Coin and the Claw Crane start open. These were open on every older save
 #without being saved, so such a save keeps them
@@ -250,7 +257,7 @@ func selectPreviousCar():
 #A won run: the mode is beaten on the RUN's level on the run's tier (and the tiers below it), and the run's car
 #clears it there (meta.carClears). The run's level, mode and tier come from the level that ran (Level.runLevel,
 #runMode, tier; the menu's selection may have moved since), else the menu's selection (tests, tools). Once the
-#Marathon is won (on Medium at a region's finale: Root.opensNextLevel) the next level opens and the menu moves
+#one of the level's featured modes is won (on Medium at a region's finale: Root.opensNextLevel) the next level opens and the menu moves
 #to it; until then the menu offers this level's next unbeaten mode. Levels already open stay open.
 #Returns the best tier before this run, for the first-clear bonus (ModeTiers.firstClear).
 func currentLevelPassed(levelIndex := -1, mode := -1, tier := -1) -> int:
@@ -269,7 +276,7 @@ func currentLevelPassed(levelIndex := -1, mode := -1, tier := -1) -> int:
 			playerData.selectedLevel = next
 			playerData.gameMode = Root.FIRST_MODE
 	elif playerData.selectedLevel == levelIndex:
-		var unbeaten = Root.MODE_PATH.filter(func(m): return not level.gamemodeBeat.get(m, false) && Root.isModePlayable(level, m))
+		var unbeaten = Root.modePath(level).filter(func(m): return not level.gamemodeBeat.get(m, false) && Root.isModePlayable(level, m))
 		if not unbeaten.is_empty(): playerData.gameMode = unbeaten[0]
 	save_character_data()
 	return before
@@ -393,16 +400,6 @@ func getGameMode():
 func setGameMode(mode: int):
 	if playerData.gameMode == mode: return mode
 	playerData.gameMode = wrap( mode, 0 , Root.gameModes.size() )
-	save_character_data()
-	return playerData.gameMode
-
-func selectNextGameMode():
-	playerData.gameMode = wrap( playerData.gameMode + 1, 0 , Root.gameModes.size() )
-	save_character_data()
-	return playerData.gameMode
-
-func selectPreviousGameMode():
-	playerData.gameMode = wrap( playerData.gameMode  -1, 0 , Root.gameModes.size() )
 	save_character_data()
 	return playerData.gameMode
 

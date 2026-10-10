@@ -60,7 +60,7 @@ const DATA := {
 	#---------------------------------------------------------------- the original 14
 	"fuel": {"start":true, "name":"Fuel Can", "kind":K.SUPPLY, "rarity":R.UNCOMMON, "w":32, "icon":"fuel", "scene":"res://scene/powerup/fuel.tscn", "ui":"fuelui", "fac":{F.SCRAP:1.4},
 		"text":"Adds 20 fuel."},
-	"health": {"name":"Repair Kit", "kind":K.SUPPLY, "rarity":R.UNCOMMON, "w":15, "icon":"health", "scene":"res://scene/powerup/health.tscn", "ui":"healthui", "fac":{F.WILD:1.3},
+	"health": {"price":{"coin":250}, "name":"Repair Kit", "kind":K.SUPPLY, "rarity":R.UNCOMMON, "w":15, "icon":"health", "scene":"res://scene/powerup/health.tscn", "ui":"healthui", "fac":{F.WILD:1.3},
 		"text":"Patches up 20 hull."},
 	"coin": {"start":true, "name":"Coin", "kind":K.LOOT, "rarity":R.COMMON, "w":20, "icon":"coin", "scene":"res://scene/powerup/coin.tscn", "ui":"coinui",
 		"text":"+1 coin. Stars multiply what a run pays."},
@@ -377,7 +377,7 @@ static func ticks(id: String) -> int:
 ## Can this pickup turn up in `mode` (a Root.gameModes value)?
 static func allowedIn(id: String, mode: int) -> bool:
 	var modes: Array = def(id).get("modes", [])
-	return modes.is_empty() || mode in modes
+	return modes.is_empty() || Modes.plays(mode) in modes #a variant drops what its base mode does
 
 static func ids(kind := -1) -> Array:
 	var out := []

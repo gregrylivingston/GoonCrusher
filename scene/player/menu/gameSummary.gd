@@ -183,6 +183,8 @@ func buildGameSummary():
 	match gameMode: #one row for the mode's own goal
 		Root.gameModes.GOONPOCALYPSE: addRow("Score", str(level.runScore()), newBest.score)
 		Root.gameModes.MARATHON: addRow("Stations", "%d / %d" % [level.leg - (0 if reason == Root.endCondition.SUCCESS else 1), level.legs()], false)
+		Root.gameModes.BOUNTY:
+			if level.bounty: addRow("Marks", "%d / %d" % [level.bounty.caught, level.bounty.total], false)
 		Root.gameModes.DEFENSE:
 			if is_instance_valid(Root.station): addRow("Barrier", "%d%%" % ceili(100.0 * Root.station.barrier / Root.station.BARRIER_MAX), false)
 	addRow("Top speed", Settings.speed_text(car._highest_measured_speed), topSpeed > records.speed)

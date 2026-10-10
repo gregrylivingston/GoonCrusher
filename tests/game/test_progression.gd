@@ -15,27 +15,52 @@ func after_each():
 	SaveManager.playerData = original
 	SaveManager.dirty = false
 
-func level(unlocked: bool, beaten: Array) -> Dictionary:
+#a save entry for Prairie Run: Sprint, Countdown, then Marathon, Rally Stage and Cannonball (LevelDef.featured)
+func level(unlocked: bool, beaten: Array, id := "prairie") -> Dictionary:
 	var beat = {}
 	for mode in M.values(): beat[mode] = mode in beaten
-	return {"name": "test", "unlocked": unlocked, "gamemodeBeat": beat}
+	return {"id": id, "name": "test", "unlocked": unlocked, "gamemodeBeat": beat}
+
+func test_a_level_plays_the_staples_and_its_three_featured_modes():
+	assert_eq(Root.modePath(level(true, [])), [M.SPRINT, M.GOONCRUSHER, M.MARATHON, M.RALLY, M.CANNONBALL], "Sprint, Countdown, then its Crusher, Trial and Goon Cup mode")
+	assert_eq(Root.modePath(0), Root.modePath(level(true, [])), "by index too")
+	assert_eq(Root.featuredModes(0), [M.MARATHON, M.RALLY, M.CANNONBALL])
+	assert_eq(Root.modePath({"unlocked": true}), Root.STAPLE_MODES, "an entry with no id has only the staples")
+	for i in Levels.count():
+		var featured := Root.featuredModes(i)
+		assert_eq(featured.map(func(m): return Modes.category(m)), Modes.CATEGORY_ORDER, "%s: one Crusher, one Trial, one Goon Cup" % Levels.ORDER[i])
+		for mode in featured: assert_false(mode in Root.STAPLE_MODES, "%s: a staple isn't featured" % Levels.ORDER[i])
+		assert_eq(Levels.defAt(i).featured.size(), 3, "%s names its three" % Levels.ORDER[i])
+	for region in Territories.ORDER: #five Crusher modes, five stops: a region plays each once
+		var crushers := {}
+		for id in Territories.levelsOf(region): crushers[Root.featuredModes(Levels.indexOf(id))[0]] = true
+		assert_eq(crushers.size(), Territories.STOPS, "%s plays every Crusher mode" % region)
+
+func test_every_mode_has_its_words_and_an_icon():
+	assert_eq(Modes.IDS.size(), M.size(), "an id per mode")
+	for mode in M.values():
+		assert_eq(Modes.byId(Modes.idOf(mode)), mode)
+		assert_true(Modes.DATA.has(mode), "%s is in Modes.DATA" % M.find_key(mode))
+		assert_true(Root.gameModeDescription[mode].name != "" && Root.gameModeDescription[mode].description != "", "%s has a name and a description" % M.find_key(mode))
+		assert_true(Root.MODE_RULES.get(mode, "") != "", "%s says how it is won" % M.find_key(mode))
+		assert_true(Root.MODE_AVAILABLE.has(mode), "%s is switched on or off" % M.find_key(mode))
+		assert_true(HudTheme.MODE_ICONS.get(mode) is Texture2D, "%s has an icon" % M.find_key(mode))
+	assert_eq(Modes.plays(M.BLACKOUT), M.GOONCRUSHER, "Blackout runs on Countdown's rules")
+	assert_eq(Modes.plays(M.SPRINT), M.SPRINT)
+	assert_eq(Modes.title(M.RALLY), "Rally Stage")
 
 func test_unlock_chain():
-	assert_eq(Root.MODE_PATH, [M.SPRINT, M.GOONCRUSHER, M.MARATHON, M.GOONPOCALYPSE, M.DEFENSE], "the road, then the extras")
 	var fresh = level(true, [])
 	assert_true(Root.isModeUnlocked(fresh, M.SPRINT), "Sprint is open on an unlocked level")
-	for mode in [M.GOONCRUSHER, M.MARATHON, M.DEFENSE, M.GOONPOCALYPSE]:
+	for mode in [M.GOONCRUSHER, M.MARATHON, M.RALLY, M.CANNONBALL]:
 		assert_false(Root.isModeUnlocked(fresh, mode), "%s starts locked" % M.find_key(mode))
 	var sprint = level(true, [M.SPRINT])
 	assert_true(Root.isModeUnlocked(sprint, M.GOONCRUSHER), "Sprint beaten opens Countdown")
-	for mode in [M.MARATHON, M.GOONPOCALYPSE, M.DEFENSE]: assert_false(Root.isModeUnlocked(sprint, mode))
+	for mode in [M.MARATHON, M.RALLY, M.CANNONBALL]: assert_false(Root.isModeUnlocked(sprint, mode))
 	var both = level(true, [M.GOONCRUSHER, M.SPRINT])
-	assert_true(Root.isModeUnlocked(both, M.MARATHON), "Countdown beaten opens Marathon")
-	assert_false(Root.isModeUnlocked(both, M.GOONPOCALYPSE), "Goonpocalypse waits for the Marathon")
-	assert_false(Root.isModeUnlocked(both, M.DEFENSE), "so does Defense")
-	var road = level(true, [M.GOONCRUSHER, M.SPRINT, M.MARATHON])
-	for mode in M.values(): assert_true(Root.isModeUnlocked(road, mode), "%s is open once the Marathon is won" % M.find_key(mode))
-	assert_eq(Root.modeLockReason(both, M.DEFENSE), "Win Marathon Here To Unlock" if Root.isModeAvailable(M.DEFENSE) else Root.modeLockReason(both, M.DEFENSE))
+	for mode in Root.modePath(both): assert_true(Root.isModeUnlocked(both, mode), "%s is open once Countdown is won" % M.find_key(mode))
+	for mode in [M.DEFENSE, M.GOONPOCALYPSE, M.BLACKOUT]: assert_false(Root.isModeUnlocked(both, mode), "%s isn't a Prairie Run mode" % M.find_key(mode))
+	assert_eq(Root.modeLockReason(both, M.DEFENSE), "Not On This Level")
 	var countdownOnly = level(true, [M.GOONCRUSHER]) #a save from when Countdown came first
 	assert_true(Root.isModeUnlocked(countdownOnly, M.MARATHON))
 	assert_true(Root.isModeUnlocked(countdownOnly, M.GOONCRUSHER), "a beaten mode stays open")
@@ -43,25 +68,37 @@ func test_unlock_chain():
 	for mode in M.values(): assert_false(Root.isModeUnlocked(locked, mode), "nothing is open on a locked level")
 
 func test_missing_keys_read_as_not_beaten():
-	var old = {"unlocked": true, "gamemodeBeat": {M.GOONCRUSHER: true, M.SPRINT: true, M.MARATHON: true}} #no GOONPOCALYPSE key
-	assert_true(Root.isModeUnlocked(old, M.GOONPOCALYPSE))
-	assert_false(Root.isModeUnlocked({"unlocked": true}, M.GOONCRUSHER), "no gamemodeBeat at all")
+	var old = {"id": "prairie", "unlocked": true, "gamemodeBeat": {M.GOONCRUSHER: true, M.SPRINT: true}} #no key for the newer modes
+	assert_true(Root.isModeUnlocked(old, M.RALLY))
+	assert_false(Root.isModeUnlocked({"id": "prairie", "unlocked": true}, M.GOONCRUSHER), "no gamemodeBeat at all")
 	assert_false(Root.isModeUnlocked({}, M.SPRINT), "no unlocked key means locked")
 
 func test_unavailable_modes_cant_be_played_whatever_the_unlocks():
 	var all = level(true, M.values())
-	for mode in M.values():
+	for mode in Root.modePath(all):
 		assert_eq(Root.isModePlayable(all, mode), Root.isModeAvailable(mode), "%s playable only if available" % M.find_key(mode))
-	assert_true(Root.isModeAvailable(M.MARATHON), "Marathon is the demo's road too")
-	assert_eq(Root.isModeAvailable(M.DEFENSE), not Root.IS_DEMO, "Defense is full-game only")
-	assert_true(Root.isModeAvailable(M.GOONCRUSHER))
-	assert_true(Root.isModeAvailable(M.SPRINT))
-	assert_eq(Root.isModeAvailable(M.GOONPOCALYPSE), not Root.IS_DEMO, "Goonpocalypse is full-game only")
-	assert_eq(Root.modeLockReason(all, M.MARATHON), "Not Available In Demo" if Root.IS_DEMO else "")
+	for mode in [M.SPRINT, M.GOONCRUSHER, M.MARATHON, M.DEFENSE, M.GOONPOCALYPSE, M.BLACKOUT]: assert_true(Root.isModeAvailable(mode), "%s is built" % M.find_key(mode))
+	for mode in M.values():
+		if not Root.isModeAvailable(mode): assert_eq(Root.modeLockReason(all, mode), "Coming Soon", "%s says so" % M.find_key(mode))
 	assert_eq(Root.modeLockReason(all, M.SPRINT), "")
 	assert_eq(Root.modeLockReason(level(true, []), M.GOONCRUSHER), "Beat Sprint To Unlock")
 	assert_eq(Root.modeLockReason(level(true, [M.SPRINT]), M.MARATHON), "Beat Countdown To Unlock")
 	assert_false(Root.modeLockReason(level(true, [M.SPRINT]), M.GOONPOCALYPSE) == "", "a locked mode always has a reason")
+
+func test_any_featured_mode_opens_the_road():
+	for mode in Root.featuredModes(0):
+		var won = level(true, [M.SPRINT, M.GOONCRUSHER, mode])
+		assert_eq(Root.opensNextLevel(won), Root.isModeAvailable(mode), "%s opens the next level once it is built" % M.find_key(mode))
+	assert_false(Root.opensNextLevel(level(true, [M.SPRINT, M.GOONCRUSHER])), "the staples alone don't, where a featured mode can be played")
+	assert_eq(Root.roadModes(0), Root.featuredModes(0).filter(func(m): return Root.isModeAvailable(m)), "the road is the featured modes that are built")
+	Root.devAllModesAvailable = true
+	assert_eq(Root.roadModes(0), Root.featuredModes(0))
+	assert_eq(Root.roadText(level(true, [])), "Marathon, Rally Stage or Cannonball")
+	Root.devAllModesAvailable = false
+	#a level none of whose featured modes is built yet opens the road on Countdown
+	var none = {"unlocked": true, "gamemodeBeat": {M.SPRINT: true, M.GOONCRUSHER: true}}
+	assert_eq(Root.roadModes(none), [M.GOONCRUSHER])
+	assert_true(Root.opensNextLevel(none))
 
 func test_every_default_level_has_every_mode_key():
 	for lvl in PlayerData.new().levels:
@@ -78,28 +115,26 @@ func test_payout_is_coins_times_the_star_multiplier():
 	assert_eq(Root.multiplierText(16), "2.6")
 	assert_eq(Root.multiplierText(26), "3.0", "the multiplier stops at STAR_MULT_MAX")
 
-func test_the_marathon_opens_the_next_level():
+func test_a_featured_mode_opens_the_next_level():
 	var data = PlayerData.new()
 	var keep = SaveManager.playerData
 	SaveManager.playerData = data
-	data.selectedLevel = 2
-	data.levels[2].unlocked = true #reached by play
-	assert_false(data.levels[3].unlocked)
+	data.selectedLevel = 0 #Prairie Run: the Marathon is its Crusher mode
+	assert_false(data.levels[1].unlocked)
 	data.gameMode = M.SPRINT
 	SaveManager.currentLevelPassed()
-	assert_true(data.levels[2].gamemodeBeat[M.SPRINT], "the mode is marked beaten")
-	assert_false(data.levels[3].unlocked, "Sprint isn't enough")
+	assert_true(data.levels[0].gamemodeBeat[M.SPRINT], "the mode is marked beaten")
+	assert_false(data.levels[1].unlocked, "Sprint isn't enough")
 	assert_eq(data.gameMode, M.GOONCRUSHER, "the menu offers the mode it opened")
-	assert_eq(SaveManager.openLeft(2), "Win the Marathon here")
+	assert_eq(SaveManager.openLeft(0), "Win %s here" % Root.roadText(data.levels[0]))
 	SaveManager.currentLevelPassed()
-	assert_false(data.levels[3].unlocked, "nor Countdown")
-	assert_eq(data.gameMode, M.MARATHON, "then the road on")
+	assert_false(data.levels[1].unlocked, "nor Countdown")
+	assert_eq(data.gameMode, M.MARATHON, "then the first featured mode that can be played")
 	SaveManager.currentLevelPassed()
-	assert_true(data.levels[3].unlocked, "the Marathon opens the next level")
-	assert_eq(data.selectedLevel, 3, "and it is selected")
+	assert_true(data.levels[1].unlocked, "a featured mode opens the next level")
+	assert_eq(data.selectedLevel, 1, "and it is selected")
 	assert_eq(data.gameMode, M.SPRINT, "starting from Sprint")
-	assert_eq(SaveManager.openLeft(2), "")
-	assert_true(Root.isModePlayable(data.levels[2], M.GOONPOCALYPSE) || not Root.isModeAvailable(M.GOONPOCALYPSE), "Goonpocalypse is open behind it")
+	assert_eq(SaveManager.openLeft(0), "")
 	SaveManager.playerData = keep
 
 func test_a_finale_opens_the_next_region_on_medium():
@@ -109,14 +144,31 @@ func test_a_finale_opens_the_next_region_on_medium():
 	var finale := Levels.indexOf(&"moosewoods")
 	assert_true(Levels.defAt(finale).isFinale())
 	data.levels[finale].unlocked = true
-	SaveManager.currentLevelPassed(finale, M.MARATHON, ModeTiers.EASY)
-	assert_false(data.levels[finale + 1].unlocked, "an Easy Marathon doesn't open the next region")
-	assert_eq(Root.openLeftText(data.levels[finale]), "Win the Marathon on Medium here")
+	var road: int = Root.roadModes(finale)[0]
+	SaveManager.currentLevelPassed(finale, road, ModeTiers.EASY)
+	assert_false(data.levels[finale + 1].unlocked, "an Easy win doesn't open the next region")
+	assert_eq(Root.openLeftText(data.levels[finale]), "Win %s on Medium here" % Root.roadText(data.levels[finale]))
 	assert_true(Root.openRuleText(data.levels[finale]).contains("on Medium"))
-	SaveManager.currentLevelPassed(finale, M.MARATHON, ModeTiers.MEDIUM)
+	SaveManager.currentLevelPassed(finale, road, ModeTiers.MEDIUM)
 	assert_true(data.levels[finale + 1].unlocked, "Medium does")
 	assert_false(Root.isFinale(data.levels[0]), "Prairie Run is no finale")
 	assert_false(Root.openRuleText(data.levels[0]).contains("Medium"))
+	SaveManager.playerData = keep
+
+func test_an_older_save_gets_the_level_a_featured_win_now_opens():
+	var data = PlayerData.new()
+	var keep = SaveManager.playerData
+	SaveManager.playerData = data
+	data.saveVersion = 11
+	var bayou := Levels.indexOf(&"bayou") #the Marathon isn't featured here; Blackout is
+	data.levels[bayou].unlocked = true
+	for mode in [M.SPRINT, M.GOONCRUSHER, M.MARATHON]: SaveManager.passTier(data.levels[bayou], mode, ModeTiers.EASY)
+	SaveManager.migrate()
+	assert_false(data.levels[bayou + 1].unlocked, "an old Marathon win on a level that doesn't feature it opens nothing")
+	data.saveVersion = 11
+	SaveManager.passTier(data.levels[bayou], M.BLACKOUT, ModeTiers.EASY)
+	SaveManager.migrate()
+	assert_true(data.levels[bayou + 1].unlocked, "a featured win does")
 	SaveManager.playerData = keep
 
 #the run's own level, mode and tier are credited, not the menu's selection (which can move while the ticket waits)
@@ -140,9 +192,9 @@ func test_the_results_ticket_says_what_opens_next():
 	SaveManager.playerData = data
 	var summary = load("res://scene/player/menu/gameSummary.gd")
 	data.levels[2].gamemodeBeat[M.GOONCRUSHER] = true
-	assert_eq(summary.nextLevelNote(2, false), "Win the Marathon here to open %s" % data.levels[3].name)
+	assert_eq(summary.nextLevelNote(2, false), "Win %s here to open %s" % [Root.roadText(data.levels[2]), data.levels[3].name])
 	data.levels[2].gamemodeBeat[M.SPRINT] = true
-	data.levels[2].gamemodeBeat[M.MARATHON] = true
+	data.levels[2].gamemodeBeat[Root.roadModes(2)[0]] = true
 	data.levels[3].unlocked = true
 	assert_eq(summary.nextLevelNote(2, false), "%s is open" % data.levels[3].name)
 	assert_eq(summary.nextLevelNote(2, true), "", "nothing to say when it was already open")

@@ -15,7 +15,6 @@ class_name Personas extends RefCounted
 
 const G := Root.gameModes
 const U := Root.upgrade
-const MODE_PATH := Root.MODE_PATH #the order a player meets them
 
 const DATA := {
 	"rookie": {
@@ -218,24 +217,25 @@ static func playableRuns(data: PlayerData) -> Array:
 	var out := []
 	for i in data.levels.size():
 		if not data.levels[i].unlocked || (Root.IS_DEMO && i >= Root.DEMO_LEVEL_COUNT): continue
-		for mode in MODE_PATH:
+		for mode in Root.modePath(data.levels[i]): #the order a player meets them
 			if Root.isModePlayable(data.levels[i], mode): out.push_back({"level": i, "mode": mode})
 	return out
 
-## The obvious next run, heading for the Marathon on the furthest open level (Root.MODE_PATH puts the road,
-## Sprint, Countdown and Marathon, first): that level's first unbeaten mode; at a finale whose Marathon was won
-## below Medium, the Marathon again (chooseTier picks Medium); then Goonpocalypse and Defense where they are
-## open, furthest first; then a mode with a tier left to win (up to the persona's cap); else the furthest
-## level's Sprint. Modes this persona keeps losing there are skipped while another is left.
+## The obvious next run, heading down the road on the furthest open level (Root.modePath: Sprint, Countdown,
+## then its three featured modes, any of which opens the next level): that level's first unbeaten mode; at a
+## finale whose road mode was won below Medium, that mode again (chooseTier picks Medium); then the modes left
+## on earlier levels, furthest first; then a mode with a tier left to win (up to the persona's cap); else the
+## furthest level's Sprint. Modes this persona keeps losing there are skipped while another is left.
 static func pathRun(data: PlayerData, history: Array, persona: Dictionary) -> Dictionary:
 	var playable := playableRuns(data)
 	if playable.is_empty(): return {}
 	var furthest: int = playable.map(func(r): return r.level).max()
-	var road := {"level": furthest, "mode": Root.ROAD_MODE}
 	var top: Dictionary = data.levels[furthest]
-	if furthest + 1 < data.levels.size() && top.gamemodeBeat.get(Root.ROAD_MODE, false) && not Root.opensNextLevel(top) \
-			&& Root.isModePlayable(top, Root.ROAD_MODE) && not losingStreak(history, road, persona.retreat):
-		return road #a finale won on Easy: the next region waits for Medium
+	if furthest + 1 < data.levels.size() && not Root.opensNextLevel(top):
+		for mode in Root.roadModes(top):
+			var road := {"level": furthest, "mode": mode}
+			if top.gamemodeBeat.get(mode, false) && Root.isModePlayable(top, mode) && not losingStreak(history, road, persona.retreat):
+				return road #a finale won on Easy: the next region waits for Medium
 	for level in range(furthest, -1, -1):
 		var fallback := {}
 		for run in playable:

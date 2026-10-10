@@ -98,14 +98,19 @@ func test_locked_pickups_never_drop_or_get_offered():
 		assert_true(Unlocks.isPickupOpen(id) && id not in PickupDeal.NEVER, "an offer: %s" % id)
 		id = SlotSymbols.pick()
 		assert_true(id == SlotSymbols.STAR || Unlocks.isPickupOpen(id), "a reel: %s" % id)
-	assert_eq(Pickups.openLoadout(Pickups.LOADOUT).keys(), ["horn"], "run setup sells only the Air Horn")
+	assert_true(Pickups.openLoadout(Pickups.LOADOUT).is_empty() && Pickups.openLoadout(Pickups.BOOST_LOADOUT).is_empty(), "run setup sells no gadget or boost until one is unlocked")
+	Unlocks.grant("pickup:horn")
+	Unlocks.grant("pickup:nitro")
+	assert_eq(Pickups.openLoadout(Pickups.LOADOUT).keys(), ["horn"], "then only the Air Horn")
 	assert_eq(Pickups.openLoadout(Pickups.BOOST_LOADOUT).keys(), ["nitro"], "and Nitro")
 
 func test_fixed_rewards_fall_back_to_an_open_ancestor():
 	assert_eq(Pickups.openOr("coinstack"), "coin")
 	assert_eq(Pickups.openOr("strongbox"), "coin", "two steps up")
+	assert_eq(Pickups.openOr("crate"), "coin", "a tree whose root is still locked falls back to the Coin")
+	Unlocks.grant("pickup:engine")
 	assert_eq(Pickups.openOr("crate"), "engine")
-	assert_eq(Pickups.openOr("nitro"), "nitro", "an open pickup is itself")
+	assert_eq(Pickups.openOr("engine"), "engine", "an open pickup is itself")
 	var ids := WorldSkin.pickupIds()
 	assert_eq(ids.purse, "coin", "a chunk's purse is a coin until the Purse is unlocked")
 	assert_eq(ids.fuel, "fuel")
@@ -127,6 +132,7 @@ func test_buying_spends_the_bank_and_shows_the_children():
 	assert_eq(data().gem, 0)
 
 func test_play_conditions_open_on_the_results_ticket():
+	for id in ["horn", "engine", "speedtrap"]: Unlocks.grant("pickup:" + id) #the roots above them, bought
 	assert_false(Unlocks.isPickupOpen("flare"))
 	Unlocks.countRun(false, Root.gameModes.GOONCRUSHER, 1, 0)
 	assert_eq(Unlocks.lifetime("nights"), 1)

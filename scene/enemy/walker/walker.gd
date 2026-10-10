@@ -103,7 +103,7 @@ func _ready():
 	cooldown = randf() * 1.5
 	sprite.play(&"walk")
 	sprite.frame = randi() % 8
-	if SaveManager.playerData.gameMode == Root.gameModes.DEFENSE && is_instance_valid(Root.station) && def.get("verb", &"lunge") not in SIEGE_SKIP:
+	if Modes.running() == Root.gameModes.DEFENSE && is_instance_valid(Root.station) && def.get("verb", &"lunge") not in SIEGE_SKIP:
 		siegeTarget = Root.station
 	tramples = def.get("tramples", false)
 	dazes = def.get("daze", false) && Walker.levelRule("dazeHeavies")
@@ -344,6 +344,8 @@ func bounceCar(car: Node2D, dmg: float, system: String, label := "BLOCKED") -> v
 	if f: f.label(global_position, label)
 	if Settings.has_method("vibrate") && car.get("isPlayer"): Settings.vibrate(0.5, 0.3, 0.12)
 
+var deathCause: StringName = &"" #what destroy() was called with; &"" when it left without dying (swept, vanished)
+
 func isDying() -> bool:
 	return dead
 
@@ -361,8 +363,9 @@ func vanish() -> void:
 func destroy(cause: StringName = &"crush"):
 	if dead: return
 	dead = true
+	deathCause = cause
 	myMode = mode.DEAD
-	verb.onDeath(cause)
+	if verb: verb.onDeath(cause) #a goon killed the tick it spawned has no verb yet
 	var f = fx()
 	if f && cause != &"drown":
 		f.crushed(self, cause, killedFrom)

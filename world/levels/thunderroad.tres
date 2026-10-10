@@ -9,6 +9,7 @@ displayName = "Thunder Road"
 poster = "res://world/art/posters/thunderroad.png"
 region = &"raiders"
 stop = 5
+featured = Array[StringName]([&"blackout", &"hotlap", &"knockout"])
 order = 14
 blurb = "The convoy finale: billboards to topple onto the road and explosive tanks on the verge. Plowbosses can't be hit head-on."
 barrier = "Rock outcrops off the road; jersey barriers and pile-ups on it."

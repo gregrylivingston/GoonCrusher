@@ -69,10 +69,10 @@ Run flows 1 to 6 under each of these:
   - Unlock flashes.
 - The mouse wheel scrolls the carousels.
 - Run setup's road map:
-  - Clicking a region tab opens that region at its furthest open stop; Z/C (LT/RT) step regions, and a held trigger steps once.
-  - Clicking another stop selects it; Q/E (LB/RB) and A/D walk the road and cross into the next region at either end; 1-5 pick a stop.
+  - The buttons at the road's ends (and Z/C, LT/RT) open the region before and after at its furthest open stop; a held trigger steps once. A locked region's button shows a lock and shakes; the first region has no button before it, the last none after. Each button shows its key for the device in use.
+  - Clicking another stop selects it; Q/E (LB/RB) and A/D walk the road and cross into the next region at either end when it is open; 1-5 pick a stop.
   - Each stop shows five mode glyphs: grey when open, faint when locked, bronze, silver or gold for the best medal by any car. The bar under a glyph is the current driver's own medal; change driver in the garage and the bars change.
-  - The panel under the road follows the highlighted stop; a locked stop says what opens it and SELECT reads LOCKED (pressing it shakes the button).
+  - On a locked stop SELECT reads LOCKED, with what opens it underneath.
   - SELECT, Accept or a click on the selected stop opens Level Options; Back returns to the road map, and Back again to the garage.
 - Level Options:
   - A/D change mode, W/S change tier, and both work by clicking a medallion or a tier card. It opens on the mode and tier last used.

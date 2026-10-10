@@ -51,6 +51,7 @@ const SHALLOWS_COST = 0.3     #per second of a plan with a wheel in shallows: sl
 const WADE_COST = 0.8         #per second of a plan with a wheel in wading depth: slower, slipperier, a little damage
 const WET_CORNER_SHARE = 0.3  #per second of a plan with a corner (not the centre) over deep water, this share of LETHAL_COST
 
+const BOUNTY_VALUE := 6.0 #Bounty Hunt: the mark is worth this many times a plain goon
 const GOAL_RADIUS = {"pickup":70.0, "goon":80.0, "station":300.0, "roam":600.0, "patrol":600.0, "escape":300.0}
 const PURSE_QUANTITY = 10.0   #purse.tscn is a "coin" powerup with this quantity
 const FUEL_NEAR_PX = 3000.0   #a known fuel pickup this close lifts the fuel-saving cap
@@ -170,7 +171,7 @@ static func attach(target: OverheadCarBody2D, options: Dictionary = {}) -> AIDri
 	return driver
 
 func _ready():
-	mode = SaveManager.playerData.gameMode
+	mode = Modes.running() #the run rules: Blackout drives as Countdown
 	var area = car.get_node_or_null("carBodyArea/CollisionShape2D")
 	if area && area.shape is RectangleShape2D: halfSize = area.shape.size / 2.0
 	bodyShape.size = halfSize * 2.0 + Vector2(20, 24)
@@ -291,6 +292,7 @@ func updateGoal() -> void:
 			for other in near:
 				if other != g && other.global_position.distance_squared_to(g.global_position) < 350.0 * 350.0: neighbours += 1
 			var value = goonValue(neighbours, p.goonValue, p.goonPackBonus)
+			if g.has_meta(&"bounty"): value *= BOUNTY_VALUE
 			if isRaceMode(): value *= p.raceGoonScale
 			elif mode == Root.gameModes.DEFENSE:
 				value = defenseValue(g, value)
@@ -360,6 +362,10 @@ func objectiveGoal() -> Dictionary:
 				if legDistance < 0.0: legDistance = raceDistance
 				var pressure = clampf(1.0 - raceSlack() / 60.0, 0.0, 1.0)
 				return {"kind":"station", "pos":target, "value":40.0 + 160.0 * pressure, "key":"station"}
+		Root.gameModes.BOUNTY: #out to the mark; close up, the goon options take over (BOUNTY_VALUE)
+			var hunt = Root.levelRoot.get("bounty")
+			var at: Vector2 = hunt.markPosition() if hunt else Vector2.INF
+			if at != Vector2.INF && car.global_position.distance_to(at) > GOAL_RADIUS.patrol: return {"kind":"patrol", "pos":at, "value":60.0, "key":"mark"}
 		Root.gameModes.DEFENSE:
 			if is_instance_valid(Root.station):
 				if roamPoint == Vector2.INF || tick > roamUntil || car.global_position.distance_to(roamPoint) < GOAL_RADIUS.patrol:

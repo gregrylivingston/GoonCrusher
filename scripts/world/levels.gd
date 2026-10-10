@@ -82,7 +82,7 @@ static func defaultEntries() -> Array:
 	return out
 
 ## A new save's entry for the level at `index`. Only the first starts unlocked; the rest open by play
-## (Marathon beaten on the level before, on Medium at a finale: Root.opensNextLevel). Saves keep whatever
+## (a featured mode won on the level before, on Medium at a finale: Root.opensNextLevel). Saves keep whatever
 ## they had already opened.
 static func defaultEntry(index: int) -> Dictionary:
 	var id: StringName = ORDER[index]

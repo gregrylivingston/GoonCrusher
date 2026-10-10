@@ -177,8 +177,10 @@ func _process(delta: float) -> void:
 	elif deepDrawn: busy = true #one more redraw clears it
 	PickupWorld.beacons = PickupWorld.beacons.filter(func(b): return is_instance_valid(b[0]) && not b[0].is_queued_for_deletion())
 	var stationOn: bool = is_instance_valid(Root.station) && is_instance_valid(Root.playerCar) && Root.station.active
-	if busy || not PickupWorld.beacons.is_empty() || stationOn || stationShown: queue_redraw()
+	var hunting: bool = is_instance_valid(Root.levelRoot) && Root.levelRoot.get("bounty") != null #Bounty Hunt points at its mark
+	if busy || not PickupWorld.beacons.is_empty() || stationOn || stationShown || hunting || markShown: queue_redraw()
 	stationShown = stationOn
+	markShown = hunting
 
 func _draw() -> void:
 	var w := size.x
@@ -194,6 +196,7 @@ func _draw() -> void:
 		HudTheme.text(self, Vector2(34.0, 190.0 + (fontSize - 26) * 0.5), combo.text, fontSize, Color(col, a), HORIZONTAL_ALIGNMENT_LEFT, 7, Color(HudTheme.DEEP, a))
 	drawBeacons()
 	if stationShown: drawStation()
+	drawMark()
 	if flashT > 0.0: drawShockwave(1.0 - flashT / SHOCK_SECONDS)
 	deepDrawn = deepShown > 0.0
 	if deepDrawn: drawDeepWater(deepShown)
@@ -304,6 +307,7 @@ func drawShockwave(k: float) -> void:
 const HURRY_SECONDS := 15.0
 const STATION_PILL := Vector2(200.0, 56.0)
 var stationShown := false
+var markShown := false
 
 func drawStation() -> void:
 	if not is_instance_valid(Root.station) || not is_instance_valid(Root.playerCar): return
@@ -316,17 +320,29 @@ func drawStation() -> void:
 	var calm := Settings.reduce_motion()
 	var shake := Vector2.ZERO
 	if hit > 0.0 && not calm: shake = Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)) * 6.0 * hit
-	var drive: Vector2 = Root.station.drivewayPoint()
-	var target: Vector2 = get_viewport().get_canvas_transform() * drive
-	if Rect2(Vector2.ZERO, size).grow(-40.0).has_point(target):
-		var fade := clampf((Root.playerCar.global_position.distance_to(drive) - 400.0) / 600.0, 0.0, 1.0)
-		if fade > 0.0 || hit > 0.0: drawStationTag(target + shake, label, Color(col, maxf(fade, hit)), icon)
-		return
 	#a race's last seconds: the rim pulses (and the pill swells, unless Reduce Motion)
 	var pulse := 0.0
 	var level = Root.levelRoot
 	if not defense && is_instance_valid(level) && level.seconds > 0.0 && level.seconds <= HURRY_SECONDS:
 		pulse = 1.0 if Settings.get_value("access/reduce_flashing") else 0.5 + 0.5 * sin(Time.get_ticks_msec() * 0.012)
+	drawPointer(Root.station.drivewayPoint(), label, col, icon, pulse, shake, hit)
+
+#Bounty Hunt: the same pointer at the mark, in red
+func drawMark() -> void:
+	var level = Root.levelRoot
+	if not is_instance_valid(level) || level.get("bounty") == null || not is_instance_valid(Root.playerCar): return
+	var at: Vector2 = level.bounty.markPosition()
+	if at != Vector2.INF: drawPointer(at, "MARK", HudTheme.BAD, HudTheme.MODE_ICONS.get(Root.gameModes.BOUNTY), 0.0, Vector2.ZERO, 0.0)
+
+#a world point as the HUD shows it: on screen a tag over it that fades as the car arrives (`hit` keeps it lit);
+#off screen a pill on the screen edge with an arrow, the label and the distance
+func drawPointer(point: Vector2, label: String, col: Color, icon: Texture2D, pulse: float, shake: Vector2, hit: float) -> void:
+	var calm := Settings.reduce_motion()
+	var target: Vector2 = get_viewport().get_canvas_transform() * point
+	if Rect2(Vector2.ZERO, size).grow(-40.0).has_point(target):
+		var fade := clampf((Root.playerCar.global_position.distance_to(point) - 400.0) / 600.0, 0.0, 1.0)
+		if fade > 0.0 || hit > 0.0: drawStationTag(target + shake, label, Color(col, maxf(fade, hit)), icon)
+		return
 	var inner := Rect2(Vector2(EDGE + 60.0, 190.0), size - Vector2((EDGE + 60.0) * 2.0, 190.0 + 300.0)) #clear of the top panels and the dials
 	var centre := inner.get_center()
 	var dir: Vector2 = (target - centre).normalized()
@@ -343,7 +359,7 @@ func drawStation() -> void:
 	HudTheme.panel(self, rect, col.lerp(Color.WHITE, pulse * 0.8), 26)
 	if icon: HudTheme.icon(self, icon, rect.position + Vector2(32.0, rect.size.y * 0.5), 36.0)
 	HudTheme.text(self, rect.position + Vector2(60.0, 23.0), label, 16, HudTheme.TEXT)
-	HudTheme.text(self, rect.position + Vector2(60.0, 46.0), HudTheme.stationDistance(), 20, col, HORIZONTAL_ALIGNMENT_LEFT, 5)
+	HudTheme.text(self, rect.position + Vector2(60.0, 46.0), HudTheme.distanceTo(point), 20, col, HORIZONTAL_ALIGNMENT_LEFT, 5)
 
 #on screen: a small pill over the driveway with a notch pointing down at it
 func drawStationTag(at: Vector2, label: String, col: Color, icon: Texture2D) -> void:

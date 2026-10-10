@@ -9,6 +9,7 @@ displayName = "Rust City"
 poster = "res://world/art/posters/city.png"
 region = &"sprawl"
 stop = 1
+featured = Array[StringName]([&"bounty", &"cones", &"pursuit"])
 order = 20
 blurb = "A street grid between buildings, parks, lots and canals. Bridges cross the canals where the streets do."
 barrier = "Building blocks wall every street, and canals cut across the grid, bridged at each street."

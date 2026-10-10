@@ -400,11 +400,11 @@ func setGoons(unlock: bool) -> String:
 	for id in Goons.DATA: crushed[String(id)] = maxi(crushed.get(String(id), 0), 1)
 	return "Goons: all %d revealed in the Goonopedia" % Goons.DATA.size()
 
-#Countdown, Sprint and Marathon beaten opens every mode (Root.isModeUnlocked); locking clears every beaten mode
+#Sprint and Countdown beaten opens every mode a level plays (Root.isModeUnlocked); locking clears every beaten mode
 func setModes(unlock: bool) -> String:
 	for level in SaveManager.playerData.levels:
 		if unlock:
-			for mode in [Root.gameModes.GOONCRUSHER, Root.gameModes.SPRINT, Root.gameModes.MARATHON]: SaveManager.passTier(level, mode, ModeTiers.EASY)
+			for mode in Root.STAPLE_MODES: SaveManager.passTier(level, mode, ModeTiers.EASY)
 		else:
 			for mode in level.gamemodeBeat: level.gamemodeBeat[mode] = false
 			if level.get("tiers") is Dictionary:
@@ -412,7 +412,7 @@ func setModes(unlock: bool) -> String:
 	if not unlock: return "Modes: every beaten mode cleared"
 	var comingSoon = Root.MODE_AVAILABLE.keys().filter(func(m): return not Root.MODE_AVAILABLE[m])
 	var note = "" if Root.devAllModesAvailable || comingSoon.is_empty() else " (Coming Soon modes stay hidden; see unfinished)"
-	return "Modes: Countdown, Sprint and Marathon marked beaten on every level, so every mode is open on unlocked levels" + note
+	return "Modes: Sprint and Countdown marked beaten on every level, so every mode is open on unlocked levels" + note
 
 #every level of a region (1-6 or its Territories id) and every level before it; locking closes the region's
 #levels (the first level of the game stays open)
@@ -510,7 +510,7 @@ func cmdCars(args: Array) -> String:
 	var levels: Array = range(data.levels.size()) if args[0] == "all" else [data.selectedLevel]
 	var count := 0
 	for i in levels:
-		for mode in Root.MODE_PATH:
+		for mode in Root.modePath(i):
 			var best := ModeTiers.best(data.levels[i], mode)
 			if best == ModeTiers.NONE: continue
 			for car in who:

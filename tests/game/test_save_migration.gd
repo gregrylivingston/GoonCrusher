@@ -57,7 +57,7 @@ func test_migrate_adds_and_updates_without_losing_progress():
 	assert_eq(data.saveVersion, SaveManager.SAVE_VERSION)
 
 func test_saves_from_before_the_road_atlas_start_over():
-	assert_eq(SaveManager.SAVE_VERSION, 10)
+	assert_eq(SaveManager.SAVE_VERSION, 12)
 	assert_eq(SaveManager.FIRST_KEPT_VERSION, 8)
 	for version in [0, 4, 5, 6, 7]:
 		var data = PlayerData.new()
@@ -145,10 +145,11 @@ func test_old_prize_game_unlocks_become_casino_pickups():
 	assert_eq(data.meta.unlocks.keys().filter(func(k): return str(k).begins_with("prize:")).size(), 0, "no old ids left")
 	assert_true(data.meta.unlocks.has("pickup:shuffle") && data.meta.unlocks.has("pickup:purse"), "bought games and pickups are kept")
 	assert_true(data.meta.unlocks.has("pickup:slotmachine"), "the Slot Machine stays open")
+	for id in SaveManager.OLD_STARTERS: assert_true(data.meta.unlocks.has("pickup:" + id), "version 11: %s, open on every older save, stays open" % id)
 	var fresh = PlayerData.new()
 	SaveManager.playerData = fresh
 	SaveManager.migrate()
-	assert_false(fresh.meta.unlocks.has("pickup:slotmachine"), "a new save starts without it")
+	assert_true(fresh.meta.unlocks.is_empty(), "a new save starts with only the Fuel Can, the Coin and the Claw Crane")
 
 #version 9 renamed the "audi" to the "supercar": its garage entry, unlock and clears follow it, in place
 func test_a_renamed_car_keeps_its_progress():

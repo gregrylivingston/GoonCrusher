@@ -9,6 +9,7 @@ displayName = "Manhole Mile"
 poster = "res://world/art/posters/manhole.png"
 region = &"sprawl"
 stop = 2
+featured = Array[StringName]([&"blackout", &"flatout", &"circuit"])
 order = 21
 blurb = "Manholes on every block and canals between them. Rat Packs pour out of the ground."
 barrier = "Building blocks wall every street, and canals cut across the grid, bridged at each street."

@@ -30,6 +30,9 @@ const DEFENSE_SPAWN_SCALE := 2.5
 const SLACK := [0.0, 1.15, 1.0, 0.85]
 const SPRINT_DISTANCE := [2.5, 2.875, 3.25, 3.75]
 const LEGS := [0, 2, 3, 4]
+## Bounty Hunt: marks to crush, and the clock's seconds for each one (the drive out to it and the fight)
+const BOUNTY_MARKS := [0, 3, 4, 5]
+const BOUNTY_MARK_SECONDS := [0.0, 80.0, 70.0, 60.0]
 
 ## The world, by tier: escalation speed x, giant odds + (percent points), spawn interval x
 const ESCALATION := [1.0, 1.0, 1.3, 1.6]
@@ -40,7 +43,8 @@ const SPAWN_TIMER := [1.0, 1.0, 0.9, 0.8]
 ## added to the run's coins before the star multiplier (Root.computePayout). Racing and Defense earn few coins
 ## on the way, so they get more a minute. Paid by the goal's length, not per run: a flat bonus made a one-minute
 ## Hard Sprint pay 1,575 coins a minute (career playtests, 2026-10-08).
-const WIN_RATE := {M.GOONCRUSHER: 100.0, M.SPRINT: 150.0, M.MARATHON: 120.0, M.DEFENSE: 150.0, M.GOONPOCALYPSE: 60.0}
+## A mode with no rate of its own pays its base mode's (Modes.plays); a mode that isn't built yet pays nothing.
+const WIN_RATE := {M.GOONCRUSHER: 100.0, M.SPRINT: 150.0, M.MARATHON: 120.0, M.DEFENSE: 150.0, M.GOONPOCALYPSE: 60.0, M.BLACKOUT: 120.0, M.BOUNTY: 130.0}
 const TIER_BONUS := [0.0, 1.0, 1.3, 1.6]
 const LEVEL_STEP := 0.085 #each level after the first adds this share of the base: the 30th pays about 3.5x the first
 ## Paid once, the first time a tier is beaten on a mode and level (not multiplied by stars)
@@ -57,7 +61,7 @@ static func levelFactor(levelIndex: int) -> float:
 static func winBonus(mode: int, tier: int, levelIndex: int) -> int:
 	var def := Levels.defAt(levelIndex)
 	var seconds := goalSeconds(mode, tier, def.seconds if def else 300.0, def.sprintSlack if def else 1.3)
-	return roundi(WIN_RATE.get(mode, 0.0) * seconds / 60.0 * TIER_BONUS[clampTier(tier)] * levelFactor(levelIndex))
+	return roundi(WIN_RATE.get(mode, WIN_RATE.get(Modes.plays(mode), 0.0)) * seconds / 60.0 * TIER_BONUS[clampTier(tier)] * levelFactor(levelIndex))
 
 ## How long the tier's goal runs, for its pay: the clock or target, or for the races the clock the planned
 ## drive gets (Level.SPRINT_DRIVE_FRACTION of the level's seconds at REFERENCE_SPEED, x the slack; x Sprint's
@@ -65,13 +69,19 @@ static func winBonus(mode: int, tier: int, levelIndex: int) -> int:
 static func goalSeconds(mode: int, tier: int, levelSeconds: float, sprintSlack: float) -> float:
 	tier = clampTier(tier)
 	var sprint: float = levelSeconds * Level.SPRINT_DRIVE_FRACTION * sprintSlack * SLACK[tier]
-	match mode:
+	match Modes.plays(mode):
 		M.GOONCRUSHER: return levelSeconds * CLOCK[tier]
 		M.GOONPOCALYPSE: return levelSeconds * POCALYPSE_TARGET[tier]
 		M.DEFENSE: return DEFENSE_HOLD[tier]
+		M.BOUNTY: return bountySeconds(tier)
 		M.SPRINT: return sprint * SPRINT_DISTANCE[tier]
 		M.MARATHON: return sprint * SPRINT_DISTANCE[NONE] * LEGS[tier]
 	return 0.0
+
+## Bounty Hunt's clock: its marks x the seconds each gets
+static func bountySeconds(tier: int) -> float:
+	tier = clampTier(tier)
+	return BOUNTY_MARKS[tier] * BOUNTY_MARK_SECONDS[tier]
 
 ## {coin, gem} for beating `tier` when `before` was the best so far: every tier newly credited pays once
 static func firstClear(before: int, tier: int, levelIndex: int) -> Dictionary:
@@ -109,6 +119,8 @@ static func clears(levels: Array, tier: int) -> int:
 static func goalText(mode: int, tier: int, levelSeconds: float) -> String:
 	tier = clampTier(tier)
 	match mode:
+		M.BOUNTY: return "Crush %d marks in %s" % [BOUNTY_MARKS[tier], clock(bountySeconds(tier))]
+		M.BLACKOUT: return "Survive %s of night" % clock(levelSeconds * CLOCK[tier])
 		M.GOONCRUSHER: return "Survive %s" % clock(levelSeconds * CLOCK[tier])
 		M.GOONPOCALYPSE: return "Survive %s" % clock(levelSeconds * POCALYPSE_TARGET[tier])
 		M.DEFENSE: return "Hold the station for %s" % clock(DEFENSE_HOLD[tier])

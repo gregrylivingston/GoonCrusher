@@ -9,6 +9,7 @@ displayName = "Block Party"
 poster = "res://world/art/posters/blockparty.png"
 region = &"sprawl"
 stop = 5
+featured = Array[StringName]([&"goonpocalypse", &"drift", &"derby"])
 order = 24
 blurb = "Wide plazas and the most goons in the game. Combo heaven, and the crowd is the threat."
 barrier = "Building blocks wall every street, and canals cut across the grid, bridged at each street."

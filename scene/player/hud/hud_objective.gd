@@ -23,6 +23,7 @@ func _process(_delta: float) -> void:
 		Root.gameModes.GOONPOCALYPSE: key = [level.runScore(), level.targetReached, int(level.pocalypseTarget() - level.seconds)]
 		Root.gameModes.SPRINT: key = [HudTheme.stationDistance()]
 		Root.gameModes.MARATHON: key = [level.leg, HudTheme.stationDistance()]
+		Root.gameModes.BOUNTY: key = [level.bounty.caught, HudTheme.distanceTo(level.bounty.markPosition())] if level.bounty else [0]
 		Root.gameModes.DEFENSE: key = [int(Root.station.barrier) if is_instance_valid(Root.station) else -1, snappedf(HudTheme.stationHit(), 0.1)]
 		_: key = [mode]
 	if key != shownKey:
@@ -52,10 +53,14 @@ func _draw() -> void:
 		Root.gameModes.MARATHON:
 			HudTheme.text(self, Vector2(42, 28), "STATION %d OF %d" % [level.leg, level.legs()], 18)
 			HudTheme.text(self, Vector2(size.x - 14, 28), HudTheme.stationDistance(), 17, HudTheme.STATION, HORIZONTAL_ALIGNMENT_RIGHT)
+		Root.gameModes.BOUNTY:
+			var hunt: BountyHunt = level.bounty
+			HudTheme.text(self, Vector2(42, 28), "MARK %d OF %d" % [mini(hunt.caught + 1, hunt.total), hunt.total] if hunt else "FIND THE MARK", 18)
+			if hunt: HudTheme.text(self, Vector2(size.x - 14, 28), HudTheme.distanceTo(hunt.markPosition()), 17, HudTheme.BAD, HORIZONTAL_ALIGNMENT_RIGHT)
 		Root.gameModes.DEFENSE:
 			var fraction = Root.station.barrier / Root.station.BARRIER_MAX if is_instance_valid(Root.station) else 1.0
 			HudTheme.text(self, Vector2(42, 28), "BASE", 17, HudTheme.TEXT.lerp(HudTheme.BAD, hit))
 			HudTheme.bar(self, Rect2(96, 15, size.x - 164, 12), fraction, HudTheme.conditionColor(fraction * 100.0))
 			HudTheme.text(self, Vector2(size.x - 14, 28), "%d%%" % ceili(fraction * 100.0), 17, HudTheme.conditionColor(fraction * 100.0), HORIZONTAL_ALIGNMENT_RIGHT)
 		_:
-			HudTheme.text(self, Vector2(mid + 12, 28), "SURVIVE THE CLOCK", 17, HudTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER)
+			HudTheme.text(self, Vector2(mid + 12, 28), "SURVIVE THE NIGHT" if mode == Root.gameModes.BLACKOUT else "SURVIVE THE CLOCK", 17, HudTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER)

@@ -9,6 +9,7 @@ displayName = "Timberline Camp"
 poster = "res://world/art/posters/timberline.png"
 region = &"hunting"
 stop = 3
+featured = Array[StringName]([&"defense", &"smash", &"pursuit"])
 order = 17
 blurb = "Snowy pines, cabins, snowcats and log piles. Herds come through the trees."
 barrier = "A creek with deep pools winds through the meadow. Ford it where the shallows are."

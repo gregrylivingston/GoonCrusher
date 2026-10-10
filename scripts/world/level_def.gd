@@ -15,6 +15,9 @@ class_name LevelDef extends Resource
 @export var region: StringName = &"wilds"
 @export_range(1, 5) var stop: int = 1
 @export var order: int = 0
+## Its three featured modes, as Modes.IDS: a Crusher, a Trial and a Goon Cup mode, in that order. They open
+## behind Sprint and Countdown, and winning any one opens the next level (Root.modePath, Modes.featured).
+@export var featured: Array[StringName] = []
 ## One line for run setup: the level's signature barrier and surfaces.
 @export_multiline var blurb: String
 ## Level Options' BARRIER line: what walls the level in and how to get through

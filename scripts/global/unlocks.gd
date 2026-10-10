@@ -28,7 +28,7 @@ static var prices := {} #pickup id -> its price, built once (Pickups.DATA is con
 ## the games straight under its root, whatever their rarity, so gift boxes have more than one game (inDemo).
 const DEMO_MAX_RARITY := Pickups.R.UNCOMMON
 ## Condition words for modes, in Root.gameModes order.
-const MODE_KEYS := ["countdown", "sprint", "marathon", "defense", "goonpocalypse"]
+const MODE_KEYS := Modes.IDS
 const FACTION_KEYS := ["wild", "tribe", "scrap"]
 const TIER_KEYS := ["", "easy", "medium", "hard"] #ModeTiers, for "clears:<tier>:<n>"
 

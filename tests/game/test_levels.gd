@@ -192,7 +192,6 @@ func test_region_uses_the_selected_level():
 
 func test_demo_is_the_first_two_regions():
 	assert_eq(Root.DEMO_LEVEL_COUNT, 10)
-	assert_eq(Root.DEMO_MODES, [Root.gameModes.SPRINT, Root.gameModes.GOONCRUSHER, Root.gameModes.MARATHON])
 	for i in Levels.count(): assert_eq(i < Root.DEMO_LEVEL_COUNT, Territories.isDemo(Levels.defAt(i).region), "%s: in the demo by its region" % Levels.ORDER[i])
 	var levels = PlayerData.new().levels
 	for i in levels.size(): assert_eq(levels[i].unlocked, i == 0, "%s: only the first is open in a new save" % levels[i].id)

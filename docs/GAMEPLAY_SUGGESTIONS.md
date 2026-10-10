@@ -46,12 +46,15 @@ Suggestions to discuss, not a spec; the author runs gameplay as a separate proje
 - **Region 1 lane A (code, untuned)** Wild instincts (docs/GOONS.md "Wild instincts"): the Critter Chain (kills set up within 900 px of the car join the Crush Combo, +10% XP per extra source up to +40%, a gold CRITTER CHAIN readout), charges and lunges break what they can beat, heavies trample fodder, one `seeks` table (piles, hives, crates, carcasses, roosts), herds that graze and stampede when spooked, the Bullmoose daze (`LevelDef.rules.dazeHeavies`), Snapper bubbles, slime that slows goons, Quill friendly fire, Rattlers sunning on red rocks, Buzzard roosts in dead trees, MPH smash tags with first-meeting hints (docs/HUD.md), the Golden Jackalope, and `lureFor` without a per-goon copy.
 - **Water rework (2026-10-09, untuned)** Deep water no longer wrecks the car on contact: a wading band (WADE, the outer 224 px of deep water) is slow, slippery and costs 2 health a second; deep water costs 33 a second with heavy drag, so a flat-out sedan crosses 300 px for about 16 and drowns in about 3 s parked; goons still drown in deep water and wade at 60% speed; a sinking look, a DEEP WATER warning (docs/WORLD.md "Water").
 
+- **Package 18, step 1 (2026-10-09)** The mode menu's structure: `Modes` (19 modes with ids, categories, words and per-mode rules), three featured modes per level in `LevelDef.featured`, the new unlock chain and road rule (`Root.modePath`, `roadModes`, `opensNextLevel`), run setup's medallions by level, 14 new mode icons, save version 12, and the first new mode, **Blackout** (Countdown at permanent night; `Modes.plays`). The other 13 new modes show "Coming Soon".
+
 ## Work packages, in order
 
 Package numbers are IDs (other docs link to them); the table is in the suggested order.
 
 | # | Package | Items | Effort | Needs |
 |---|---|---|---|---|
+| 18 | The mode menu: 14 new modes in three categories, three featured per level | below | L × several | — |
 | 17 | Road atlas: road map select, car strip art, new landscapes, level content | P3 to P7 below | L + art + play time | — |
 | 1 | Balance pass (absorbs the package 2 follow-ups and packages 6, 12 and 16) | B-1 to B-7 below | L + play time | — |
 | 13 | Driving juice (what's left) | feel pass, benchmark | S + play time | — |
@@ -66,6 +69,19 @@ Package numbers are IDs (other docs link to them); the table is in the suggested
 | 10 | Post-launch | Tier 3 | — | 7 |
 
 Re-run the crowd benchmarks (S3, S4 in `PERFORMANCE.md`) after packages 1, 3, 9, 13 and 14.
+
+### Package 18: The mode menu
+The plan, with every mode's pitch and the level sheet: https://claude.ai/artifact/CBinsKaUkcXvu3S3V2YMbk (the author approved it on 2026-10-09). Every level plays Sprint, then Countdown, then one Crusher, one Trial and one Goon Cup mode picked for it; winning any one of the three opens the next level. The pool is 17 modes: Marathon, Goonpocalypse, Defense, Blackout, Bounty Hunt (Crusher); Rally Stage, Flat Out, Hot Lap, Drift Trial, Cone Course, Smash Run (Trials: no goons); Cannonball, Circuit Race, Demolition Derby, Knockout, Keep the Cup, Pursuit (Goon Cup: the garage's other drivers as rivals). `Modes.DATA` holds each mode's design rules (fixed or random map, pickups, gift boxes, record type, goons); the level sheet is `LevelDef.featured`.
+
+Built: step 1 ("Done" above). Left, in order:
+1. **Bounty Hunt** (M): marked goons, one per district, each tougher; the pointer shows the next. Completes the Crusher column, so no level opens on the Countdown fallback any more (`Root.roadModes`).
+2. **Courses and the record book** (L): a fixed world seed per level and mode plus a checkpoint list (stage, strip, loop, arena), gates and start lines from props, spawners off, placed pickups (never rolled on a fixed map), a timing HUD with splits, ghosts from recorded inputs, records per level, mode and car with a course version (`meta.records`). Then **Rally Stage, Cone Course, Drift Trial, Smash Run**.
+3. **Rival cars** (L): the other drivers in their own cars on `AIDriver`, with no camera, HUD, rewards or spawners; car-to-car contact and damage, positions, name plates. Measure the AI's cost with five rivals on the HD 620 first. Then **Cannonball, Pursuit, Keep the Cup** (light goons in Cannonball and Pursuit).
+4. **Loops and arenas:** **Hot Lap, Circuit Race, Knockout, Demolition Derby**. Closed tracks in a generated world are the least certain piece.
+5. **Flat Out** (M-L): 60 to 90 s flat out to the right down a wide strip: a launch light, lanes of different ground, the level's own hazards, one fork, a stop box; placed nitro. Not in the demo's levels.
+6. Goonopedia entries, first-run hints, AI goal rules for every mode (the career harness can't measure a mode it can't play), then target times, rival strength and pay in the pacing pass.
+
+Notes: the demo plays every mode its ten levels feature (16 of the 17; `Root.DEMO_MODES` is gone). Blackout is untuned: it runs Countdown's clock and spawns with night from the start, pays 120 coins a minute, and has no night spawn table yet (T2-11). Run setup's category ring and the 14 icons haven't been looked at by eye.
 
 ### Package 17: Road atlas (what's left)
 P1 (registry, classes, progression), P2 (landscapes and regions as data) and P4's data side (car clears, rewards, the results ticket rows, the `cars` console command) are built ("Done" above). Left, in the plan's order:
@@ -209,7 +225,8 @@ Built (2026-10-08, "Done" above; docs/WORLD.md "Props and decor", "Interactive p
 
 ## Decisions already made
 
-- All five modes are playable; the demo offers Countdown and Sprint.
+- The mode menu (2026-10-09): Sprint and Countdown on every level, then one Crusher, one Trial and one Goon Cup mode per level, any of which opens the next level. Approved: Blackout, Bounty Hunt, Rally Stage, Flat Out, Hot Lap, Drift Trial, Cone Course, Smash Run, Cannonball, Circuit Race, Demolition Derby, Knockout, Keep the Cup, Pursuit. Rejected: Convoy, Turf War, Big Game, Last Drop, Crush-Off, Odd Jobs, Goon Ball, stunt and airtime modes, Hill Climb. Rivals are the garage's own drivers. Fixed or random maps, pickups and gift boxes are decided per mode (`Modes.DATA`); pickups in a mode are only ones useful there. Records are kept per car. Cannonball and Pursuit have light goons. The demo shows the modes its two regions feature. Goonpocalypse and Defense stay; a mode can be retired later.
+- All five original modes are playable.
 - Unlocks: Countdown → Sprint → Goonpocalypse; Marathon and Defense need Sprint. A new save opens only the first level; each next one opens once 3 modes are beaten on the one before (Countdown, Sprint and one of the rest; 2 in the demo), in act 2 one of them on Medium and in act 3 two. Most pickups start locked, one tree per kind (package 12).
 - Sprint's clock ends the run; Marathon adds one Sprint clock per station.
 - Payout is (coins + a win bonus) × (1 + 0.1 × stars), the multiplier capped at ×3 (20 stars). The win bonus pays by the minute of the goal and grows with the tier and level (package 1, B-2).

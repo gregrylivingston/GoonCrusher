@@ -95,7 +95,7 @@ static func aiWantsUse(car) -> bool:
 		"emp": return sm.goonsNear(pos, 700.0).any(func(g): return g.def.get("faction", -1) == Goons.faction.SCRAP)
 		"mine", "oilslick": return sm.goonsNear(pos, 450.0).any(func(g): return car.to_local(g.global_position).x < 0.0)
 		"flare": return sm.isNight
-		"bait": return SaveManager.playerData.gameMode == Root.gameModes.DEFENSE || sm.goonsNear(pos, 600.0).size() >= 6
+		"bait": return Modes.running() == Root.gameModes.DEFENSE || sm.goonsNear(pos, 600.0).size() >= 6
 		"hubcap", "airstrike": return sm.goonsNear(pos, 800.0).size() >= 3
 		"pocket": return car.fuel < 25.0 || car.health < 30.0
 		"nuke": return sm.goonsNear(pos, 1100.0).size() >= 12

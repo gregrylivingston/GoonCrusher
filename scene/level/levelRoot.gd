@@ -135,17 +135,19 @@ func _ready():
 	Root.playerRoot = get_tree().get_nodes_in_group("playerGameUi")[0]
 	Root.playerRoot.updateStats()
 	
-	match SaveManager.playerData.gameMode:
+	match Modes.running(): #the run rules: a variant plays its base mode's (Modes.plays)
 		Root.gameModes.GOONCRUSHER:createCountdownSpawners()
 		Root.gameModes.GOONPOCALYPSE:createCountdownSpawners()
+		Root.gameModes.BOUNTY:createCountdownSpawners()
 		Root.gameModes.MARATHON:createSprintSpawners()
 		Root.gameModes.SPRINT:createSprintSpawners()
 		#DEFENSE: its spawners ring the station, which exists only once the world is ready
 
-	match SaveManager.playerData.gameMode: #the tier's clock; Sprint and Marathon set theirs from the route
+	match Modes.running(): #the tier's clock; Sprint and Marathon set theirs from the route
 		Root.gameModes.GOONPOCALYPSE: seconds = 0
 		Root.gameModes.GOONCRUSHER: seconds = levelSeconds * ModeTiers.CLOCK[tier]
 		Root.gameModes.DEFENSE: seconds = ModeTiers.DEFENSE_HOLD[tier]
+		Root.gameModes.BOUNTY: seconds = ModeTiers.bountySeconds(tier)
 
 	#the TileManager waits at least one frame before placing stations, so this is never too late
 	var tileManager = $TileManager
@@ -153,15 +155,21 @@ func _ready():
 	if tileManager.isWorldReady: onWorldReady()
 	else: tileManager.world_ready.connect(onWorldReady)
 
+var bounty: BountyHunt #Bounty Hunt's marks; null in every other mode
+
 #the map is built and every station is placed and in the tree
 func onWorldReady() -> void:
-	match SaveManager.playerData.gameMode:
+	match Modes.running():
 		Root.gameModes.SPRINT, Root.gameModes.MARATHON:
 			if is_instance_valid(Root.station):
 				seconds = sprintSeconds(driveLength(routeLengthTo(Root.station.global_position)), levelSeconds, slack())
 				legHeading = (Root.station.global_position - startPosition).angle()
 		Root.gameModes.DEFENSE:
 			if is_instance_valid(Root.station): setupDefense()
+		Root.gameModes.BOUNTY:
+			bounty = BountyHunt.new()
+			add_child(bounty)
+			bounty.begin()
 	clockReady = true
 	get_tree().call_group("runTimer", "onClockReady")
 	revealRun()
@@ -273,6 +281,7 @@ static func sprintSeconds(distancePx: float, levelSeconds: float, slackOverride:
 #the races are lost. A wrecked car (exploding, its NOHEALTH ending still pending) has not survived. A car
 #that only ran out of fuel has, matching the rolling finish in station.gd.
 static func timeUpCondition(gameMode: int, wrecked: bool = false) -> int:
+	gameMode = Modes.plays(gameMode)
 	if gameMode != Root.gameModes.GOONCRUSHER && gameMode != Root.gameModes.DEFENSE: return Root.endCondition.NOTIME
 	return Root.endCondition.NOHEALTH if wrecked else Root.endCondition.SUCCESS
 
@@ -317,7 +326,7 @@ func runScore() -> int:
 
 #Timer.gd calls this every frame the clock runs
 func onClockTick() -> void:
-	if targetReached || SaveManager.playerData.gameMode != Root.gameModes.GOONPOCALYPSE || hasEnded: return
+	if targetReached || Modes.running() != Root.gameModes.GOONPOCALYPSE || hasEnded: return
 	if seconds >= pocalypseTarget():
 		targetReached = true #the mode is beaten however the run ends (endLevel)
 		if is_instance_valid(Root.spawnManager): Root.spawnManager.overtime() #from here it only gets worse
@@ -333,6 +342,8 @@ const BRIEF_RUNS := 3
 ## [goal, how] for the run's mode, banner-ready (upper case)
 func briefing() -> Array[String]:
 	match SaveManager.playerData.gameMode:
+		Root.gameModes.BOUNTY: return ["CRUSH %d MARKS" % ModeTiers.BOUNTY_MARKS[tier], "FOLLOW THE RED ARROW TO EACH ONE"]
+		Root.gameModes.BLACKOUT: return ["SURVIVE THE NIGHT", "ONLY YOUR HEADLIGHTS SHOW THE GOONS"]
 		Root.gameModes.SPRINT: return ["REACH THE STATION", "FOLLOW THE BLUE ARROW BEFORE TIME RUNS OUT"]
 		Root.gameModes.MARATHON: return ["REACH %d STATIONS" % legs(), "EACH STATION REFUELS YOU AND ADDS TIME"]
 		Root.gameModes.DEFENSE: return ["HOLD THE BASE", "CRUSH GOONS BEFORE THEY REACH THE PUMPS"]

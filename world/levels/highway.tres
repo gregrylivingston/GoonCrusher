@@ -9,6 +9,7 @@ displayName = "Route Nowhere"
 poster = "res://world/art/posters/highway.png"
 region = &"raiders"
 stop = 1
+featured = Array[StringName]([&"marathon", &"smash", &"cannonball"])
 order = 10
 blurb = "A highway runs east with branch roads off it. Asphalt is fast; oil slicks, jersey barriers and pile-ups are not."
 barrier = "Rock outcrops off the road; jersey barriers and pile-ups on it."

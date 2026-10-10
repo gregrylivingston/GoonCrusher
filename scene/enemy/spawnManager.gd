@@ -73,9 +73,10 @@ func despawnSweep() -> void:
 	var carPosition = Root.playerCar.global_position
 	var view = get_viewport().get_canvas_transform().affine_inverse() * get_viewport().get_visible_rect()
 	#Defense: goons marching on the station are kept however far the car has driven
-	var base = Root.station.global_position if SaveManager.playerData.gameMode == Root.gameModes.DEFENSE && is_instance_valid(Root.station) else Vector2.INF
+	var base = Root.station.global_position if Modes.running() == Root.gameModes.DEFENSE && is_instance_valid(Root.station) else Vector2.INF
 	for goon in goons.duplicate():
 		if not is_instance_valid(goon) || goon.is_queued_for_deletion() || view.has_point(goon.global_position): continue
+		if goon.has_meta(&"bounty"): continue #Bounty Hunt's mark waits wherever it is (BountyHunt)
 		#far behind, or wedged against a barrier it will never get through (Walker.isStuck), once off screen
 		if goon.global_position.distance_to(carPosition) > DESPAWN_DISTANCE || goon.isStuck():
 			if base != Vector2.INF && goon.global_position.distance_to(base) < DESPAWN_DISTANCE: continue #Defense keeps its siege
@@ -97,7 +98,7 @@ func _ready():
 	Root.spawnManager = self
 	GoonBody.setPhysicsView(physicsView)
 	get_tree().node_added.connect(onNodeAdded)
-	if SaveManager.playerData.gameMode == Root.gameModes.GOONPOCALYPSE:
+	if Modes.running() == Root.gameModes.GOONPOCALYPSE:
 		escalationSpeed *= POCALYPSE_ESCALATION
 		spawnFloor = POCALYPSE_SPAWN_FLOOR
 	fx = GoonFx.new()

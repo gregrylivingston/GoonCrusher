@@ -133,7 +133,7 @@ func _on_driveway_body_entered(body):
 	if not body.has_method("getIsPlayer"): return
 	if not active || not is_instance_valid(Root.levelRoot) || Root.levelRoot.hasEnded || body.health <= 0 || body.isWrecked: return
 	PickupEffects.onStationReached(body, self) #a Delivery's star and Barricade Kits, before the run can end
-	match SaveManager.playerData.gameMode:
+	match Modes.running():
 		Root.gameModes.SPRINT: Root.levelRoot.endLevel(true, Root.endCondition.SUCCESS)
 		Root.gameModes.MARATHON: Root.levelRoot.stationReached.call_deferred(self) #it places the next station: not inside a physics callback
 		_:
