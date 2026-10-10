@@ -19,6 +19,7 @@ script = ExtResource("12_ancu4")
 carId = "supercar"
 traits = Array[StringName]([&"downforce", &"low_clearance"])
 gears = 7
+redline = 8.5
 weight = 30
 charName = "Snake"
 profilePic = ExtResource("11_ivnrd")

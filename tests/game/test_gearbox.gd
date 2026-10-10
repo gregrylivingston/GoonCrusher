@@ -189,21 +189,32 @@ func test_every_car_climbs_through_its_gears():
 func test_the_tach_drops_on_a_shift_and_climbs_through_the_gear():
 	for id in ALL:
 		var c := car(id)
+		var red := c.redline
 		c._car_input.acceleration = 1.0
 		for g in range(1, c.shownGears() + 1):
 			c.gear = g
-			c.velocity = Vector2.RIGHT * c.gearTop(g) * 0.995
+			c.velocity = Vector2.RIGHT * lerpf(c.gearTop(g - 1) if g > 1 else 0.0, c.gearTop(g), 0.99)
 			var high := HudDial.gearedRpm(c)
-			assert_true(high > 5.5 && high < HudDial.REDLINE, "%s gear %d reads %.1f at the top of the gear" % [id, g, high])
+			assert_true(high > red * 0.95 && high <= red, "%s gear %d reads %.1f at the top of the gear (redline %.1f)" % [id, g, high, red])
 			if g == 1: continue
 			c.velocity = Vector2.RIGHT * c.gearTop(g - 1)
 			var low := HudDial.gearedRpm(c)
-			assert_true(low > 1.5 && low < 2.5, "%s gear %d reads %.1f just after the shift up" % [id, g, low])
+			assert_almost_eq(low, red * HudDial.RPM_AFTER_SHIFT, 0.05, "%s gear %d reads %.1f just after the shift up" % [id, g, low])
 			c.velocity = Vector2.RIGHT * lerpf(c.gearTop(g - 1), c.gearTop(g), 0.5)
-			assert_true(HudDial.gearedRpm(c) < 5.0, "%s gear %d is out of the red halfway through" % [id, g])
+			assert_true(HudDial.gearedRpm(c) < red * 0.75, "%s gear %d is well under the red halfway through" % [id, g])
 		c.gear = c.shownGears()
 		c.velocity = Vector2.RIGHT * c.gearTop(c.gear) * 1.3 #Nitro past the last gear
-		assert_true(HudDial.gearedRpm(c) <= HudDial.RPM_LIMIT, "%s never reads past the limit" % id)
+		assert_true(HudDial.gearedRpm(c) <= HudDial.rpmMaxFor(red), "%s never reads past its dial" % id)
+
+#each car's tach is its own: trucks rev low, sports cars high
+func test_every_car_has_its_own_redline():
+	var red := {}
+	for id in ALL: red[id] = car(id).redline
+	assert_gt(red.supercar, red.racer - 0.01, "the supercar revs highest")
+	assert_gt(red.racer, red.police, "sports cars above the saloons")
+	assert_gt(red.sedan, red.pickup, "trucks below the saloons")
+	assert_gt(red.ambulance, red.semi, "and the semi lowest of all")
+	for id in ALL: assert_gt(HudDial.rpmMaxFor(red[id]), red[id] + 0.5, "%s's dial has room past its redline" % id)
 
 func test_the_kick_needs_the_top_of_the_band():
 	var c := car("supercar")

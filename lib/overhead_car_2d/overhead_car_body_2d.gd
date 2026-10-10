@@ -172,6 +172,7 @@ var gear: int = 0 #-1 R, 0 N, 1 up. An automatic's is only for show (the HUD and
 #(ShiftUp / ShiftDown, down past N into R) unless the Automatic Gearbox setting is on; the AI and that
 #setting use autoGear. gearThrust() is read inside integrate(), so the AI's predictions follow it.
 var gears: int = 0          #forward gears; 0 is an automatic, as before gearboxes
+var redline := 6.5          #thousands of rpm, from `info`: the tach's scale and red zone (HudDial)
 var gearTops := PackedFloat32Array() #px/s at each gear's limiter, gear 1 first (setupGearbox)
 var shiftCut := 0           #ticks left of the clutch's cut after a shift between forward gears
 var shiftKick := 0          #ticks left of a well-timed shift's push

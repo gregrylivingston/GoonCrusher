@@ -11,12 +11,12 @@ enum Kind { TACH, SPEEDO, FUEL, HULL }
 
 const SWEEP := 135.0         #tach and speedometer run from -135 to +135 degrees
 const SMALL_SWEEP := 70.0    #fuel and hull run from -70 to +70
-const RPM_MAX := 8.0
-const REDLINE := 6.5
-const RPM_IDLE := 0.8
-const RPM_AFTER_SHIFT := 2.0 #where the needle lands after a shift up...
-const RPM_SHIFT := 6.0       #...and where it is when the gear runs out, just under the red
-const RPM_LIMIT := 7.2       #on the limiter
+#The tach's scale is the car's own (CarInfo.redline, thousands of rpm: a semi's 2.4, a sedan's 6, a supercar's 8.5)
+const RPM_IDLE := 0.8        #idle, or RPM_IDLE_SHARE of a low redline
+const RPM_IDLE_SHARE := 0.2
+const RPM_AFTER_SHIFT := 0.35 #share of the redline the needle lands at after a shift up; it reaches the redline as the gear runs out
+const RPM_OVER := 0.5        #past the redline on the limiter
+const RPM_HEADROOM := 0.75   #the dial runs to the next whole thousand past redline + this
 const CRUSH_SPEED := 100.0   #px/s; goons die when hit faster than this (overhead_car_body_2d)
 const LOW := 25.0            #fuel and hull blink under this
 const FACE := Color(0.047, 0.039, 0.035, 0.86)
@@ -29,6 +29,8 @@ var needle := Control.new()
 var center: Vector2
 var radius: float
 var unit: float              #face design units: a big dial is 118 across its radius, a small one 64
+var rpmMax := 8.0            #the tach's scale and red zone, set from the car (setRevScale)
+var redline := 6.5
 var speedMax := 160          #speedometer scale in the player's units, set from the car's top speed
 var scaled := false
 var shownValue := 0.0        #the needle eases toward its target, frame-rate independent
@@ -86,6 +88,9 @@ func _process(delta: float) -> void:
 	if kind == Kind.SPEEDO && not scaled:
 		scaled = true
 		setSpeedScale()
+	if kind == Kind.TACH && not scaled:
+		scaled = true
+		setRevScale(car)
 	var target = targetValue(car)
 	shownValue = lerpf(shownValue, target, 1.0 - exp(-delta * 14.0))
 	var key: Array
@@ -105,17 +110,32 @@ func _process(delta: float) -> void:
 #the revs: through the gear the car is in (an automatic's shown gear too), bouncing off the limiter at the top of any gear but the
 #last; in N the throttle revs it freely
 static func gearedRpm(car) -> float:
-	if car.gear == 0: return 0.8 + (5.6 if car._car_input.acceleration > 0.0 else 0.0)
-	if car.velocity.length() < 5.0 && car._car_input.acceleration == 0.0: return RPM_IDLE
+	var red: float = car.redline
+	var idle := idleRpm(red)
+	if car.gear == 0: return lerpf(idle, red, 0.85) if car._car_input.acceleration > 0.0 else idle
+	if car.velocity.length() < 5.0 && car._car_input.acceleration == 0.0: return idle
 	var share: float = car.revShare()
-	#a shift up lands at RPM_AFTER_SHIFT and the revs climb to RPM_SHIFT at the gear's limit; first gear climbs
-	#from idle. Too high a gear sags toward idle; on the limiter the needle sits in the red and stutters.
-	var low := RPM_AFTER_SHIFT if car.gear > 1 else RPM_IDLE + 0.3
-	var rpm := maxf(lerpf(low, RPM_SHIFT, minf(share, 1.0)), RPM_IDLE)
+	#a shift up lands at RPM_AFTER_SHIFT of the redline and the revs climb to the redline at the gear's limit; first
+	#gear climbs from idle. Too high a gear sags toward idle; on the limiter the needle sits in the red and stutters.
+	var low := red * RPM_AFTER_SHIFT if car.gear > 1 else idle * 1.3
+	var rpm := maxf(lerpf(low, red, minf(share, 1.0)), idle)
 	if share >= 1.0:
-		rpm = minf(RPM_SHIFT + (share - 1.0) * 8.0, RPM_LIMIT)
-		if car.gear < car.gears && car._car_input.acceleration > 0.0: rpm -= 0.3 * absf(sin(Time.get_ticks_msec() * 0.03))
+		rpm = minf(red + (share - 1.0) * red, red + RPM_OVER)
+		if car.gear < car.gears && car._car_input.acceleration > 0.0: rpm -= red * 0.04 * absf(sin(Time.get_ticks_msec() * 0.03))
 	return rpm
+
+static func idleRpm(red: float) -> float:
+	return minf(RPM_IDLE, red * RPM_IDLE_SHARE)
+
+## The tach's top number for a redline: the next whole thousand past redline + RPM_HEADROOM
+static func rpmMaxFor(red: float) -> float:
+	return ceilf(red + RPM_HEADROOM)
+
+func setRevScale(car) -> void:
+	redline = car.redline
+	rpmMax = rpmMaxFor(redline)
+	queue_redraw()
+	needle.queue_redraw()
 
 #the gear's colour: gold, green near the redline of a gear you shift by hand (time to shift up), white
 #while a well-timed shift's push lasts
@@ -145,7 +165,7 @@ func _draw() -> void:
 	draw_arc(center, radius - 1.5 * unit, 0.0, TAU, 64, HudTheme.RIM, 3.0 * unit, true)
 	draw_arc(center, radius - 8.0 * unit, 0.0, TAU, 64, Color(1, 1, 1, 0.06), 2.0 * unit, true)
 	match kind:
-		Kind.TACH: drawBigFace(RPM_MAX, 1, true)
+		Kind.TACH: drawBigFace(rpmMax, 1, true)
 		Kind.SPEEDO: drawBigFace(speedMax, speedMax / 8, false)
 		Kind.FUEL: drawSmallFace("E", "F", FUEL_ICON)
 		Kind.HULL: drawSmallFace("0", "100", HULL_ICON)
@@ -153,7 +173,7 @@ func _draw() -> void:
 func drawBigFace(maxValue: float, step: float, isTach: bool) -> void:
 	HudTheme.arc(self, center, 100 * unit, -SWEEP, SWEEP, HudTheme.TRACK, 6 * unit)
 	if isTach:
-		HudTheme.arc(self, center, 100 * unit, angleFor(REDLINE / RPM_MAX), SWEEP, HudTheme.BAD, 6 * unit)
+		HudTheme.arc(self, center, 100 * unit, angleFor(redline / rpmMax), SWEEP, HudTheme.BAD, 6 * unit)
 		HudTheme.text(self, center + Vector2(0, -30) * unit, "RPM x1000", int(10 * unit), HudTheme.MUTED, HORIZONTAL_ALIGNMENT_CENTER, 0)
 	else: #the green arc is where hitting a goon crushes it
 		HudTheme.arc(self, center, 111 * unit, angleFor(CRUSH_SPEED * unitsPerPx() / maxValue), SWEEP, Color(HudTheme.OK, 0.85), 4 * unit)
@@ -183,7 +203,7 @@ func drawNeedle() -> void:
 	if not is_instance_valid(car): return
 	match kind:
 		Kind.TACH:
-			drawPointer(angleFor(shownValue / RPM_MAX), 98 * unit, HudTheme.NEEDLE, 5 * unit)
+			drawPointer(angleFor(shownValue / rpmMax), 98 * unit, HudTheme.NEEDLE, 5 * unit)
 			HudTheme.text(needle, center + Vector2(0, 74) * unit, gearText(car), int(40 * unit), gearColor(car), HORIZONTAL_ALIGNMENT_CENTER, 10, HudTheme.DEEP)
 		Kind.SPEEDO:
 			drawPointer(angleFor(shownValue / speedMax), 98 * unit, HudTheme.NEEDLE, 5 * unit)
