@@ -213,6 +213,7 @@ func _ready():
 	$"AudioStream-Engine".stream = engineNoise
 	$"AudioStream-Engine".play()
 
+	add_to_group(&"cars") #the player's and every rival's (Rivals)
 	if isPlayer:
 		add_to_group("playerCar")
 		Root.playerCar = self
@@ -364,6 +365,10 @@ func _physics_process(delta):
 			velocity = hitVelocity * PropReactions.KNOCK_KEEP #a cone flies off instead of stopping the car
 		elif hitVelocity.length() > 0.01 && World.isWall(collider): #the speed going in: a square hit leaves none after the slide
 			collideWithFixedObject( collision, hitVelocity )
+		elif collider is OverheadCarBody2D:
+			bumpCar(collider, collision.get_normal(), hitVelocity)
+		elif collider is CarTrailer: #a rival semi's trailer: its tractor takes the knock
+			if is_instance_valid(collider.car) && collider.car != self: bumpCar(collider.car, collision.get_normal(), hitVelocity)
 		elif collider is CharacterBody2D:
 			#the flank hull (CollisionShape2D_body) is there for walls; a goon against it is slamGoons' to judge
 			if collision.get_local_shape() == bodyHull && bodyHull != null: continue
@@ -790,6 +795,35 @@ func honk() -> void:
 		if absf(forward.angle_to(to)) > HORN_CONE: continue
 		Gadgets.stun(goon, HORN_STUN, to.normalized() * HORN_PUSH)
 
+#--- car against car (the Goon Cup's rivals, docs/GAMEPLAY_SUGGESTIONS.md package 18) -------------------
+const CAR_BOUNCE := 0.35         #how much of the closing speed comes back
+const CAR_BUMP_FREE := 180.0     #closing speed (px/s) under which a bump does no damage
+const CAR_BUMP_DAMAGE := 1.0 / 45.0 #health per px/s of closing speed above that, before armour
+static var carBumpScale := 1.0   #a mode's own (Demolition Derby raises it)
+var bumpedAt := -1               #the physics frame of this car's last bump: one response per contact, not one each
+
+## Two cars met: they trade speed along the contact by weight (CarInfo.weight) and both take the knock.
+## `normal` points from `other` to this car; `moving` is this car's velocity going in.
+func bumpCar(other: OverheadCarBody2D, normal: Vector2, moving: Vector2) -> void:
+	var now := Engine.get_physics_frames()
+	if bumpedAt == now || other.bumpedAt == now: return #the other car already answered this contact
+	bumpedAt = now
+	other.bumpedAt = now
+	var closing := -(moving - other.velocity).dot(normal)
+	if closing <= 0.0: return
+	var mine := 1.0 + weight / 50.0
+	var theirs := 1.0 + other.weight / 50.0
+	var impulse := closing * (1.0 + CAR_BOUNCE) / (1.0 / mine + 1.0 / theirs)
+	velocity = moving + normal * impulse / mine
+	other.velocity -= normal * impulse / theirs
+	var hurt := maxf(closing - CAR_BUMP_FREE, 0.0) * CAR_BUMP_DAMAGE * carBumpScale
+	if hurt > 0.0:
+		damage(hurt * theirs / mine) #the lighter car comes off worse
+		other.damage(hurt * mine / theirs)
+	if isPlayer || other.isPlayer:
+		Settings.vibrate(0.4, 0.6, 0.12)
+		if is_instance_valid(crushFeel): crushFeel.kick += normal * minf(closing / 40.0, 14.0)
+
 func crushGoon(collider, speed := -1.0) -> bool:
 	if not is_instance_valid(collider) || collider.isDying(): return true
 	if speed < 0.0: speed = velocity.length()
@@ -943,7 +977,7 @@ func activeCarEffects(delta):
 	if not engineAudio.playing: engineAudio.play()
 	if not carDamageAudio.playing && healthWarningGiven: carDamageAudio.play()
 	if not is_instance_valid(juice): engineAudio.pitch_scale = 1  +  ( velocity.length() / 400 ) #the player's follows the gears (CarJuice)
-	if not buffs.has("freetank"): fuel -= fuelBurn(_car_input.acceleration, oil * conditionFactor("tank")) + fuelLeak(condition.tank)
+	if not buffs.has("freetank") && not fuelFree: fuel -= fuelBurn(_car_input.acceleration, oil * conditionFactor("tank")) + fuelLeak(condition.tank)
 
 	#body shake: the sprite slides between two offsets, one tick at a time (no tween per shake)
 	vibrationSteps += 1
@@ -1246,7 +1280,7 @@ func outOfFuel():
 	if fuel > 0.0 && not isWrecked: #coasted into a Marathon station, which filled the tank
 		isDestroyed = false
 		return
-	Root.levelRoot.endLevel(false, Root.endCondition.NOGAS)
+	if isPlayer: Root.levelRoot.endLevel(false, Root.endCondition.NOGAS)
 	
 ## Gear spacing from the car's cruising top speed (its engine, with upgrades, against drag on grass), once
 ## the run's stats are in: the second-to-last gear tops out at LAST_SHIFT of it, so the last gear is in reach
@@ -1351,6 +1385,7 @@ func setForwardCollisionMode(setting: bool):#activate or deactive bumper collisi
 #boosts (Nitro, Hop, Jump Jets: Pickups.K.MOVE) in a second for the Boost button (UseMove).
 const MAX_BUFFS := 4      #a fifth timed power-up replaces the one with the least time left
 var buffs := {}           #pickup id -> physics ticks left
+var fuelFree := false     #a Trial: the tank doesn't run down (Level sets it, Modes.isTrial)
 var buffTicks := {}       #pickup id -> ticks it started with (the HUD ring drains from this)
 var heldItem := ""        #a gadget waiting for Fire
 var heldCharges := 0

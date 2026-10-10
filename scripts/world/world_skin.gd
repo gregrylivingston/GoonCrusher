@@ -479,7 +479,7 @@ func recipeContext(lots: Array, lanes: Array) -> Dictionary:
 		"layerOf": layerOf, "mainLayer": 0, "blocked": blocked, "spawnable": spawnable,
 		"wallStrip": stripNames.find(look.wallStrip if look.wallStrip in stripNames else "cliff_lip"), "waterStrip": stripNames.find("shore_foam"),
 		"props": props, "decor": decor, "propTables": propTables, "decorTables": decorTables,
-		"pickupTable": pickupTable, "pickupsPerChunk": def.pickupsPerChunk, "pickupIds": pickupIds(),
+		"pickupTable": pickupTable, "pickupsPerChunk": def.pickupsPerChunk if Modes.drops(SaveManager.playerData.gameMode) != Modes.Drops.NONE else 0, "pickupIds": pickupIds(),
 		"motifs": motifTables, "motifDefs": motifDefs, "motifsPerChunk": float(def.features.get("motifs", 1.0)),
 		"fieldDensity": fieldDensity, "fieldSpacing": float(def.features.get("fieldSpacing", 1400.0)),
 		"propsPerChunk": int(def.features.get("props", 16)), "decorPerChunk": int(def.features.get("decor", 110)),

@@ -352,7 +352,7 @@ func _process(delta):
 		giantTimer = 0
 	timeCount += delta
 	if timeCount > spawnTimer * spawnScale:
-		pendingSpawns.append_array(spawners)
+		if spawners: pendingSpawns.append_array(spawners) #none in a mode without goons
 		timeCount = 0
 	#one spawner per frame, so a wave is spread over five frames instead of one
 	if not pendingSpawns.is_empty():

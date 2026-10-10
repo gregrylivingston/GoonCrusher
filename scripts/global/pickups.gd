@@ -377,6 +377,7 @@ static func ticks(id: String) -> int:
 ## Can this pickup turn up in `mode` (a Root.gameModes value)?
 static func allowedIn(id: String, mode: int) -> bool:
 	var modes: Array = def(id).get("modes", [])
+	if not Modes.allowsKind(mode, KIND_KEYS[def(id).get("kind", K.LOOT)]) && def(id).get("rarity", 0) != R.SYSTEM: return false #only what is useful there
 	return modes.is_empty() || Modes.plays(mode) in modes #a variant drops what its base mode does
 
 static func ids(kind := -1) -> Array:

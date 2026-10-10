@@ -43,6 +43,7 @@ const GROUPS := {&"log": &"prop_log", &"manhole": &"prop_manhole", &"crate": &"p
 	&"beehive": &"prop_hive", &"rock_red": &"prop_rock", &"den": &"prop_den", &"burrow": &"prop_burrow"}
 const ROOST_GROUP := &"prop_roost" #crowns Buzzards roost in (Spill.ROOSTS)
 const EXPLOSIVE_GROUP := &"prop_explosive"
+const BREAKABLE_GROUP := &"prop_breakable" #everything that smashes: the AI driver hunts these in a Smash Run
 const DEBRIS_PIECES := 5
 const DEBRIS_POOL_MAX := 30
 const DEBRIS_SECONDS := 0.6
@@ -104,6 +105,7 @@ static func tag(node: Node) -> void:
 	var group: StringName = GROUPS.get(propId(node), &"")
 	if group != &"": node.add_to_group(group)
 	if node.get_meta(&"explosive", false): node.add_to_group(EXPLOSIVE_GROUP)
+	if isBreakable(node): node.add_to_group(BREAKABLE_GROUP)
 	if Spill.DEFS.has(propId(node)) && (isBreakable(node) || propId(node) == &"crane"): node.add_to_group(Spill.SPILL_GROUP) #a hero saguaro joins when armed
 	if Spill.ROOSTS.has(propId(node)): node.add_to_group(ROOST_GROUP)
 	if propId(node) == &"burrow": node.add_to_group(Spill.WARREN_GROUP) #kept when it caves in: the warren count
@@ -113,6 +115,7 @@ static func tag(node: Node) -> void:
 ## The car hit it fast enough (or a goon broke it: car is then null). Once only.
 static func smashNode(node: Node2D, car: Node2D = null) -> void:
 	if not is_instance_valid(node) || node.get_meta(&"smashed", false): return
+	if is_instance_valid(car) && is_instance_valid(Root.levelRoot) && Root.levelRoot.has_method("propSmashed"): Root.levelRoot.propSmashed(node) #Smash Run's count
 	if node.get_meta(&"explosive", false):
 		detonate(node)
 		return

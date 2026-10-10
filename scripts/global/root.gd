@@ -3,7 +3,7 @@ extends Node
 #append only: saves key beaten modes, tiers and car clears by these numbers. Modes (scripts/global/modes.gd) holds
 #each mode's id, category and rules; a level plays Sprint, Countdown and its three featured modes (modePath)
 enum gameModes {  GOONCRUSHER , SPRINT, MARATHON, DEFENSE, GOONPOCALYPSE, BLACKOUT, BOUNTY, RALLY, FLATOUT, HOTLAP, DRIFT, CONES, SMASH, CANNONBALL, CIRCUIT, DERBY, KNOCKOUT, KEEPCUP, PURSUIT }
-enum endCondition { NOGAS , NOHEALTH , NOTIME , SUCCESS , ABANDONED , BASEDESTROYED } #append only: the values are ints
+enum endCondition { NOGAS , NOHEALTH , NOTIME , SUCCESS , ABANDONED , BASEDESTROYED , OUTRUN } #append only: the values are ints
 enum upgrade { HEALTH , FUEL , ARMOR , ENGINE , TRACTION , STEERING , CLOVER , LUCK , HEADLIGHTS , OIL , COIN , PURSE , GEM , SLOTMACHINE, CURRENTGOONSCRUSHED}
 enum terrain { GRASS , SAND , MUD , WATER , HILLS , MOSS , DIRT , SNOW, ASPHALT, ICE, OIL, SHALLOWS, WASH, CONVEYOR, MUDPIT, DEEPSNOW, LOT, BUILDING, BRIDGE, WADE } #append only: World.TERRAIN and Goons.T mirror it
 
@@ -46,18 +46,18 @@ const MODE_AVAILABLE = {
 	gameModes.DEFENSE: true,
 	gameModes.BLACKOUT: true,
 	gameModes.BOUNTY: true,
-	gameModes.RALLY: false,
-	gameModes.FLATOUT: false,
-	gameModes.HOTLAP: false,
-	gameModes.DRIFT: false,
-	gameModes.CONES: false,
-	gameModes.SMASH: false,
-	gameModes.CANNONBALL: false,
-	gameModes.CIRCUIT: false,
-	gameModes.DERBY: false,
-	gameModes.KNOCKOUT: false,
-	gameModes.KEEPCUP: false,
-	gameModes.PURSUIT: false,
+	gameModes.RALLY: true,
+	gameModes.FLATOUT: true,
+	gameModes.HOTLAP: true,
+	gameModes.DRIFT: true,
+	gameModes.CONES: true,
+	gameModes.SMASH: true,
+	gameModes.CANNONBALL: true,
+	gameModes.CIRCUIT: true,
+	gameModes.DERBY: true,
+	gameModes.KNOCKOUT: true,
+	gameModes.KEEPCUP: true,
+	gameModes.PURSUIT: true,
 }
 
 static func versionText() -> String:

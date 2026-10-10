@@ -96,8 +96,10 @@ func levelDef() -> LevelDef:
 #stall, hands the districts to Region, sets up the level's art, then has the start chunk's raster and recipe
 #built on the worker pool too.
 func buildWorld() -> void:
-	if worldSeed < 0: worldSeed = randi()
 	var def := levelDef()
+	var played: int = SaveManager.playerData.gameMode
+	#a fixed-map mode drives the same course every run (Course.seedFor); a harness that set the seed keeps its own
+	if worldSeed < 0: worldSeed = Course.seedFor(def.id, played) if Modes.isFixedMap(played) && def else randi()
 	var objective := ""
 	var offset := Vector2.ZERO
 	var mode: int = Modes.running()
@@ -105,9 +107,12 @@ func buildWorld() -> void:
 		Root.gameModes.SPRINT, Root.gameModes.MARATHON:
 			objective = "sprint"
 			#a Sprint's station is further off on the harder tiers; a Marathon's legs are not (it has more of them)
-			var sprintTier: int = SaveManager.getGameTier() if mode == Root.gameModes.SPRINT else ModeTiers.NONE
-			offset = Level.sprintOffsetPx(Level.sprintDistance(def, sprintTier), WorldGen.hashf(worldSeed, WorldGen.TAG_SPRINT, 0, 0) * 2.0 - 1.0, sprintTier)
+			#(nor is a Rally Stage: one course for bronze, silver and gold)
+			var sprintTier: int = SaveManager.getGameTier() if played == Root.gameModes.SPRINT else ModeTiers.NONE
+			var yRoll := 0.0 if played == Root.gameModes.FLATOUT else WorldGen.hashf(worldSeed, WorldGen.TAG_SPRINT, 0, 0) * 2.0 - 1.0 #Flat Out runs due east
+			offset = Level.sprintOffsetPx(Level.sprintDistance(def, sprintTier), yRoll, sprintTier)
 		Root.gameModes.DEFENSE: objective = "defense"
+		Root.gameModes.CONES, Root.gameModes.DERBY: objective = "defense" #a cleared lot at the start for the cones or the arena; no station is placed on it (ConeCourse, Derby)
 	buildJob = WorldMap.jobFor(worldSeed, def, objective, offset)
 	var started := Time.get_ticks_msec()
 	buildTask = WorkerThreadPool.add_task(WorldGen.buildCoarse.bind(buildJob), false, "World map")

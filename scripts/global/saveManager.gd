@@ -403,6 +403,26 @@ func setGameMode(mode: int):
 	save_character_data()
 	return playerData.gameMode
 
+#--- the record book of fixed courses (meta.records.course) ---------------------------------------
+#records.course[level id][mode id][car] = {"time": seconds, "splits": [seconds at each checkpoint], "version":
+#Course.VERSION}: the best won run of a fixed-map mode (Modes.isFixedMap), per car. Splits are only compared
+#within one course version.
+
+## The car's best run of a level's course in a mode; {} when it has none
+func bestCourse(levelIndex: int, mode: int, carName: String) -> Dictionary:
+	var byLevel: Dictionary = playerData.meta.get("records", {}).get("course", {})
+	return byLevel.get(levelKey(playerData.levels[levelIndex]), {}).get(Modes.idOf(mode), {}).get(carName, {})
+
+## Records a won run; {"time": true} when it is the car's best here (a record from an older course version is replaced)
+func recordCourse(levelIndex: int, mode: int, carName: String, seconds: float, splits: Array) -> Dictionary:
+	var best := bestCourse(levelIndex, mode, carName)
+	var better: bool = best.is_empty() || int(best.get("version", -1)) != Course.VERSION || seconds < float(best.get("time", INF))
+	if not better: return {"time": false}
+	var byLevel: Dictionary = playerData.meta.records.get_or_add("course", {})
+	byLevel.get_or_add(levelKey(playerData.levels[levelIndex]), {}).get_or_add(Modes.idOf(mode), {})[carName] = {"time": seconds, "splits": splits.duplicate(), "version": Course.VERSION}
+	save_character_data()
+	return {"time": true}
+
 #--- per-level records (meta.records) -----------------------------------------------------------
 #Keyed by the level's id (Levels.ORDER), so reordering levels keeps them, then by car.
 

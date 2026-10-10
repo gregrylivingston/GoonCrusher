@@ -73,12 +73,18 @@ Run flows 1 to 6 under each of these:
   - Clicking another stop selects it; Q/E (LB/RB) and A/D walk the road and cross into the next region at either end when it is open; 1-5 pick a stop.
   - Each stop shows five mode glyphs: grey when open, faint when locked, bronze, silver or gold for the best medal by any car. The bar under a glyph is the current driver's own medal; change driver in the garage and the bars change.
   - On a locked stop SELECT reads LOCKED, with what opens it underneath.
-  - SELECT, Accept or a click on the selected stop opens Level Options; Back returns to the road map, and Back again to the garage.
+  - SELECT, Accept or a click on the selected stop opens Level Options; Back (Esc / B, or the BACK button at the bottom left, beside Discord and Wishlist) returns to the road map, and Back again to the garage. Esc never opens Settings in run setup; the gear button and Start on a pad do.
 - Level Options:
-  - A/D change mode, W/S change tier, and both work by clicking a medallion or a tier card. It opens on the mode and tier last used.
-  - Each tier card shows its goal, win bonus, first-clear bonus (or "paid"), whether the current driver has won it and the cars count.
-  - The car strip: cleared cars in colour, owned-but-not-cleared dark, unowned as outlines, the driver bigger over an orange bar. It updates with the mode and tier. "FULL GARAGE" shows in gold when all 9 have won. Clicking an owned car makes it the driver; clicking an unowned one does nothing.
-- The medallions have hover states.
+  - It opens with the focus on START, on the mode and tier last used, and START keeps the focus: Accept always starts the run.
+  - W/S change mode (the rows wrap), A/D change tier, and both work by clicking a mode row or a tier of the switch.
+  - Z/C (LT/RT; a held trigger steps once) walk the level's tiles: a white ring marks the tile and the card beside them describes it; one step past the last tile shows the level's blurb again. Opening another level starts with no tile.
+  - The pane shows the selected tier only: its goal as a number under GOAL (or, in red, why it can't be started) and its win bonus and first-clear bonus (or "First clear paid") under PAYS.
+  - Q/E (LB/RB) or a click on the driver pill change the driver among the cars owned; the car strip, the mode rows' bars and the pill follow. The road map's driver chip is hidden here and back on the road map.
+  - The level's tiles: goons (silhouettes until crushed), ground swatches, props. The mouse on one fills the card beside them; leaving brings back the card of the tile Z/C walked to, or the level's blurb. A click on a goon's tile opens the Goonopedia.
+  - The round slots show the chosen pickup's icon (a plus when empty) and their captions the name, uses and gem price. START is round and reads LOCKED or COMING SOON on two lines when it can't start.
+  - The radio sits beside the top-left buttons in run setup and under them in the garage; it never covers the logo or a level's title.
+  - The car strip: cleared cars in colour, owned-but-not-cleared dim, unowned as outlines, the driver bigger over an orange bar. It updates with the mode and tier. "FULL GARAGE" shows in gold when all 9 have won. Clicking an owned car makes it the driver; clicking an unowned one does nothing.
+- The mode rows and the tier switch have hover states.
 - Check that a synthetic action fired by a click never leaves an action stuck "pressed" (`KeyHint.fire`).
 
 ## Harnesses and performance

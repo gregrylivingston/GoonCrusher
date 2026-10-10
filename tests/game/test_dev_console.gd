@@ -45,9 +45,9 @@ func test_unlock_levels_and_modes():
 			assert_true(Root.isModeUnlocked(level, mode), "%s open on %s" % [M.find_key(mode), level.name])
 	assert_true(Root.isModePlayable(SaveManager.playerData.levels[0], M.MARATHON), "Marathon opens with Countdown beaten")
 	assert_false(SaveManager.playerData.levels[0].gamemodeBeat[M.MARATHON], "unlock modes credits only Sprint and Countdown")
-	assert_false(Root.isModePlayable(SaveManager.playerData.levels[0], M.RALLY), "a mode that isn't built stays shut")
+	assert_false(Root.isModePlayable(SaveManager.playerData.levels[1], M.CIRCUIT), "a mode that isn't built stays shut")
 	Console.execute("unfinished on")
-	assert_true(Root.isModePlayable(SaveManager.playerData.levels[0], M.RALLY), "unfinished on lets any of the level's modes start")
+	assert_true(Root.isModePlayable(SaveManager.playerData.levels[1], M.CIRCUIT), "unfinished on lets any of the level's modes start")
 	Console.execute("unfinished off")
 	Console.execute("lock all")
 	var defaults = PlayerData.new().levels

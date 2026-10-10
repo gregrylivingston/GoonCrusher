@@ -35,6 +35,7 @@ func waveIntensity() -> float:
 func _process(delta):
 	if not Root.isRunActive || not is_instance_valid(Root.levelRoot) || not Root.levelRoot.get("clockReady"): return
 	runTime += delta
+	if not Modes.hasGoons(SaveManager.playerData.gameMode): return #no goons: no waves, stars or wave chests
 	if wave * waveLength < runTime:
 		wave += 1
 		if is_instance_valid(Root.playerCar): Root.playerCar.star += 1

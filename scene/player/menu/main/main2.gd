@@ -11,10 +11,14 @@ extends CanvasLayer
 #             of the best medal won there and a bar under it for the current driver's own. A button at each
 #             end of the road leads to the region before and after (Z/C or LT/RT; locked until that region
 #             is open). SELECT, Accept or a click on the selected stop opens LEVEL OPTIONS
-#             (optionsOpen): the five mode medallions (Left/Right), a card per tier (Up/Down; ModeTiers:
-#             Easy, Medium, Hard) with its goal and pay, the car strip (which cars have won this mode,
-#             level and tier; a click on an owned car drives it) and START. Back returns to the road map,
-#             then to the garage. Medals (bronze, silver, gold) show the best tier beaten.
+#             (optionsOpen): the level across the top (its poster, and its goons, ground and props as
+#             tiles: Z/C, LT/RT or the mouse walks them and the card beside them says what each is), its
+#             five modes as rows down the left (Up/Down) and one pane for the selected mode: its rule, a
+#             three-way tier switch (Left/Right; ModeTiers: Easy, Medium, Hard), that tier's goal and pay,
+#             and the car strip (which cars have won this mode, level and tier). Bottom right, the launch
+#             cluster: the driver (Q/E), the gadget (F) and boost (V) slots and a round START, which keeps
+#             the focus. Back (Esc / B) returns to the road map, then to the garage. Medals (bronze,
+#             silver, gold) show the best tier beaten.
 #The save holds every selection; this only draws it. Built in code with MenuTheme.
 #  G / View opens the Pickups screen (pickup_shop.gd) and B / L3 the Goonopedia (goonopedia.gd), over either screen.
 #Other scripts call: startLevel(path), animateCoins(from, to), statUpdatesUiUpdate(), add_child(menu).
@@ -40,7 +44,18 @@ const REGION_BUTTON := Vector2(124, 124) #the buttons at the road's ends: the re
 const REGION_SPOTS := [Vector2(78, 296), Vector2(1522, 296)] #their centres; the road runs from one to the other
 const ROAD_BEND := 150.0 #the road's handles at each stop, flat, so it swings between them
 const STOP_FOCUS_SCALE := 1.14
-const TIER_CARD := Vector2(340, 228)
+const LEVEL_BAND := Rect2(60, 112, 1480, 136) #Level Options: the level, across the top
+const MODE_LIST_POS := Vector2(60, 258)  #the mode rows, down the left
+const MODE_ROW := Vector2(440, 84)
+const OPTIONS_PANE := Rect2(520, 258, 1020, 404) #the selected mode and tier
+const LEVEL_ART := Vector2(190, 108)
+const FACT_ICON := 52.0 #a goon, a ground or a prop's tile in the level's facts
+const FACT_CAPS := {"goons": 6, "ground": 5, "props": 5}
+const START_SIZE := 148.0 #the round START, bottom right, with the two loadout slots on its left
+const START_POS := Vector2(1392, 676)
+const SLOT_SIZE := 72.0
+const DRIVER_BUTTON := Rect2(700, 712, 316, 76)
+const LOCK_TEXT := Color(1.0, 0.62, 0.55)
 #a mode icon in one colour (a medal's): its light and dark kept as shades of the tint
 const GLYPH_SHADER := "shader_type canvas_item;
 uniform vec4 tint : source_color = vec4(1.0);
@@ -64,7 +79,7 @@ void fragment() {
 	COLOR = vec4(line.rgb, line.a * clamp(n - a, 0.0, 1.0));
 }"
 const SLIDE_SECONDS := 0.22
-const MODE_SLOTS := 5 #the medallions, left to right: Sprint, Countdown and the level's three featured modes (Root.modePath)
+const MODE_SLOTS := 5 #the mode rows, top to bottom: Sprint, Countdown and the level's three featured modes (Root.modePath)
 const TEXT_SHADER := preload("res://shader/3dtext.gdshader")
 const SETTINGS_ICON := preload("res://texture/icon/settings.svg")
 const QUIT_ICON := preload("res://texture/icon/quit.svg")
@@ -92,7 +107,7 @@ var shownCoins := 0
 var hintBar := HBoxContainer.new()
 var optionsOpen := false     #run setup's second step: Level Options in place of the road map
 var map := Control.new()     #the road map: region tabs, the stops, the level panel
-var options := Control.new() #Level Options: the level, the medallions, the tier cards, the car strip, START
+var options := Control.new() #Level Options: the mode rows, the pane (tier switch, goal, pay, car strip, the level), START
 var glyphMaterials: Array[ShaderMaterial] = []
 var levelLock := Label.new() #what opens the highlighted stop, under SELECT
 var selectButton: Button
@@ -105,7 +120,20 @@ var optionsTitle := Label.new()
 var optionsRegion := Label.new()
 var optionsArt := TextureRect.new()
 var optionsBlurb := Label.new()
-var optionsFacts := VBoxContainer.new()
+var optionsFacts := HBoxContainer.new() #the level's goons, ground and props, a group of tiles each (fillFacts)
+var factsFor := -1           #the level they show
+var factTiles: Array[Button] = []
+var factAt := -1             #the tile Z/C has walked to (-1: none, the card shows the level's blurb)
+var factTitle := Label.new() #the card beside the tiles: the tile walked to or under the mouse (optionsBlurb is its line)
+var factChips := HBoxContainer.new()
+var backButton: Button       #bottom left of run setup: to the road map, then the garage
+var radioBar := NowPlaying.new() #top left: under the buttons in the garage, beside them in run setup
+var radioInline := Vector2.ZERO
+var driverChip: PanelContainer #the road map's "DRIVER (car) Name"; Level Options has driverButton
+var driverButton: Button     #the launch cluster's driver: a press takes the next car owned
+var driverSide := TextureRect.new()
+var driverLabel := Label.new()
+var slotCaptions := {}       #loadout slot -> the lines beside its round button
 var posters: Array[Control] = [] #one stop per level; only the selected region's five show
 var pendingPosters := {}     #poster index -> level image path still loading
 var regionBlurb := Label.new()
@@ -114,13 +142,14 @@ var carStrip := HBoxContainer.new()
 var carStripLabel := Label.new()
 var carCells: Array[Button] = []
 var outlineMaterial: ShaderMaterial
-var medallions: Array[Control] = []
+var modeRows: Array[Button] = []
 var modeTitle := Label.new()
-var tierRow := HBoxContainer.new() #Easy, Medium, Hard (ModeTiers): a card each
+var tierRow := HBoxContainer.new() #Easy, Medium, Hard (ModeTiers): a three-way switch
 var tierButtons: Array[Button] = []
 var modeText := Label.new()
-var modeLock := Label.new()
-var nextUnlock := HBoxContainer.new() #run setup's "Next unlock" line (Unlocks.nextUnlock), in symbols
+var goalLabel := Label.new() #the selected tier's goal, or why it can't be started
+var payBox := VBoxContainer.new() #what the selected tier pays
+var lockReason := ""         #why START is locked ("" when it isn't; the career harness reads it)
 var startButton: Button
 var buyPlayer := AudioStreamPlayer.new()
 
@@ -246,27 +275,29 @@ func buildLogo() -> void:
 	ui.add_child(logo)
 
 func buildTopBar() -> void:
+	#top left: Quit, Settings and the Goonopedia, then the radio (it shows the song, a click changes
+	#station: docs/RADIO.md): beside them in run setup, under them in the garage, clear of the logo (placeRadio)
 	var left = HBoxContainer.new()
 	left.position = Vector2(24, 24)
 	left.add_theme_constant_override("separation", 10)
 	for item in [[QUIT_ICON, "Quit game", func(): get_tree().quit()],
 			[SETTINGS_ICON, "Settings", openSettings],
-			[Goonopedia.ICON, "Goonopedia", openGoonopedia],
-			[DISCORD_ICON, "Discord", func(): OS.shell_open("https://discord.gg/CRwgEe4Gve")],
-			[STEAM_ICON, "Wishlist on Steam", func(): OS.shell_open("https://store.steampowered.com/app/1941650/GOONCRUSHER/")]]:
-		var b = MenuTheme.button("", PackedStringArray(), false, item[0])
-		b.tooltip_text = item[1]
-		b.focus_mode = Control.FOCUS_NONE
-		b.custom_minimum_size = Vector2(52, 52)
-		b.alignment = HORIZONTAL_ALIGNMENT_CENTER
-		b.pressed.connect(item[2])
-		left.add_child(b)
+			[Goonopedia.ICON, "Goonopedia", openGoonopedia]]:
+		left.add_child(barButton(item[0], item[1], item[2]))
 	ui.add_child(left)
-	#the radio, under the icons: shows the song, a click changes station (docs/RADIO.md)
-	var radio = NowPlaying.new()
-	radio.pinned = true
-	radio.position = Vector2(24, 88)
-	ui.add_child(radio)
+	radioBar.pinned = true
+	radioBar.width = 330.0
+	radioInline = Vector2(24.0 + left.get_combined_minimum_size().x + 10.0, 21)
+	radioBar.position = Vector2(24, 88)
+	ui.add_child(radioBar)
+	#bottom left, level with the hint bar: the links out of the game
+	var links = HBoxContainer.new()
+	links.position = Vector2(24, 826)
+	links.add_theme_constant_override("separation", 10)
+	for item in [[DISCORD_ICON, "Discord", func(): OS.shell_open("https://discord.gg/CRwgEe4Gve")],
+			[STEAM_ICON, "Wishlist on Steam", func(): OS.shell_open("https://store.steampowered.com/app/1941650/GOONCRUSHER/")]]:
+		links.add_child(barButton(item[0], item[1], item[2]))
+	ui.add_child(links)
 	var pill = PanelContainer.new()
 	pill.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
 	pill.grow_horizontal = Control.GROW_DIRECTION_BEGIN
@@ -287,6 +318,28 @@ func buildTopBar() -> void:
 	row.add_child(gemsLabel)
 	pill.add_child(row)
 	ui.add_child(pill)
+
+#an icon of the screen's corners that is its own button: no frame, it lights up and grows under the mouse
+static func barButton(icon: Texture2D, tip: String, onPress: Callable) -> Button:
+	var b = MenuTheme.button("", PackedStringArray(), false, icon)
+	b.tooltip_text = tip
+	b.focus_mode = Control.FOCUS_NONE
+	b.custom_minimum_size = Vector2(52, 52)
+	b.pivot_offset = Vector2(26, 26)
+	b.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	b.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	b.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	b.add_theme_constant_override("icon_max_width", 46)
+	for state in ["normal", "hover", "pressed", "disabled", "focus"]:
+		b.add_theme_stylebox_override(state, StyleBoxEmpty.new())
+	b.add_theme_color_override("icon_normal_color", Color(0.82, 0.82, 0.82))
+	b.add_theme_color_override("icon_hover_color", Color.WHITE)
+	b.add_theme_color_override("icon_pressed_color", HudTheme.GOLD)
+	b.add_theme_color_override("icon_hover_pressed_color", HudTheme.GOLD)
+	b.mouse_entered.connect(func(): b.create_tween().tween_property(b, "scale", Vector2(1.15, 1.15), 0.08))
+	b.mouse_exited.connect(func(): b.create_tween().tween_property(b, "scale", Vector2.ONE, 0.08))
+	b.pressed.connect(onPress)
+	return b
 
 func buildGarage() -> void:
 	var cars = SaveManager.playerData.cars
@@ -340,11 +393,13 @@ func buildSetup() -> void:
 	buildMap()
 	buildOptions()
 	buildDriverChip()
-	nextUnlock.position = Vector2(300, 818)
-	nextUnlock.size = Vector2(1000, 28)
-	nextUnlock.alignment = BoxContainer.ALIGNMENT_CENTER
-	nextUnlock.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	setup.add_child(nextUnlock)
+	backButton = MenuTheme.button("BACK", PackedStringArray(["ui_cancel"]))
+	backButton.position = Vector2(176, 826) #bottom left, beside the links, on both steps
+	backButton.size = Vector2(132, 52)
+	backButton.add_theme_font_size_override("font_size", 18)
+	backButton.focus_mode = Control.FOCUS_NONE
+	backButton.pressed.connect(onBackPressed)
+	setup.add_child(backButton)
 	refreshLoadout()
 
 #run setup's first step: the region tabs, the road and its stops, and the highlighted level's panel
@@ -415,9 +470,15 @@ func buildMap() -> void:
 	legend.add_child(legendCar)
 	map.add_child(legend)
 
-#run setup's second step, for the level picked on the road map
+#run setup's second step, for the level picked on the road map: the level across the top, its modes down
+#the left, one pane for the selected mode and tier, and the launch cluster at the bottom right
 func buildOptions() -> void:
 	options.visible = false
+	var scrim = ColorRect.new() #keeps the level's art out from under the text
+	scrim.color = Color(0, 0, 0, 0.45)
+	scrim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	scrim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	options.add_child(scrim)
 	optionsTitle.theme_type_variation = "TitleLabel"
 	optionsTitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	optionsTitle.position = Vector2(330, 18)
@@ -428,71 +489,197 @@ func buildOptions() -> void:
 	optionsRegion.position = Vector2(330, 80)
 	optionsRegion.size = Vector2(940, 26)
 	options.add_child(optionsRegion)
-	#the level, down the left: what the Goonopedia's level page said
-	var side = VBoxContainer.new()
-	side.position = Vector2(60, 162)
-	side.size = Vector2(370, 0)
-	side.add_theme_constant_override("separation", 10)
-	side.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	#the level: its poster, its goons, ground and props as tiles, and the card that says what a tile is
+	var band = PanelContainer.new()
+	band.position = LEVEL_BAND.position
+	band.size = LEVEL_BAND.size
+	band.add_theme_stylebox_override("panel", MenuTheme.box(Color(HudTheme.PANEL, 0.94), Color(1, 1, 1, 0.22), 16, 2, Vector4(14, 12, 14, 12)))
+	band.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var strip = HBoxContainer.new()
+	strip.add_theme_constant_override("separation", 22)
+	strip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	band.add_child(strip)
+	options.add_child(band)
 	var frame = Panel.new()
-	frame.custom_minimum_size = Vector2(370, 200)
+	frame.custom_minimum_size = LEVEL_ART
+	frame.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	frame.clip_children = CanvasItem.CLIP_CHILDREN_AND_DRAW
-	frame.add_theme_stylebox_override("panel", MenuTheme.box(Color(0.12, 0.1, 0.09), Color(0, 0, 0, 0), 16, 0))
+	frame.add_theme_stylebox_override("panel", MenuTheme.box(Color(0.12, 0.1, 0.09), Color(0, 0, 0, 0), 12, 0))
 	frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	optionsArt.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	optionsArt.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	optionsArt.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	optionsArt.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	frame.add_child(optionsArt)
-	side.add_child(frame)
+	strip.add_child(frame)
+	optionsFacts.add_theme_constant_override("separation", 22)
+	optionsFacts.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	optionsFacts.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	strip.add_child(optionsFacts)
+	var card = VBoxContainer.new()
+	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	card.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	card.add_theme_constant_override("separation", 2)
+	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var head = HBoxContainer.new()
+	head.add_theme_constant_override("separation", 14)
+	factTitle.theme_type_variation = "GoldLabel"
+	factTitle.add_theme_font_size_override("font_size", 20)
+	head.add_child(factTitle)
+	factChips.add_theme_constant_override("separation", 12)
+	head.add_child(factChips)
+	card.add_child(head)
 	optionsBlurb.theme_type_variation = "BodyLabel"
-	optionsBlurb.add_theme_font_size_override("font_size", 16)
+	optionsBlurb.add_theme_font_size_override("font_size", 15)
 	optionsBlurb.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	side.add_child(optionsBlurb)
-	optionsFacts.add_theme_constant_override("separation", 8)
-	side.add_child(optionsFacts)
-	options.add_child(side)
-	var row = HBoxContainer.new()
-	row.add_theme_constant_override("separation", 30)
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.position = Vector2(470, 148)
-	row.size = Vector2(1070, 150)
+	optionsBlurb.max_lines_visible = 3
+	optionsBlurb.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	optionsBlurb.custom_minimum_size.x = 240
+	card.add_child(optionsBlurb)
+	strip.add_child(card)
+	var list = VBoxContainer.new()
+	list.position = MODE_LIST_POS
+	list.add_theme_constant_override("separation", 8)
+	list.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	for slot in MODE_SLOTS:
-		var medallion = makeMedallion(slot)
-		row.add_child(medallion)
-		medallions.push_back(medallion)
-	options.add_child(row)
-	modeTitle.visible = false #the selected medallion names the mode
-	options.add_child(modeTitle)
-	for l in [modeText, modeLock]:
-		l.theme_type_variation = "BodyLabel"
-		l.add_theme_font_size_override("font_size", 17)
-		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		options.add_child(l)
-	modeText.position = Vector2(470, 302)
-	modeText.size = Vector2(1070, 56)
-	modeLock.position = Vector2(470, 664)
-	modeLock.size = Vector2(1070, 56)
-	modeLock.add_theme_color_override("font_color", Color(1.0, 0.62, 0.55))
-	tierRow.alignment = BoxContainer.ALIGNMENT_CENTER
-	tierRow.add_theme_constant_override("separation", 20)
-	tierRow.position = Vector2(470, 364)
-	tierRow.size = Vector2(1070, TIER_CARD.y)
+		var row = makeModeRow(slot)
+		list.add_child(row)
+		modeRows.push_back(row)
+	options.add_child(list)
+	var pane = PanelContainer.new()
+	pane.position = OPTIONS_PANE.position
+	pane.size = OPTIONS_PANE.size
+	pane.add_theme_stylebox_override("panel", MenuTheme.box(Color(HudTheme.PANEL, 0.94), Color(1, 1, 1, 0.22), 16, 2, Vector4(26, 16, 26, 16)))
+	pane.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var body = VBoxContainer.new()
+	body.add_theme_constant_override("separation", 10)
+	body.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	pane.add_child(body)
+	options.add_child(pane)
+	#the mode: its name and rule
+	modeTitle.theme_type_variation = "GoldLabel"
+	modeTitle.add_theme_font_size_override("font_size", 32)
+	body.add_child(modeTitle)
+	modeText.theme_type_variation = "BodyLabel"
+	modeText.add_theme_font_size_override("font_size", 17)
+	modeText.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	modeText.custom_minimum_size.y = 48 #two lines, so the switch under it stays put
+	body.add_child(modeText)
+	tierRow.add_theme_constant_override("separation", 8)
 	for tier in ModeTiers.TIERS: tierRow.add_child(makeTierButton(tier))
-	options.add_child(tierRow)
+	body.add_child(tierRow)
+	#the selected tier: what it asks and what it pays
+	var deal = HBoxContainer.new()
+	deal.add_theme_constant_override("separation", 24)
+	deal.custom_minimum_size.y = 84
+	deal.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var goal = VBoxContainer.new()
+	goal.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	goal.add_theme_constant_override("separation", 0)
+	goal.add_child(paneTag("GOAL"))
+	goalLabel.add_theme_font_size_override("font_size", 28)
+	goalLabel.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	goal.add_child(goalLabel)
+	deal.add_child(goal)
+	var pays = VBoxContainer.new()
+	pays.custom_minimum_size.x = 340
+	pays.add_theme_constant_override("separation", 0)
+	pays.add_child(paneTag("PAYS"))
+	payBox.add_theme_constant_override("separation", 2)
+	pays.add_child(payBox)
+	deal.add_child(pays)
+	body.add_child(deal)
+	body.add_child(paneRule())
 	buildCarStrip()
-	startButton = MenuTheme.button("START", PackedStringArray(["ui_accept"]), true)
-	startButton.position = Vector2(620, 744)
-	startButton.size = Vector2(360, 68)
-	startButton.add_theme_font_size_override("font_size", 30)
+	body.add_child(carStrip)
+	buildLaunch()
+
+#the launch cluster, bottom right: the driver, the gadget and boost slots with what they hold written
+#beside them, and a round START
+func buildLaunch() -> void:
+	driverButton = Button.new()
+	MenuTheme.addSounds(driverButton)
+	driverButton.position = DRIVER_BUTTON.position
+	driverButton.size = DRIVER_BUTTON.size
+	driverButton.tooltip_text = "Next driver"
+	driverButton.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	driverButton.focus_mode = Control.FOCUS_NONE
+	roundStyles(driverButton, DRIVER_BUTTON.size.y / 2.0)
+	driverButton.pressed.connect(stepDriver.bind(1))
+	var row = HBoxContainer.new()
+	row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	row.offset_left = 22
+	row.offset_right = -20
+	row.add_theme_constant_override("separation", 12)
+	driverSide.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	driverSide.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	driverSide.custom_minimum_size = Vector2(108, 40)
+	driverSide.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(driverSide)
+	var words = VBoxContainer.new()
+	words.alignment = BoxContainer.ALIGNMENT_CENTER
+	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	words.add_theme_constant_override("separation", -4)
+	words.add_child(paneTag("DRIVER"))
+	driverLabel.add_theme_font_size_override("font_size", 19)
+	driverLabel.clip_text = true
+	words.add_child(driverLabel)
+	row.add_child(words)
+	var keys = KeyHint.make(PackedStringArray(["ui_tab_prev", "ui_tab_next"]), "", 13)
+	keys.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(keys)
+	driverButton.add_child(row)
+	setMouseIgnore(row)
+	options.add_child(driverButton)
+	var slotX := START_POS.x - 12.0 - SLOT_SIZE
+	loadoutButton = loadoutSlotButton("loadout", "ui_upgrade", Vector2(slotX, START_POS.y), cycleLoadout)
+	boostButton = loadoutSlotButton("boostLoadout", "ui_boost", Vector2(slotX, START_POS.y + START_SIZE - SLOT_SIZE), cycleBoost)
+	startButton = MenuTheme.button("START", PackedStringArray(), true)
+	startButton.position = START_POS
+	startButton.size = Vector2(START_SIZE, START_SIZE)
+	for state in ["normal", "hover", "pressed", "disabled", "focus"]:
+		var style: StyleBox = MenuTheme.theme().get_stylebox(state, "PrimaryButton").duplicate()
+		if style is StyleBoxFlat:
+			style.set_corner_radius_all(int(START_SIZE / 2.0))
+			style.corner_detail = 16
+			style.content_margin_left = 6
+			style.content_margin_right = 6
+			style.content_margin_top = 0
+			style.content_margin_bottom = 28 #the word sits over its key
+		startButton.add_theme_stylebox_override(state, style)
+	var key = KeyHint.make(PackedStringArray(["ui_accept"]), "", 14)
+	key.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+	key.offset_top = -54
+	key.offset_bottom = -26
+	key.alignment = BoxContainer.ALIGNMENT_CENTER
+	startButton.add_child(key)
+	setMouseIgnore(key)
 	startButton.pressed.connect(onStartPressed)
 	options.add_child(startButton)
-	loadoutButton = loadoutSlotButton("ui_upgrade", Vector2(200, 744), cycleLoadout)
-	boostButton = loadoutSlotButton("ui_boost", Vector2(1010, 744), cycleBoost)
 
-#"DRIVER (side view) Name", top right under the bank, on both steps
+#a dark round (or pill) button: its rim lights on hover
+static func roundStyles(b: Button, radius: float) -> void:
+	for state in ["normal", "hover", "pressed"]:
+		var style = MenuTheme.box(Color(HudTheme.PANEL, 0.94), Color(HudTheme.RIM, 0.9) if state == "hover" else Color(1, 1, 1, 0.3), int(radius), 2, Vector4.ZERO)
+		style.corner_detail = 12
+		b.add_theme_stylebox_override(state, style)
+
+#a small muted heading in the pane ("GOAL", "GOONS")
+static func paneTag(text: String) -> Label:
+	var tag = Label.new()
+	tag.text = text
+	tag.theme_type_variation = "MutedLabel"
+	tag.add_theme_font_size_override("font_size", 13)
+	return tag
+
+static func paneRule() -> ColorRect:
+	var rule = ColorRect.new()
+	rule.color = Color(1, 1, 1, 0.14)
+	rule.custom_minimum_size = Vector2(0, 2)
+	rule.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return rule
+
+#"DRIVER (side view) Name", top right under the bank, on the road map
 func buildDriverChip() -> void:
 	var chip = PanelContainer.new()
 	chip.theme_type_variation = "QuietPanel"
@@ -516,16 +703,52 @@ func buildDriverChip() -> void:
 	row.add_child(driverName)
 	chip.add_child(row)
 	setup.add_child(chip)
+	driverChip = chip
 
-#U / Y (B / RS for the boost) and clicks drive it; focus stays on START so Accept always starts
-func loadoutSlotButton(action: String, at: Vector2, onPress: Callable) -> Button:
-	var b := MenuTheme.button("", PackedStringArray([action]), false)
+#a loadout slot: a round button left of START showing the pickup it holds (or a plus) over its key, with
+#what it holds written to its left (refreshLoadout). F / Y (V / RS for the boost) and clicks cycle it.
+func loadoutSlotButton(slot: String, action: String, at: Vector2, onPress: Callable) -> Button:
+	var b := Button.new()
+	MenuTheme.addSounds(b)
 	b.position = at
-	b.size = Vector2(390, 68)
-	b.add_theme_font_size_override("font_size", 17)
+	b.size = Vector2(SLOT_SIZE, SLOT_SIZE)
+	b.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	b.focus_mode = Control.FOCUS_NONE #the focus stays on START
+	roundStyles(b, SLOT_SIZE / 2.0)
 	b.pressed.connect(onPress)
-	b.focus_mode = Control.FOCUS_NONE
+	var pic = TextureRect.new()
+	pic.name = "pic"
+	pic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	pic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	pic.position = Vector2((SLOT_SIZE - 38.0) / 2.0, 8)
+	pic.size = Vector2(38, 38)
+	b.add_child(pic)
+	var plus = Label.new()
+	plus.name = "plus"
+	plus.text = "+"
+	plus.add_theme_font_size_override("font_size", 30)
+	plus.add_theme_color_override("font_color", HudTheme.MUTED)
+	plus.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	plus.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	plus.position = pic.position
+	plus.size = pic.size
+	b.add_child(plus)
+	var key = KeyHint.make(PackedStringArray([action]), "", 13)
+	key.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+	key.offset_top = -26
+	key.offset_bottom = 0
+	key.alignment = BoxContainer.ALIGNMENT_CENTER
+	b.add_child(key)
+	for child in [pic, plus, key]: setMouseIgnore(child)
 	options.add_child(b)
+	var caption = VBoxContainer.new()
+	caption.position = Vector2(at.x - 272.0, at.y)
+	caption.size = Vector2(260, SLOT_SIZE)
+	caption.alignment = BoxContainer.ALIGNMENT_CENTER
+	caption.add_theme_constant_override("separation", -2)
+	caption.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	options.add_child(caption)
+	slotCaptions[slot] = caption
 	return b
 
 #---------- the loadout ----------
@@ -579,39 +802,39 @@ func cycleSlot(slot: String) -> void:
 	SaveManager.save_character_data()
 	refreshLoadout()
 
+#each slot: the chosen pickup's icon on the button (a plus when empty), and beside it "GADGET" over the
+#choice, its uses and its price, or "none  from 1 (gem)"; the tooltip has the pickup's text and the key that
+#fires it in the run
 func refreshLoadout() -> void:
 	for pair in [[loadoutButton, "loadout", "UseItem", "GADGET"], [boostButton, "boostLoadout", "UseMove", "BOOST"]]:
 		var button: Button = pair[0]
 		if not is_instance_valid(button): continue
 		var id := slotPurchase(pair[1])
+		var prices := slotPrices(pair[1])
 		var key := InputGlyphs.label(pair[2])
-		if id == "":
-			button.text = "%s:  NONE
-Start with one, fired with %s" % [pair[3], key]
-			button.tooltip_text = ""
-		else:
-			var cost: int = slotPrices(pair[1])[id]
+		button.get_node("pic").texture = Pickups.texture(id) if id != "" else null
+		button.get_node("plus").visible = id == ""
+		var parts: Array
+		if id != "":
 			var uses: int = Pickups.DATA[id].get("charges", 1)
-			button.text = "%s%s  -  %d GEM%s
-In the run: press %s" % [Pickups.displayName(id).to_upper(), "  x%d" % uses if uses > 1 else "", cost, "" if cost == 1 else "S", key]
-			button.tooltip_text = Pickups.DATA[id].get("text", "")
-		button.icon = Pickups.texture(id) if id != "" else null
-		button.add_theme_constant_override("icon_max_width", 34)
-
-## "NEXT UNLOCK  (purse) Purse  900 (coin)", with the bank's progress toward it or its play condition, as
-## symbol parts (MenuTheme.symbolRow); [] when nothing is waiting (Unlocks.nextUnlock)
-static func nextUnlockParts() -> Array:
-	var next := Unlocks.nextUnlock()
-	if next.is_empty(): return []
-	var id: String = next.uid.trim_prefix("pickup:")
-	var parts := ["NEXT UNLOCK  ", Pickups.texture(id), next.name, "  "]
-	var cost := Unlocks.pickupPrice(id)
-	if Unlocks.state(next.uid) == Unlocks.S.READY && not cost.is_empty():
-		parts.push_back(cost)
-		if Unlocks.canAfford(next.uid): parts.push_back("  in Pickups (%s)" % InputGlyphs.label("ui_pickups"))
-		else: parts.append_array(["  (", DriverCard.formatCoins(next.have), "/", DriverCard.formatCoins(next.need), ")"])
-	else: parts.push_back("%s  (%d / %d)" % [next.text, next.have, next.need])
-	return parts
+			parts = ["%s%s   " % [Pickups.displayName(id).to_upper(), "  x%d" % uses if uses > 1 else ""], {"gem": prices[id]}]
+			button.tooltip_text = "%s\nIn the run: press %s" % [Pickups.DATA[id].get("text", ""), key]
+		elif prices.is_empty():
+			parts = ["none unlocked"]
+			button.tooltip_text = "Unlock one in Pickups (%s)" % InputGlyphs.label("ui_pickups")
+		else:
+			parts = ["none   from ", {"gem": prices.values().min()}]
+			button.tooltip_text = "Start the run with one. In the run: press %s" % key
+		var caption: VBoxContainer = slotCaptions[pair[1]]
+		for child in caption.get_children():
+			caption.remove_child(child)
+			child.queue_free()
+		var tag := paneTag(pair[3])
+		tag.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		caption.add_child(tag)
+		var line := MenuTheme.symbolRow(parts, 17, HudTheme.TEXT if id != "" else HudTheme.MUTED)
+		line.alignment = BoxContainer.ALIGNMENT_END
+		caption.add_child(line)
 
 #the level at a save index as the registry describes it (Levels): poster art, name and scene
 static func levelDef(index: int) -> LevelDef:
@@ -721,71 +944,107 @@ func onPosterPressed(index: int) -> void:
 	if index == SaveManager.playerData.selectedLevel: openOptions()
 	else: stepLevelTo(index)
 
-## The modes of a level's medallions and poster glyphs, in order (Root.modePath)
+## The modes of a level's mode rows and poster glyphs, in order (Root.modePath)
 func modeOrder(index := -1) -> Array:
 	return Root.modePath(SaveManager.playerData.selectedLevel if index < 0 else index)
 
-func onMedallionPressed(slot: int) -> void:
+func onModeRowPressed(slot: int) -> void:
 	var order := modeOrder()
-	if slot >= order.size(): return
+	if slot >= order.size() || order[slot] == SaveManager.getGameMode(): return
 	SaveManager.setGameMode(order[slot])
 	refreshSetup()
 
-#one of run setup's five mode slots; refreshMedallion gives it the selected level's mode
-func makeMedallion(slot: int) -> Control:
-	var column = VBoxContainer.new()
-	column.custom_minimum_size = Vector2(170, 140)
-	column.add_theme_constant_override("separation", 6)
-	var disc = Button.new()
+#one of Level Options' five mode rows: the mode's icon in a ring, its name over its category (or why it is
+#locked), and at the right three medal stars over the current driver's bar; refreshModeRow fills it
+func makeModeRow(slot: int) -> Button:
+	var b := Button.new()
+	b.custom_minimum_size = MODE_ROW
+	b.focus_mode = Control.FOCUS_NONE
+	b.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	b.pressed.connect(onModeRowPressed.bind(slot))
+	MenuTheme.addSounds(b)
+	var row = HBoxContainer.new()
+	row.name = "row"
+	row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	row.offset_left = 14
+	row.offset_right = -18
+	row.add_theme_constant_override("separation", 14)
+	var disc = Panel.new()
 	disc.name = "disc"
-	disc.custom_minimum_size = Vector2(96, 96)
-	disc.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	disc.focus_mode = Control.FOCUS_NONE
-	disc.expand_icon = true
-	disc.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	disc.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	disc.pressed.connect(onMedallionPressed.bind(slot))
-	MenuTheme.addSounds(disc)
-	column.add_child(disc)
+	disc.custom_minimum_size = Vector2(60, 60)
+	disc.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var icon = TextureRect.new()
+	icon.name = "icon"
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	for side in ["offset_left", "offset_top"]: icon.set(side, 11)
+	for side in ["offset_right", "offset_bottom"]: icon.set(side, -11)
+	disc.add_child(icon)
+	row.add_child(disc)
+	var words = VBoxContainer.new()
+	words.name = "words"
+	words.alignment = BoxContainer.ALIGNMENT_CENTER
+	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	words.add_theme_constant_override("separation", -2)
 	var label = Label.new()
 	label.name = "name"
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", 16)
-	column.add_child(label)
+	label.add_theme_font_size_override("font_size", 22)
+	label.clip_text = true
+	words.add_child(label)
+	var sub = Label.new()
+	sub.name = "sub"
+	sub.add_theme_font_size_override("font_size", 14)
+	sub.clip_text = true
+	words.add_child(sub)
+	row.add_child(words)
+	var marks = VBoxContainer.new()
+	marks.name = "marks"
+	marks.alignment = BoxContainer.ALIGNMENT_CENTER
+	marks.add_theme_constant_override("separation", 5)
 	var medals = HBoxContainer.new() #the best tier beaten here: bronze, silver, gold
 	medals.name = "medals"
-	medals.alignment = BoxContainer.ALIGNMENT_CENTER
-	medals.add_theme_constant_override("separation", 2)
-	medals.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	for tier in ModeTiers.TIERS: medals.add_child(MenuTheme.iconRect(HudTheme.STAR_ICON, 14))
-	column.add_child(medals)
+	medals.add_theme_constant_override("separation", 3)
+	for tier in ModeTiers.TIERS: medals.add_child(MenuTheme.iconRect(HudTheme.STAR_ICON, 22))
+	marks.add_child(medals)
 	var mine = ColorRect.new() #the current driver's own medal in this mode here
 	mine.name = "mine"
-	mine.custom_minimum_size = Vector2(56, 4)
-	mine.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	mine.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	column.add_child(mine)
-	return column
+	mine.custom_minimum_size = Vector2(72, 4)
+	marks.add_child(mine)
+	row.add_child(marks)
+	b.add_child(row)
+	setMouseIgnore(row)
+	return b
 
-#a tier's card under the medallions, filled by refreshTiers; a click picks it (focus stays on START)
+#a tier's segment of the switch, lit by refreshTiers; a click picks it (the focus stays on START)
 func makeTierButton(tier: int) -> Button:
 	var b := Button.new()
 	b.name = ModeTiers.NAMES[tier]
-	b.custom_minimum_size = TIER_CARD
-	b.focus_mode = Control.FOCUS_NONE
-	b.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	b.pressed.connect(func(): SaveManager.setGameTier(tier); refreshSetup(false))
-	MenuTheme.addSounds(b)
-	var body = VBoxContainer.new()
+	b.custom_minimum_size = Vector2(0, 50)
+	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var body = HBoxContainer.new() #its medal star (or a lock) and its name, centred together
 	body.name = "body"
 	body.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	body.offset_left = 18
-	body.offset_right = -18
-	body.offset_top = 12
-	body.offset_bottom = -12
-	body.add_theme_constant_override("separation", 5)
-	body.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	body.alignment = BoxContainer.ALIGNMENT_CENTER
+	body.add_theme_constant_override("separation", 10)
+	var star = TextureRect.new()
+	star.name = "star"
+	star.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	star.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	star.custom_minimum_size = Vector2(24, 24)
+	star.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	body.add_child(star)
+	var label = Label.new()
+	label.name = "name"
+	label.text = ModeTiers.NAMES[tier].to_upper()
+	label.add_theme_font_size_override("font_size", 20)
+	body.add_child(label)
 	b.add_child(body)
+	setMouseIgnore(body)
+	b.focus_mode = Control.FOCUS_NONE
+	b.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	b.pressed.connect(selectTier.bind(tier))
+	MenuTheme.addSounds(b)
 	tierButtons.push_back(b)
 	return b
 
@@ -845,7 +1104,7 @@ func refreshRegionButtons(region: int) -> void:
 		var color: Color = def.get("color", HudTheme.RIM)
 		var open := isRegionOpen(target)
 		var style = MenuTheme.box(HudTheme.PANEL.lerp(color, 0.2), Color(color, 0.85 if open else 0.4), 14, 3, Vector4(8, 6, 8, 6))
-		for state in ["normal", "pressed", "focus"]: b.add_theme_stylebox_override(state, style)
+		for state in ["normal", "pressed"]: b.add_theme_stylebox_override(state, style)
 		var hover = style.duplicate()
 		hover.border_color = color if open else Color(color, 0.4)
 		hover.bg_color = HudTheme.PANEL.lerp(color, 0.32 if open else 0.2)
@@ -911,13 +1170,10 @@ func buildCarStrip() -> void:
 	outlineMaterial = ShaderMaterial.new()
 	outlineMaterial.shader = Shader.new()
 	outlineMaterial.shader.code = OUTLINE_SHADER
-	carStrip.alignment = BoxContainer.ALIGNMENT_CENTER
 	carStrip.add_theme_constant_override("separation", 6)
-	carStrip.position = Vector2(470, 602)
-	carStrip.size = Vector2(1070, CAR_CELL_BIG.y + 6)
-	carStripLabel.add_theme_font_size_override("font_size", 15)
-	carStripLabel.custom_minimum_size = Vector2(120, 0)
-	carStripLabel.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	carStrip.custom_minimum_size.y = CAR_CELL_BIG.y + 6
+	carStripLabel.add_theme_font_size_override("font_size", 13)
+	carStripLabel.custom_minimum_size = Vector2(96, 0)
 	carStripLabel.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	carStrip.add_child(carStripLabel)
 	for i in SaveManager.playerData.cars.size():
@@ -944,12 +1200,11 @@ func buildCarStrip() -> void:
 		cell.pressed.connect(onCarCellPressed.bind(i))
 		carStrip.add_child(cell)
 		carCells.push_back(cell)
-	options.add_child(carStrip)
 
 static func isCarOwned(index: int) -> bool:
 	return int(SaveManager.playerData.cars[index].cost) == 0 && not (Root.IS_DEMO && index >= Root.DEMO_CAR_COUNT)
 
-#which cars have won this mode here on this tier: in colour = cleared, dark = owned but not cleared,
+#which cars have won this mode here on this tier: in colour = cleared, dim = owned but not cleared,
 #an outline = not owned; the current driver is bigger, over an orange bar
 func refreshCarStrip(index: int, mode: int, tier: int) -> void:
 	var cars = SaveManager.playerData.cars
@@ -965,12 +1220,12 @@ func refreshCarStrip(index: int, mode: int, tier: int) -> void:
 		cell.custom_minimum_size = (CAR_CELL_BIG if current else CAR_CELL) + Vector2(0, 6)
 		cell.get_node("bar").visible = current
 		pic.material = null if owned else outlineMaterial
-		pic.modulate = Color.WHITE if cleared || not owned else Color(0.07, 0.07, 0.08)
+		pic.modulate = Color.WHITE if cleared || not owned else Color(0.3, 0.3, 0.34)
 		cell.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if owned && not current else Control.CURSOR_ARROW
 		var carName: String = cards[i].info.charName
 		cell.tooltip_text = "%s: %s" % [carName, ("won on " + ModeTiers.NAMES[best]) if cleared else ("not won yet" if owned else "not owned")]
 	var full := SaveManager.isFullGarage(index, mode, tier)
-	carStripLabel.text = "FULL GARAGE" if full else "CARS  %d / %d" % [SaveManager.carsCleared(index, mode, tier), cars.size()]
+	carStripLabel.text = "FULL\nGARAGE" if full else "WON HERE\n%d / %d" % [SaveManager.carsCleared(index, mode, tier), cars.size()]
 	carStripLabel.add_theme_color_override("font_color", HudTheme.GOLD if full else HudTheme.MUTED)
 
 #a click on an owned car in the strip makes it the driver
@@ -979,132 +1234,208 @@ func onCarCellPressed(index: int) -> void:
 	selectCar(index, false)
 	refreshSetup(false)
 
-#each card: lit while selected, dim while locked; its star in the medal colour once that tier is beaten,
-#the tier's goal, what a win pays, the first-clear bonus still to earn, whether the current driver has won
-#it and how many have
-func refreshTiers(level: Dictionary, mode: int, index: int) -> void:
+#the switch: the selected tier lit, a locked one dim under a lock, each star in its medal's colour once that
+#tier is beaten. Under it the selected tier's goal (or `reason`, why it can't be started) and what a win
+#pays: the win bonus, and the first-clear bonus still to earn.
+func refreshTiers(level: Dictionary, mode: int, index: int, reason: String) -> void:
 	var selected := SaveManager.getGameTier()
 	var best := ModeTiers.best(level, mode)
 	var def := levelDef(index)
-	var data = SaveManager.playerData
-	var card := cards[data.selectedCar]
-	var mine := SaveManager.carClearTier(index, mode, str(data.cars[data.selectedCar].name))
-	var driver: String = card.info.charName if card.info else str(data.cars[data.selectedCar].name)
 	for i in tierButtons.size():
 		var b := tierButtons[i]
 		var tier: int = ModeTiers.TIERS[i]
 		var on := tier == selected
 		var open := ModeTiers.isOpen(level, mode, tier)
-		var style = MenuTheme.box(Color(HudTheme.PANEL, 0.94), HudTheme.RIM if on else Color(1, 1, 1, 0.22), 16, 4 if on else 2)
-		if on:
-			style.shadow_color = Color(HudTheme.GOLD, 0.4)
-			style.shadow_size = 10
-		for state in ["normal", "pressed", "focus"]: b.add_theme_stylebox_override(state, style)
+		var style = MenuTheme.box(HudTheme.PANEL.lerp(HudTheme.RIM, 0.16) if on else Color(HudTheme.PANEL, 0.6), HudTheme.RIM if on else Color(1, 1, 1, 0.22), 12, 3 if on else 2, Vector4(8, 4, 8, 4))
+		for state in ["normal", "pressed"]: b.add_theme_stylebox_override(state, style)
 		var hover = style.duplicate()
 		hover.border_color = HudTheme.GOLD if on else Color(HudTheme.RIM, 0.8)
 		b.add_theme_stylebox_override("hover", hover)
 		b.modulate = Color.WHITE if open || on else Color(1, 1, 1, 0.55)
-		var body: VBoxContainer = b.get_node("body")
-		for child in body.get_children():
-			body.remove_child(child)
-			child.queue_free()
-		var head = HBoxContainer.new()
-		head.add_theme_constant_override("separation", 8)
-		var star = MenuTheme.iconRect(HudTheme.STAR_ICON if open else HudTheme.LOCK_ICON, 22)
-		if open: star.modulate = ModeTiers.MEDAL_COLORS[tier] if best >= tier else GLYPH_OPEN
-		head.add_child(star)
-		var title = Label.new()
-		title.text = ModeTiers.NAMES[tier].to_upper()
-		title.add_theme_font_size_override("font_size", 19)
-		title.add_theme_color_override("font_color", HudTheme.GOLD if on else HudTheme.TEXT)
-		head.add_child(title)
-		body.add_child(head)
-		var goal = Label.new()
-		goal.text = ModeTiers.goalText(mode, tier, def.seconds if def else 300.0)
-		goal.add_theme_font_size_override("font_size", 20)
-		goal.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		goal.custom_minimum_size.y = 54 #two lines, so the cards' rows line up
-		body.add_child(goal)
-		var pay := [MenuTheme.symbolRow(["WIN  +", {"coin": ModeTiers.winBonus(mode, tier, index)}], 17, HudTheme.GOLD)]
-		var first := ModeTiers.firstClear(best, tier, index)
-		if first.coin > 0 || first.gem > 0: pay.push_back(MenuTheme.symbolRow(["FIRST CLEAR  +", first], 17, HudTheme.GOLD))
-		for line in pay: line.alignment = BoxContainer.ALIGNMENT_BEGIN
-		if pay.size() == 1: pay.push_back(cardLine("FIRST CLEAR  paid", HudTheme.MUTED))
-		for line in pay: body.add_child(line)
-		var rule = ColorRect.new()
-		rule.color = Color(1, 1, 1, 0.14)
-		rule.custom_minimum_size = Vector2(0, 2)
-		body.add_child(rule)
-		var won := mine >= tier
-		var row = HBoxContainer.new()
-		row.add_theme_constant_override("separation", 8)
-		if card.info:
-			var pic = TextureRect.new()
-			pic.texture = card.info.sidePic
-			pic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-			pic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-			pic.custom_minimum_size = Vector2(58, 22)
-			pic.modulate = Color.WHITE if won else Color(0.3, 0.3, 0.32)
-			row.add_child(pic)
-		row.add_child(cardLine(("Won with %s" if won else "Not won with %s yet") % driver, ModeTiers.MEDAL_COLORS[tier] if won else MenuTheme.BODY_TEXT))
-		body.add_child(row)
-		var full := SaveManager.isFullGarage(index, mode, tier)
-		body.add_child(cardLine("FULL GARAGE" if full else "CARS  %d / %d" % [SaveManager.carsCleared(index, mode, tier), data.cars.size()], HudTheme.GOLD if full else HudTheme.MUTED))
-		for child in body.get_children(): setMouseIgnore(child)
-
-#a small line on a tier card
-static func cardLine(text: String, color: Color) -> Label:
-	var label = Label.new()
-	label.text = text
-	label.theme_type_variation = "BodyLabel"
-	label.add_theme_font_size_override("font_size", 15)
-	label.add_theme_color_override("font_color", color)
-	label.clip_text = true
-	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	return label
+		var star: TextureRect = b.get_node("body/star")
+		star.texture = HudTheme.STAR_ICON if open else HudTheme.LOCK_ICON
+		star.modulate = Color.WHITE if not open else (ModeTiers.MEDAL_COLORS[tier] if best >= tier else GLYPH_OPEN)
+		b.get_node("body/name").add_theme_color_override("font_color", HudTheme.GOLD if on else HudTheme.TEXT)
+	goalLabel.text = reason if reason != "" else ModeTiers.goalText(mode, selected, def.seconds if def else 300.0, def.sprintSlack if def else 1.3)
+	goalLabel.add_theme_color_override("font_color", LOCK_TEXT if reason != "" else HudTheme.TEXT)
+	for child in payBox.get_children():
+		payBox.remove_child(child)
+		child.queue_free()
+	var win := ModeTiers.winBonus(mode, selected, index)
+	if win <= 0: return #a mode that isn't built yet pays nothing
+	var pay := [MenuTheme.symbolRow(["WIN  +", {"coin": win}], 26, HudTheme.GOLD)]
+	var first := ModeTiers.firstClear(best, selected, index)
+	if first.coin > 0 || first.gem > 0: pay.push_back(MenuTheme.symbolRow(["FIRST CLEAR  +", first], 17, HudTheme.GOLD))
+	else: pay.push_back(MenuTheme.symbolRow(["First clear paid"], 15, HudTheme.MUTED))
+	for line in pay:
+		line.alignment = BoxContainer.ALIGNMENT_BEGIN
+		payBox.add_child(line)
 
 #children of a clickable card let the click through (docs/UI.md, "Mouse")
 static func setMouseIgnore(node: Node) -> void:
 	if node is Control: node.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	for child in node.get_children(): setMouseIgnore(child)
 
-## A level's facts, as the Goonopedia's level page gave them: who lives there (class, line-up, an elite
-## region's step) and, with `full`, its barrier and surfaces. `stacked` puts each tag over its text.
-func fillFacts(into: VBoxContainer, index: int, full: bool, stacked: bool) -> void:
-	for child in into.get_children():
-		into.remove_child(child)
+## A level's facts as groups of tiles: GOONS (the line-up; one not crushed yet is a silhouette), GROUND (a
+## swatch of each surface) and PROPS (what stands on the level). Z/C (LT/RT) walk the tiles (stepFact) and
+## the tile walked to, or the one under the mouse, fills the card beside them (showFact); a click on a
+## goon's tile opens the Goonopedia.
+func fillFacts(index: int) -> void:
+	if index == factsFor: return
+	factsFor = index
+	factAt = -1
+	factTiles.clear()
+	for child in optionsFacts.get_children():
+		optionsFacts.remove_child(child)
 		child.queue_free()
 	var def := levelDef(index)
 	if def == null: return
+	def.resolve()
+	var goons := factGroup("GOONS")
+	for id in LevelRoster.lineupFor(def).slice(0, FACT_CAPS.goons):
+		var path := Goonopedia.goonArt(id)
+		if not ResourceLoader.exists(path): continue
+		var art: Texture2D = load(path)
+		var crop = AtlasTexture.new() #the goon without the frame's empty margin
+		crop.atlas = art
+		crop.region = Goonopedia.artBounds(art)
+		var d: Dictionary = Goons.DATA[id]
+		var known := Goonopedia.isDiscovered(id)
+		var fact := {"title": str(d.name).to_upper(), "line": Goonopedia.behaviour(d), "chips": [[Goonopedia.RANK_NAMES.get(d.rank, "GOON"), HudTheme.RIM]]}
+		if not known: fact = {"title": "???", "line": "Crush one to find out what it does.", "chips": []}
+		var tile := factTile(crop, fact)
+		if not known: tile.get_node("pic").modulate = Color(0.02, 0.02, 0.03, 0.9)
+		tile.pressed.connect(openGoonopedia)
+		goons.get_node("tiles").add_child(tile)
 	var rows := Goonopedia.regionRows(def)
-	var facts := [["WHO LIVES HERE", "%s: %s" % [rows[1][1], rows[2][1]]]]
-	if rows.size() > 3: facts.push_back(["ELITE", rows[3][1]])
-	if full: facts.append_array([["BARRIER", def.barrier], ["SURFACES", def.surfaces]])
-	for fact in facts:
-		if fact[1] == "": continue
-		var row: BoxContainer = VBoxContainer.new() if stacked else HBoxContainer.new()
-		row.add_theme_constant_override("separation", 0 if stacked else 12)
-		var tag = Label.new()
-		tag.text = fact[0]
-		tag.theme_type_variation = "MutedLabel"
-		tag.add_theme_font_size_override("font_size", 13)
-		if not stacked: tag.custom_minimum_size.x = 140
-		row.add_child(tag)
-		var text = Label.new()
-		text.text = fact[1]
-		text.theme_type_variation = "BodyLabel"
-		text.add_theme_font_size_override("font_size", 15 if stacked else 16)
-		text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		row.add_child(text)
-		into.add_child(row)
+	if rows.size() > 3: #an elite region's step
+		var tag: Label = goons.get_child(0)
+		tag.text = "GOONS  ELITE"
+		tag.add_theme_color_override("font_color", LOCK_TEXT)
+		tag.tooltip_text = "Elite goons: %s" % rows[3][1]
+		tag.mouse_filter = Control.MOUSE_FILTER_STOP
+	var ground := factGroup("GROUND")
+	var land := Landscapes.get_def(def.landscape)
+	var seen := []
+	for t in def.baseTerrain + def.accents:
+		var terrain := int(t)
+		if terrain in seen || seen.size() >= FACT_CAPS.ground || terrain < 0 || terrain >= World.count(): continue
+		var material: String = land.materialOf(terrain) if land else WorldSkin.MATERIAL_OF[terrain]
+		var path := WorldSkin.GROUND_DIR + material + ".png"
+		if not ResourceLoader.exists(path): continue
+		seen.push_back(terrain)
+		var info := World.def(terrain)
+		var feel := "slick" if info.grip <= 0.5 else ("slow" if info.friction >= 0.3 else ("fast" if info.friction <= 0.05 else ""))
+		var chips := [["Friction %.2f" % info.friction, HudTheme.MUTED], ["Grip %.1f" % info.grip, HudTheme.MUTED]]
+		if feel != "": chips.push_front([feel.to_upper(), {"slick": LOCK_TEXT, "slow": HudTheme.RIM, "fast": Color(0.6, 0.9, 0.45)}[feel]])
+		var line: String = {"fast": "Fast ground: the car keeps its speed.", "slow": "Slow ground: it drags the car down.", "slick": "Slick: the tyres let go easily."}.get(feel, "Ordinary ground.")
+		var tile: Texture2D = load(path)
+		var swatch = AtlasTexture.new() #a corner of the tile
+		swatch.atlas = tile
+		swatch.region = Rect2(Vector2.ZERO, Vector2(96, 96).min(tile.get_size()))
+		ground.get_node("tiles").add_child(factTile(swatch, {"title": material.capitalize().to_upper(), "line": line, "chips": chips}, true))
+	var props := factGroup("PROPS")
+	var manifest := WorldSkin.loadManifest()
+	var ids := []
+	for id in WorldSkin.FIELD_PROPS:
+		if float(def.features.get(WorldSkin.FIELD_PROPS[id], 0.0)) > 0.0: ids.push_back(String(id))
+	for id in def.heroes: ids.push_back(String(id))
+	for id in def.dressing:
+		if float(def.dressing[id]) > 0.0: ids.push_back(String(id))
+	var shown := []
+	for id in ids:
+		var entry = manifest.get(id)
+		if id in shown || shown.size() >= FACT_CAPS.props || not entry is Dictionary || entry.get("variants", []).is_empty(): continue
+		if not ResourceLoader.exists(entry.variants[0]): continue
+		shown.push_back(id)
+		var breaks: bool = entry.get("breakable") is Dictionary
+		var chips := []
+		if breaks: chips.push_back(["Smashes at %s" % Settings.speed_text(float(entry.breakable.get("smashSpeed", 0.0))), HudTheme.RIM])
+		else: chips.push_back(["SOLID", LOCK_TEXT])
+		if StringName(id) in WorldSkin.PAYING_PROPS: chips.push_back(["Pays coins", HudTheme.GOLD])
+		if entry.get("occluder", false): chips.push_back(["Blocks light", HudTheme.MUTED])
+		var line := "Hit it at speed to smash through." if breaks else "It doesn't break. Steer around it."
+		props.get_node("tiles").add_child(factTile(load(entry.variants[0]), {"title": id.capitalize().to_upper(), "line": line, "chips": chips}))
+	for group in [goons, ground, props]:
+		if group.get_node("tiles").get_child_count() > 0: optionsFacts.add_child(group)
+		else: group.queue_free()
+
+#a group of the level's facts: its tag over its tiles
+static func factGroup(title: String) -> VBoxContainer:
+	var group = VBoxContainer.new()
+	group.add_theme_constant_override("separation", 4)
+	group.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	group.add_child(paneTag(title))
+	var tiles = HBoxContainer.new()
+	tiles.name = "tiles"
+	tiles.add_theme_constant_override("separation", 5)
+	tiles.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	group.add_child(tiles)
+	return group
+
+#a goon, a ground or a prop on a pale tile (a dark silhouette still reads); `fill` covers the tile (a
+#ground swatch). The mouse on it shows `fact` in the card; markFact rings the one Z/C walked to.
+func factTile(texture: Texture2D, fact: Dictionary, fill := false) -> Button:
+	var b := Button.new()
+	b.custom_minimum_size = Vector2(FACT_ICON, FACT_ICON)
+	b.set_meta("fact", fact)
+	b.focus_mode = Control.FOCUS_NONE
+	for state in ["normal", "hover", "pressed"]:
+		b.add_theme_stylebox_override(state, MenuTheme.box(Color(1, 1, 1, 0.09), Color(HudTheme.RIM, 0.9 if state == "hover" else 0.0), 8, 2, Vector4.ZERO))
+	var pic = TextureRect.new()
+	pic.name = "pic"
+	pic.texture = texture
+	pic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	pic.stretch_mode = TextureRect.STRETCH_SCALE if fill else TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	pic.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var inset := 3.0 if fill else 5.0
+	for side in ["offset_left", "offset_top"]: pic.set(side, inset)
+	for side in ["offset_right", "offset_bottom"]: pic.set(side, -inset)
+	pic.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	b.add_child(pic)
+	b.mouse_entered.connect(showFact.bind(fact))
+	b.mouse_exited.connect(restoreFact)
+	factTiles.push_back(b)
+	return b
+
+#the card beside the tiles: a tile's name, what matters about it and one line; {} shows the level's blurb
+func showFact(fact: Dictionary) -> void:
+	for child in factChips.get_children():
+		factChips.remove_child(child)
+		child.queue_free()
+	var def := levelDef(SaveManager.playerData.selectedLevel)
+	factTitle.text = fact.get("title", "")
+	factTitle.visible = factTitle.text != ""
+	optionsBlurb.text = fact.get("line", def.blurb if def else "")
+	optionsBlurb.add_theme_color_override("font_color", MenuTheme.BODY_TEXT if not fact.is_empty() else HudTheme.MUTED)
+	for chip in fact.get("chips", []):
+		var label := paneTag(chip[0])
+		label.add_theme_color_override("font_color", chip[1])
+		label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		factChips.add_child(label)
+
+#back to the fact of the tile Z/C walked to (the mouse left another), or to the blurb
+func restoreFact() -> void:
+	showFact(factTiles[factAt].get_meta("fact") if factAt >= 0 && factAt < factTiles.size() else {})
+
+#Z/C (LT/RT) in Level Options: on to the next tile of the level's facts; past either end is no tile (the blurb)
+func stepFact(direction: int) -> void:
+	factAt = wrapi(factAt + direction + 1, 0, factTiles.size() + 1) - 1
+	markFact()
+	restoreFact()
+
+#a white ring on the tile walked to
+func markFact() -> void:
+	for i in factTiles.size():
+		factTiles[i].add_theme_stylebox_override("normal", MenuTheme.box(Color(1, 1, 1, 0.09), Color(1, 1, 1, 0.92 if i == factAt else 0.0), 8, 2, Vector4.ZERO))
 
 #---------- garage ----------
 
 func selectCar(index: int, animate := true) -> void:
 	var cars = SaveManager.playerData.cars
 	index = wrapi(index, 0, cars.size())
-	if index != SaveManager.playerData.selectedCar:
+	var switched: bool = index != SaveManager.playerData.selectedCar #the driver speaks on a switch, not when the menu loads
+	if switched:
 		SaveManager.playerData.selectedCar = index
 		SaveManager.save_character_data()
 	if cards[index].info == null: finishCarLoad(index, true)
@@ -1114,7 +1445,7 @@ func selectCar(index: int, animate := true) -> void:
 	if focusOpen: refreshBench()
 	layoutCards(animate)
 	showBackground(Root.carInfo.backgroundPic, animate)
-	if Root.carInfo.introAudio.size() > 0:
+	if switched && Root.carInfo.introAudio.size() > 0:
 		$voicePlayer.stream = Root.carInfo.introAudio[randi_range(0, Root.carInfo.introAudio.size() - 1)]
 		$voicePlayer.play()
 	statUpdatesUiUpdate()
@@ -1311,6 +1642,7 @@ func showGarage() -> void:
 func switchLayer(show: Control, hide: Control) -> void:
 	hide.visible = false
 	show.visible = true
+	radioBar.position = Vector2(24, 88) if show == garage else radioInline
 	logo.visible = show == garage
 
 func refreshSetup(animate := true) -> void:
@@ -1377,15 +1709,19 @@ func refreshSetup(animate := true) -> void:
 	optionsRegion.text = str(territory.get("name", "")).to_upper()
 	optionsRegion.add_theme_color_override("font_color", territory.get("color", HudTheme.RIM))
 	optionsArt.texture = posters[selected].get_node("art").texture
-	optionsBlurb.text = def.blurb if def else ""
-	optionsBlurb.visible = optionsBlurb.text != ""
-	fillFacts(optionsFacts, selected, true, true)
+	backButton.tooltip_text = "Back to the road map" if optionsOpen else "Back to the garage"
+	driverChip.visible = not optionsOpen #Level Options has the driver in its launch cluster
+	if driver.info:
+		driverSide.texture = driver.info.sidePic
+		driverLabel.text = driver.info.charName.to_upper()
+	if optionsOpen:
+		fillFacts(selected)
+		restoreFact()
 	var order := modeOrder(selected)
-	for i in medallions.size():
-		medallions[i].visible = i < order.size()
-		if i < order.size(): refreshMedallion(medallions[i], order[i], order[i] == mode, forModes, SaveManager.carClearTier(selected, order[i], driverCar))
+	for i in modeRows.size():
+		modeRows[i].visible = i < order.size()
+		if i < order.size(): refreshModeRow(modeRows[i], order[i], order[i] == mode, forModes, SaveManager.carClearTier(selected, order[i], driverCar))
 	var tier := SaveManager.getGameTier()
-	refreshTiers(forModes, mode, selected)
 	refreshCarStrip(selected, mode, tier)
 	modeTitle.text = Root.gameModeDescription[mode].name
 	modeText.text = "%s%s %s" % ["" if mode in Root.STAPLE_MODES else Modes.categoryName(mode).to_upper() + ": ", Root.gameModeDescription[mode].description, Root.MODE_RULES.get(mode, "")]
@@ -1395,16 +1731,12 @@ func refreshSetup(animate := true) -> void:
 	var reason = "" if open else ("Not in the demo" if isDemoLockedLevel(selected) else Root.openRuleText(SaveManager.playerData.levels[selected - 1] if selected > 0 else {}))
 	if reason == "": reason = Root.modeLockReason(forModes, mode)
 	if reason == "": reason = ModeTiers.lockReason(forModes, mode, tier)
-	modeLock.text = reason
-	modeLock.visible = reason != ""
-	for child in nextUnlock.get_children():
-		nextUnlock.remove_child(child)
-		child.queue_free()
-	var parts := nextUnlockParts()
-	if not parts.is_empty(): nextUnlock.add_child(MenuTheme.symbolRow(parts, 17, HudTheme.MUTED))
+	lockReason = reason
+	refreshTiers(forModes, mode, selected, reason)
 	var playable = isLevelSelectable(selected) && Root.isModePlayable(forModes, mode) && ModeTiers.isOpen(forModes, mode, tier)
 	startButton.disabled = not playable
-	startButton.text = "START" if playable else ("COMING SOON" if reason == "Coming Soon" else "LOCKED")
+	startButton.text = "START" if playable else ("COMING\nSOON" if reason == "Coming Soon" else "LOCKED")
+	startButton.add_theme_font_size_override("font_size", 28 if playable else 21)
 	updateHints()
 
 func refreshPoster(index: int, isFocused: bool) -> void:
@@ -1435,33 +1767,36 @@ func finishPosterLoad(index: int, wait: bool) -> void:
 	pendingPosters.erase(index)
 	posters[index].get_node("art").texture = ResourceLoader.load_threaded_get(path)
 
-#gold star when beaten here, a dim star when it can be started, a lock when it can't
-func refreshMedallion(column: Control, mode: int, selected: bool, level: Dictionary, mine: int) -> void:
-	var disc: Button = column.get_node("disc")
+#a mode's row: lit while selected, dim under a lock while it can't be started (with the reason under its
+#name); its three stars in the medals' colours up to the best tier beaten, over the driver's own bar
+func refreshModeRow(b: Button, mode: int, selected: bool, level: Dictionary, mine: int) -> void:
 	var playable = Root.isModePlayable(level, mode)
-	var beaten = playable && level.gamemodeBeat.get(mode, false)
-	disc.icon = HudTheme.MODE_ICONS[mode] if playable else HudTheme.LOCK_ICON
-	disc.modulate = Color.WHITE if beaten || not playable else Color(0.85, 0.85, 0.85)
-	#a featured mode's ring is its category's colour: Crusher, Trial or Goon Cup (Modes.CATEGORY_COLORS)
-	var ring := Color(1, 1, 1, 0.25) if mode in Root.STAPLE_MODES else Color(Modes.categoryColor(mode), 0.75)
-	var style = MenuTheme.box(HudTheme.PANEL, HudTheme.RIM if selected else ring, 48, 4 if selected else 2, Vector4(16, 16, 16, 16))
+	var style = MenuTheme.box(HudTheme.PANEL.lerp(HudTheme.RIM, 0.16) if selected else Color(HudTheme.PANEL, 0.9), HudTheme.RIM if selected else Color(1, 1, 1, 0.22), 14, 4 if selected else 2)
 	if selected:
-		style.shadow_color = Color(HudTheme.GOLD, 0.45)
-		style.shadow_size = 14
-	for state in ["normal", "pressed", "focus"]: disc.add_theme_stylebox_override(state, style)
+		style.shadow_color = Color(HudTheme.GOLD, 0.4)
+		style.shadow_size = 10
+	for state in ["normal", "pressed", "focus"]: b.add_theme_stylebox_override(state, style)
 	var hover = style.duplicate()
 	hover.border_color = HudTheme.GOLD if selected else Color(HudTheme.RIM, 0.8)
-	hover.bg_color = HudTheme.PANEL.lerp(HudTheme.RIM, 0.12)
-	disc.add_theme_stylebox_override("hover", hover)
-	var best := ModeTiers.best(level, mode) if playable else ModeTiers.NONE
-	var medals = column.get_node("medals")
-	for i in medals.get_child_count(): medals.get_child(i).modulate = ModeTiers.MEDAL_COLORS[ModeTiers.TIERS[i] if best >= ModeTiers.TIERS[i] else 0]
-	column.get_node("mine").color = ModeTiers.MEDAL_COLORS[mine] if playable && mine > ModeTiers.NONE else Color(0, 0, 0, 0)
-	var label: Label = column.get_node("name")
+	b.add_theme_stylebox_override("hover", hover)
+	#a featured mode's ring is its category's colour: Crusher, Trial or Goon Cup (Modes.CATEGORY_COLORS)
+	var staple: bool = mode in Root.STAPLE_MODES
+	var ring := Color(1, 1, 1, 0.25) if staple else Color(Modes.categoryColor(mode), 0.75)
+	b.get_node("row/disc").add_theme_stylebox_override("panel", MenuTheme.box(HudTheme.PANEL, HudTheme.RIM if selected else ring, 30, 3, Vector4.ZERO))
+	b.get_node("row/disc/icon").texture = HudTheme.MODE_ICONS[mode] if playable else HudTheme.LOCK_ICON
+	var label: Label = b.get_node("row/words/name")
 	label.text = Root.gameModeDescription[mode].name
-	label.theme_type_variation = "GoldLabel" if selected else ""
-	label.add_theme_font_size_override("font_size", 19 if selected else 16)
-	column.modulate = Color.WHITE if playable || selected else Color(1, 1, 1, 0.55)
+	label.add_theme_color_override("font_color", HudTheme.GOLD if selected else HudTheme.TEXT)
+	var sub: Label = b.get_node("row/words/sub")
+	sub.text = Root.modeLockReason(level, mode) if not playable else ("" if staple else Modes.categoryName(mode).to_upper())
+	sub.add_theme_color_override("font_color", HudTheme.MUTED if not playable || staple else Modes.categoryColor(mode).lightened(0.2))
+	sub.visible = sub.text != ""
+	var best := ModeTiers.best(level, mode) if playable else ModeTiers.NONE
+	var medals = b.get_node("row/marks/medals")
+	for i in medals.get_child_count(): medals.get_child(i).modulate = ModeTiers.MEDAL_COLORS[ModeTiers.TIERS[i]] if best >= ModeTiers.TIERS[i] else Color(1, 1, 1, 0.16)
+	b.get_node("row/marks").visible = playable
+	b.get_node("row/marks/mine").color = ModeTiers.MEDAL_COLORS[mine] if playable && mine > ModeTiers.NONE else Color(0, 0, 0, 0)
+	b.modulate = Color.WHITE if playable || selected else Color(1, 1, 1, 0.6)
 
 func onStartPressed() -> void:
 	var index = SaveManager.playerData.selectedLevel
@@ -1527,21 +1862,26 @@ func _input(event: InputEvent) -> void:
 		elif event.is_action_pressed("ui_accept") && get_viewport().gui_get_focus_owner() == null: cards[SaveManager.playerData.selectedCar].onMainPressed()
 		else: handled = false
 	else:
-		if event.is_action_pressed("ui_records"): openRecords()
+		#Back before Settings: Esc is both ui_cancel and ui_menu, and here it goes back (Settings has the gear
+		#button, and Start on a pad)
+		if event.is_action_pressed("ui_cancel"): onBackPressed()
+		elif event.is_action_pressed("ui_records"): openRecords()
 		elif event.is_action_pressed("ui_pickups"): openPickups()
 		elif event.is_action_pressed("ui_codex"): openGoonopedia()
 		elif event.is_action_pressed("ui_menu"): openSettings()
 		elif optionsOpen:
-			if event.is_action_pressed("ui_cancel"): closeOptions()
-			elif event.is_action_pressed("ui_left"): stepMode(-1)
-			elif event.is_action_pressed("ui_right"): stepMode(1)
-			elif event.is_action_pressed("ui_up"): stepTier(-1)
-			elif event.is_action_pressed("ui_down"): stepTier(1)
+			if event.is_action_pressed("ui_up"): stepMode(-1)
+			elif event.is_action_pressed("ui_down"): stepMode(1)
+			elif event.is_action_pressed("ui_left"): stepTier(-1)
+			elif event.is_action_pressed("ui_right"): stepTier(1)
+			elif event.is_action_pressed("ui_region_prev") && triggerEdge(event, "ui_region_prev"): stepFact(-1)
+			elif event.is_action_pressed("ui_region_next") && triggerEdge(event, "ui_region_next"): stepFact(1)
+			elif event.is_action_pressed("ui_tab_prev"): stepDriver(-1)
+			elif event.is_action_pressed("ui_tab_next"): stepDriver(1)
 			elif event.is_action_pressed("ui_upgrade"): cycleLoadout()
 			elif event.is_action_pressed("ui_boost"): cycleBoost()
 			elif event.is_action_pressed("ui_accept") && get_viewport().gui_get_focus_owner() == null: onStartPressed()
 			else: handled = false
-		elif event.is_action_pressed("ui_cancel"): goToGarage()
 		elif event.is_action_pressed("ui_tab_prev") || event.is_action_pressed("ui_left"): stepLevelTo(SaveManager.playerData.selectedLevel - 1)
 		elif event.is_action_pressed("ui_tab_next") || event.is_action_pressed("ui_right"): stepLevelTo(SaveManager.playerData.selectedLevel + 1)
 		elif event.is_action_pressed("ui_region_prev") && triggerEdge(event, "ui_region_prev"): stepRegion(-1)
@@ -1566,16 +1906,36 @@ func stepLevelTo(index: int) -> void:
 func triggerEdge(event: InputEvent, action: String) -> bool:
 	return not event is InputEventJoypadMotion || Input.is_action_just_pressed(action)
 
+#Up / Down: the mode rows, top to bottom (they wrap)
 func stepMode(direction: int) -> void:
 	var order := modeOrder()
 	var at = maxi(order.find(SaveManager.getGameMode()), 0)
 	SaveManager.setGameMode(order[wrapi(at + direction, 0, order.size())])
 	refreshSetup()
 
-#Up is the easier tier, Down the harder (the cards read Easy, Medium, Hard left to right)
+#Left is the easier tier, Right the harder (the switch reads Easy, Medium, Hard)
 func stepTier(direction: int) -> void:
-	SaveManager.setGameTier(SaveManager.getGameTier() + direction)
+	selectTier(ModeTiers.clampTier(SaveManager.getGameTier() + direction))
+
+func selectTier(tier: int) -> void:
+	if tier == SaveManager.getGameTier(): return
+	SaveManager.setGameTier(tier)
 	refreshSetup(false)
+
+#Q/E in Level Options: the next car owned drives, so its wins here can be compared without the garage
+func stepDriver(direction: int) -> void:
+	var count: int = SaveManager.playerData.cars.size()
+	var at: int = SaveManager.playerData.selectedCar
+	for i in count - 1:
+		at = wrapi(at + direction, 0, count)
+		if isCarOwned(at):
+			onCarCellPressed(at)
+			return
+
+#run setup's Back: Level Options to the road map, the road map to the garage
+func onBackPressed() -> void:
+	if optionsOpen: closeOptions()
+	else: goToGarage()
 
 func overlayOpen() -> bool:
 	return get_tree().get_nodes_in_group("menuOverlay").size() > 0
@@ -1586,8 +1946,8 @@ func updateHints() -> void:
 		child.queue_free()
 	var hints: Array
 	if screen == Screen.SETUP:
-		if optionsOpen: hints = [[["ui_left", "ui_right"], "Mode"], [["ui_up", "ui_down"], "Tier"], [["ui_accept"], "Start"], [["ui_upgrade"], "Gadget"], [["ui_boost"], "Boost"], [["ui_records"], "Records"], [["ui_pickups"], "Pickups"], [["ui_cancel"], "Back"]]
-		else: hints = [[["ui_region_prev", "ui_region_next"], "Region"], [["ui_tab_prev", "ui_tab_next"], "Stop"], [["ui_accept"], "Select"], [["ui_records"], "Records"], [["ui_pickups"], "Pickups"], [["ui_codex"], "Goonopedia"], [["ui_cancel"], "Back"]]
+		if optionsOpen: hints = [[["ui_up", "ui_down"], "Mode"], [["ui_left", "ui_right"], "Tier"], [["ui_region_prev", "ui_region_next"], "Level Info"], [["ui_records"], "Records"], [["ui_pickups"], "Pickups"]] #Start, Driver, Gadget, Boost and Back show their keys themselves
+		else: hints = [[["ui_region_prev", "ui_region_next"], "Region"], [["ui_tab_prev", "ui_tab_next"], "Stop"], [["ui_accept"], "Select"], [["ui_records"], "Records"], [["ui_pickups"], "Pickups"], [["ui_codex"], "Goonopedia"]]
 	else:
 		var locked = cards[SaveManager.playerData.selectedCar].isLocked()
 		hints = [[["ui_left", "ui_right"] if focusOpen else ["ui_tab_prev", "ui_tab_next"], "Driver"]]

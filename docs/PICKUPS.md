@@ -251,7 +251,7 @@ These lines are all that pickups add to files other systems own. They are marked
 | `scene/player/playerRoot.gd` | `addPickupWidgets`, `HudChance`, and the gift boxes (`checkGiftBox`). |
 | `scene/player/slots/*` | The slot machine (`SlotMachine`) and the gift box reveal (`GiftBox`). |
 | `scene/player/menu/gameSummary.gd` | The Lottery row, best combo, Blueprints; `Unlocks.countRun` and `refresh` (the Unlocked row). |
-| `scene/player/menu/main/main2.gd` | The loadout in run setup (a gadget and a boost, open ones only), the Next unlock line. |
+| `scene/player/menu/main/main2.gd` | The loadout in run setup (a gadget and a boost, open ones only). |
 | `scene/player/menu/pickups/pickup_shop.gd` | The Pickups screen: a tab per tree from the registry, unlock states and buying, `dropShare(id, mode)`. |
 | `scripts/world/world_skin.gd` | `pickupIds()`: the chunk floor pickups through `openOr`. |
 | `scene/level/levelRoot.gd` | `nightsSeen` (for the night unlocks). |

@@ -60,7 +60,7 @@ func test_region_rows_name_the_region_class_and_line_up():
 	assert_true(crusher[3][1].contains("+20% harder hits"), "the elite step: %s" % crusher[3][1])
 
 func test_drop_shares_add_up_in_every_mode():
-	for mode in Root.gameModes.values():
+	for mode in Root.gameModes.values().filter(func(m): return Modes.drops(m) == Modes.Drops.ALL): #the modes that roll drops
 		var total := 0.0
 		for id in Pickups.DATA: total += PickupShop.dropShare(id, mode)
 		assert_true(absf(total - 100.0) < 0.01, "mode %d: shares sum to 100%%, got %f" % [mode, total])

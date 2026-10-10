@@ -58,6 +58,7 @@ func _exit_tree() -> void:
 func _physics_process(delta: float) -> void:
 	var car = Root.playerCar
 	if not is_instance_valid(car) || not Root.isRunActive || not is_instance_valid(Root.levelRoot) || Root.levelRoot.hasEnded: return
+	if Modes.drops(Root.levelRoot.runMode) != Modes.Drops.ALL: return #no supply drops or events where nothing is rolled
 	supplyIn -= delta
 	if supplyIn <= 0.0:
 		supplyIn = randf_range(SUPPLY_EVERY.x, SUPPLY_EVERY.y)

@@ -52,7 +52,7 @@ const WADE_COST = 0.8         #per second of a plan with a wheel in wading depth
 const WET_CORNER_SHARE = 0.3  #per second of a plan with a corner (not the centre) over deep water, this share of LETHAL_COST
 
 const BOUNTY_VALUE := 6.0 #Bounty Hunt: the mark is worth this many times a plain goon
-const GOAL_RADIUS = {"pickup":70.0, "goon":80.0, "station":300.0, "roam":600.0, "patrol":600.0, "escape":300.0}
+const GOAL_RADIUS = {"gate":60.0, "pickup":70.0, "goon":80.0, "station":300.0, "roam":600.0, "patrol":600.0, "escape":300.0}
 const PURSE_QUANTITY = 10.0   #purse.tscn is a "coin" powerup with this quantity
 const FUEL_NEAR_PX = 3000.0   #a known fuel pickup this close lifts the fuel-saving cap
 const CRUSH_SPEED = 140.0     #below this (with a margin over the game's 100) a touch costs health and crushes nothing
@@ -95,6 +95,7 @@ var plan: Dictionary = PLANS[0]
 var planTick := 0
 var planPath := PackedVector2Array()
 var planHit := false
+var paceCap := INF            #a rival's handicap: it never drives faster than this (Rivals.spawn)
 var speedCap := INF           #fuel saving (updateSpeedCap)
 var throttleCap := INF        #what the throttle actually holds to: speedCap, or slower near rocks
 var rockyPickups := {}        #pickup instance id -> amongRocks
@@ -140,9 +141,15 @@ var halfSize := Vector2(80, 40)
 var excludes: Array[RID] = []
 
 #the car's own bodies, which no sweep should count as an obstacle: the car, and a semi's trailer (CarTrailer)
+var ramCars := false #plan as if other cars weren't there, so it drives into them (Demolition Derby; Pursuit's hunter)
 func ownBodies() -> Array[RID]:
 	var own: Array[RID] = [car.get_rid()]
 	if car.trailer: own.push_back(car.trailer.get_rid())
+	if ramCars:
+		for other in car.get_tree().get_nodes_in_group(&"cars"):
+			if other == car: continue
+			own.push_back(other.get_rid())
+			if other.trailer: own.push_back(other.trailer.get_rid())
 	return own
 var lastCosts := PackedStringArray() #every plan's cost at the last choice, for --trace
 var nearGoons := PackedVector2Array() #goons near the car, refreshed with every plan choice
@@ -172,6 +179,8 @@ static func attach(target: OverheadCarBody2D, options: Dictionary = {}) -> AIDri
 
 func _ready():
 	mode = Modes.running() #the run rules: Blackout drives as Countdown
+	var played: int = Root.levelRoot.runMode if is_instance_valid(Root.levelRoot) else mode
+	ramCars = played == Root.gameModes.DERBY || (played == Root.gameModes.PURSUIT && car.isPlayer)
 	var area = car.get_node_or_null("carBodyArea/CollisionShape2D")
 	if area && area.shape is RectangleShape2D: halfSize = area.shape.size / 2.0
 	bodyShape.size = halfSize * 2.0 + Vector2(20, 24)
@@ -346,14 +355,48 @@ func forgetStaleStation() -> void:
 	approachHop = -1
 	graphStation = null
 
+const SMASH_SEEK_PX := 3500.0
+func nearestBreakable() -> Node2D:
+	var best: Node2D = null
+	var bestD := SMASH_SEEK_PX * SMASH_SEEK_PX
+	for prop in car.get_tree().get_nodes_in_group(BreakableProp.BREAKABLE_GROUP):
+		if prop.get_meta(&"smashed", false) || BreakableProp.speedOf(prop) > topSpeed() * 0.85: continue
+		var d: float = prop.global_position.distance_squared_to(car.global_position)
+		if d < bestD && not nearWater(prop.global_position):
+			bestD = d
+			best = prop
+	return best
+
 #the mode's own goal: the station in a race, a region worth stars in survival, the base in Defense
 func objectiveGoal() -> Dictionary:
 	forgetStaleStation()
+	var trophy = Root.levelRoot.get("cup") #Keep the Cup: after the cup, unless this car holds it (then it roams, below)
+	if trophy != null && trophy.holder != car: return {"kind":"gate", "pos":trophy.cupPosition(), "value":200.0, "key":"cup"}
+	if Root.levelRoot.runMode == Root.gameModes.PURSUIT && car.isPlayer: #the player's driver goes for the runner
+		var prey = Root.levelRoot.rivals.runner() if Root.levelRoot.get("rivals") != null else null
+		if prey != null: return {"kind":"gate", "pos":prey.global_position + prey.velocity * 0.4, "value":200.0, "key":"runner"}
+	var arena = Root.levelRoot.get("derby") #Demolition Derby: at the nearest car still running, staying inside the line
+	if arena != null:
+		var prey: Node2D = null
+		for other in car.get_tree().get_nodes_in_group(&"cars"):
+			if other != car && not other.isDestroyed && arena.inside(other.global_position) && (prey == null || other.global_position.distance_squared_to(car.global_position) < prey.global_position.distance_squared_to(car.global_position)): prey = other
+		return {"kind":"gate", "pos":prey.global_position + prey.velocity * 0.3 if prey else arena.centre, "value":200.0, "key":"ram"}
+	var gates = Root.levelRoot.get("course") #a course with no station (Cone Course, a loop): this car's next gate
+	if gates != null && not is_instance_valid(Root.station) && gates.targetFor(car) != Vector2.INF:
+		return {"kind":"gate", "pos":gates.targetFor(car), "value":200.0, "key":"gate%d" % gates.next}
+	if mode == Root.gameModes.SMASH: #the nearest thing this car can smash
+		var prop = nearestBreakable()
+		if prop != null: return {"kind":"gate", "pos":prop.global_position, "value":80.0, "key":"smash%d" % prop.get_instance_id()}
 	match mode:
 		Root.gameModes.SPRINT, Root.gameModes.MARATHON:
 			if is_instance_valid(Root.station):
 				startLegIfNew()
 				var target = stationTarget()
+				var stage = Root.levelRoot.get("course") #a course's next checkpoint comes before its finish
+				var toFinish := 0.0
+				if stage != null && stage.target() != Vector2.INF:
+					toFinish = stage.target().distance_to(target)
+					target = stage.target()
 				raceDistance = car.global_position.distance_to(target)
 				if not route.lineIsClear(car.global_position, target, 250.0):
 					var result = route.plan(car.global_position, target)
@@ -571,6 +614,7 @@ func healthReserve() -> float:
 
 #0 when the tank will last the run, 1 when the car is about to run dry
 func fuelNeed() -> float:
+	if car.fuelFree: return 0.0 #a Trial: the tank doesn't run down
 	var burn = fuelPerSecond()
 	var low = clampf((50.0 - car.fuel) / 40.0, 0.0, 1.0)
 	match mode:
@@ -589,7 +633,8 @@ func fuelPerSecond() -> float:
 #less per second (Countdown) and per px (races). No cap while a fuel pickup is close by and not
 #given up on; one seen far away doesn't count, or the car would burn its tank getting there.
 func updateSpeedCap() -> void:
-	speedCap = INF
+	speedCap = paceCap
+	if car.fuelFree: return
 	if known.values().any(func(pickup): return is_instance_valid(pickup) && pickup.powerup == "fuel" && blacklist.get(str(pickup.get_instance_id()), 0) <= tick && pickup.global_position.distance_to(car.global_position) < FUEL_NEAR_PX): return
 	var burn = fuelPerSecond()
 	var cap = INF
@@ -604,7 +649,7 @@ func updateSpeedCap() -> void:
 				cap = maxf(fuelLimited, timeLimited)
 		_:
 			if car.fuel < 40.0: cap = sustainableSpeed(car.fuel / (120.0 * burn))
-	if cap < topSpeed() * 0.95: speedCap = maxf(cap, p.ecoMinSpeed)
+	if cap < topSpeed() * 0.95: speedCap = minf(maxf(cap, p.ecoMinSpeed), paceCap)
 
 #the speed at which the throttle is needed `duty` of the time (1 = full throttle, top speed)
 func sustainableSpeed(duty: float) -> float:

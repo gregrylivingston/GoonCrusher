@@ -177,7 +177,7 @@ func _process(delta: float) -> void:
 	elif deepDrawn: busy = true #one more redraw clears it
 	PickupWorld.beacons = PickupWorld.beacons.filter(func(b): return is_instance_valid(b[0]) && not b[0].is_queued_for_deletion())
 	var stationOn: bool = is_instance_valid(Root.station) && is_instance_valid(Root.playerCar) && Root.station.active
-	var hunting: bool = is_instance_valid(Root.levelRoot) && Root.levelRoot.get("bounty") != null #Bounty Hunt points at its mark
+	var hunting: bool = is_instance_valid(Root.levelRoot) && (Root.levelRoot.get("bounty") != null || Root.levelRoot.get("course") != null || Root.levelRoot.get("rivals") != null) #Bounty Hunt points at its mark, a course at its next gate
 	if busy || not PickupWorld.beacons.is_empty() || stationOn || stationShown || hunting || markShown: queue_redraw()
 	stationShown = stationOn
 	markShown = hunting
@@ -197,6 +197,8 @@ func _draw() -> void:
 	drawBeacons()
 	if stationShown: drawStation()
 	drawMark()
+	drawGate()
+	drawQuarry()
 	if flashT > 0.0: drawShockwave(1.0 - flashT / SHOCK_SECONDS)
 	deepDrawn = deepShown > 0.0
 	if deepDrawn: drawDeepWater(deepShown)
@@ -325,7 +327,10 @@ func drawStation() -> void:
 	var level = Root.levelRoot
 	if not defense && is_instance_valid(level) && level.seconds > 0.0 && level.seconds <= HURRY_SECONDS:
 		pulse = 1.0 if Settings.get_value("access/reduce_flashing") else 0.5 + 0.5 * sin(Time.get_ticks_msec() * 0.012)
-	drawPointer(Root.station.drivewayPoint(), label, col, icon, pulse, shake, hit)
+	#a course's next checkpoint comes before its finish
+	var gate: Vector2 = level.course.target() if is_instance_valid(level) && level.get("course") != null else Vector2.INF
+	if gate != Vector2.INF: drawPointer(gate, "CHECKPOINT", col, icon, pulse, shake, hit)
+	else: drawPointer(Root.station.drivewayPoint(), "FINISH" if is_instance_valid(level) && level.get("course") != null else label, col, icon, pulse, shake, hit)
 
 #Bounty Hunt: the same pointer at the mark, in red
 func drawMark() -> void:
@@ -333,6 +338,23 @@ func drawMark() -> void:
 	if not is_instance_valid(level) || level.get("bounty") == null || not is_instance_valid(Root.playerCar): return
 	var at: Vector2 = level.bounty.markPosition()
 	if at != Vector2.INF: drawPointer(at, "MARK", HudTheme.BAD, HudTheme.MODE_ICONS.get(Root.gameModes.BOUNTY), 0.0, Vector2.ZERO, 0.0)
+
+#Pursuit: at the runner, in red, over the station's own pointer. Keep the Cup: at the cup, in gold.
+func drawQuarry() -> void:
+	var level = Root.levelRoot
+	if not is_instance_valid(level) || not is_instance_valid(Root.playerCar): return
+	if level.get("cup") != null && not level.cup.playerHolds():
+		drawPointer(level.cup.cupPosition(), "CUP", HudTheme.GOLD, HudTheme.MODE_ICONS.get(Root.gameModes.KEEPCUP), 0.0, Vector2.ZERO, 0.0)
+	elif level.runMode == Root.gameModes.PURSUIT && level.get("rivals") != null && level.rivals.runner() != null:
+		drawPointer(level.rivals.runner().global_position, "RUNNER", HudTheme.BAD, HudTheme.MODE_ICONS.get(Root.gameModes.PURSUIT), 0.0, Vector2.ZERO, 0.0)
+
+#a course with no station (Cone Course): the pointer at its next gate, when that is off screen
+func drawGate() -> void:
+	var level = Root.levelRoot
+	if not is_instance_valid(level) || level.get("course") == null || is_instance_valid(Root.station) || not is_instance_valid(Root.playerCar): return
+	var at: Vector2 = level.course.target()
+	if at != Vector2.INF && not Rect2(Vector2.ZERO, size).grow(-40.0).has_point(get_viewport().get_canvas_transform() * at):
+		drawPointer(at, level.course.gateWord, HudTheme.STATION, HudTheme.MODE_ICONS.get(level.runMode), 0.0, Vector2.ZERO, 0.0)
 
 #a world point as the HUD shows it: on screen a tag over it that fades as the car arrives (`hit` keeps it lit);
 #off screen a pill on the screen edge with an arrow, the label and the distance

@@ -52,12 +52,12 @@ const DATA := {
 	M.BOUNTY: {"name": "BOUNTY HUNT", "category": Category.CRUSHER, "map": Map.RANDOM, "pickups": Drops.ALL, "boxes": true, "record": "time", "goons": "full",
 		"description": "Marked goons, one per district, each tougher than the last. The pointer shows the next mark.",
 		"rules": "Crush every mark before the clock runs out."},
-	M.RALLY: {"name": "RALLY STAGE", "category": Category.TRIAL, "map": Map.FIXED, "pickups": Drops.NONE, "boxes": false, "record": "time", "goons": "none",
+	M.RALLY: {"name": "RALLY STAGE", "category": Category.TRIAL, "plays": M.SPRINT, "map": Map.FIXED, "pickups": Drops.NONE, "boxes": false, "record": "time", "goons": "none",
 		"description": "A marked stage over the level's worst ground, with a split time at every checkpoint.",
 		"rules": "Pass every checkpoint and beat the medal time. The stage is the same every run."},
-	M.FLATOUT: {"name": "FLAT OUT", "category": Category.TRIAL, "map": Map.FIXED, "pickups": Drops.PLACED, "kinds": ["boost"], "boxes": false, "record": "time", "goons": "none",
-		"description": "A minute flat out down a wide strip: launch on green, pick your lane, dodge what the level throws at you and stop in the box.",
-		"rules": "Beat the medal time. Nitro sits at the same spots every run."},
+	M.FLATOUT: {"name": "FLAT OUT", "category": Category.TRIAL, "plays": M.SPRINT, "map": Map.FIXED, "pickups": Drops.PLACED, "kinds": ["boost"], "boxes": false, "record": "time", "goons": "none",
+		"description": "Flat out due east to the station, with nitro at every checkpoint. Arrive too fast to stop and it costs you.",
+		"rules": "Beat the medal time. Nitro sits at the same spots every run; crossing the line over the stop speed adds two seconds."},
 	M.HOTLAP: {"name": "HOT LAP", "category": Category.TRIAL, "map": Map.FIXED, "pickups": Drops.NONE, "boxes": false, "record": "lap", "goons": "none",
 		"description": "A closed loop and three laps. Your best run drives ahead of you as a ghost.",
 		"rules": "The best of three laps counts. Beat the medal lap."},
@@ -70,24 +70,24 @@ const DATA := {
 	M.SMASH: {"name": "SMASH RUN", "category": Category.TRIAL, "map": Map.FIXED, "pickups": Drops.PLACED, "kinds": ["boost"], "boxes": false, "record": "score", "goons": "none",
 		"description": "The stage is lined with things that break. Rocks and walls still hurt.",
 		"rules": "Smash the quota before the clock runs out."},
-	M.CANNONBALL: {"name": "CANNONBALL", "category": Category.CUP, "map": Map.RANDOM, "pickups": Drops.PLACED, "kinds": ["boost", "gadget", "fuel", "repair"], "boxes": true, "record": "wins", "goons": "light",
+	M.CANNONBALL: {"name": "CANNONBALL", "category": Category.CUP, "plays": M.SPRINT, "rivals": true, "map": Map.RANDOM, "pickups": Drops.PLACED, "kinds": ["supply", "boost", "gadget", "move", "loot"], "boxes": true, "record": "wins", "goons": "light",
 		"description": "Five rivals, one station, no set route. Shortcuts through water and fences are fair.",
 		"rules": "Reach the pumps in a paying place."},
-	M.CIRCUIT: {"name": "CIRCUIT RACE", "category": Category.CUP, "map": Map.FIXED, "pickups": Drops.PLACED, "kinds": ["boost", "gadget"], "boxes": false, "record": "time", "goons": "none",
+	M.CIRCUIT: {"name": "CIRCUIT RACE", "category": Category.CUP, "rivals": true, "map": Map.FIXED, "pickups": Drops.PLACED, "kinds": ["boost", "gadget"], "boxes": false, "record": "time", "goons": "none",
 		"description": "Three laps of a track cut through the level, against five rivals.",
-		"rules": "Finish in a paying place. Pickup pads refill every lap."},
-	M.DERBY: {"name": "DEMOLITION DERBY", "category": Category.CUP, "map": Map.FIXED, "pickups": Drops.PLACED, "kinds": ["repair", "armor", "gadget"], "boxes": true, "record": "score", "goons": "none",
-		"description": "A walled arena and no rules. A hit can cost a rival its steering before its engine.",
+		"rules": "Finish in a paying place."},
+	M.DERBY: {"name": "DEMOLITION DERBY", "category": Category.CUP, "rivals": true, "map": Map.FIXED, "pickups": Drops.PLACED, "kinds": ["repair", "armor", "gadget"], "boxes": true, "record": "score", "goons": "none",
+		"description": "Six cars on a lot and no rules. Hits hurt far more here, and leaving the painted line costs health.",
 		"rules": "Be the last car running."},
-	M.KNOCKOUT: {"name": "KNOCKOUT", "category": Category.CUP, "map": Map.FIXED, "pickups": Drops.PLACED, "kinds": ["boost", "gadget"], "boxes": false, "record": "wins", "goons": "none",
+	M.KNOCKOUT: {"name": "KNOCKOUT", "category": Category.CUP, "rivals": true, "map": Map.FIXED, "pickups": Drops.PLACED, "kinds": ["boost", "gadget"], "boxes": false, "record": "wins", "goons": "none",
 		"description": "Last place is cut at the end of every lap until one car is left.",
 		"rules": "Be the one left."},
-	M.KEEPCUP: {"name": "KEEP THE CUP", "category": Category.CUP, "map": Map.RANDOM, "pickups": Drops.PLACED, "kinds": ["boost", "gadget"], "boxes": false, "record": "time", "goons": "none",
-		"description": "One trophy on the map. Ram whoever holds it to take it.",
-		"rules": "Hold the cup for 60 seconds in total."},
-	M.PURSUIT: {"name": "PURSUIT", "category": Category.CUP, "map": Map.RANDOM, "pickups": Drops.PLACED, "kinds": ["boost", "gadget", "fuel"], "boxes": true, "record": "time", "goons": "light",
-		"description": "One of the other drivers runs for the edge of the map with a head start.",
-		"rules": "Wreck them before they get away."},
+	M.KEEPCUP: {"name": "KEEP THE CUP", "category": Category.CUP, "rivals": true, "map": Map.RANDOM, "pickups": Drops.PLACED, "kinds": ["boost", "gadget", "move"], "boxes": false, "record": "time", "goons": "none",
+		"description": "One trophy on the map and six cars after it. Whoever holds it banks time.",
+		"rules": "The first car to hold the cup for the tier's time wins. Get close to whoever has it to take it."},
+	M.PURSUIT: {"name": "PURSUIT", "category": Category.CUP, "plays": M.SPRINT, "rivals": true, "map": Map.RANDOM, "pickups": Drops.PLACED, "kinds": ["supply", "boost", "gadget", "move", "loot"], "boxes": true, "record": "time", "goons": "light",
+		"description": "One of the other drivers runs for the station with a head start.",
+		"rules": "Ram them until they wreck. If they reach the station, they got away."},
 }
 
 ## The featured modes of a level whose def names none (a def from before the mode menu, a test's stand-in)
@@ -126,6 +126,35 @@ static func title(mode: int) -> String:
 
 static func isFixedMap(mode: int) -> bool:
 	return get_def(mode).get("map", Map.RANDOM) == Map.FIXED
+
+## Does the mode have goons at all (its spawners, the wave clock and its stars)
+static func hasGoons(mode: int) -> bool:
+	return get_def(mode).get("goons", "full") != "none"
+
+## What the world hands out: Drops.ALL (rolled drops, supply drops and events, the level's chunk pickups),
+## PLACED (fixed spots only) or NONE
+static func drops(mode: int) -> int:
+	return get_def(mode).get("pickups", Drops.ALL)
+
+## Does the mode put the other drivers on the map (Rivals)
+static func hasRivals(mode: int) -> bool:
+	return get_def(mode).get("rivals", false)
+
+## A thin crowd: goons on the road for something to crush, far fewer than a Crusher mode's
+static func lightGoons(mode: int) -> bool:
+	return get_def(mode).get("goons", "full") == "light"
+
+## Can a pickup of this kind (Pickups.KIND_KEYS) turn up in the mode: any in a mode that rolls everything, only
+## its own `kinds` where they are limited to what is useful there, none in a mode with no pickups
+static func allowsKind(mode: int, kind: String) -> bool:
+	match drops(mode):
+		Drops.ALL: return true
+		Drops.PLACED: return kind in get_def(mode).get("kinds", [])
+	return false
+
+## A Trial is the car against the course: no goons, no night, and the tank doesn't run down
+static func isTrial(mode: int) -> bool:
+	return category(mode) == Category.TRIAL
 
 static func fillsBoxes(mode: int) -> bool:
 	return get_def(mode).get("boxes", true)

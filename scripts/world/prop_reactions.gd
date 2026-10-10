@@ -290,6 +290,7 @@ func updateSprings(delta: float) -> void:
 ## A knocked cone: the sprite flies off along the hit and lands; the prop stops being a wall
 func knock(prop: Node2D, dir: Vector2, k: float) -> void:
 	prop.set_meta(&"knocked", true)
+	if prop.get_meta(&"courseCone", false) && is_instance_valid(Root.levelRoot) && Root.levelRoot.has_method("coneKnocked"): Root.levelRoot.coneKnocked(prop)
 	var shape: CollisionShape2D = prop.get_node_or_null("CollisionShape2D")
 	if shape: shape.set_deferred("disabled", true)
 	var sprite: Node2D = prop.get_node_or_null("Sprite2D")

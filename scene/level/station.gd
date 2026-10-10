@@ -131,10 +131,16 @@ func drivewayPoint() -> Vector2:
 #still rolling may coast in (its NOGAS ending is still pending); a wrecked car (health <= 0, or water) may not.
 func _on_driveway_body_entered(body):
 	if not body.has_method("getIsPlayer"): return
+	if not body.getIsPlayer(): #a rival (Rivals): it takes its place; the level's rules decide what that means
+		if active && is_instance_valid(Root.levelRoot) && Root.levelRoot.rivals: Root.levelRoot.rivalFinished(body)
+		return
 	if not active || not is_instance_valid(Root.levelRoot) || Root.levelRoot.hasEnded || body.health <= 0 || body.isWrecked: return
 	PickupEffects.onStationReached(body, self) #a Delivery's star and Barricade Kits, before the run can end
 	match Modes.running():
-		Root.gameModes.SPRINT: Root.levelRoot.endLevel(true, Root.endCondition.SUCCESS)
+		Root.gameModes.SPRINT:
+			var course = Root.levelRoot.course
+			if course && not course.complete(): TapeBanner.post("CHECKPOINT %d MISSED" % (course.next + 1), 1.2) #the HUD points back at it
+			else: Root.levelRoot.playerFinished()
 		Root.gameModes.MARATHON: Root.levelRoot.stationReached.call_deferred(self) #it places the next station: not inside a physics callback
 		_:
 			if body.has_method("repairAll"): body.repairAll() #a free repair shop

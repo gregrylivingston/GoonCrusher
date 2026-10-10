@@ -47,6 +47,7 @@ func _process(delta):
 #when the level keeps the old cycle (night falls and lifts every daylength seconds)
 func nightShare() -> float:
 	if Root.levelRoot.runMode == Root.gameModes.BLACKOUT: return 1.0 #night from the start to the end
+	if Modes.isTrial(Root.levelRoot.runMode): return 0.0 #a Trial is driven by day
 	var def = Root.levelRoot.def
 	if def == null || not def.rules.has("nightShare"): return -1.0
 	return clampf(float(def.rules.nightShare), 0.0, 1.0)

@@ -436,38 +436,36 @@ func openOptions() -> bool:
 
 func selectMode(mode: int) -> bool:
 	var m := menu()
-	var MODE_ORDER: Array = m.modeOrder() #the medallions, left to right: the selected level's modes
+	var MODE_ORDER: Array = m.modeOrder() #the mode rows, top to bottom: the selected level's modes
 	if mode not in MODE_ORDER:
 		issue("block", "%s isn't a mode of %s" % [Root.gameModeDescription[mode].name, Levels.ORDER[SaveManager.playerData.selectedLevel]])
 		return false
 	for step in MODE_ORDER.size() + 1:
 		if SaveManager.playerData.gameMode == mode: return true
 		var before := SaveManager.playerData.gameMode
-		if useMouse(): await click(m.medallions[MODE_ORDER.find(mode)].get_node("disc"))
+		if useMouse(): await click(m.modeRows[MODE_ORDER.find(mode)])
 		else:
 			var at := MODE_ORDER.find(before)
 			var target := MODE_ORDER.find(mode)
-			await press("ui_right" if wrapi(target - at, 0, MODE_ORDER.size()) <= MODE_ORDER.size() / 2 else "ui_left")
+			await press("ui_down" if wrapi(target - at, 0, MODE_ORDER.size()) <= MODE_ORDER.size() / 2 else "ui_up")
 		if SaveManager.playerData.gameMode == before:
 			issue("block", "run setup didn't change the mode from %s" % Root.gameModeDescription[before].name)
 			return false
 	return SaveManager.playerData.gameMode == mode
 
-## Level Options' tier cards (ModeTiers): a click on the card, or Up / Down
+## Level Options' tier switch (ModeTiers): a click on the tier, or Left / Right
 func selectTier(tier: int) -> bool:
 	var m := menu()
 	for step in ModeTiers.TIERS.size() + 1:
 		if SaveManager.getGameTier() == tier: return true
 		var before := SaveManager.getGameTier()
 		if useMouse(): await click(m.tierButtons[ModeTiers.TIERS.find(tier)])
-		else: await press("ui_down" if tier > before else "ui_up")
+		else: await press("ui_right" if tier > before else "ui_left")
 		if SaveManager.getGameTier() == before:
 			issue("block", "run setup didn't change the tier from %s" % ModeTiers.NAMES[before])
 			return false
 	return SaveManager.getGameTier() == tier
 
-## Run setup's starting slots (main2.SLOTS): the gadget (Gadget, U / Y) and the boost (Boost, B / RS),
-## each cycled until it shows `id`
 func chooseSlot(slot: String, id: String, button: Button, action: String) -> void:
 	var m := menu()
 	for i in m.slotPrices(slot).size() + 1:
@@ -480,7 +478,7 @@ func start(run: Dictionary, car: int, gadget: String, boost: String) -> bool:
 	var data := SaveManager.playerData
 	if m.startButton.disabled:
 		issue("block", "START is disabled for %s %s (%s) though the mode rules say it is playable" % [
-			Levels.ORDER[run.level], Root.gameModeDescription[run.mode].name, m.modeLock.text])
+			Levels.ORDER[run.level], Root.gameModeDescription[run.mode].name, m.lockReason])
 		return false
 	var paid: int = Pickups.LOADOUT.get(m.slotPurchase("loadout"), 0) + Pickups.BOOST_LOADOUT.get(m.slotPurchase("boostLoadout"), 0)
 	bankBefore = {"coin": data.coin, "gem": data.gem, "gadget_cost": paid} #what Start will take for the gadget and boost
