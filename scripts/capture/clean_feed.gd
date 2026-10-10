@@ -2,7 +2,7 @@ class_name CleanFeed
 
 #What the picture shows besides the game: the capture kit's clean feed, and photo mode's (docs/PROMO.md).
 #  full:    the HUD as the player sees it
-#  minimal: the instruments only (no version, objective, now-playing card, toasts or key hints)
+#  minimal: the dials and the visors (no version, mirror with its clock and goal, objective, toasts or key hints)
 #  off:     no HUD at all; screens that open later (a prize game, the results) still show
 #Applied to a run's HUD once it is ready; `restore` puts back what `apply` hid.
 

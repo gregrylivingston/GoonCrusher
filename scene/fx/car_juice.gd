@@ -49,7 +49,7 @@ const WALL_MIN_FORCE := 120.0    #px/s into the wall before a hit jolts anything
 const BOOST_ZOOM := 0.02         #a drift boost pulls the zoom out this much per tier; updateCameraZoom eases it back
 
 #--- sound (D-4) ---
-const GEAR_SPEED := 300.0        #px/s per gear, the controller's rule for car.gear
+const GEAR_SPEED := 300.0        #px/s per gear for enginePitch and gearOf (not the gearbox: that is CarInfo.gears)
 const PITCH_IDLE := 0.85
 const PITCH_RANGE := 0.85        #added from the bottom of a gear to its top
 const PITCH_AFTER_SHIFT := 0.25  #share of PITCH_RANGE the note starts a gear at, after a shift up

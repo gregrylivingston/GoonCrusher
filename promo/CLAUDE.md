@@ -33,11 +33,11 @@ You are probably helping a **trailer maker who is not a programmer**. They have 
 | the "CRUSHED" stamp, the tape, the road sign, the garage door | `stage transition --set which=<stamp, banner, sign or shutter> --set label=...` |
 | more goons | `"crowd": {"spawnTimer": 1.0, "progress": 150}` or a `crowd` event |
 
-Level ids, in game order: prairie, orchard, bayou, canyon, moosewoods (The Wilds); mudlick, stilttown, lantern, sawmill, quarry (Tribe Country); highway, ghosttown, saltflats, raiderpass, thunderroad (Raider Road); frostbite, frozenlake, timberline, tarpits, summit (Hunting Grounds); city, manhole, culdesac, gridlock, blockparty (The Sprawl); blastpits, tankfarm, slagfields, theline, crusher (The Works). Cars: sedan, taxi, pickup, police, ambulance, van, racer, supercar, semi.
+Level ids, in game order (`LEVELS` in `capture.py`): prairie, orchard, bayou, canyon, moosewoods (The Wilds); mudlick, stilttown, lantern, sawmill, quarry (Tribe Country); highway, ghosttown, saltflats, raiderpass, thunderroad (Raider Road); frostbite, frozenlake, timberline, tarpits, summit (Hunting Grounds); city, manhole, culdesac, gridlock, blockparty (The Sprawl); blastpits, tankfarm, slagfields, theline, crusher (The Works). Cars: sedan, taxi, pickup, police, ambulance, van, racer, supercar, semi.
 
 ## Limits to be honest about
 
-- 7 of the 19 game modes aren't built yet (the menu shows them as Coming Soon). Film `countdown` unless they ask for another; if a mode fails to start, say it may not be built yet.
+- All 19 game modes start, but as untuned first versions. Film `countdown` unless they ask for another (`--mode`, the ids in `scripts/global/modes.gd`, `Modes.IDS`).
 - A camera far from the car shows only the part of the world that is loaded round the car. Keep `tripod` and `pan` rigs within about a screen of it.
 - `"layer": "hud"` can leave a stray world marker or two in frame. If it matters, they can mask it in the edit.
 - Slow motion invents the in-between frames, so fast, busy shots can smear.

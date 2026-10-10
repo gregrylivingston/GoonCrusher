@@ -989,7 +989,7 @@ def main():
     p.set_defaults(run=cmd_seeds)
 
     p = commands.add_parser("stage", help="an interface piece, a title or a line-up on a plain backdrop (promo/stages/)")
-    p.add_argument("stage", help="ui, title, lineup or transition")
+    p.add_argument("stage", help="title, lineup, transition, keyart, safezone, endcard, menu or a res:// scene")
     p.add_argument("--set", action="append", metavar="key=value", help="what the stage shows, e.g. --set piece=results --set text=\"43 GOONS\"")
     p.add_argument("--backdrop", default="clear", choices=["clear", "magenta", "grey", "black"])
     p.add_argument("--seconds", type=float, default=4.0, help="0 = one still")

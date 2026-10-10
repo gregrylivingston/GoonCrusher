@@ -1,6 +1,6 @@
 """Bakes the world art into world/art/ (docs/WORLD_ART.md): seamless ground materials and the macro noise, edge strips,
 props (with variants, broken and debris states, hulls and a generated scene each), decor atlases, the station
-textures and the eight level posters. It also writes world/art/props.json and every .import file (mipmaps on; BC7
+textures and the level posters. It also writes world/art/props.json and every .import file (mipmaps on; BC7
 for ground, posters and the station lot).
 
 	python scripts/art/bake_world.py                     # everything
@@ -91,23 +91,6 @@ def write_files(files):
 		new = import_text(rel, old)
 		if new != old: imp.write_text(new, encoding="utf-8")
 
-def level_tags():
-	"""prop id -> {"levels": [...], "faction": [...]}, read from the dressing tables in world/levels/*.tres"""
-	tags = {}
-	for tres in sorted((ROOT / "world" / "levels").glob("*.tres")):
-		text = tres.read_text(encoding="utf-8")
-		lid = re.search(r'^id = &"([a-z_]+)"', text, re.M)
-		#the dressing block ends at its own closing brace, after the last faction's (`}` then `}`)
-		block = re.search(r"^dressing = \{\n(.*?\n\})\n\}$", text, re.M | re.S)
-		if not lid or not block: continue
-		for fac, body in re.findall(r"^(\d+): \{(.*?)^\}", block.group(1), re.M | re.S):
-			for pid in re.findall(r'&"([a-z_]+)"', body):
-				t = tags.setdefault(pid, {"levels": [], "faction": []})
-				if lid.group(1) not in t["levels"]: t["levels"].append(lid.group(1))
-				f = FACTIONS[int(fac)] if int(fac) < 3 else fac
-				if f not in t["faction"]: t["faction"].append(f)
-	return tags
-
 def ccw_screen(pts):
 	"""orient like scene/scenery/rocks1.tscn's occluder (positive shoelace sum in y-down space), for cull_mode 2"""
 	s = sum(pts[i][0] * pts[(i + 1) % len(pts)][1] - pts[(i + 1) % len(pts)][0] * pts[i][1] for i in range(len(pts)))
@@ -192,12 +175,11 @@ texture = ExtResource("tex")
 shape = SubResource("shape")
 {disabled}{node_occ}{node_beacon}{node_over}{node_canopy}""".format(tex=tex, ext_beacon=ext_beacon, ext_canopy=ext_canopy, node_canopy=node_canopy, ext_over=ext_over, node_over=node_over, pts=vec_array(hull), sub_occ=sub_occ, pid=pid, meta="\n".join(meta), sc=1.0 / m["res"], disabled=disabled, node_occ=node_occ, node_beacon=node_beacon)
 
-def manifest_entry(pid, m, tags):
+def manifest_entry(pid, m):
 	res = lambda name: RES_DIR + ("decor/" if m["class"] == "DECOR" else "props/") + name
 	t = dict(m.get("tags") or {})
-	lt = tags.get(pid, {})
-	t["levels"] = sorted(set(t.get("levels", [])) | set(lt.get("levels", [])))
-	t["faction"] = [f for f in FACTIONS if f in set(t.get("faction", [])) | set(lt.get("faction", []))]
+	t["levels"] = sorted(set(t.get("levels", [])))
+	t["faction"] = [f for f in FACTIONS if f in set(t.get("faction", []))]
 	e = {"class": m["class"], "sizePx": m["sizePx"], "variants": [res(v) for v in m["variants"]], "hull": ccw_screen(m["hull"]) if m["hull"] else [],
 		"occluder": m["occluder"], "breakable": None, "explosive": bool(m.get("explosive")), "tags": t}
 	if m.get("breakable"):
@@ -240,7 +222,6 @@ def main():
 	with ThreadPoolExecutor(max_workers=args.workers) as pool:
 		for meta in pool.map(one, tasks): props.update(meta)
 	if props:
-		tags = level_tags()
 		mpath = OUT / "props.json"
 		manifest = json.loads(mpath.read_text(encoding="utf-8")) if mpath.exists() else {}
 		manifest.setdefault("props", {})
@@ -249,7 +230,7 @@ def main():
 		manifest["classes"] = {"DECOR": "MultiMesh, no collision", "LOW": "pooled scene, collision, no occluder", "TALL": "pooled scene, collision and occluder",
 			"STATEFUL": "instanced scene with state (breakable, explosive, spawn point)", "WALL": "wall segment, collision and occluder"}
 		for pid, m in props.items():
-			manifest["props"][pid] = manifest_entry(pid, m, tags)
+			manifest["props"][pid] = manifest_entry(pid, m)
 			if m["class"] != "DECOR": (OUT / "props" / (pid + ".tscn")).write_text(scene_tscn(pid, m), encoding="utf-8")
 		manifest["props"] = dict(sorted(manifest["props"].items()))
 		mpath.write_text(json.dumps(manifest, indent=1), encoding="utf-8")

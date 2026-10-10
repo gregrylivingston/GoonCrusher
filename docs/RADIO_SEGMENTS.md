@@ -1,8 +1,10 @@
 # GoonCrusher Radio: idents, talk and ads in the game
 
-The record of every segment that plays between songs on GoonCrusher Radio: its final script, the direction that produced it, and how it went in. Only segments that are in the game are listed here; drafts live outside the repo until one is chosen and recorded. Format and loudness rules are in `docs/RADIO.md`; the songs are in `docs/RADIO_SONGS.md`.
+The record of every segment that plays between songs on GoonCrusher Radio: its final script, the direction that produced it, and how it went in. Only segments that are in the game are listed here; drafts live outside the repo until one is chosen and recorded. Format and loudness rules and the writing brief are in `docs/RADIO.md`; the songs are in `docs/RADIO_SONGS.md`.
 
 ## In the game
+
+10 ads, 9 idents and 23 talk segments. Every row has its file under `sound/radio/gooncrusher/`, and every file there has a row.
 
 | Segment | File | Length | Kind |
 |---|---|---|---|
@@ -49,7 +51,7 @@ The record of every segment that plays between songs on GoonCrusher Radio: its f
 | DJ: Prize patrol | `sound/radio/gooncrusher/talk/talk_prize_patrol.ogg` | 0:20 | talk |
 | DJ: Investment advice | `sound/radio/gooncrusher/talk/talk_star_report.ogg` | 0:21 | talk |
 
-**Segment odds:** `station.json` has `segment_counts` at `[1, 1, 1]`, and a gap is never empty twice in a row: after each song, a quarter of the time the next song plays straight away, 3/8 of the time one segment plays, and 3/8 of the time two segments of different kinds play back to back (so three songs never play in a row). Kinds are picked by weight (ident 3, talk 4, ad 2), and tuning in always opens with an ident. That's about 1.1 segments per song: DJ talk about every 7 minutes, an ident about every 8 (plus every tune-in), an ad about every 12, and Skip song in the pause menu drops whatever segments were queued.
+**How often they play:** the rules and the station's odds are in `docs/RADIO.md` ("`station.json`"). With the shipped odds (none, one or two segments a third each, never two empty gaps in a row; ident 3, talk 4, ad 2) that's about 1.1 segments per song: DJ talk about every 7 minutes, an ident about every 8 (plus every tune-in), an ad about every 12. Skip song drops whatever segments were queued.
 
 ## Writing segments that generate well
 

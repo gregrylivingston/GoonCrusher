@@ -32,8 +32,8 @@ Reset Progress never touches the settings files.
 
 | Option | Values | Potato | Low | Medium | High | Effect |
 |---|---|---|---|---|---|---|
-| Text Effects | Flat / Still 3D / Animated / Animated HD | Flat | Still 3D | Animated | Animated HD | `shader/3dtext.gdshader` via `gc_text_quality` and `gc_text_max_slices` (1/4/8/16); at rest text uses only the slices its extrusion needs |
-| Lighting | Low / Medium / High | Low | Medium | Medium | High | High as authored. Medium keeps every shadow and occluder with a smaller atlas and no pickup glow. **Low affects gameplay:** no shadows or small lights (world occluders stay), one big station lamp |
+| Text Effects | Flat / Still 3D / Animated / Animated HD | Flat | Still 3D | Animated | Animated HD | `shader/3dtext.gdshader` via `gc_text_quality` and `gc_text_max_slices` (at most 1/4/8/16 slices); at rest text uses only the slices its extrusion needs |
+| Lighting | Low / Medium / High | Low | Medium | Medium | High | High as authored. Medium keeps every shadow and occluder with a smaller shadow atlas (`Settings.SHADOW_ATLAS`: 256 / 1024 / 2048) and no pickup glow. **Low affects gameplay:** no shadows or small lights (world occluders stay), one big station lamp |
 | Simple Headlight Cone | On / Off | On | On | Off | Off | One baked shadowed cone (`texture/fx/headlight_cone.png`) instead of 5 headlamps, same reach |
 | Exhaust Smoke | Off / Low / Full | Off | Low | Full | Full | Pooled puffs |
 | Tire Marks | Off / Short / Full | Off | Short | Full | Full | Short: rear tyres, 6 s. Full: all tyres, 20 s |
@@ -63,10 +63,10 @@ Reset Progress never touches the settings files.
 
 ### Audio, Controls, Accessibility, Gameplay
 
-- **Audio:** Master, Music, Voice, Effects and Menu Sounds (0–100% perceptual, 0 dB max, each with a mute); Mute When Unfocused.
-- **Controls:** rebind Accelerate, Brake, Steer Left/Right, Handbrake, Fire Gadget, Boost / Hop and Pause (two keys plus one pad input each); stick deadzone; vibration Off/Low/High.
-- **Accessibility** (overrides presets without making them Custom): Reduce Motion, Reduce Flashing, giant marker style and colour, Plain Text, Car Shake, Screen Shake (Off / Low / Full), Hit-Stop, HUD Scale (80–130%).
-- **Gameplay:** speed units, Show Run Timer, Confirm Abandon / Quit, Car Paint, Reset Progress (keeps settings).
+- **Audio:** Master, Music, Voice, Effects and Menu Sounds (0–100% perceptual, 0 dB max, each with a mute); Radio (the station, or off: docs/RADIO.md); Mute When Unfocused.
+- **Controls:** rebind every action in `Settings.REBINDABLE` (Accelerate, Brake, Steer Left/Right, Handbrake, Fire Gadget, Boost / Hop, Horn, Car Ability, Shift Up/Down and Pause; two keys plus one pad input each); stick deadzone; vibration Off/Low/High.
+- **Accessibility** (overrides presets without making them Custom): Reduce Motion, Reduce Flashing, giant marker style and colour, Plain Text, Car Shake, Screen Shake (Off / Low / Full), Hit-Stop, HUD Scale (80–130%), Classic Dashboard (the house dials on every car, no signature instrument: docs/HUD.md).
+- **Gameplay:** speed units, Show Run Timer, Automatic Gearbox (the manual cars shift themselves), Confirm Abandon / Quit, Car Paint, Reset Progress (keeps settings).
 
 There are deliberately no MSAA, FXAA, HDR-2D or glow options, and **the physics tick rate is never exposed**.
 
@@ -74,16 +74,16 @@ There are deliberately no MSAA, FXAA, HDR-2D or glow options, and **the physics 
 
 - **World streaming** (docs/WORLD.md): map built on a worker; rasters and recipes built on workers; the main thread applies chunks within `APPLY_BUDGET_USEC`; nodes are pooled; chunks more than 2 away unload. Per-chunk budgets: docs/WORLD.md, "Budgets".
 - **Goons:** capped at 250 for everyone; off-screen goons skip collision; spawns are staggered; the despawn sweep runs every 0.5 s. They move in floating mode (top-down), not CharacterBody2D's grounded default.
-- **Native code** (docs/NATIVE.md): the goon tick's fields and movement helpers (`GoonBody`), the terrain queries and WorldHooks' grid walks (`WorldGrid`), and the map build's crossings pass (`WorldGenNative`) are C++. Goon script went from 62 to 30 µs per goon per tick; the map build from 1.36–2.02 s to 0.82–1.29 s.
+- **Native code:** the goon tick (`GoonBody`), the terrain queries (`WorldGrid`) and the map build's crossings pass (`WorldGenNative`) are C++; docs/NATIVE.md has the classes and their gains.
 - **Rewards** are credited at once; flyers are pooled visuals.
 - **Batching and textures:** one text shader, shared pickup materials, mipmaps on world textures, BC7 for large backgrounds, portraits, ground materials and posters. A level loads only its own world art (about 17 MB of 48 MB budget).
-- **Lights:** 2D shadow atlas 1024; no world lights (landmarks use unlit beacon sprites).
+- **Lights:** no world lights (landmarks use unlit beacon sprites); the 2D shadow atlas follows the Lighting option.
 - **Loading:** levels and the car load on worker threads; the menu loads `CarInfo`, not car scenes; shaders warm up behind the countdown.
 - **Physics overload:** `max_physics_steps_per_frame = 4` (brief slow motion instead of a stall).
 
 ## Latest results on the HD 620
 
-Measured 2026-10-07 with the native goon tick, grid and crossings. Vulkan Mobile, 1920x1080 borderless, uncapped, 90 s, one run per cell. Avg / 1% low fps; in brackets the 2026-10-06 GDScript numbers from the same box.
+Measured 2026-10-07 with the native goon tick, grid and crossings, so before the road atlas, the 19 modes, the rivals and the HUD rework: nothing below has been re-run since 2026-10-08. Vulkan Mobile, 1920x1080 borderless, uncapped, 90 s, one run per cell. Avg / 1% low fps; in brackets the 2026-10-06 GDScript numbers from the same box.
 
 | Scenario | fps | p99 frame | Under 17.5 ms | Frames > 50 ms | Max goons |
 |---|---|---|---|---|---|
@@ -97,9 +97,9 @@ Measured 2026-10-07 with the native goon tick, grid and crossings. Vulkan Mobile
 
 The S3 night, city and S6 rows of 2026-10-06 weren't re-run. Chunk work (`WORLD_CHUNKS`): fine raster about 16–25 ms and recipe 7–8 ms average on workers; main-thread apply 1.6–1.9 ms average, longest step under 5 ms.
 
-- **The goon tick halved; crowds still miss the S4 targets.** In a profile of S4 (counters in `Walker`), goon script cost 62 µs per goon per tick before and 30 after (docs/NATIVE.md has the breakdown). Physics by crowd size on Low: 80–120 goons 13 → 4.5–5 ms per frame, 120–160 goons 16.6 → 8–10 ms; above 160 goons it is still 10–12 ms, now mostly the physics server and other nodes (goon script is under a quarter of it). Long frames are rare now (2–21 per run instead of 42–303), but the 1% low stays at 19–28 fps.
+- **The goon tick halved; crowds still miss the S4 targets.** Goon script cost 62 µs per goon per tick before and 30 after (docs/NATIVE.md has the breakdown). Physics by crowd size on Low: 80–120 goons 13 → 4.5–5 ms per frame, 120–160 goons 16.6 → 8–10 ms; above 160 goons it is still 10–12 ms, now mostly the physics server and other nodes (goon script is under a quarter of it). Long frames are rare now (2–21 per run instead of 42–303), but the 1% low stays at 19–28 fps.
 - GPU time stays at 9–12 ms on Low (4 on Potato) whatever the crowd, so Potato's S4 average clears its 58 fps target; its 1% low doesn't.
-- Prairie's S4 is inflated by churn: the bench car can't drown and circles over lakes, where following goons keep drowning and respawning.
+- Prairie's S4 is inflated by churn: the bench car can't be wrecked and circles over lakes, where following goons keep drowning and respawning.
 - Compatibility ran pinned at 16.67 ms despite `--uncapped` (V-Sync forced through ANGLE). It stays a troubleshooting option.
 
 ## Decisions
@@ -114,12 +114,12 @@ The S3 night, city and S6 rows of 2026-10-06 weren't re-run. Chunk work (`WORLD_
 - Night crowds above 160 goons: physics is still 10–12 ms per frame on Low, now mostly outside goon script. Next steps: no collision for off-screen goons (they never use it, but they still sit in the broadphase and move every tick), then a lower cap on Low and Potato, then native verbs (docs/NATIVE.md, "What to port next").
 - Load time: the map build is 0.8–1.3 s; `WorldField.sample` is the next native port.
 - Should Low or Potato default to 720p?
-- Unmeasured: 4K (stepped text slices on the titles, ground seams), vsync-on runs, medians of 3 runs.
+- Unmeasured: 4K (stepped text slices on the titles, ground seams), vsync-on runs, medians of 3 runs, Crush Effects and Driving Effects in S3/S4, and the Goon Cup's rivals (up to five more AI planners and cars; docs/AI_DRIVER.md, "Limits").
 - Per-canvas-item 2D light limits are unconfirmed; watch for lights popping near a station at night.
 
 ## Benchmarking
 
-`scripts/debug/bench.gd` (autoload `Bench`): inert without `--bench`; boots through the menu, saves to a scratch copy, fixes the seed (default 1337), drives with an autopilot, and resets health, fuel and the deep-water counter every tick. Output: a per-frame CSV (with `chunk_ms` and `occluders`) and a `summary.csv` row in `user://bench/`; `WORLD_CHUNKS` prints at exit.
+`scripts/debug/bench.gd` (autoload `Bench`): inert without `--bench`; boots through the menu, saves to a scratch copy, opens every unlock, fixes the seed (default 1337), drives a pattern (not the AI driver), refills health and fuel every tick (so nothing wrecks the car) and keeps a counting-down clock from running out. Output: a per-frame CSV (with `chunk_ms` and `occluders`) and a `summary.csv` row in `user://bench/`; `WORLD_CHUNKS` prints at exit.
 
 ```
 Godot_console.exe --path . -- --bench=S3 --uncapped --preset=low --seconds=90
@@ -127,12 +127,12 @@ Godot_console.exe --path . -- --bench=S3 --level=city --uncapped --preset=low --
 Godot_console.exe --path . -- --bench=S2 --mode=sprint --at=station --pattern=none --shot=8 --seconds=10
 ```
 
-Options (the header lists all): `--preset`, `--set=gfx/lighting:0;...` (values go through `str_to_var`, so strings need quotes, e.g. `display/render_res:"720"`; PowerShell strips them unless the command line is built with `Start-Process -ArgumentList`), `--shot=5;30`, `--tag`, `--headlights=N`, `--open-settings`, `--notext`, `--car`, `--damage=engine:35;...`, `--level=<id>`, `--seed=N`, `--pattern=none|sine|circle|route`, `--at=water|wall|station|x,y`, `--zoom=0.4`. For a Compatibility spot check put `--rendering-method gl_compatibility` before the `--`.
+Options (the header lists all): `--preset`, `--set=gfx/lighting:0;...` (values go through `str_to_var`, so strings need quotes, e.g. `display/render_res:"720"`; PowerShell strips them unless the command line is built with `Start-Process -ArgumentList`), `--shot=5;30`, `--tag`, `--headlights=N`, `--open-settings`, `--notext`, `--car`, `--damage=engine:35;...`, `--level=<id>`, `--landscape=<id>`, `--mode=<Root.gameModes name>` (default `gooncrusher`, Countdown), `--level-seconds=N` (the run can then end), `--unlocks=all|save`, `--seed=N`, `--pattern=none|sine|circle|route`, `--at=water|wall|station|x,y`, `--zoom=0.4`. For a Compatibility spot check put `--rendering-method gl_compatibility` before the `--`.
 
 | ID | Scenario | Stresses |
 |---|---|---|
 | S1 | Main menu idle | 3D text fill |
-| S2 | Day drive, prairie, sedan | terrain, smoke, streaming |
+| S2 | Day drive, prairie, sedan, weaving | terrain, smoke, streaming |
 | S3 | Night, quarry, police car, circling | lights, shadows, occluders |
 | S4 | S3 plus maximum spawn pressure | goon physics, draw calls |
 | S5 | 5 slot claims | celebrations, reels |

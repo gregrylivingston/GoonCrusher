@@ -292,8 +292,8 @@ func buildLogo() -> void:
 	ui.add_child(logo)
 
 func buildTopBar() -> void:
-	#top left: Quit, Settings and the Goonopedia, then the radio (it shows the song, a click changes
-	#station: docs/RADIO.md), narrower in the garage to stay clear of the logo (switchLayer)
+	#top left: Quit, Settings and the Goonopedia, then the radio (it shows the song, a click skips to
+	#the next one: docs/RADIO.md), narrower in the garage to stay clear of the logo (switchLayer)
 	var left = HBoxContainer.new()
 	left.position = Vector2(24, 24)
 	left.add_theme_constant_override("separation", 10)

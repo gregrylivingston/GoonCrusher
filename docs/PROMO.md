@@ -7,7 +7,7 @@ How the kit works, for whoever maintains it. The people filming read `promo/READ
 | Path | What | Ships with the game |
 |---|---|---|
 | `scripts/debug/capture.gd` | autoload `Capture`: inert without `--capture`, else loads the session | yes (inert) |
-| `scripts/capture/clean_feed.gd` | `CleanFeed`: HUD full / minimal / off | yes (photo mode will use it) |
+| `scripts/capture/clean_feed.gd` | `CleanFeed`: HUD full / minimal / off. Minimal hides the HUD children named in `MINIMAL_HIDES` (the version, the mirror with its clock and goal, the objective), the chance widgets and every `KeyHint`: a renamed HUD node must be renamed there too | yes (photo mode will use it) |
 | `scripts/capture/director_camera.gd` | `DirectorCamera`: follow, tripod, pan, free rigs | yes (photo mode will use it) |
 | `promo/capture/session.gd` | one capture job: starts the run or stage, drives, films, writes the sidecar | no |
 | `promo/capture/tape.gd` | `Tape`: a hand drive's inputs per tick | no |
@@ -64,11 +64,11 @@ The `transition` stage plays the game's own pieces by `which`: `Transition.play`
 
 A clean picture (`hud: off`, a survey) also hides the run's `Banners` layer each frame: the tape banners and district signs are not part of the HUD.
 
+To add a stage: a function in `stage.gd`, a line in its `match`, its fields in the header comment, and an example in `promo/shots/elements.json`.
+
 ## Panoramas
 
-A job of kind `survey` parks a hidden car at each cell of a grid round the start, waits `SURVEY_SETTLE` frames for the chunks, and saves a tile; `capture.py panorama` joins them with ffmpeg's `tile` filter. The car's own camera is held at the survey's zoom because `TileManager.queueNeededChunks` streams for that camera. `KEEP_RADIUS` (2 chunks) bounds how much world one tile can hold: below about zoom 0.12 the edges of a tile would be unloaded.
-
-To add a stage: a function in `stage.gd`, a line in its `match`, its fields in the header comment, and an example in `promo/shots/elements.json`.
+A job of kind `survey` parks a hidden car at each cell of a grid round the start, waits `SURVEY_SETTLE` frames for the chunks, and saves a tile; `capture.py panorama` joins them with ffmpeg's `tile` filter. The car's own camera is held at the survey's zoom because `TileManager.queueNeededChunks` streams for that camera. `TileManager.KEEP_RADIUS` (2 chunks) bounds how much world one tile can hold: below about zoom 0.12 the edges of a tile would be unloaded.
 
 ## Events and the camera
 
@@ -83,7 +83,7 @@ To add a stage: a function in `stage.gd`, a line in its `match`, its fields in t
 - `scene/level/tileManager.gd`: `steady`.
 - `export_presets.cfg`: `promo/*` excluded.
 
-`tests/game/test_capture.gd` checks that the autoload is inert, that the export excludes `promo/`, the tape round trip, the clean feed and the camera rigs.
+`tests/game/test_capture.gd` checks that the autoload is inert, that the export excludes `promo/`, the tape round trip, the clean feed, the camera rigs, the frame shapes and that the shot files are well formed.
 
 ## Photo mode (planned)
 
@@ -97,4 +97,4 @@ To add a stage: a function in `stage.gd`, a line in its `match`, its fields in t
 - `"layer": "hud"` and an isolated results ticket leave the odd world-space marker that draws on its own layer.
 - The hatch reel and the full pages (Pickups, Goonopedia) come on the game's own dark background, not transparent: their backdrops are part of the piece.
 - The Steam sizes in `PROFILES` and the safe zones in `stage.gd` are from memory: check them before a final export.
-- A non-technical filmer can't build the native library. `doctor --native <folder>` copies in a prebuilt pair; publishing one per commit (a GitHub release) is the author's job and isn't automated.
+- A non-technical filmer can't build the native library (docs/NATIVE.md). `doctor --native <folder>` copies in a prebuilt pair; publishing one per commit (a GitHub release) is the author's job and isn't automated.

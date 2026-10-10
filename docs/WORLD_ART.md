@@ -9,14 +9,14 @@ The ground, edges, props, station textures and level posters are generated top-d
 | `scripts/art/art_core.js` | Shared helpers: seeded `rng`, noise and periodic `fbm`/`worley`, colour maths, the overhead-lit `vol`/`polyVol`, `facetRock`, `tire`, grime, and the alpha-mask convex `hull`. (`car_gen.js` and `goon_gen.js` keep their own copies so their output never changes.) |
 | `scripts/art/world_gen.js` | The generator (`window.WorldArt`): `GROUND` (materials), `EDGE` (strips), `PROPS` (the catalog: class, size and a draw function per prop), `STATION`, `POSTER` (one vignette per level) and the bake functions. **Change world art here.** |
 | `scripts/art/bake_world.html`, `scripts/art/bake_world.py` | The bake. `python scripts/art/bake_world.py [job ...] [--only id,id]` opens `bake_world.html#<job>:<ids>` in headless Edge (3 in parallel) and writes the files, `props.json`, the prop scenes and every `.import` file. |
-| `world/art/ground/` | 30 seamless materials (`<name>.png`, 512²) and `macro_noise.png` (256², greyscale). |
+| `world/art/ground/` | 31 seamless materials (`<name>.png`, 512²) and `macro_noise.png` (256², greyscale). |
 | `world/art/edges/` | 14 edge strips for `Line2D` (512×96). |
 | `world/art/props/` | Each prop's variants (`<id>.png`, `<id>_v1.png`...), breakable and explosive states (`<id>_broken.png`, `<id>_debris.png`), the landmarks' beacon glows (`<id>_beacon.png`) and its scene (`<id>.tscn`). |
 | `shader/world_beacon.gdshader`, `shader/world_beacon.tres` | The landmarks' beacon: additive, unlit, a slow breath and a double flash, out of step per landmark; `gc_motion` (Reduce Motion) calms it. One shared material; its `night` parameter dims it to 15% by day, faded by `Level.fadeBeacons` with the day and night. |
 | `world/art/decor/` | One atlas per decor id (`<id>.png`, a row of 4 square cells). |
 | `world/art/props.json` | The prop manifest (below). |
-| `world/art/station/` | `station_lot`, `station_roof` (512² tiles), `station_wall` (strip; unused since the lot lost its walls), `station_lamp` and `station_pump` (sprites). |
-| `world/art/posters/` | The 30 level posters (the 8 levels in `Levels.ORDER` and the Road Atlas's 22 new ones), `<level id>.png`, 1792×1024. |
+| `world/art/station/` | `station_lot`, `station_roof` (512² tiles), `station_wall` (strip; unused), `station_lamp` and `station_pump` (sprites). |
+| `world/art/posters/` | The 30 level posters, `<level id>.png`, 1792×1024. |
 | `tests/game/test_world_art.gd` | Manifest vs. files and scenes, hull shape, occluders, level dressing ids, ground, edges, station and posters. |
 
 **Never edit the baked files by hand; change the generator and re-bake.** That includes the `.tscn` files and `props.json`.
@@ -35,22 +35,22 @@ Godot_console.exe --headless --path . --import
 - Prop scenes are written without uids; Godot assigns them on import.
 - `--workers N` sets how many Edge processes run at once (default 3). Each gets a scratch profile.
 - The bake is deterministic: no `Math.random`, no `Date`. Re-baking without changes gives the same pixels.
-- Prop tags (`tags.levels`, `tags.faction`) come from the `dressing` tables in `world/levels/*.tres` at bake time, merged with tags set in the design. Re-bake props (`prop decor`) after changing a level's dressing. (Before package 14 the dressing regex stopped at the last faction's brace, so each level's last table, usually Scrap, was never tagged; fixed in `level_tags`.)
+- Prop tags (`tags` in the manifest) are hints for whoever fills the dressing tables; the game doesn't read them. They are the design's own `tags`. `tags.levels` and `tags.faction` in `props.json` are whatever the design says (a prop not re-baked since keeps its older ones).
 
 ## Rules
 
 - **Light from straight overhead.** Nothing implies a sun direction. Height reads only through ambient occlusion: a dark contact band at the foot of cliffs, props and buildings, and a lighter lip on top edges. So every sprite and strip may be rotated and flipped freely.
 - **Contact shadows are centred** under each prop (a blurred silhouette, `shadow` in the design). Props get a **1.0 px rim** in `rgba(18,13,16,.9)`, thinner than the goons' 1.6, so the actors stay the most outlined thing on screen. Flat things (decor, the manhole, scorch and debris remains) have no rim.
 - **Palette:** ground mid-value (about 35-60% luminance) and less saturated than the actors. Never use telegraph red `#ff5c30`, HUD orange `#f0a030` or Scrap teal `#2aa6a1` as a large fill. Teal appears only as small daubs on Scrap Gang props; the Tribe's orange is the rag colour `#e0782c`. Deep water is slate (`#284a57`), not teal. Bake at final brightness: no modulates above 1.
-- Known exceptions: snow (`#c5cbd1`, about 78%) and deep snow are brighter than the mid-value band, because snow has to read as snow; asphalt and deep water sit a little below it. The Road Atlas added three more: `salt` (about 68%) is bright because a salt flat has to read white to the horizon; `tar` (about 17%) is near-black like `oil`; and `lava` (about 26% on average) is mostly dark crust, its molten network in deep red to orange (`#6e2210` to `#d2712e`, the thin cores `#e8a85a`), kept off telegraph red and HUD orange and dark enough that the ground shader's glow can lift it without blowing out.
+- Known exceptions: snow (`#c5cbd1`, about 78%) and deep snow are brighter than the mid-value band, because snow has to read as snow; asphalt and deep water sit a little below it. Three more: `salt` (about 68%) is bright because a salt flat has to read white to the horizon; `tar` (about 17%) is near-black like `oil`; and `lava` (about 26% on average) is mostly dark crust, its molten network in deep red to orange (`#6e2210` to `#d2712e`, the thin cores `#e8a85a`), kept off telegraph red and HUD orange and dark enough that the ground shader's glow can lift it without blowing out.
 - **Texel density:** ground 0.5 texels per world px (a 512 tile covers 1024 px), props, strips and decor 0.75 (shown at scale 1/0.75 = 1.3333), matching the goons.
 - **Grime:** props get the goons' grime pattern (`#2e2218`) source-atop at their `grime` alpha. Tiles use the seamless twin (`grimeTile`, 128 px with a periodic lattice) so it never seams.
 
 ## Ground materials
 
-`grass`, `moss`, `dirt`, `sand`, `mud`, `mudpit`, `snow`, `deepsnow`, `ice`, `asphalt`, `lot`, `wash`, `oil`, `shallows`, `water` (deep), `conveyor`, `rock` (cliff and mountain tops), `roof` (building rooftops), `bridge` (deck planks), `gravel`.
+`grass`, `moss`, `dirt`, `sand`, `mud`, `mudpit`, `snow`, `deepsnow`, `ice`, `asphalt`, `lot`, `wash`, `oil`, `shallows`, `water` (deep), `conveyor`, `wade` (wading depth: bluer and darker than `shallows`, the bed still showing), `rock` (cliff and mountain tops), `roof` (building rooftops), `bridge` (deck planks), `gravel`.
 
-The Road Atlas landscapes added ten: `needles` (forest floor: rust-brown pine needle litter, mossy patches, twigs and cones; drives like grass), `beach` (pale coast sand, cooler and greyer than `sand`, swash ripples, shells, wrack lines), `salt` (salt crust polygons about 146 px across with raised ridges and a hairline crack), `ash` (volcanic ash with wind ripples and cinders), `tar` (glossy near-black with slow folds and domed bubbles), `lava` (dark cooled crust plates over a molten network and open pools; drawn in the ground shader's water layer), `basalt` (hexagonal column tops for volcano walls, each at its own height), `roof_timber` (ghost town roofs: bleached wooden shakes in 64 px courses along x, a few missing, tin patches), `roof_shingle` (suburb roofs: slate three-tab shingles in 48 px courses along x, algae streaks downslope) and `lawn` (mown suburb grass, light and dark stripes 128 px wide running along y).
+For the newer landscapes: `needles` (forest floor: rust-brown pine needle litter, mossy patches, twigs and cones; drives like grass), `beach` (pale coast sand, cooler and greyer than `sand`, swash ripples, shells, wrack lines), `salt` (salt crust polygons about 146 px across with raised ridges and a hairline crack), `ash` (volcanic ash with wind ripples and cinders), `tar` (glossy near-black with slow folds and domed bubbles), `lava` (dark cooled crust plates over a molten network and open pools; drawn in the ground shader's water layer), `basalt` (hexagonal column tops for volcano walls, each at its own height), `roof_timber` (ghost town roofs: bleached wooden shakes in 64 px courses along x, a few missing, tin patches), `roof_shingle` (suburb roofs: slate three-tab shingles in 48 px courses along x, algae streaks downslope) and `lawn` (mown suburb grass, light and dark stripes 128 px wide running along y).
 
 - Seamless: every noise call wraps its lattice (`fbm(u*k, v*k, seed, oct, k)`), and strokes and pebbles near an edge are drawn again on the far side (`wrapAt`). Sample them with repeat on.
 - `conveyor` moves along **+x**: cleats run across x every 32 texels and the worn chevrons point +x. Rotate the UVs with the belt direction.
@@ -80,7 +80,7 @@ The Road Atlas landscapes added ten: `needles` (forest floor: rust-brown pine ne
 | `hedgerow` | symmetric: deep AO, a dry-stone base, the tall dark hedge with a hard lit top edge in the middle, base, AO (the unbreakable hedgerow as one continuous run; see "Hedgerow") | |
 | `treeline` | the thicket: solid dark fading in, then a ragged row of pine crowns (the thicket wall's lip) | deep AO and needle litter on the ground |
 
-`roof_edge` is the city's wall strip (`WorldSkin.WALL_STRIP`). One-sided strips put the barrier (water, cliff top, canyon, kerb, roof, volcano wall) at the top (v = 0). Which side of a `Line2D` that lands on depends on the direction of its points, so build contours with a consistent winding and reverse the points if the lip faces the wrong way. `ChunkRecipe` does this: its lines run with the barrier on the left (docs/WORLD.md).
+Each landscape names its wall strip (`Landscape.wallStrip`; `roof_edge` is the city's). One-sided strips put the barrier (water, cliff top, canyon, kerb, roof, volcano wall) at the top (v = 0). Which side of a `Line2D` that lands on depends on the direction of its points, so build contours with a consistent winding and reverse the points if the lip faces the wrong way. `ChunkRecipe` does this: its lines run with the barrier on the left (docs/WORLD.md).
 
 ## Props
 
@@ -100,20 +100,20 @@ The Road Atlas landscapes added ten: `needles` (forest floor: rust-brown pine ne
 
 The full list, with sizes, hulls and tags, is `props.json`. By class:
 
-- **TALL:** (layered: `oak`, `pine`, `cypress`, `deadtree`, `crane`) `rock`, `boulder`, `rock_white`, `rock_ice`, `rock_red`, `boulder_red`, `oak`, `pine`, `cypress`, `saguaro`, `deadtree`, `shack`, `tent`, `totem`, `crane`, `cabin`, `snowcat`, `billboard`, `scrapheap`, `container`, and the landmarks `landmark_wild`/`_tribe`/`_scrap` (each with a beacon glow).
+- **TALL:** `rock`, `boulder`, `rock_white`, `rock_ice`, `rock_red`, `boulder_red`, `saguaro`, `shack`, `tent`, `totem`, `cabin`, `snowcat`, `billboard`, `scrapheap`, `container`, the layered `oak`, `pine`, `cypress`, `deadtree` and `crane` ("Layered props"), and the landmarks `landmark_wild`/`_tribe`/`_scrap` (each with a beacon glow).
 - **LOW:** `log` (the Snapper's disguise), `stump`, `carcass` (Buzzard perch), `firepit`, `tyres`, `wreck` (rusted renders of the player's cars), `cone`, `gaspump`, `sign`, `hydrant`, `dumpster`, `busstop`.
-- **STATEFUL:** `haybale`, `fence`, `hedge`, `crate` (Bandit bait), `barricade`, `barrel` (explosive), `tank` (explosive, blast only), `manhole` (not solid; Rat Pack spawn), and the interactive props `logpile`, `watertower`, `beehive` (package 14; what they let loose: docs/WORLD.md, "Interactive props"). The `billboard` (TALL) is breakable too: its broken state is the board lying flat on its +y side. Smash speeds: docs/WORLD.md, "Breakables".
+- **STATEFUL:** `haybale`, `fence`, `hedge`, `crate` (Bandit bait), `barricade`, `barrel` (explosive), `tank` (explosive, blast only), `manhole` (not solid; Rat Pack spawn), and the interactive props `logpile`, `watertower`, `beehive` (what they let loose: docs/WORLD.md, "Interactive props"). The `billboard` (TALL) is breakable too: its broken state is the board lying flat on its +y side. What each smash gives: docs/WORLD.md, "Breakables and explosives".
 - **WALL:** `fortwall`, `jersey`.
 - **DECOR:** `tufts`, `pebbles`, `cracks`, `bones`, `paint`, `oilstain`, `reeds`, `streetglow`, and `rooftop` (laid on BUILDING cells by `ChunkRecipe.placeRoofs`, not by dressing).
 
 #### Road Atlas props
 
-Made for the new landscapes and regions, and dressed in by them (each landscape's `dressing`, the Hunting Grounds' and the Sprawl's overlays, `WorldSkin.MOTIFS`' `rangerpost` and `snowstand`; the mile marker may stand on roads and the tumbleweed bends away from the car). Their `tags` carry `landscape` (or `region` for the class overlays and landmarks) as a hint for the dressing tables; the bake still adds `levels` and `faction` from the dressing. The hit reaction is the prop's entry in `PropReactions.REACT`.
+Made for the newer landscapes and regions, and dressed in by them (each landscape's `dressing`, the Hunting Grounds' and the Sprawl's overlays, `WorldSkin.MOTIFS`' `rangerpost` and `snowstand`; the mile marker may stand on roads and the tumbleweed bends away from the car). Their `tags` carry `landscape` (or `region` for the class overlays and landmarks) as a hint for the dressing tables. The hit reaction is the prop's entry in `PropReactions.REACT`.
 
 | Prop | Class | Variants, states | Reaction | For |
 |---|---|---|---|---|
-| `ranger_tower` | TALL | 2 (green, rust roof): a fire lookout on splayed, braced legs, catwalk and stair; breakable at 420 (toppled, see Region 1) | SWAY | forest |
-| `fallen_trunk` | STATEFUL, no occluder | 3 (root plate, snapped end, leaning deadfall); breakable at 300 (fallen) | THUD | forest |
+| `ranger_tower` | TALL | 2 (green, rust roof): a fire lookout on splayed, braced legs, catwalk and stair; breakable at 420 (toppled along +y: the footings stay, the frame lies across, the cab crushed at its end; a 340×760 px sprite centred like the prop) | SWAY | forest |
+| `fallen_trunk` | STATEFUL, no occluder | 3 (root plate, snapped end, and `v2`, a deadfall leaning on a stump); breakable at 300 (fallen flat and split, with litter) | THUD | forest |
 | `pine_snow` | TALL, layered | 3; canopy: the pine's tiers under snow; leaves: snow clumps and needles | CANOPY | snowy forest |
 | `palm` | TALL, layered | 3; canopy: 9-11 fronds and coconuts; litter: dead fronds and coconuts; leaves: frond pieces | CANOPY | coast |
 | `beach_hut` | TALL | 2 (striped plank gable roof and deck, thatched palapa) | SHAKE | coast |
@@ -134,17 +134,17 @@ Made for the new landscapes and regions, and dressed in by them (each landscape'
 | `tumbleweed` | DECOR | 4 cells, tangled dry twigs | none | ghost town, salt flats |
 | `steam_vent` | DECOR | 4 cells (three fissures, a crusted hole) with sulphur rims and a faint steam puff | none | volcano |
 
-The breakables above are STATEFUL like the older ones (`smashSpeed`, `_broken`, `_debris`); they only show. What a smash or spill should give is left to a later design pass.
+The breakables above smash like the older ones (`smashSpeed`, `_broken`, `_debris`) and give nothing, except the ranger tower and the leaning trunk, which fall on what is under them (docs/WORLD.md, "Interactive props").
 
 #### Region 1 props (The Wilds)
 
-Made for the Region 1 study (Lane B). The study's role for each is noted; none of the gameplay (stashes, lures, spills, roosts) is wired by the art.
+The art supplies the states; what each does in play (stashes, lures, spills, roosts) is docs/WORLD.md, "Interactive props", and docs/GOONS.md, "Wild instincts".
 
 | Prop | Class | Variants, states | Reaction | Role |
 |---|---|---|---|---|
 | `den` | STATEFUL | 2 (twig dome with junk panels; junk shack under a tarp); breakable at 250: twigs, panels, tarp; overlay `sacks` (4 frames: 0-3 loot sacks) | SHAKE | the Bandit's stash (R-6) |
 | `burrow` | STATEFUL, no occluder | 2 (one hole; two holes and a bone); breakable at 120: collapsed into a filled crater | SQUASH | Jackalope warren (R-7) |
-| `beehive` | STATEFUL | now 4: the two skep-style hives and two white box hives (a lid with a brick, one on a second box) | WOBBLE | apiary (R-9) |
+| `beehive` | STATEFUL | 4: the two skep-style hives and two white box hives (a lid with a brick, one on a second box) | WOBBLE | apiary (R-9) |
 | `honeyshed` | TALL | 1: tin shed, white supers, honey drums | SHAKE | apiary centre |
 | `bell` | TALL | 2 (ranch bell on a post and arm, dinner triangle) | SWAY | Dinner Bell lure (R-10) |
 | `saltlick` | LOW | 1: salt block on a stump, hoof prints | THUD | heavies' lure (R-10) |
@@ -160,11 +160,7 @@ Made for the Region 1 study (Lane B). The study's role for each is noted; none o
 | `pine_crown` | DECOR | 4 cells of 256 px: one to four dark overlapping pine crowns with lit needle tips | none | laid over thicket wall cells like `rooftop` |
 | `hedgerow` | DECOR | 4 pieces of 192 px (see "Hedgerow") | none | the unbreakable hedgerow |
 
-Upgrades to earlier props:
-
-- `ranger_tower` is breakable at 420. Its broken state is the tower toppled along +y: the footings stay, the frame lies across, and the cab is crushed at its end. The broken sprite is 340×760 px, centred like the prop.
-- `fallen_trunk` is now STATEFUL. It has a third variant, `v2`, a deadfall leaning on a stump, which reads through the wide soft gap under its raised end. It is breakable at 300; the broken state is the trunk fallen flat and split, with litter.
-- `saguaro` stays unbreakable, so nothing changes in play. It gains `states`: `fallen` (toppled along +y from its snapped base) and `chunks` (a 4-cell strip). Making it breakable is a code change: give the design a `breakable` that reuses those drawings.
+The `saguaro` has no `breakable` (scattered ones are scenery), but it bakes two `states`: `fallen` (toppled along +y from its snapped base) and `chunks` (a 4-cell strip). `Spill.armSaguaro` gives them to the ones the hero pass placed, which topple (docs/WORLD.md, "Heroes").
 
 #### Hedgerow
 
@@ -196,7 +192,7 @@ The unbreakable hedgerow is deliberately unlike the breakable `hedge`: tall, dar
 
 ### Layered props
 
-A design with a `canopy(c, R, v)` drawing is baked in two layers (package 14): `draw` becomes the **ground layer** (`<id>.png` and its variants: roots, the trunk's top and leaf litter for trees, the cab and tracks for the crane) with the canopy's silhouette baked under it as a soft shade (`shadowOf`), and the canopy becomes `<id>_canopy.png` (`_canopy_v1`...), rimmed, no shadow, drawn over the car. The canopy keeps the variant's random stream, so the crowns look as they did before the split; the ground layer has its own (`litter(c, R, v)` draws unrimmed litter between the shade and the trunk; `baseShadow` sets the ground layer's own shadow, 3 by default). The hull comes from `core` as before, so collision and night occluders stay on the trunk. A `leaves(c, R, k)` drawing bakes `<id>_leaves.png`, a row of 4 square cells of `LEAF_CELL` (28) px: what falls when the prop is hit (oak and cypress leaves, Spanish moss, pine needles and snow clumps, dead twigs, palm frond pieces). The manifest gets `canopy` (one path per variant) and `leaves`; posters draw the canopy over the ground layer. The saguaro stays one piece. `palm` and `pine_snow` (Road Atlas) are layered like the trees; `pine_snow`'s strip is three snow cells and one needle cell, so a hit drops mostly snow on any level. PropReactions fades and shakes the canopy (docs/WORLD.md, "Prop reactions").
+A design with a `canopy(c, R, v)` drawing is baked in two layers: `draw` becomes the **ground layer** (`<id>.png` and its variants: roots, the trunk's top and leaf litter for trees, the cab and tracks for the crane) with the canopy's silhouette baked under it as a soft shade (`shadowOf`), and the canopy becomes `<id>_canopy.png` (`_canopy_v1`...), rimmed, no shadow, drawn over the car. The canopy keeps the variant's random stream; the ground layer has its own (`litter(c, R, v)` draws unrimmed litter between the shade and the trunk; `baseShadow` sets the ground layer's own shadow, 3 by default). The hull comes from `core` as before, so collision and night occluders stay on the trunk. A `leaves(c, R, k)` drawing bakes `<id>_leaves.png`, a row of 4 square cells of `LEAF_CELL` (28) px: what falls when the prop is hit (oak and cypress leaves, Spanish moss, pine needles and snow clumps, dead twigs, palm frond pieces). The manifest gets `canopy` (one path per variant) and `leaves`; posters draw the canopy over the ground layer. The saguaro stays one piece. `palm` and `pine_snow` are layered like the trees; `pine_snow`'s strip is three snow cells and one needle cell, so a hit drops mostly snow on any level. PropReactions fades and shakes the canopy (docs/WORLD.md, "Prop reactions").
 
 Over-the-car layers were reviewed for every tall prop: the crane's jib reaches past its hull, so it has one; billboards and bus stops collide across their whole footprint and landmarks' and tents' overhang is ground clutter, so they don't.
 
@@ -246,29 +242,29 @@ The root is a `StaticBody2D`, so the car's wall-hit checks (`World.isWall`) trea
 - `beacon` (landmarks): the glow texture's path.
 - `overlays` (the den): `{name: {path, frames}}`. Each is a strip of `frames` frames, each the size of the sprite and with the same centre. The scene has a child `Sprite2D` named after it (`Sacks`, `hframes` = frames, frame 0 = no sacks).
 - `states` (the saguaro): `{name: path}`. These are extra baked states the code can adopt (`fallen`, and `chunks`, a 4-cell strip). They don't make the prop breakable.
-- `tags.levels` and `tags.faction` come from the levels' dressing tables (faction keys 0, 1, 2 become `wild`, `tribe`, `scrap`).
+- `tags`: hints only ("Re-baking"); `levels` and `faction` are always present, possibly empty.
 
 ## Station
 
-`station_lot` (concrete slabs, 256 px joints, oil stains and tyre smears) and `station_roof` (worn shingles) are 512² seamless tiles; `station_wall` is a strip like the others (wall top above, AO below); `station_lamp` (lamp post with a lit fixture) and `station_pump` (a pump island) are sprites at 0.75 with the prop rim and shadow. `scene/level/station.tscn` is built from them: `lot` is a Sprite2D region over the LOT at scale 2 (open on every side: the walls are gone), the house roof two Sprite2D halves at scale 2 (the south one flipped) with a ridge and eaves, two pumps on the driveway apron and a lamp over each post light, all at 1.3333. The collision (`house`) and lights keep the old layout; `tintBarrier` reddens the house.
+`station_lot` (concrete slabs, 256 px joints, oil stains and tyre smears) and `station_roof` (worn shingles) are 512² seamless tiles; `station_wall` is a strip like the others (wall top above, AO below); `station_lamp` (lamp post with a lit fixture) and `station_pump` (a pump island) are sprites at 0.75 with the prop rim and shadow. `scene/level/station.tscn` is built from them: `lot` is a Sprite2D region over the LOT at scale 2 (open on every side: the lot has no walls, so `station_wall` is unused), the house roof two Sprite2D halves at scale 2 (the south one flipped) with a ridge and eaves, two pumps on the driveway apron and a lamp over each post light, all at 1.3333. The collision (`house`) and lights keep the old layout; `tintBarrier` reddens the house.
 
 ## Posters
 
 `world/art/posters/<id>.png`, 1792×1024, one per level: a top-down vignette of the level's signature barrier and surfaces at 0.75 poster px per world px, built from the same ground materials, props, cars (`CarArt`) and goons (`GoonArt`). Each `POSTER` entry is a `ground(X, Y, o)` per-pixel function and a `dress(p)` function that queues props, decor, tracks, the car and goons. No text. `LevelDef.poster` points here.
 
-There are 30: the 8 levels in `Levels.ORDER` and one for each of the Road Atlas's 22 new level ids (`orchard`, `moosewoods`, `mudlick`, `stilttown`, `lantern`, `sawmill`, `ghosttown`, `saltflats`, `raiderpass`, `thunderroad`, `frozenlake`, `timberline`, `tarpits`, `summit`, `manhole`, `culdesac`, `gridlock`, `blockparty`, `blastpits`, `tankfarm`, `slagfields`, `theline`), and each level's `poster` names its own. Each shows its landscape, its twist (the yipper pack down the orchard lanes, the herd and the bull moose in the clearing, the harpoon line on the salt, the toppled billboard on Thunder Road, the rats pouring out of the manholes, the jam, the crowd round the junk throne, the chained tank blasts, the magnet pulling the car off its belt...), its hero goons from the line-up and a car. `tests/game/test_world_art.gd` checks that the posters are exactly the levels in `Levels.ORDER`.
+There are 30, one per level in `Levels.ORDER`, and each level's `poster` names its own. Each shows its landscape, its twist (the yipper pack down the orchard lanes, the herd and the bull moose in the clearing, the harpoon line on the salt, the toppled billboard on Thunder Road, the rats pouring out of the manholes, the jam, the crowd round the junk throne, the chained tank blasts, the magnet pulling the car off its belt...), its hero goons from the line-up and a car. `tests/game/test_world_art.gd` checks that the posters are exactly the levels in `Levels.ORDER`.
 
 Shared pieces for posters (in `world_gen.js`): `rutsAt` (a rutted dirt track), `rectE` and `bldg` (a building's roof, eave lip and ground AO from its signed edge distance), `grade: 'night'` (a darker multiply than `'dusk'`, lights added after it), and `o.u`/`o.v` in `ground` to sample a material in a building's own axes (rotated suburb roofs). The `dress` api adds `spaced` (props kept apart, with `reserve` to keep a spot clear), `pack` (a group of goons), `rope` (a harpoon line), `fire`, `flash` (a blast), `lantern`, `field` (a magnet's pull), `pipe` and `line` (a row of props such as hedges or fences along a segment).
 
 ## Budget
 
-About 122 MB on disk (posters 97 MB, ground 16 MB, props 9 MB). Only the menu shows posters, one at a time. A level loads only its own materials (4–6), the props its dressing names and the three landmarks, about 17 MB of VRAM, inside the 48 MB budget. If props ever need trimming, switch `props/*` to VRAM compression in `VRAM` in `bake_world.py`.
+About 128 MB on disk (posters 98 MB, ground 16 MB, props 11 MB). Only the menu shows posters, one at a time. A level loads only its own materials (4–6), the props its dressing and motifs name and its region's landmark, about 17 MB of VRAM, inside the 48 MB budget. If props ever need trimming, switch `props/*` to VRAM compression in `VRAM` in `bake_world.py`.
 
 ## Adding a prop
 
 1. Add a design entry to `PROPS` in `world_gen.js`: `cls`, `box`, `n`, `shadow`, `grime`, `draw(c, R, v)` (overhead light: `vol`, `polyVol`, `crown` for the crown highlight and rim darkening), and `core` if the hull should be smaller than the drawing. Breakables get `breakable: {smashSpeed, box, broken(c, R), cell, debris(c, R, k)}`.
 2. `python scripts/art/bake_world.py prop --only <id>`, then `--import`.
-3. Add it to a level's `dressing` in `world/levels/<id>.tres` and re-bake props so its tags update.
+3. Dress it in and give it its rules and reaction (docs/WORLD.md, "How to add a prop").
 4. Add the id to `CATALOG` in `tests/game/test_world_art.gd`.
 
 ## Adding a ground material or strip

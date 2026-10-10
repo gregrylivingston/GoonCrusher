@@ -7,7 +7,7 @@ The song book for GoonCrusher Radio: the house style, every song's lyrics and th
 Fast, loud, funny songs about driving and crushing goons, sung completely straight. The joke is the commitment: a real band with real chops singing about goon goo on the windshield.
 
 - **Default sound:** 2000s punk rock, 160–180 BPM, distorted guitars, punchy live drums, shout-along gang vocals, a short guitar solo, polished video-game-soundtrack production. Every song should feel good at full throttle.
-- **Vary within it:** not every song should be the same punk song. Good neighbours: pop-punk, skate punk, garage rock, Southern garage punk (My Baby Loves My Truck), surf rock, rockabilly, ska-punk, metal parody, trucker country, 80s arena rock. Vary the subject too: a love song, a road song, an anthem, a small-town song. Keep the energy high: the set has two mid-tempo songs (Welcome to Nowhere at 135 BPM, Gas Station Romance at 145), which is enough; new ones should be fast, and no ballads unless the joke is that it's a ballad.
+- **Vary within it:** not every song should be the same punk song. Good neighbours: pop-punk, skate punk, garage rock, Southern garage punk (My Baby Loves My Truck), surf rock, rockabilly, ska-punk, metal parody, trucker country, 80s arena rock. Vary the subject too: a love song, a road song, an anthem, a small-town song. Keep the energy high: the set has three slower songs (Long Haul at 120 BPM, Welcome to Nowhere at 135, Gas Station Romance at 145), which is enough; new ones should be fast, and no ballads unless the joke is that it's a ballad.
 - **Subject matter:** the car (full tank, dents, busted lights, bald tyres), the road and its goons, splatter and wipers, never braking, the world's places and goons (see the writing brief in `docs/RADIO.md`). First person, the driver as the hero.
 - **Shape:** short verses, a chorus with a shoutable hook that names the song, a bridge that builds to a chant. 2:30–3:30.
 - **Keep it clean:** cartoon violence only (crush, splat, goo), no swearing, no real brands, people or songs.
@@ -25,6 +25,8 @@ Fast, chaotic 2000s-style punk rock, aggressive distorted electric guitars, punc
 
 ## Songs in the game
 
+14 songs, about 44 minutes. Every row has its file in `sound/radio/gooncrusher/songs/`, and every file there has a row.
+
 | Song | File | Length | Style |
 |---|---|---|---|
 | Crush Hour | `sound/radio/gooncrusher/songs/Crush Hour.ogg` | 2:57 | 2000s punk, 170 BPM |
@@ -33,7 +35,7 @@ Fast, chaotic 2000s-style punk rock, aggressive distorted electric guitars, punc
 | My Baby Loves My Truck | `sound/radio/gooncrusher/songs/My Baby Loves My Truck.ogg` | 3:15 | Southern pop-punk / garage punk love song, 160 BPM |
 | Cheap Beer, Premium Gas | `sound/radio/gooncrusher/songs/Cheap Beer, Premium Gas.ogg` | 2:59 | blue-collar weekend punk (prompt not recorded) |
 | Trailer Park Superstar | `sound/radio/gooncrusher/songs/Trailer Park Superstar.ogg` | 3:21 | brag song, demolition-derby rock (prompt not recorded) |
-| Welcome to Nowhere | `sound/radio/gooncrusher/songs/Welcome to Nowhere.ogg` | 3:23 | heartland punk, 135 BPM: the slower song |
+| Welcome to Nowhere | `sound/radio/gooncrusher/songs/Welcome to Nowhere.ogg` | 3:23 | heartland punk, 135 BPM: a slower song |
 | Gas Station Romance | `sound/radio/gooncrusher/songs/Gas Station Romance.ogg` | 3:16 | Southern punk / garage rock love song, 145 BPM |
 | She Left Me at the Truck Stop | `sound/radio/gooncrusher/songs/She Left Me at the Truck Stop.ogg` | 2:31 | country-punk heartbreak, 155 BPM |
 | No Brakes | `sound/radio/gooncrusher/songs/No Brakes.ogg` | 3:12 | punk-metal rage, 175 BPM |
@@ -1172,7 +1174,7 @@ Older brainstorm, written before the three categories above; several (surf, ska,
 
 Each needs lyrics, then a style prompt from the template above.
 
-- **Goonling Lullaby (Don't Cross the Road):** the variation song. A slow country waltz with pedal steel, sung deadpan by a goon parent warning their kid about the road ("Your uncle tried it Tuesday / Now he's a puddle on the overpass"). It breaks the tempo on purpose; the set already has two mid-tempo songs, so it would need one of them to go, or to be the station's single novelty track.
+- **Goonling Lullaby (Don't Cross the Road):** the variation song. A slow country waltz with pedal steel, sung deadpan by a goon parent warning their kid about the road ("Your uncle tried it Tuesday / Now he's a puddle on the overpass"). It breaks the tempo on purpose; the set already has its slower songs (house style), so it would need one of them to go, or to be the station's single novelty track.
 - **Route Nowhere:** surf rock with twangy reverb guitar; a road with no end and no brakes.
 - **Hubcap Rodeo:** rockabilly; the Scrap Gang's wheels as rodeo bulls.
 - **Pit Stop Romance:** ska-punk; falling for the Pit Shop mechanic between legs of a Marathon.

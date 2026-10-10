@@ -32,7 +32,7 @@ func _process(_delta):
 	if Input.is_action_just_pressed("ui_menu"): openPause()
 	if not get_tree().paused: checkGiftBox() #a box earned under a paused tree opens once it unpauses
 
-#the only way to pause a run: Esc / Start, the HUD button, or losing focus.
+#the only way to pause a run: Esc / Start, or losing focus.
 #never opens over the slot machine, countdown or summary, which pause the tree themselves
 func openPause() -> void:
 	if get_tree().paused || Settings.menu_open || get_tree().get_nodes_in_group("pauseMenu").size() > 0: return

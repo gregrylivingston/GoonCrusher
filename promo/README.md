@@ -91,7 +91,7 @@ A shot is a few plain fields. Copy one and change it:
 - **What is played:** `level`, `car`, `mode`, `tier`, `seed`, `time` (day, night, cycle), `upgrades` (0 to 20), `god` (the car can't be hurt). Also the game's own `landscape`, `goons`, `class` and `prize` options.
 - **Who drives:** `driver`: `ai`, `pattern:sine`, `pattern:circle`, `pattern:straight`, `none` (parked).
 - **When:** `lead` is seconds of driving after GO before filming starts; `seconds` is how long is filmed (0 = one still).
-- **What shows:** `hud`: `full`, `minimal` (instruments only), `off`. `"layer": "hud"` films the HUD alone with transparency.
+- **What shows:** `hud`: `full`, `minimal` (the dashboard without the mirror's clock and goal, the objective or key hints), `off`. `"layer": "hud"` films the HUD alone with transparency.
 - **Camera:** `rig`: `follow`, `tripod` (stands still while the car drives through), `pan`. `zoom` is a number, or `[from, to]` for a push in or pull back over `seconds`. `lead` looks ahead of the car. `offset: [0, 220]` sits the car low in a tall frame.
 - **Events** happen at `t` seconds into the shot (a negative `t` happens before filming starts, during the lead-in):
   - `crowd`: `count` goons `ahead` px in front of the car (`goon`: an id, else the level's own)
@@ -102,7 +102,7 @@ A shot is a few plain fields. Copy one and change it:
   - `press` / `click`: an input action or a mouse click (for menu tours)
   - `isolate`: leave one piece of the interface in the picture, over nothing (see "Pieces for the edit")
   - `mark`: a named marker for the edit
-- **Sizes:** `profiles`: `wide4k`, `wide1440`, `wide1080`, `vertical` (1080×1920), `square`, `portrait45` (1080×1350), and the Steam art sizes. `per` holds changes for one size.
+- **Sizes:** `profiles`: `wide4k`, `wide1440`, `wide1080`, `wide720`, `vertical` (1080×1920), `square`, `portrait45` (1080×1350), and the Steam art sizes. `per` holds changes for one size.
 
 ## What you get
 
@@ -151,6 +151,7 @@ What `elements.json` already holds:
 | Kind | Shots |
 |---|---|
 | Titles | `title_goons`, `title_levels`, `title_cars`, `title_logo`, `endcard` |
+| Guide | `safezone`: what the platforms' own buttons cover on a tall video. A still for the top track; delete it before export. |
 | The game's own screen moves | `wipe_shutter` (the garage door), `stamp_crushed`, `banner_night` (hazard tape), `sign_district` (the highway sign). Change the words with `label` and `sub`. |
 | Line-ups | `lineup_cars`, `lineup_goons` (walking), `lineup_pickups`, `lineup_posters` (the 30 levels) |
 | Single interface pieces | `piece_driver_card`, `piece_bench` (the upgrade panel), `piece_road_map`, `piece_results` (the results ticket), `hud_alone` |

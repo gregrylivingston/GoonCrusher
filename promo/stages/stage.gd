@@ -1,6 +1,6 @@
 extends Node
 
-#The capture kit's stage (docs/PROMO.md, "Elements"): one thing on a plain backdrop, filmed with
+#The capture kit's stage (docs/PROMO.md, "Stages"): one thing on a plain backdrop, filmed with
 #transparency so an editor can lay it over anything. The session (promo/capture/session.gd) makes one for a
 #job whose kind is "stage"; job.stage picks what stands on it:
 #  title       job.text in the game's extruded 3D lettering; "sub": a smaller line under it; "font_size" (170);

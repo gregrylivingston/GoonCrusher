@@ -4,49 +4,46 @@ Suggestions to discuss, not a spec; the author runs gameplay as a separate proje
 
 ## Done (one line each)
 
-- **T0-1** `levels` is saved and migrated; the demo and full game share the save.
-- **T0-2** A run ends exactly once (`Level.hasEnded`, `endLevel`), Abandon included.
-- **T0-3** Countdown counts down and is won at 0.
-- **T0-4** Stations are placed on reachable land and pinned; `world_ready` signals a valid `Root.station`.
-- **T0-5** Sprint's clock comes from the route to its station; running out ends the run (NOTIME).
-- **T0-6** Per-level mode unlock chain (`Root.isModeUnlocked`); demo gates read `Root.IS_DEMO`.
-- **T0-7** Marathon and Defense no longer crash.
-- **T0-8** Stat fixes: Oil (`fuelBurn`), Dice, traction (`gripFor`), armor once, upgrade cap 20, in-run cap 150, Clover/Dice labels.
-- **T0-9** Payout = coins × (1 + 0.1 × stars) (`Root.STAR_BONUS`; was coins × stars until the career playtests), credited on the summary; Abandon pays like a death.
-- **T0-10** Start pauses on a controller.
-- **Goon physics layer** (layer 3, goons don't collide with each other), **`meta` in the save**, **explosion pooling** (`Level.explode`, used by GoonFx too).
-- **T1-1** Debug run log (`user://runlog.csv`, `scripts/debug/run_log.gd`).
-- **T1-2** Goonpocalypse: faster escalation, uncapped waves, score, survival target, records.
-- **T1-3** Marathon: a relay of 5 legs with refuel, heal, repair, Pit Shop and a free slot machine at each station.
-- **T1-4** Defense: a station barrier, sieging goons, lanes from the world generator, refuel in the driveway.
-- **T1-5, T1-6, T1-8, T2-9** Per-level terrain, walls, surfaces and hazards (the world revamp, docs/WORLD.md).
-- **T1-7 (regions)** Regions are the map's districts, with faction, goons, name and tint.
-- **T1-9** Slot machine paylines, bets, jackpot and Dice (docs/PICKUPS.md).
-- **T2-2, T2-7** Goon movement archetypes; 79 pickups in nine kinds (docs/GOONS.md, docs/PICKUPS.md).
-- **T2-3 (drowning credit)** A drowning within 3 s of the car's touch counts as a crush ("SPLASH").
-- **T2-10 (most)** Breakables, explosives, faction landmarks, log and manhole spawns.
-- **Package 2 (T1-12, T2-6)** Crush feel: four death styles (splat, shove, hood ride, fling) picked by speed and hit point, goo spatter, impact bursts, camera trauma and kick, hit-stop and zoom punch on giants, bosses and crowds, a rising combo tick and hot combo readout; multi, drift, giant and boss crush bonuses; best combo as a car record; Crush Effects, Screen Shake and Hit-Stop settings (docs/GOONS.md, "Crush feel"). Crushes still chip 0.35 health before armour, by choice.
-- **Driving controls** Handbrake powerslide (Space / RB, shaped per car by its stats; a held slide charges a drift boost, blue then orange sparks, fired on release; the tail and flanks slam goons), a second held slot for boosts (Shift / LB: Nitro as 2 stored burns, the new Hop, Jump Jets), gadgets on E / X; settings v2 migrates saved bindings (CLAUDE.md, docs/PICKUPS.md). Run setup sells a starting gadget and boost for gems.
-- **Menu juice** Garage shutter, hatch and tire-smoke transitions, and a mouse pass so every menu works with the mouse alone (docs/UI.md, "Transitions"; test checklist in docs/TEST_SCOPE_TRANSITIONS.md).
-- **Package 14 (P-1 to P-5, code)** Prop layers, reactions and layout (docs/WORLD.md "Prop reactions"): trees (oak, pine, cypress, dead tree) are baked as a ground layer and a canopy drawn over the car and goons, which fades to 40% while the car is under it (never for goons) and shakes and drops leaves (snow on Frostbite) when the trunk is hit or a blast goes off nearby; the crane's jib is its over-the-car layer; every other prop answers a hit (squash, wobble, sway, shake, thud and dust, a hydrant's spray), and cones knock over and stop being walls (the AI plans through them); breakables hit just under their smash speed crack and chip. Fences and hedges lie as field lines on a lattice per region, with gates, corner oaks and paddocks of hay bales (P-3); camps, groves, orchards, wreck piles, junkyards, roadblocks and pile-ups come as motifs (P-5); barriers line the road. Interactive props (P-4, `Spill`): log piles that goons cut loose at the car (the logs flatten goons and stay as obstacles), water towers that flood goons flat, billboards that topple away from the car, beehives that let a goon-hunting swarm loose, and cranes that drop their container when rammed; what spills is kept per chunk. Tufts and reeds bend away from the car. The levels lost their dead feature keys and got prop counts of their own. Feel pass and benchmark still to do (below).
-- **Package 13 (D-1 to D-4, code)** Driving juice (`CarJuice`, docs/CAR_ART.md "Driving feel"): the body leans out of turns and tips onto two wheels in hard ones, the nose dips and the tail squats, the body bounces on landings, wall hits and ground changes, and wall hits jolt the camera by speed. Dust, spray and clods per surface, slide smoke, wall sparks, a drift-boost flame. Engine pitch through the gears, squeal from slip, backfires on lift-off. All show only, with a Driving Effects setting. Feel pass and benchmark still to do (below).
-- **Package 12 (U-1 to U-5, most)** One unlock system (`Unlocks`, docs/PICKUPS.md "Unlocks"): four states (hidden, shown, ready, open), nine pickup trees with 10 roots open on a new save, placeholder prices by rarity plus ten play unlocks (nights, giants, Scrap crushes, a won Sprint, modes, Quarry, survival), locked pickups never drop or get offered (fixed rewards fall back to an open ancestor), buying in the Goonopedia, results-ticket unlocks and a Next unlock line in run setup, advanced cars cost gems too, level gates in `LevelDef.unlockModes`, career personas shop for pickups, the demo caps pickups at Uncommon, and saves before version 6 start over.
-- **Package 11 (M-1)** Left-hand menu keys: hints show Space for Accept (Enter still works) and WASD before the arrows; F Upgrade or Gadget, V Boost, R Records, G Goonopedia; 1–8 pick a level poster, 1–6 a Goonopedia tab; the focused upgrade row's price becomes a BUY button and holding Accept keeps buying (docs/UI.md).
-- **Career playtests** Three personas play the whole game through the real menus (docs/AI_DRIVER.md).
-- **W-1** Run-wide waves: one wave clock for the whole run (`Region.wave`), a star and a wave chest every 60 s with no cap, the spawner's goon mix from the run's wave; districts only decide who spawns; the AI no longer hunts districts for stars (docs/WORLD.md).
-- **N-1** Pickup name tags (`Pickups.shortName`) on the gadget and boost boxes, new power-up rings, slot reels, the Scratch Card, the Claw Crane and the Vault (docs/PICKUPS.md, "Name tags").
-- **Package 16 (G-1 to G-4)** Gift boxes: crush XP by goon rank, giants, bosses, combo, style and night; box *n* needs 50 n² XP; Cardboard to Diamond tiers; six prize games weakest first (Claw Crane, Scratch Card, Prize Wheel, The Deal, Slot Machine, the new Vault), only the Claw open on a new save; better versions in higher boxes; no star per box; `--prize=` for testing (docs/PICKUPS.md, "Gift boxes").
-- **Prize games (2026-10-09)** One frame for every pausing game (`PickupMenu`: same size, a 640 x 420 stage, a winnings board that says what each prize did, a held key ignored until released); no game pays another (`Pickups.NOT_IN_GAMES`); a quick 3-2-1 back from a game (0.25 s lamps) and a 1 s gift box. Reworked as skill games: the Claw Crane (a patrolling claw you drop on time; the prizes are loose physics objects it can grab several of and lose), the Slot Machine (readable reels you stop, nudges, the pay line is what pays), the Prize Wheel (charge and aim), The Deal (keep or swap against a visible deck), The Vault (crack a dial by ear). The prize lab, `tests/prize_lab/`, plays any one of them on repeat on a bare background (docs/PICKUPS.md, "Prize games"). Their values need measuring again (package 1).
-- **Prize games, second pass (2026-10-09)** The Prize Wheel and The Vault are gone; four drafts join the ladder: Hubcap Shuffle, Goon Press, Pachinko Drop and Coin Pusher (proposals: the "Ten new prize games" artifact). One key scheme in every game (E acts, WASD moves, Q rejects). The Claw got bigger, weightier prizes and junk to avoid; The Deal a twelve-card deck with coins, three redraws, a flip and card backs painted from game art; the Pit Shop sells in order and shows what each offer does up front.
-- **R-1 (code)** Radio: one station, GoonCrusher Radio, scanned from `sound/radio/` (shuffle bags, crossfades, idents, talk and ads between songs, lazy threaded loads), turned on or off and skipped in the pause menu (the shuffle carries over launches), set in Settings, a now-playing card in the HUD and menu, music ducking under the Voice bus (docs/RADIO.md). Songs in: *Crush Hour*, *Gooncrusher*, *Full Tank, Empty Head*, *My Baby Loves My Truck*, *Cheap Beer, Premium Gas*, *Trailer Park Superstar*, *Welcome to Nowhere*, *Gas Station Romance*, *She Left Me at the Truck Stop*, *No Brakes*, *Check Engine Light*, *There's a Goon on My Hood*, *Hot Black Coffee*, *Long Haul* (docs/RADIO_SONGS.md); ten ads, twenty-three Dee Jay Crush talk segments and nine idents (docs/RADIO_SEGMENTS.md).
-- **Polish (2026-10-08)** An icon per game mode on the run setup medallions and Goonopedia tiles (`HudTheme.MODE_ICONS`). A mix pass: every sound effect on the FX or UI bus, the goon crush far quieter and only for crushes and blasts near the car (drownings and self-destructs anywhere on the map used to play it), the music 2 dB up and a gentler duck under the Voice bus. Removed: the level-start bell, the win jingle, all slot machine sounds but the reel clank, and 20 unused sound files (the slot machine set and ten never referenced). The results ticket wraps its Unlocked names and footer note instead of running off the screen (docs/RADIO.md "Mix", docs/UI.md).
-- **Run setup in two steps (2026-10-09)** The road map only picks a level: each stop shows a glyph per mode in its best medal's colour with a bar for the current driver's own, and a panel describes the highlighted level. SELECT opens Level Options: the medallions, a card per tier (goal, pay, the driver's win, drivers cleared), the car strip and START. The Goonopedia's Levels and Modes tabs are gone; their content is on these two screens (docs/UI.md, "Run setup").
-- **Tier 3** Shallows, fords and bridges; most of a daily seeded run (the map and its contents come from the world seed).
-- **Road atlas P1, P2 and the car-clear data (2026-10-09)** 30 levels in 6 regions of 5 stops (`Levels.ORDER`, `Territories`), six goon classes (`Goons.CLASSES`) with a line-up per level, elite strength steps, the Marathon road (Goonpocalypse and Defense open behind it, finales on Medium), a 10-level demo, save version 8, car clears and Full Garages (`meta.carClears`, unlock conditions `carclears:` and `garages:`), and 15 landscapes as data (`Landscape`, `Landscapes`) with fallback skins, lava and region overlays by zone; today's eight levels draw as before (docs/WORLD.md "The levels", "Landscapes", "Regions"; docs/GOONS.md "Classes").
-- **Region 1 lane A (code, untuned)** Wild instincts (docs/GOONS.md "Wild instincts"): the Critter Chain (kills set up within 900 px of the car join the Crush Combo, +10% XP per extra source up to +40%, a gold CRITTER CHAIN readout), charges and lunges break what they can beat, heavies trample fodder, one `seeks` table (piles, hives, crates, carcasses, roosts), herds that graze and stampede when spooked, the Bullmoose daze (`LevelDef.rules.dazeHeavies`), Snapper bubbles, slime that slows goons, Quill friendly fire, Rattlers sunning on red rocks, Buzzard roosts in dead trees, MPH smash tags with first-meeting hints (docs/HUD.md), the Golden Jackalope, and `lureFor` without a per-goon copy.
-- **Water rework (2026-10-09, untuned)** Deep water no longer wrecks the car on contact: a wading band (WADE, the outer 224 px of deep water) is slow, slippery and costs 2 health a second; deep water costs 33 a second with heavy drag, so a flat-out sedan crosses 300 px for about 16 and drowns in about 3 s parked; goons still drown in deep water and wade at 60% speed; a sinking look, a DEEP WATER warning (docs/WORLD.md "Water").
+How a finished system works is in its area doc (named on each line), not here.
 
-- **Package 18, step 1 (2026-10-09)** The mode menu's structure: `Modes` (19 modes with ids, categories, words and per-mode rules), three featured modes per level in `LevelDef.featured`, the new unlock chain and road rule (`Root.modePath`, `roadModes`, `opensNextLevel`), run setup's medallions by level, 14 new mode icons, save version 12, and the first new mode, **Blackout** (Countdown at permanent night; `Modes.plays`). The other 13 new modes show "Coming Soon".
+- **T0-1 to T0-10** The first fixes: `levels` saved and migrated; a run ends exactly once (`Level.endLevel`); Countdown is won at 0; stations on reachable land; Sprint's clock from its route; the per-level mode chain; Marathon and Defense no longer crash; the stat fixes (Oil, Dice, traction, armor once, upgrade cap 20, in-run cap 150); payout credited on the summary, Abandon pays like a death; Start pauses on a controller.
+- **Goon physics layer**, **`meta` in the save**, **explosion pooling** (`Level.explode`).
+- **T1-1** Debug run log (`user://runlog.csv`, `scripts/debug/run_log.gd`).
+- **T1-2, T1-3, T1-4** Goonpocalypse (escalation, score, survival target, overtime), Marathon (a relay of legs with a pit stop at each station) and Defense (a station barrier, goons that march on the pumps and blow up, lanes) (docs/MODES.md, "Endings and pay").
+- **T1-5, T1-6, T1-8, T2-9, Tier 3 (shallows, fords, bridges)** Per-level terrain, walls, surfaces and hazards (docs/WORLD.md).
+- **T1-7 (regions)** A run's regions are the map's districts, with faction, goons, name and tint.
+- **T1-9** Slot machine paylines and Dice (docs/PICKUPS.md).
+- **T2-2, T2-7** Goon movement archetypes; 79 pickups (docs/GOONS.md, docs/PICKUPS.md).
+- **T2-3 (drowning credit)** A drowning within 3 s of the car's touch counts as a crush.
+- **T2-10 (most)** Breakables, explosives, faction landmarks, log and manhole spawns (docs/WORLD.md).
+- **Package 2 (T1-12, T2-6)** Crush feel: death styles, goo, camera trauma, hit-stop, combo readout, crush bonuses, three settings (docs/GOONS.md "Crush feel"). Crushes still chip 0.35 health before armour, by choice.
+- **Driving controls** Handbrake powerslide and drift boost, a second held slot for boosts, gadgets on E / X, a starting gadget and boost for gems in run setup (CLAUDE.md, docs/PICKUPS.md).
+- **Handling overhaul (2026-10-09, merged)** `CarHandling` with a weight stat, wall deflection and bounce, camera look-ahead, the semi's trailer, two traits per car, a horn per car, manual gearboxes on the racer, supercar and semi with gear ratios from each car's top speed and a tach per car (docs/CAR_ART.md "Handling", "Traits", "Trailer"). Untuned (B-5).
+- **Package 13 (D-1 to D-4, code)** Driving juice, `CarJuice`: lean, two-wheel tilt, bounce, trails, engine and tyre sound, a Driving Effects setting (docs/CAR_ART.md "Driving feel"). What is left is below.
+- **Package 14 (P-1 to P-5, code)** Prop layers, reactions and layout: canopies over the car, hit reactions, field lines, motifs, interactive props (`Spill`) (docs/WORLD.md "Props and decor", "Interactive props", "Prop reactions"). What is left is below.
+- **Package 12 (U-1 to U-5)** One unlock system (`Unlocks`): four states, one tree per pickup kind, a new save opens only the Fuel Can, the Coin and the Claw Crane, locked pickups never drop or get offered, results-ticket unlocks, advanced cars cost gems too, the demo's cap, and the **Pickups screen** (`PickupShop`, G / View), which replaced buying in the Goonopedia (docs/PICKUPS.md "Unlocks", docs/UI.md "Pickups"). Prices are placeholders (B-4).
+- **Package 11 (M-1)** Left-hand menu keys: Space accepts, WASD before the arrows, letters near WASD for shortcuts, hold Accept to keep buying (docs/UI.md).
+- **Menu juice** Shutter, hatch and tire-smoke transitions; every menu works with the mouse alone (docs/UI.md "Transitions", docs/TEST_SCOPE_TRANSITIONS.md).
+- **Run setup: road map and Level Options (2026-10-09; road atlas P3 and P4)** Six regions of five stops on a road with region buttons, a glyph per mode in its best medal's colour; Level Options with the mode rows, the tier switch, the records, the car strip of the 9 side views (`CarInfo.sidePic`) and START; the career harness drives it. The Goonopedia's Levels and Modes tabs are gone (docs/UI.md "Run setup").
+- **HUD (2026-10-10)** The clock and goal on a rear-view mirror, two sun visors (gift box and radio; star, coins and payout), and a dashboard per car (`HudSkin`: two dials, system lamps, one signature instrument); they replaced the crush, payout and region panels (docs/HUD.md).
+- **Career playtests** Three personas play the whole game through the real menus (docs/AI_DRIVER.md).
+- **AI drivers rebuilt (2026-10-10)** One shared `AIDriver`, a driver per car with two personalities, a brief per mode, three skills; handbrake, manual shifting, horn and ability; rivals drive their own car. 133 wins of 171 in the car × mode matrix (was 110); what is left is in docs/AI_DRIVER.md, "Status and what is next".
+- **W-1** Run-wide waves: one wave clock for the run (`Region.wave`), a star and a wave chest every 60 s with no cap; districts only decide who spawns (docs/WORLD.md).
+- **N-1** Pickup name tags (`Pickups.shortName`) (docs/PICKUPS.md "Name tags").
+- **Package 16 (G-1 to G-4) and the prize games (2026-10-09)** Gift boxes from crush XP, Cardboard to Diamond, each holding one unlocked prize game; eight skill games in one frame with one key scheme (Claw Crane, Hubcap Shuffle, Scratch Card, Goon Press, The Deal, Pachinko Drop, Slot Machine, Coin Pusher; the Prize Wheel and The Vault are gone), each unlocked by its Casino pickup; no game pays another; the prize lab (docs/PICKUPS.md "Gift boxes", "Prize games"). The box curve is now `120 × n^2.4` XP (`CrushPrizes.XP_BASE`, `XP_EXP`; was `50 n²`: games came too often). Values need measuring again (B-4).
+- **R-1 (code)** Radio: one station, GoonCrusher Radio, scanned from `sound/radio/`, with skip and on/off in the pause menu, a now-playing card, ducking under the Voice bus; 14 songs, 10 ads, 23 talk segments, 9 idents (docs/RADIO.md, docs/RADIO_SONGS.md, docs/RADIO_SEGMENTS.md).
+- **Polish (2026-10-08)** A mode icon per mode (`HudTheme.MODE_ICONS`); the mix pass and the removed jingles (docs/RADIO.md "Mix").
+- **Road atlas P1, P2, P4 data and P5 (2026-10-09)** 30 levels in 6 regions of 5 stops, six goon classes with a line-up per level, elite steps, a 10-level demo, car clears and Full Garages, 15 landscapes with their own baked skins, props, landmarks and posters (docs/WORLD.md "The levels", "Landscapes", "Regions"; docs/GOONS.md "Classes"; docs/WORLD_ART.md).
+- **Region 1 (The Wilds) systems (code, untuned)** Wild instincts, the Critter Chain, herds, dens and warrens, bee yards and lures, the Region 1 spills, heroes and MPH smash tags, layout (the Home Paddock, hedgerow lanes, slot canyons, thickets), world events and the levels' rules (docs/GOONS.md "Wild instincts"; docs/WORLD.md "Heroes", "Region 1 levels", "Interactive props").
+- **Water rework (2026-10-09, untuned)** A wading band and deep water that hurts the car instead of wrecking it; goons still drown (docs/WORLD.md "Water").
+- **B-1 Mode tiers (2026-10-08)** Easy, Medium and Hard for every mode on every level, picked in Level Options; the tier sets the goal and the world's toughness, pays a win bonus and a first-clear bonus, and shows as medals; `clears:<tier>:<n>` unlock conditions; `--tier=` for playtests. Every number is in `ModeTiers` (`scripts/global/mode_tiers.gd`).
+- **B-2 Win pay (2026-10-08)** `ModeTiers.winBonus` pays by the minute of the goal, by tier and by level; `Level.runPayout` is the one payout the ticket, run log and harnesses use. A flat bonus was tried first and got farmed (Prairie's Hard Sprint, 1,575 coins a minute).
+- **B-3 fixes so far (2026-10-08, 2026-10-09)** Defense spawns 2.5× less often (`ModeTiers.DEFENSE_SPAWN_SCALE`), holds a fixed time per tier, and its goons march on the nearer pump and blow up there (`station.siegeStep`, `BLAST_DAMAGE`); the station lot has no walls in any mode, which also unstuck Marathon; every car has a middle hull (`CollisionShape2D_body`).
+- **B-4 first fit (2026-10-08)** Goonpocalypse overtime (`SpawnManager.overtime`), the star multiplier capped at ×3, car and pickup prices raised about ×3, upgrades × the car's `UPGRADE_COST_SCALE`.
+- **B-6, B-7 (parts)** Frostbite's passes; landmark beacons dim by day; lifetime gift boxes and the best run's count in `meta.lifetime`, a `boxes:<n>` unlock condition, boxes and medals on the records ticket.
+- **Package 18, first versions (2026-10-09, 2026-10-10)** The mode menu: `Modes` (19 modes, three categories), three featured modes per level (`LevelDef.featured`), the unlock chain and road rule (`Root.modePath`, `roadModes`, `opensNextLevel`), save version 12, and a first playable version of all 14 new modes (`Root.MODE_AVAILABLE` is all true). Their rules as built, and what is left, are below.
+- **Dev console (2026-10-10)** A status line, quick buttons (`Console.QUICK`), short help, Tab completion, `start <tier>`, `play <mode> [level] [tier]`, `autopilot` (CLAUDE.md "Autoloads").
+- **Capture kit** Trailer and social footage, stills and interface elements from the game: takes, hand drives and replays, stages (docs/PROMO.md, `promo/README.md`).
 
 ## Work packages, in order
 
@@ -54,174 +51,132 @@ Package numbers are IDs (other docs link to them); the table is in the suggested
 
 | # | Package | Items | Effort | Needs |
 |---|---|---|---|---|
-| 18 | The mode menu: 14 new modes in three categories, three featured per level | below | L × several | — |
-| 17 | Road atlas: road map select, car strip art, new landscapes, level content | P3 to P7 below | L + art + play time | — |
-| 1 | Balance pass (absorbs the package 2 follow-ups and packages 6, 12 and 16) | B-1 to B-7 below | L + play time | — |
+| 18 | The mode menu (what's left) | play by hand, cost, what the first versions left out | L + play time | — |
+| 17 | Road atlas (what's left) | P5 leftovers, P6, P7, Region 1 follow-ups | L + play time | — |
+| 1 | Balance pass (absorbs the package 2 follow-ups and packages 12 and 16) | B-3 to B-7 below | L + play time | — |
 | 13 | Driving juice (what's left) | feel pass, benchmark | S + play time | — |
 | 6 | Driver perks | T2-13 | M–L | 1 |
-| 14 | Prop layers, reactions and layout (what's left) | feel pass, benchmark | S + play time | — |
+| 14 | Prop layers, reactions and layout (what's left) | feel pass, questions | S + play time | — |
 | 3 | Regions, waves and giants | T1-7 (giantism), T2-4, T2-8, T2-11 | M–L | 1 |
 | 5 | Slot machine and gems | T1-10 | S | 1 |
 | 7 | Goals and teaching | T1-15, T2-12, T1-16, T2-14, T2-15 | M–L | 1 for T2-15 |
-| 8 | Sound and radio | T1-13, T1-14, R-1 | M + in-house tracks | — |
+| 8 | Sound and radio | T1-13, mix follow-ups, R-1 listening pass | M | — |
 | 15 | Cosmetics | C-1 | M | 1 |
 | 9 | Goon depth | T2-1, T2-3, T2-5 | M | — |
 | 10 | Post-launch | Tier 3 | — | 7 |
 
 Re-run the crowd benchmarks (S3, S4 in `PERFORMANCE.md`) after packages 1, 3, 9, 13 and 14.
 
-### Package 18: The mode menu
-The plan, with every mode's pitch and the level sheet: https://claude.ai/artifact/CBinsKaUkcXvu3S3V2YMbk (the author approved it on 2026-10-09). Every level plays Sprint, then Countdown, then one Crusher, one Trial and one Goon Cup mode picked for it; winning any one of the three opens the next level. The pool is 17 modes: Marathon, Goonpocalypse, Defense, Blackout, Bounty Hunt (Crusher); Rally Stage, Flat Out, Hot Lap, Drift Trial, Cone Course, Smash Run (Trials: no goons); Cannonball, Circuit Race, Demolition Derby, Knockout, Keep the Cup, Pursuit (Goon Cup: the garage's other drivers as rivals). `Modes.DATA` holds each mode's design rules (fixed or random map, pickups, gift boxes, record type, goons); the level sheet is `LevelDef.featured`.
+### Package 18: The mode menu (what's left)
+The plan, with every mode's pitch and the level sheet: https://claude.ai/artifact/CBinsKaUkcXvu3S3V2YMbk (approved 2026-10-09). The structure (categories, featured modes, unlocks, tiers, endings) is in docs/MODES.md. **None of the 14 new modes has been driven by a person, none is tuned, none has been looked at by eye** (the category ring, the icons, the mark's ring and pointer, the checkpoint rings, the cone lot), and the frame cost of six AI drivers is not measured.
 
-Built so far ("Done" above has step 1):
-- **Blackout** (`Modes.plays` Countdown): night from the start to the end. No night spawn table yet (T2-11).
-- **Bounty Hunt** (`BountyHunt`, `scene/level/bounty_hunt.gd`): 3 / 4 / 5 marks, one at a time, 80 / 70 / 60 s of clock each (`ModeTiers.BOUNTY_MARKS`, `BOUNTY_MARK_SECONDS`). A mark is a giant from the level's line-up, weakest first, with a red ring and an escort, 3,200 px off and 500 further each time; it is never swept, and only a death the car caused counts (`Walker.deathCause`). The HUD points at it in red (`HudChance.drawMark`, `drawPointer`). The AI drives to the mark and values it x6. Three AI runs on Orchard Lanes: one win in 94 s, one out of fuel, one wrecked.
-- **Courses and the record book** (`Course`, `scene/level/course.gd`): a fixed-map mode (`Modes.isFixedMap`) gets its world seed from the level and mode (`Course.seedFor`; a harness's `--seed` wins), checkpoints every 5,000 px along the world's route to the station (pass inside 650 px, in order; the finish doesn't count until all are passed), a split banner against the driver's best, and a record per level, mode and car in `meta.records.course` with a course version (`SaveManager.bestCourse`, `recordCourse`). A Trial (`Modes.isTrial`) has no spawners, waves, stars, supply drops, events or chunk pickups, stays in daylight and doesn't burn fuel (`car.fuelFree`).
-- **Rally Stage** (`Modes.plays` Sprint): the station is the finish, a Marathon leg away on every tier, so bronze, silver and gold share one course; the clock is the Sprint clock x `ModeTiers.RALLY_SLACK` (0.7 / 0.56 / 0.46). The AI drives the checkpoints. Six AI runs in the stock sedan (seed 1, not the course seed): Prairie 72-80 s, Mudlick 78-81 s, Frostbite 169-172 s, all finished. With these slacks the clocks are about 141 / 113 / 93 s on Prairie and 193 / 155 / 127 s on Frostbite, so Prairie is loose and Frostbite's gold is out of a stock sedan's reach: one slack doesn't fit every landscape. A par time per course, measured, would fit better.
-
-- **Cone Course** (`ConeCourse`, `scene/level/cone_course.gd`): the world is built with a cleared lot at the start and no station on it (the "defense" objective); 30 gates of two baked cone props in three slalom lanes (east, back west, east again) with two tight turns between them. `Course` counts the gates (pass within 105 px of the middle; cones are 125 px either side) and the last one wins. A knocked cone takes a second off the clock (`Level.coneKnocked`, from `PropReactions.knock`). Clocks 90 / 70 / 55 s. The AI weaves badly: 26 of 30 gates in 79 s with 11 cones down on Orchard Lanes, 6 of 30 on Rust City (not looked into).
-- **Smash Run** and **Drift Trial** (`TrialScore`, `scene/level/trial_score.gd`): reach a score before the clock runs out, on a fixed map with no goons; the time to the target is the record. Smash Run counts breakables the car smashes (`Level.propSmashed`, from `BreakableProp.smashNode`): 15 / 25 / 35 in 150 s. The AI hunts the nearest breakable (`BreakableProp.BREAKABLE_GROUP`): it won Cul-de-Sac in 72 s and got 7, 10 and 1 of 15 on Moose Woods, Route Nowhere and Blast Pits, so the levels differ a lot in how much there is to smash. Drift Trial banks a chain when a held slide ends: speed / 100 a tick, doubled from the blue sparks and tripled from the orange, for a slide of 20 ticks or more; 1,500 / 3,000 / 5,000 in 120 s. The AI never pulls the handbrake, so nothing has measured it.
-- Every run with a course, a score or marks prints a `RUN_GOAL` line when it ends (gates, cones, score, marks), for the harnesses' logs.
-
-- **Pursuit** (plays Sprint, one rival: `Rivals.spawnRunner`): the runner starts 1,600 / 2,200 / 2,800 px toward the station with 45 / 60 / 75 health and a pace of 78 / 86 / 94% of the player's car's top speed; cars hit 2.5x harder (`ModeTiers.PURSUIT_BUMP`). Wrecking it wins (`Level.rivalWrecked`); it reaching the station loses (OUTRUN). The HUD points at it in red and shows its health. The AI player rams (`AIDriver.ramCars`) but wrecked nobody in two runs.
-- **Keep the Cup** (`KeepCup`, `scene/level/keep_cup.gd`): the cup lies 1,600 px ahead; a car within 130 px takes it, and any car within 230 px of the holder takes it after 2 s. The holder banks time and drives at 88% of the field's pace. First to 40 / 55 / 70 s wins (a rival: OUTRUN), inside a 240 s clock. Two AI runs: rivals reached 40 s both times (the player's driver held it 17 s and 0 s).
-- **Loops** (`Course.loopRoute`, `setupLoop`): out to two corners 5,200 px off and back along the world's routes, checkpoints every 4,000 px and the start line, driven in laps; `Course` tracks every car's laps and place. **Hot Lap**: 3 laps, the best under the tier's target (`HOTLAP_SLACK` 0.36 / 0.3 / 0.26 of a Sprint clock round the loop) wins; the AI lapped in 23-26 s. **Circuit Race**: 3 laps against five rivals, top 3 / 2 / 1; the AI won from 1st in 101 s on Orchard Lanes. **Knockout**: one lap fewer than the field, the car still on the lap when the rest are through is out (`Level.lapDone`, `Rivals.eliminate`); the AI went out third on Lantern Marsh.
-- **Demolition Derby** (`Derby`, `scene/level/derby.gd`; reworked 2026-10-10 after the author's first drive: "playing field is way too small; should have props and pickups; level the field between the semi and the others"): a painted circle 3,400 px in radius on the level's own ground round the start, so the level's trees, rocks, breakables and surfaces are the arena; six cars on a ring 1,250 px out, facing in; Repair Kits and Nitro at eight fixed spots, back 18 s after they are taken (rivals don't collect pickups yet); 12 health a second outside the line; 240 s. Rivals have 80 / 100 / 120 health and every driver rams the nearest car. **Car hits everywhere** (`OverheadCarBody2D.bumpCar`, `bumpShare`, `takeBump`): damage goes by closing speed and by where the hit lands (a car struck on its nose takes 30%, on its flank or tail all of it), weight counts only to the power 0.25 (a car twice as heavy takes about 16% less) and armour not at all; the shove still goes by weight in full. Derby hits are 1.5x. Four AI runs: the sedan won one in 55 s and lost one; the semi lost both (31 and 52 s), so it no longer wins on armour, and the derbies may now be too short.
-- **Flat Out** (plays Sprint): due east to the station on one course for all three medals, a nitro at every checkpoint (placed), `FLATOUT_SLACK` 0.62 / 0.5 / 0.42; crossing the line over 420 px/s adds 2 s. AI: 85 s of a 132 s clock on Salt Flats, 160 of 172 on Tar Pits (it took the penalty). **Simpler than the approved design:** no launch light, no lanes of different ground, no fork, no level hazards of its own.
-
-**Every mode of the menu now has a first playable version** (`Root.MODE_AVAILABLE` is all true). None has been driven by a person, none is tuned, and the frame cost of six AI drivers is not measured.
-
-**The console** (2026-10-10): a status line (menu or run, the selected mode, level and tier, which save), buttons for the common commands there (`Console.QUICK`), help as one short line a command (`SHORT`; `help <command>` for the full text), the usage of what is being typed under the output, and Tab completing arguments (modes, levels, tiers, pickups).
-
-**Trying a mode:** the console's `play <mode> [level] [easy | medium | hard]` starts a run in any mode from the menu, on the level named or the first that features it (bare `play` lists the mode ids with such a level). Run `start maxed` first so it plays on a scratch save. From the command line: `-- --console="start maxed;play derby hard"`.
+Each mode's rules as first built, and how to try one from the console: docs/MODES.md. Tuning notes from building them:
+- Blackout has no night spawn table yet (T2-11).
+- Rally Stage: one slack doesn't fit every landscape. Prairie is loose and Frostbite's gold is out of a stock sedan's reach.
+- Smash Run: the levels differ a lot in how much there is to smash.
+- Demolition Derby (reworked after the author's first drive): the semi no longer wins on armour; derbies may now be too short.
+- Cannonball has no notes: write its rules into docs/MODES.md.
 
 Left, in order:
-1. **By hand first:** play each of the 14. The AI can't judge Drift Trial at all, wins few Cone Courses and Smash Runs, and can't wreck the Pursuit runner.
+1. **By hand first:** play each of the 14. The AI's results per mode are in docs/AI_DRIVER.md, "Status and what is next": it clears Drift Trial's Easy target in under 10 s (the target wants raising), wrecks the Pursuit runner in 6 of 9 cars, some in under 15 s (the runner may be too soft), and wins under half its Cone Courses, derbies and Keep the Cups.
 2. **Cost:** benchmark a six-car race on the HD 620 (the headless playtests ran several times slower with rivals); a cheaper driving profile for rivals if it is too much.
-3. **What the first versions left out:** Flat Out's launch light, lanes, fork and hazards; pickup pads on the loops and in the arena; name plates over rivals; ghosts; marked corners for Drift Trial; a walled arena; a per-level Smash Run quota; a par time per course in place of one slack per mode.
-4. Goonopedia entries, first-run hints, the record book on the records ticket and in run setup, then the pacing pass.
-
-Notes: the demo plays every mode its ten levels feature (16 of the 17; `Root.DEMO_MODES` is gone). Every featured mode is built, so the Countdown fallback in `Root.roadModes` no longer applies anywhere. Nothing here is tuned, and none of it has been looked at by eye: run setup's category ring, the 14 icons, the mark's ring and pointer, the checkpoint rings, the cone lot.
+3. **What the first versions left out:** Flat Out's launch light, lanes of different ground, fork and hazards; pickup pads on the loops; pickups for rivals in the arena; name plates over rivals; ghosts (Hot Lap's description promises one); marked corners for Drift Trial; a walled arena; a per-level Smash Run quota; a par time per course in place of one slack per mode.
+4. First-run hints (each mode has a start briefing, `meta.hints.briefings`), the record book on the records ticket, then the pacing pass.
 
 ### Package 17: Road atlas (what's left)
-P1 (registry, classes, progression), P2 (landscapes and regions as data) and P4's data side (car clears, rewards, the results ticket rows, the `cars` console command) are built ("Done" above). Left, in the plan's order:
-- **P3. Road map level select.** Region tabs (with a `ui_region_prev` / `ui_region_next` input pair), five stops on a road per region, the run panel with the car strip under the goal; keys and mouse; the career harness's menu driving; docs/TEST_SCOPE_TRANSITIONS.md. Until then run setup is the old carousel over all 30 posters. The data it needs is in place: `Levels.stopText`, `Territories.levelsOf`, `color`, `Root.openRuleText`, `SaveManager.carClearTier` / `carsCleared` / `isFullGarage`.
-- **P4 art.** Weathered car side views (`CarInfo.sidePic`) for the strip.
-- **P5. New landscapes in three waves** (art: materials, strips, props). Done: the art is baked, every landscape draws its own skin, and the new props, landmarks and posters are wired. Left: the dressing weights are first guesses; `mountain` keeps the plain `pine` (snowy pines there are the author's call); `steam_vent` doesn't glow at night (it would need `"blend": "add"` in the generator's atlas entry).
-- **P6. Level content** for the 22 new levels (posters, twists as data, line-up checks, AI playtests), regions 1 and 2 first for the demo.
-- **P7. Pacing pass:** the level curve, `ModeTiers.LEVEL_STEP` (0.085), Sprint distance by region (20,000 to 34,000 px) and tier (`ModeTiers.SPRINT_DISTANCE`, ×2.875 / ×3.25 / ×3.75; a Marathon leg ×2.5), the elite steps and the car-clear prices; careers against 15 hours; S3 and S4 on The Sprawl and The Works. Also: Stilt Town's and Cul-de-Sac's stations sit too far out, and the goon damage from the "damage updates" change is about 14× on unarmoured cars. Needs the author's play notes first.
+- **P5 leftovers.** The new props' dressing weights are first guesses; `mountain` keeps the plain `pine` (snowy pines there are the author's call); `steam_vent` doesn't glow at night (it would need `"blend": "add"` in the generator's atlas entry).
+- **P6. Level content** for the 22 new levels: they start from their landscape's template (docs/WORLD.md "Known issues"); twists as data, line-up checks, AI playtests, regions 1 and 2 first for the demo.
+- **P7. Pacing pass:** the level curve, `ModeTiers.LEVEL_STEP` (0.085), Sprint distance by region and tier (`ModeTiers.SPRINT_DISTANCE`), the elite steps and the car-clear prices; careers against 15 hours; S3 and S4 on The Sprawl and The Works. Also: Stilt Town's and Cul-de-Sac's stations sit too far out, and the goon damage from the "damage updates" change is about 14× on unarmoured cars. Needs the author's play notes first.
 - **Region 1 (The Wilds) follow-ups:**
-  - *AI tuning.* Orchard Lanes: the hedgerow lanes stall the AI (stuck 18–26 a run, was 5–6); widen the gate gaps or let the AI's breakable sweep treat farm gates as passable at speed. Moose Woods: thicket stucks 8–10 (was 3); thin the stands or widen the trails. Snapper Bayou: Countdown AI wins fell from 4/4 to 1/4 after the props/events merge (events? crates? the sluice?). Measure with `--playtest --level=<id> --mode=countdown,sprint --runs=8 --seed=1 --trace` before and after (`world/levels/{orchard,moosewoods,bayou}.tres`, `chunk_recipe.gd`, `ai_driver.gd`). M.
+  - *AI tuning.* Orchard Lanes: the hedgerow lanes stall the AI (stuck 18–26 a run, was 5–6); widen the gate gaps or let the AI's breakable sweep treat farm gates as passable at speed. Moose Woods: thicket stucks 8–10 (was 3); the edge pines were moved since (6cddbb01), not measured again. Snapper Bayou: Countdown AI wins fell from 4/4 to 1/4 after the props/events merge. All three were measured before the driver rebuild: measure again first (`--playtest --level=<id> --mode=countdown,sprint --runs=8 --seed=1 --trace`). M.
   - *Benchmarks.* S2 and S4 on Prairie and Moose Woods at Low on an idle machine (earlier S2 runs were spoiled by CPU load); record them in docs/PERFORMANCE.md. S.
-  - *Feel and tuning pass* by hand: every smash speed, coin value, event weight and lure radius is a placeholder (docs/GOONS.md "Wild instincts", docs/WORLD.md "Interactive props", docs/PICKUPS.md). Wait for the author's notes.
-  - *On hold (author's call):* Region 2 (Tribe Country) and the regions 3–6 revamps, and champions, until Region 1 is settled.
+  - *Feel and tuning pass* by hand: every smash speed, coin value, event weight and lure radius is a placeholder. Wait for the author's notes.
+  - *On hold (author's call):* Region 2 (Tribe Country) and the regions 3–6 revamps, and champions, until Region 1 is settled. Don't start them.
 
 ### Package 1: Balance pass
-One pass that connects and balances what is built. It absorbs the package 2 follow-ups, the economy (old package 6, minus driver perks), the unlock pace (old 12) and the gift-box curve (old 16). **Targets (the author, 2026-10-08):** about **15+ hours** to finish (all levels open, every mode seen, most cars owned), with maxing out taking longer; every mode earns a similar number of coins per minute; all five modes ship in 1.0, so Defense must be winnable.
+One pass that connects and balances what is built. **Targets (the author, 2026-10-08):** about **15+ hours** to finish (all levels open, every mode seen, most cars owned), with maxing out taking longer; every mode earns a similar number of coins per minute; Defense must be winnable. B-1 (mode tiers) and B-2 (win pay) are built ("Done" above); both were fitted on the old 8 levels and 5 modes, before the road atlas and the mode menu.
 
-In priority order:
+**B-3. Every mode winnable.** After the fixes (`cautious` sedan, no upgrades, Prairie): Defense Easy 2 of 2, Medium 1 of 2 (lost at 201 of 210 s); Marathon Easy and Medium 4 of 6; Sprint on Prairie wins on every tier with about half the clock. Left:
+- Play Defense Medium by hand before tuning further.
+- The AI's Defense: it hunts by threat to the pumps but doesn't guard lanes or park to refuel (docs/AI_DRIVER.md "Limits"). Its lot-approach graph and the Sprint clock's approach allowance still assume a walled lot with an east gap: they work, but are more cautious than they need to be.
+- Check Sprint on Bayou and the late levels.
 
-**B-1. Mode tiers** (the author's idea, 2026-10-08). Every mode on every level has three completions, **Easy, Medium and Hard** (8 levels × 5 modes × 3 = 120).
-- Picked in run setup next to the mode medallion. Hard opens once Medium is beaten; beating a tier also credits the ones below it.
-- Harder means a longer or stricter goal **and** a tougher world (faster escalation, more giants). Countdown: a longer clock. Sprint: tighter slack. Marathon: more legs. Defense: a longer hold. Goonpocalypse: a longer survival target.
-- The next level opens on 3 modes (Countdown, Sprint and one more); in act 2 one of them must be won on Medium, in act 3 two (the author, 2026-10-08, after the careers opened all 8 levels in 3-4 hours on Easy alone).
-- Rewards: the win bonus (B-2) × 1 / 2 / 4; a one-time first-clear bonus (gems on Hard); bronze, silver and gold medals on the level poster and the records ticket (folds in T2-12's medals); unlocks gated on completion counts (`Unlocks` conditions).
-- The save keeps the tier beaten per mode per level; bump `SAVE_VERSION` and migrate a beaten mode as Easy.
-- *Built (2026-10-08):* `ModeTiers` (`scripts/global/mode_tiers.gd`) holds every number: Countdown clock ×1 / 1.6 / 2.2, Goonpocalypse target ×1 / 1.75 / 2.5, Sprint slack ×0.7 / 0.66 / 0.62, Marathon 2 / 3 / 4 legs (2026-10-09; legs ×2.5 longer), Defense 150 / 210 / 270 s; escalation ×1 / 1.3 / 1.6, giant odds +0 / 8 / 16, spawn interval ×1 / 0.9 / 0.8. Run setup's tier chips (W/S), medals on posters and medallions, `Level.tier`, `PlayerData.gameTier` and the level entry's `tiers` (save version 7), `clears:<tier>:<n>` unlock conditions, `--tier=` for playtests, personas pick tiers (the Rookie stops at Medium). No completion-count unlocks are assigned yet (B-4).
-
-**B-2. Win pay.** A flat **win bonus** per mode that grows with the level, added to the run's coins before the star multiplier, fitted so racing and Defense earn about as much a minute as Countdown. Before it, the careers earned 25-80 coins a minute in Sprint and Defense against 270-1,200 in Countdown and Goonpocalypse; a won Sprint could pay 1-23 coins.
-- *Built (2026-10-08):* `ModeTiers.winBonus` pays by the minute of the goal (`goalSeconds`: the clock, target or hold, or the races' planned clock): Countdown 100, Sprint 150, Marathon 120, Defense 150, Goonpocalypse 60 coins a minute, × 1 / 1.3 / 1.6 by tier, × (1 + 0.35 a level after the first). Prairie pays 270-1,800 a win, Crusher 1,300-11,000. A flat bonus was tried first: the Grinder farmed Prairie's Hard Sprint (1,600 a minute-long run) eleven times running at 1,575 coins a minute. First clears pay 300 / 800 / 2,000 coins and 0 / 1 / 3 gems × the level step. `Level.runPayout` is the one payout the ticket, run log and harnesses use. Also fixed: the results ticket and run log read the mode and level after a win had moved the selection on, so a won run could be titled, recorded and logged as the next mode or level.
-
-**B-3. Every mode winnable.** In the careers Defense was 0 for 9+ (the barrier falls at 85-105 s whatever the car does, and some runs stick where Defense starts the car, `Level.DEFENSE_START`), Marathon 1 of 6 (stuck between legs, out of fuel), Sprint fair on Prairie but short on Bayou, and one Crusher clock was 46.8 s. Fix the rules first (barrier strength, siege rate, start spot, clocks), then the AI's Defense strategy (rank goons by distance to the walls and `siege`, guard the lanes, refuel when low) so the careers can measure it.
-- *Defense (2026-10-08):* the barrier fell because goons piled up, not because it was weak: every lane spawns each round and Countdown's escalation ran on, so 79 goons were alive by 80 s with 26 at the walls. Now Defense spawns 2.5× less often (`ModeTiers.DEFENSE_SPAWN_SCALE`, `SpawnManager.spawnScale`), a blow on the walls does half its damage (`station.SIEGE_DAMAGE`) and the hold is a fixed time per tier. `cautious` sedan, 8 upgrades: Prairie Easy 3 of 3 (was 0), Medium 0 of 3 (fell at 122-173 of 210 s); Bayou Easy lost one at 148 s with 1 crush (the AI). Play Medium by hand before tuning further. Every car also got an always-on middle hull (`CollisionShape2D_body`; a goon against it is left to `slamGoons`); it didn't change Defense's stuck counts (17-41 a run).
-- *Open station (2026-10-09):* the station lot has no walls in any mode (only the house blocks), so `station.openLot` is gone. In Defense a goon now marches on the lot and blows up when it reaches it, taking `station.BLAST_DAMAGE` (8) × its attack damage off the barrier (was half its attack per blow, every 2+ s, while it stood at the walls). `cautious` sedan, no upgrades, Prairie: Easy 2 of 2 (barrier left 42-50%), Medium 0 of 2 (fell at 167 and 188 of 210 s). The AI's lot-approach graph and the Sprint clock's approach allowance still assume a walled lot with an east gap; both still work, but are now more cautious than they need to be.
-- *Pump targeting (2026-10-09):* Defense goons now march on the nearer pump island and round the house by its corners (`station.siegeStep`) instead of blowing up at the lot's edge, so they cross the lot and come at the driveway side. Same playtest as above: Easy 2 of 2 (barrier left 51-73%), Medium 1 of 2 (won with 34% left; lost at 201 of 210 s), no goons wedged on the house.
-- *Marathon (2026-10-08):* traces showed the car stuck 30-40 s per leg inside the station it had just reached, sliding along the lot's walls toward its one east gap with 50-60 goons piling in. A station Marathon has moved past now opens its lot (`station.openLot`: the walls fade and stop blocking). Easy and Medium went from 1 of 4 won to 4 of 6 (Prairie Easy 2 of 2, stuck 1-10 a run, was 22-50).
-- *Sprint:* Prairie Easy and Medium 4 of 4, using about half the clock; Hard wins too (the Grinder won it 11 times). Check Bayou and the late levels.
-
-**B-4. Fit the numbers** with career playtests (`scripts/ai/career.py`, all three personas from `fresh`; read `unlock_pace`, coins a minute by mode, `longest_runs_without_progress`) against the 15-hour target:
-- Payouts: the win bonus, `escalationSpeed` and Goonpocalypse escalation on late levels, wave stars (no cap since W-1, so a long Goonpocalypse earns a star a minute).
-- Upgrades (T1-11): every car uses `int((lvl+1)^1.6 × 15)`, about 119k coins to max one car, and a flat +1 a level helps weak stats far more than strong ones. Proposal: a `stat_max` per stat in `<car>_info.tres`, tier-based cost bases, car prices re-fit.
-- Unlocks: `Unlocks.PICKUP_PRICE`, the car gem prices, and the completion-count unlocks from B-1. The target is a Rookie who sees every mode before the last level and opens about 20 pickups by the end of Prairie.
-- Gift boxes: `CrushPrizes.XP_BASE` 50 and `XP_EXP` 2 were fitted to AI runs only. The goal is the first box in under a minute of decent play, then one every 2-4 minutes (`crush_xp`, `boxes` in `runlog.csv`).
-- *First fit (2026-10-08):* careers on the new code (tiers, win pay, the Defense and Marathon fixes) against this morning's: wins 9/2/6 → 11/13/13 of 20 (Rookie, Grinder, Explorer), levels open 2/2/1 → 4/3/3 in 89-105 minutes, the longest stall 9/10/4 → 2/2/1 runs. Income rose 4-6×: the Rookie opened 73 of 79 pickups in 89 minutes, and three Goonpocalypse runs that outlived the harness's 15 minutes paid 33,000-50,000 each. Changed: Goonpocalypse overtime past its target (`SpawnManager.overtime`: escalation ×2, spawn floor 0.3 s), the star multiplier capped at ×3, Medium gates in acts 2 and 3, pickups ×3-3.5 (1,000 / 3,000 / 8,000 / 20,000 + 5 gems / 15 gems), cars ×3 (Van 3,000 to Ambulance 105,000), prize games ×2, upgrades × the car's `UPGRADE_COST_SCALE` (sedan and van 1 to ambulance 2.5). Next: re-run the careers and compare the pace with 15 hours.
-- Other numbers: the drop mix, pickup odds and timers (docs/PICKUPS.md); fuel pressure (about 87 s of full throttle per tank in the stock sedan); all 9 cars' handling and wall damage; Goonpocalypse (escalation 2×, floor 0.6 s); Marathon (heal 35, 60° turn); Defense (rest 2 s, aggro 650, refuel 4/s).
+**B-4. Fit the numbers** with career playtests (`scripts/ai/career.py`, all three personas from `fresh`; read `unlock_pace`, coins a minute by mode, `longest_runs_without_progress`) against the 15-hour target. The first fit's careers ran 89–105 minutes on 8 levels (wins 11 / 13 / 13 of 20, 3–4 levels open; the Rookie opened 73 of 79 pickups, so prices went up). Next: re-run them on the 30 levels and compare the pace.
+- Payouts: the win bonus, `escalationSpeed` and Goonpocalypse escalation on late levels, wave stars (no cap, so a long Goonpocalypse earns a star a minute: check star totals per mode).
+- Upgrades (T1-11): about 119k coins to max a sedan, and a flat +1 a level helps weak stats far more than strong ones. Proposal: a `stat_max` per stat in `<car>_info.tres`, tier-based cost bases, car prices re-fit.
+- Unlocks: `Unlocks.PRICE_RANGE`, the car gem prices, and completion-count unlocks (`clears:<tier>:<n>`; none assigned yet). The target is a Rookie who sees every mode before the last level and opens about 20 pickups by the end of Prairie.
+- Gift boxes: the curve was fitted to AI runs only (1–3 boxes a run). The goal is the first box in under a minute of decent play, then one every 2–4 minutes (`crush_xp`, `boxes` in `runlog.csv`). The eight games' values need measuring again.
+- Other numbers: the drop mix, pickup odds and timers (docs/PICKUPS.md); fuel pressure (about 87 s of full throttle per tank in the stock sedan, measured before the handling and gearbox changes); all 9 cars' handling and wall damage; Marathon's and Defense's pit numbers; the water costs.
 
 **B-5. By hand** (the author; the AI can't judge feel). Play from the console's `start <tier>` or `-- --play-start=<tier>` (a scratch save); runs log to `runlog.csv` as `driver = player`.
-- About 30 runs across 3 cars and all five modes, for the run log.
+- About 30 runs across 3 cars and the modes, for the run log.
 - Crush feel: the death-style weights (`GoonFx.STYLE_WEIGHTS`), `FLING_SPEED`, trauma sizes, hit-stop lengths, the bonus coins, and whether the giant's 10% speed loss feels heavy or sticky.
-- Handling (new 2026-10-09, branch `handling-overhaul`; docs/CAR_ART.md, "Handling"): playtesters found the driving could be better. The model is now `CarHandling` with a weight stat, a steering ramp from the steering stat, a turn-rate curve, a smooth grip curve, light cornering scrub, brakes that stop, a reverse cap, wall deflection and bounce, and camera look-ahead. Drive the stock sedan, the semi and a maxed racer on keyboard and pad. Tune live with the console's `handling` (`handling yawlow 1.9`, `handling car weight 80`), then copy the numbers into `car_handling.gd`. Questions: is full lock in 0.17 s (stock) to 0.11 s (maxed) quick enough on keys; is the semi heavy in a good way; do walls deflect too much or too little; is the look-ahead too much?
-- Handbrake (`HANDBRAKE_*`: grip 0.16/0.07, steer ×1.6, throttle 0.85, decel 60), drift boost (`DRIFT_TIERS`: 40 ticks for +120 px/s, 100 for +240) and slams (`SLAM_MIN_SPEED` 150, 2 coins).
-- The checks where the AI struggles:
+- Handling (docs/CAR_ART.md "Handling"): drive the stock sedan, the semi and a maxed racer on keyboard and pad. Tune live with the console's `handling` (`handling yawlow 1.9`, `handling car weight 80`), then copy the numbers into `car_handling.gd`. Questions: is full lock quick enough on keys; is the semi heavy in a good way; do walls deflect too much or too little; is the look-ahead too much; do the gearboxes and the slower climb to top speed feel right?
+- Handbrake (`HANDBRAKE_*`), drift boost (`DRIFT_TIERS`) and slams (`SLAM_MIN_SPEED`).
+- The checks where the AI struggled (2026-10-07 careers, on the old level order):
 
   | Level and mode | Start | What to look for |
   |---|---|---|
   | Crusher, Countdown, in a mid car (`--play-start=late --cars=4`) | `late` | the Rookie wrecked 3 runs in a row here |
   | Sprint and Marathon on Crusher, Highway and Bayou | `late` | clocks short or fair? |
   | Defense on Prairie and Bayou | `mid` | after B-3 |
-  | Goonpocalypse in a maxed car | `maxed` | does it ever end? A run outlived the harness's 15 minutes |
+  | Goonpocalypse in a maxed car | `maxed` | does overtime end it? A run once outlived the harness's 15 minutes |
 
 **B-6. World and AI follow-ups:**
-- Bumper-only car collision: add a middle polygon or side capsule on layer 1 only, keeping crushing and `carBodyArea` contact unchanged. Cars stall on it, and it adds to the stuck events in races. S–M.
+- Cars wedging on corners: the middle hull is in, but it didn't change Defense's stuck counts (17–41 a run). Find what still stalls them (`overlap=` in `PLAYTEST_STUCK`). S–M.
 - The AI skips pickups near deep water (`waterTargetPx`): allow them at low approach speed. S.
 - Highway edges look blobby: a crisper border for road surfaces, or a kerb line. S.
 - Benchmark S3/S4 at Crush Effects Full; drop the Low preset to Minimal if crowds cost frames.
-- *Done (2026-10-08):* Frostbite's passes (deep snow and ice inside a pass become snow, `passWidth` 1800); landmark beacons dim to 15% by day (`Level.fadeBeacons`).
 
 **B-7. Small connections** (gift boxes and unlocks):
-- A small "+XP" tag flying to the crush pill; lifetime boxes and the best box in `meta.lifetime`; the AI weights goons by XP.
-- An "XP Boost" pickup or car perk through `car.crushXpMult`.
-- *Done (2026-10-08):* lifetime gift boxes and the best run's count in `meta.lifetime` (`boxes`, `bestBox`), a `boxes:<n>` unlock condition, and boxes and medals on the records ticket.
-- Cosmetics (package 15) and radio stations (R-1) take `paint:` and `station:` ids in `meta.unlocks` when they are built.
+- A small "+XP" tag flying to the gift box on the visor; the AI weights goons by XP.
+- An "XP Boost" pickup or car perk through `car.crushXpMult` (the hook exists; nothing sets it).
+- Cosmetics (package 15) take `paint:` ids in `meta.unlocks` when they are built.
 
 Moved out: world build speed is a native port (docs/NATIVE.md, "What to port next"); driver perks are package 6.
 
-**Evidence so far (career playtests, 2026-10-07).** Under coins × stars the first Countdown win paid 10k-17k and the Grinder owned all 9 cars after 4 runs; coins × (1 + 0.1 × stars) fixed that (Countdown 270-560 coins a minute, Goonpocalypse 240-1,230). Countdown alone opened every level until the 3-mode gate. Crusher is a wall for the Rookie (5 wrecks with every car owned) while the Grinder beat it first try. Also changed then: the AI's race budget and Defense hunting, `start <tier>` for testing by hand, only the first level open on a new save, stations at least 85% of a Sprint out, and three menu focus bugs.
+**Evidence (career playtests, 2026-10-07).** Under coins × stars the first Countdown win paid 10k–17k and the Grinder owned all 9 cars after 4 runs: hence coins × (1 + 0.1 × stars). Before win pay, Sprint and Defense earned 25–80 coins a minute against 270–1,200 in Countdown and Goonpocalypse. Crusher was a wall for the Rookie (5 wrecks with every car owned) while the Grinder beat it first try.
 
 ### Packages 2, 12 and 16
 Merged into package 1 (2026-10-08). What they built is under "Done".
 
 ### Package 13: Driving juice (what's left)
-Built (2026-10-08, "Done" above): `CarJuice` in `scene/fx/car_juice.gd`, documented in docs/CAR_ART.md "Driving feel". It runs outside `integrate()`, reads the car after it moves, and never writes velocity or input. What is left:
-- **Feel pass by hand.** Nothing is tuned yet. Check how far the body leans (`ROLL_PX` 4.5, `ROLL_ACCEL` 1300) and how often the car goes up on two wheels (`TWO_WHEEL_ON` 0.9 held 6 ticks above 380 px/s). Check the bounce sizes (`BUMP_*`), the wall jolt (`WALL_KICK_*`, `WALL_TRAUMA_*`), the trail density (`TRAILS`, `LEVELS`), engine pitch per gear and the backfire odds (0.55).
-- **Built differently from the brief:** the two-wheel look is an offset, a narrower body and a shadow shift, with no perspective skew on one edge. A sprite can't do that without a shader pass on the car's damage shader. The outer tyres smoke, and the inner ones throw dust when they land. The speed pull is the existing zoom-out with speed, plus a short pull on a drift boost. The bloom is an additive glow sprite, not a real glow pass. All of these can change after the feel pass.
+- **Feel pass by hand.** Nothing is tuned: how far the body leans (`ROLL_PX`, `ROLL_ACCEL`), how often the car goes up on two wheels (`TWO_WHEEL_ON`), the bounce sizes (`BUMP_*`), the wall jolt (`WALL_KICK_*`, `WALL_TRAUMA_*`), the trail density (`TRAILS`, `LEVELS`), engine pitch per gear and the backfire odds (`scene/fx/car_juice.gd`).
+- **Built differently from the brief** (can change after the feel pass): the two-wheel look is an offset, a narrower body and a shadow shift, with no perspective skew (that would need a pass in the car's damage shader); the speed pull is the existing zoom-out plus a short pull on a drift boost; the bloom is an additive glow sprite.
 - **Benchmark** S3/S4 on the HD 620 at Driving Effects Full against Reduced. If trails cost frames in crowds, drop Low to Minimal.
-- **Sound package (8):** the engine sample loops one recording. Real gear shifts and backfires want their own clips (the backfire now uses the transition "pop" pitched down, and landings use "thud").
+- **Sound (package 8):** the engine loops one recording. Real gear shifts and backfires want their own clips (the backfire is the transition "pop" pitched down, landings use "thud").
 
 ### Package 14: Prop layers and reactions (what's left)
-Built (2026-10-08, "Done" above; docs/WORLD.md "Props and decor", "Interactive props" and "Prop reactions", docs/WORLD_ART.md "Layered props"). The report with the prop catalog, the placement rules and the recommendations: https://claude.ai/artifact/NHJTxtvaqVsyzXSU2MSKNE. What is left:
-- **Feel pass by hand.** Nothing is tuned: the canopy fade (`FADE_ALPHA` 0.4), the springs (`PropReactions.SPRING`), leaves 3-12 a hit, `KNOCK_SPEED` 120, `NEAR_SMASH` 0.7; the field lattice (`fieldSpacing`, the densities, gates, `CORNER_TREE`); motif sizes and weights; the spills (log distance and damage, the flood radius, the swarm's kills and stings, the crane's `DROP_SPEED`); which goons release piles. Check how much a crown hides goons at night.
-- **Benchmarked** (docs/PERFORMANCE.md): an A/B costs about 1.4 fps on S3 and nothing on S2. S3 sits about 8 fps under the 2026-10-07 numbers with package 14 off too, so that drop is from other changes.
-- **Questions for the author:** should goons that release a pile get credit and run away (the brief's "maybe becoming regular goons": today they simply go back to their own verb)? Should spilled logs and the crane's container ever clear away? Should water towers leave a slippery puddle (it would need a terrain overlay `integrate()` reads, kept pure for the AI)?
+The report with the prop catalog, the placement rules and the recommendations: https://claude.ai/artifact/NHJTxtvaqVsyzXSU2MSKNE. Benchmarked: about 1.4 fps on S3, nothing on S2 (docs/PERFORMANCE.md).
+- **Feel pass by hand.** Nothing is tuned: the canopy fade (`FADE_ALPHA`), the springs (`PropReactions.SPRING`), `KNOCK_SPEED`, `NEAR_SMASH`; the field lattice (`fieldSpacing`, densities, gates, `CORNER_TREE`); motif sizes and weights; the spills (log distance and damage, the flood radius, the swarm, the crane's `DROP_SPEED`); which goons release piles. Check how much a crown hides goons at night.
+- **Questions for the author:** should goons that release a pile get credit and run away (today they go back to their own verb)? Should spilled logs and the crane's container ever clear away? Should water towers leave a slippery puddle (it would need a terrain overlay `integrate()` reads, kept pure for the AI)?
 
 ### Package 3: Regions, waves and giants
-- **T1-7.** `giantism` is shown but unused. Proposal: giant odds = `giantOdds + giantism / 5`, plus a term from the run's wave (`Region.waveIntensity()`). S.
-- **Wave stars** have no cap since W-1, so a long Goonpocalypse earns a star a minute: check star totals per mode in package 1 alongside the payout model (question 2).
+- **T1-7.** A district's `giantism` is shown but unused (the spawner reads only the level's `giantOdds` plus the tier's). Proposal: giant odds = `giantOdds + giantism / 5`, plus a term from the run's wave. S.
 - **T2-4.** Giants get hp 3; a Warlord at wave 4 with a health bar, minions and charges, pointed at by the indicator (start from the Foreman's `Boss` verb). M.
 - **T2-8.** Region mutators ("fog", "giants only", "double coins") and objectives ("crush 20 Rat Pack"), anchored on district landmarks. M.
-- **T2-11.** Night as a real phase: about 150 s day and 90 s night, a night spawn table, ×1.5 coins at night (`Timer.gd` `daylength`). S.
+- **T2-11.** Night as a real phase. Built: a level sets how much of each cycle is night (`LevelDef.rules.nightShare`), and night adds crush XP. Left: a night spawn table (Blackout wants one too) and ×1.5 coins at night. S.
 
 ### Package 5: Slot machine and gems
-- **T1-10.** Gems buy a starting gadget and boost (the slot's gem respin went on 2026-10-09) (`Pickups.LOADOUT`, `BOOST_LOADOUT`); The Deal's gem hand went with its rework (2026-10-09). Proposal, cheapest first: a gem pouch (carry up to 3 into a run), Second Wind (pay gems to continue with 50 health and fuel; must hook in before `endLevel`; not in Goonpocalypse), respec. Cosmetics move to package 15; locked pickups to package 12. M.
+- **T1-10.** Gems buy a starting gadget and boost (`Pickups.LOADOUT`, `BOOST_LOADOUT`), cars and top pickups; the slot's gem respin and The Deal's gem hand went with the prize game reworks. Proposal, cheapest first: a gem pouch (carry up to 3 into a run), a gem-paid continue (50 health and fuel; must hook in before `endLevel`; not in Goonpocalypse; not named "Second Wind", which is now the sedan's trait), respec. M.
 
 ### Package 6: Driver perks
-- **T2-13.** Driver perks and affinity (hooks: `awardBase` in `playerRoot.gd`, the purse's `MIN_COINS`/`MAX_COINS`). The economy that was here is in package 1 (B-4). M–L.
+- **T2-13.** Driver perks and affinity (hooks: `awardBase` in `playerRoot.gd`, the purse's `MIN_COINS`/`MAX_COINS`, `car.crushXpMult`). Each car now has two traits (`CarTraits`); perks would sit beside them. M–L.
 
 ### Package 7: Goals and teaching
-- **T1-15. First-run hints.** Nothing teaches crush speed, the slot controls, where stars come from, gadget Use, that deep water hurts the car fast, or that breakables smash and rocks don't. One-time toasts via `HudChance.toast`, flags in `meta.hints`. S–M.
-- **T2-12.** Medals (now package 1, B-1) and per-level records for every mode (the Goonpocalypse shape in `meta.records`), a "Next up" panel. M.
-- **T1-16.** A `SteamService` autoload guarded by `Engine.has_singleton("Steam")`, achievements mirrored into `meta.achievements`, lifetime totals in `meta.lifetime`, `steam_appid.txt` only in dev builds. M.
+- **T1-15. First-run hints.** Built: a start briefing per mode (`meta.hints.briefings`), MPH smash tags with first-meeting toasts for hero props (`SmashTags`), a manual-gearbox toast. Still untaught: crush speed, the prize games' keys, where stars come from, gadget Use, that deep water hurts the car, that ordinary breakables smash and rocks don't. One-time toasts via `HudChance.toast`, flags in `meta.hints`. S–M.
+- **T2-12.** Medals are built (B-1) and course modes keep a record per car (`meta.records.course`). Left: per-level records for the other modes in the Goonpocalypse shape, a "Next up" panel. M.
+- **T1-16.** A `SteamService` autoload guarded by `Engine.has_singleton("Steam")`, achievements mirrored into `meta.achievements`, lifetime totals in `meta.lifetime`, `steam_appid.txt` only in dev builds. No game code calls Steam yet. M.
 - **T2-14.** Three date-seeded contracts, reroll for a gem. M. Needs T1-16.
-- **T2-15.** Medal-gated top cars. S–M. Needs T2-12, T1-11.
+- **T2-15.** Medal-gated top cars. S–M. Needs T1-11 (B-4).
 
 ### Package 8: Sound and radio
 - **T1-13.** A `VoiceDirector`: priorities (warning > win > record > jackpot > giant > award > region), a ~5 s cooldown, no repeats in the last 3 lines, subtitles. S.
-- **T1-14.** *Mostly covered by R-1:* the radio plays in the menus and runs, and ducks under the Voice bus. Stingers were dropped (2026-10-08): the level-start bell, win jingle and slot machine sounds clashed with the songs and are gone. Any new cue should be short and not tonal.
-- **Mix follow-ups (2026-10-08).** Listen to the new mix in play (docs/RADIO.md "Mix"). Still tonal and maybe clashing with the songs: the glockenspiel chime on every pickup and reward flyer (`short-success-sound-glockenspie.mp3`), the results ticket's impact on a loss and on stamps (`halloween-impact`, now -4 dB), and the wolf howl at nightfall. The goon death sounds are the old shared set for every goon (docs/GOONS.md). S.
-- **R-1. Radio stations.** The code is done (above, docs/RADIO.md). Left: more in-house tracks (GoonCrusher Radio has 14 songs (about 45 minutes, past the 8 to ship), ten ads, twenty-three DJ talk segments and nine idents, docs/RADIO_SEGMENTS.md; docs/RADIO.md part 1 and docs/RADIO_SONGS.md), then a listening pass on crossfade lengths, segment odds and the ducking depth.
+- **Mix follow-ups (2026-10-08).** Listen to the mix in play (docs/RADIO.md "Mix"). Still tonal and maybe clashing with the songs: the glockenspiel chime on every pickup and reward flyer, the results ticket's impact on a loss and on stamps, and the wolf howl at nightfall. The goon death sounds are the old shared set for every goon. Any new cue should be short and not tonal. S.
+- **R-1.** The code and the first set of audio are in (14 songs, about 45 minutes, past the 8 to ship). Left: a listening pass on crossfade lengths, segment odds and the ducking depth; more tracks as they come (docs/RADIO_SONGS.md).
 
 ### Package 15: Cosmetics
-- **C-1.** Unlockable looks that never change stats: paint jobs and liveries per car (look C "Showroom" is already a whole-car paint, docs/CAR_ART.md), decals and numbers, tyre-smoke and drift-spark colours, horns, a boost-flame colour, and driver outfits on the card portrait. Generated with `car_gen.js` (never painted by hand), chosen on the driver card, bought with coins or gems, or earned from medals and achievements through the unlock registry (package 12). Saved per car in `meta.cosmetics`. M.
+- **C-1.** Unlockable looks that never change stats: paint jobs and liveries per car (look C "Showroom" is already a whole-car paint, docs/CAR_ART.md), decals and numbers, tyre-smoke and drift-spark colours, horns, a boost-flame colour, and driver outfits on the card portrait. Generated with `car_gen.js` (never painted by hand), chosen on the driver card, bought with coins or gems, or earned from medals and achievements through `Unlocks`. Saved per car in `meta.cosmetics`. M.
 
 ### Package 9: Goon depth
 - **T2-1.** Add `hp` (for T2-4) and a speed-label tint when the car is too slow for a nearby heavy goon.
@@ -230,8 +185,8 @@ Built (2026-10-08, "Done" above; docs/WORLD.md "Props and decor", "Interactive p
 
 ### Package 10: Post-launch (Tier 3)
 - Steam leaderboards (Goonpocalypse score, Sprint time); needs T1-16.
-- Daily seeded run: move goon choice, giants and drops off the global RNG.
-- "Heat" modifiers after level 8.
+- Daily seeded run: the map and its contents already come from the world seed; move goon choice, giants and drops off the global RNG.
+- "Heat" modifiers after the last level (written as "after level 8" when there were 8).
 - Ramps and airtime crushes (Jump Jets already drop the goon mask while airborne).
 - Goon nests, single-use gas pumps, boost chevrons.
 - Interactive music layers; new voice lines.
@@ -240,42 +195,33 @@ Built (2026-10-08, "Done" above; docs/WORLD.md "Props and decor", "Interactive p
 ## Maybe
 
 - **Elite escort goon.** Line-ups with no rank-1 goon have no fodder to crush between heavies. Add one weak escort: Goon Quarry + Grunt; the War Machine levels (blastpits, tankfarm, slagfields, theline, crusher) + Grunt; the Big Game levels + Yipper (`world/levels/*.tres` `lineup`; `test_levels.gd` wants every line-up inside its class, so add the escort to `Goons.CLASSES` too). Check an AI playtest on crusher survives past 25 s. Deferred by the author (2026-10-09).
-
-**Curses** (on hold: they add ways to lose a run). They would be a `K.CURSE` kind in `Pickups.DATA`; icons exist in `scripts/art/pickup_icons.js` (skipped by the generator): Cursed Idol, Glass Cannon, Blood Moon, Devil's Bargain, Gremlin Sack.
+- **Curses** (on hold: they add ways to lose a run). They would be a `K.CURSE` kind in `Pickups.DATA`; icons exist in `scripts/art/pickup_icons.js` (skipped by the generator): Cursed Idol, Glass Cannon, Blood Moon, Devil's Bargain, Gremlin Sack.
 
 ## Decisions already made
 
-- The mode menu (2026-10-09): Sprint and Countdown on every level, then one Crusher, one Trial and one Goon Cup mode per level, any of which opens the next level. Approved: Blackout, Bounty Hunt, Rally Stage, Flat Out, Hot Lap, Drift Trial, Cone Course, Smash Run, Cannonball, Circuit Race, Demolition Derby, Knockout, Keep the Cup, Pursuit. Rejected: Convoy, Turf War, Big Game, Last Drop, Crush-Off, Odd Jobs, Goon Ball, stunt and airtime modes, Hill Climb. Rivals are the garage's own drivers. Fixed or random maps, pickups and gift boxes are decided per mode (`Modes.DATA`); pickups in a mode are only ones useful there. Records are kept per car. Cannonball and Pursuit have light goons. The demo shows the modes its two regions feature. Goonpocalypse and Defense stay; a mode can be retired later.
-- All five original modes are playable.
-- Unlocks: Countdown → Sprint → Goonpocalypse; Marathon and Defense need Sprint. A new save opens only the first level; each next one opens once 3 modes are beaten on the one before (Countdown, Sprint and one of the rest; 2 in the demo), in act 2 one of them on Medium and in act 3 two. Most pickups start locked, one tree per kind (package 12).
+- **Modes (2026-10-09):** Sprint, then Countdown on every level, then one Crusher, one Trial and one Goon Cup mode picked for it; a win in any of the three opens the next level, on Medium at a region's finale. Rejected: Convoy, Turf War, Big Game, Last Drop, Crush-Off, Odd Jobs, Goon Ball, stunt and airtime modes, Hill Climb. Rivals are the garage's own drivers. Fixed or random maps, pickups and gift boxes are decided per mode (`Modes.DATA`); pickups in a mode are only ones useful there. Records are kept per car. Cannonball and Pursuit have light goons. The demo shows the modes its two regions feature. Marathon, Defense and Goonpocalypse stay and ship in 1.0; a mode can be retired later.
+- **Tiers:** every mode on every level has Easy, Medium and Hard, picked in run setup; Hard means a longer goal and a tougher world, and opens once Medium is beaten; tiers pay a bigger win bonus, a first-clear bonus and medals.
 - Sprint's clock ends the run; Marathon adds one Sprint clock per station.
-- Payout is (coins + a win bonus) × (1 + 0.1 × stars), the multiplier capped at ×3 (20 stars). The win bonus pays by the minute of the goal and grows with the tier and level (package 1, B-2).
+- **Payout** is (coins + a win bonus) × (1 + 0.1 × stars), the multiplier capped at ×3 (20 stars). The win bonus pays by the minute of the goal and grows with the tier and level.
 - The full game takes about 15+ hours to finish; prices and unlock pace are fitted to that (package 1).
-- Every mode on every level has Easy, Medium and Hard completions, picked in run setup; Hard means a longer goal and a tougher world; the next level opens on Easy in 3 modes; tiers pay a bigger win bonus, a first-clear bonus, medals and completion-count unlocks (package 1, B-1).
-- Marathon and Defense ship in 1.0.
-- The demo and the full game share the save; one codebase (`Root.IS_DEMO`).
-- Crush goals are crush XP toward gift boxes holding one prize game. The games are ranked by measured strength: the Slot Machine beats pick-one games because it pays three things. Only the weakest game (the Claw Crane) starts unlocked. Higher boxes hold better versions, and boxes pay no star (package 16).
-- Waves are one clock for the whole run, not per district, with no cap: you keep going wave after wave. Districts still set faction, goons, name and giantism (W-1).
-- Pickups show short name tags in small type wherever an icon stands for something held or offered (N-1).
-- Menu shortcuts are letters near WASD; numbers only for lists such as levels and tabs.
-- Pickups unlock in a separate tree per kind; locked ones never drop and show as "???" until their parent is unlocked, then with a preview and price.
-- Entry cars cost coins; advanced ones (semi, supercar, racer, police, ambulance) cost coins and gems. No level gates on cars.
-- The demo opens Common and Uncommon pickups only.
-- Saves from before the unlocks (version 6) start over; nothing from them is kept.
-- Unlock prices are placeholders, set now and re-fit in package 6.
+- The demo and the full game share the save; one codebase (`Root.IS_DEMO`). The demo opens Common and Uncommon pickups, every tree's root and the Casino tree's first tier.
+- **Unlocks:** pickups unlock in a separate tree per kind, nearly all locked on a new save; locked ones never drop and show as "???" until their parent is open, then with a preview and price. Entry cars cost coins; advanced ones (semi, supercar, racer, police, ambulance) cost coins and gems. No level gates on cars. Prices are placeholders until B-4.
+- Saves from before the road atlas (version 8) start over; nothing from them is kept.
+- **Gift boxes:** crush goals are crush XP toward gift boxes holding one prize game. The games are ranked by measured strength; only the weakest (the Claw Crane) starts unlocked. Higher boxes hold better versions, boxes pay no star, and no game pays another.
+- Waves are one clock for the whole run, not per district, with no cap. Districts still set faction, goons, name and giantism.
+- Pickups show short name tags wherever an icon stands for something held or offered.
+- Menu shortcuts are letters near WASD; numbers only for lists such as stops and tabs.
 - Cosmetics cost coins or gems.
 - Tree canopies may hide goons beneath them.
 - The two-wheel tilt is style only; cars never tip over.
-- No jingles or stingers over the radio: the music plays straight through a run's start, its prize games and its results (2026-10-08).
-- Radio: one station of in-house tracks, GoonCrusher Radio (funny vocal tracks and radio talk), plus Radio Off; no other stations (the author's call, 2026-10-10; Classical Lofi and Lofi were tried and dropped). Changed in the pause menu and Settings, no driving key. Talk is not contextual (no night, level or event lines).
+- No jingles or stingers over the radio: the music plays straight through a run's start, its prize games and its results.
+- **Radio:** one station of in-house tracks, GoonCrusher Radio, plus Radio Off; no other stations (2026-10-10; Classical Lofi and Lofi were tried and dropped). Changed in the pause menu and Settings, no driving key. Talk is not contextual (no night, level or event lines).
 
 ## Open questions for the author
 
-1. *(Answered: Marathon and Defense ship in 1.0.)*
-2. *(Answered: stars stay a small multiplier, plus a win bonus.)*
+Numbers are kept from earlier versions; 1, 2 and 7 to 10 are answered (see "Decisions").
+
 3. Fuel pressure: should fuel or health be the main way runs end?
-4. Price? *(Length answered: 15+ hours.)*
+4. Price?
 5. Gems: never sold? Is a gem-paid continue acceptable?
 6. Steam scope for 1.0 (achievements vs. leaderboards and dailies); Steam Deck needs analog steering.
-7. *(Answered: the demo opens Common and Uncommon pickups; see "Decisions".)*
-8–10. *(Answered: prize games ranked by measured strength, the weakest open first; better versions in higher boxes, no star per box; no wave cap. See "Decisions".)*

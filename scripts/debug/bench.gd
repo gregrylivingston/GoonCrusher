@@ -7,7 +7,7 @@ extends Node
 #setting, not saved), --shot=5;30 (screenshots at those level seconds), --open-settings (S1 only),
 #--notext, --car=taxi (another car than the scenario's), --damage=engine:30;tank:10 (system conditions,
 #held for the whole run; e.g. to look at the damaged car art or time the damage effects).
-#Game mode: --mode=gooncrusher|sprint|marathon|defense|goonpocalypse (default gooncrusher) sets the
+#Game mode: --mode=<any Root.gameModes name, e.g. sprint, derby> (default gooncrusher) sets the
 #scratch save's gameMode before the level loads. --level-seconds=N replaces the level's authored
 #seconds (Sprint derives its clock from them). Without --level-seconds the bench keeps a
 #counting-down clock from running out, so long benchmarks are not cut short by the Countdown win;

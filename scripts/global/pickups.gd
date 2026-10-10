@@ -13,7 +13,7 @@ const KIND_NAMES := ["Supplies", "Tune-ups", "Power-ups", "Gadgets", "Loot", "Ca
 const KIND_NOTES := [
 	"Instant refills and repairs: fuel, hull and the five car systems.",
 	"Stat gains for the rest of the run.",
-	"Timed effects. Their rings drain above the systems strip.",
+	"Timed effects. Their rings drain on the HUD's items row.",
 	"Held in one slot and fired with the Fire button (E).",
 	"Coins, gems and stars.",
 	"Prizes of chance. Most play out in the HUD corner; a few pause.",
@@ -47,7 +47,7 @@ const ROLL := "pickups_roll"
 const TICKS := 60 #physics ticks per second (never changes; see CLAUDE.md)
 
 ## Keys: name, kind, rarity, w (weight inside its tier; 0 = never dropped by goons), icon (texture/icon/<icon>.svg),
-## text (the Goonopedia line), ui (the HUD group its flyer lands on), ai (worth to the AI driver, a crush is
+## text (the card's line on the Pickups screen), ui (the HUD group its flyer lands on), ai (worth to the AI driver, a crush is
 ## about 12), modes (M values it drops in; missing = all), night (only drops at night), fac (faction ->
 ## weight multiplier), scene (an original pickup's own scene), secs (a timed effect's length), charges
 ## (a gadget's or boost's uses), plus each item's own numbers.
@@ -201,9 +201,9 @@ const DATA := {
 	"wheel": {"parent":"scratch", "name":"Prize Wheel", "kind":K.CASINO, "rarity":R.RARE, "w":0, "icon":"wheel", "ui":"coinui",
 		"text":"Found in the world. Drive across it and your speed sets the spin, from BUST to JACKPOT."},
 	"deal": {"parent":"double", "price":{"coin":18000}, "name":"The Deal", "kind":K.CASINO, "rarity":R.EPIC, "w":6, "icon":"deal", "ui":"slotmachineui", "ai":40,
-		"text":"Pick one of three cards. A gem deals a new hand; run coins raise the hand's rarity. It can also come in a gift box."},
+		"text":"A deck of twelve cards. Keep the card in your hand or redraw for the next one, up to three times; there is no going back. It can also come in a gift box."},
 	"claw": {"start":true, "name":"Claw Crane", "kind":K.CASINO, "rarity":R.RARE, "w":5, "icon":"claw", "ui":"slotmachineui", "ai":25, #the weakest prize game (CrushPrizes), so the cheapest (Rare) of them
-		"text":"Steer the claw over a heap of prizes and drop it with Accelerate. Prizes can slip on the way up. Run coins buy another grab."},
+		"text":"The claw patrols over a heap of prizes: drop it when it is over the one you want. Prizes can slip on the way up. Run coins buy another grab."},
 	#gift box games that goons don't drop (w 0): unlocking one only adds it to the boxes
 	"shuffle": {"parent":"claw", "price":{"coin":2000}, "name":"Hubcap Shuffle", "kind":K.CASINO, "rarity":R.RARE, "w":0, "icon":"hubcap", "ui":"slotmachineui",
 		"text":"A prize, a coin and some junk go under three hubcaps and they shuffle. Find the prize, then keep it or go again."},
@@ -254,7 +254,7 @@ const DATA := {
 const LOADOUT := {"horn": 1, "oilslick": 1, "mine": 2, "emp": 2, "bait": 2, "hubcap": 4, "airstrike": 4}
 const BOOST_LOADOUT := {"hop": 1, "nitro": 2, "jets": 4}
 
-## Kinds in the order the Goonopedia lists them.
+## Kinds in the order the Pickups screen lists them.
 const KIND_ORDER := [K.SUPPLY, K.TUNE, K.BOOST, K.GADGET, K.MOVE, K.LOOT, K.CASINO, K.SKILL, K.MODE]
 
 #--- run state ----------------------------------------------------------------------------------

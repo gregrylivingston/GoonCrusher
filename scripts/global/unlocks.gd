@@ -2,8 +2,8 @@ class_name Unlocks extends RefCounted
 ## What is open: levels, modes, cars and pickups, asked in one place (docs/PICKUPS.md, "Unlocks").
 ##
 ## Each owner keeps its own data. A pickup's place in its kind's tree is `parent` (and `start` for a root)
-## in Pickups.DATA, with an optional play condition in `needs`. A level opens once the Marathon is won on the
-## one before it, on Medium after a region's finale (Root.opensNextLevel, SaveManager.currentLevelPassed), and
+## in Pickups.DATA, with an optional play condition in `needs`. A level opens once any featured mode is won on
+## the one before it, on Medium at a region's finale (Root.opensNextLevel, SaveManager.currentLevelPassed), and
 ## the mode chain is Root.isModeUnlocked. A car is open once bought (`cost` and `gems` in PlayerData.cars).
 ##
 ## Every unlock has one of four states. HIDDEN: its parent is still locked ("???"). SHOWN: its parent is

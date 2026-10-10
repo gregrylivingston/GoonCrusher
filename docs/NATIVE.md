@@ -8,7 +8,7 @@ GoonCrusher runs C++ through a GDExtension built with [godot-cpp](https://github
 |---|---|
 | `native/godot-cpp/` | Git submodule, pinned to godot-cpp `10.0.0-stable`. Built against the Godot 4.7 API (`api_version` in the SConstruct). |
 | `native/SConstruct` | Builds `libgooncrusher` and installs it into `bin/<platform>/`. |
-| `native/src/` | The extension's sources. `register_types.cpp` registers the classes below; `goon_native.*` is `GoonNative`, whose static `version()` the test checks. |
+| `native/src/` | The extension's sources. `register_types.cpp` registers the classes below; `goon_native.*` is `GoonNative`, whose static `version()` the test checks. SCons leaves its `.obj` files here (ignored). |
 | `native/.gdignore` | Keeps Godot from scanning or exporting the C++ tree. |
 | `bin/gooncrusher.gdextension` | Tells Godot which DLL to load (`template_debug` for the editor and debug exports, `template_release` for release exports). Tracked. |
 | `bin/windows/*.dll` | Build output. **Gitignored**, so a fresh clone (or a new worktree) must build before the project loads the extension. |
@@ -24,7 +24,7 @@ scons                           # debug DLL: editor, debug exports, tests
 scons target=template_release   # release DLL: release exports
 ```
 
-Or run `scripts\windows\build_native.bat` from the project root to do both. The first build compiles all of godot-cpp once per target (over 10 minutes each on the dev box with `-j4`); later builds only recompile `src/`. Add `-j4` to use all 4 threads; the batch file does.
+Or run `scripts\windows\build_native.bat` from the project root to do both. The first build compiles all of godot-cpp once per target (over 10 minutes each on the dev box with `-j4`); later builds only recompile `src/`. Add `-j4` to plain `scons` to use all 4 threads; the batch file does.
 
 The extension is `reloadable`, so the editor picks up a rebuilt debug DLL without restarting. A DLL the editor or a running game holds can still block the install step; close it and rebuild if SCons reports the file is in use.
 
@@ -49,7 +49,7 @@ Rules that came with the moves:
 - **GoonBody calls GDScript only for rare events:** `_onCarContact(car)` when `advance` bumps the car (it has already done `touchedByCar` and reset `stuckTime`). Drowning stays in GDScript: `beginTick` returns true and `Walker` calls `drown()`.
 - **The LOD view is pushed, not read:** `SpawnManager` hands its `physicsView` to `GoonBody.setPhysicsView` every tick (and clears it on exit); `GoonBody.needsFullPhysics(point)` is the native check.
 - **Two wall checks:** `World.isWall` and `GoonBody::advance` both treat `StaticBody2D` and `TileMap` colliders as walls. Change both together.
-- **Goons move in floating mode** (`Walker._ready`), like the car. They had been in CharacterBody2D's default grounded (platformer) mode.
+- **Goons move in floating mode** (`Walker._ready`), like the car, not CharacterBody2D's default grounded (platformer) mode.
 - **`WorldGrid` is main-thread only** (the AI plans on the main thread too). `WorldGenNative` touches only its arguments, so it runs on the build's worker.
 
 ## Adding a class
@@ -71,7 +71,7 @@ Port only what a profile points at, and keep a GDScript version until the native
 Candidates, in order:
 1. **`WorldField.sample`** (the coarse `sample` step, and the fine raster's inner loop: 6–9 ms per chunk idle, 16–25 ms in a run). The biggest remaining load cost, but its float math must match bit for bit or the rasters drift; port the whole field with a parity test over every grammar.
 2. **The rest of the coarse build:** `shareCaps`/`trimWindow`, `components`/`connectIslands`, `markStart`, `buildDistricts`/`districtTable`. Integer grid passes like `cutCrossings`, so they port the same way: arrays in, arrays out.
-3. **Verb logic.** A native verb means moving the whole state machine (21 verbs in `goon_verbs.gd`), so do it only if crowds still miss the targets after cheaper changes (e.g. no collision for off-screen goons, which never use it).
+3. **Verb logic.** A native verb means moving the whole state machine (21 verbs in `scene/enemy/goon_verbs.gd`), so do it only if crowds still miss the targets after cheaper changes (e.g. no collision for off-screen goons, which never use it).
 4. **`ChunkRecipe`** (7–12 ms per chunk on workers): streaming stays inside its budget, so it isn't urgent.
 
 ## Exporting
