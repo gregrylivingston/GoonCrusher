@@ -2,7 +2,8 @@ class_name NowPlaying extends Control
 
 #The radio's now-playing card (docs/RADIO.md). In a run (the HUD, bottom left above the tachometer)
 #it slides in when a song starts or the station changes, holds a few seconds and fades. In the main
-#menu it is pinned (always shown) and a click changes station (right click goes back).
+#menu it is pinned (always shown): a click skips to the next song (or tunes in), a right click turns
+#the radio on or off.
 #Drawn with _draw like the HUD widgets; redraws only while it moves or its little meter ticks.
 
 const ICON := preload("res://texture/icon/radio.svg")
@@ -25,7 +26,7 @@ func _ready():
 	size = SIZE
 	mouse_filter = Control.MOUSE_FILTER_STOP if pinned else Control.MOUSE_FILTER_IGNORE
 	if pinned:
-		tooltip_text = "Radio: click to change station"
+		tooltip_text = "Radio: click to skip the song, right click to turn it on or off"
 		mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 		mouse_entered.connect(setHovered.bind(true))
 		mouse_exited.connect(setHovered.bind(false))
@@ -54,8 +55,10 @@ func setHovered(value: bool) -> void:
 
 func _gui_input(event):
 	if not pinned || not event is InputEventMouseButton || not event.pressed: return
-	if event.button_index == MOUSE_BUTTON_LEFT: Audio.radio.cycleStation(1)
-	elif event.button_index == MOUSE_BUTTON_RIGHT: Audio.radio.cycleStation(-1)
+	if event.button_index == MOUSE_BUTTON_LEFT:
+		if Audio.radio.isOn(): Audio.radio.skip()
+		else: Audio.radio.toggle()
+	elif event.button_index == MOUSE_BUTTON_RIGHT: Audio.radio.toggle()
 	else: return
 	accept_event()
 

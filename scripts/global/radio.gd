@@ -16,11 +16,13 @@ const SILENT_DB := -80.0
 const SWITCH_FADE := 0.4      #s: the old station fades out before the new one starts
 const SEGMENT_OVERLAP := 0.1  #s: segments butt-join with this much overlap
 const MUFFLE_POLL := 0.25     #s between checks for the pause menu
+const STATE_PATH := "user://radio.json"  #where each station's shuffle left off (not in the save: per machine)
 
 var stations := {}                  #id -> RadioStation
 var order: Array[StringName] = []   #stations with songs, in picker order
 var station: StringName = OFF
 var audible := true                 #false headless: schedule only
+var persist := false                #saves and restores the shuffle (the game's radio, never headless or a test's)
 var players: Array[AudioStreamPlayer] = []
 var active := 0
 var current := {}                   #the item on players[active]: {kind, path, stream}
@@ -48,6 +50,8 @@ func _ready():
 		for i in AudioServer.get_bus_effect_count(musicBus):
 			if AudioServer.get_bus_effect(musicBus, i) is AudioEffectLowPassFilter: lowpass = i
 	scan()
+	persist = audible
+	loadState()
 	Settings.changed.connect(onSettingChanged)
 	tune(StringName(Settings.get_value("audio/station")))
 
@@ -94,7 +98,30 @@ func isStationOpen(_id: StringName) -> bool:
 func setStation(id: StringName) -> void:
 	Settings.set_value("audio/station", String(id))
 
-#steps through stationIds(), wrapping (the now-playing chip in the menu)
+#ends what is playing and goes straight to the next song, skipping any segments queued before it
+func skip() -> void:
+	if station == OFF: return
+	var next = {}
+	for item in queue:
+		if item.kind == "song":
+			next = item
+			break
+	if next.is_empty(): next = songItem(stations[station].nextSong())
+	if loadingPath != "" && loadingPath != next.path: cancelLoad()
+	queue = [next]
+	fadeOutAll()
+	current = {}
+	lastSong = {}
+	requestHead()
+
+func isOn() -> bool:
+	return station != OFF
+
+#Radio Off and back (the now-playing card's right click)
+func toggle() -> void:
+	setStation(OFF if isOn() else (order[0] if not order.is_empty() else OFF))
+
+#steps through stationIds(), wrapping
 func cycleStation(direction: int = 1) -> void:
 	var ids = stationIds()
 	var index = maxi(0, ids.find(station))
@@ -217,8 +244,28 @@ func startHead() -> void:
 	if item.kind == "song":
 		lastSong = stations[station].songInfo(item.path)
 		trackStarted.emit(nowPlaying())
+		saveState()
 	if queue.is_empty(): queue.append_array(planAfterSong())
 	requestHead()
+
+#---------- the shuffle across launches ----------
+
+func _exit_tree():
+	saveState()
+
+func saveState() -> void:
+	if not persist: return
+	var out := {}
+	for id in stations: out[String(id)] = stations[id].state()
+	var file = FileAccess.open(STATE_PATH, FileAccess.WRITE)
+	if file: file.store_string(JSON.stringify(out))
+
+func loadState() -> void:
+	if not persist || not FileAccess.file_exists(STATE_PATH): return
+	var saved = JSON.parse_string(FileAccess.get_file_as_string(STATE_PATH))
+	if not saved is Dictionary: return
+	for id in stations:
+		if saved.get(String(id)) is Dictionary: stations[id].restore(saved[String(id)])
 
 #equal-power crossfade: the sum stays level through the middle
 func crossfade(from: AudioStreamPlayer, to: AudioStreamPlayer, seconds: float) -> void:

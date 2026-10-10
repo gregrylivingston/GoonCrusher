@@ -220,7 +220,7 @@ func buildTopBar() -> void:
 		b.pressed.connect(item[2])
 		left.add_child(b)
 	ui.add_child(left)
-	#the radio, under the icons: shows the song, a click changes station (docs/RADIO.md)
+	#the radio, under the icons: shows the song, a click skips it, a right click turns the radio on or off (docs/RADIO.md)
 	var radio = NowPlaying.new()
 	radio.pinned = true
 	radio.position = Vector2(24, 88)

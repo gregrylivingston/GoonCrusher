@@ -15,8 +15,10 @@ var short: String
 var color := Color.WHITE
 var order := 99
 #relative odds of 0, 1 or 2 segments between two songs (station.json "segment_counts"); two are always
-#of different kinds. Stations without it use "segment_chance": [1 - chance, chance, 0].
+#of different kinds. Stations without it use "segment_chance": [1 - chance, chance, 0]. Two empty gaps
+#never come in a row (lastEmpty), so with [1, 1, 1] a gap is empty a quarter of the time.
 var segmentCounts: Array[float] = [0.4, 0.6, 0.0]
+var lastEmpty := false
 var weights := {"ident":1.0, "talk":1.0, "ad":1.0}
 var crossfade := 2.5
 var logo: String = ""
@@ -68,7 +70,9 @@ func nextSong() -> String:
 #segment_counts, each kind picked by its weight. Segments are not contextual (docs/RADIO.md): any one
 #may play at any time.
 func pickSegments() -> Array:
-	var count = weightedIndex(segmentCounts)
+	var odds: Array[float] = segmentCounts.duplicate()
+	if lastEmpty && odds[1] + odds[2] > 0.0: odds[0] = 0.0
+	var count = weightedIndex(odds)
 	var out := []
 	var used := []
 	for n in count:
@@ -76,6 +80,7 @@ func pickSegments() -> Array:
 		if kind == "": break
 		used.push_back(kind)
 		out.push_back({"kind":kind, "path":bag(kind, files[kind]).next()})
+	lastEmpty = out.is_empty()
 	return out
 
 #a segment kind with files, by weight, skipping the kinds already used; "" when none is left
@@ -98,6 +103,17 @@ func weightedIndex(odds: Array[float]) -> int:
 		roll -= odds[i]
 		if roll < 0.0: return i
 	return odds.size() - 1
+
+#every bag's place in its cycle (Radio saves it to user:// so the shuffle carries over launches)
+func state() -> Dictionary:
+	var out := {}
+	for kind in FOLDERS:
+		if bags.has(kind): out[kind] = bags[kind].state()
+	return out
+
+func restore(saved: Dictionary) -> void:
+	for kind in FOLDERS:
+		if saved.get(kind) is Dictionary && not files.get(kind, []).is_empty(): bag(kind, files[kind]).restore(saved[kind])
 
 func nextIdent() -> String:
 	var path = bag("ident", files.get("ident", [])).next()

@@ -84,8 +84,8 @@ func buildSchema() -> Array:
 		{"name":"Audio", "rows":[
 			audioRow("master", "Master"), audioRow("music", "Music"), audioRow("voice", "Voice"),
 			audioRow("fx", "Effects"), audioRow("ui", "Menu Sounds"),
-			{"type":"choice", "key":"audio/station", "label":"Radio Station", "options":Audio.radio.stationOptions(),
-				"info":"The music in runs and menus. GoonCrusher Radio has songs, a DJ and ads; Radio Off silences it. You can also change it from the pause menu.", "perf":"None"},
+			{"type":"choice", "key":"audio/station", "label":"Radio", "options":Audio.radio.stationOptions(),
+				"info":"The music in runs and menus. GoonCrusher Radio: songs, a DJ and ads. Radio Off silences it. The pause menu can also turn it off or skip a song.", "perf":"None"},
 			{"type":"choice", "key":"audio/mute_unfocused", "label":"Mute When Unfocused", "options":onOff(),
 				"info":"Silences the game while another window has focus.", "perf":"None"},
 		]},

@@ -60,7 +60,7 @@ The now-playing card reads the file name, so name files for players:
 
 ### How much to make
 
-Enough that a 30-minute session doesn't repeat. The playlist is shuffled without repeats until every song has played, and segments shuffle the same way.
+Enough that a 30-minute session doesn't repeat. The playlist is shuffled without repeats until every song has played, and segments shuffle the same way. The shuffle carries over between launches (`user://radio.json`), so short sessions don't keep hearing the same first songs.
 
 | | Minimum to ship | Good |
 |---|---|---|
@@ -89,12 +89,12 @@ Enough that a 30-minute session doesn't repeat. The playlist is shuffled without
 | `short` | 3–4 letters for tight spots | first letters of `name` |
 | `color` | The card's accent | white |
 | `order` | Position in the picker | 99 |
-| `segment_counts` | Relative odds of **0, 1 or 2** segments between two songs. `[1, 1, 1]` is a third each | from `segment_chance` |
+| `segment_counts` | Relative odds of **0, 1 or 2** segments between two songs. Two empty gaps never come in a row, so `[1, 1, 1]` gives an empty gap a quarter of the time and one or two segments 3/8 each | from `segment_chance` |
 | `segment_chance` | Older, simpler form: chance (0–1) of one segment between two songs; ignored when `segment_counts` is set | 0.6 talk stations, 0.3 music-only |
 | `weights` | Relative odds of each segment kind (`ident`, `talk`, `ad`) when a segment plays | 1 each |
 | `crossfade` | Seconds of song-to-song crossfade | 2.5 |
 
-After each song the radio rolls `segment_counts`: the next song straight away, one segment, or two segments **of different kinds** (an ad then the DJ, say; never two ads), each kind picked by `weights`. Then the next song. Switching to a station plays an ident first when it has one.
+After each song the radio rolls `segment_counts`: the next song straight away, one segment, or two segments **of different kinds** (an ad then the DJ, say; never two ads), each kind picked by `weights`. Then the next song. A gap is never empty twice in a row (unless nothing else can play), so three songs never play back to back. Switching to a station plays an ident first when it has one.
 
 ### Writing brief: GoonCrusher Radio
 
@@ -138,13 +138,14 @@ After each song the radio rolls `segment_counts`: the next song straight away, o
 | Station data (scanning folders, `station.json`, picking segments) | `scripts/global/radio_station.gd` (class `RadioStation`) |
 | Shuffle bag | `scripts/global/radio_bag.gd` (class `RadioBag`) |
 | Playback, scheduling, crossfade, loading | `scripts/global/radio.gd` (class `Radio`), a child the `Audio` autoload makes: `Audio.radio` |
-| Station picker | An `OptionRow` on `audio/station`: in the pause menu (`pauseMenu.gd` `radioRow()`, with the song under it) and in Settings → Audio |
-| Now-playing card | `scene/ui/radio/now_playing.gd` (class `NowPlaying`): in the HUD above the tachometer, shown for 5 s at each song or station change; pinned under the icon bar in the main menu, where a click changes station (right click goes back) |
+| On/Off and Skip | An `OptionRow` on `audio/station` (GoonCrusher Radio or Radio Off): in the pause menu (`pauseMenu.gd` `radioRow()`, with a **Skip song** button beside it and the song under it) and in Settings → Audio |
+| Now-playing card | `scene/ui/radio/now_playing.gd` (class `NowPlaying`): in the HUD above the tachometer, shown for 5 s at each song or station change; pinned under the icon bar in the main menu, where a click skips to the next song (or tunes in when off) and a right click turns the radio on or off |
 | Setting | `audio/station` in `Settings.DEFAULTS` (`"gooncrusher"`; `"off"` is Radio Off) |
 | Ducking and pause muffle | `sound/new_audio_bus_layout.tres`, Music bus effects 0 (compressor) and 1 (low-pass) |
+| Shuffle memory | `user://radio.json` (per machine, not in the save): each bag's place in its cycle, saved at every song and on exit, restored at startup (`Radio.saveState`, `loadState`; `RadioBag.state`, `restore`). Songs added since are shuffled into the cycle; songs removed are dropped. Never written headless. |
 | Tests | `tests/game/test_radio.gd` |
 
-There is no driving key for the radio: changing station is rare, so it lives in the pause menu.
+There is no driving key for the radio: turning it off or skipping is rare, so it lives in the pause menu.
 
 ### Playback
 
@@ -161,6 +162,8 @@ There is no driving key for the radio: changing station is rare, so it lives in 
 
 ```gdscript
 Audio.radio.setStation(&"gooncrusher")         # saves audio/station; the radio follows Settings.changed
+Audio.radio.skip()                      # straight to the next song, dropping queued segments
+Audio.radio.toggle()                    # Radio Off and back
 Audio.radio.cycleStation(1)             # next station, wrapping through Radio Off
 Audio.radio.stationIds()                # stations with songs, in order, then &"off"
 Audio.radio.stationOptions()            # [[id, name]] for an OptionRow

@@ -1,6 +1,6 @@
 extends CanvasLayer
 
-#The pause card (docs/UI.md): Continue, Settings, the radio station, Abandon run and Quit game, then
+#The pause card (docs/UI.md): Continue, Settings, the radio (on or off, and Skip), Abandon run and Quit game, then
 #this run's numbers and the car's stats with what pickups added. Opened by GameUI.openPause; built in code with MenuTheme.
 
 const SETTINGS_ICON := preload("res://texture/icon/settings.svg")
@@ -11,6 +11,7 @@ var continueButton: Button
 var abandonButton: Button
 var quitButton: Button
 var radioLine: Label
+var skipButton: Button
 var confirmTimers = {}
 
 func _ready():
@@ -93,14 +94,25 @@ func build() -> void:
 	runLine.text = runSummary()
 	body.add_child(runLine)
 	if is_instance_valid(Root.playerCar): body.add_child(statRow(Root.playerCar))
-	body.add_child(KeyHint.bar([[["ui_up", "ui_down"], "Choose"], [["ui_left", "ui_right"], "Station"], [["ui_accept"], "Select"], [["ui_menu"], "Continue"]], 15, 22))
+	body.add_child(KeyHint.bar([[["ui_up", "ui_down"], "Choose"], [["ui_left", "ui_right"], "Radio"], [["ui_accept"], "Select"], [["ui_menu"], "Continue"]], 15, 22))
 
-#the radio (docs/RADIO.md): a settings-style row, left/right or its arrows change station, and the song under it
+#the radio (docs/RADIO.md): a settings-style row (left/right or its arrows turn it on and off), a Skip
+#button beside it, and the song under it
 func radioRow() -> VBoxContainer:
 	var box = VBoxContainer.new()
 	box.add_theme_constant_override("separation", 2)
+	var line = HBoxContainer.new()
+	line.add_theme_constant_override("separation", 10)
 	var row = OptionRow.new({"type":"choice", "key":"audio/station", "label":"Radio", "options":Audio.radio.stationOptions()})
-	box.add_child(row)
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	line.add_child(row)
+	skipButton = MenuTheme.button("Skip song", PackedStringArray(), false)
+	skipButton.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	skipButton.custom_minimum_size = Vector2(130, 0)
+	skipButton.tooltip_text = "Skip to the next song"
+	skipButton.pressed.connect(Audio.radio.skip)
+	line.add_child(skipButton)
+	box.add_child(line)
 	radioLine = Label.new()
 	radioLine.theme_type_variation = "MutedLabel"
 	radioLine.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -116,6 +128,7 @@ func onStationChanged(_id: StringName) -> void:
 	showSong(Audio.radio.nowPlaying())
 
 func showSong(info: Dictionary) -> void:
+	if is_instance_valid(skipButton): skipButton.disabled = info.get("station") == Radio.OFF
 	if not is_instance_valid(radioLine): return
 	var title: String = info.get("title", "")
 	if info.get("station") == Radio.OFF: radioLine.text = ""

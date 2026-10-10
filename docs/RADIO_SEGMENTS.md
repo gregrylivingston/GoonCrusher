@@ -38,7 +38,7 @@ The record of every segment that plays between songs on GoonCrusher Radio: its f
 | DJ: DJ confession | `sound/radio/gooncrusher/talk/talk_dj_confession.ogg` | 0:25 | talk |
 | DJ: Contest | `sound/radio/gooncrusher/talk/talk_contest.ogg` | 0:17 | talk |
 
-**Segment odds:** `station.json` has `segment_counts` at `[1, 1, 1]`: after each song, a third of the time the next song plays straight away, a third of the time one segment plays, and a third of the time two segments of different kinds play back to back. Kinds are picked by weight (ident 3, talk 4, ad 2), and tuning in always opens with an ident. That's one segment per song on average: DJ talk about every 8 minutes, an ident about every 9 (plus every tune-in), an ad about every 13 (the different-kinds rule lifts ads a little), and any one segment comes round again after about an hour and a half.
+**Segment odds:** `station.json` has `segment_counts` at `[1, 1, 1]`, and a gap is never empty twice in a row: after each song, a quarter of the time the next song plays straight away, 3/8 of the time one segment plays, and 3/8 of the time two segments of different kinds play back to back (so three songs never play in a row). Kinds are picked by weight (ident 3, talk 4, ad 2), and tuning in always opens with an ident. That's about 1.1 segments per song: DJ talk about every 7 minutes, an ident about every 8 (plus every tune-in), an ad about every 12, and Skip song in the pause menu drops whatever segments were queued.
 
 ## Writing segments that generate well
 
