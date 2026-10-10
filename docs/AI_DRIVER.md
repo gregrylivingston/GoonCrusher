@@ -1,15 +1,94 @@
 # AI driver and playtest harness
 
-The AI driver plays like a player: it holds the same digital keys, sees only what a player could see, and lives with the same physics, walls, water, goons, fuel and clock. Its job is automated playtesting.
+The AI driver plays like a player: it holds the same digital keys, sees only what a player could see, and lives with the same physics, walls, water, goons, fuel and clock. It playtests the game, and it drives every rival of the Goon Cup.
 
-**Profile:** the game (console `ai`), the playtest harness and `tournament.py` all play `AIProfiles.BEST` = `"cautious"` unless `--profiles` names others.
+**Who drives:** the game (console `ai`), the playtest harness and `tournament.py` all play `AIProfiles.BEST` = `"auto"`: the car's own driver, its first personality, at ace skill, unless `--profiles` names another spec ("Who is driving", below).
 
-- `scripts/ai/ai_driver.gd` (`AIDriver`): the driver. One node, attached to a car.
+- `scripts/ai/car_driver.gd` (`CarDriver`): what anything that holds a car's keys must answer (`think`, `isPressed`, `justPressed`, `shiftsByHand`). The car's controller and the car itself read every key and button through it.
+- `scripts/ai/ai_driver.gd` (`AIDriver`): the driver every car shares: perception, route, plans, recovery, the lever and the buttons.
+- `scene/car/<car>/<car>_driver.gd`: each car's own driver. It extends `AIDriver`, overrides the hooks its traits touch and holds the car's tuning and personalities.
+- `scripts/ai/mode_brief.gd` (`ModeBrief`), `scripts/ai/briefs/`, `scripts/ai/mode_briefs.gd` (`ModeBriefs`): what each mode asks of a driver.
 - `scripts/ai/ai_route.gd` (`AIRoute`): the long-range route planner (A* over the world's coarse map; docs/WORLD.md).
-- `scripts/ai/ai_profiles.gd` (`AIProfiles`): the driver's tuning, as named profiles.
+- `scripts/ai/ai_profiles.gd` (`AIProfiles`): the tuning: every parameter, the house styles, the skills, and how a spec is built into a driver's set.
 - `scripts/debug/playtest.gd` (autoload `Playtest`): the harness that plays and records runs.
 - `scripts/ai/tournament.py`: plays several profiles on the same seeds and ranks them.
-- `tests/game/test_ai_driver.gd`: the route planner, the prediction and the scoring rules.
+- `tests/game/test_ai_driver.gd`: the route planner, the prediction and the scoring rules. `tests/game/test_ai_cars.gd`: the car drivers, personalities, skills, briefs, the handbrake, the lever and the buttons.
+
+## Who is driving
+
+A driver is built in layers, each changing only what it must (`AIProfiles.build`):
+
+1. **`DEFAULTS`**: every parameter, with a comment on each.
+2. **The house style** (`AIProfiles.HOUSE`, `cautious`): the tuning the single driver won its tournaments with.
+3. **The car's driver** (`tuning()`): what this car needs changed whoever drives it.
+4. **A personality** of that car (`personalities()`; the first is the default).
+5. **The mode's brief** (`ModeBrief.tuning()`): what the mode demands, over any personality.
+6. **A skill** (`AIProfiles.SKILLS`): how well the keys are worked.
+7. **Overrides** from the spec.
+
+A **spec** names the personality, the skill and overrides: `auto` (first personality, ace), `alt` (second), `showoff@rookie`, `@regular`, `auto+hitCost=4`. A personality another car owns falls back to the car's first, so one spec drives a whole field. A house style by name (`cautious`, `crusher`, `default`...) replaces the house style and puts no personality on top. Use a spec in `--profiles`, the tournament, the console (`ai alt@rookie`) or code (`AIDriver.attach(car, {"profile": ...})`). `AIProfiles.problemWith(spec)` says what is wrong with one.
+
+### The cars' drivers
+
+Handling traits live in `integrate()`, so every plan already feels them. A car's driver adds what is a rule on top, through hooks the shared driver calls.
+
+| Car (character) | Personalities | What its driver adds |
+|---|---|---|
+| Sedan (Anthony) | `steady`, `scrappy` | Second Wind unused: worries less about the tank (`fuelCaution`) |
+| Van (Lester) | `hauler`, `tipsy` | Charges plans that keep it on two wheels until it rolls (`planGuard`, `tipCost`); never pulls the handbrake |
+| Taxi (Andrew) | `fare`, `shortcut` | Fuel saving never drops below the meter's speed (`cruiseFloor`); walls cost more |
+| Pickup (Karen) | `hoarder`, `mudder` | A pickup is worth a crate in the bed too, while there is room (`pickupWorth`); walls cost more |
+| Police (Nikita) | `interceptor`, `bythebook` | PIT: goons beside it matter a quarter as much (`flankScale`); the lightbar's 900 px of sight at night (`nightGlow`) |
+| Ambulance (Xavier) | `careful`, `codethree` | The unused defibrillator is 12 health in hand (`spareHealth`) |
+| Racer (Kim) | `showoff`, `lineholder` | Pulls the handbrake for smaller turns; the showoff slides for the boost (`driftReward`); a bigger health reserve |
+| Supercar (Snake) | `precious`, `flatout` | Walls cost more; a bigger health reserve |
+| Semi (Tiffany) | `bulldozer`, `trucker` | Drops the load on a pack behind it (`wantsAbility`); never pulls the handbrake |
+
+The shared driver also asks the car what it can smash (`OverheadCarBody2D.smashThreshold`, so the semi drives through fences from a standstill) and drags a trailer along every plan (`towTrailer`, `trailerSnags`, `trailerCost`).
+
+To add a car: write `scene/car/<id>/<id>_driver.gd` extending `AIDriver` and add the id to `AIProfiles.CARS`. A car without one gets the shared driver.
+
+### Skills
+
+| Skill | |
+|---|---|
+| `ace` | No delay, no noise, shifts on the redline |
+| `regular` | Keys reach the car 0.08 s late, 0.3 s of noise on each plan's cost, shift points off by up to 12% of the band |
+| `rookie` | 0.2 s late, 0.8 s of noise, a shorter look ahead, shifts early and unevenly |
+
+The Goon Cup's rivals drive their own car's driver and first personality, with a skill by tier (`Rivals.SKILL`: rookie on Easy, regular on Medium, ace on Hard) on top of the pace cap. The personas: the Rookie plays `auto@rookie`, the Grinder `auto`, the Explorer `alt@regular`.
+
+### The keys beyond the four
+
+- **Handbrake.** Four handbrake plans (`HAND_PLANS`: a slide held for the plan, or a flick) are weighed above `handbrakeFrom` px/s when the aim is more than `handbrakeTurn` radians off the nose, or always where sliding scores. `simulate()` holds `CarInput.handbrake`, which `integrate()` already models, and counts the ticks of slide the drift charge would count; `driftReward` takes that off the plan's cost.
+- **The lever.** On a geared car a driver with `shiftByHand` makes the car a manual (`OverheadCarBody2D.isManual`) and works `ShiftUp` / `ShiftDown` (`workLever`): up at `shiftAt` of the gear's band (0.8 or more earns the kick), down when the engine bogs, down to R to back up. `shiftSlop` moves each shift's point, so a rookie's shifts cut the push.
+- **Horn.** At `hornGoons` goons ahead in the horn's cone that the car is too slow to crush (or any, when it is protecting its health).
+- **Gadget and boost.** `Gadgets.aiWantsUse` / `aiWantsMove` (the crowd rules), plus the brief's `wantsBoost`: Nitro on a long, clear, straight run at the aim (`openRoadAhead`) in the modes with no goons.
+- **Ability.** The car's driver decides (`wantsAbility`).
+
+The car reads all of these through `actionDown`, which asks the driver; nothing reaches the car another way.
+
+## Mode briefs
+
+`AIDriver` holds a `ModeBrief` for the mode being played (`Level.runMode`, so a variant has its own) and asks it instead of matching on the mode.
+
+| Brief | Modes | What it sets |
+|---|---|---|
+| base (`ModeBrief`) | Goonpocalypse | Roam, crush, collect; a course's next gate if there is one |
+| `survival_brief` | Countdown, Blackout | The tank must last the clock; the health reserve shrinks with the time left |
+| `race_brief` | Sprint, Marathon, Rally Stage, Cannonball | The station through any checkpoints; detour budget; goons worth less |
+| `flatout_brief` | Flat Out | No slow zone at the lot; brakes to 380 px/s from the point its own physics says it must (`brakeDistance`), under the 420 stop speed; Nitro on the straights |
+| `pursuit_brief` | Pursuit | The hunter aims where the runner will be (`leadPoint`) and leaves cars out of its sweeps; the runner races |
+| `lap_brief` | Hot Lap, Circuit Race, Knockout | The next gate; Nitro on the straights |
+| `cones_brief` | Cone Course | A knocked cone costs a plan 2 s (`knockCost`), not a passing touch; the handbrake for tighter turns |
+| `drift_brief` | Drift Trial | Handbrake plans always weighed; 3 s off a plan per second of slide |
+| `smash_brief` | Smash Run | The nearest thing this car can smash; Nitro on the straights |
+| `defense_brief` | Defense | Patrol by the base; goons worth more the nearer the pumps |
+| `bounty_brief` | Bounty Hunt | Out to the mark; the mark worth 6 goons |
+| `derby_brief` | Demolition Derby | The car whose flank or tail is soonest reached, led; stays inside the line |
+| `keepcup_brief` | Keep the Cup | After the cup; the holder flees the nearest chaser |
+
+To add a mode: extend `ModeBrief` (or a brief near it) in `scripts/ai/briefs/` and add it to `ModeBriefs.BRIEFS`.
 
 ## Watching it drive
 
@@ -42,9 +121,10 @@ Godot_console.exe --headless --fixed-fps 60 --path . -- --playtest --uncapped --
 | `--level=a,b` | `prairie` | level ids (`Levels.ORDER`, 30), 0-based indices or scene names |
 | `--landscape=<id>` | the level's | builds every level in this landscape (`Landscapes.ORDER`; docs/WORLD.md "Landscapes"); benchmarks and the world preview take it too |
 | `--class=<id>` | the line-up | every district's goons from this class (`Goons.CLASSES`) instead of the level's line-up; `--goons=a,b,c` forces three |
-| `--mode=a,b` | `countdown` | `countdown`, `sprint`, `goonpocalypse`, `marathon`, `defense` |
+| `--mode=a,b` | `countdown` | any of `Modes.IDS`: `countdown`, `sprint`, `marathon`, `defense`, `goonpocalypse`, `blackout`, `bounty`, `rally`, `flatout`, `hotlap`, `drift`, `cones`, `smash`, `cannonball`, `circuit`, `derby`, `knockout`, `keepcup`, `pursuit` |
 | `--car=a,b` | `sedan` | car names from the save (`sedan`, `van`, `police`, ...) |
-| `--profiles=a,b` | `cautious` (`AIProfiles.BEST`) | AI profiles to play (below); each is another dimension like car or mode |
+| `--profiles=a,b` | `auto` (`AIProfiles.BEST`) | AI specs to play ("Who is driving"); each is another dimension like car or mode |
+| `--matrix` | off | every car in every mode (unless `--car` or `--mode` names some): the table to check a driver change against |
 | `--tier=a,b` | `easy` | mode tiers (`ModeTiers`): `easy`, `medium`, `hard` |
 | `--runs=N` | 1 | runs per level × mode × tier × car × profile |
 | `--seed=N` | 1 | first map seed; run *k* uses seed + *k* |
@@ -60,42 +140,43 @@ Each run appends one row to `user://playtest/results<tag>.csv` (`%APPDATA%/GoonC
 
 Write long runs to a file (`> out.txt`) rather than capturing them in a shell variable.
 
-## Profiles and tournaments
+## House styles and tournaments
 
-Everything the driver weighs is a parameter in `AIProfiles.DEFAULTS` (`scripts/ai/ai_profiles.gd`), with a comment on each. A profile lists only what it changes from the defaults:
+Everything the driver weighs is a parameter in `AIProfiles.DEFAULTS` (`scripts/ai/ai_profiles.gd`), with a comment on each. The house styles are whole-driver tunings from before each car had a driver; `cautious` is what every car's driver is built on, and the rest are kept to compare against:
 
-| Profile | Idea |
+| Style | Idea |
 |---|---|
-| `cautious` | **`BEST`.** Keeps health: walls, flanks and slowness among goons cost more; stops hunting sooner. The best all-round profile in the tournaments |
-| `default` | the plain `DEFAULTS` (not yet measured in a tournament) |
+| `cautious` | **`HOUSE`.** Keeps health: walls, flanks and slowness among goons cost more; stops hunting sooner. The best all-round style in the single-driver tournaments (stock sedan, Prairie, three modes) |
+| `default` | the plain `DEFAULTS` |
 | `v1` | the driver as first tuned: 1 s plans, a 400 px sweep, no reverse cost or crush reward |
 | `crusher` | plays for crushes: goons worth twice as much, flanks matter less, hunts until lower health |
 | `farsight` | simulates 2–3 s ahead tick by tick (several times the CPU) |
 | `collector` | pickups first: every pickup worth twice as much, goons less |
-| `rookie` | a new player (the Rookie persona): keys reach the car 0.2 s late (`reactionTicks`), up to 0.8 s of noise on each plan's cost (`planSlop`) so close calls sometimes go wrong, a shorter look ahead, chases goons |
-
-A spec can change values on the fly without editing the file: `crusher+horizonTicks=120+flankCost=2`. Use one in `--profiles` (separated by commas), in the tournament or in code (`AIDriver.attach(car, {"profile": ...})`).
+| `rookie` | the old Rookie persona's style (the `rookie` skill replaces it) |
 
 A tournament plays every profile in every mode on the same seeds, so all of them meet the same maps, and ranks them by score:
 
 ```
-python scripts/ai/tournament.py --profiles cautious,default,crusher --runs 6
-python scripts/ai/tournament.py --profiles "default,default+reverseCost=6" --modes sprint --runs 10 --name reverse
+python scripts/ai/tournament.py --profiles auto,alt --car racer --runs 6
+python scripts/ai/tournament.py --profiles "auto,auto+reverseCost=6" --modes sprint --runs 10 --name reverse
 ```
 
 Each profile × mode is one headless Godot process, `--parallel` at a time (default 3 of the dev box's 4 threads). The script prints a table per mode and writes every run to `tournament_<name>.csv` next to the per-process logs. `--rerank <csv>` prints the tables of an earlier tournament again, so a change to the score doesn't need a replay.
 
-The score per run is **coins + the mode's result**, because payout (coins × the star multiplier, `Root.computePayout`) is what buys cars and upgrades, and a run pays out even when it is lost. It is computed by `runScore` in `playtest.gd` and again by `run_score` in `tournament.py`; keep the two in step.
+The score per run is **coins + the mode's result**, because payout (coins × the star multiplier, `Root.computePayout`) is what buys cars and upgrades, and a run pays out even when it is lost. It is computed once, by `runScore` in `playtest.gd`; `tournament.py` reads the `score` column.
 - **Coins:** 30 × log10(1 + payout): 60 for 100 coins, 90 for 1,000, 104 for 3,000. The log keeps one huge payout from swamping every other run.
 - **Countdown:** plus 50 × the share of the clock survived.
 - **Sprint and Marathon:** a win adds 50 + 25 × the share of the clock left; a loss adds up to 25 for the share of the way to the station covered.
-- **Goonpocalypse and Defense:** plus 50 × the share of 300 s survived.
+- **Blackout and Defense:** as Countdown (won by outlasting the clock).
+- **Goonpocalypse:** plus 50 × the share of 300 s survived.
+- **Every other mode** (the Trials, the Goon Cup, Bounty Hunt): a win adds 50 + 25 × the share of the clock left; a loss adds up to 25 for the share of the goal reached (`goalProgress`: score or marks out of the target, the cup's seconds, gates and laps, the way to the station).
 
 To iterate: copy the winner into a new profile, change one or two values, and play it against its parent with more seeds. Differences of a few points over 6 runs are noise. Look at the `+/-` column (the spread of scores) before believing a ranking.
 
 ### What a row records
 
-- **Run:** `level`, `mode`, `car`, `profile`, `seed`, `upgrades`, `sight` and `score`.
+- **Run:** `level`, `mode`, `car`, `profile` (the spec), `personality`, `seed`, `upgrades`, `sight` and `score`.
+- **Goal:** `progress` (the share of the mode's goal reached), `place` and `field` (races against rivals), `overshot` (Flat Out: crossed the line too fast), `ai_shifts` (pulls on the lever).
 - **Ending:** `reason` is `SUCCESS`, `NOHEALTH`, `NOGAS`, `NOTIME`, `ABANDONED`, `WATER` (drowned: a `NOHEALTH` with the car's centre over deep water, `car.drowned`) or `TIMEOUT`. Also `won`, `level_time`, the starting `clock`, `time_left`, and for races `station_px`, `station_left_px` (how far from the station it ended) `route_reached` (false when the station is cut off by water) and `legs` (stations reached: 0 or 1 in Sprint, one per leg in Marathon).
 - **Score:** `crushed`, `coin`, `star`, `payout`, `gem`, `slot_machines`, and pickups by kind (`fuel_pickups`, `health_pickups`, `purses`, `coins_picked`, `gems_picked`, `stat_pickups`). Slot machine prizes count as pickups.
 - **Damage**, as health lost, split by what the car was touching at the time:
@@ -124,14 +205,14 @@ Godot_console.exe --headless --fixed-fps 60 --path . -- --career --persona=rooki
 
 | | Rookie | Grinder | Explorer |
 |---|---|---|---|
-| Drives with | `rookie` (late keys, noisy plans) | `cautious` (`BEST`) | `crusher` |
+| Drives with | `auto@rookie` (late keys, noisy plans, fluffed shifts) | `auto` (`BEST`) | `alt@regular` (each car's second personality) |
 | Menus with | the mouse | keys | both, plus pad glyphs |
-| Runs | the obvious next one: the furthest open level's first unbeaten mode in `Root.MODE_PATH` order (Countdown, Sprint, then the Marathon that opens the next level); a finale whose Marathon was won below Medium gets the Marathon again on Medium; then Goonpocalypse and Defense where they are open; after 3 losses in a row there, Countdown on the level before to farm coins | the path while it's winning, else the run that pays most per minute in its own history (20% sampling the others) | the level and mode it has played least, with the car it has driven least |
+| Runs | the obvious next one: the furthest open level's first unbeaten mode in `Root.modePath` order (Sprint, Countdown, then its featured modes, the first of which to be won opens the next level); a finale whose featured mode was won below Medium gets that mode again on Medium; then the modes left on earlier levels; after 3 losses in a row there, Countdown on the level before to farm coins | the path while it's winning, else the run that pays most per minute in its own history (20% sampling the others) | the level and mode it has played least, with the car it has driven least |
 | Garage | a new car the moment it is affordable, any pickup unlock under half the bank, then the cheapest upgrade going | saves once the next car is within 3 average payouts; meanwhile the pickup unlock with the best `ai` worth per coin (under a third of the bank), then Engine, Armor, Oil, Traction first (no stat more than 2 levels ahead of the lowest) | buys every car to try it, often a random pickup unlock, then the stat it has least of |
 | Gems | never | a starting gadget only with 6+ gems, Nitro in the boost slot with 8+ left | gadgets, boosts, new hands, raises at random |
 | In-run screens | slot bet 0; in The Deal keeps a card once fewer than half the deck beat it; the nearest claw prize; the first Pit Shop offer it can afford | bets 25 with 400+ run coins; keeps a Deal card worth 20+ (`ai`); the rarest claw prize; supplies in the Pit Shop | random bets; keeps a Deal card it hasn't discovered; extra claw grabs; buys the whole Pit Shop |
 | Prize games (all personas) | the claw is dropped as it passes over the persona's prize; the Deal redraws (Q) until the persona's rule keeps a card; the Pit Shop buys in order, stopping at the first offer it doesn't want; Hubcap Shuffle, Goon Press, Pachinko Drop and Coin Pusher (drafts) are tapped through with the action key (`answerTapping`); every game's winnings board is left with Accelerate or a click (`career.gd`, `answer*`, `leaveBoard`) | | |
-| Side trips | Goonopedia or records sometimes (15%) | none | Goonopedia (every tab), records and Settings (every tab, changing nothing) every visit; pauses half its runs, opens Settings from pause; abandons 6% of runs |
+| Side trips | Goonopedia or records sometimes (15%) | none | Goonopedia and Pickups (every tab), records and Settings (every tab, changing nothing) every visit; pauses half its runs, opens Settings from pause; abandons 6% of runs |
 
 ### Starting points
 
@@ -140,12 +221,12 @@ Godot_console.exe --headless --fixed-fps 60 --path . -- --career --persona=rooki
 | Tier | Levels and modes | Cars | Upgrades | Bank | Pickups |
 |---|---|---|---|---|---|
 | `fresh` | a new save | sedan | none | 0 | the 10 tree roots |
-| `early` | The Wilds (levels 1-5) beaten through the Marathon on Medium, so Mudlick Marsh (6) is open | 2 | 3 per stat | 1,500 coins, 2 gems | Commons |
-| `mid` | three regions (levels 1-15) through the Marathon and Goonpocalypse on Medium; Frostbite Pass (16) open | 4 | 8 | 8,000, 5 | up to Uncommon |
+| `early` | The Wilds (levels 1-5) beaten on Medium (Sprint, Countdown and the first featured mode that can be played), so Mudlick Marsh (6) is open | 2 | 3 per stat | 1,500 coins, 2 gems | Commons |
+| `mid` | three regions (levels 1-15) the same way on Medium; Frostbite Pass (16) open | 4 | 8 | 8,000, 5 | up to Uncommon |
 | `late` | five regions (1-25) fully beaten on Medium; Blast Pits (26) open | 7 | 14 | 40,000, 12 | up to Epic |
 | `maxed` | all 30 levels beaten on Hard, every car has cleared every mode (`meta.carClears`) | all 9 | 20 (max) | 1,000,000, 99 | all |
 
-Modes are credited on Medium (the finales ask for it), and Goonpocalypse and Defense only where the Marathon is, as play would.
+Modes are credited on Medium (the finales ask for it), and only modes a level plays that are built (`CareerStart.beatenModes`), as play would.
 
 Pickups open down each tree from its root, so none is open while its parent is locked (`CareerStart.build`).
 
@@ -192,7 +273,7 @@ Every purchase must move the bank by its price and the stat by one level. Every 
   - `unlock_pace`: per kind of milestone (car, level, beat, pickup), how many and the first and last minute
   - `longest_runs_without_progress`, where this player stalls
   - per mode: runs, wins and coins per minute
-  - shopping totals (cars, upgrades and pickup unlocks bought through the Goonopedia, with their coins)
+  - shopping totals (cars and upgrades bought in the garage, upgrades on the driver focus's bench, and pickup unlocks bought on the Pickups screen, with their coins)
   - issues by kind (`block`, `ui`, `mouse`, `economy`, `progress`, `save`, `softlock`, `no_run`)
   - script errors
 
@@ -304,12 +385,14 @@ Every candidate is scored **value ÷ (seconds to get there + 1)**. The current g
 
 ## Limits
 
-- **New pickups:** the driver values pickups by their registry `ai` worth but has no plan for events, and its gadget and boost use is a few rules (`Gadgets.aiWantsUse`, `aiWantsMove`).
-- **Handbrake:** the driver never pulls it (`isPressed("Handbrake")` is false). `simulate()` leaves `CarInput.handbrake` off, so its predictions stay exact; teaching it to powerslide would mean a new key bit and candidates that hold it.
+- **New pickups:** the driver values pickups by their registry `ai` worth but has no plan for events, and its gadget use is a few crowd rules (`Gadgets.aiWantsUse`, `aiWantsMove`).
+- **Routes are the same for every car:** `AIRoute` shares the map's one weighted grid, so the pickup doesn't prefer the rough it barely feels and the supercar doesn't avoid it.
+- **Drift:** plans know how long they slide, not the boost a release fires or the score's tiers. The handbrake's catch and a spin into a wall are predicted (`integrate()`); the drift charge is not.
+- **Manual shifting:** predictions use the shift points without their slop, the kick or the cut, so a clumsy shifter's plans are a little optimistic.
 - **Goon changes** need the goon rules re-checked (lunge range, crush rules, what is safe to touch); handling changes are followed automatically through `integrate()` and `carBodyArea`.
 - **Horizon:** the planner simulates 0.75 s and sweeps on to 1,600 px; long walls are left to the route, the station graph and the breadcrumb escape.
 - **CPU:** simulating plans is most of the cost (several hundred ms per game second on a busy dev box), so `ai` in the console can lower the frame rate. Plans that share a beginning could share its simulation.
 - **Pockets:** the escape gets out of most, but can lose 10–20 s in one.
 - **Defense:** it hunts goons by their threat to the base but doesn't guard lanes or park to refuel. The score's Defense line still uses survival out of 300 s, though Defense counts down and is won at 0.
 - **Water margins:** pickups within 400 px of deep water are skipped, which on Snapper Bayou leaves fuel behind.
-- **Rivals:** a rival car would also need `isPlayer = false`, its own camera off, no player HUD, goons, spawners and the sweep not assuming one `Root.playerCar`, and a difficulty knob (reaction time, sight, plan noise).
+- **Rivals:** they don't know their place in a race, and each is a full planner (one more than 3,200 px from the player plans half as often, `AIDriver.scanEvery`). The cost of six drivers on the low-end target is not measured.

@@ -1,9 +1,9 @@
 class_name NowPlaying extends Control
 
-#The radio's now-playing card (docs/RADIO.md). In a run (the HUD, bottom left above the tachometer)
-#it slides in when a song starts or the station changes, holds a few seconds and fades. In the main
-#menu it is pinned (always shown): a click skips to the next song (or tunes in), a right click turns
-#the radio on or off.
+#The radio's now-playing card (docs/RADIO.md). In the main menu it is pinned (always shown): a click
+#skips to the next song (or tunes in), a right click turns the radio on or off. In a run the radio is a
+#line on the left sun visor (HudVisor); unpinned, this card slides in when a song starts or the station
+#changes, holds a few seconds and fades.
 #Drawn with _draw like the HUD widgets; redraws only while it moves or its little meter ticks.
 
 const ICON := preload("res://texture/icon/radio.svg")
@@ -14,6 +14,7 @@ const OUT_SECONDS := 0.6
 const METER_FPS := 8.0
 
 var pinned := false
+var width := SIZE.x #the top bar of the menu sets a narrower one before it is added
 var info := {}
 var shown := 0.0    #0 hidden, 1 fully in
 var hold := 0.0
@@ -22,8 +23,8 @@ var hovered := false
 
 
 func _ready():
-	custom_minimum_size = SIZE
-	size = SIZE
+	custom_minimum_size = Vector2(width, SIZE.y)
+	size = custom_minimum_size
 	mouse_filter = Control.MOUSE_FILTER_STOP if pinned else Control.MOUSE_FILTER_IGNORE
 	if pinned:
 		tooltip_text = "Radio: click to skip the song, right click to turn it on or off"
@@ -87,13 +88,13 @@ func isPlaying() -> bool:
 
 func _draw():
 	var offset = Vector2.ZERO
-	if not pinned && not Settings.reduce_motion(): offset.x = -(1.0 - eased()) * (SIZE.x + 40.0)
+	if not pinned && not Settings.reduce_motion(): offset.x = -(1.0 - eased()) * (width + 40.0)
 	var accent: Color = info.get("color", Color(1, 1, 1, 0.5))
-	var rect = Rect2(offset, SIZE)
+	var rect = Rect2(offset, Vector2(width, SIZE.y))
 	HudTheme.panel(self, rect, Color(accent, 0.9 if hovered else 0.6))
 	draw_texture_rect(ICON, Rect2(offset + Vector2(10, 11), Vector2(36, 36)), false, Color(1, 1, 1, 1.0 if isPlaying() else 0.4))
 	var textLeft = offset.x + 56.0
-	var textWidth = SIZE.x - 56.0 - (44.0 if isPlaying() else 12.0)
+	var textWidth = width - 56.0 - (44.0 if isPlaying() else 12.0)
 	var title: String = info.get("title", "")
 	var second: String
 	if not isPlaying():
@@ -111,7 +112,7 @@ func _draw():
 	if second != "":
 		HudTheme.text(self, Vector2(textLeft, offset.y + 47.0), fit(second, 15, textWidth, HudTheme.BODY), 15, HudTheme.MUTED,
 			HORIZONTAL_ALIGNMENT_LEFT, 4, HudTheme.OUTLINE, HudTheme.BODY)
-	if isPlaying(): drawMeter(Vector2(offset.x + SIZE.x - 36.0, offset.y + 42.0), accent)
+	if isPlaying(): drawMeter(Vector2(offset.x + width - 36.0, offset.y + 42.0), accent)
 
 #three bouncing level bars, stepped at METER_FPS (looks alive, costs a few redraws a second)
 func drawMeter(base: Vector2, color: Color) -> void:

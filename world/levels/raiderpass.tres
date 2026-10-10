@@ -9,6 +9,7 @@ displayName = "Raider Pass"
 poster = "res://world/art/posters/raiderpass.png"
 region = &"raiders"
 stop = 4
+featured = Array[StringName]([&"defense", &"rally", &"circuit"])
 order = 13
 blurb = "Narrow passes with roadblocks and pile-ups. Every pass is an ambush, and Turrets cover the exits."
 barrier = "Red canyon walls and mesas. A pass opens through them every chunk."

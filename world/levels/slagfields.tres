@@ -9,6 +9,7 @@ displayName = "Slag Fields"
 poster = "res://world/art/posters/slagfields.png"
 region = &"works"
 stop = 3
+featured = Array[StringName]([&"blackout", &"flatout", &"pursuit"])
 order = 27
 blurb = "A foundry's lava runoff: slag heaps, lava channels and Turrets on the high ground."
 barrier = "Red canyon walls and mesas. A pass opens through them every chunk."

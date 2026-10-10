@@ -14,7 +14,7 @@ func _ready():
 
 func _on_area_2d_body_entered(body):
 	if body is CharacterBody2D:
-		if body.has_method("getIsPlayer"):
+		if body.has_method("getIsPlayer") && body.getIsPlayer(): #a rival car (Rivals) leaves it
 			WorldMap.takeNode(self) #a chunk's own pickup stays gone when the chunk loads again
 			sendReward(body)
 

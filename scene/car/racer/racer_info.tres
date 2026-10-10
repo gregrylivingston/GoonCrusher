@@ -17,6 +17,9 @@
 script = ExtResource("11_gabta")
 carId = "racer"
 traits = Array[StringName]([&"drift_king", &"featherweight"])
+gears = 6
+redline = 8.0
+hudSkin = &"track_racer"
 weight = 15
 charName = "Kim"
 profilePic = ExtResource("10_u8c0r")

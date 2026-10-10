@@ -9,6 +9,7 @@ displayName = "Gridlock"
 poster = "res://world/art/posters/gridlock.png"
 region = &"sprawl"
 stop = 4
+featured = Array[StringName]([&"marathon", &"rally", &"cannonball"])
 order = 23
 blurb = "The jammed interstate into town: pile-ups block half the lanes, and karts and bikes thread the gaps."
 barrier = "Rock outcrops off the road; jersey barriers and pile-ups on it."

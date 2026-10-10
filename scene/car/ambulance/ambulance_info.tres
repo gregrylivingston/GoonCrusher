@@ -17,6 +17,8 @@
 script = ExtResource("11_jhpki")
 carId = "ambulance"
 traits = Array[StringName]([&"defib", &"box_sway"])
+redline = 5.0
+hudSkin = &"medic"
 weight = 80
 charName = "Xavier"
 profilePic = ExtResource("10_tp774")

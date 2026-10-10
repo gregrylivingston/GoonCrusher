@@ -9,6 +9,7 @@ displayName = "Mudlick Marsh"
 poster = "res://world/art/posters/mudlick.png"
 region = &"tribe"
 stop = 1
+featured = Array[StringName]([&"defense", &"rally", &"cannonball"])
 order = 5
 blurb = "The Tribe moves into the swamp. Splitters teach that some goons multiply."
 barrier = "Lakes and braided channels. Boardwalk bridges cross the deep water."

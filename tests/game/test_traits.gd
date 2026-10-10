@@ -3,7 +3,7 @@ extends GameTest
 #Car traits (CarTraits, CarTraitRig; docs/CAR_ART.md "Traits"): every car has its signature features, the
 #handling ones change integrate()'s numbers the right way, and the rules do what their cards say.
 
-const CARS := {"sedan": 2, "van": 2, "taxi": 2, "pickup": 2, "audi": 2, "racer": 2, "police": 2, "ambulance": 2, "semi": 2}
+const CARS := {"sedan": 2, "van": 2, "taxi": 2, "pickup": 2, "supercar": 2, "racer": 2, "police": 2, "ambulance": 2, "semi": 2}
 const T = Root.terrain
 
 func car(id: String) -> OverheadCarBody2D:
@@ -34,14 +34,14 @@ func test_every_car_has_its_features():
 	assert_eq(seen.size(), CarTraits.DATA.size(), "every trait in CarTraits is on a car")
 
 func test_flags_follow_the_traits():
-	assert_true(car("audi").tDownforce, "the supercar has Downforce")
+	assert_true(car("supercar").tDownforce, "the supercar has Downforce")
 	assert_false(car("racer").tDownforce, "the racer doesn't")
 	assert_true(car("semi").tDropLoad && car("semi").tUnstoppable, "the semi's two")
 
 #--- handling ---
 
 func test_downforce_grips_harder_with_speed():
-	var c := car("audi")
+	var c := car("supercar")
 	var slow := c.traitGrip(200.0, input())
 	var fast := c.traitGrip(1200.0, input())
 	assert_gt(fast, 1.4, "glued at speed")
@@ -54,10 +54,10 @@ func test_city_tyres_love_pavement():
 
 func test_offroad_and_low_clearance_on_rough_ground():
 	var pickup := car("pickup")
-	var audi := car("audi")
+	var supercar := car("supercar")
 	var plain := car("taxi")
 	assert_gt(plain.groundFriction(T.SAND), pickup.groundFriction(T.SAND), "sand drags the pickup less")
-	assert_gt(audi.groundFriction(T.SAND), plain.groundFriction(T.SAND), "and the supercar more")
+	assert_gt(supercar.groundFriction(T.SAND), plain.groundFriction(T.SAND), "and the supercar more")
 	assert_gt(pickup.surfaceGrip(T.MUD), World.grip(T.MUD), "the pickup keeps its grip in mud")
 	assert_almost_eq(pickup.groundFriction(T.ASPHALT), plain.groundFriction(T.ASPHALT), 0.0001, "paved ground is the same for everyone")
 
@@ -68,7 +68,7 @@ func test_drift_king_slides_looser():
 	assert_gt(racer.handbrakeGrip(), king, "the handbrake lets the rear go further")
 	racer.tDriftKing = true
 	assert_eq(racer.tierFor(170), OverheadCarBody2D.DRIFT_TIERS.size(), "a long slide reaches the third tier")
-	assert_eq(car("audi").tierFor(170), OverheadCarBody2D.DRIFT_TIERS.size() - 1, "others top out at two")
+	assert_eq(car("supercar").tierFor(170), OverheadCarBody2D.DRIFT_TIERS.size() - 1, "others top out at two")
 
 func test_top_heavy_grips_less_on_two_wheels():
 	var van := car("van")

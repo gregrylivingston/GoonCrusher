@@ -34,6 +34,20 @@ const MODE_ICONS := {
 	Root.gameModes.MARATHON: preload("res://texture/icon/mode_marathon.svg"),
 	Root.gameModes.DEFENSE: preload("res://texture/icon/mode_defense.svg"),
 	Root.gameModes.GOONPOCALYPSE: preload("res://texture/icon/mode_pocalypse.svg"),
+	Root.gameModes.BLACKOUT: preload("res://texture/icon/mode_blackout.svg"),
+	Root.gameModes.BOUNTY: preload("res://texture/icon/mode_bounty.svg"),
+	Root.gameModes.RALLY: preload("res://texture/icon/mode_rally.svg"),
+	Root.gameModes.FLATOUT: preload("res://texture/icon/mode_flatout.svg"),
+	Root.gameModes.HOTLAP: preload("res://texture/icon/mode_hotlap.svg"),
+	Root.gameModes.DRIFT: preload("res://texture/icon/mode_drift.svg"),
+	Root.gameModes.CONES: preload("res://texture/icon/mode_cones.svg"),
+	Root.gameModes.SMASH: preload("res://texture/icon/mode_smash.svg"),
+	Root.gameModes.CANNONBALL: preload("res://texture/icon/mode_cannonball.svg"),
+	Root.gameModes.CIRCUIT: preload("res://texture/icon/mode_circuit.svg"),
+	Root.gameModes.DERBY: preload("res://texture/icon/mode_derby.svg"),
+	Root.gameModes.KNOCKOUT: preload("res://texture/icon/mode_knockout.svg"),
+	Root.gameModes.KEEPCUP: preload("res://texture/icon/mode_keepcup.svg"),
+	Root.gameModes.PURSUIT: preload("res://texture/icon/mode_pursuit.svg"),
 }
 
 static var boxes := {}
@@ -43,8 +57,13 @@ const STATION_HIT_SECONDS := 1.2
 ## The car's distance to the station, "2.3 km" or "1.4 mi" (Settings' units, one decimal under 10),
 ## or "" with no station
 static func stationDistance() -> String:
-	if not is_instance_valid(Root.station) || not is_instance_valid(Root.playerCar): return ""
-	var miles: float = Root.playerCar.global_position.distance_to(Root.station.drivewayPoint()) / 10000.0
+	if not is_instance_valid(Root.station): return ""
+	return distanceTo(Root.station.drivewayPoint())
+
+## The car's distance to a point in the world, the same way; "" with no car or for Vector2.INF
+static func distanceTo(point: Vector2) -> String:
+	if point == Vector2.INF || not is_instance_valid(Root.playerCar): return ""
+	var miles: float = Root.playerCar.global_position.distance_to(point) / 10000.0
 	if Settings.distance_unit() == "km": miles *= 1.609
 	var shown := "%.1f" % maxf(miles, 0.1) if miles < 10.0 else str(int(miles))
 	return "%s %s" % [shown, Settings.distance_unit()]
@@ -87,7 +106,10 @@ static func textWidth(value: String, fontSize: int, font: Font = BOLD) -> float:
 	return font.get_string_size(value, HORIZONTAL_ALIGNMENT_LEFT, -1, fontSize).x
 
 #the smoked, rimmed backing every HUD panel shares
-static func panel(item: CanvasItem, rect: Rect2, rim := Color(RIM, 0.55), radius := 12, fill := PANEL) -> void:
+#with no rim or radius given it takes the dashboard's (HudSkin): the car's rim colour and corner shape
+static func panel(item: CanvasItem, rect: Rect2, rim := Color(0, 0, 0, 0), radius := -1, fill := PANEL) -> void:
+	if rim.a == 0.0: rim = Color(HudSkin.current().rim, 0.55)
+	if radius < 0: radius = HudSkin.current().radius
 	var key = rim.to_html() + str(radius) + fill.to_html()
 	if not boxes.has(key):
 		var box = StyleBoxFlat.new()

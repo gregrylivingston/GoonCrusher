@@ -35,6 +35,7 @@ func waveIntensity() -> float:
 func _process(delta):
 	if not Root.isRunActive || not is_instance_valid(Root.levelRoot) || not Root.levelRoot.get("clockReady"): return
 	runTime += delta
+	if not Modes.hasGoons(SaveManager.playerData.gameMode): return #no goons: no waves, stars or wave chests
 	if wave * waveLength < runTime:
 		wave += 1
 		if is_instance_valid(Root.playerCar): Root.playerCar.star += 1
@@ -149,15 +150,10 @@ func factionName(faction: int = -1) -> String:
 func updatePlayerRegion(tile):
 	var id: int = tile.region
 	if id < 0 || id == currentRegionNumber: return
-	var previous := currentRegion
 	var next := getRegion(id, tile.terrain)
-	var firstVisit: bool = not next.get("visited", false)
 	next.visited = true
-	#a sign for each district met after the first (the run starts in one)
-	if is_instance_valid(Root.playerRoot) && previous.has("faction") && firstVisit: Root.playerRoot.districtEntered(next)
+	#the HUD says nothing about districts: what changes is who spawns
 	if is_instance_valid(Root.spawnManager) && next.has("goon"): Root.spawnManager.basicGoons = next.goon
-	await get_tree().process_frame
-	if is_instance_valid(Root.playerRoot) && currentRegionNumber == id: Root.playerRoot.updatePlayerRegion(tile)
 
 ## How many districts the car has been in this run
 func visitedCount() -> int:

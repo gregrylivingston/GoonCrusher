@@ -9,17 +9,20 @@ class_name LevelDef extends Resource
 
 @export var id: StringName
 @export var displayName: String
-## The menu and Goonopedia art. One path, so the art phase can swap the placeholder posters.
+## The level's art in run setup. One path, so the art phase can swap the placeholder posters.
 @export_file("*.png") var poster: String
 ## Its region (Territories.ORDER) and its stop on the region's road (1-5; 5 is the finale)
 @export var region: StringName = &"wilds"
 @export_range(1, 5) var stop: int = 1
 @export var order: int = 0
-## One line for the Goonopedia: the level's signature barrier and surfaces.
+## Its three featured modes, as Modes.IDS: a Crusher, a Trial and a Goon Cup mode, in that order. They open
+## behind Sprint and Countdown, and winning any one opens the next level (Root.modePath, Modes.featured).
+@export var featured: Array[StringName] = []
+## One line for run setup: the level's signature barrier and surfaces.
 @export_multiline var blurb: String
-## The Goonopedia's BARRIER line: what walls the level in and how to get through
+## Level Options' BARRIER line: what walls the level in and how to get through
 @export var barrier: String
-## The Goonopedia's SURFACES line: the ground and its hazards
+## Level Options' SURFACES line: the ground and its hazards
 @export var surfaces: String
 
 @export_group("Run")

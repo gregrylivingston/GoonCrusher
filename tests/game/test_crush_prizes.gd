@@ -12,14 +12,14 @@ func before_each() -> void:
 	savedPrizes.clear()
 	var saved := Unlocks.saved()
 	for key in saved.keys():
-		if String(key).begins_with("prize:"):
+		if String(key).begins_with("pickup:"):
 			savedPrizes[key] = saved[key]
 			saved.erase(key)
 
 func after_each() -> void:
 	var saved := Unlocks.saved()
 	for key in saved.keys():
-		if String(key).begins_with("prize:"): saved.erase(key)
+		if String(key).begins_with("pickup:"): saved.erase(key)
 	saved.merge(savedPrizes)
 	Unlocks.allOpen = wasAllOpen
 
@@ -52,12 +52,12 @@ func test_tiers_climb_to_diamond():
 func test_only_the_weakest_game_starts_open():
 	assert_eq(CrushPrizes.openGames(), [CrushPrizes.GAMES[0].id], "a new save boxes only the weakest game")
 	assert_eq(CrushPrizes.state(CrushPrizes.GAMES[1].id), Unlocks.S.READY, "the next one up can be unlocked")
-	assert_eq(CrushPrizes.state(CrushPrizes.GAMES[3].id), Unlocks.S.SHOWN, "the ladder opens in order")
+	assert_eq(CrushPrizes.state(CrushPrizes.GAMES[3].id), Unlocks.S.HIDDEN, "a game waits for the one above it in the Casino tree")
 	for tier in 5:
 		for i in 20: assert_eq(CrushPrizes.pickGame(tier, i / 20.0, CrushPrizes.openGames()), CrushPrizes.GAMES[0].id, "nothing locked is ever boxed")
 	CrushPrizes.grant(CrushPrizes.GAMES[1].id)
 	assert_true(CrushPrizes.isOpen(CrushPrizes.GAMES[1].id), "granted: saved in meta.unlocks")
-	assert_eq(CrushPrizes.state(CrushPrizes.GAMES[2].id), Unlocks.S.READY)
+	assert_eq(CrushPrizes.state(CrushPrizes.GAMES[3].id), Unlocks.S.READY, "and can be unlocked once that one is open")
 	Unlocks.allOpen = true
 	assert_eq(CrushPrizes.openGames().size(), CrushPrizes.GAMES.size(), "harnesses open every game")
 
@@ -77,7 +77,9 @@ func test_higher_boxes_favour_stronger_games():
 func test_every_game_has_a_name_and_icon():
 	for g in CrushPrizes.GAMES:
 		assert_true(CrushPrizes.texture(g.id) != null, "%s has an icon" % g.id)
-		assert_true(g.get("start", false) || not CrushPrizes.price(g.id).is_empty(), "%s has a price or starts open" % g.id)
+		assert_true(Pickups.DATA.has(g.pickup) && Pickups.DATA[g.pickup].kind == Pickups.K.CASINO, "%s is a Casino pickup" % g.id)
+		assert_true(Pickups.DATA[g.pickup].get("start", false) || not CrushPrizes.price(g.id).is_empty(), "%s has a price or starts open" % g.id)
+		assert_eq(CrushPrizes.forPickup(g.pickup), g.id)
 
 func test_every_pickup_name_tag_fits():
 	for id in Pickups.DATA:

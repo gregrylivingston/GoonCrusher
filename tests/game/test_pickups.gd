@@ -58,7 +58,7 @@ func test_generic_pickups_take_their_look_from_the_registry():
 	assert_false(Pickups.make("fuel") is GenericPickup, "originals keep their scenes")
 
 func test_every_tier_has_something_in_every_mode():
-	for mode in Root.gameModes.values():
+	for mode in Root.gameModes.values().filter(func(m): return Modes.drops(m) == Modes.Drops.ALL): #the modes that roll drops
 		for tier in [Pickups.R.COMMON, Pickups.R.UNCOMMON, Pickups.R.RARE, Pickups.R.EPIC, Pickups.R.LEGENDARY]:
 			assert_false(Pickups.candidates(tier, mode, false).is_empty(), "mode %d tier %d by day" % [mode, tier])
 

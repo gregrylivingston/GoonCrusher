@@ -7,24 +7,28 @@ class_name Unlocks extends RefCounted
 ## the mode chain is Root.isModeUnlocked. A car is open once bought (`cost` and `gems` in PlayerData.cars).
 ##
 ## Every unlock has one of four states. HIDDEN: its parent is still locked ("???"). SHOWN: its parent is
-## open but its condition isn't met yet. READY: it can be bought, or opens on its own at the next results
+## open but its condition isn't met yet, or a pickup in its `after` is still locked. READY: it can be bought, or opens on its own at the next results
 ## ticket (refresh). OPEN: saved in meta.unlocks, and for a pickup, it can drop and be offered. An unlock
 ## never closes again, even when its rule is retuned.
 ##
-## Ids: "pickup:<id>", "car:<name>", "level:<id>", "mode:<level>:<mode>", "prize:<game>" (the gift box games,
-## CrushPrizes, whose ladder and prices live there). Reserved for later: paint, station.
+## Ids: "pickup:<id>", "car:<name>", "level:<id>", "mode:<level>:<mode>". The gift box games (CrushPrizes) have no id of
+## their own: each is open with its Casino pickup. Reserved for later: paint, station.
 
 enum S { HIDDEN, SHOWN, READY, OPEN }
 const STATE_NAMES := ["Hidden", "Shown", "Ready", "Open"]
 
-## Prices by rarity, coins and gems, first fitted to the career playtests with tiers and win pay (2026-10-08:
-## the old 300-6,000 let the Rookie open 73 of 79 pickups in 89 minutes). A pickup with a play condition
-## (`needs`) costs nothing: it opens when the condition is met.
-const PICKUP_PRICE := [{"coin": 1000}, {"coin": 3000}, {"coin": 8000}, {"coin": 20000, "gem": 5}, {"gem": 15}]
-## The demo opens Commons and Uncommons only (its tree roots are always open).
+## Price ranges by rarity: [fewest coins, most coins, fewest gems, most gems]. Inside a rarity no two
+## pickups cost the same: they are spread over the range (evenly by ratio), shallowest in their trees first,
+## so a tree's root is its rarity's cheapest and there is always something a little dearer to save for
+## (buildPrices). Commons run from pocket change up; Legendaries cost gems only. A pickup with a play
+## condition (`needs`) costs nothing: it opens when the condition is met. Placeholders until package 1.
+const PRICE_RANGE := [[20, 1000, 0, 0], [1200, 4500, 0, 0], [5000, 12000, 0, 0], [15000, 30000, 3, 6], [0, 0, 12, 18]]
+static var prices := {} #pickup id -> its price, built once (Pickups.DATA is constant)
+## The demo opens Commons and Uncommons, every tree's root, and the Casino tree's first tier:
+## the games straight under its root, whatever their rarity, so gift boxes have more than one game (inDemo).
 const DEMO_MAX_RARITY := Pickups.R.UNCOMMON
 ## Condition words for modes, in Root.gameModes order.
-const MODE_KEYS := ["countdown", "sprint", "marathon", "defense", "goonpocalypse"]
+const MODE_KEYS := Modes.IDS
 const FACTION_KEYS := ["wild", "tribe", "scrap"]
 const TIER_KEYS := ["", "easy", "medium", "hard"] #ModeTiers, for "clears:<tier>:<n>"
 
@@ -39,14 +43,21 @@ static func isPickupOpen(id: String) -> bool:
 	var d: Dictionary = Pickups.DATA.get(id, {})
 	if d.is_empty(): return false
 	if allOpen || d.get("start", false) || d.rarity == Pickups.R.SYSTEM: return true
-	if Root.IS_DEMO && d.rarity > DEMO_MAX_RARITY: return false
+	if Root.IS_DEMO && not inDemo(id): return false
 	return saved().has("pickup:" + id)
 
-## Pickup ids in tree order for one kind: each root, then its children depth first.
+## Can the demo unlock this pickup? Commons and Uncommons, tree roots, and the Casino games straight under their root.
+static func inDemo(id: String) -> bool:
+	var d: Dictionary = Pickups.DATA.get(id, {})
+	if d.is_empty(): return false
+	if d.rarity <= DEMO_MAX_RARITY || d.get("parent", "") == "": return true
+	return d.kind == Pickups.K.CASINO && Pickups.DATA.get(d.get("parent", ""), {}).get("start", false)
+
+## Pickup ids in tree order for one kind: each root (a pickup with no parent, open or not), then its children depth first.
 static func treeOrder(kind: int) -> Array:
 	var out := []
 	for id in Pickups.ids(kind):
-		if Pickups.DATA[id].get("start", false) || Pickups.DATA[id].rarity == Pickups.R.SYSTEM: addSubtree(id, out)
+		if Pickups.DATA[id].get("parent", "") == "": addSubtree(id, out)
 	return out
 
 static func addSubtree(id: String, out: Array) -> void:
@@ -59,11 +70,57 @@ static func children(id: String) -> Array:
 		if Pickups.DATA[other].get("parent", "") == id: out.push_back(other)
 	return out
 
-## The pickup's price ({} for a root, a play unlock or Crush Combo).
+## Every pickup that must be open before this one can be bought: its `parent`, then any in `after`
+static func prerequisites(id: String) -> Array:
+	var d: Dictionary = Pickups.DATA.get(id, {})
+	var out := []
+	if d.get("parent", "") != "": out.push_back(d.parent)
+	out.append_array(d.get("after", []))
+	return out
+
+## The prerequisites still locked
+static func missing(id: String) -> Array:
+	return prerequisites(id).filter(func(p): return not isPickupOpen(p))
+
+## The pickup's price ({} for one that starts open, a play unlock or Crush Combo): its own `price`, else its
+## place in its rarity's range (buildPrices).
 static func pickupPrice(id: String) -> Dictionary:
 	var d: Dictionary = Pickups.DATA.get(id, {})
 	if d.is_empty() || d.get("start", false) || d.rarity == Pickups.R.SYSTEM || d.has("needs"): return {}
-	return d.get("price", PICKUP_PRICE[clampi(d.rarity, 0, PICKUP_PRICE.size() - 1)])
+	if d.has("price"): return d.price
+	if prices.is_empty(): buildPrices()
+	return prices.get(id, {})
+
+## How many pickups are above this one in its tree
+static func depthOf(id: String) -> int:
+	var depth := 0
+	var parent: String = Pickups.DATA[id].get("parent", "")
+	while parent != "":
+		depth += 1
+		parent = Pickups.DATA[parent].get("parent", "")
+	return depth
+
+## Spreads each rarity's pickups over its PRICE_RANGE, shallowest first (then in registry order)
+static func buildPrices() -> void:
+	var order: Array = Pickups.DATA.keys()
+	for r in PRICE_RANGE.size():
+		var ids := []
+		for id in order:
+			var d: Dictionary = Pickups.DATA[id]
+			if d.rarity == r && not (d.get("start", false) || d.has("needs") || d.has("price")): ids.push_back(id)
+		ids.sort_custom(func(a, b): return depthOf(a) * 1000 + order.find(a) < depthOf(b) * 1000 + order.find(b))
+		var span: Array = PRICE_RANGE[r]
+		for i in ids.size():
+			var t := float(i) / maxf(ids.size() - 1, 1.0)
+			var cost := {}
+			if span[1] > 0: cost.coin = roundPrice(span[0] * pow(float(span[1]) / span[0], t))
+			if span[3] > 0: cost.gem = roundi(lerpf(span[2], span[3], t))
+			prices[ids[i]] = cost
+
+## A price a person would write: to the nearest 5 under 100, 10 under 1,000, 100 under 10,000, then 500
+static func roundPrice(value: float) -> int:
+	var step := 5.0 if value < 100.0 else (10.0 if value < 1000.0 else (100.0 if value < 10000.0 else 500.0))
+	return int(roundf(value / step) * step)
 
 #--- any unlock ---------------------------------------------------------------------------------
 
@@ -79,7 +136,8 @@ static func state(uid: String) -> int:
 			if isPickupOpen(id): return S.OPEN
 			var parent: String = Pickups.DATA[id].get("parent", "")
 			if parent != "" && not isPickupOpen(parent): return S.HIDDEN
-			if Root.IS_DEMO && Pickups.DATA[id].rarity > DEMO_MAX_RARITY: return S.SHOWN
+			if Root.IS_DEMO && not inDemo(id): return S.SHOWN
+			if not missing(id).is_empty(): return S.SHOWN #its parent is open, but not everything in `after`
 			return S.READY if needsMet(Pickups.DATA[id].get("needs", [])) else S.SHOWN
 		"car":
 			var car = carEntry(parts[1])
@@ -97,7 +155,6 @@ static func state(uid: String) -> int:
 			var level: Dictionary = data().levels[i]
 			if Root.isModeUnlocked(level, mode): return S.OPEN
 			return S.SHOWN if level.unlocked else S.HIDDEN
-		"prize": return CrushPrizes.state(parts[1])
 	return S.OPEN if saved().has(uid) else S.HIDDEN
 
 ## What an unlock costs right now: {"coin": n, "gem": n}, either may be missing; {} when free.
@@ -111,12 +168,20 @@ static func price(uid: String) -> Dictionary:
 			var out := {"coin": int(car.cost)}
 			if int(car.get("gems", 0)) > 0: out.gem = int(car.gems)
 			return out
-		"prize": return {} if CrushPrizes.isOpen(parts[1]) else CrushPrizes.price(parts[1])
 	return {}
 
 static func canAfford(uid: String) -> bool:
 	var cost := price(uid)
 	return data() != null && data().coin >= int(cost.get("coin", 0)) && data().gem >= int(cost.get("gem", 0))
+
+## How many pickups the bank could buy right now, each on its own (the garage dock's badge)
+static func buyableCount() -> int:
+	var uids := []
+	for id in Pickups.DATA: uids.push_back("pickup:" + str(id))
+	var count := 0
+	for uid in uids:
+		if state(uid) == S.READY && not price(uid).is_empty() && canAfford(uid): count += 1
+	return count
 
 ## Buys a READY unlock that has a price: spends the bank, opens it, and opens any child whose play
 ## condition is already met. False (nothing spent) when it can't be bought.
@@ -237,7 +302,7 @@ static func nextUnlock() -> Dictionary:
 		var uid: String = "pickup:" + id
 		var s := state(uid)
 		if s != S.READY && s != S.SHOWN: continue
-		if Root.IS_DEMO && Pickups.DATA[id].rarity > DEMO_MAX_RARITY: continue
+		if Root.IS_DEMO && not inDemo(id): continue
 		var entry := {"uid": uid, "name": Pickups.displayName(id)}
 		var score: float
 		var cost := pickupPrice(id)

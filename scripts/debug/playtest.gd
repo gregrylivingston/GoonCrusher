@@ -8,8 +8,9 @@ extends Node
 #runScore). Fastest: headless, with frames decoupled from real time. scripts/ai/tournament.py runs
 #several profiles in parallel processes and ranks them.
 #  Godot_console.exe --headless --fixed-fps 60 --path . -- --playtest --uncapped --mode=sprint --runs=5
-#Options: --level=prairie[,...] (a Levels id, its 0-based index or an old scene name)  --mode=countdown|sprint|goonpocalypse|marathon|defense[,...]
-#  --car=sedan[,...]  --profiles=cautious[,default,...] (AIProfiles specs; cautious, the best all-round in the tournaments, by default)  --runs=N  --seed=N  --upgrades=N|save (every stat at level N; default 0, the
+#Options: --level=prairie[,...] (a Levels id, its 0-based index or an old scene name)  --mode=countdown|sprint|...[,...] (any of Modes.IDS)
+#  --matrix (every car in every mode, unless --car or --mode names some)
+#  --car=sedan[,...]  --profiles=auto[,alt,showoff@rookie,...] (AIProfiles specs; by default auto: the car's own driver, its first personality, an ace)  --runs=N  --seed=N  --upgrades=N|save (every stat at level N; default 0, the
 #  stock car; "save" keeps the save's)  --sight=human|full  --max-seconds=N (level time before a run
 #  is cut short, default 900)  --ai-debug (draw the AI's plan; not headless)  --trace (state once a
 #  second)  --tag=name
@@ -26,7 +27,8 @@ const COLUMNS = ["run", "level", "mode", "car", "profile", "seed", "upgrades", "
 	"damage_rocks", "damage_goon_contact", "damage_goon_attacks", "crush_misses", "min_fuel", "min_health",
 	"end_fuel", "end_health", "distance_px", "avg_speed", "top_speed", "eco_seconds", "stuck", "escapes", "ai_ms", "goals",
 	"pk_supply", "pk_tune", "pk_boost", "pk_gadget", "pk_loot", "pk_casino", "pk_skill", "pk_mode", "pk_move", "persona", "session",
-	"tier", "win_bonus", "first_clear", "first_clear_gem", "damage_water"]
+	"tier", "win_bonus", "first_clear", "first_clear_gem", "damage_water",
+	"progress", "place", "field", "overshot", "personality", "ai_shifts"]
 
 var options := {}
 var jobs: Array = []
@@ -80,16 +82,19 @@ func _ready():
 		return
 	SaveManager.save_path = SCRATCH_SAVE % str(options.get("tag", ""))
 	var firstSeed = int(options.get("seed", 1))
+	#--matrix: every car in every mode (unless --car or --mode names some), the table a driver change is checked against
+	var matrix: bool = options.has("matrix")
+	var allCars := ",".join(SaveManager.playerData.cars.map(func(c): return str(c.name)))
 	for levelArg in listArg("level", "prairie"):
 		var level := String(Levels.resolve(levelArg)) #an id, an index in Levels.ORDER or an old scene name
 		if level == "": return fail("Unknown level " + levelArg)
-		for modeName in listArg("mode", "countdown"):
+		for modeName in listArg("mode", ",".join(Modes.IDS) if matrix else "countdown"):
 			var key = MODE_ALIASES.get(modeName.to_lower(), modeName.to_upper())
 			if not Root.gameModes.has(key): return fail("Unknown mode " + modeName)
-			for carName in listArg("car", "sedan"):
+			for carName in listArg("car", allCars if matrix else "sedan"):
 				if carIndex(carName) < 0: return fail("Unknown car " + carName)
 				for profile in listArg("profiles", AIProfiles.BEST):
-					if not AIProfiles.PROFILES.has(profile.split("+")[0]): return fail("Unknown AI profile " + profile)
+					if AIProfiles.problemWith(profile) != "": return fail(AIProfiles.problemWith(profile))
 					for tierName in listArg("tier", "easy"): #ModeTiers: easy, medium, hard
 						var tier := ModeTiers.NAMES.map(func(n): return n.to_lower()).find(tierName.to_lower())
 						if tier < ModeTiers.EASY: return fail("Unknown tier " + tierName)
@@ -475,6 +480,13 @@ func recordRun() -> void:
 			print("PLAYTEST_AI_MS per game second: " + " ".join(parts))
 	var kinds = Pickups.countByKind(car.pickedById)
 	for kind in kinds: row["pk_" + kind] = kinds[kind]
+	var level = Root.levelRoot
+	row.progress = snappedf(goalProgress(), 0.001)
+	row.place = level.finishPlace if level.rivals else 0
+	row.field = level.rivals.field() if level.rivals else 0
+	row.overshot = level.overshot
+	row.personality = driver.personality if is_instance_valid(driver) else ""
+	row.ai_shifts = driver.stats.get("shifts", 0) if is_instance_valid(driver) else 0
 	row.score = snappedf(runScore(row), 0.1)
 	if career: career.onRunRecorded(row) #adds persona and session
 	results.push_back(row.duplicate())
@@ -509,12 +521,32 @@ static func runScore(result: Dictionary) -> float:
 	var clock = maxf(float(result.get("clock", 1.0)), 1.0)
 	var coins = 30.0 * log(1.0 + maxf(float(result.payout), 0.0)) / log(10.0)
 	match result.mode:
-		"gooncrusher":
+		"gooncrusher", "blackout", "defense": #won by outlasting the clock
 			return coins + 50.0 * minf(result.level_time / clock, 1.0)
+		"goonpocalypse":
+			return coins + 50.0 * minf(result.level_time / 300.0, 1.0)
 		"sprint", "marathon":
 			if result.won: return coins + 50.0 + 25.0 * result.time_left / clock
 			return coins + 25.0 * clampf(1.0 - float(result.station_left_px) / maxf(float(result.get("station_px", 1)), 1.0), 0.0, 1.0)
-	return coins + 50.0 * minf(result.level_time / 300.0, 1.0)
+	#a goal against the clock (the Trials, the Goon Cup, Bounty Hunt): a win and the time to spare, or the share of
+	#the goal reached (goalProgress)
+	if result.won: return coins + 50.0 + 25.0 * clampf(float(result.get("time_left", 0.0)) / clock, 0.0, 1.0)
+	return coins + 25.0 * clampf(float(result.get("progress", 0.0)), 0.0, 1.0)
+
+#How much of the mode's own goal the run reached, 0 to 1: the score or the marks out of the target, the cup's
+#seconds, the gates and laps of a course, the way to the station, else the share of the clock survived
+func goalProgress() -> float:
+	var level = Root.levelRoot
+	if level.isWon(): return 1.0
+	if level.trial: return clampf(float(level.trial.score) / maxf(level.trial.target, 1.0), 0.0, 1.0)
+	if level.bounty: return clampf(float(level.bounty.caught) / maxf(level.bounty.total, 1.0), 0.0, 1.0)
+	if level.cup: return clampf(level.cup.playerSeconds() / maxf(level.cup.need, 1.0), 0.0, 1.0)
+	if level.course && level.course.total() > 0:
+		var gates: int = level.course.total() * maxi(level.course.laps, 1)
+		return clampf(float(level.course.lap * level.course.total() + level.course.next) / gates, 0.0, 1.0)
+	if is_instance_valid(Root.station) && float(row.get("station_px", 0)) > 0.0:
+		return clampf(1.0 - float(row.station_left_px) / float(row.station_px), 0.0, 1.0)
+	return clampf(levelTime / maxf(float(row.get("clock", 300.0)), 1.0), 0.0, 1.0)
 
 #one line per level x mode x car x profile (wins, endings and averages), then each mode's profiles
 #ranked by average score

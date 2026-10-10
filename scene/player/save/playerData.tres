@@ -82,7 +82,7 @@ cars = [{
 "upgrades": {}
 }, {
 "cost": 10000,
-"name": "audi",
+"name": "supercar",
 "records": {
 "coin": 0,
 "gem": 0,
@@ -92,7 +92,7 @@ cars = [{
 "speed": 0,
 "time": 0
 },
-"scene": "res://scene/car/audi/audi.tscn",
+"scene": "res://scene/car/supercar/supercar.tscn",
 "upgrades": {}
 }, {
 "cost": 10000,

@@ -27,14 +27,16 @@ var endReason: int = -1 #Root.endCondition once the run has ended
 var startPosition: Vector2 #where the car starts; objectives are placed relative to it
 var clockReady := false #true once the clock holds its final starting value (Sprint sets it from the station distance)
 
-#Sprint: the station is placed by distance (by region: Territories.sprintDistance) and the clock is derived
+#Sprint: the station is placed by distance (by region: Territories.sprintDistance, x the tier's:
+#ModeTiers.SPRINT_DISTANCE) and the clock is derived
 #from the real distance.
 const SPRINT_DRIVE_FRACTION = 0.25 #ModeTiers' pay estimate: share of the level's seconds spent driving at REFERENCE_SPEED
 #px/s; a fixed baseline, not the selected car, so fast cars feel fast. The stock sedan tops out at about
 #744 on grass, 615 on snow and 499 on sand and mud, so 450 leaves room for rocks, goons and turns.
 const REFERENCE_SPEED = 450.0
-#the station is never further than this (px): about 0.8 of the stock sedan's tank (87 s at full throttle)
-#at its sand and mud top speed, so a run is possible without fuel pickups
+#the last region's distance (px): about 0.8 of the stock sedan's tank (87 s at full throttle) at its sand and
+#mud top speed. A station is never further than this x ModeTiers.SPRINT_DISTANCE (a Sprint's tier, or a
+#Marathon leg), so every race needs fuel pickups or oil upgrades on the way.
 const SPRINT_MAX_DISTANCE = 34000.0
 const SPRINT_Y_SPREAD = 0.25 #the station's y offset is up to this share of the distance, either way
 #The clock is set from the A* route on the coarse map (1280 px cells), which is shorter than the drive: the
@@ -47,8 +49,11 @@ const ROUTE_FACTOR_DEFAULT = 1.1
 const STATION_APPROACH_PX = 1500.0
 
 #Marathon: a relay of Sprint-length legs (ModeTiers.LEGS by tier). Each station but the last adds that leg's
-#clock, refuels, patches the car up and opens a free slot machine; the last one wins.
+#clock, refuels, patches the car up and opens the pit shop; the last one wins.
 const MARATHON_TURN = PI / 3 #each leg heads off within this of the last leg's heading
+#a leg that would leave the map (WorldGen.CHUNK_LIMIT, less this margin of the leg's length for its y spread)
+#heads back toward the map's centre instead
+const MARATHON_EDGE_MARGIN = 0.3
 const MARATHON_HEAL = 35.0   #health restored at each station
 var leg := 1
 var legHeading := 0.0
@@ -92,10 +97,15 @@ func applyDef() -> void:
 		spawnManager.giantOdds = def.giantOdds + ModeTiers.GIANT_ODDS[tier]
 		spawnManager.escalationSpeed = def.escalationSpeed * ModeTiers.ESCALATION[tier]
 		if runMode == Root.gameModes.DEFENSE: spawnManager.spawnScale = ModeTiers.DEFENSE_SPAWN_SCALE
+		if Modes.lightGoons(runMode): spawnManager.spawnScale = ModeTiers.LIGHT_SPAWN_SCALE
 
 #Sprint and Marathon slack: the def's (else the old curve over the level's seconds), x the tier's
 func slack() -> float:
-	return (def.sprintSlack if def else sprintSlack(levelSeconds)) * ModeTiers.SLACK[tier]
+	var byTier: Array = ModeTiers.SLACK
+	if runMode == Root.gameModes.RALLY: byTier = ModeTiers.RALLY_SLACK
+	elif runMode == Root.gameModes.HOTLAP: byTier = ModeTiers.HOTLAP_SLACK
+	elif runMode == Root.gameModes.FLATOUT: byTier = ModeTiers.FLATOUT_SLACK
+	return (def.sprintSlack if def else sprintSlack(levelSeconds)) * byTier[tier]
 
 #Marathon: stations to reach on this tier
 func legs() -> int:
@@ -130,17 +140,25 @@ func _ready():
 	Root.playerRoot = get_tree().get_nodes_in_group("playerGameUi")[0]
 	Root.playerRoot.updateStats()
 	
-	match SaveManager.playerData.gameMode:
-		Root.gameModes.GOONCRUSHER:createCountdownSpawners()
-		Root.gameModes.GOONPOCALYPSE:createCountdownSpawners()
-		Root.gameModes.MARATHON:createSprintSpawners()
-		Root.gameModes.SPRINT:createSprintSpawners()
-		#DEFENSE: its spawners ring the station, which exists only once the world is ready
+	OverheadCarBody2D.carBumpScale = {Root.gameModes.PURSUIT: ModeTiers.PURSUIT_BUMP, Root.gameModes.DERBY: ModeTiers.DERBY_BUMP}.get(runMode, 1.0)
+	Root.playerCar.fuelFree = Modes.isTrial(runMode) || not Modes.hasGoons(runMode) #no pumps on the road where there are no goons #a Trial is about the driving: the tank doesn't run down
+	if not Modes.hasGoons(runMode): $SpawnManager.floorOn = false #no spawners below, and no goons topped up round the car
+	else:
+		match Modes.running(): #the run rules: a variant plays its base mode's (Modes.plays)
+			Root.gameModes.GOONCRUSHER:createCountdownSpawners()
+			Root.gameModes.GOONPOCALYPSE:createCountdownSpawners()
+			Root.gameModes.BOUNTY:createCountdownSpawners()
+			Root.gameModes.MARATHON:createSprintSpawners()
+			Root.gameModes.SPRINT:createSprintSpawners()
+			#DEFENSE: its spawners ring the station, which exists only once the world is ready
 
-	match SaveManager.playerData.gameMode: #the tier's clock; Sprint and Marathon set theirs from the route
+	match Modes.running(): #the tier's clock; Sprint and Marathon set theirs from the route
 		Root.gameModes.GOONPOCALYPSE: seconds = 0
 		Root.gameModes.GOONCRUSHER: seconds = levelSeconds * ModeTiers.CLOCK[tier]
 		Root.gameModes.DEFENSE: seconds = ModeTiers.DEFENSE_HOLD[tier]
+		Root.gameModes.BOUNTY: seconds = ModeTiers.bountySeconds(tier)
+		Root.gameModes.SMASH, Root.gameModes.DRIFT, Root.gameModes.KEEPCUP, Root.gameModes.DERBY: seconds = ModeTiers.goalSeconds(runMode, tier, levelSeconds, 1.0)
+		Root.gameModes.CONES: seconds = ModeTiers.CONES_SECONDS[tier]
 
 	#the TileManager waits at least one frame before placing stations, so this is never too late
 	var tileManager = $TileManager
@@ -148,15 +166,164 @@ func _ready():
 	if tileManager.isWorldReady: onWorldReady()
 	else: tileManager.world_ready.connect(onWorldReady)
 
+var bounty: BountyHunt #Bounty Hunt's marks; null in every other mode
+var course: Course #a fixed-map mode's checkpoints or gates; null in every other mode
+var rivals: Rivals #the Goon Cup's other drivers; null in every other mode
+var finishPlace := 0 #the player's place at the finish of a race against rivals (0: didn't finish)
+
+## The player reached the finish (station.gd): a win, or in a race against rivals the place that the tier asks for
+func playerFinished() -> void:
+	if runMode == Root.gameModes.PURSUIT: return #the station is the runner's goal, not the player's
+	if runMode == Root.gameModes.FLATOUT && is_instance_valid(Root.playerCar) && Root.playerCar.velocity.length() > ModeTiers.FLATOUT_STOP_SPEED:
+		overshot = true #too fast to stop in the box: it costs time, and the run if there was none to spare
+		elapsed += ModeTiers.FLATOUT_PENALTY
+		seconds -= ModeTiers.FLATOUT_PENALTY
+		if seconds <= 0.0:
+			endLevel(false, Root.endCondition.NOTIME)
+			return
+	if rivals == null:
+		endLevel(true, Root.endCondition.SUCCESS)
+		return
+	finishPlace = rivals.nextPlace()
+	rivals.finishOrder.push_back("")
+	var placed: bool = finishPlace <= ModeTiers.CUP_PLACE[tier]
+	endLevel(placed, Root.endCondition.SUCCESS if placed else Root.endCondition.OUTRUN)
+
+## A rival reached the finish: once the paying places are gone the race is lost
+func rivalFinished(car: Node) -> void:
+	if rivals == null || hasEnded: return
+	if runMode == Root.gameModes.PURSUIT: #the runner made it
+		endLevel.call_deferred(false, Root.endCondition.OUTRUN)
+		return
+	rivals.rivalFinished(car)
+	if rivals.nextPlace() > ModeTiers.CUP_PLACE[tier]: endLevel.call_deferred(false, Root.endCondition.OUTRUN)
+
+var cup: KeepCup #Keep the Cup's trophy; null in every other mode
+var derby: Derby #Demolition Derby's arena; null in every other mode
+var overshot := false #Flat Out: crossed the line too fast to stop
+var lapTarget := 0.0 #Hot Lap: the lap time the tier asks for
+var lapFinishers := {} #Knockout: laps done -> the cars that have finished that lap
+
+#Hot Lap, Circuit Race, Knockout: a loop out of the start and back along the world's routes (Course.loopRoute),
+#and the clock for its laps. Hot Lap asks for a lap under lapTarget; the races have a Sprint's slack a lap.
+func setupLoop() -> void:
+	var loop := Course.loopRoute($TileManager.worldMap, startPosition)
+	if loop.is_empty(): #no way round from here: a square of open-map checkpoints, so the mode still runs
+		var s := startPosition
+		loop = {"route": PackedVector2Array([s, s + Vector2(4000, 0), s + Vector2(4000, 3200), s + Vector2(0, 3200), s]), "length": 14400.0}
+	var count: int = ModeTiers.HOTLAP_LAPS
+	if runMode == Root.gameModes.CIRCUIT: count = ModeTiers.CIRCUIT_LAPS
+	elif runMode == Root.gameModes.KNOCKOUT: count = maxi(rivals.cars.size(), 1) if rivals else 1 #one car out a lap
+	course = Course.new()
+	add_child(course)
+	course.setupLoop(loop, startPosition, count)
+	var lapSeconds := sprintSeconds(driveLength(loop.length), levelSeconds, slack())
+	lapTarget = lapSeconds
+	seconds = lapSeconds * count * (2.5 if runMode == Root.gameModes.HOTLAP else 1.0) #room for three laps that miss the target
+
+## A car finished a lap of the loop (Course)
+func lapDone(car: Node, lapsDone: int) -> void:
+	if hasEnded: return
+	if car == Root.playerCar && lapsDone < course.laps: TapeBanner.post("LAP %d  %s" % [lapsDone, Course.clock(course.lapTimes[-1])], 1.2)
+	if runMode != Root.gameModes.KNOCKOUT || rivals == null: return
+	var done: Array = lapFinishers.get_or_add(lapsDone, [])
+	done.push_back(car)
+	var running: Array = [Root.playerCar] + rivals.cars.filter(func(c): return is_instance_valid(c) && not c.isDestroyed)
+	if done.size() < running.size() - 1: return
+	for other in running: #everyone else is through: the one still on the lap is out
+		if other in done: continue
+		if other == Root.playerCar: endLevel.call_deferred(false, Root.endCondition.OUTRUN)
+		else:
+			rivals.eliminate(other)
+			if rivals.cars.is_empty(): endLevel.call_deferred(true, Root.endCondition.SUCCESS)
+		return
+
+## A car finished the course (Course): the gates, or every lap of a loop
+func courseDone(car: Node) -> void:
+	if hasEnded: return
+	var mine: bool = car == Root.playerCar
+	match runMode:
+		Root.gameModes.CONES: endLevel(true, Root.endCondition.SUCCESS)
+		Root.gameModes.HOTLAP:
+			var quick: bool = course.bestLap() <= lapTarget
+			endLevel(quick, Root.endCondition.SUCCESS if quick else Root.endCondition.NOTIME)
+		Root.gameModes.CIRCUIT:
+			if mine: playerFinished()
+			else: rivalFinished(car)
+		Root.gameModes.KNOCKOUT: endLevel(mine, Root.endCondition.SUCCESS if mine else Root.endCondition.OUTRUN)
+var wrecks := 0 #rivals wrecked this run
+
+## A rival was wrecked (Rivals.onRivalGone): in a Pursuit that is the win
+func rivalWrecked(who: String) -> void:
+	if hasEnded: return
+	wrecks += 1
+	TapeBanner.post("%s WRECKED" % (who if who != "" else "RIVAL"), 1.2)
+	if runMode == Root.gameModes.PURSUIT: endLevel(true, Root.endCondition.SUCCESS)
+	elif runMode in [Root.gameModes.DERBY, Root.gameModes.KNOCKOUT] && rivals && rivals.cars.is_empty(): endLevel(true, Root.endCondition.SUCCESS) #the last car running
+
+var trial: TrialScore #Smash Run's and Drift Trial's score; null in every other mode
+
+#Cone Course: the cones on the lot the world cleared at the start, and the car at the first lane
+func setupCones() -> void:
+	var map = $TileManager.worldMap
+	var centre: Vector2 = map.station if map.station != Vector2.INF else startPosition
+	course = ConeCourse.build(self, centre)
+	var car = Root.playerCar
+	car.global_position = centre + ConeCourse.START
+	car.rotation = 0.0
+	car.velocity = Vector2.ZERO
+	startPosition = car.global_position
+	if car.has_node("Camera2D"): car.get_node("Camera2D").reset_smoothing()
+
+## The car smashed a breakable (BreakableProp.smashNode): Smash Run counts it
+func propSmashed(_prop: Node) -> void:
+	if trial && runMode == Root.gameModes.SMASH: trial.add(1)
+
+## The car knocked over one of the course's cones (PropReactions.knock): a second off the clock
+func coneKnocked(cone: Node2D) -> void:
+	if course == null || hasEnded: return
+	course.conesHit += 1
+	seconds = maxf(seconds - ConeCourse.CONE_PENALTY, 0.0)
+	var fx = Root.spawnManager.fx if is_instance_valid(Root.spawnManager) else null
+	if fx: fx.label(cone.global_position, "-1 SECOND", 22, HudTheme.BAD)
+
 #the map is built and every station is placed and in the tree
 func onWorldReady() -> void:
-	match SaveManager.playerData.gameMode:
+	match Modes.running():
 		Root.gameModes.SPRINT, Root.gameModes.MARATHON:
 			if is_instance_valid(Root.station):
 				seconds = sprintSeconds(driveLength(routeLengthTo(Root.station.global_position)), levelSeconds, slack())
 				legHeading = (Root.station.global_position - startPosition).angle()
 		Root.gameModes.DEFENSE:
 			if is_instance_valid(Root.station): setupDefense()
+		Root.gameModes.BOUNTY:
+			bounty = BountyHunt.new()
+			add_child(bounty)
+			bounty.begin()
+	if Modes.hasRivals(runMode):
+		rivals = Rivals.new()
+		add_child(rivals)
+		if runMode == Root.gameModes.PURSUIT: rivals.spawnRunner()
+		else: rivals.spawn()
+	if runMode == Root.gameModes.KEEPCUP:
+		cup = KeepCup.new()
+		add_child(cup)
+	match runMode:
+		Root.gameModes.SMASH, Root.gameModes.DRIFT:
+			trial = TrialScore.new()
+			add_child(trial)
+		Root.gameModes.CONES: setupCones()
+		Root.gameModes.HOTLAP, Root.gameModes.CIRCUIT, Root.gameModes.KNOCKOUT: setupLoop()
+		Root.gameModes.DERBY: derby = Derby.build(self, startPosition) #on the level's own ground, props and all
+	if Modes.isFixedMap(runMode) && is_instance_valid(Root.station):
+		course = Course.new()
+		add_child(course)
+		course.setup($TileManager.worldMap.route)
+		if runMode == Root.gameModes.FLATOUT: #nitro at every checkpoint: placed, the same every run
+			for point in course.points:
+				var nitro := Pickups.make("nitro")
+				nitro.position = point
+				add_child(nitro)
 	clockReady = true
 	get_tree().call_group("runTimer", "onClockReady")
 	revealRun()
@@ -225,13 +392,16 @@ func burnout(_fx: TransitionFx) -> void:
 	Transition.sound("screech", -8.0)
 
 #Sprint station offset from the car start, in px: `distance` straight ahead (+x), with a y offset of up
-#to SPRINT_Y_SPREAD of the distance, never further than SPRINT_MAX_DISTANCE. yRoll is -1..1.
-static func sprintOffsetPx(distance: float, yRoll: float) -> Vector2:
-	return Vector2(distance, distance * SPRINT_Y_SPREAD * clampf(yRoll, -1.0, 1.0)).limit_length(SPRINT_MAX_DISTANCE)
+#to SPRINT_Y_SPREAD of the distance, never further than SPRINT_MAX_DISTANCE (x the tier's distance for a
+#Sprint; without a tier, a Marathon leg). yRoll is -1..1.
+static func sprintOffsetPx(distance: float, yRoll: float, sprintTier: int = ModeTiers.NONE) -> Vector2:
+	var cap: float = SPRINT_MAX_DISTANCE * ModeTiers.SPRINT_DISTANCE[clampi(sprintTier, ModeTiers.NONE, ModeTiers.HARD)]
+	return Vector2(distance, distance * SPRINT_Y_SPREAD * clampf(yRoll, -1.0, 1.0)).limit_length(cap)
 
-#how far a level's Sprint station (and each Marathon leg) is: by its region (Territories.sprintDistance)
-static func sprintDistance(levelDef: LevelDef) -> float:
-	return Territories.sprintDistance(levelDef.region if levelDef else &"")
+#how far a level's Sprint station is: by its region (Territories.sprintDistance), x the tier's
+#(ModeTiers.SPRINT_DISTANCE). Without a tier, a Marathon leg.
+static func sprintDistance(levelDef: LevelDef, sprintTier: int = ModeTiers.NONE) -> float:
+	return Territories.sprintDistance(levelDef.region if levelDef else &"") * ModeTiers.SPRINT_DISTANCE[clampi(sprintTier, ModeTiers.NONE, ModeTiers.HARD)]
 
 #time allowed per second of reference driving: 1.5 on Easy (250 s) down to 1.1 on Northern Wastes (540 s)
 static func sprintSlack(levelSeconds: float) -> float:
@@ -265,6 +435,7 @@ static func sprintSeconds(distancePx: float, levelSeconds: float, slackOverride:
 #the races are lost. A wrecked car (exploding, its NOHEALTH ending still pending) has not survived. A car
 #that only ran out of fuel has, matching the rolling finish in station.gd.
 static func timeUpCondition(gameMode: int, wrecked: bool = false) -> int:
+	gameMode = Modes.plays(gameMode)
 	if gameMode != Root.gameModes.GOONCRUSHER && gameMode != Root.gameModes.DEFENSE: return Root.endCondition.NOTIME
 	return Root.endCondition.NOHEALTH if wrecked else Root.endCondition.SUCCESS
 
@@ -309,7 +480,7 @@ func runScore() -> int:
 
 #Timer.gd calls this every frame the clock runs
 func onClockTick() -> void:
-	if targetReached || SaveManager.playerData.gameMode != Root.gameModes.GOONPOCALYPSE || hasEnded: return
+	if targetReached || Modes.running() != Root.gameModes.GOONPOCALYPSE || hasEnded: return
 	if seconds >= pocalypseTarget():
 		targetReached = true #the mode is beaten however the run ends (endLevel)
 		if is_instance_valid(Root.spawnManager): Root.spawnManager.overtime() #from here it only gets worse
@@ -325,6 +496,20 @@ const BRIEF_RUNS := 3
 ## [goal, how] for the run's mode, banner-ready (upper case)
 func briefing() -> Array[String]:
 	match SaveManager.playerData.gameMode:
+		Root.gameModes.FLATOUT: return ["FLAT OUT TO THE STATION", "GRAB THE NITRO. BE SLOW ENOUGH TO STOP AT THE LINE"]
+		Root.gameModes.HOTLAP: return ["%d LAPS. YOUR BEST ONE COUNTS" % ModeTiers.HOTLAP_LAPS, "BEAT %s" % Course.clock(lapTarget)]
+		Root.gameModes.CIRCUIT: return ["%d LAPS" % ModeTiers.CIRCUIT_LAPS, "FIRST" if tier >= ModeTiers.HARD else "FINISH IN THE TOP %d" % ModeTiers.CUP_PLACE[tier]]
+		Root.gameModes.KNOCKOUT: return ["LAST PLACE IS OUT EVERY LAP", "BE THE ONE LEFT"]
+		Root.gameModes.DERBY: return ["WRECK THEM ALL", "STAY INSIDE THE LINE"]
+		Root.gameModes.PURSUIT: return ["WRECK THE RUNNER", "RAM THEM BEFORE THEY REACH THE STATION"]
+		Root.gameModes.KEEPCUP: return ["HOLD THE CUP FOR %d SECONDS" % ModeTiers.CUP_HOLD[tier], "GET CLOSE TO WHOEVER HAS IT TO TAKE IT"]
+		Root.gameModes.CANNONBALL: return ["FIRST TO THE STATION" if tier >= ModeTiers.HARD else "TOP %d TO THE STATION" % ModeTiers.CUP_PLACE[tier], "ANY ROUTE. RAM WHO YOU LIKE"]
+		Root.gameModes.SMASH: return ["SMASH %d THINGS" % ModeTiers.SMASH_QUOTA[tier], "FENCES, CRATES AND BALES BREAK AT SPEED. ROCKS DON'T"]
+		Root.gameModes.DRIFT: return ["SCORE %d DRIFTING" % ModeTiers.DRIFT_TARGET[tier], "HOLD THE HANDBRAKE THROUGH A TURN. LONGER AND FASTER SCORES MORE"]
+		Root.gameModes.CONES: return ["THROUGH EVERY GATE", "A KNOCKED CONE COSTS A SECOND"]
+		Root.gameModes.RALLY: return ["BEAT THE CLOCK TO THE FINISH", "PASS EVERY CHECKPOINT ON THE WAY"]
+		Root.gameModes.BOUNTY: return ["CRUSH %d MARKS" % ModeTiers.BOUNTY_MARKS[tier], "FOLLOW THE RED ARROW TO EACH ONE"]
+		Root.gameModes.BLACKOUT: return ["SURVIVE THE NIGHT", "ONLY YOUR HEADLIGHTS SHOW THE GOONS"]
 		Root.gameModes.SPRINT: return ["REACH THE STATION", "FOLLOW THE BLUE ARROW BEFORE TIME RUNS OUT"]
 		Root.gameModes.MARATHON: return ["REACH %d STATIONS" % legs(), "EACH STATION REFUELS YOU AND ADDS TIME"]
 		Root.gameModes.DEFENSE: return ["HOLD THE BASE", "CRUSH GOONS BEFORE THEY REACH THE PUMPS"]
@@ -362,20 +547,27 @@ func stationReached(station: Node2D) -> void:
 	var from = station.global_position
 	var tileManager = $TileManager
 	var turn := (WorldGen.hashf(tileManager.worldSeed, WorldGen.TAG_LEG, leg, 0) * 2.0 - 1.0) * MARATHON_TURN
-	var next = tileManager.placeNextStation(from, legHeading + turn, sprintDistance(def))
+	var next = tileManager.placeNextStation(from, legHeadingFrom(from, legHeading, turn, sprintDistance(def)), sprintDistance(def))
 	legHeading = (next.global_position - from).angle()
 	seconds += sprintSeconds(driveLength(maxf(tileManager.lastRouteLength, from.distance_to(next.global_position))), levelSeconds, slack())
 	call_deferred("openPitShop")
 
-#Marathon stations: the pit shop sells pickups for run coins, then the free slot machine opens
+#the heading of a leg `distance` px long from `from`: the last heading plus `turn`, unless that leaves the
+#map; then toward the map's centre (plus the turn if that fits), which always does
+static func legHeadingFrom(from: Vector2, lastHeading: float, turn: float, distance: float) -> float:
+	if legFits(from, lastHeading + turn, distance): return lastHeading + turn
+	var home := (-from).angle()
+	return home + turn if legFits(from, home + turn, distance) else home
+
+static func legFits(from: Vector2, heading: float, distance: float) -> bool:
+	var reach: Vector2 = Vector2(WorldGen.CHUNK_LIMIT * WorldGen.CHUNK_PX) - Vector2.ONE * distance * MARATHON_EDGE_MARGIN
+	var to := from + Vector2.from_angle(heading) * distance
+	return absf(to.x) <= reach.x && absf(to.y) <= reach.y
+
+#Marathon stations: the pit shop sells pickups for run coins
 func openPitShop() -> void:
 	if hasEnded || get_tree().paused: return
 	PitShop.open()
-
-func openFreeSlotMachine() -> void:
-	if hasEnded || get_tree().paused: return
-	get_tree().paused = true
-	SlotMachine.open()
 
 #--- Defense ------------------------------------------------------------------------------------
 
@@ -468,6 +660,12 @@ func endLevel(levelCompleted: bool, reason):  #reason takes Root.endCondition
 	if targetReached: levelCompleted = true #Goonpocalypse ends in a wreck, but surviving the target beat it
 	hasEnded = true
 	endReason = reason
+	if course || trial || bounty: #the mode's own count, for the harnesses' logs
+		print("RUN_GOAL mode=%s won=%s t=%.1f course=%s trial=%s bounty=%s" % [Modes.idOf(runMode), levelCompleted, elapsed,
+			"%d/%d cones=%d" % [course.next, course.total(), course.conesHit] if course else "-",
+			"%d/%d" % [trial.score, trial.target] if trial else "-", "%d/%d" % [bounty.caught, bounty.total] if bounty else "-"])
+	if rivals: print("RUN_RACE mode=%s won=%s t=%.1f place=%d field=%d finished=%s rivals_left=%d wrecks=%d cup=%s" % [Modes.idOf(runMode), levelCompleted, elapsed, finishPlace, rivals.field(), rivals.finishOrder, rivals.cars.size(), wrecks,
+		"%.0f/%.0f rival %.0f" % [cup.playerSeconds(), cup.need, cup.rivalBest()] if cup else "-"])
 	if is_instance_valid(Root.playerCar): Root.playerCar.isDestroyed = true
 	var gameSummary = load("res://scene/player/menu/gameSummary.tscn").instantiate()
 	gameSummary.reason = reason 

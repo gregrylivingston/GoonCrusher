@@ -9,6 +9,7 @@ displayName = "Frozen Lake"
 poster = "res://world/art/posters/frozenlake.png"
 region = &"hunting"
 stop = 2
+featured = Array[StringName]([&"goonpocalypse", &"drift", &"derby"])
 order = 16
 blurb = "Huge ice lakes with almost no grip. Getting up to crush speed is easy; turning isn't."
 barrier = "Mountain ranges wall the valleys, with passes between them."

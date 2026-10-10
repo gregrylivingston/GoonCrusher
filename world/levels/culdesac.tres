@@ -9,6 +9,7 @@ displayName = "Cul-de-Sac"
 poster = "res://world/art/posters/culdesac.png"
 region = &"sprawl"
 stop = 3
+featured = Array[StringName]([&"defense", &"smash", &"keepcup"])
 order = 22
 blurb = "Mostly night. Hedged backyards, pools and trampolines; packs hide behind every fence."
 barrier = "Building blocks wall every street, and canals cut across the grid, bridged at each street."

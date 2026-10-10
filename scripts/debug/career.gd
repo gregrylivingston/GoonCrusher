@@ -23,7 +23,6 @@ class_name CareerPilot extends Node
 const MENU_SCENE := "res://scene/player/menu/main/main2.tscn"
 const GARAGE := 0 #main2.Screen
 const SETUP := 1
-const MODE_ORDER := Root.MODE_PATH #the medallions, left to right (main2.MODE_ORDER)
 const SOFTLOCK_MS := 10000
 
 var playtest: Node #the Playtest autoload, which records the runs (null under autopilot)
@@ -215,6 +214,7 @@ func menuVisit() -> bool:
 	await think(0.6)
 	var m := menu()
 	if m.screen != GARAGE:
+		if m.optionsOpen: await press("ui_cancel") #Level Options back to the road map first
 		await press("ui_cancel")
 		if not await waitFor(func(): return menu() != null && menu().screen == GARAGE, 5.0, "Back to leave run setup"): return false
 	if rng.randf() < persona.overlays: await sideTrips()
@@ -227,6 +227,7 @@ func menuVisit() -> bool:
 		return false
 	if not await openSetup(): return false
 	if not await selectLevel(run.level): return false
+	if not await openOptions(): return false
 	if not await selectMode(run.mode): return false
 	if not await selectTier(run.get("tier", ModeTiers.EASY)): return false
 	var gadget := Personas.chooseLoadout(persona, SaveManager.playerData.gem, rng)
@@ -285,27 +286,31 @@ func unlock(index: int) -> bool:
 	note("CAREER_SHOP session=%d unlock %s for %d (bank %d)" % [session, data.cars[index].name, price, data.coin])
 	return true
 
-## Unlocks a pickup or a prize game ("prize:<game>") in the Goonopedia's Pickups tab: G, a click on the tab,
+## Unlocks a pickup on the Pickups screen: G, a click on its tab,
 ## then two clicks on its tile (the first shows it, the second buys it), then Back.
 func unlockPickup(id: String) -> bool:
-	var uid := id if id.begins_with("prize:") else "pickup:" + id
+	var uid := "pickup:" + id
 	var data := SaveManager.playerData
-	await press("ui_codex")
-	if not await waitFor(func(): return goonopedia() != null, 3.0, "G to open the Goonopedia"): return false
-	var page := goonopedia()
-	await click(page.tabButtons[Goonopedia.Tab.PICKUPS])
-	if page.tab != Goonopedia.Tab.PICKUPS:
-		issue("ui", "a click on the PICKUPS tab left the Goonopedia on %s" % Goonopedia.TAB_NAMES[page.tab])
+	await press("ui_pickups")
+	if not await waitFor(func(): return pickupShop() != null, 3.0, "G to open Pickups"): return false
+	var page := pickupShop()
+	var want := PickupShop.tabOf(uid)
+	if want < 0:
+		issue("ui", "no Pickups tab holds %s" % uid)
+		return false
+	await click(page.tabButtons[want])
+	if page.tab != want:
+		issue("ui", "a click on the %s tab left Pickups on %s" % [page.tabNames()[want], page.tabNames()[page.tab]])
 		return false
 	var coins := data.coin
 	var gems := data.gem
 	var cost := Unlocks.price(uid)
 	var tile := page.tileFor(id)
 	if tile == null:
-		issue("ui", "no Goonopedia tile for the ready pickup %s" % id)
+		issue("ui", "no Pickups tile for the ready pickup %s" % id)
 		return false
 	if not await wheelIntoView(page.listScroll, tile):
-		issue("mouse", "the mouse wheel couldn't bring the %s tile into view in the Goonopedia" % id)
+		issue("mouse", "the mouse wheel couldn't bring the %s tile into view in Pickups" % id)
 		return false
 	await click(tile)
 	if Unlocks.isOpen(uid): issue("ui", "the first click on %s bought it; a click should only show a tile" % id)
@@ -317,7 +322,7 @@ func unlockPickup(id: String) -> bool:
 		shopping.pickup_coins = int(shopping.get("pickup_coins", 0)) + int(cost.get("coin", 0))
 		note("CAREER_SHOP session=%d pickup %s for %s (bank %d)" % [session, id, Unlocks.priceText(cost), data.coin])
 	await press("ui_cancel")
-	await waitFor(func(): return goonopedia() == null, 3.0, "Back to close the Goonopedia")
+	await waitFor(func(): return pickupShop() == null, 3.0, "Back to close Pickups")
 	return ok
 
 ## Turns the mouse wheel over a scroll container until `control` is wholly inside it, as a player scrolls
@@ -339,66 +344,59 @@ func wheelIntoView(scroll: ScrollContainer, control: Control) -> bool:
 		await get_tree().process_frame
 	return false
 
-func goonopedia() -> Goonopedia:
+func pickupShop() -> PickupShop:
 	for node in get_tree().get_nodes_in_group("menuOverlay"):
-		if node is Goonopedia && not node.is_queued_for_deletion(): return node
+		if node is PickupShop && not node.is_queued_for_deletion(): return node
 	return null
 
-## Buys one upgrade the way a player does: Upgrades on the garage card opens the driver's page in the
-## Goonopedia, then a click on the stat's upgrade button (or Up/Down to it and Accept), then Back.
+## Buys one upgrade the way a player does: Upgrades in the garage's dock opens the driver focus, then a click
+## on the stat's buy button on the bench (or Up/Down to it and Buy), then Back to the drivers.
 func upgrade(index: int, stat: int) -> bool:
 	var data := SaveManager.playerData
 	if not await selectCar(index): return false
-	var card: DriverCard = menu().cards[index]
+	var m := menu()
+	var card: DriverCard = m.cards[index]
 	await activate(card.upgradeButton, "ui_upgrade")
-	if not await waitFor(func(): return goonopedia() != null, 3.0, "Upgrades to open the driver's page"): return false
-	var page := goonopedia()
-	if page.tab != Goonopedia.Tab.CARS || page.shown == null || page.shown.kind != "car" || page.shown.key != index:
-		issue("ui", "Upgrades opened the Goonopedia on %s, not %s's card" % [Goonopedia.TAB_NAMES[page.tab], data.cars[index].name])
-		return await closeGoonopedia(false)
-	await waitFor(func(): return page.upgradeButton(stat) != null, 3.0, "the upgrade buttons to show")
-	var button := page.upgradeButton(stat)
+	if not await waitFor(func(): return m.focusOpen, 3.0, "Upgrades to open the driver focus"): return false
+	await think(0.3) #the bench slides in
 	var statName := String(DriverCard.STATS.filter(func(s): return s[1] == stat)[0][0])
-	if button == null:
-		issue("ui", "no %s upgrade button on %s's page" % [statName, data.cars[index].name])
-		return await closeGoonopedia(false)
+	var button: Button = m.bench.upgradeButton(stat)
+	if m.bench.index != index || button == null:
+		issue("ui", "no %s upgrade button on %s's bench (it shows car %d)" % [statName, data.cars[index].name, m.bench.index])
+		return await closeFocus(false)
 	var level := int(data.cars[index].upgrades.get(stat, 0))
 	var coins := data.coin
 	var cost := SaveManager.requestStatCost(stat, index)
-	if useMouse():
-		if not await wheelIntoView(page.detailScroll, button):
-			issue("mouse", "the mouse wheel couldn't bring the %s upgrade into view" % statName)
-			return await closeGoonopedia(false)
-		await click(button)
+	if useMouse(): await click(button)
 	else:
 		var buttons: Array[Button] = []
-		for s in DriverCard.STATS: buttons.push_back(page.upgradeButton(s[1]))
+		for s in DriverCard.STATS: buttons.push_back(m.bench.upgradeButton(s[1]))
 		var row := buttons.find(button)
 		for step in buttons.size():
 			var at := buttons.find(button.get_viewport().gui_get_focus_owner())
 			if at == row: break
 			if at < 0:
-				issue("ui", "no upgrade button has focus on the driver's page; keys can't choose one (focus on %s)" % focusName())
-				return await closeGoonopedia(false)
+				issue("ui", "no upgrade button has focus on the driver's bench; keys can't choose one (focus on %s)" % focusName())
+				return await closeFocus(false)
 			await press("ui_down" if row > at else "ui_up")
 			if buttons.find(button.get_viewport().gui_get_focus_owner()) == at:
 				issue("ui", "Up/Down didn't move between the upgrade buttons (stuck on %s)" % DriverCard.STATS[at][0])
-				return await closeGoonopedia(false)
-		await press("ui_accept")
+				return await closeFocus(false)
+		await press("ui_buy")
 	await think(0.2)
 	if int(data.cars[index].upgrades.get(stat, 0)) != level + 1 || data.coin != coins - cost:
 		issue("economy" if data.coin != coins else "block", "upgrading %s on %s: level %d -> %d, bank %d -> %d (cost %d)" % [
 			statName, data.cars[index].name, level, int(data.cars[index].upgrades.get(stat, 0)), coins, data.coin, cost])
-		return await closeGoonopedia(false)
+		return await closeFocus(false)
 	shopping.upgrades += 1
 	shopping.upgrade_coins += cost
 	note("CAREER_SHOP session=%d upgrade %s %s to %d for %d (bank %d)" % [session, data.cars[index].name, statName, level + 1, cost, data.coin])
-	return await closeGoonopedia(true)
+	return await closeFocus(true)
 
-## Back out of the Goonopedia; returns `result` once it has closed (false if it never does)
-func closeGoonopedia(result: bool) -> bool:
+## Back from the driver focus to the drivers; returns `result` once it has closed (false if it never does)
+func closeFocus(result: bool) -> bool:
 	await press("ui_cancel")
-	if not await waitFor(func(): return goonopedia() == null, 3.0, "Back to close the Goonopedia"): return false
+	if not await waitFor(func(): return menu() == null || not menu().focusOpen, 3.0, "Back to close the driver focus"): return false
 	return result
 
 func openSetup() -> bool:
@@ -406,7 +404,7 @@ func openSetup() -> bool:
 	await activate(card.mainButton, "ui_accept")
 	return await waitFor(func(): return menu() != null && menu().screen == SETUP && not Transition.busy(), 5.0, "Drive to open run setup")
 
-## Run setup's road map: the region's tab (a click, or Z / C), then the stop (a click, or Q / E)
+## Run setup's road map: the region (the buttons at the road's ends, or Z / C), then the stop (a click, or Q / E)
 func selectLevel(index: int) -> bool:
 	var m := menu()
 	var data := SaveManager.playerData
@@ -416,8 +414,8 @@ func selectLevel(index: int) -> bool:
 		var before := data.selectedLevel
 		var at: int = before / Territories.STOPS
 		if at != region:
-			if useMouse(): await click(m.regionTabs[region])
-			else: await press("ui_region_next" if wrapi(region - at, 0, Territories.ORDER.size()) <= Territories.ORDER.size() / 2 else "ui_region_prev")
+			if useMouse(): await click(m.regionButtons[1 if region > at else 0]) #the buttons at the road's ends, a region at a time
+			else: await press("ui_region_next" if region > at else "ui_region_prev")
 		else:
 			var stop: Control = m.posters[index].get_node("catcher")
 			if useMouse() && stop.is_visible_in_tree(): await click(stop)
@@ -427,36 +425,47 @@ func selectLevel(index: int) -> bool:
 			return false
 	return data.selectedLevel == index
 
+## The road map's SELECT (a click, or Accept): on to Level Options for the selected stop
+func openOptions() -> bool:
+	var m := menu()
+	if m.selectButton.disabled:
+		issue("block", "SELECT is disabled for %s though the save says it is open" % Levels.ORDER[SaveManager.playerData.selectedLevel])
+		return false
+	await activate(m.selectButton, "ui_accept")
+	return await waitFor(func(): return menu() != null && menu().optionsOpen, 3.0, "Select to open Level Options")
+
 func selectMode(mode: int) -> bool:
 	var m := menu()
+	var MODE_ORDER: Array = m.modeOrder() #the mode rows, top to bottom: the selected level's modes
+	if mode not in MODE_ORDER:
+		issue("block", "%s isn't a mode of %s" % [Root.gameModeDescription[mode].name, Levels.ORDER[SaveManager.playerData.selectedLevel]])
+		return false
 	for step in MODE_ORDER.size() + 1:
 		if SaveManager.playerData.gameMode == mode: return true
 		var before := SaveManager.playerData.gameMode
-		if useMouse(): await click(m.medallions[MODE_ORDER.find(mode)].get_node("disc"))
+		if useMouse(): await click(m.modeRows[MODE_ORDER.find(mode)])
 		else:
 			var at := MODE_ORDER.find(before)
 			var target := MODE_ORDER.find(mode)
-			await press("ui_right" if wrapi(target - at, 0, MODE_ORDER.size()) <= MODE_ORDER.size() / 2 else "ui_left")
+			await press("ui_down" if wrapi(target - at, 0, MODE_ORDER.size()) <= MODE_ORDER.size() / 2 else "ui_up")
 		if SaveManager.playerData.gameMode == before:
 			issue("block", "run setup didn't change the mode from %s" % Root.gameModeDescription[before].name)
 			return false
 	return SaveManager.playerData.gameMode == mode
 
-## Run setup's tier chips (ModeTiers): a click on the chip, or Up / Down
+## Level Options' tier switch (ModeTiers): a click on the tier, or Left / Right
 func selectTier(tier: int) -> bool:
 	var m := menu()
 	for step in ModeTiers.TIERS.size() + 1:
 		if SaveManager.getGameTier() == tier: return true
 		var before := SaveManager.getGameTier()
 		if useMouse(): await click(m.tierButtons[ModeTiers.TIERS.find(tier)])
-		else: await press("ui_down" if tier > before else "ui_up")
+		else: await press("ui_right" if tier > before else "ui_left")
 		if SaveManager.getGameTier() == before:
 			issue("block", "run setup didn't change the tier from %s" % ModeTiers.NAMES[before])
 			return false
 	return SaveManager.getGameTier() == tier
 
-## Run setup's starting slots (main2.SLOTS): the gadget (Gadget, U / Y) and the boost (Boost, B / RS),
-## each cycled until it shows `id`
 func chooseSlot(slot: String, id: String, button: Button, action: String) -> void:
 	var m := menu()
 	for i in m.slotPrices(slot).size() + 1:
@@ -469,7 +478,7 @@ func start(run: Dictionary, car: int, gadget: String, boost: String) -> bool:
 	var data := SaveManager.playerData
 	if m.startButton.disabled:
 		issue("block", "START is disabled for %s %s (%s) though the mode rules say it is playable" % [
-			Levels.ORDER[run.level], Root.gameModeDescription[run.mode].name, m.modeLock.text])
+			Levels.ORDER[run.level], Root.gameModeDescription[run.mode].name, m.lockReason])
 		return false
 	var paid: int = Pickups.LOADOUT.get(m.slotPurchase("loadout"), 0) + Pickups.BOOST_LOADOUT.get(m.slotPurchase("boostLoadout"), 0)
 	bankBefore = {"coin": data.coin, "gem": data.gem, "gadget_cost": paid} #what Start will take for the gadget and boost
@@ -495,11 +504,11 @@ func start(run: Dictionary, car: int, gadget: String, boost: String) -> bool:
 
 #---------- the side trips ----------
 
-## The screens around the runs: the Goonopedia (every tab), the records ticket, Settings (every tab,
+## The screens around the runs: the Goonopedia and Pickups (every tab), the records ticket, Settings (every tab,
 ## changing nothing). Each must open, take input and close, leaving the garage working.
 func sideTrips() -> void:
 	var m := menu()
-	var trips := ["goonopedia", "records", "settings"]
+	var trips := ["goonopedia", "pickups", "records", "settings"]
 	trips.shuffle()
 	if persona.overlays < 1.0: trips = [trips[0]] if trips[0] != "settings" else ["goonopedia"]
 	for trip in trips:
@@ -512,6 +521,14 @@ func sideTrips() -> void:
 					await press("ui_tab_next", 0.2)
 				await press("ui_cancel")
 				await waitFor(func(): return not menu().overlayOpen(), 3.0, "Back to close the Goonopedia")
+			"pickups":
+				await press("ui_pickups")
+				if not await waitFor(func(): return menu().overlayOpen(), 3.0, "G to open Pickups"): continue
+				for tab in PickupShop.tabCount() + 1:
+					for i in rng.randi_range(1, 4): await press(["ui_down", "ui_right", "ui_left", "ui_up"][rng.randi_range(0, 3)], 0.12)
+					await press("ui_tab_next", 0.2)
+				await press("ui_cancel")
+				await waitFor(func(): return not menu().overlayOpen(), 3.0, "Back to close Pickups")
 			"records":
 				await press("ui_records")
 				if not await waitFor(func(): return menu().overlayOpen(), 3.0, "R to open the records"): continue

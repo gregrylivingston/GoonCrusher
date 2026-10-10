@@ -9,6 +9,7 @@ displayName = "The Line"
 poster = "res://world/art/posters/theline.png"
 region = &"works"
 stop = 4
+featured = Array[StringName]([&"marathon", &"hotlap", &"circuit"])
 order = 28
 blurb = "Conveyors on every plot push the car along. Magnets pull you off them; Turrets cover the belts."
 barrier = "Scrap mountains and container rows wall the yard plots."

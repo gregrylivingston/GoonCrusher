@@ -32,3 +32,6 @@ bin/macos/
 # Python caches
 __pycache__/
 *.pyc
+
+# Capture kit: this machine's paths (promo/tools/capture.py doctor)
+promo/tools/local.json

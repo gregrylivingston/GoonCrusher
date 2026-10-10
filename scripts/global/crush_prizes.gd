@@ -11,17 +11,18 @@ class_name CrushPrizes extends RefCounted
 ## (rarity points per play: Common 1, Uncommon 2, Rare 4, Epic 8, Legendary 16): Claw Crane 1.05 for an
 ## average grab (2.67 aimed at the best prize), Scratch Card 2.12, The Deal 2.77 (old rules: one
 ## card, your pick), Slot Machine 6.95 (three reels pay three things); the drafts are not measured yet.
-## A new save opens only the first. Prices are placeholders until the unlock shop sells them (Unlocks,
-## "prize:<id>" in meta.unlocks).
+## A game is in the boxes once its Casino pickup (`pickup`, Pickups.DATA) is unlocked: one unlock opens both,
+## and the Casino tree's order, prices and place on the Pickups screen are the pickups'. A new save opens
+## only the Claw Crane, the tree's root.
 const GAMES := [
-	{"id": "claw", "name": "Claw Crane", "icon": "res://texture/icon/claw.svg", "start": true},
-	{"id": "shuffle", "name": "Hubcap Shuffle", "icon": "res://texture/icon/hubcap.svg", "price": {"coin": 2000}},
-	{"id": "scratch", "name": "Scratch Card", "icon": "res://texture/icon/scratch.svg", "price": {"coin": 3000}},
-	{"id": "press", "name": "Goon Press", "icon": "res://texture/icon/wrecking.svg", "price": {"coin": 6000}},
-	{"id": "deal", "name": "The Deal", "icon": "res://texture/icon/deal.svg", "price": {"coin": 18000}},
-	{"id": "pachinko", "name": "Pachinko Drop", "icon": "res://texture/icon/bullseye.svg", "price": {"coin": 25000}},
-	{"id": "slot", "name": "Slot Machine", "icon": "res://texture/icon/slotMachine.svg", "price": {"coin": 40000}},
-	{"id": "pusher", "name": "Coin Pusher", "icon": "res://texture/icon/coinstack.svg", "price": {"coin": 60000, "gem": 5}},
+	{"id": "claw", "name": "Claw Crane", "icon": "res://texture/icon/claw.svg", "pickup": "claw"},
+	{"id": "shuffle", "name": "Hubcap Shuffle", "icon": "res://texture/icon/hubcap.svg", "pickup": "shuffle"},
+	{"id": "scratch", "name": "Scratch Card", "icon": "res://texture/icon/scratch.svg", "pickup": "scratch"},
+	{"id": "press", "name": "Goon Press", "icon": "res://texture/icon/wrecking.svg", "pickup": "press"},
+	{"id": "deal", "name": "The Deal", "icon": "res://texture/icon/deal.svg", "pickup": "deal"},
+	{"id": "pachinko", "name": "Pachinko Drop", "icon": "res://texture/icon/bullseye.svg", "pickup": "pachinko"},
+	{"id": "slot", "name": "Slot Machine", "icon": "res://texture/icon/slotMachine.svg", "pickup": "slotmachine"},
+	{"id": "pusher", "name": "Coin Pusher", "icon": "res://texture/icon/coinstack.svg", "pickup": "pusher"},
 ]
 
 ## Box tiers by box level: box 1 is Cardboard, box 5 and later Diamond.
@@ -29,11 +30,12 @@ const TIERS := ["Cardboard", "Bronze", "Silver", "Gold", "Diamond"]
 const TIER_COLORS := [Color(0.784, 0.635, 0.416), Color(0.851, 0.537, 0.29), Color(0.8, 0.835, 0.871), Color(1.0, 0.827, 0.42), Color(0.541, 0.91, 1.0)]
 const TOP_TIER := 4
 
-## The XP box `level` (1, 2, 3...) needs on its own: 50, 200, 450, 800, 1250... AI playtests (Countdown and
+## The XP box `level` (1, 2, 3...) needs on its own: 120, 634, 1678, 3346, 5704... (2026-10-09: was
+## 50 * level^2; prize games came too often). AI playtests (Countdown and
 ## Goonpocalypse, 3-4 min) make 150-1300 XP, 2-7.5 per crush as giants and combos pile up: 1-3 boxes a run,
 ## fewer than the old crush goals gave the same runs (2-4). A human's pace is for package 1 to check.
-const XP_BASE := 50.0
-const XP_EXP := 2.0
+const XP_BASE := 120.0
+const XP_EXP := 2.4
 
 ## Crush XP: by rank (Goons.DATA: 1 fodder, 2 special, 3 heavy), times 4 for a giant and 10 for a boss
 const RANK_XP := [1.0, 1.0, 3.0, 8.0]
@@ -108,15 +110,21 @@ static func texture(id: String) -> Texture2D:
 	if not textures.has(path): textures[path] = load(path)
 	return textures[path]
 
-## Is this game in the boxes? The first is always; harnesses and tests open every one (Unlocks.allOpen).
+## Is this game in the boxes? It is once its Casino pickup is open (the Claw Crane always; harnesses and
+## tests open every one, Unlocks.allOpen).
 static func isOpen(id: String) -> bool:
 	var g := game(id)
-	if g.is_empty(): return false
-	if Unlocks.allOpen || g.get("start", false): return true
-	return Unlocks.saved().has(uid(id))
+	return not g.is_empty() && Unlocks.isPickupOpen(g.pickup)
 
+## The unlock a game shares with its Casino pickup
 static func uid(id: String) -> String:
-	return "prize:" + id
+	return "pickup:" + str(game(id).get("pickup", id))
+
+## The gift box game a Casino pickup's unlock also opens ("" for none)
+static func forPickup(pickupId: String) -> String:
+	for g in GAMES:
+		if g.pickup == pickupId: return g.id
+	return ""
 
 static func openGames() -> Array:
 	var out := []
@@ -124,16 +132,12 @@ static func openGames() -> Array:
 		if isOpen(g.id): out.push_back(g.id)
 	return out
 
-## Unlocks state for a prize game: OPEN, READY (the one after the best open game, or any whose
-## predecessor is open) or SHOWN. The ladder opens in order.
+## The game's unlock state and price: its pickup's (Unlocks)
 static func state(id: String) -> int:
-	if isOpen(id): return Unlocks.S.OPEN
-	var r := rank(id)
-	if r < 0: return Unlocks.S.HIDDEN
-	return Unlocks.S.READY if r == 0 || isOpen(GAMES[r - 1].id) else Unlocks.S.SHOWN
+	return Unlocks.state(uid(id))
 
 static func price(id: String) -> Dictionary:
-	return game(id).get("price", {})
+	return Unlocks.pickupPrice(str(game(id).get("pickup", "")))
 
 ## Opens a prize game without paying (the unlock shop's purchase, the dev console, career tiers)
 static func grant(id: String) -> void:

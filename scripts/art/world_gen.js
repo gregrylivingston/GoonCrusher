@@ -1681,7 +1681,7 @@ saltflats:{mats:['salt','asphalt','sand','gravel'],seed:157,
 		p.prop('wreck',1950,1120,.4,2,1); p.prop('tyres',2050,1040,1,2,.8); p.decor('tumbleweed',1500,1200,0,1,1); p.decor('tumbleweed',800,260,0,2,1);
 		const cy=X=>820-X*.12; const trk=[]; for(let X=0;X<=1060;X+=20) trk.push([X,cy(X)]); p.tracks(trk,8,.18,22);
 		for(let k=0;k<7;k++){ const X=980-k*150; p.dust(X,cy(X),90+k*20,[176,166,148,.42-k*.04]); }
-		p.car('audi',1100,cy(1100),-.12,0);
+		p.car('supercar',1100,cy(1100),-.12,0);
 		const sp=[]; for(let X=500;X<=1180;X+=20) sp.push([X,cy(X)-150]); p.tracks(sp,4,.14,0); p.goon('spoke',1200,cy(1200)-150,-.12,2);
 		p.goon('shredder',1650,cy(1650)+10,Math.PI-.1,1); p.goon('sawbot',700,cy(700)+120,-.1,3); p.goon('sawbot',780,cy(780)+200,-.2,6);
 		p.goon('harpooner',1500,cy(1500)+330,-2.3,2); p.rope(1490,cy(1490)+320,1050,cy(1050)+16,60); }},
@@ -1713,7 +1713,7 @@ thunderroad:{mats:['asphalt','sand','dirt','gravel','oil'],seed:167,
 		p.prop('tank',380,H(380)+440,0,0,.7); p.prop('tank',1200,H(1200)+450,0,0,.7,'broken'); p.flash(1200,H(1200)+450,150); p.fire(1150,H(1150)+430,24); p.fire(1260,H(1260)+470,18); p.prop('tank',1950,H(1950)-450,0,0,.7);
 		for(let i=0;i<4;i++) p.prop('barrel',1330+i*50,H(1330)+330+(i%2)*30,R()*3,(R()*3)|0,.9);
 		p.scatterProp('saguaro',6,(X,Y)=>Math.abs(Y-H(X))>380&&Math.hypot(X-1200,Y-H(1200)-450)>260,(X,Y,i)=>[R()*6,i%2,.85]); p.scatterDecor('oilstain',8,(X,Y)=>Math.abs(Y-H(X))<200);
-		const trk=[]; for(let X=200;X<=860;X+=20) trk.push([X,H(X)+60]); p.tracks(trk,9,.25,22); p.car('audi',900,H(900)+60,ang(900),1);
+		const trk=[]; for(let X=200;X<=860;X+=20) trk.push([X,H(X)+60]); p.tracks(trk,9,.25,22); p.car('supercar',900,H(900)+60,ang(900),1);
 		p.goon('plowboss',1250,H(1250)+50,Math.PI+ang(1250),2); p.goon('magnet',1900,H(1900)-120,Math.PI,1); p.goon('spoke',1100,H(1100)-60,ang(1100),3); p.goon('spoke',1700,H(1700)+150,Math.PI,5);
 		p.goon('sidecar',2050,H(2050)+60,Math.PI,2); p.goon('slick',2250,H(2250)-60,Math.PI,4); }},
 frozenlake:{mats:['ice','snow','deepsnow','rock','water'],seed:173,
@@ -1821,7 +1821,7 @@ gridlock:{mats:['asphalt','sand','gravel','dirt','lot'],seed:199,
 	ground(X,Y,o){ o.a='sand'; o.tint=[1.04,1,.96]; const s=fbm(X*.003,Y*.003,1991,3); if(s<.44){ o.b='dirt'; o.t=.6*smooth(.44,.36,s); }
 		for(const [y0,y1] of [this.N,this.S]){ if(Y>=y0&&Y<=y1){ o.a='asphalt'; o.b=null; o.t=0; o.tint=null; const k=Y-y0; if(k<6||y1-Y<6) o.paint=[214,210,198,.75]; else if(((k%95)<3||(k%95)>92)&&(X%130)<70) o.paint=[214,210,198,.7]; return; } if(Y>y0-60&&Y<y0) o.ao=Math.max(o.ao,.15*(1-(y0-Y)/60)); if(Y>y1&&Y<y1+60){ o.a='gravel'; o.ao=.12*(1-(Y-y1)/60); } }
 		if(Y>this.N[1]&&Y<this.S[0]){ o.a='gravel'; o.b='dirt'; o.t=.3; o.ao=.25; } },
-	dress(p){ const R=p.rng, keys=['sedan','van','taxi','pickup','semi','audi','sedan','van','ambulance'];
+	dress(p){ const R=p.rng, keys=['sedan','van','taxi','pickup','semi','supercar','sedan','van','ambulance'];
 		for(let X=150;X<WW;X+=330) p.prop('jersey',X,680,0,(X/330|0)%2,.8);
 		const lanes=[[297,Math.PI],[392,Math.PI],[487,Math.PI],[582,Math.PI],[777,0],[872,0],[967,0],[1062,0]]; let k=0;
 		lanes.forEach(([Y,a],li)=>{ let X=60+R()*120; while(X<WW+100){ const key=keys[(k++)%keys.length], L=key==='semi'?400:260;

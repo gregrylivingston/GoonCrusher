@@ -1,8 +1,12 @@
 extends CanvasLayer
 
 #Developer console (autoload `Console`). Debug builds only: in a release export it frees itself.
-#  `  (backtick) opens and closes it; Esc closes; Up/Down walk the history; Tab completes a command.
-#  `help` lists the commands for where you are (the menu or a run); `help menu`, `help run`, `help all`.
+#  `  (backtick) opens and closes it; Esc closes; Up/Down walk the history; Tab completes a command or its
+#  argument (a mode, a level, a tier...), and Tab again steps through the choices.
+#  The panel, top to bottom: where you are and which save is in use; a row of buttons for the common commands
+#  there (QUICK); the output; a line with the usage of what is being typed; the input.
+#  `help` lists the commands for where you are (the menu or a run), one short line each (SHORT); `help menu`,
+#  `help run`, `help all`; `help <command>` explains one in full.
 #  Several can be given on one line, separated by ';'.
 #  `start <tier>` plays from further into the game (early, mid, late, maxed: CareerStart.TIERS) on a scratch
 #  save, so the real save is untouched; `start real` goes back to it.
@@ -17,14 +21,43 @@ extends CanvasLayer
 const TOGGLE_KEY := KEY_QUOTELEFT
 const ERROR_COLOR := Color(1.0, 0.45, 0.4)
 const ECHO_COLOR := Color(0.6, 0.65, 0.7)
+const HEAD_COLOR := Color(1.0, 0.78, 0.3)   #a "-- group --" line
+const NAME_COLOR := Color(0.55, 0.85, 1.0)  #the first word of an indented line: a command, an id
+const TEXT_COLOR := Color(0.9, 0.92, 0.94)
+#one short line per command for `help`; `help <command>` gives the full text
+const SHORT := {
+	"help": "this list; help <command> explains one", "clear": "clear the output",
+	"start": "play from further in, on a scratch save (start real goes back)", "play": "start a run in any mode now",
+	"autopilot": "a persona plays the whole game for you", "ailines": "show or hide what AI drivers draw",
+	"unlock": "open cars, levels, a region, modes, goons, pickups or all", "lock": "undo unlock",
+	"unlocks": "what is waiting to be unlocked, nearest first", "coins": "add coins (50k, 2m, set 0)", "gems": "add gems",
+	"upgrades": "the car's upgrades to the cap or to 0", "unfinished": "let Coming Soon modes start",
+	"level": "list the levels, or select one", "cars": "credit car clears", "save": "show, back up, open or reset the save",
+	"heal": "full health", "fuel": "full fuel", "god": "health and fuel stay full", "ai": "the AI drives this run and the next",
+	"give": "credit a pickup's reward", "pickup": "collect any pickup by id", "win": "end the run as a win", "lose": "end the run as a wreck",
+	"handling": "list or change the driving numbers", "night": "night now", "day": "day now",
+}
+#the buttons over the output, by where you are: [label, command]. A command ending in a space is put in the
+#input to be finished by hand; the rest run at once.
+const QUICK := {
+	"menu": [["Scratch save: maxed", "start maxed"], ["Real save", "start real"], ["Play a mode...", "play"], ["Levels", "level"], ["Unlock all", "unlock all"], ["+50k coins", "coins 50k"], ["Autopilot", "autopilot"]],
+	"run": [["Win", "win"], ["Lose", "lose"], ["Heal", "heal"], ["Fuel", "fuel"], ["God mode", "god"], ["AI drives", "ai"], ["Night", "night"], ["Day", "day"], ["Pickup...", "pickup "]],
+}
 
 var panel: PanelContainer
 var output: RichTextLabel
 var input: LineEdit
+var header: Label   #where you are and which save is in use
+var quick: HFlowContainer
+var hint: Label     #the usage of the command being typed
+var font: SystemFont
+var tabBase := ""   #the text Tab last completed from, and which choice it is on (complete)
+var tabIndex := 0
 var history: PackedStringArray = []
 var historyIndex := 0
 var previousFocus: Control
 var godMode := false
+var aiSpec := AIProfiles.BEST #who `ai` puts at the wheel (an AIProfiles spec)
 var aiMode := false #the AI driver (scripts/ai/) drives every run's car until `ai off`
 var commands := {} #name -> {"fn", "usage", "help", "group"}, in help order
 var pilot: CareerPilot #the autopilot while a persona has the game
@@ -69,7 +102,7 @@ func _input(event):
 func _physics_process(_delta):
 	if not is_instance_valid(Root.playerCar): return
 	if aiMode && Root.playerCar.is_node_ready() && Root.playerCar.myController.driver == null:
-		AIDriver.attach(Root.playerCar, {"debug":true})
+		AIDriver.attach(Root.playerCar, {"debug":true, "profile":aiSpec})
 	if not godMode: return
 	Root.playerCar.health = 100.0
 	Root.playerCar.fuel = 100.0
@@ -80,6 +113,7 @@ func toggle(open: bool) -> void:
 	if open:
 		Settings.push_menu() #main2, the HUD, the pause menu and the car's controls ignore keys while it is open
 		previousFocus = get_viewport().gui_get_focus_owner()
+		refreshHeader()
 		input.grab_focus()
 		input.edit()
 	else:
@@ -91,53 +125,142 @@ func toggle(open: bool) -> void:
 #--- ui -------------------------------------------------------------------------------------
 
 func buildUi() -> void:
-	var font = SystemFont.new()
+	font = SystemFont.new()
 	font.font_names = PackedStringArray(["Consolas", "Cascadia Mono", "Courier New", "monospace"])
 	panel = PanelContainer.new()
 	panel.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	panel.anchor_bottom = 0.45
+	panel.anchor_bottom = 0.56
 	var style = StyleBoxFlat.new()
-	style.bg_color = Color(0.05, 0.06, 0.08, 0.92)
+	style.bg_color = Color(0.05, 0.06, 0.08, 0.94)
 	style.border_color = Color(0.3, 0.35, 0.4)
 	style.border_width_bottom = 2
-	style.set_content_margin_all(10)
+	style.set_content_margin_all(12)
 	panel.add_theme_stylebox_override("panel", style)
 	add_child(panel)
 	var box = VBoxContainer.new()
+	box.add_theme_constant_override("separation", 8)
 	panel.add_child(box)
+	header = Label.new()
+	header.add_theme_font_override("font", font)
+	header.add_theme_font_size_override("font_size", 15)
+	header.add_theme_color_override("font_color", HEAD_COLOR)
+	box.add_child(header)
+	quick = HFlowContainer.new()
+	quick.add_theme_constant_override("h_separation", 6)
+	quick.add_theme_constant_override("v_separation", 6)
+	box.add_child(quick)
 	output = RichTextLabel.new()
-	output.bbcode_enabled = true
 	output.scroll_following = true
 	output.selection_enabled = true
 	output.focus_mode = Control.FOCUS_NONE
 	output.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	output.add_theme_font_override("normal_font", font)
-	output.add_theme_font_size_override("normal_font_size", 18)
+	output.add_theme_font_size_override("normal_font_size", 17)
+	output.add_theme_constant_override("line_separation", 3)
 	box.add_child(output)
+	hint = Label.new()
+	hint.add_theme_font_override("font", font)
+	hint.add_theme_font_size_override("font_size", 14)
+	hint.add_theme_color_override("font_color", ECHO_COLOR)
+	hint.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	box.add_child(hint)
 	input = LineEdit.new()
-	input.placeholder_text = "command (help, Tab completes, Esc closes)"
+	input.placeholder_text = "type a command, or click one above"
 	input.keep_editing_on_text_submit = true
 	input.add_theme_font_override("font", font)
 	input.add_theme_font_size_override("font_size", 18)
 	input.text_submitted.connect(onSubmit)
+	input.text_changed.connect(onTyped)
 	input.gui_input.connect(onInputKey)
 	box.add_child(input)
-	say("Dev console. help lists what works here (the menu or a run). start late plays from further in on a scratch save (start lists the tiers).", ECHO_COLOR)
+	onTyped("")
+	say("help lists the commands for where you are. play starts any mode. start maxed keeps the real save out of it.", ECHO_COLOR)
 
-func say(text: String, color := Color.WHITE) -> void:
+## "menu" or "run": which commands apply
+func context() -> String:
+	return "run" if Root.isRunActive else "menu"
+
+#the top line and the buttons, for where the game is now; called when the console opens and after every command
+func refreshHeader() -> void:
+	var where := context()
+	var tier := CareerStart.activeTier()
+	var data = SaveManager.playerData
+	var text := "MENU" if where == "menu" else "RUN"
+	if data:
+		var level: String = String(Levels.ORDER[clampi(data.selectedLevel, 0, Levels.count() - 1)])
+		text += "   %s on %s, %s" % [Modes.title(data.gameMode), level, ModeTiers.NAMES[ModeTiers.clampTier(data.gameTier)]]
+	text += "   save: %s" % ("REAL (commands change it)" if tier == "" else "scratch, %s" % tier)
+	header.text = text
+	for child in quick.get_children():
+		quick.remove_child(child)
+		child.queue_free()
+	for entry in QUICK[where] + [["Help", "help"], ["Clear", "clear"]]:
+		var button := Button.new()
+		button.text = entry[0]
+		button.focus_mode = Control.FOCUS_NONE
+		button.tooltip_text = entry[1]
+		button.add_theme_font_override("font", font)
+		button.add_theme_font_size_override("font_size", 14)
+		button.pressed.connect(onQuick.bind(entry[1]))
+		quick.add_child(button)
+
+func onQuick(command: String) -> void:
+	if command.ends_with(" "): #to be finished by hand
+		input.text = command
+		input.caret_column = command.length()
+		onTyped(command)
+	else: onSubmit(command)
+	input.grab_focus()
+
+#the line under the output: the usage of the command being typed, or the commands that start that way
+func onTyped(text: String) -> void:
+	var words := text.strip_edges(true, false).to_lower().split(" ", false)
+	if words.is_empty():
+		hint.text = "Tab completes   Up/Down history   ; joins commands   Esc closes"
+		return
+	if commands.has(words[0]):
+		hint.text = "%s   %s" % [commands[words[0]].usage, SHORT.get(words[0], "")]
+		return
+	var starts := commands.keys().filter(func(c): return c.begins_with(words[0]))
+	hint.text = "  ".join(starts) if not starts.is_empty() else "no such command (help lists them)"
+
+#output, coloured by line: an error red, a "-- group --" line gold, and the first word of an indented line (a
+#command in help, an id in a list) picked out
+func say(text: String, color := TEXT_COLOR) -> void:
 	if text == "": return
 	if text.begins_with("Error"): color = ERROR_COLOR
-	output.push_color(color)
-	output.add_text(text + "\n")
-	output.pop()
+	for line in text.split("\n"):
+		if line.begins_with("-- "):
+			output.push_color(HEAD_COLOR)
+			output.add_text(line.trim_prefix("-- ").trim_suffix(" --").to_upper() + "\n")
+			output.pop()
+			continue
+		var body: String = line.strip_edges(true, false)
+		var cut := body.find(" ")
+		if color == TEXT_COLOR && line.begins_with("  ") && cut > 0:
+			output.add_text(line.substr(0, line.length() - body.length()))
+			output.push_color(NAME_COLOR)
+			output.add_text(body.substr(0, cut))
+			output.pop()
+			output.push_color(color)
+			output.add_text(body.substr(cut) + "\n")
+			output.pop()
+			continue
+		output.push_color(color)
+		output.add_text(line + "\n")
+		output.pop()
 
 func onSubmit(text: String) -> void:
 	input.clear()
 	if text.strip_edges() == "": return
 	if history.is_empty() || history[-1] != text: history.push_back(text)
 	historyIndex = history.size()
+	output.add_text("\n")
 	say("> " + text, ECHO_COLOR)
 	say(execute(text))
+	tabBase = ""
+	onTyped("")
+	refreshHeader.call_deferred() #the command may have changed the save, the selection or the scene
 
 func onInputKey(event: InputEvent) -> void:
 	if not (event is InputEventKey) || not event.pressed: return
@@ -154,12 +277,45 @@ func showHistory(index: int) -> void:
 	input.text = history[historyIndex] if historyIndex < history.size() else ""
 	input.caret_column = input.text.length()
 
+#Tab: the command being typed, then each argument from its choices (argChoices); Tab again steps on to the
+#next choice
 func complete() -> void:
-	var typed = input.text.strip_edges().to_lower()
-	var matches = commands.keys().filter(func(c): return c.begins_with(typed))
-	if matches.size() == 1: input.text = matches[0] + " "
-	elif matches.size() > 1: say("  ".join(matches), ECHO_COLOR)
+	if tabBase == "" || not input.text.begins_with(tabBase.get_slice("\t", 0)): tabBase = ""
+	var typed: String = input.text.to_lower() if tabBase == "" else tabBase.get_slice("\t", 1)
+	var words := Array(typed.split(" ", false))
+	var fresh := typed.ends_with(" ") || words.is_empty()
+	var stem: String = "" if fresh else words.pop_back()
+	var choices: Array = commands.keys() if words.is_empty() else argChoices(words[0])
+	var matches := choices.filter(func(c): return str(c).begins_with(stem))
+	if matches.is_empty(): return
+	if tabBase == "":
+		tabIndex = 0
+		if matches.size() > 1: say("  ".join(matches.map(func(c): return str(c))), ECHO_COLOR)
+	else: tabIndex = (tabIndex + 1) % matches.size()
+	var head := " ".join(words) + (" " if not words.is_empty() else "")
+	input.text = head + str(matches[tabIndex]) + (" " if matches.size() == 1 else "")
+	tabBase = input.text + "\t" + typed if matches.size() > 1 else ""
 	input.caret_column = input.text.length()
+	onTyped(input.text)
+
+## What a command's arguments can be, for Tab: every word that fits anywhere after it
+func argChoices(cmd: String) -> Array:
+	var tiers: Array = ["easy", "medium", "hard"]
+	var levels: Array = Levels.ORDER.map(func(id): return String(id))
+	match cmd:
+		"play": return Modes.IDS + levels + tiers
+		"level": return levels
+		"start": return CareerStart.TIERS.keys() + ["real", "fresh"]
+		"help": return commands.keys() + ["menu", "run", "all"]
+		"unlock": return ["all", "cars", "levels", "region", "modes", "goons", "pickups"] + levels
+		"lock": return ["all", "cars", "levels", "modes", "goons", "pickups"] + levels
+		"autopilot": return Personas.DATA.keys() + ["off"]
+		"pickup", "give": return Pickups.DATA.keys()
+		"upgrades": return ["max", "reset", "all"]
+		"save": return ["backup", "open", "reset"]
+		"cars": return ["all"] + SaveManager.playerData.cars.map(func(c): return str(c.name)) + tiers
+		"god", "ai", "ailines", "unfinished": return ["on", "off"]
+	return []
 
 
 #--- commands -------------------------------------------------------------------------------
@@ -193,13 +349,14 @@ func registerCommands() -> void:
 	add("gems", cmdGems, "gems [amount | set amount]", "add gems to the bank", "Progress")
 	add("upgrades", cmdUpgrades, "upgrades max | reset [all]", "the selected car's (or every car's) upgrades to the cap or to 0", "Progress")
 	add("unfinished", cmdUnfinished, "unfinished on | off", "let Coming Soon modes (any in Root.MODE_AVAILABLE set to false) be started; this session only", "Progress")
+	add("play", cmdPlay, "play [mode] [level] [easy | medium | hard]", "start a run in any mode right now, whatever is unlocked: bare lists the modes and a level that features each; the level defaults to the first that features the mode. Run 'start maxed' first to keep the real save out of it", "Start here")
 	add("level", cmdLevel, "level [id | index]", "list the levels by region (Levels.ORDER), or select one for the menu and direct launches", "Progress")
 	add("cars", cmdCars, "cars all | <car> [tier]", "car clears (meta.carClears): every car (all) or one clears every beaten mode on the selected level (all: on every level), on its best tier or the one named (easy, medium, hard)", "Progress")
 	add("save", cmdSave, "save [backup | open | reset]", "show the save; back it up; open its folder; reset it (backs up first)", "Progress")
 	add("heal", cmdHeal, "heal", "full health", "Run")
 	add("fuel", cmdFuel, "fuel", "full fuel", "Run")
 	add("god", cmdGod, "god [on | off]", "keep health and fuel full (water still wrecks the car)", "Run")
-	add("ai", cmdAi, "ai [on | off]", "the AI drives this run and every run after, drawing its plan (green, red when it expects a hit), goal (yellow) and route (blue); docs/AI_DRIVER.md", "Run")
+	add("ai", cmdAi, "ai [on | off | <spec>]", "the AI drives this run and every run after (the car's own driver; a spec picks its personality and skill: alt, @rookie, showoff@regular), drawing its plan (green, red when it expects a hit), goal (yellow) and route (blue); docs/AI_DRIVER.md", "Run")
 	add("give", cmdGive, "give <what> [amount]", "credit a pickup to the car: %s" % ", ".join(giveable()), "Run")
 	add("pickup", cmdPickup, "pickup <id> [count]", "collect any pickup from Pickups.DATA (docs/PICKUPS.md), e.g. nitro, deal, claw, goldgoon", "Run")
 	add("win", cmdWin, "win", "end the run as a success (beats the mode, as playing it would)", "Run")
@@ -209,28 +366,29 @@ func registerCommands() -> void:
 	add("day", cmdDay, "day", "turn day on now", "Run")
 
 func cmdHelp(args: Array) -> String:
-	var context := "run" if Root.isRunActive else "menu"
-	var heading := "In %s. help %s, help all or help <command> for more." % ["a run" if context == "run" else "the menu", "menu" if context == "run" else "run"]
+	var where := context()
+	var heading := "In %s. Also: help %s, help all, help <command>." % ["a run" if where == "run" else "the menu", "menu" if where == "run" else "run"]
 	if not args.is_empty():
 		match args[0]:
 			"menu", "run":
-				context = args[0]
+				where = args[0]
 				heading = "Commands for the %s:" % args[0]
 			"all":
-				context = "all"
+				where = "all"
 				heading = "Every command:"
 			_:
 				if not commands.has(args[0]): return "Error: unknown command '%s'" % args[0]
-				return "%s\n  %s" % [commands[args[0]].usage, commands[args[0]].help]
-	var groups: Array = ["Console"]
-	if context == "all":
+				return "%s\n%s" % [commands[args[0]].usage, commands[args[0]].help]
+	var groups: Array = []
+	if where == "all":
 		for c in CONTEXT_GROUPS: groups.append_array(CONTEXT_GROUPS[c])
-	else: groups.append_array(CONTEXT_GROUPS[context])
+	else: groups.append_array(CONTEXT_GROUPS[where])
+	groups.push_back("Console")
 	var lines = [heading]
 	for group in groups:
 		lines.push_back("-- %s --" % group)
 		for cmd in commands:
-			if commands[cmd].group == group: lines.push_back("  %-45s %s" % [commands[cmd].usage, commands[cmd].help])
+			if commands[cmd].group == group: lines.push_back("  %-11s %s" % [cmd, SHORT.get(cmd, commands[cmd].help)])
 	return "\n".join(lines)
 
 #--- start here: autopilot ------------------------------------------------------------------
@@ -400,11 +558,11 @@ func setGoons(unlock: bool) -> String:
 	for id in Goons.DATA: crushed[String(id)] = maxi(crushed.get(String(id), 0), 1)
 	return "Goons: all %d revealed in the Goonopedia" % Goons.DATA.size()
 
-#Countdown, Sprint and Marathon beaten opens every mode (Root.isModeUnlocked); locking clears every beaten mode
+#Sprint and Countdown beaten opens every mode a level plays (Root.isModeUnlocked); locking clears every beaten mode
 func setModes(unlock: bool) -> String:
 	for level in SaveManager.playerData.levels:
 		if unlock:
-			for mode in [Root.gameModes.GOONCRUSHER, Root.gameModes.SPRINT, Root.gameModes.MARATHON]: SaveManager.passTier(level, mode, ModeTiers.EASY)
+			for mode in Root.STAPLE_MODES: SaveManager.passTier(level, mode, ModeTiers.EASY)
 		else:
 			for mode in level.gamemodeBeat: level.gamemodeBeat[mode] = false
 			if level.get("tiers") is Dictionary:
@@ -412,7 +570,7 @@ func setModes(unlock: bool) -> String:
 	if not unlock: return "Modes: every beaten mode cleared"
 	var comingSoon = Root.MODE_AVAILABLE.keys().filter(func(m): return not Root.MODE_AVAILABLE[m])
 	var note = "" if Root.devAllModesAvailable || comingSoon.is_empty() else " (Coming Soon modes stay hidden; see unfinished)"
-	return "Modes: Countdown, Sprint and Marathon marked beaten on every level, so every mode is open on unlocked levels" + note
+	return "Modes: Sprint and Countdown marked beaten on every level, so every mode is open on unlocked levels" + note
 
 #every level of a region (1-6 or its Territories id) and every level before it; locking closes the region's
 #levels (the first level of the game stays open)
@@ -480,6 +638,51 @@ func cmdUnfinished(args: Array) -> String:
 	refreshMenu()
 	return "Coming Soon modes are %s" % ("playable" if Root.devAllModesAvailable else "hidden")
 
+#a run in any mode, straight from the menu: the mode by its id (Modes.IDS), on the level named or the first that
+#features it, on the tier named or the selected one. It skips the unlock chain; a win is credited as usual.
+func cmdPlay(args: Array) -> String:
+	var data = SaveManager.playerData
+	if args.is_empty():
+		var lines := ["-- play <mode> [level] [easy | medium | hard] --"]
+		for mode in Root.gameModes.values():
+			var at := firstLevelWith(mode)
+			lines.push_back("  %-14s %-17s %-12s %s" % [Modes.idOf(mode), Modes.title(mode), "every level" if mode in Root.STAPLE_MODES else Modes.categoryName(mode), "" if mode in Root.STAPLE_MODES else "e.g. " + String(Levels.ORDER[at])])
+		return "
+".join(lines)
+	var mode := Modes.byId(args[0].to_lower())
+	if mode < 0: return "Error: no mode '%s' (%s)" % [args[0], ", ".join(Modes.IDS)]
+	if is_instance_valid(Root.levelRoot) && Root.levelRoot.is_inside_tree() && not Root.levelRoot.hasEnded: return "Error: play starts a run from the main menu"
+	var index := firstLevelWith(mode)
+	for arg in args.slice(1):
+		var tier := ModeTiers.NAMES.map(func(n): return n.to_lower()).find(arg.to_lower())
+		if tier >= ModeTiers.EASY: data.gameTier = tier
+		elif Levels.resolve(arg) != &"": index = Levels.indexOf(Levels.resolve(arg))
+		else: return "Error: '%s' is no level or tier" % arg
+	data.selectedLevel = index
+	data.gameMode = mode
+	data.levels[index].unlocked = true
+	toggle(false)
+	playFromMenu(index)
+	return "%s on %s, %s" % [Modes.title(mode), Levels.ORDER[index], ModeTiers.NAMES[ModeTiers.clampTier(data.gameTier)]]
+
+#starts the selected run once the main menu is up: at once from the open console, a moment later for a
+#`--console="play ..."` given on the command line (the menu isn't built yet, or `start` is reloading it)
+func playFromMenu(index: int) -> void:
+	for frame in 900:
+		var menu = Root.mainMenu
+		if is_instance_valid(menu) && menu.is_inside_tree() && not menu.loadingLevel && menu.cards.size() > 0 && frame > 0: #a frame on, so a reload asked for just before has happened
+			Root.selectedCar = SaveManager.playerData.cars[SaveManager.playerData.selectedCar]
+			menu.startLevel(menu.levelScene(index))
+			return
+		await get_tree().process_frame
+
+## The first level that plays a mode (Root.modePath), or the selected one for a staple
+func firstLevelWith(mode: int) -> int:
+	if mode in Root.STAPLE_MODES: return SaveManager.playerData.selectedLevel
+	for i in Levels.count():
+		if mode in Root.modePath(i): return i
+	return SaveManager.playerData.selectedLevel
+
 func cmdLevel(args: Array) -> String:
 	var data = SaveManager.playerData
 	if args.is_empty():
@@ -510,7 +713,7 @@ func cmdCars(args: Array) -> String:
 	var levels: Array = range(data.levels.size()) if args[0] == "all" else [data.selectedLevel]
 	var count := 0
 	for i in levels:
-		for mode in Root.MODE_PATH:
+		for mode in Root.modePath(i):
 			var best := ModeTiers.best(data.levels[i], mode)
 			if best == ModeTiers.NONE: continue
 			for car in who:
@@ -622,13 +825,21 @@ func cmdGod(args: Array) -> String:
 	set_physics_process(godMode || aiMode)
 	return "God mode " + ("on" if godMode else "off")
 
+#`ai`, `ai on`, `ai off`, or `ai <spec>` to pick who drives (AIProfiles: alt, showoff@rookie, auto+hitCost=4)
 func cmdAi(args: Array) -> String:
-	aiMode = (args[0] in ["on", "1", "true"]) if not args.is_empty() else not aiMode
+	var word: String = args[0] if not args.is_empty() else ""
+	var named := word != "" && word not in ["on", "off", "1", "0", "true", "false"]
+	if named:
+		var problem := AIProfiles.problemWith(word)
+		if problem != "": return "Error: " + problem
+		aiSpec = word
+	aiMode = true if named else ((word in ["on", "1", "true"]) if word != "" else not aiMode)
 	set_physics_process(godMode || aiMode)
-	if not aiMode && is_instance_valid(Root.playerCar) && Root.playerCar.myController.driver != null:
-		Root.playerCar.myController.driver.queue_free()
-		Root.playerCar.myController.driver = null #the keys are the player's again
-	return "AI driver " + ("on: it takes the wheel now and in every run until `ai off`" if aiMode else "off")
+	var onCar: bool = is_instance_valid(Root.playerCar) && Root.playerCar.myController.driver != null
+	if onCar && (not aiMode || named): Root.playerCar.myController.driver.leave() #the keys are the player's again, or the new driver's next tick
+	if not aiMode: return "AI driver off"
+	var who := AIProfiles.personalityName(aiSpec, AIProfiles.personalitiesOf(Root.playerCar.carId)) if is_instance_valid(Root.playerCar) else ""
+	return "AI driver on (%s%s): it takes the wheel now and in every run until `ai off`" % [aiSpec, ", " + who if who != "" else ""]
 
 static func giveable() -> Array:
 	return OverheadCarBody2D.UPGRADEABLE_STATS + ["coin", "gem", "star", "crushed", "health", "fuel"]

@@ -21,7 +21,10 @@ func world(id: StringName, worldSeed: int) -> Array:
 		var map := WorldMap.build(worldSeed, def, "sprint", offset)
 		var skin := WorldSkin.new(def)
 		var lots := [TileManager.lotRect(map.stationChunk)] if map.stationChunk != WorldGen.NO_CHUNK else []
+		var modeBefore: int = SaveManager.playerData.gameMode
+		SaveManager.playerData.gameMode = Root.gameModes.SPRINT #whatever the save has selected: a Trial's chunks carry no pickups (Modes.drops)
 		map.recipeContext = skin.recipeContext(lots, [])
+		SaveManager.playerData.gameMode = modeBefore
 		maps[key] = [map, map.recipeContext, skin]
 	return maps[key]
 

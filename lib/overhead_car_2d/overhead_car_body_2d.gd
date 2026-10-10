@@ -33,6 +33,7 @@ var oil: int = 1
 var headlights: int = 1
 var weight: int = 50 #0-100, never upgraded: how the car carries its mass (CarHandling)
 var traits: Array[StringName] = [] #signature features (CarTraits), from `info`
+var hudSkin: StringName = &"" #its dashboard (HudSkin), from `info`
 
 #Trait flags, cached in _ready because integrate() reads them every tick (CarTraits; docs/CAR_ART.md "Traits").
 #Rules that aren't handling live in traitRig (CarTraitRig), which also holds the state these read.
@@ -159,9 +160,39 @@ class CarInput:
 	var acceleration := 0.0  # -1.0 (reverse) to 1.0 (accelerate)
 	var braking := false     # True if brakes are engaged
 	var handbrake := false   # the parking brake: locks the rear for a powerslide (handbrakeGrip)
+	var gear := GEAR_FOR_SPEED # a geared car's gear (-1 R, 0 N, 1 up); unset, the right one for the speed. Automatics ignore it
 
-var gear: int = 0
-var maxGears: int = 3
+var gear: int = 0 #-1 R, 0 N, 1 up. An automatic's is only for show (the HUD and the engine note, from speed)
+
+#--- the gearbox (CarInfo.gears; docs/CAR_ART.md, "Gearbox") ---
+#A geared car has `gears` forward gears, each topping out at gearTop(g) px/s: long low gears, closer together
+#toward the top (GEAR_CURVE), so every gear lasts long enough to shift by hand. Low gears pull
+#harder; at the top of any gear but the last the rev limiter cuts the push, and a gear far too high for the
+#speed bogs. Changing between forward gears cuts the push for a moment (the clutch); a shift up near the
+#redline (the top of the gear's band, from SHIFT_KICK_FROM) earns a short push instead. Who shifts: the player by hand
+#(ShiftUp / ShiftDown, down past N into R) unless the Automatic Gearbox setting is on; the AI and that
+#setting use autoGear. gearThrust() is read inside integrate(), so the AI's predictions follow it.
+var gears: int = 0          #forward gears; 0 is an automatic, as before gearboxes
+var redline := 6.5          #thousands of rpm, from `info`: the tach's scale and red zone (HudDial)
+var gearTops := PackedFloat32Array() #px/s at each gear's limiter, gear 1 first (setupGearbox)
+var shiftCut := 0           #ticks left of the clutch's cut after a shift between forward gears
+var shiftKick := 0          #ticks left of a well-timed shift's push
+signal shifted(gear: int, kicked: bool)
+const GEAR_FOR_SPEED := 99 #CarInput.gear left unset: whichever gear suits the speed (bestGear)
+const SHIFT_CUT_TICKS := 12     #a sloppy shift: a fifth of a second with no push
+const SHIFT_KICK_TICKS := 45    #a well-timed one: three quarters of a second...
+const SHIFT_KICK := 1.5         #...of half again the push
+const POWER_BAND := Vector2(0.75, 1.0) #the push at the bottom and at the top of each gear: keep the revs up
+const SHIFT_KICK_FROM := 0.8   #share of a gear's band (revShare) from which a shift up earns the kick: the top fifth of the revs
+const LOW_GEAR_PULL := 0.3     #first gear pulls this much harder than the top gear
+const BOG_BELOW := 0.55        #under this share of a gear's range (any gear but first) the engine bogs...
+const BOG_THRUST := 0.3        #...down to this share of its push at a standstill in second, halving each gear up (bogFloor)
+const LAST_SHIFT := 0.8        #the second-to-last gear's limiter sits at this share of the cruising top speed...
+const GEAR_CURVE := 0.55       #gear g of n tops out at (g / (n - 1)) ^ this of the second-to-last gear's limit: under 1, low gears are longer
+const AUTO_SHOWN_GEARS := 5    #...and an automatic shows this many gears, spread the same way (the HUD and the engine note)
+const AUTO_UP := 0.97          #autoGear shifts up at this share of the gear's range...
+const AUTO_DOWN := 0.7         #...and down below this share of the gear under it
+const REVERSE_SHIFT_SPEED := 40.0 #R only goes in below this px/s forward; faster, the lever stops at N
 var _car_input := CarInput.new()
 var _path_follow: OverheadCarPathFollow2D = null
 @onready var myController = $CarController
@@ -183,6 +214,7 @@ func _ready():
 	$"AudioStream-Engine".stream = engineNoise
 	$"AudioStream-Engine".play()
 
+	add_to_group(&"cars") #the player's and every rival's (Rivals)
 	if isPlayer:
 		add_to_group("playerCar")
 		Root.playerCar = self
@@ -196,6 +228,7 @@ func _ready():
 		clover += SaveManager.getUpgradeLevel(Root.upgrade.CLOVER)
 		luck += SaveManager.getUpgradeLevel(Root.upgrade.LUCK)
 	for stat in UPGRADEABLE_STATS: runStartStats[stat] = self[stat]
+	setupGearbox()
 	if isPlayer:
 		buffFx = CarBuffFx.new()
 		add_child(buffFx)
@@ -208,6 +241,7 @@ func _ready():
 		Pickups.loadout = ""
 		Pickups.boostLoadout = ""
 		if heldItem != "" || moveItem != "": announceLoadout()
+		if isManual(): announceGearbox()
 
 	#the camera follows even while the run is paused: the start (the loading door, then the 3-2-1) is all paused,
 	#and a paused camera keeps a stale view, so the car started off centre until GO
@@ -309,6 +343,8 @@ func _physics_process(delta):
 	rotation = next[0].angle()
 	spinRate = angle_difference(lastRotation, rotation) / delta if delta > 0.0 else 0.0
 	velocity = next[1]
+	if shiftCut > 0: shiftCut -= 1
+	if shiftKick > 0: shiftKick -= 1
 	if isPlayer: tickDriftCharge()
 	var hitVelocity = velocity #before the slide, for a wall hit's impact angle and a breakable's speed
 	move_and_slide()
@@ -330,6 +366,10 @@ func _physics_process(delta):
 			velocity = hitVelocity * PropReactions.KNOCK_KEEP #a cone flies off instead of stopping the car
 		elif hitVelocity.length() > 0.01 && World.isWall(collider): #the speed going in: a square hit leaves none after the slide
 			collideWithFixedObject( collision, hitVelocity )
+		elif collider is OverheadCarBody2D:
+			bumpCar(collider, collision.get_normal(), hitVelocity)
+		elif collider is CarTrailer: #a rival semi's trailer: its tractor takes the knock
+			if is_instance_valid(collider.car) && collider.car != self: bumpCar(collider.car, collision.get_normal(), hitVelocity)
 		elif collider is CharacterBody2D:
 			#the flank hull (CollisionShape2D_body) is there for walls; a goon against it is slamGoons' to judge
 			if collision.get_local_shape() == bodyHull && bodyHull != null: continue
@@ -379,6 +419,7 @@ func integrate(pos: Vector2, forward: Vector2, vel: Vector2, input: CarInput, de
 
 	var acceleration = input.acceleration * forward * ( engine_stat + 14 ) * 10 * 2.2 * (1.0 - h.thrustSteerCut * absf(input.steering)) * thrust
 	if input.handbrake: acceleration *= HANDBRAKE_THROTTLE #the locked rear eats part of the throttle
+	if gears > 0: acceleration *= gearThrust(input.gear if input.gear != GEAR_FOR_SPEED else bestGear(speed), speed)
 	#reverse tops out well below forward (CarHandling.reverseTop)
 	if input.acceleration < 0.0 && vel.dot(forward) < 0.0 && speed >= h.reverseTop(engine_stat): acceleration = Vector2.ZERO
 
@@ -398,6 +439,7 @@ func integrate(pos: Vector2, forward: Vector2, vel: Vector2, input: CarInput, de
 	acceleration += drag_force + friction_force
 	acceleration += conveyorPull(vel, World.pushAt(pos, surface))
 	acceleration *= h.inertia(w) #weight: the same top speed, reached (and lost) more slowly when heavy
+	if acceleration.dot(vel) > 0.0: acceleration *= h.pickup(speed) #gaining speed gets slower toward the top; drag, water and brakes don't soften
 	if input.handbrake && speed > 0.0:
 		acceleration -= vel.normalized() * HANDBRAKE_DECEL * World.brake(surface)
 
@@ -754,6 +796,49 @@ func honk() -> void:
 		if absf(forward.angle_to(to)) > HORN_CONE: continue
 		Gadgets.stun(goon, HORN_STUN, to.normalized() * HORN_PUSH)
 
+#--- car against car (the Goon Cup's rivals, docs/GAMEPLAY_SUGGESTIONS.md package 18) -------------------
+const CAR_BOUNCE := 0.35         #how much of the closing speed comes back
+const CAR_BUMP_FREE := 180.0     #closing speed (px/s) under which a bump does no damage
+const CAR_BUMP_DAMAGE := 1.0 / 45.0 #health per px/s of closing speed above that, before armour
+const CAR_NOSE_ARC := 0.9        #radians either side of a car's heading that count as its nose
+const CAR_NOSE_SHARE := 0.3      #a car struck on its nose takes this share: the one that lands the hit comes off best
+const CAR_WEIGHT_POWER := 0.25   #how much the weights' ratio counts for damage (the shove goes by weight in full)
+static var carBumpScale := 1.0   #a mode's own (Demolition Derby raises it)
+var bumpedAt := -1               #the physics frame of this car's last bump: one response per contact, not one each
+
+## Two cars met: they trade speed along the contact by weight (CarInfo.weight) and both take the knock.
+## `normal` points from `other` to this car; `moving` is this car's velocity going in.
+## The damage is the same for any car: by how fast they closed, by where each was struck (its nose takes
+## CAR_NOSE_SHARE of it, its flank or tail all of it) and a little by weight, and armour doesn't count
+## (bumpShare, takeBump). So a quick car that turns onto a rival's flank beats a heavy one that can't.
+func bumpCar(other: OverheadCarBody2D, normal: Vector2, moving: Vector2) -> void:
+	var now := Engine.get_physics_frames()
+	if bumpedAt == now || other.bumpedAt == now: return #the other car already answered this contact
+	bumpedAt = now
+	other.bumpedAt = now
+	var closing := -(moving - other.velocity).dot(normal)
+	if closing <= 0.0: return
+	var mine := 1.0 + weight / 50.0
+	var theirs := 1.0 + other.weight / 50.0
+	var impulse := closing * (1.0 + CAR_BOUNCE) / (1.0 / mine + 1.0 / theirs)
+	velocity = moving + normal * impulse / mine
+	other.velocity -= normal * impulse / theirs
+	var hurt := maxf(closing - CAR_BUMP_FREE, 0.0) * CAR_BUMP_DAMAGE * carBumpScale
+	if hurt > 0.0:
+		takeBump(hurt * bumpShare(rotation, -normal) * pow(theirs / mine, CAR_WEIGHT_POWER))
+		other.takeBump(hurt * bumpShare(other.rotation, normal) * pow(mine / theirs, CAR_WEIGHT_POWER))
+	if isPlayer || other.isPlayer:
+		Settings.vibrate(0.4, 0.6, 0.12)
+		if is_instance_valid(crushFeel): crushFeel.kick += normal * minf(closing / 40.0, 14.0)
+
+## The share of a bump a car takes when the contact lies `toContact` from it: its nose shrugs most of it off
+static func bumpShare(heading: float, toContact: Vector2) -> float:
+	return CAR_NOSE_SHARE if absf(Vector2.from_angle(heading).angle_to(toContact)) < CAR_NOSE_ARC else 1.0
+
+## Damage from another car, whatever this car's armour
+func takeBump(amount: float) -> void:
+	damage(amount / maxf(armorFactor(armor), 0.05))
+
 func crushGoon(collider, speed := -1.0) -> bool:
 	if not is_instance_valid(collider) || collider.isDying(): return true
 	if speed < 0.0: speed = velocity.length()
@@ -907,7 +992,7 @@ func activeCarEffects(delta):
 	if not engineAudio.playing: engineAudio.play()
 	if not carDamageAudio.playing && healthWarningGiven: carDamageAudio.play()
 	if not is_instance_valid(juice): engineAudio.pitch_scale = 1  +  ( velocity.length() / 400 ) #the player's follows the gears (CarJuice)
-	if not buffs.has("freetank"): fuel -= fuelBurn(_car_input.acceleration, oil * conditionFactor("tank")) + fuelLeak(condition.tank)
+	if not buffs.has("freetank") && not fuelFree: fuel -= fuelBurn(_car_input.acceleration, oil * conditionFactor("tank")) + fuelLeak(condition.tank)
 
 	#body shake: the sprite slides between two offsets, one tick at a time (no tween per shake)
 	vibrationSteps += 1
@@ -954,10 +1039,12 @@ func updateLookAhead(delta: float) -> void:
 
 var defaultZoomLevel:float = 0.45
 var cameraAdjustmentSpeed: float = 0.0008
+const SPEED_ZOOM_FLOOR := 0.5 #the furthest the speed zoom goes: half the default zoom
 func updateCameraZoom():
 	var targetZoomFactor: float
 	if velocity.length() > 450.0 && isPlayer && is_instance_valid(camera):
-		targetZoomFactor = defaultZoomLevel + 0.10 - velocity.length() / 4500.0
+		#pulls back with speed, but never past SPEED_ZOOM_FLOOR of the default: further out, the car and goons got too small to read
+		targetZoomFactor = maxf(defaultZoomLevel + 0.08 - velocity.length() / 5500.0, defaultZoomLevel * SPEED_ZOOM_FLOOR)
 	else:
 		targetZoomFactor = defaultZoomLevel
 	if camera.zoom.x > targetZoomFactor:
@@ -1208,8 +1295,104 @@ func outOfFuel():
 	if fuel > 0.0 && not isWrecked: #coasted into a Marathon station, which filled the tank
 		isDestroyed = false
 		return
-	Root.levelRoot.endLevel(false, Root.endCondition.NOGAS)
+	if isPlayer: Root.levelRoot.endLevel(false, Root.endCondition.NOGAS)
 	
+## Gear spacing from the car's cruising top speed (its engine, with upgrades, against drag on grass), once
+## the run's stats are in: the second-to-last gear tops out at LAST_SHIFT of it, so the last gear is in reach
+## while the car is still gaining speed well. Pickups and Nitro can push past it: the last gear has no limiter.
+## An automatic gets the same spacing for the gears it shows.
+func setupGearbox() -> void:
+	var n := shownGears()
+	var top := cruiseTop(engine)
+	gearTops.resize(n)
+	for g in range(1, n): gearTops[g - 1] = top * LAST_SHIFT * pow(float(g) / (n - 1), GEAR_CURVE)
+	gearTops[n - 1] = top
+	if gears > 0: gear = 1
+
+## The speed at gear `g`'s limiter (the last gear's is the cruising top speed, and it has no limiter)
+func gearTop(g: int) -> float:
+	return gearTops[clampi(g, 1, gearTops.size()) - 1] if not gearTops.is_empty() else 300.0 * maxi(g, 1)
+
+## The gears a car has (a manual) or shows (an automatic)
+func shownGears() -> int:
+	return gears if gears > 0 else AUTO_SHOWN_GEARS
+
+## Top speed on grass for an engine stat: thrust against drag and ground friction
+func cruiseTop(engineStat: float) -> float:
+	var force := (engineStat + 14.0) * 10.0 * 2.2
+	var f := World.GRASS_FRICTION
+	return (-f + sqrt(f * f + 4.0 * drag * force)) / (2.0 * drag) if drag > 0.0 else 2000.0
+
+## The gearbox's share of the engine's push in gear `g` at `speed` (read only: integrate() calls it)
+func gearThrust(g: int, speed: float) -> float:
+	if g < 0: return 1.0 #reverse keeps its own cap (CarHandling.reverseTop)
+	if g == 0 || shiftCut > 0: return 0.0
+	var r := speed / gearTop(g)
+	if g < gears && r >= 1.0: return 0.0 #the rev limiter
+	var thrust := 1.0 + LOW_GEAR_PULL * float(gears - g) / maxf(gears - 1, 1)
+	if g < gears: thrust *= lerpf(POWER_BAND.x, POWER_BAND.y, clampf(r, 0.0, 1.0)) #the top gear stays flat, so the top speed matches an automatic's
+	if g > 1: thrust *= lerpf(bogFloor(g), 1.0, clampf(r / BOG_BELOW, 0.0, 1.0))
+	if shiftKick > 0: thrust *= SHIFT_KICK
+	return thrust
+
+## The gear that suits `speed`: the lowest one still under its limiter
+func bestGear(speed: float) -> int:
+	var n := shownGears()
+	for g in range(1, n):
+		if speed < gearTop(g): return g
+	return n
+
+## A gear's share of its push at a standstill: BOG_THRUST in second, half that in third and so on, so
+## pulling away in fifth barely moves the car and first is by far the best start
+static func bogFloor(g: int) -> float:
+	return BOG_THRUST * pow(0.5, g - 2)
+
+## How far the engine is through the band its gear works in: 0 where the gear below hands over (its limiter;
+## a standstill for first), 1 at this gear's own limiter. Under 0 the gear is too high for the speed. The
+## tach, the engine note and the shift kick read this; R and N count through first gear's band.
+func revShare() -> float:
+	var g := maxi(gear, 1)
+	var low := gearTop(g - 1) if g > 1 else 0.0
+	return (velocity.length() - low) / maxf(gearTop(g) - low, 1.0)
+
+## The gear autoGear would choose from `g` at `speed`: one step up near the limiter, one down when bogging
+func autoGear(g: int, speed: float) -> int:
+	if g < 1: return 1
+	if g < gears && speed >= gearTop(g) * AUTO_UP: return g + 1
+	if g > 1 && speed < gearTop(g - 1) * AUTO_DOWN: return g - 1
+	return g
+
+## Shifted by hand: a geared car with the Automatic Gearbox setting off, or with a driver at the wheel that
+## works the lever itself (CarDriver.shiftsByHand)
+func isManual() -> bool:
+	if gears <= 0: return false
+	if myController != null && myController.driver != null: return myController.driver.shiftsByHand()
+	return not Settings.get_value("gameplay/auto_gearbox")
+
+## One step of the lever (+1 up, -1 down; down past N is R). Returns whether the gear changed.
+func shift(step: int) -> bool:
+	var to := clampi(gear + step, -1, gears)
+	if to == -1 && velocity.dot(transform.x) > REVERSE_SHIFT_SPEED: return false #it won't go into R rolling forward
+	if to == gear: return false
+	var from := gear
+	var kicked := step > 0 && from >= 1 && revShare() >= SHIFT_KICK_FROM
+	setGear(to)
+	shiftCut = SHIFT_CUT_TICKS if from >= 1 && to >= 1 && not kicked else 0
+	shiftKick = SHIFT_KICK_TICKS if kicked else 0
+	shifted.emit(gear, kicked)
+	return true
+
+## Puts the car in gear `g`, swapping which bumper collides when it goes into or out of reverse
+func setGear(g: int) -> void:
+	if g == gear: return
+	if (g == -1) != (gear == -1): setForwardCollisionMode(g != -1)
+	gear = g
+
+## A second into a manual car's run: which keys shift
+func announceGearbox() -> void:
+	await get_tree().create_timer(2.2, false).timeout
+	PickupEffects.toast("MANUAL GEARBOX  -  %s UP, %s DOWN" % [InputGlyphs.label("ShiftUp"), InputGlyphs.label("ShiftDown")], HudTheme.SKY)
+
 func setForwardCollisionMode(setting: bool):#activate or deactive bumper collision based on gear
 	$CollisionShape2D.disabled = not setting
 	$CollisionShape2D_rear.disabled = setting
@@ -1220,6 +1403,7 @@ func setForwardCollisionMode(setting: bool):#activate or deactive bumper collisi
 #boosts (Nitro, Hop, Jump Jets: Pickups.K.MOVE) in a second for the Boost button (UseMove).
 const MAX_BUFFS := 4      #a fifth timed power-up replaces the one with the least time left
 var buffs := {}           #pickup id -> physics ticks left
+var fuelFree := false     #a Trial: the tank doesn't run down (Level sets it, Modes.isTrial)
 var buffTicks := {}       #pickup id -> ticks it started with (the HUD ring drains from this)
 var heldItem := ""        #a gadget waiting for Fire
 var heldCharges := 0
@@ -1284,15 +1468,16 @@ func tickPickups() -> void:
 	if airborneTicks > 0:
 		airborneTicks -= 1
 		if airborneTicks == 0: Gadgets.land(self)
-	var ai = myController.driver
-	var down := heldItem != "" && not isDestroyed && (Gadgets.aiWantsUse(self) if ai else actionDown("UseItem"))
+	var down := heldItem != "" && not isDestroyed && actionDown("UseItem")
 	if down && not useWasDown && not PickupEffects.useTakenByPrompt(): useItem()
 	useWasDown = down
-	down = moveItem != "" && not isDestroyed && (Gadgets.aiWantsMove(self) if ai else actionDown("UseMove"))
+	down = moveItem != "" && not isDestroyed && actionDown("UseMove")
 	if down && not moveWasDown: useMove()
 	moveWasDown = down
 
+#is a button of this car's held: the player's, or its driver's when one is at the wheel (CarDriver)
 func actionDown(action: String) -> bool:
+	if myController != null && myController.driver != null: return myController.driver.isPressed(action)
 	return not Settings.menu_open && InputMap.has_action(action) && Input.is_action_pressed(action)
 
 ## Takes a gadget into the Fire slot, or a boost (Pickups.K.MOVE) into the Boost slot. The same item adds

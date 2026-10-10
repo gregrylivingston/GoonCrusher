@@ -58,19 +58,37 @@ Run flows 1 to 6 under each of these:
 
 ## Mouse pass
 
-- Every bottom hint bar is clickable: the main menu (Back included), Goonopedia, pause, Deal, Claw and Pit Shop. Also the Q/E tab chips in Settings and Goonopedia.
+- Every bottom hint bar is clickable: the main menu (Back included), Goonopedia, Pickups, pause, Deal, Claw and Pit Shop. Also the Q/E tab chips in Settings, Goonopedia and Pickups.
 - Driver card:
-  - Upgrades opens the Goonopedia on that car with its Engine upgrade button focused. The stat rail ignores the mouse.
+  - Upgrades (F, or its button) opens the driver focus: the other drivers slide off, the card moves left and the bench slides in with the Engine row focused. The stat rail ignores the mouse.
+  - In driver focus: Up/Down move between rows, E buys (gold wash, the number pops, the coins count down), a stat the coins don't cover shakes, Space drives from any row, Down from Dice reaches Drive, A/D change driver and keep the row, and Upgrades, Back or Esc returns to the drivers. A locked driver's bench has no buy buttons and UNLOCK has the focus.
+  - The Upgrades and Pickups badges show how many the bank covers, hop every couple of seconds, pop when the number changes, hide at 0 and sit still with Reduce Motion. Pickups opens the Pickups screen on the first tab with something the bank covers, on that tile, and each tab wears its own badge; neither dock badge shows through it. G / View (and Back) closes it; B / L3 opens the Goonopedia.
   - Hovering a feature shows its full text.
   - Side cards show only their art; selecting one flips it to its front (a crossfade with Reduce Motion), and the old one flips back.
-  - Drive and Upgrades sit at the bottom right and follow the selected card.
+  - Upgrades, Drive and Pickups sit in a tray at the bottom centre and follow the selected card.
   - Unlock flashes.
 - The mouse wheel scrolls the carousels.
 - Run setup's road map:
-  - Clicking a region tab opens that region at its furthest open stop; Z/C (LT/RT) step regions, and a held trigger steps once.
-  - Clicking another stop selects it; Q/E (LB/RB) walk the road and cross into the next region at either end; 1-5 pick a stop.
-  - The car strip: cleared cars in colour, owned-but-not-cleared dark, unowned as outlines, the driver bigger over an orange bar. It updates with the mode and tier. "FULL GARAGE" shows in gold when all 9 have won. Clicking an owned car makes it the driver; clicking an unowned one does nothing.
-- The medallions have hover states.
+  - The buttons at the road's ends (and Z/C, LT/RT) open the region before and after at its furthest open stop; a held trigger steps once. A locked region's button shows a lock and shakes; the first region has no button before it, the last none after. Each button shows its key for the device in use.
+  - Clicking another stop selects it; Q/E (LB/RB) and A/D walk the road and cross into the next region at either end when it is open; 1-5 pick a stop.
+  - Each stop shows five mode glyphs: grey when open, faint when locked, bronze, silver or gold for the best medal by any car. The bar under a glyph is the current driver's own medal; change driver in the garage and the bars change.
+  - On a locked stop SELECT reads LOCKED, with what opens it underneath.
+  - SELECT, Accept or a click on the selected stop opens Level Options; Back (Esc / B, or the BACK button at the bottom left, beside Discord and Wishlist) returns to the road map, and Back again to the garage. Esc never opens Settings in run setup; the gear button and Start on a pad do.
+- Level Options:
+  - It opens with the focus on START, on the mode and tier last used, and START keeps the focus: Accept always starts the run.
+  - W/S change mode (the rows wrap), A/D change tier, and both work by clicking a mode row or a tier of the switch.
+  - Z/C (LT/RT; a held trigger steps once) walk the level's tiles: a white ring marks the tile and the card beside them describes it; one step past the last tile shows the level's blurb again. Opening another level starts with no tile.
+  - Each tier of the switch shows its medal, its goal and its win bonus; a locked Hard reads "Beat Medium first". The line under the switch shows why the run can't start (red) or what a win opens (green: Countdown, the featured modes, the next level, "on Medium" at a finale), then the first-clear bonus or "First clear paid".
+  - The stop buttons under the title and the keys 1-5 open another level of the region in place; a locked stop is dim and does nothing. The mode falls back to one the new level can start.
+  - Shift+Z/C jump a group of tiles at a time. Unknown goons are question marks; the RULES tiles show the night's share and the level's events.
+  - Mode rows: medals fill bronze, silver, gold; each row is one line (its name); a mode that isn't built is a slim "Coming soon" row.
+  - The records panel (bottom left) follows the mode and Q/E: the driver's medal here beside the best by any car and who holds it; a fixed-course mode and Goonpocalypse add their time or score.
+  - START's badge shows the gems the gadget and boost will take, and goes away with none chosen. The three sections line up on both edges with even gaps, and the mode rows end level with the pane.
+  - Road map: SELECT is the round button at the bottom right; on a locked stop it reads LOCKED with what opens it beside it. The radio is beside the top-left buttons in the garage too and clear of the logo.
+  - Q/E (LB/RB) or a click on the driver pill change the driver among the cars owned; the car strip, the mode rows' bars and the pill follow. The road map's driver chip is hidden here and back on the road map.
+  - The level's tiles: goons (silhouettes until crushed), ground swatches, props. The mouse on one fills the card beside them; leaving brings back the card of the tile Z/C walked to, or the level's blurb. A click on a goon's tile opens the Goonopedia.
+  - The car strip: cleared cars in colour, owned-but-not-cleared dim, unowned as outlines, the driver bigger over an orange bar. It updates with the mode and tier. "FULL GARAGE" shows in gold when all 9 have won. Clicking an owned car makes it the driver; clicking an unowned one does nothing.
+- The mode rows and the tier switch have hover states.
 - Check that a synthetic action fired by a click never leaves an action stuck "pressed" (`KeyHint.fire`).
 
 ## Harnesses and performance

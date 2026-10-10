@@ -30,9 +30,10 @@ func test_every_pickup_flies_to_a_hud_widget():
 
 func test_stat_pickups_land_on_their_lamp():
 	var hud = await addHud()
-	var systems = hud.get_node("Systems")
-	for stat in ["headlights", "engine", "steering", "traction", "oil"]:
-		assert_true(systems.is_ancestor_of(get_tree().get_first_node_in_group(stat + "ui")), stat)
+	for stat in ["engine", "oil"]:
+		assert_true(hud.get_node("Tach").is_ancestor_of(get_tree().get_first_node_in_group(stat + "ui")), stat + " is on the tachometer")
+	for stat in ["steering", "headlights", "traction"]:
+		assert_true(hud.get_node("Speedo").is_ancestor_of(get_tree().get_first_node_in_group(stat + "ui")), stat + " is on the speedometer")
 	hud.free()
 
 #a slow car gets a short scale and a fast one a long scale, always a multiple of 40

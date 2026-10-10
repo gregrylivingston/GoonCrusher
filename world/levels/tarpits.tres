@@ -9,6 +9,7 @@ displayName = "Tar Pits"
 poster = "res://world/art/posters/tarpits.png"
 region = &"hunting"
 stop = 4
+featured = Array[StringName]([&"bounty", &"flatout", &"knockout"])
 order = 18
 blurb = "Ash plains with tar pools that bog you down and lava that kills. Lure the heavies across the tar."
 barrier = "Red canyon walls and mesas. A pass opens through them every chunk."

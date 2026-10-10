@@ -1,0 +1,194 @@
+{
+	"about": "The launch trailer's gameplay shots, in beat order (promo/brief/beat_sheet.md). Film all: capture.py shot trailer_launch. One: capture.py shot trailer_launch crowd_plough",
+	"defaults": {
+		"mode": "countdown",
+		"tier": "medium",
+		"driver": "ai",
+		"god": true,
+		"upgrades": 10,
+		"hud": "off",
+		"lead": 8,
+		"seconds": 8,
+		"profiles": [
+			"wide4k"
+		]
+	},
+	"shots": [
+		{
+			"id": "cold_open",
+			"level": "prairie",
+			"car": "sedan",
+			"time": "day",
+			"lead": 2,
+			"seconds": 7,
+			"camera": {
+				"rig": "follow",
+				"zoom": [
+					0.9,
+					0.45
+				],
+				"seconds": 5
+			},
+			"events": [
+				{
+					"t": 2.5,
+					"do": "crowd",
+					"count": 14,
+					"ahead": 1400
+				}
+			]
+		},
+		{
+			"id": "crowd_plough",
+			"level": "orchard",
+			"car": "pickup",
+			"time": "day",
+			"camera": {
+				"rig": "follow",
+				"zoom": 0.55,
+				"lead": 0.25
+			},
+			"crowd": {
+				"spawnTimer": 1.0,
+				"progress": 120
+			},
+			"events": [
+				{
+					"t": 1,
+					"do": "crowd",
+					"count": 20,
+					"ahead": 1500
+				},
+				{
+					"t": 4,
+					"do": "crowd",
+					"count": 20,
+					"ahead": 1500
+				}
+			]
+		},
+		{
+			"id": "drive_through",
+			"level": "canyon",
+			"car": "racer",
+			"time": "day",
+			"seconds": 6,
+			"camera": {
+				"rig": "tripod",
+				"ahead": 900,
+				"zoom": 0.6
+			},
+			"driver": "pattern:straight",
+			"lead": 3
+		},
+		{
+			"id": "night_falls",
+			"level": "bayou",
+			"car": "police",
+			"time": "cycle",
+			"seconds": 9,
+			"events": [
+				{
+					"t": 2,
+					"do": "console",
+					"line": "night",
+					"label": "night falls"
+				}
+			]
+		},
+		{
+			"id": "night_crowd",
+			"level": "quarry",
+			"car": "police",
+			"time": "night",
+			"crowd": {
+				"spawnTimer": 1.0,
+				"progress": 200,
+				"giantOdds": 50
+			},
+			"camera": {
+				"rig": "follow",
+				"zoom": 0.5
+			}
+		},
+		{
+			"id": "city_taxi",
+			"level": "city",
+			"car": "taxi",
+			"time": "day",
+			"camera": {
+				"rig": "follow",
+				"zoom": 0.5,
+				"lead": 0.3
+			}
+		},
+		{
+			"id": "frozen_drift",
+			"level": "frozenlake",
+			"car": "supercar",
+			"time": "day",
+			"camera": {
+				"rig": "follow",
+				"zoom": 0.5
+			}
+		},
+		{
+			"id": "semi_convoy",
+			"level": "highway",
+			"car": "semi",
+			"time": "day",
+			"camera": {
+				"rig": "follow",
+				"zoom": 0.4
+			}
+		},
+		{
+			"id": "the_works",
+			"level": "blastpits",
+			"car": "van",
+			"time": "night",
+			"events": [
+				{
+					"t": 3,
+					"do": "explode",
+					"ahead": 600
+				},
+				{
+					"t": 3.4,
+					"do": "explode",
+					"ahead": 800,
+					"side": 200
+				},
+				{
+					"t": 3.8,
+					"do": "explode",
+					"ahead": 1000,
+					"side": -200
+				}
+			]
+		},
+		{
+			"id": "hud_showcase",
+			"level": "prairie",
+			"car": "racer",
+			"time": "day",
+			"hud": "full",
+			"seconds": 8
+		},
+		{
+			"id": "world_pullback",
+			"level": "moosewoods",
+			"car": "sedan",
+			"time": "day",
+			"seconds": 8,
+			"camera": {
+				"rig": "follow",
+				"zoom": [
+					0.45,
+					0.2
+				],
+				"seconds": 7
+			}
+		}
+	]
+}

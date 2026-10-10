@@ -38,7 +38,7 @@ func test_integrate_stays_pure_with_the_handbrake():
 	assert_eq(c.velocity, Vector2.ZERO, "the body is untouched")
 
 func test_the_handbrake_slides_and_turns_tighter():
-	var c = car("audi")
+	var c = car("supercar")
 	var plain = slide(c, 1200.0, false, 40)
 	var slid = slide(c, 1200.0, true, 40)
 	assert_gt(slid[2], plain[2] + 0.3, "the rear lets go")

@@ -1,0 +1,63 @@
+{
+	"about": "Short vertical and square clips for Shorts, Reels, TikTok and feed posts. The car sits low in a tall frame (camera offset).",
+	"defaults": {
+		"mode": "countdown",
+		"tier": "medium",
+		"driver": "ai",
+		"god": true,
+		"upgrades": 10,
+		"hud": "off",
+		"lead": 10,
+		"seconds": 12,
+		"profiles": [
+			"vertical",
+			"square"
+		],
+		"per": {
+			"vertical": {
+				"camera": {
+					"rig": "follow",
+					"zoom": 0.5,
+					"offset": [
+						0,
+						220
+					]
+				}
+			}
+		}
+	},
+	"shots": [
+		{
+			"id": "crush_prairie",
+			"level": "prairie",
+			"car": "sedan",
+			"time": "day",
+			"crowd": {
+				"spawnTimer": 1.0,
+				"progress": 150
+			}
+		},
+		{
+			"id": "crush_night",
+			"level": "quarry",
+			"car": "police",
+			"time": "night",
+			"crowd": {
+				"spawnTimer": 1.0,
+				"progress": 200
+			}
+		},
+		{
+			"id": "taxi_city",
+			"level": "city",
+			"car": "taxi",
+			"time": "day"
+		},
+		{
+			"id": "semi_highway",
+			"level": "highway",
+			"car": "semi",
+			"time": "day"
+		}
+	]
+}

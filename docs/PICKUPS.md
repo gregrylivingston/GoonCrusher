@@ -1,6 +1,6 @@
 # Pickups
 
-79 pickups in nine kinds and five rarities. Most start locked: each kind is a small unlock tree ("Unlocks", below). Everything you tune lives in `scripts/global/pickups.gd` (`Pickups.DATA`). Curses are on hold (`docs/GAMEPLAY_SUGGESTIONS.md`, "Maybe").
+83 pickups in nine kinds and five rarities (four of them gift box games that goons never drop). Most start locked: each kind is a small unlock tree ("Unlocks", below). Everything you tune lives in `scripts/global/pickups.gd` (`Pickups.DATA`). Curses are on hold (`docs/GAMEPLAY_SUGGESTIONS.md`, "Maybe").
 
 ## Files
 
@@ -27,7 +27,7 @@
 ## The registry
 
 Each entry in `Pickups.DATA` has these keys:
-- `name`, `kind` (`Pickups.K`), `rarity` (`Pickups.R`) and `text` (the Goonopedia line; keep the numbers in it true).
+- `name`, `kind` (`Pickups.K`), `rarity` (`Pickups.R`) and `text` (the line on its card on the Pickups screen; keep the numbers in it true).
 - `w`: the weight inside its tier. 0 means goons never drop it; world props and events use 0.
 - `icon` (`texture/icon/<icon>.svg`) and `ui`: the HUD group its flyer lands on.
 - `ai`: its worth to the AI driver, where a crush is about 12. `AIDriver.pickupValue` reads it.
@@ -39,7 +39,7 @@ These keys are optional:
 - `scene`: the original 14 keep their scenes.
 - `secs`: how long a timed effect lasts.
 - `charges`: a gadget's uses.
-- `start`, `parent`, `needs`, `price`: its place in its kind's unlock tree ("Unlocks", below).
+- `start`, `parent`, `after`, `needs`, `price`: its place in its kind's unlock tree ("Unlocks", below).
 - The item's own numbers (`fuel`, `repair`, `thrust`, `radius`, and so on).
 
 **Adding a pickup:**
@@ -48,7 +48,7 @@ These keys are optional:
 3. Add what it does to `PickupEffects.collect`. A gadget's use goes in `Gadgets.use` and `Gadgets.aiWantsUse`.
 4. A timed power-up that changes handling goes in `integrate()`, which only reads `car.buffs`.
 
-The Goonopedia, the HUD flyers and the tests pick the new pickup up from the registry.
+The Pickups screen, the HUD flyers and the tests pick the new pickup up from the registry.
 
 ## Drops
 
@@ -57,14 +57,14 @@ The Goonopedia, the HUD flyers and the tests pick the new pickup up from the reg
   1. **Tier:** `TIER_WEIGHTS` = 64 / 26 / 8 / 1.6 / 0.4 for Common to Legendary. Each tier above Common is scaled by `1 + Dice / DICE_DIVISOR[tier]` (40, 25, 18, 12). Giants and bosses (Foreman) drop one tier up. After `PITY` (25) drops without a Rare or better, the next drop is a Rare.
   2. **Item:** a weighted pick inside the tier, filtered by mode and night and scaled by the goon's faction (`fac`). Scrap Gang drops more Nitro, Jerry Cans, Spark Plugs and EMPs; Wild Things drop more Repair Kits, Bait and Spare Tyres; the Goon Tribe drops more Wrenches, Toolboxes, Mines and Air Horns.
 - **The old table:** `Walker.powerupDropDict` and `Root.LUCK_WEIGHT_BONUS` serve only `getPowerupFromWeights` with a plain table; goons don't use them.
-- **Goonopedia shares:** `Goonopedia.dropShare(id, mode)` is a pickup's share of drops in a mode, before Dice and faction. The shares sum to 100 in every mode (tested).
+- **Drop shares:** `PickupShop.dropShare(id, mode)` is a pickup's share of drops in a mode, before Dice and faction. The shares sum to 100 in every mode (tested).
 
 ## The kinds
 
 | Kind | How it works | HUD |
 |---|---|---|
-| Supplies | Instant: fuel, hull, systems. The Wrench fixes the worst system by 35, a part (Spare Tyre, Bulb, Spark Plug, Tie Rod, Tank Patch) sets its system to 100, the Toolbox gives +40 to all, and Full Service fills everything. | Fuel/hull dials, system lamps |
-| Tune-ups | The original +1 stat pickups. The Tune-up Crate gives +3 to one of the car's three weakest stats, the Overhaul +2 to all, and the Turbo Kit +12 Engine (plus flames). The Blueprint gives a free garage upgrade, credited at the results ticket. | Systems strip |
+| Supplies | Instant: fuel, hull, systems. The Wrench fixes the worst system by 35, a part (Spare Tire, Bulb, Spark Plug, Tie Rod, Tank Patch) sets its system to 100, the Toolbox gives +40 to all, and Full Service fills everything. | The fuel and hull on the dials, system lamps |
+| Tune-ups | The original +1 stat pickups. The Tune-up Crate gives +3 to one of the car's three weakest stats, the Overhaul +2 to all, and the Turbo Kit +12 Engine (plus flames). The Blueprint gives a free garage upgrade, credited at the results ticket. | The system lamps on the dials |
 | Power-ups | `car.addBuff(id)`: physics ticks from `secs`, at most `MAX_BUFFS` (4); a fifth replaces the one with the least time left. The same one again adds its time. | Rings above the strip |
 | Gadgets | `car.giveItem(id)`: the Fire slot (`heldItem`). The same gadget adds charges; a different one replaces it if it is as rare or rarer, otherwise it is sold for 10 × (rarity + 1) coins. **Fire** (E; X on a controller; rebindable as "Fire Gadget", action `UseItem`) fires one charge (`Gadgets.use`). | Slot left of the rings |
 | Boosts | Nitro (2 burns of 3 s), Hop (3 short hops, no landing blast) and Jump Jets (2 hops that crush on landing). `car.giveItem(id)` puts them in the Boost slot (`moveItem`), with the Fire slot's rules. **Boost** (Shift; LB on a controller; rebindable as "Boost / Hop", action `UseMove`) fires one charge (`car.useMove`, `Gadgets.use`). Nitro's burn is the timed buff `integrate()` reads. | Slot beside the gadget |
@@ -188,17 +188,19 @@ Hubcap Shuffle, Goon Press, Pachinko Drop and Coin Pusher are first drafts (2026
 
 ## Unlocks
 
-`scripts/global/unlocks.gd` (`Unlocks`, a class, not an autoload) answers what is open for pickups, cars, levels and modes. Each owner keeps its own data: a pickup's place in its tree is in `Pickups.DATA`, a level's gate is the Marathon won on the level before, on Medium after a region's finale (`Root.opensNextLevel`; the mode chain is `Root.isModeUnlocked`: Countdown, Sprint, Marathon, then Goonpocalypse and Defense), and a car's price is `cost` and `gems` in `PlayerData.cars`. Ids are `pickup:<id>`, `car:<name>`, `level:<id>` and `mode:<level>:<mode>` (`prize:<game>` for the gift box games, `CrushPrizes`).
+`scripts/global/unlocks.gd` (`Unlocks`, a class, not an autoload) answers what is open for pickups, cars, levels and modes. Each owner keeps its own data: a pickup's place in its tree is in `Pickups.DATA`, a level's gate is a featured mode won on the level before, on Medium after a region's finale (`Root.opensNextLevel`; the mode chain is `Root.isModeUnlocked`: Sprint, Countdown, then the level's three featured modes), and a car's price is `cost` and `gems` in `PlayerData.cars`. Ids are `pickup:<id>`, `car:<name>`, `level:<id>` and `mode:<level>:<mode>` (`prize:<game>` for the gift box games, `CrushPrizes`).
 
 **Four states** (`Unlocks.state(uid)`):
-- **HIDDEN:** its parent is still locked. The Goonopedia shows "???".
+- **HIDDEN:** its parent is still locked. The Pickups screen shows "???".
 - **SHOWN:** its parent is open but its play condition isn't met. It shows a dimmed preview, the condition and a progress bar.
 - **READY:** it can be bought, or opens at the next results ticket.
 - **OPEN:** saved in `meta.unlocks`. An unlock never closes again, even when its rule is retuned.
 
+**What a new save starts with.** Only the Fuel Can, the Coin and the Claw Crane (`start`), plus Crush Combo, which is always on. Every other tree's root is locked and for sale from the start (a pickup with no `parent`; state READY): the Repair Kit (250), Engine (20), Magnet (25), Air Horn (30), Nitro (40), Speed Trap (50) and Fast Forward (5,000). Until a tree's root is bought, nothing in it drops, run setup offers no gadget or boost, and fixed rewards fall back to the Coin (`Pickups.openOr`). Saves from before version 11 keep the roots they always had (`SaveManager.keepOldStarters`).
+
 **The trees.** Each kind is its own tree. A root (`start`) is open on a new save: Fuel Can and Repair Kit (Supplies has two roots, so survival never depends on unlocks), Engine, Magnet, Air Horn, Nitro, Coin, Slot Machine, Speed Trap and Fast Forward. Every other pickup names its `parent`, a pickup of its kind that must be open first. Crush Combo (`R.SYSTEM`) is always on and outside the trees. `Unlocks.treeOrder(kind)` lists a kind root first, depth first, and the Goonopedia shows them in that order.
 
-**Prices** are a first fit to the career playtests (package 1, B-4), by rarity in `Unlocks.PICKUP_PRICE`: Common 1,000 coins, Uncommon 3,000, Rare 8,000, Epic 20,000 and 5 gems, Legendary 15 gems. A `price` in the entry overrides it.
+**Prices** are placeholders (package 1, B-4). Each rarity has a range (`Unlocks.PRICE_RANGE`): Common 20 to 1,000 coins, Uncommon 1,200 to 4,500, Rare 5,000 to 12,000, Epic 15,000 to 30,000 and 3 to 6 gems, Legendary 12 to 18 gems. Inside a rarity no two pickups cost the same: they are spread over the range by ratio, shallowest in their trees first (`buildPrices`, `depthOf`), so a tree's root is the cheapest of its rarity and there is always something a little dearer to save for. A `price` in the entry overrides it (the Repair Kit's 250, the Casino games).
 
 **Play unlocks.** A pickup with `needs` has no price: it opens on the results ticket once its parent is open and every condition is met (`Unlocks.refresh`). There are ten: Headlights and Flare (drive through a night), Floodlights (3 nights), Monster Tires (crush 10 giants), EMP (crush 150 Scrap goons), Delivery (win a Sprint), Blueprint (open Quarry), Stopwatch (Sprint open anywhere), Barricade Kit (Defense open anywhere) and Panic Button (survive 3:00 of Goonpocalypse). The conditions are strings: `nights:<n>`, `giants:<n>`, `crushes:<n>`, `crushed:<faction>:<n>`, `wins:<mode>:<n>`, `mode:<mode>`, `open:<level>`, `survive:<seconds>`, `clears:<tier>:<n>` (mode-and-level completions on that tier or harder: `clears:medium:5` is five silver or gold medals; `ModeTiers.clears`), `boxes:<n>` (gift boxes opened over every run), `carclears:<n>` (car clears: a car's first win of a mode on a level, any tier; `SaveManager.carClearCount`) and `garages:<n>` (Full Garages: every car has won a mode on a level; `fullGarageCount`), the last two for future cosmetics (package 15). Their counters are `meta.lifetime` (`runs`, `nights`, `giants`, `wins_<mode>`, `boxes` and `bestBox`, added once per run by `Unlocks.countRun` on the results ticket), `goonsCrushed` and the Goonpocalypse records. `test_unlocks.gd` checks that every condition parses (`isValidNeed`).
 
@@ -209,13 +211,17 @@ Hubcap Shuffle, Goon Press, Pachinko Drop and Coin Pusher are first drafts (2026
 - The Scratch Card's pool, world events (`PickupWorld.EVENTS`) and chunk challenges (`CHUNK_PROPS`) leave locked ones out.
 - Run setup sells only open gadgets and boosts (`Pickups.openLoadout`).
 
-Unlocks open only on the results ticket and in the Goonopedia, never in a run, so a run's drop pool doesn't change under it.
+Unlocks open only on the results ticket and on the Pickups screen, never in a run, so a run's drop pool doesn't change under it.
 
-**Buying.** The Goonopedia's Pickups tab (docs/UI.md) shows each locked tile's price or PLAY in its corner (gold when the bank covers it). Accept on a focused tile, a second click on it, or the card's BUY button calls `Unlocks.buy(uid)`, which spends the bank, opens it and runs `refresh`. Run setup's "Next unlock" line names the nearest one (`Unlocks.nextUnlock`), and the results ticket lists what play opened ("Unlocked", NEW PICKUP).
+**More than one parent.** `after` lists pickups that must all be open, as well as the `parent`, before a pickup can be bought (`Unlocks.prerequisites`, `missing`). Until then it is SHOWN, not READY: its tile and price are visible, its card says what is still missing, and the tree draws a line from each prerequisite, dashed from the locked ones (`PickupShop.placeJoined` puts it under the middle of them). The Toolbox is the one so far: it needs the Spare Tire, Bulb, Spark Plug and Tie Rod.
 
-**Cars.** Entry cars (sedan, van, taxi, pickup) cost coins. Advanced ones also cost gems: semi 3, audi and racer 5, police 10, ambulance 15 (`gems` in `PlayerData.cars`). `SaveManager.unlockCar` goes through `Unlocks.buy("car:<name>")`.
+**Casino and the gift box games.** Casino is one tree, weakest first, rooted at the Claw Crane (open on a new save): the box-only games (Hubcap Shuffle, Goon Press, Pachinko Drop, Coin Pusher; `w` 0, so goons never drop them), the tickets (Scratch Card, then Lottery Ticket and Prize Wheel) and the gambles (Mystery Box, Double or Nothing, The Deal, Slot Machine). Each of the eight gift box games (`CrushPrizes.GAMES`) names its Casino pickup in `pickup`, and that pickup's unlock is the game's: one purchase opens the drop (if it has one) and puts the game in the boxes (`CrushPrizes.isOpen`, `forPickup`). There is no `prize:<id>` unlock any more; save version 10 turned old ones into their pickups and kept the Slot Machine, the old Casino root, open on older saves (`SaveManager.mergePrizeUnlocks`). The demo can unlock the tree's first tier (below).
 
-**The demo** opens Commons and Uncommons only (`Unlocks.DEMO_MAX_RARITY`); rarer tiles say FULL GAME. Its roots stay open, the Slot Machine included.
+**Buying.** The Pickups screen (`PickupShop`, docs/UI.md) shows each locked tile's price or PLAY in its corner (gold when the bank covers it). Accept on a focused tile, a second click on it, or the card's BUY button calls `Unlocks.buy(uid)`, which spends the bank, opens it and runs `refresh`. Run setup's "Next unlock" line names the nearest one (`Unlocks.nextUnlock`), and the results ticket lists what play opened ("Unlocked", NEW PICKUP).
+
+**Cars.** Entry cars (sedan, van, taxi, pickup) cost coins. Advanced ones also cost gems: semi 3, supercar and racer 5, police 10, ambulance 15 (`gems` in `PlayerData.cars`). `SaveManager.unlockCar` goes through `Unlocks.buy("car:<name>")`.
+
+**The demo** opens Commons and Uncommons (`Unlocks.DEMO_MAX_RARITY`) and the Casino tree's first tier, the games straight under the Claw Crane (Scratch Card, Mystery Box, Hubcap Shuffle; `Unlocks.inDemo`); other tiles say FULL GAME. It can buy every tree's root. The Slot Machine is not a root any more, so the demo doesn't have it.
 
 **Harnesses.** `Unlocks.allOpen` opens every pickup. Playtests and benchmarks set it by default (`--unlocks=all`), so their numbers compare with older runs; `--unlocks=save` uses the save. Career playtests and `--play-start` use the save, and career tiers open pickups down each tree up to a rarity (`CareerStart.TIERS`, `pickups`). The test runner sets it before every test; `test_unlocks.gd` turns it off.
 
@@ -245,8 +251,8 @@ These lines are all that pickups add to files other systems own. They are marked
 | `scene/player/playerRoot.gd` | `addPickupWidgets`, `HudChance`, and the gift boxes (`checkGiftBox`). |
 | `scene/player/slots/*` | The slot machine (`SlotMachine`) and the gift box reveal (`GiftBox`). |
 | `scene/player/menu/gameSummary.gd` | The Lottery row, best combo, Blueprints; `Unlocks.countRun` and `refresh` (the Unlocked row). |
-| `scene/player/menu/main/main2.gd` | The loadout in run setup (a gadget and a boost, open ones only), the Next unlock line. |
-| `scene/player/menu/goonopedia/goonopedia.gd` | The Pickups tab from the registry in tree order, unlock states and buying, `dropShare(id, mode)`. |
+| `scene/player/menu/main/main2.gd` | The loadout in run setup (a gadget and a boost, open ones only). |
+| `scene/player/menu/pickups/pickup_shop.gd` | The Pickups screen: a tab per tree from the registry, unlock states and buying, `dropShare(id, mode)`. |
 | `scripts/world/world_skin.gd` | `pickupIds()`: the chunk floor pickups through `openOr`. |
 | `scene/level/levelRoot.gd` | `nightsSeen` (for the night unlocks). |
 | `scripts/ai/ai_driver.gd` | `pickupValue` reads `ai` from the registry. |

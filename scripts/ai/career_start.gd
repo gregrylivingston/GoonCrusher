@@ -16,14 +16,16 @@ class_name CareerStart extends RefCounted
 #  pickups  the rarest pickup tier unlocked (Pickups.R; missing: only the tree roots), following each tree
 #           down from its root, so no pickup is open while its parent is locked
 const G := Root.gameModes
-const ALL_MODES := Root.MODE_PATH
-const ROAD := [G.GOONCRUSHER, G.SPRINT, G.MARATHON]
+#what a tier has beaten on a level: ROAD is Sprint, Countdown and the first featured mode that can be played
+#(enough to open the next level); ALL_MODES is every mode the level plays that can be played
+const ROAD := "road"
+const ALL_MODES := "all"
 const TIERS := {
 	"fresh": {},
 	#an hour or two in: The Wilds done (Tribe Country's first level open), a second car, a few upgrades
 	"early": {"beaten": {5: ROAD}, "cars": 2, "upgrades": 3, "coins": 1500, "gems": 2, "pickups": Pickups.R.COMMON},
-	#halfway: three regions down the road, Goonpocalypse picked up on the way, four cars, mid upgrades
-	"mid": {"beaten": {15: [G.GOONCRUSHER, G.SPRINT, G.MARATHON, G.GOONPOCALYPSE]}, "cars": 4, "upgrades": 8, "coins": 8000, "gems": 5, "pickups": Pickups.R.UNCOMMON},
+	#halfway: three regions down the road, four cars, mid upgrades
+	"mid": {"beaten": {15: ROAD}, "cars": 4, "upgrades": 8, "coins": 8000, "gems": 5, "pickups": Pickups.R.UNCOMMON},
 	#most of the way: five regions fully beaten (The Works open), all but the two dearest cars
 	"late": {"beaten": {25: ALL_MODES}, "cars": 7, "upgrades": 14, "coins": 40000, "gems": 12, "pickups": Pickups.R.EPIC},
 	#everything: every mode beaten on Hard everywhere by every car, every car maxed, a deep bank
@@ -32,8 +34,8 @@ const TIERS := {
 #one line per tier, for the console's `start` and the docs
 const TIER_TEXT := {
 	"fresh": "a new save",
-	"early": "The Wilds done on Medium (Countdown, Sprint, Marathon; Mudlick Marsh open), 2 cars, upgrades at 3, 1,500 coins, Common pickups",
-	"mid": "3 regions done on Medium with Goonpocalypse (Frostbite Pass open), 4 cars, upgrades at 8, 8,000 coins, pickups up to Uncommon",
+	"early": "The Wilds done on Medium (Sprint, Countdown and a featured mode; Mudlick Marsh open), 2 cars, upgrades at 3, 1,500 coins, Common pickups",
+	"mid": "3 regions done on Medium (Frostbite Pass open), 4 cars, upgrades at 8, 8,000 coins, pickups up to Uncommon",
 	"late": "5 regions fully beaten on Medium (Blast Pits open), 7 cars, upgrades at 14, 40,000 coins, pickups up to Epic",
 	"maxed": "all 30 levels beaten on Hard by every car, everything owned and unlocked, every upgrade maxed, 1,000,000 coins",
 }
@@ -53,12 +55,8 @@ static func build(tier: String, overrides: Dictionary = {}) -> PlayerData:
 	for count in spec.get("beaten", {}):
 		for i in mini(int(count), data.levels.size()):
 			data.levels[i].unlocked = true
-			var modes: Array = spec.beaten[count]
-			for mode in modes:
-				#Goonpocalypse and Defense open behind the Marathon (Root.isModeUnlocked)
-				if mode in [G.GOONPOCALYPSE, G.DEFENSE] && not G.MARATHON in modes: continue
-				SaveManager.passTier(data.levels[i], mode, winTier)
-			#a won Marathon opens the next level
+			for mode in beatenModes(i, spec.beaten[count]): SaveManager.passTier(data.levels[i], mode, winTier)
+			#a won featured mode opens the next level
 			if i + 1 < data.levels.size() && Root.opensNextLevel(data.levels[i]): data.levels[i + 1].unlocked = true
 	var byPrice: Array = data.cars.duplicate()
 	byPrice.sort_custom(func(a, b): return a.cost < b.cost)
@@ -87,9 +85,14 @@ static func build(tier: String, overrides: Dictionary = {}) -> PlayerData:
 	data.gem = int(spec.get("gems", 0))
 	data.selectedCar = data.cars.find(byPrice[owned - 1]) if owned > 0 else 0 #the best car owned, as a player would drive
 	data.selectedLevel = 0
-	data.gameMode = G.GOONCRUSHER
+	data.gameMode = Root.FIRST_MODE
 	data.saveVersion = SaveManager.SAVE_VERSION
 	return data
+
+## The modes a tier has beaten on level `index`: ROAD or ALL_MODES
+static func beatenModes(index: int, what: String) -> Array:
+	if what == ALL_MODES: return Root.modePath(index).filter(func(m): return Root.isModeAvailable(m))
+	return Root.STAPLE_MODES + [Root.roadModes(index)[0]]
 
 #---------- playing from a tier by hand (the console's `start`, the --play-start option) ----------
 
@@ -133,13 +136,13 @@ static func progress(data: PlayerData) -> Dictionary:
 	var open := 0
 	for level in data.levels:
 		if level.unlocked: open += 1
-		for mode in ALL_MODES: if level.gamemodeBeat.get(mode, false): beaten += 1
+		for mode in Root.modePath(level): if level.gamemodeBeat.get(mode, false): beaten += 1
 	var owned := 0
 	var upgrades := 0
 	for car in data.cars:
 		if car.cost == 0: owned += 1
 		for value in car.upgrades.values(): upgrades += int(value)
-	return {"levels_open": open, "modes_beaten": beaten, "modes_total": data.levels.size() * ALL_MODES.size(),
+	return {"levels_open": open, "modes_beaten": beaten, "modes_total": range(data.levels.size()).reduce(func(n, i): return n + beatenModes(i, ALL_MODES).size(), 0),
 		"cars_owned": owned, "cars_total": data.cars.size(), "upgrades": upgrades,
 		"upgrades_total": data.cars.size() * STATS.size() * SaveManager.MAX_UPGRADE_LEVEL, "coins": data.coin, "gems": data.gem,
 		"pickups_open": pickupsOpen(data), "pickups_total": Pickups.DATA.size()}

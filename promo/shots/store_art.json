@@ -1,0 +1,72 @@
+{
+	"about": "Steam store and library art from a still (D4). First film a still you like (capture.py shot steam_screens), then set \"plate\" below to its path and run: capture.py shot store_art. Sizes: check Steamworks before a final upload.",
+	"defaults": {
+		"kind": "stage",
+		"stage": "keyart",
+		"backdrop": "black",
+		"seconds": 0,
+		"plate": "SET-ME: the full path of a still in your output folder",
+		"dim": 0.35
+	},
+	"shots": [
+		{
+			"id": "header",
+			"profiles": [
+				"steam_header"
+			],
+			"logo_at": 0.5
+		},
+		{
+			"id": "small",
+			"profiles": [
+				"steam_small"
+			],
+			"logo_at": 0.5
+		},
+		{
+			"id": "main",
+			"profiles": [
+				"steam_main"
+			],
+			"logo_at": 0.38
+		},
+		{
+			"id": "vertical",
+			"profiles": [
+				"steam_vertical"
+			],
+			"logo_at": 0.25
+		},
+		{
+			"id": "library",
+			"profiles": [
+				"steam_library"
+			],
+			"logo_at": 0.22
+		},
+		{
+			"id": "hero",
+			"profiles": [
+				"steam_hero"
+			],
+			"text": "",
+			"dim": 0.15
+		},
+		{
+			"id": "logo",
+			"profiles": [
+				"steam_logo"
+			],
+			"backdrop": "clear",
+			"dim": 0,
+			"plate": ""
+		},
+		{
+			"id": "youtube_thumb",
+			"profiles": [
+				"youtube_thumb"
+			],
+			"logo_at": 0.3
+		}
+	]
+}

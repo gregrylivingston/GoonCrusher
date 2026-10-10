@@ -35,7 +35,7 @@ func test_every_tier_is_reachable_by_play():
 				if not level.gamemodeBeat[mode]: continue
 				assert_true(level.unlocked, "%s: a level with a beaten mode is open" % tier)
 				if i + 1 < data.levels.size() && Root.opensNextLevel(level): assert_true(data.levels[i + 1].unlocked, "%s: level %d's beaten modes opened the next" % [tier, i])
-				#the chain: Sprint needs Countdown, and so on, so every beaten mode was playable when it was beaten
+				#the chain: Countdown needs Sprint, and so on, so every beaten mode was playable when it was beaten
 				var without := level.duplicate(true)
 				without.gamemodeBeat[mode] = false
 				assert_true(Root.isModeUnlocked(without, mode), "%s: %s on level %d was unlocked before it was beaten" % [tier, Root.gameModeDescription[mode].name, i])
@@ -58,7 +58,7 @@ func test_tiers_grow():
 	assert_eq(maxed.upgrades, maxed.upgrades_total)
 	var data := CareerStart.build("maxed")
 	SaveManager.playerData = data
-	assert_true(SaveManager.isFullGarage(29, G.DEFENSE, ModeTiers.HARD), "maxed: every car has cleared everything on Hard")
+	assert_true(SaveManager.isFullGarage(29, Root.roadModes(29)[0], ModeTiers.HARD), "maxed: every car has cleared everything on Hard")
 	SaveManager.playerData = keepData
 
 func test_tiers_open_the_road_by_region():
@@ -66,21 +66,22 @@ func test_tiers_open_the_road_by_region():
 		var data := CareerStart.build(tier)
 		var open := data.levels.filter(func(l): return l.unlocked).size()
 		assert_eq(open, {"early": 6, "mid": 16, "late": 26}[tier], "%s: the next region's first level is open" % tier)
-		for i in open - 1: assert_eq(ModeTiers.best(data.levels[i], G.MARATHON), ModeTiers.MEDIUM, "%s: Marathon on Medium on level %d" % [tier, i])
 		for i in open - 1:
-			if data.levels[i].gamemodeBeat[G.GOONPOCALYPSE]: assert_true(data.levels[i].gamemodeBeat[G.MARATHON], "%s: Goonpocalypse only where the Marathon is" % tier)
+			assert_eq(Root.roadTier(data.levels[i]), ModeTiers.MEDIUM, "%s: a featured mode on Medium on level %d" % [tier, i])
+			for mode in G.values():
+				if data.levels[i].gamemodeBeat[mode]: assert_true(mode in Root.modePath(i), "%s: only modes level %d plays are beaten" % [tier, i])
 
-func test_personas_head_for_the_marathon_and_retry_a_finale_on_medium():
+func test_personas_head_for_a_featured_mode_and_retry_a_finale_on_medium():
 	var rookie := Personas.get_def("rookie")
 	var data := CareerStart.build("fresh")
 	for mode in [G.GOONCRUSHER, G.SPRINT]: SaveManager.passTier(data.levels[0], mode, ModeTiers.EASY)
-	assert_eq(Personas.chooseRun(rookie, data, [], rng()).mode, G.MARATHON, "the road goes on through the Marathon")
+	assert_eq(Personas.chooseRun(rookie, data, [], rng()).mode, Root.roadModes(0)[0], "the road goes on through a featured mode")
 	var finale := Levels.indexOf(&"moosewoods")
 	for i in finale + 1:
 		data.levels[i].unlocked = true
-		for mode in Root.MODE_PATH: SaveManager.passTier(data.levels[i], mode, ModeTiers.EASY)
+		for mode in CareerStart.beatenModes(i, CareerStart.ALL_MODES): SaveManager.passTier(data.levels[i], mode, ModeTiers.EASY)
 	var next := Personas.chooseRun(rookie, data, [], rng())
-	assert_eq([next.level, next.mode, next.tier], [finale, G.MARATHON, ModeTiers.MEDIUM], "a finale won on Easy: the Marathon again, on Medium")
+	assert_eq([next.level, next.mode, next.tier], [finale, Root.roadModes(finale)[0], ModeTiers.MEDIUM], "a finale won on Easy: its road mode again, on Medium")
 
 func test_overrides_and_unknown_tiers():
 	var data := CareerStart.build("fresh", {"coins": 5000, "gems": 3, "cars": 3, "upgrades": 2})
@@ -93,10 +94,10 @@ func test_rookie_follows_the_path():
 	var rookie := Personas.get_def("rookie")
 	var data := CareerStart.build("fresh")
 	var next := Personas.chooseRun(rookie, data, [], rng())
-	assert_eq(next.mode, G.GOONCRUSHER, "a new player starts with Countdown")
+	assert_eq(next.mode, G.SPRINT, "a new player starts with Sprint")
 	assert_eq(next.level, 0, "on the only open level")
-	data.levels[next.level].gamemodeBeat[G.GOONCRUSHER] = true
-	assert_eq(Personas.chooseRun(rookie, data, [], rng()).mode, G.SPRINT, "then the mode it opened")
+	data.levels[next.level].gamemodeBeat[G.SPRINT] = true
+	assert_eq(Personas.chooseRun(rookie, data, [], rng()).mode, G.GOONCRUSHER, "then the mode it opened")
 
 func test_a_losing_streak_sends_the_rookie_back_to_farm():
 	var rookie := Personas.get_def("rookie")
@@ -181,8 +182,8 @@ func test_in_run_choices_are_valid():
 			if g != "": assert_true(Pickups.LOADOUT[g] <= gems, "%s's gadget is affordable" % id)
 			var b := Personas.chooseBoost(persona, gems, rng())
 			if b != "": assert_true(Pickups.BOOST_LOADOUT[b] <= gems, "%s's boost is affordable" % id)
-	assert_eq(Personas.get_def("rookie").profile, "rookie")
-	for id in Personas.DATA: assert_true(AIProfiles.PROFILES.has(Personas.get_def(id).profile), "%s drives a real profile" % id)
+	assert_eq(AIProfiles.parse(Personas.get_def("rookie").profile).skill, "rookie")
+	for id in Personas.DATA: assert_eq(AIProfiles.problemWith(Personas.get_def(id).profile), "", "%s drives a real spec" % id)
 
 func test_rookie_profile_is_imperfect_and_the_rest_unchanged():
 	var rookie := AIProfiles.resolve("rookie")

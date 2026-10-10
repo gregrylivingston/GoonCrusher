@@ -20,6 +20,8 @@
 script = ExtResource("14_ap600")
 carId = "sedan"
 traits = Array[StringName]([&"second_wind", &"duct_tape"])
+redline = 6.0
+hudSkin = &"beater"
 weight = 35
 charName = "Anthony"
 profilePic = ExtResource("13_mjohb")

@@ -15,6 +15,10 @@ func after_each():
 	SaveManager.playerData = original
 	SaveManager.dirty = false
 
+#the modes that can be played: one that isn't built yet has no goal or pay (Root.MODE_AVAILABLE)
+func built() -> Array:
+	return M.values().filter(func(m): return Root.MODE_AVAILABLE.get(m, false))
+
 func test_beating_a_tier_credits_it_and_the_ones_below():
 	var data = PlayerData.new()
 	SaveManager.playerData = data
@@ -50,7 +54,7 @@ func test_a_save_from_before_the_tiers_counts_beaten_modes_as_easy():
 	assert_eq(ModeTiers.best({"gamemodeBeat": {M.DEFENSE: true}}, M.DEFENSE), ModeTiers.EASY, "an entry with no tiers at all")
 
 func test_win_bonus_grows_with_tier_and_level():
-	for mode in M.values():
+	for mode in built():
 		var easy := ModeTiers.winBonus(mode, ModeTiers.EASY, 0)
 		assert_gt(easy, 0, "%s pays a win bonus" % M.find_key(mode))
 		assert_gt(ModeTiers.winBonus(mode, ModeTiers.MEDIUM, 0), easy, "Medium pays more")
@@ -59,7 +63,7 @@ func test_win_bonus_grows_with_tier_and_level():
 
 func test_win_bonus_is_paid_by_the_minute_so_short_goals_cant_be_farmed():
 	var def := Levels.defAt(0)
-	for mode in M.values():
+	for mode in built():
 		for tier in ModeTiers.TIERS:
 			var minutes := ModeTiers.goalSeconds(mode, tier, def.seconds, def.sprintSlack) / 60.0
 			assert_gt(minutes, 0.5, "%s %s has a goal length" % [M.find_key(mode), ModeTiers.NAMES[tier]])
@@ -83,7 +87,9 @@ func test_harder_tiers_ask_more():
 		assert_gt(ModeTiers.SLACK[i], ModeTiers.SLACK[i + 1], "Sprint's clock is tighter")
 		assert_gt(ModeTiers.LEGS[i + 1], ModeTiers.LEGS[i])
 		assert_true(ModeTiers.ESCALATION[i] <= ModeTiers.ESCALATION[i + 1] && ModeTiers.SPAWN_TIMER[i] >= ModeTiers.SPAWN_TIMER[i + 1], "the world is tougher")
-	for mode in M.values(): assert_true(ModeTiers.goalText(mode, ModeTiers.MEDIUM, 300.0) != "", "%s has a goal line" % M.find_key(mode))
+	for mode in built(): assert_true(ModeTiers.goalText(mode, ModeTiers.MEDIUM, 300.0) != "", "%s has a goal line" % M.find_key(mode))
+	assert_true(ModeTiers.goalText(M.BLACKOUT, ModeTiers.EASY, 300.0).contains("night"))
+	assert_eq(ModeTiers.goalSeconds(M.BLACKOUT, ModeTiers.HARD, 300.0, 1.3), ModeTiers.goalSeconds(M.GOONCRUSHER, ModeTiers.HARD, 300.0, 1.3), "Blackout runs Countdown's clock")
 
 func test_the_level_reads_its_tier():
 	var data = PlayerData.new()

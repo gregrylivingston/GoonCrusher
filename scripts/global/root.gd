@@ -1,7 +1,9 @@
 extends Node
 
-enum gameModes {  GOONCRUSHER , SPRINT, MARATHON, DEFENSE, GOONPOCALYPSE }
-enum endCondition { NOGAS , NOHEALTH , NOTIME , SUCCESS , ABANDONED , BASEDESTROYED } #append only: the values are ints
+#append only: saves key beaten modes, tiers and car clears by these numbers. Modes (scripts/global/modes.gd) holds
+#each mode's id, category and rules; a level plays Sprint, Countdown and its three featured modes (modePath)
+enum gameModes {  GOONCRUSHER , SPRINT, MARATHON, DEFENSE, GOONPOCALYPSE, BLACKOUT, BOUNTY, RALLY, FLATOUT, HOTLAP, DRIFT, CONES, SMASH, CANNONBALL, CIRCUIT, DERBY, KNOCKOUT, KEEPCUP, PURSUIT }
+enum endCondition { NOGAS , NOHEALTH , NOTIME , SUCCESS , ABANDONED , BASEDESTROYED , OUTRUN } #append only: the values are ints
 enum upgrade { HEALTH , FUEL , ARMOR , ENGINE , TRACTION , STEERING , CLOVER , LUCK , HEADLIGHTS , OIL , COIN , PURSE , GEM , SLOTMACHINE, CURRENTGOONSCRUSHED}
 enum terrain { GRASS , SAND , MUD , WATER , HILLS , MOSS , DIRT , SNOW, ASPHALT, ICE, OIL, SHALLOWS, WASH, CONVEYOR, MUDPIT, DEEPSNOW, LOT, BUILDING, BRIDGE, WADE } #append only: World.TERRAIN and Goons.T mirror it
 
@@ -34,16 +36,28 @@ const IS_DEMO := false
 const GAME_VERSION := "0.1"
 const DEMO_CAR_COUNT := 3 #the demo offers the first 3 cars and the first 2 regions (10 levels)
 const DEMO_LEVEL_COUNT := 10
-const DEMO_MODES = [gameModes.GOONCRUSHER, gameModes.SPRINT, gameModes.MARATHON]
-
 #modes that are finished enough to play. An unavailable mode shows "Coming soon" whatever its
-#unlocks, can't be started, and doesn't count toward unlocking other modes.
+#unlocks, can't be started, and doesn't count toward unlocking other modes or the next level.
 const MODE_AVAILABLE = {
 	gameModes.GOONCRUSHER: true,
 	gameModes.SPRINT: true,
 	gameModes.GOONPOCALYPSE: true,
 	gameModes.MARATHON: true,
 	gameModes.DEFENSE: true,
+	gameModes.BLACKOUT: true,
+	gameModes.BOUNTY: true,
+	gameModes.RALLY: true,
+	gameModes.FLATOUT: true,
+	gameModes.HOTLAP: true,
+	gameModes.DRIFT: true,
+	gameModes.CONES: true,
+	gameModes.SMASH: true,
+	gameModes.CANNONBALL: true,
+	gameModes.CIRCUIT: true,
+	gameModes.DERBY: true,
+	gameModes.KNOCKOUT: true,
+	gameModes.KEEPCUP: true,
+	gameModes.PURSUIT: true,
 }
 
 static func versionText() -> String:
@@ -52,60 +66,92 @@ static func versionText() -> String:
 #dev console `unfinished on`: Coming Soon modes can be started. Session only, never saved.
 static var devAllModesAvailable := false
 
+#the demo plays every mode its levels feature
 static func isModeAvailable(mode: int) -> bool:
 	if devAllModesAvailable: return true
-	if IS_DEMO && mode not in DEMO_MODES: return false
 	return MODE_AVAILABLE.get(mode, false)
 
-#The order a player meets the modes on every level, and the order the menus show them: Countdown, Sprint and
-#Marathon are the road (Marathon opens the next level), then Goonpocalypse and Defense open behind it. The one
-#list every menu, harness and test reads.
-const MODE_PATH := [gameModes.GOONCRUSHER, gameModes.SPRINT, gameModes.MARATHON, gameModes.GOONPOCALYPSE, gameModes.DEFENSE]
-#the mode whose win opens the next level (Medium at a region's finale)
-const ROAD_MODE := gameModes.MARATHON
+#the mode open on every unlocked level: the shortest and easiest, where a new level starts
+const FIRST_MODE := gameModes.SPRINT
+#the two modes every level starts with, in order; its three featured modes open behind them
+const STAPLE_MODES := [gameModes.SPRINT, gameModes.GOONCRUSHER]
 
-#the per-level unlock chain, ignoring availability. Countdown is open on any unlocked level, Sprint needs
-#Countdown beaten, Marathon needs Sprint, and Goonpocalypse and Defense need Marathon.
+## The modes a level plays, in the order a player meets them and the menus show them: Sprint, Countdown, then
+## its featured Crusher, Trial and Goon Cup mode (LevelDef.featured, Modes.featured). The one list every menu,
+## harness and test reads. `level` is a save entry (its "id") or a level index; an entry with no id has only
+## the staples.
+static func modePath(level) -> Array:
+	var def: LevelDef = null
+	if level is int: def = Levels.defAt(level)
+	elif level is Dictionary && level.has("id"): def = Levels.get_def(StringName(str(level.id)))
+	return STAPLE_MODES + (Modes.featured(def) if def else [])
+
+## A level's featured modes: the ones behind Countdown, any of which opens the next level
+static func featuredModes(level) -> Array:
+	return modePath(level).slice(STAPLE_MODES.size())
+
+## The modes whose win opens the next level: the featured ones that can be played. A level none of whose
+## featured modes is finished yet opens the road on Countdown, so unfinished modes never block it.
+static func roadModes(level) -> Array:
+	var road := featuredModes(level).filter(func(m): return isModeAvailable(m))
+	return road if not road.is_empty() else [gameModes.GOONCRUSHER]
+
+#the per-level unlock chain, ignoring availability. Sprint is open on any unlocked level, Countdown needs
+#Sprint beaten, and the level's three featured modes need Countdown. A mode the level doesn't feature is shut.
 static func isModeUnlocked(level: Dictionary, mode: int) -> bool:
 	if not level.get("unlocked", false): return false
+	if mode not in modePath(level): return false
 	var beat: Dictionary = level.get("gamemodeBeat", {})
 	if beat.get(mode, false): return true #a mode already beaten stays open
 	match mode:
-		gameModes.GOONCRUSHER: return true
-		gameModes.SPRINT: return beat.get(gameModes.GOONCRUSHER, false)
-		gameModes.MARATHON: return beat.get(gameModes.SPRINT, false)
-		gameModes.GOONPOCALYPSE, gameModes.DEFENSE: return beat.get(gameModes.MARATHON, false)
-	return false
+		gameModes.SPRINT: return true
+		gameModes.GOONCRUSHER: return beat.get(gameModes.SPRINT, false)
+	return beat.get(gameModes.GOONCRUSHER, false)
 
-## Modes beaten on a level, counting only those that can be played (a demo save's extras don't count there)
+## Modes beaten on a level, counting only those it plays that can be played
 static func modesBeaten(level: Dictionary) -> int:
 	var beat: Dictionary = level.get("gamemodeBeat", {})
-	return MODE_PATH.filter(func(m): return beat.get(m, false) && isModeAvailable(m)).size()
+	return modePath(level).filter(func(m): return beat.get(m, false) && isModeAvailable(m)).size()
 
 ## Is the level a region's finale (its 5th stop), which opens the next region only on Medium
 static func isFinale(level: Dictionary) -> bool:
 	var def := Levels.get_def(StringName(str(level.get("id", "")))) if level.has("id") else null
 	return def != null && def.isFinale()
 
-## The tier the road mode must be won on here to open the next level: Medium at a finale, else any
+## The tier a road mode must be won on here to open the next level: Medium at a finale, else any
 static func tierToOpenNext(level: Dictionary) -> int:
 	return ModeTiers.MEDIUM if isFinale(level) else ModeTiers.EASY
 
-## Has this level done enough to open the one after it: Marathon won, on Medium at a finale
+## The best tier won here on any road mode
+static func roadTier(level: Dictionary) -> int:
+	var best := ModeTiers.NONE
+	for mode in roadModes(level): best = maxi(best, ModeTiers.best(level, mode))
+	return best
+
+## Has this level done enough to open the one after it: one of its road modes won, on Medium at a finale
 static func opensNextLevel(level: Dictionary) -> bool:
-	return ModeTiers.best(level, ROAD_MODE) >= tierToOpenNext(level)
+	return roadTier(level) >= tierToOpenNext(level)
 
-## The rule that opens the next level, for a locked poster: "Win the Marathon on the level before it to
-## unlock", "... on Medium ..." after a finale
+## "Marathon, Rally Stage or Cannonball": the level's road modes by name
+static func roadText(level: Dictionary) -> String:
+	var names := roadModes(level).map(func(m): return modeName(m))
+	if names.size() < 2: return "".join(names)
+	return ", ".join(names.slice(0, -1)) + " or " + names[-1]
+
+## A mode's name as a sentence writes it: "Rally Stage"
+static func modeName(mode: int) -> String:
+	return Modes.title(mode)
+
+## The rule that opens the next level, for a locked poster: "Win Marathon, Rally Stage or Cannonball on the
+## level before it to unlock", "... on Medium ..." after a finale
 static func openRuleText(level: Dictionary) -> String:
-	return "Win the Marathon on the level before it%s to unlock" % (" on Medium" if isFinale(level) else "")
+	return "Win %s on the level before it%s to unlock" % [roadText(level), " on Medium" if isFinale(level) else ""]
 
-## What is left here before the next level opens, or "" when nothing is: "Win the Marathon here", "Win the
-## Marathon on Medium here"
+## What is left here before the next level opens, or "" when nothing is: "Win Marathon, Rally Stage or
+## Cannonball here", "... on Medium here"
 static func openLeftText(level: Dictionary) -> String:
 	if opensNextLevel(level): return ""
-	if isFinale(level) && ModeTiers.best(level, ROAD_MODE) >= ModeTiers.EASY: return "Win the Marathon on Medium here"
-	return "Win the Marathon%s here" % (" on Medium" if isFinale(level) else "")
+	return "Win %s%s here" % [roadText(level), " on Medium" if isFinale(level) else ""]
 
 #can this mode be started on this level from the menu
 static func isModePlayable(level: Dictionary, mode: int) -> bool:
@@ -113,14 +159,11 @@ static func isModePlayable(level: Dictionary, mode: int) -> bool:
 
 #why a mode can't be started, for the menu; "" when it can
 static func modeLockReason(level: Dictionary, mode: int) -> String:
-	if not isModeAvailable(mode): return "Not Available In Demo" if IS_DEMO && MODE_AVAILABLE.get(mode, false) else "Coming Soon"
+	if not isModeAvailable(mode): return "Coming Soon"
 	if isModeUnlocked(level, mode): return ""
 	if not level.get("unlocked", false): return "Level Locked"
-	match mode:
-		gameModes.SPRINT: return "Beat Countdown To Unlock"
-		gameModes.MARATHON: return "Beat Sprint To Unlock"
-		gameModes.GOONPOCALYPSE, gameModes.DEFENSE: return "Win Marathon Here To Unlock"
-	return "Locked"
+	if mode not in modePath(level): return "Not On This Level"
+	return "Beat Sprint To Unlock" if mode == gameModes.GOONCRUSHER else "Beat Countdown To Unlock"
 
 #coins a run pays: its coins times the star multiplier, x1 plus STAR_BONUS a star, up to STAR_MULT_MAX (20 stars).
 #Was coins x stars, which paid six-figure runs by the sixth level (career playtests, docs/GAMEPLAY_SUGGESTIONS.md);
@@ -195,27 +238,7 @@ func getSpecificPowerup(pName: upgrade) -> Powerup:
 func getGoon():return spawnManager.getGoon()
 
 
-var gameModeDescription: Dictionary = {
-	Root.gameModes.GOONCRUSHER:{
-		"name":"COUNTDOWN",
-		"description":"Survive the countdown while crushing increasing powerful waves of goon.",
-	},
-	Root.gameModes.SPRINT:{
-		"name":"SPRINT",
-		"description":"Race against the goons, rocks, and clocks to reach the finish line.",
-	},
-	Root.gameModes.DEFENSE:{
-		"name":"DEFENSE",
-		"description":"Hold the station until the clock runs out. Goons march on its pumps and blow up when they reach them: crush them before they get there.",
-	},
-	Root.gameModes.MARATHON:{
-		"name":"MARATHON",
-		"description":"A relay of five stations. Each one refuels you, patches you up and adds time. Reach the last.",
-	},
-	Root.gameModes.GOONPOCALYPSE:{
-		"name":"GOONPOCALYPSE",
-		"description":"Endless, and it only gets worse. Survive twice the level's clock for the star, then chase your best score.",
-	},
-}
-	
-	
+#how a run in each mode is won and lost (Level Options shows it after the mode's description), and each mode's
+#name and description: all from Modes.DATA
+var MODE_RULES: Dictionary = Modes.rulesTexts()
+var gameModeDescription: Dictionary = Modes.descriptions()

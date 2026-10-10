@@ -13,7 +13,7 @@ their .import files; the sheets need mipmaps on (see docs/CAR_ART.md). The side 
 import base64, json, os, re, subprocess, sys, html, argparse, pathlib, tempfile, shutil
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
-CARS = ["sedan", "van", "taxi", "pickup", "semi", "audi", "racer", "police", "ambulance"]
+CARS = ["sedan", "van", "taxi", "pickup", "semi", "supercar", "racer", "police", "ambulance"]
 #art that bakes with a car into its folder under another name: the semi's trailer (CarTrailer)
 EXTRA = {"semi": [("semiTrailer", "semi_trailer")]}
 JOBS = ["sheets", "side"]

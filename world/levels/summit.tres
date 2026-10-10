@@ -9,6 +9,7 @@ displayName = "Yeti Summit"
 poster = "res://world/art/posters/summit.png"
 region = &"hunting"
 stop = 5
+featured = Array[StringName]([&"blackout", &"hotlap", &"circuit"])
 order = 19
 blurb = "Boulder corridors up to one high plateau of deep snow. Every goon here is a heavy."
 barrier = "Mountain ranges wall the valleys, with passes between them."

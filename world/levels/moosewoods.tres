@@ -9,6 +9,7 @@ displayName = "Moose Woods"
 poster = "res://world/art/posters/moosewoods.png"
 region = &"wilds"
 stop = 5
+featured = Array[StringName]([&"goonpocalypse", &"smash", &"derby"])
 order = 4
 blurb = "Dense pines broken by clearings. Herds stampede through the clearings and Bullmoose crash out of the trees."
 barrier = "Thickets of pine too dense to drive through. Trails run through them; the clearings between are where you build speed."

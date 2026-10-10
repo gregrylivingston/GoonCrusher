@@ -9,6 +9,7 @@ displayName = "Ghost Town"
 poster = "res://world/art/posters/ghosttown.png"
 region = &"raiders"
 stop = 2
+featured = Array[StringName]([&"bounty", &"cones", &"pursuit"])
 order = 11
 blurb = "Raiders looting a western town: wide dirt streets, timber fronts, tumbleweeds. Slick vans oil the main street."
 barrier = "Building blocks wall every street, and canals cut across the grid, bridged at each street."

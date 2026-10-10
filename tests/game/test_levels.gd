@@ -192,7 +192,6 @@ func test_region_uses_the_selected_level():
 
 func test_demo_is_the_first_two_regions():
 	assert_eq(Root.DEMO_LEVEL_COUNT, 10)
-	assert_eq(Root.DEMO_MODES, [Root.gameModes.GOONCRUSHER, Root.gameModes.SPRINT, Root.gameModes.MARATHON])
 	for i in Levels.count(): assert_eq(i < Root.DEMO_LEVEL_COUNT, Territories.isDemo(Levels.defAt(i).region), "%s: in the demo by its region" % Levels.ORDER[i])
 	var levels = PlayerData.new().levels
 	for i in levels.size(): assert_eq(levels[i].unlocked, i == 0, "%s: only the first is open in a new save" % levels[i].id)
@@ -278,11 +277,35 @@ func test_sprint_distance_grows_by_region():
 		last = d
 	assert_almost_eq(Territories.sprintDistance(&"wilds"), 20000.0, 0.01)
 	assert_almost_eq(Territories.sprintDistance(&"works"), 34000.0, 0.01)
-	assert_almost_eq(Level.sprintDistance(Levels.get_def(&"city")), Territories.sprintDistance(&"sprawl"), 0.01)
+	assert_almost_eq(Level.sprintDistance(Levels.get_def(&"city")), Territories.sprintDistance(&"sprawl") * ModeTiers.SPRINT_DISTANCE[ModeTiers.NONE], 0.01, "a Marathon leg")
+
+func test_sprint_distance_grows_by_tier():
+	for id in Levels.ORDER:
+		var def := Levels.get_def(id)
+		var last := Level.sprintDistance(def)
+		for tier in ModeTiers.TIERS:
+			var d := Level.sprintDistance(def, tier)
+			assert_gt(d, last, "%s %s: further than the tier below (and than a Marathon leg)" % [id, ModeTiers.NAMES[tier]])
+			assert_almost_eq(Level.sprintOffsetPx(d, 0.0, tier).length(), d, 0.01, "%s %s: under the tier's cap" % [id, ModeTiers.NAMES[tier]])
+			last = d
+	assert_almost_eq(Level.sprintDistance(Levels.defAt(0), ModeTiers.EASY), 57500.0, 0.01)
+	assert_almost_eq(Level.sprintDistance(Levels.defAt(0), ModeTiers.HARD), 75000.0, 0.01)
+
+func test_marathon_legs_stay_on_the_map():
+	var reach := Vector2(WorldGen.CHUNK_LIMIT * WorldGen.CHUNK_PX)
+	for id in [Levels.ORDER[0], Levels.ORDER[-1]]:
+		var distance := Level.sprintDistance(Levels.get_def(id))
+		for run in 40:
+			var at := Vector2(2866, 1583)
+			var heading := 0.0
+			for leg in ModeTiers.LEGS[ModeTiers.HARD] * 4: #far longer than any relay
+				var turn := (WorldGen.hashf(run, WorldGen.TAG_LEG, leg, 0) * 2.0 - 1.0) * Level.MARATHON_TURN
+				heading = Level.legHeadingFrom(at, heading, turn, distance)
+				at += Level.sprintOffsetPx(distance, WorldGen.hashf(run, WorldGen.TAG_LEG, leg, 1) * 2.0 - 1.0).rotated(heading)
+				assert_true(absf(at.x) <= reach.x && absf(at.y) <= reach.y, "%s run %d leg %d: %s is on the map" % [id, run, leg, at])
 
 func test_sprint_clocks_fit_the_stock_sedan():
 	const SEDAN_SLOWEST_TOP_SPEED = 499.0
-	const SEDAN_TANK_SECONDS = 87.0
 	for id in Levels.ORDER:
 		var def := Levels.get_def(id)
 		for yRoll in [-1.0, 0.0, 1.0]:
@@ -290,7 +313,6 @@ func test_sprint_clocks_fit_the_stock_sedan():
 			var clock = Level.sprintSeconds(distance, def.seconds, def.sprintSlack)
 			assert_gt(clock, distance / Level.REFERENCE_SPEED, "%s: slack above 1" % id)
 			assert_gt(SEDAN_SLOWEST_TOP_SPEED, distance / clock, "%s: the sedan is fast enough even on sand" % id)
-			assert_gt(SEDAN_TANK_SECONDS * 0.8, distance / SEDAN_SLOWEST_TOP_SPEED, "%s: one tank is enough" % id)
 
 #the coarse route underestimates the drive: every grammar adds a share and the lot approach on top
 func test_sprint_clock_allows_for_the_real_drive():

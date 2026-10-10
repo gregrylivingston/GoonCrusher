@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="CarArtSet" format=3]
+
+[ext_resource type="Script" path="res://scene/car/car_art_set.gd" id="script"]
+[ext_resource type="Texture2D" path="res://scene/car/supercar/art/supercar_a0.png" id="a0"]
+[ext_resource type="Texture2D" path="res://scene/car/supercar/art/supercar_a1.png" id="a1"]
+[ext_resource type="Texture2D" path="res://scene/car/supercar/art/supercar_a2.png" id="a2"]
+[ext_resource type="Texture2D" path="res://scene/car/supercar/art/supercar_c0.png" id="c0"]
+[ext_resource type="Texture2D" path="res://scene/car/supercar/art/supercar_c1.png" id="c1"]
+[ext_resource type="Texture2D" path="res://scene/car/supercar/art/supercar_c2.png" id="c2"]
+[ext_resource type="Texture2D" path="res://scene/car/supercar/art/supercar_mask.png" id="mask"]
+[ext_resource type="Texture2D" path="res://scene/car/supercar/art/supercar_shadow.png" id="shadow"]
+
+[resource]
+script = ExtResource("script")
+weathered = Array[Texture2D]([ExtResource("a0"), ExtResource("a1"), ExtResource("a2")])
+showroom = Array[Texture2D]([ExtResource("c0"), ExtResource("c1"), ExtResource("c2")])
+zoneMask = ExtResource("mask")
+shadow = ExtResource("shadow")
+hood = Vector2(72, 0)
+tank = Vector2(-26, -41.9)
+frontWheel = Vector2(58, 43.5)

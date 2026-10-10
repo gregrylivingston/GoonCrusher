@@ -1,0 +1,292 @@
+{
+	"about": "Pieces for the edit, with transparency (ProRes 4444): titles, the game's shutter as a wipe, line-ups, the HUD alone, prize games. backdrop: clear, magenta, grey or black.",
+	"defaults": {
+		"kind": "stage",
+		"backdrop": "clear",
+		"seconds": 3,
+		"lead": 0,
+		"profiles": [
+			"wide1080"
+		]
+	},
+	"shots": [
+		{
+			"id": "title_goons",
+			"stage": "title",
+			"text": "43 GOONS",
+			"sub": "ONE CAR"
+		},
+		{
+			"id": "title_levels",
+			"stage": "title",
+			"text": "30 LEVELS"
+		},
+		{
+			"id": "title_cars",
+			"stage": "title",
+			"text": "9 CARS"
+		},
+		{
+			"id": "title_logo",
+			"stage": "title",
+			"text": "GOONCRUSHER",
+			"font_size": 190
+		},
+		{
+			"id": "wipe_shutter",
+			"stage": "transition",
+			"label": "GOONCRUSHER",
+			"sub": "",
+			"hold": 0.4,
+			"seconds": 3.5
+		},
+		{
+			"id": "lineup_cars",
+			"stage": "lineup",
+			"what": "cars",
+			"names": true,
+			"seconds": 0
+		},
+		{
+			"id": "lineup_goons",
+			"stage": "lineup",
+			"what": "goons",
+			"seconds": 4
+		},
+		{
+			"id": "lineup_pickups",
+			"stage": "lineup",
+			"what": "pickups",
+			"seconds": 0
+		},
+		{
+			"id": "hud_alone",
+			"kind": "shot",
+			"layer": "hud",
+			"hud": "full",
+			"level": "prairie",
+			"car": "racer",
+			"driver": "ai",
+			"god": true,
+			"upgrades": 10,
+			"lead": 6,
+			"seconds": 8
+		},
+		{
+			"id": "prize_slot",
+			"stage": "res://tests/prize_lab/slot.tscn",
+			"tap": true,
+			"seconds": 14
+		},
+		{
+			"id": "prize_claw",
+			"stage": "res://tests/prize_lab/claw.tscn",
+			"tap": true,
+			"seconds": 14
+		},
+		{
+			"id": "prize_pachinko",
+			"stage": "res://tests/prize_lab/pachinko.tscn",
+			"tap": true,
+			"seconds": 14
+		},
+		{
+			"id": "menu_tour",
+			"stage": "menu",
+			"start": "mid",
+			"backdrop": "none",
+			"doors": true,
+			"seconds": 12,
+			"events": [
+				{
+					"t": 2,
+					"do": "press",
+					"action": "ui_right"
+				},
+				{
+					"t": 3,
+					"do": "press",
+					"action": "ui_right"
+				},
+				{
+					"t": 4.5,
+					"do": "press",
+					"action": "ui_left"
+				}
+			]
+		},
+		{
+			"id": "endcard",
+			"stage": "endcard",
+			"call": "WISHLIST ON STEAM",
+			"seconds": 4,
+			"profiles": [
+				"wide1080",
+				"vertical",
+				"square"
+			]
+		},
+		{
+			"id": "safezone",
+			"stage": "safezone",
+			"platform": "all",
+			"seconds": 0,
+			"profiles": [
+				"vertical"
+			]
+		},
+		{
+			"id": "stamp_crushed",
+			"stage": "transition",
+			"which": "stamp",
+			"label": "CRUSHED",
+			"seconds": 2.5
+		},
+		{
+			"id": "banner_night",
+			"stage": "transition",
+			"which": "banner",
+			"label": "NIGHT FALLS",
+			"seconds": 3
+		},
+		{
+			"id": "sign_district",
+			"stage": "transition",
+			"which": "sign",
+			"label": "Antler Downs",
+			"sub": "Critter country",
+			"seconds": 4
+		},
+		{
+			"id": "prize_slot_hatch",
+			"stage": "res://tests/prize_lab/slot.tscn",
+			"tap": true,
+			"hatch": true,
+			"seconds": 14
+		},
+		{
+			"id": "lineup_posters",
+			"stage": "lineup",
+			"what": "posters",
+			"names": true,
+			"seconds": 0,
+			"profiles": [
+				"wide4k"
+			]
+		},
+		{
+			"id": "piece_driver_card",
+			"stage": "menu",
+			"start": "mid",
+			"backdrop": "none",
+			"alpha": true,
+			"seconds": 4,
+			"lead": 2,
+			"events": [
+				{
+					"t": 0,
+					"do": "isolate",
+					"class": "DriverCard",
+					"nth": "selected"
+				}
+			]
+		},
+		{
+			"id": "piece_bench",
+			"stage": "menu",
+			"start": "mid",
+			"backdrop": "none",
+			"alpha": true,
+			"seconds": 4,
+			"lead": 3,
+			"events": [
+				{
+					"t": -1.5,
+					"do": "press",
+					"action": "ui_upgrade"
+				},
+				{
+					"t": 0,
+					"do": "isolate",
+					"class": "DriverBench"
+				}
+			]
+		},
+		{
+			"id": "piece_road_map",
+			"stage": "menu",
+			"start": "mid",
+			"backdrop": "none",
+			"alpha": true,
+			"seconds": 4,
+			"lead": 3.5,
+			"events": [
+				{
+					"t": -2,
+					"do": "press",
+					"action": "ui_accept"
+				},
+				{
+					"t": 0,
+					"do": "isolate",
+					"var": "map"
+				}
+			]
+		},
+		{
+			"id": "page_pickups",
+			"stage": "menu",
+			"start": "mid",
+			"backdrop": "none",
+			"seconds": 6,
+			"lead": 2.5,
+			"events": [
+				{
+					"t": -1.5,
+					"do": "press",
+					"action": "ui_pickups"
+				}
+			]
+		},
+		{
+			"id": "page_goonopedia",
+			"stage": "menu",
+			"start": "mid",
+			"backdrop": "none",
+			"seconds": 6,
+			"lead": 2.5,
+			"events": [
+				{
+					"t": -1.5,
+					"do": "press",
+					"action": "ui_codex"
+				}
+			]
+		},
+		{
+			"id": "piece_results",
+			"kind": "shot",
+			"level": "prairie",
+			"car": "sedan",
+			"driver": "ai",
+			"god": true,
+			"upgrades": 10,
+			"hud": "full",
+			"alpha": true,
+			"lead": 12,
+			"seconds": 7,
+			"events": [
+				{
+					"t": -1.5,
+					"do": "console",
+					"line": "win"
+				},
+				{
+					"t": -0.5,
+					"do": "isolate",
+					"name": "ticket"
+				}
+			]
+		}
+	]
+}

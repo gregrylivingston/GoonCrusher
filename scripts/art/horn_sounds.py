@@ -49,7 +49,7 @@ HORNS = {
     "van": lambda: blast([262, 330], 0.42, "square", 1400),                                 # a low honk
     "taxi": lambda: then(blast([440, 554], 0.13), ts.silence(0.06), blast([440, 554], 0.2)),  # honk-honk
     "pickup": lambda: then(blast([520, 655], 0.1, "square", 2600), ts.silence(0.07), blast([520, 655], 0.1, "square", 2600)),
-    "audi": lambda: blast([700, 880], 0.26, "saw", 3800),                                   # sharp and high
+    "supercar": lambda: blast([700, 880], 0.26, "saw", 3800),                                   # sharp and high
     "racer": lambda: blast([820, 1035], 0.17, "saw", 4200, vibrato=0.01),                  # a quick chirp
     "police": lambda: sweep(lambda i: 600 + 800 * math.sin(math.pi * min(1.0, i / (0.42 * RATE))), 0.45),  # whoop
     "ambulance": lambda: sweep(lambda i: 720 if (i // int(0.085 * RATE)) % 2 == 0 else 1000, 0.5, "square", 3000),  # yelp

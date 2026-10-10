@@ -1,6 +1,6 @@
 class_name HudItems extends Control
 
-#Above the systems strip (docs/HUD.md): the held gadget on the left with its charges and the Fire key,
+#Along the bottom edge, between the dials (docs/HUD.md): the held gadget on the left with its charges and the Fire key,
 #the held boost beside it with the Boost key, small counters left of them (star fragments, lottery
 #tickets, a parcel, barricades), and on the right a ring per timed power-up that drains clockwise and
 #blinks in its last 2 s. Gadgets fly to "itemui", boosts to "moveui", power-ups to "buffui" and clock
@@ -32,7 +32,7 @@ func _process(_delta: float) -> void:
 	var car = Root.playerCar
 	if not is_instance_valid(car): return
 	var key := [car.heldItem, car.heldCharges, car.moveItem, car.moveCharges, car.starFragments, car.lotteryTickets.size(), car.hasParcel, car.barricades, InputGlyphs.usingPad,
-		car.spareItem, car.spareCharges]
+		car.spareItem, car.spareCharges, HudSkin.current().id]
 	var rig: CarTraitRig = car.traitRig
 	if rig: key.append_array([rig.meterMult if rig.meterTicks > 0 else 0, rig.bedCrates, int(rig.abilityReady() * 24.0)])
 	for id in car.buffs: key.append_array([id, car.buffs[id] / 6, car.buffs[id] < 120 && HudTheme.blinkOn()])
@@ -52,9 +52,10 @@ func _draw() -> void:
 			HudTheme.icon(self, HudTheme.STAR_ICON, Vector2(x - (2 - i) * 22.0, box.y - 14.0), 22.0, Color.WHITE if i < car.starFragments else Color(0.3, 0.3, 0.3, 0.6))
 	var counters := [] #[icon, count] in a row under the pips, right to left; count may be text
 	var rig: CarTraitRig = car.traitRig
-	if car.spareItem != "": counters.push_back([Pickups.texture(car.spareItem), car.spareCharges]) #Cargo Bay's second gadget
-	if rig && car.tMeter && rig.meterTicks > 0: counters.push_back([CarTraits.texture(&"meter"), "x%d" % rig.meterMult])
-	if rig && car.tLoadedBed && rig.bedCrates > 0: counters.push_back([CarTraits.texture(&"loaded_bed"), rig.bedCrates])
+	var shown := HudSkin.current().instrument #the van's bays, the taximeter and the truck bed show these themselves
+	if car.spareItem != "" && shown != &"tilt": counters.push_back([Pickups.texture(car.spareItem), car.spareCharges]) #Cargo Bay's second gadget
+	if rig && car.tMeter && rig.meterTicks > 0 && shown != &"meter": counters.push_back([CarTraits.texture(&"meter"), "x%d" % rig.meterMult])
+	if rig && car.tLoadedBed && rig.bedCrates > 0 && shown != &"bed": counters.push_back([CarTraits.texture(&"loaded_bed"), rig.bedCrates])
 	if car.lotteryTickets.size() > 0: counters.push_back([Pickups.texture("lottery"), car.lotteryTickets.size()])
 	if car.hasParcel: counters.push_back([Pickups.texture("delivery"), 1])
 	if car.barricades > 0: counters.push_back([Pickups.texture("barricade"), car.barricades])

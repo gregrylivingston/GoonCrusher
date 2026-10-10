@@ -1,8 +1,14 @@
-class_name AIDriver extends Node2D
+class_name AIDriver extends CarDriver
 
-#An AI that drives the player car, for automated playtesting (rules: docs/AI_DRIVER.md). It holds
-#the same four digital keys a player has, through playerCarController.driver, and by default sees
-#only what a player could: the screen by day, the headlight beam at night.
+#An AI that drives a car: the player's in playtests, careers and the console's `ai`, and every rival of
+#the Goon Cup (rules: docs/AI_DRIVER.md). It holds the keys a player has (CarDriver): the four driving
+#keys, the handbrake, the shift lever of a geared car and the horn, gadget, boost and ability buttons. By
+#default it sees only what a player could: the screen by day, the headlight beam at night.
+#This is the driver every car shares. Three things are laid over it (attach()):
+#  the car's own driver   scene/car/<car>/<car>_driver.gd extends this and overrides the hooks its traits
+#                         touch ("hooks", below), with the car's tuning and its personalities
+#  the mode's brief       ModeBrief (scripts/ai/briefs/): the objective and what the mode punishes
+#  a spec                 AIProfiles: which personality, how skilled, any overrides
 #Every physics tick the controller calls think(), then reads isPressed(). Layers:
 #  goal      what to go for: the mode's objective, a pickup, a goon, or a region worth stars
 #  route     A* over the world's coarse map (AIRoute), string-pulled to the farthest waypoint in sight;
@@ -20,6 +26,7 @@ const ACCEL = 1
 const BRAKE = 2
 const LEFT = 4
 const RIGHT = 8
+const HAND = 16           #the handbrake
 enum Throttle { ON, BRAKE, REVERSE }
 
 const GOAL_TICKS = 15     #re-pick the goal 4 times a second
@@ -37,6 +44,12 @@ const PLANS = [
 	{"steer":0, "steerTicks":0, "throttle":Throttle.BRAKE},
 	{"steer":-1, "steerTicks":HOLD, "throttle":Throttle.BRAKE}, {"steer":1, "steerTicks":HOLD, "throttle":Throttle.BRAKE},
 ]
+#the handbrake: a powerslide held for the whole plan, or a flick that lets go (and fires any drift boost).
+#Weighed above handbrakeFrom when the aim is far off the nose, and always where sliding scores (ModeBrief.drifts)
+const HAND_PLANS = [
+	{"steer":-1, "steerTicks":HOLD, "throttle":Throttle.ON, "hand":HOLD}, {"steer":1, "steerTicks":HOLD, "throttle":Throttle.ON, "hand":HOLD},
+	{"steer":-1, "steerTicks":30, "throttle":Throttle.ON, "hand":24}, {"steer":1, "steerTicks":30, "throttle":Throttle.ON, "hand":24},
+]
 #offered when the car is nearly stopped, when every forward plan hits something soon, or while escaping
 const REVERSE_PLANS = [
 	{"steer":0, "steerTicks":0, "throttle":Throttle.REVERSE},
@@ -51,7 +64,7 @@ const SHALLOWS_COST = 0.3     #per second of a plan with a wheel in shallows: sl
 const WADE_COST = 0.8         #per second of a plan with a wheel in wading depth: slower, slipperier, a little damage
 const WET_CORNER_SHARE = 0.3  #per second of a plan with a corner (not the centre) over deep water, this share of LETHAL_COST
 
-const GOAL_RADIUS = {"pickup":70.0, "goon":80.0, "station":300.0, "roam":600.0, "patrol":600.0, "escape":300.0}
+const GOAL_RADIUS = {"gate":60.0, "pickup":70.0, "goon":80.0, "station":300.0, "roam":600.0, "patrol":600.0, "escape":300.0}
 const PURSE_QUANTITY = 10.0   #purse.tscn is a "coin" powerup with this quantity
 const FUEL_NEAR_PX = 3000.0   #a known fuel pickup this close lifts the fuel-saving cap
 const CRUSH_SPEED = 140.0     #below this (with a margin over the game's 100) a touch costs health and crushes nothing
@@ -80,20 +93,27 @@ const TRAIL_SAMPLES = 60      #...over the last 15 s
 const ESCAPE_BACK_SAMPLES = 24 #an escape heads for the trail at least 6 s back...
 const ESCAPE_MIN_PX = 600.0   #...and at least this far away
 
-var car: OverheadCarBody2D
 var route: AIRoute
 var sight := "human"          #"human" or "full"
 var p: Dictionary = AIProfiles.resolve("") #tuning (AIProfiles); read as p.hitCost etc.
 var debug := false            #draws the chosen plan, goal and route...
 static var drawPlans := true  #...while this is on: the console's `ailines` turns every driver's drawing off and on
-var mode: int
+var brief: ModeBrief = ModeBrief.new() #what the mode asks (setBrief); the base brief until a run gives it one
+var spec := ""                #the AIProfiles spec it was attached with, and the personality that picked
+var personality := ""
 
 var tick := 0
 var keys := 0
+var buttons := 0              #this tick's horn, gadget, boost and ability buttons (pressButtons)
+var shiftWant := 0            #this tick's pull on the shift lever: +1 up, -1 down (workLever)
+var shiftPoint := 0.9         #where in the gear's band the next shift up comes (shiftAt, off by shiftSlop)
+var lastShiftTick := -9999
+var brakeCap := INF           #plans brake above this speed (ModeBrief.brakeAbove)
 var plan: Dictionary = PLANS[0]
 var planTick := 0
 var planPath := PackedVector2Array()
 var planHit := false
+var paceCap := INF            #a rival's handicap: it never drives faster than this (Rivals.spawn)
 var speedCap := INF           #fuel saving (updateSpeedCap)
 var throttleCap := INF        #what the throttle actually holds to: speedCap, or slower near rocks
 var rockyPickups := {}        #pickup instance id -> amongRocks
@@ -139,9 +159,15 @@ var halfSize := Vector2(80, 40)
 var excludes: Array[RID] = []
 
 #the car's own bodies, which no sweep should count as an obstacle: the car, and a semi's trailer (CarTrailer)
+var ramCars := false #plan as if other cars weren't there, so it drives into them (ModeBrief.ramsCars)
 func ownBodies() -> Array[RID]:
 	var own: Array[RID] = [car.get_rid()]
 	if car.trailer: own.push_back(car.trailer.get_rid())
+	if ramCars:
+		for other in car.get_tree().get_nodes_in_group(&"cars"):
+			if other == car: continue
+			own.push_back(other.get_rid())
+			if other.trailer: own.push_back(other.trailer.get_rid())
 	return own
 var lastCosts := PackedStringArray() #every plan's cost at the last choice, for --trace
 var nearGoons := PackedVector2Array() #goons near the car, refreshed with every plan choice
@@ -153,24 +179,77 @@ var stats := {"stuck":0, "escapes":0, "eco_seconds":0.0, "route_reached":true, "
 var delayed := PackedInt32Array() #keys chosen but not yet reaching the car (p.reactionTicks)
 var rng := RandomNumberGenerator.new() #plan noise (p.planSlop)
 
-#attaches a driver to a car whose _ready has run; options: sight ("human"/"full"), debug (bool),
-#profile (an AIProfiles spec, such as "crusher" or "default+horizonTicks=120")
+#Puts a car's own driver (AIProfiles.driverScript: scene/car/<car>/<car>_driver.gd) at the wheel of a car whose
+#_ready has run, briefed for the mode being played. Options: sight ("human"/"full"), debug (bool), profile
+#(an AIProfiles spec: "auto", "alt", "showoff@rookie", "crusher+horizonTicks=120"; BEST when not given)
 static func attach(target: OverheadCarBody2D, options: Dictionary = {}) -> AIDriver:
-	var driver = AIDriver.new()
+	var driver: AIDriver = AIProfiles.driverScript(target.carId).new()
 	driver.car = target
 	driver.sight = options.get("sight", "human")
 	driver.debug = options.get("debug", false)
-	driver.p = AIProfiles.resolve(options.get("profile", AIProfiles.BEST))
-	if driver.p.planSlop > 0.0: driver.rng.seed = randi() #from the run's seed, so a seeded run replays
+	driver.spec = options.get("profile", AIProfiles.BEST)
+	driver.setBrief(SaveManager.playerData.gameMode) #what Level.runMode is set from (the car can be ready before Root.levelRoot is)
+	if driver.p.planSlop > 0.0 || driver.p.shiftSlop > 0.0: driver.rng.seed = randi() #from the run's seed, so a seeded run replays
 	driver.name = "AIDriver"
 	driver.top_level = true #draws in world coordinates
 	driver.z_index = 100
-	target.add_child(driver)
-	target.myController.driver = driver
+	driver.seat(target)
 	return driver
 
+#the mode's brief, and the tuning that comes of it: the layers of AIProfiles.build for this car, spec and mode
+func setBrief(played: int) -> void:
+	brief = ModeBriefs.forMode(played, self)
+	personality = AIProfiles.personalityName(spec, personalities())
+	p = AIProfiles.build(spec, personalities(), tuning(), brief.tuning())
+	shiftPoint = p.shiftAt
+	ramCars = brief.ramsCars()
+
+func _init() -> void:
+	brief.d = self
+
+#--- hooks: what a car's own driver overrides (scene/car/<car>/<car>_driver.gd) --------------------
+
+#what this car changes in the tuning, under its personalities
+func tuning() -> Dictionary:
+	return {}
+
+#this car's personalities, name -> what each changes in the tuning; the first is the default ("auto")
+func personalities() -> Dictionary:
+	return {}
+
+#how much a goon beside the car matters (times flankCost): less for a car whose flanks hit back
+func flankScale() -> float:
+	return 1.0
+
+#how far round the car it sees at night without the beams
+func nightGlow() -> float:
+	return NIGHT_GLOW_PX
+
+#fuel saving never slows the car below this
+func cruiseFloor() -> float:
+	return p.ecoMinSpeed
+
+#health this car can spend below the mode's reserve (a second chance it hasn't used)
+func spareHealth() -> float:
+	return 0.0
+
+#how much the tank's shortfall matters, 0 to 1 (a car that restarts once can run it nearer dry)
+func fuelCaution() -> float:
+	return 1.0
+
+#what a pickup is worth to this car, from its usual `value`
+func pickupWorth(_pickup: Node, value: float) -> float:
+	return value
+
+#seconds a plan costs for a reason of the car's own (the van going over)
+func planGuard(_candidate: Dictionary, _rollout: Dictionary) -> float:
+	return 0.0
+
+#press the car's Ability button this tick
+func wantsAbility() -> bool:
+	return false
+
 func _ready():
-	mode = SaveManager.playerData.gameMode
 	var area = car.get_node_or_null("carBodyArea/CollisionShape2D")
 	if area && area.shape is RectangleShape2D: halfSize = area.shape.size / 2.0
 	bodyShape.size = halfSize * 2.0 + Vector2(20, 24)
@@ -184,19 +263,123 @@ func isPressed(action: String) -> bool:
 		"Brake": return (keys & BRAKE) != 0
 		"TurnLeft": return (keys & LEFT) != 0
 		"TurnRight": return (keys & RIGHT) != 0
+		"Handbrake": return (keys & HAND) != 0
+		"UseItem": return (buttons & ITEM) != 0
+		"UseMove": return (buttons & MOVE) != 0
+		"Horn": return (buttons & HORN) != 0
+		"Ability": return (buttons & ABILITY) != 0
 	return false
+
+func justPressed(action: String) -> bool:
+	match action:
+		"ShiftUp": return shiftWant > 0
+		"ShiftDown": return shiftWant < 0
+	return false
+
+func shiftsByHand() -> bool:
+	return car != null && car.gears > 0 && p.shiftByHand
 
 #called by the controller once per physics tick, before it reads the keys
 func think() -> void:
 	keys = 0
+	buttons = 0
+	shiftWant = 0
 	if not is_instance_valid(Root.levelRoot) || car.isDestroyed || not Root.levelRoot.clockReady: return
 	var started = Time.get_ticks_usec()
 	decide()
-	stats.think_usec += Time.get_ticks_usec() - started
 	if p.reactionTicks > 0: #a human's reaction time: the car gets the keys chosen reactionTicks ago
 		delayed.push_back(keys)
 		keys = delayed[0] if delayed.size() > p.reactionTicks else 0
 		if delayed.size() > p.reactionTicks: delayed.remove_at(0)
+	if shiftsByHand(): workLever()
+	pressButtons()
+	stats.think_usec += Time.get_ticks_usec() - started
+
+#--- the lever and the buttons ----------------------------------------------------------------
+
+#A geared car shifted by hand (shiftByHand). The plans are made of an automatic's keys (Brake at a
+#standstill backs up); this turns them into a manual's (playerCarController.gearbox): the lever goes down to
+#R to back up and Accelerate drives in whatever gear it is in. Going forward it shifts up at shiftPoint of
+#the gear's band: at 0.8 or more that is the well-timed shift that earns the kick; shiftSlop moves each
+#shift's point, so a clumsy driver shifts early (the push cuts out) or rides the limiter.
+const SHIFT_REST_TICKS := 20 #no shift down this soon after a shift (an early shift up would bounce straight back)
+func workLever() -> void:
+	var g := car.gear
+	var speed := car.velocity.length()
+	if (keys & BRAKE) && (speed < 10.0 || g == -1): #backing up
+		if g > -1: shiftWant = -1 #down through N; R only goes in once the car has nearly stopped (the brake is still held)
+		else: keys = (keys & ~BRAKE) | ACCEL
+		return
+	if g < 1:
+		if keys & ACCEL:
+			shiftWant = 1
+			if g == -1: keys = (keys & ~ACCEL) | BRAKE #stop rolling backwards first
+		return
+	var to := leverGear(g, speed, shiftPoint)
+	if to < g && tick - lastShiftTick < SHIFT_REST_TICKS: return
+	if to == g || (to > g && not (keys & ACCEL)): return
+	shiftWant = signi(to - g)
+	stats.shifts = stats.get("shifts", 0) + 1
+	lastShiftTick = tick
+	shiftPoint = clampf(p.shiftAt + (rng.randf() * 2.0 - 1.0) * p.shiftSlop, 0.35, 0.99) if p.shiftSlop > 0.0 else p.shiftAt
+
+#the gear a hand on the lever wants from `g` at `speed`: one up at `point` of the gear's band (and fast enough
+#that the next gear pulls), one down when the engine bogs
+func leverGear(g: int, speed: float, point: float) -> int:
+	if g < car.gears:
+		var low := car.gearTop(g - 1) if g > 1 else 0.0
+		var top := car.gearTop(g)
+		if (speed - low) / maxf(top - low, 1.0) >= point && speed >= top * 0.75: return g + 1
+	if g > 1 && speed < car.gearTop(g - 1) * OverheadCarBody2D.AUTO_DOWN: return g - 1
+	return g
+
+const ITEM = 1
+const MOVE = 2
+const HORN = 4
+const ABILITY = 8
+#The buttons beside the driving keys, each held for the tick it is wanted (the car fires on the press):
+#the gadget and the boost by Gadgets' rules for crowds plus the open road and the mode's own reasons, the
+#horn at goons the car is too slow to crush, the car's ability when its own driver says so.
+func pressButtons() -> void:
+	if car.heldItem != "" && Gadgets.aiWantsUse(car): buttons |= ITEM
+	if car.moveItem != "" && (Gadgets.aiWantsMove(car) || brief.wantsBoost()): buttons |= MOVE
+	if car.isPlayer && wantsHorn(): buttons |= HORN
+	if car.isPlayer && wantsAbility(): buttons |= ABILITY
+
+func wantsHorn() -> bool:
+	if p.hornGoons <= 0 || car.hornCooldown > 0 || tick % 6 != 0 || nearGoons.is_empty(): return false
+	var forward := car.global_transform.x.normalized()
+	var speed := car.velocity.length()
+	var ahead := 0
+	for i in nearGoons.size():
+		var offset := nearGoons[i] - car.global_position
+		if offset.length() < OverheadCarBody2D.HORN_RANGE * 0.9 && absf(forward.angle_to(offset)) < OverheadCarBody2D.HORN_CONE * 0.9 && (nearGoonsNeed[i] > speed || protecting()): ahead += 1
+	return ahead >= p.hornGoons
+
+#Nitro with no crowd to aim it at: at speed, wheel straight, nothing in the plan's way, and a long clear run to
+#a goal that is dead ahead (Trials, laps, the road in a race)
+func openRoadAhead() -> bool:
+	if car.moveItem != "nitro" || car.hasBuff("nitro") || tick % 10 != 0 || planHit || plan.steer != 0 || throttleCap < INF: return false
+	if car.velocity.length() < 300.0 || absf(car._car_input.steering) > 0.15 || aim == Vector2.INF: return false
+	var offset := aim - car.global_position
+	if offset.length() < p.nitroStraightPx || absf(car.global_transform.x.angle_to(offset)) > 0.12: return false
+	return clearOfWalls(car.global_position, car.global_position + offset.normalized() * p.nitroStraightPx)
+
+#where a moving car will be when this one gets to it (ramming, Pursuit)
+func leadPoint(prey: Node2D) -> Vector2:
+	var away := prey.global_position.distance_to(car.global_position)
+	return prey.global_position + prey.velocity * clampf(away / maxf(car.velocity.length(), 300.0), 0.15, 1.2)
+
+#px the car needs to brake from its speed now down to `toSpeed`, by its own physics
+func brakeDistance(toSpeed: float) -> float:
+	if car.velocity.length() <= toSpeed: return 0.0
+	var rollout := simulate(PLANS[9], 420) #seven seconds: a car on Nitro takes most of that to shed its speed
+	var path: PackedVector2Array = rollout.path
+	var travelled := 0.0
+	for i in range(1, path.size()):
+		travelled += path[i].distance_to(path[i - 1])
+		if rollout.speeds[i] <= toSpeed: break
+	return travelled
 
 func decide() -> void:
 	tick += 1
@@ -210,7 +393,7 @@ func decide() -> void:
 	#a recovery plan runs blind for a second; deep water coming up ends it, so the planner takes over
 	if tick < recoverUntil && car.velocity.length() > 50.0 && WorldHooks.lethalAhead(car.global_position, car.velocity.normalized(), car.velocity.length() * 0.8 + 200.0) < INF:
 		recoverUntil = tick
-	if tick % p.scanTicks == 1 && tick >= recoverUntil: choosePlan()
+	if tick % scanEvery() == 1 && tick >= recoverUntil: choosePlan()
 	var t3 = Time.get_ticks_usec()
 	checkProgress()
 	var t4 = Time.get_ticks_usec()
@@ -227,13 +410,22 @@ func decide() -> void:
 		throttleCap = minf(throttleCap, p.stationSpeed)
 	#going for a goon: fast enough to crush it, whatever fuel saving says
 	if goal.get("kind") == "goon" && goalValid(): throttleCap = maxf(throttleCap, crushNeed(goal.node) * CRUSH_MARGIN * 1.05)
+	brakeCap = brief.brakeAbove()
+	if brakeCap < INF: throttleCap = minf(throttleCap, brakeCap)
 	#deep water ahead: lift off early (the plans brake or turn; shallows give little grip to do it with)
 	var speed := car.velocity.length()
 	if speed > p.waterSpeed && WorldHooks.lethalAhead(car.global_position, car.velocity / speed, speed * p.waterLookSeconds * 1.5) < INF:
 		throttleCap = minf(throttleCap, p.waterSpeed)
-	keys = keysFor(plan, tick - planTick, forwardSpeed(), throttleCap)
+	keys = keysFor(plan, tick - planTick, forwardSpeed(), throttleCap, brakeCap)
 	if speedCap < INF: stats.eco_seconds += 1.0 / Engine.physics_ticks_per_second
 	if debug && drawPlans && tick % p.scanTicks == 1: queue_redraw()
+
+#Plans are re-chosen every scanTicks. A rival well out of the player's sight does it half as often: nobody
+#sees the difference, and five rivals are five planners
+const RIVAL_FAR_PX := 3200.0
+func scanEvery() -> int:
+	if car.isPlayer || not is_instance_valid(Root.playerCar): return p.scanTicks
+	return p.scanTicks * 2 if car.global_position.distance_squared_to(Root.playerCar.global_position) > RIVAL_FAR_PX * RIVAL_FAR_PX else p.scanTicks
 
 func buildRoute() -> void:
 	route = AIRoute.forWorld(Root.worldMap)
@@ -267,15 +459,16 @@ func updateGoal() -> void:
 	var carPos = car.global_position
 	var options: Array = []
 	var need = fuelNeed()
-	for pickup in get_tree().get_nodes_in_group("pickup"):
-		if not known.has(pickup.get_instance_id()) && canSee(pickup.global_position): known[pickup.get_instance_id()] = pickup
+	if car.isPlayer: #a rival leaves pickups where they lie (powerup.gd), so they are no goal of its
+		for pickup in get_tree().get_nodes_in_group("pickup"):
+			if not known.has(pickup.get_instance_id()) && canSee(pickup.global_position): known[pickup.get_instance_id()] = pickup
 	for id in known.keys():
 		var pickup = known[id]
 		if not is_instance_valid(pickup) || pickup.is_queued_for_deletion() || not pickup.visible || not pickup.has_node("Area2D"):
 			known.erase(id)
 			continue
 		if AIRoute.isBlocked(route.terrainAt(pickup.global_position)) || wetPickup(pickup): continue
-		var value = pickupValue(pickup.powerup, pickup.quantity, car.fuel, car.health, need) * p.pickupScale
+		var value = pickupWorth(pickup, pickupValue(pickup.powerup, pickup.quantity, car.fuel, car.health, need) * p.pickupScale)
 		options.push_back({"kind":"pickup", "node":pickup, "value":value, "key":str(id), "type":pickup.powerup})
 	#goons only die by being crushed, so crushing is also the defence: every goon left alive joins
 	#the horde. Goons inside the turning circle are left to etaTo's loop penalty.
@@ -290,11 +483,9 @@ func updateGoal() -> void:
 			if crushNeed(g) > topSpeed() * 0.95: continue #too tough for this car: leave it be
 			for other in near:
 				if other != g && other.global_position.distance_squared_to(g.global_position) < 350.0 * 350.0: neighbours += 1
-			var value = goonValue(neighbours, p.goonValue, p.goonPackBonus)
+			var value = brief.goonWorth(g, goonValue(neighbours, p.goonValue, p.goonPackBonus))
 			if isRaceMode(): value *= p.raceGoonScale
-			elif mode == Root.gameModes.DEFENSE:
-				value = defenseValue(g, value)
-				if value <= 0.0: continue
+			if value <= 0.0: continue
 			options.push_back({"kind":"goon", "node":g, "value":value, "key":str(g.get_instance_id())})
 
 	var objective = objectiveGoal()
@@ -344,34 +535,52 @@ func forgetStaleStation() -> void:
 	approachHop = -1
 	graphStation = null
 
-#the mode's own goal: the station in a race, a region worth stars in survival, the base in Defense
+const SMASH_SEEK_PX := 3500.0
+func nearestBreakable() -> Node2D:
+	var best: Node2D = null
+	var bestD := SMASH_SEEK_PX * SMASH_SEEK_PX
+	for prop in car.get_tree().get_nodes_in_group(BreakableProp.BREAKABLE_GROUP):
+		if prop.get_meta(&"smashed", false) || car.smashThreshold(prop) > topSpeed() * 0.85: continue
+		var d: float = prop.global_position.distance_squared_to(car.global_position)
+		if d < bestD && not nearWater(prop.global_position):
+			bestD = d
+			best = prop
+	return best
+
+#the mode's own goal (ModeBrief.objective: the station in a race, the next gate, the base in Defense...), or
+#failing one a point to roam to
 func objectiveGoal() -> Dictionary:
 	forgetStaleStation()
-	match mode:
-		Root.gameModes.SPRINT, Root.gameModes.MARATHON:
-			if is_instance_valid(Root.station):
-				startLegIfNew()
-				var target = stationTarget()
-				raceDistance = car.global_position.distance_to(target)
-				if not route.lineIsClear(car.global_position, target, 250.0):
-					var result = route.plan(car.global_position, target)
-					stats.route_reached = result.reached
-					if result.reached: raceDistance = AIRoute.pathLength(result.points) + result.points[result.points.size() - 1].distance_to(target)
-				if legDistance < 0.0: legDistance = raceDistance
-				var pressure = clampf(1.0 - raceSlack() / 60.0, 0.0, 1.0)
-				return {"kind":"station", "pos":target, "value":40.0 + 160.0 * pressure, "key":"station"}
-		Root.gameModes.DEFENSE:
-			if is_instance_valid(Root.station):
-				if roamPoint == Vector2.INF || tick > roamUntil || car.global_position.distance_to(roamPoint) < GOAL_RADIUS.patrol:
-					for attempt in 8: #a patrol point on dry land, clear of the water's edge
-						roamPoint = Root.station.global_position + Vector2.from_angle(randf() * TAU) * randf_range(500.0, 1100.0)
-						if not nearWater(roamPoint): break
-					roamUntil = tick + 15 * Engine.physics_ticks_per_second
-				return {"kind":"patrol", "pos":roamPoint, "value":4.0, "key":"patrol"}
+	var objective := brief.objective()
+	if not objective.is_empty(): return objective
 	if roamPoint == Vector2.INF || tick > roamUntil || car.global_position.distance_to(roamPoint) < GOAL_RADIUS.roam:
 		roamPoint = pickRoamPoint()
 		roamUntil = tick + 30 * Engine.physics_ticks_per_second
 	return {"kind":"roam", "pos":roamPoint, "value":4.0, "key":"roam"}
+
+#a course with no station (Cone Course, a loop): this car's next gate, or {}
+func gateObjective() -> Dictionary:
+	var gates = Root.levelRoot.get("course")
+	if gates != null && not is_instance_valid(Root.station) && gates.targetFor(car) != Vector2.INF:
+		return {"kind":"gate", "pos":gates.targetFor(car), "value":200.0, "key":"gate%d" % gates.next}
+	return {}
+
+#a race's goal: the station (a course's next checkpoint first), worth more the less time there is to spare; {}
+#with no station on the map
+func stationObjective() -> Dictionary:
+	if not is_instance_valid(Root.station): return {}
+	startLegIfNew()
+	var target = stationTarget()
+	var stage = Root.levelRoot.get("course") #a course's next checkpoint comes before its finish
+	if stage != null && stage.target() != Vector2.INF: target = stage.target()
+	raceDistance = car.global_position.distance_to(target)
+	if not route.lineIsClear(car.global_position, target, 250.0):
+		var result = route.plan(car.global_position, target)
+		stats.route_reached = result.reached
+		if result.reached: raceDistance = AIRoute.pathLength(result.points) + result.points[result.points.size() - 1].distance_to(target)
+	if legDistance < 0.0: legDistance = raceDistance
+	var pressure = clampf(1.0 - raceSlack() / 60.0, 0.0, 1.0)
+	return {"kind":"station", "pos":target, "value":40.0 + 160.0 * pressure, "key":"station"}
 
 #The station lot is open, but the house stands on it. Around it the car keeps a small visibility graph: the
 #driveway, two markers out in front of the gap (found once by probing outward from the driveway
@@ -558,22 +767,20 @@ func protecting() -> bool:
 	return car.health < healthReserve()
 
 func healthReserve() -> float:
-	match mode:
-		Root.gameModes.GOONCRUSHER: return p.reserveBase + maxf(Root.levelRoot.seconds, 0.0) * p.reservePerSecond
-		Root.gameModes.SPRINT, Root.gameModes.MARATHON: return p.reserveBase + 10.0
-	return p.reserveBase + 15.0
+	return brief.healthReserve() - spareHealth()
 
 #0 when the tank will last the run, 1 when the car is about to run dry
 func fuelNeed() -> float:
+	if car.fuelFree: return 0.0 #a Trial: the tank doesn't run down
 	var burn = fuelPerSecond()
 	var low = clampf((50.0 - car.fuel) / 40.0, 0.0, 1.0)
-	match mode:
-		Root.gameModes.GOONCRUSHER:
+	match brief.fuelPlan():
+		&"clock":
 			#throttle about 60% of the time on average
-			return maxf(low, clampf((Root.levelRoot.seconds * burn * 0.6 - car.fuel) / 60.0, 0.0, 1.0))
-		Root.gameModes.SPRINT, Root.gameModes.MARATHON:
-			return maxf(low, clampf((raceDistance / cruiseSpeed() * burn - car.fuel) / 30.0, 0.0, 1.0))
-	return low
+			low = maxf(low, clampf((Root.levelRoot.seconds * burn * 0.6 - car.fuel) / 60.0, 0.0, 1.0))
+		&"race":
+			low = maxf(low, clampf((raceDistance / cruiseSpeed() * burn - car.fuel) / 30.0, 0.0, 1.0))
+	return low * fuelCaution()
 
 func fuelPerSecond() -> float:
 	return OverheadCarBody2D.fuelBurn(1.0, car.oil) * Engine.physics_ticks_per_second
@@ -583,14 +790,15 @@ func fuelPerSecond() -> float:
 #less per second (Countdown) and per px (races). No cap while a fuel pickup is close by and not
 #given up on; one seen far away doesn't count, or the car would burn its tank getting there.
 func updateSpeedCap() -> void:
-	speedCap = INF
+	speedCap = paceCap
+	if car.fuelFree: return
 	if known.values().any(func(pickup): return is_instance_valid(pickup) && pickup.powerup == "fuel" && blacklist.get(str(pickup.get_instance_id()), 0) <= tick && pickup.global_position.distance_to(car.global_position) < FUEL_NEAR_PX): return
 	var burn = fuelPerSecond()
 	var cap = INF
-	match mode:
-		Root.gameModes.GOONCRUSHER:
+	match brief.fuelPlan():
+		&"clock":
 			cap = sustainableSpeed(car.fuel / maxf(Root.levelRoot.seconds * burn, 0.001) * p.fuelHope)
-		Root.gameModes.SPRINT, Root.gameModes.MARATHON:
+		&"race":
 			if raceDistance > 0.0:
 				#fuel per px at speed v is burn (drag v + friction) / force; the clock sets a floor
 				var fuelLimited = (car.fuel * p.fuelHope * engineForce() / (raceDistance * burn) - car.friction) / car.drag
@@ -598,7 +806,7 @@ func updateSpeedCap() -> void:
 				cap = maxf(fuelLimited, timeLimited)
 		_:
 			if car.fuel < 40.0: cap = sustainableSpeed(car.fuel / (120.0 * burn))
-	if cap < topSpeed() * 0.95: speedCap = maxf(cap, p.ecoMinSpeed)
+	if cap < topSpeed() * 0.95: speedCap = minf(maxf(cap, cruiseFloor()), paceCap)
 
 #the speed at which the throttle is needed `duty` of the time (1 = full throttle, top speed)
 func sustainableSpeed(duty: float) -> float:
@@ -630,7 +838,7 @@ func detourBudget() -> float:
 	return clampf(minf(slack * 0.15, left), 0.0, 8.0)
 
 func isRaceMode() -> bool:
-	return mode == Root.gameModes.SPRINT || mode == Root.gameModes.MARATHON
+	return brief.isRace()
 
 #a new station (the race's first, or Marathon's next) starts a leg: its progress and detour budget anew
 func startLegIfNew() -> void:
@@ -647,17 +855,6 @@ func raceProgressSpeed() -> float:
 	var seconds := float(tick - legTick) / Engine.physics_ticks_per_second
 	if legDistance < 0.0 || seconds < 10.0: return INF
 	return maxf((legDistance - raceDistance) / seconds, 1.0)
-
-#Defense: a goon is worth more the nearer it is to the base (defenseThreat times more at the lot than at
-#defenseRingPx), and double once it is about to blow up at a pump; 0 beyond the ring, where it is no threat yet
-const DEFENSE_BLAST_PX = 500.0
-func defenseValue(g: Node, base: float) -> float:
-	if not is_instance_valid(Root.station): return base
-	var d: float = g.global_position.distance_to(Root.station.global_position)
-	if d > p.defenseRingPx: return 0.0
-	var value: float = base * lerpf(p.defenseThreat, 1.0, d / p.defenseRingPx)
-	var toPump: float = g.global_position.distance_to(Root.station.nearestPump(g.global_position))
-	return value * 2.0 if toPump < DEFENSE_BLAST_PX else value
 
 #the car's top speed on the current ground: engine force against drag and friction
 func topSpeed() -> float:
@@ -693,7 +890,7 @@ func canSee(point: Vector2) -> bool:
 		var zoom = car.camera.zoom if is_instance_valid(car.camera) else Vector2.ONE
 		var half = car.get_viewport().get_visible_rect().size / zoom / 2.0
 		return absf(offset.x) < half.x && absf(offset.y) < half.y
-	if offset.length() < NIGHT_GLOW_PX: return true
+	if offset.length() < nightGlow(): return true
 	var reach = HEADLIGHT_REACH_PX * car.get_node("headlamps/headlights").scale.x
 	return offset.length() < reach && absf(car.global_transform.x.angle_to(offset)) < HEADLIGHT_HALF_ANGLE
 
@@ -761,11 +958,15 @@ func aimPoint(target: Vector2) -> Vector2:
 #--- control ----------------------------------------------------------------------------------
 
 #the keys a plan holds `t` ticks after it was chosen
-static func keysFor(candidate: Dictionary, t: int, speedForward: float, cap: float) -> int:
+#(`cap`: no throttle above it; `brakeAbove`: a forward plan brakes above it)
+static func keysFor(candidate: Dictionary, t: int, speedForward: float, cap: float, brakeAbove := INF) -> int:
 	var held = 0
 	if t < candidate.steerTicks && candidate.steer != 0: held |= LEFT if candidate.steer < 0 else RIGHT
+	if t < candidate.get("hand", 0): held |= HAND
 	match candidate.throttle:
-		Throttle.ON: if speedForward < cap: held |= ACCEL
+		Throttle.ON:
+			if speedForward > brakeAbove: held |= BRAKE
+			elif speedForward < cap: held |= ACCEL
 		Throttle.BRAKE: if speedForward > 60.0: held |= BRAKE #never so long that it starts reversing
 		Throttle.REVERSE: held |= BRAKE
 	return held
@@ -776,6 +977,8 @@ func choosePlan() -> void:
 	lastCosts.clear()
 	var ticks = horizonTicks()
 	for candidate in PLANS: best = cheaper(best, candidate, ticks)
+	if handbrakeWeighed():
+		for candidate in HAND_PLANS: best = cheaper(best, candidate, ticks)
 	#backing up is fine, just not the first choice (reverseCost): it is weighed whenever the car is
 	#nearly stopped, or slow with everything ahead blocked soon
 	var speed = car.velocity.length()
@@ -786,6 +989,13 @@ func choosePlan() -> void:
 	plan = best.plan
 	planPath = best.rollout.path
 	planHit = best.rollout.get("hit", false)
+
+#Is the handbrake among the choices: at speed, with the aim far enough off the nose that steering alone is a
+#wide arc (handbrakeTurn; 0 never pulls it), or wherever sliding is what scores (ModeBrief.drifts)
+func handbrakeWeighed() -> bool:
+	if p.handbrakeTurn <= 0.0 || car.velocity.length() < p.handbrakeFrom || tick < escapeUntil: return false
+	if brief.drifts() || p.driftReward > 0.0 || plan.has("hand"): return true
+	return aim != Vector2.INF && absf(car.global_transform.x.angle_to(aim - car.global_position)) > p.handbrakeTurn
 
 #how far ahead plans are simulated: at least p.horizonTicks, and long enough to cover lookaheadPx at
 #the current speed (a fast car needs the room to brake or swerve), up to maxHorizonTicks
@@ -800,6 +1010,8 @@ func cheaper(best: Dictionary, candidate: Dictionary, ticks: int) -> Dictionary:
 	var cost = scoreRollout(rollout, aim)
 	stats.usec_sim = stats.get("usec_sim", 0) + t1 - t0
 	stats.usec_score = stats.get("usec_score", 0) + Time.get_ticks_usec() - t1
+	cost += planGuard(candidate, rollout)
+	if rollout.slide > 0: cost -= p.driftReward * rollout.slide / Engine.physics_ticks_per_second
 	if candidate == plan: cost -= p.samePlanBonus
 	if p.planSlop > 0.0: cost += rng.randf() * p.planSlop
 	lastCosts.push_back("%d/%d/%d=%.1f%s" % [candidate.steer, mini(candidate.steerTicks, 99), candidate.throttle, cost, "!" if rollout.get("hit", false) else ""])
@@ -815,18 +1027,25 @@ func simulate(candidate: Dictionary, ticks: int) -> Dictionary:
 	var steering = car._car_input.steering
 	var steerRate: float = car.steerRate() #the wheel's speed (CarHandling), fixed for the plan
 	var gear = car.gear
+	var byHand := shiftsByHand()
+	var slide := 0      #ticks the plan holds a powerslide (what the drift charge counts, tickDriftCharge)
+	var hard := 0       #the plan's longest run of ticks at full lock and tipping speed (the van's planGuard)
+	var hardRun := 0
 	var input = OverheadCarBody2D.CarInput.new()
 	var path = PackedVector2Array([pos])
 	var headings = PackedVector2Array([forward])
 	var speeds = PackedFloat32Array([vel.length()])
 	var forwards = PackedFloat32Array([vel.dot(forward.normalized())]) #signed: negative when rolling backwards
 	for t in ticks:
-		var held = keysFor(candidate, t, vel.dot(forward.normalized()), throttleCap)
+		var held = keysFor(candidate, t, vel.dot(forward.normalized()), throttleCap, brakeCap)
 		input.acceleration = 0.0
 		input.braking = false
+		input.handbrake = (held & HAND) != 0
 		if held & ACCEL:
 			input.acceleration = 1.0
-			gear = int(vel.length()) / 300 + 1
+			if car.gears <= 0: gear = car.bestGear(vel.length())
+			elif byHand: gear = leverGear(maxi(gear, 1), vel.length(), p.shiftAt)
+			else: gear = car.autoGear(gear, vel.length())
 		steering = clampf(CONTROLLER.nextSteering(steering, (held & LEFT) != 0, (held & RIGHT) != 0, steerRate), -1.0, 1.0)
 		if held & BRAKE:
 			if vel.length() < 10 || gear == -1:
@@ -834,16 +1053,23 @@ func simulate(candidate: Dictionary, ticks: int) -> Dictionary:
 				input.acceleration = -1.0
 			else: input.braking = true
 		input.steering = steering
+		input.gear = gear
 		var next = car.integrate(pos, forward, vel, input, delta)
 		forward = next[0]
 		vel = next[1]
 		pos += vel * delta
+		var speedNow: float = vel.length()
+		if input.handbrake && speedNow > OverheadCarBody2D.HANDBRAKE_MIN_SPEED:
+			var slip := absf(angle_difference(vel.angle(), forward.angle()))
+			if slip > OverheadCarBody2D.DRIFT_CHARGE_SLIP && slip < PI - 0.6: slide += 1
+		hardRun = hardRun + 1 if absf(steering) > 0.9 && speedNow >= CarTraitRig.TIP_SPEED else 0
+		hard = maxi(hard, hardRun)
 		if (t + 1) % SAMPLE_TICKS == 0:
 			path.push_back(pos)
 			headings.push_back(forward)
 			speeds.push_back(vel.length())
 			forwards.push_back(vel.dot(forward.normalized()))
-	return {"path":path, "headings":headings, "speeds":speeds, "forwards":forwards}
+	return {"path":path, "headings":headings, "speeds":speeds, "forwards":forwards, "slide":slide, "hard":hard}
 
 #Estimated seconds to the target if the car follows this plan: the plan's own time, plus the rest
 #of the way from where it ends, plus the turn still needed; rocks, walls and water add their cost.
@@ -860,13 +1086,15 @@ func scoreRollout(rollout: Dictionary, target: Vector2) -> float:
 	var last = path.size() - 1
 	var endSpeed = speeds[last]
 	var startWet := World.lethalAt(path[0])
+	var towed: Vector2 = car.trailer.global_position if car.trailer else Vector2.ZERO #the trailer's axles, dragged along the plan
+	var snagged := false
 	for i in range(1, path.size()):
 		#forwards is how the game is played: rolling backwards costs, whatever it gains
 		if forwards[i] < -20.0: cost += p.reverseCost * segment
 		if crushing && speeds[i] >= CRUSH_SPEED: bumperGoons(path[i], headings[i], speeds[i], met)
 		#goons beside the path lunge at the body; a car below crush speed among them is chewed up
 		if not nearGoons.is_empty():
-			cost += p.flankCost * segment * flankExposure(path[i], headings[i])
+			cost += p.flankCost * flankScale() * segment * flankExposure(path[i], headings[i])
 			if speeds[i] < CRUSH_SPEED: cost += p.slowGoonCost * segment * goonsNear(path[i])
 		var ground = footprintTerrain(path[i], headings[i])
 		if World.isLethal(ground):
@@ -884,8 +1112,14 @@ func scoreRollout(rollout: Dictionary, target: Vector2) -> float:
 		elif ground == Root.terrain.WADE: cost += WADE_COST * segment
 		cost += waterAheadCost(path[i - 1], path[i], speeds[i]) * segment
 		sweepSmashes = 0
+		sweepKnocks = 0
 		var fraction = 0.0 if World.isWallTerrain(ground) else sweep(path[i - 1], headings[i - 1], path[i] - path[i - 1], i == 1, minf(speeds[i - 1], speeds[i]))
-		cost += p.smashCost * sweepSmashes #through a fence or hedge at speed: a little slower, never a wall hit
+		cost += p.smashCost * sweepSmashes + brief.knockCost() * sweepKnocks #through a fence or hedge at speed: a little slower, never a wall hit
+		if car.trailer:
+			towed = towTrailer(towed, path[i], headings[i])
+			if not snagged && i > 1 && trailerSnags(towed, path[i], headings[i], speeds[i]):
+				snagged = true
+				cost += p.trailerCost * (2.0 - float(i) / last)
 		if fraction < 1.0:
 			rollout.hit = true
 			rollout.hitSeconds = (i - 1 + fraction) * segment
@@ -930,6 +1164,32 @@ func waterAheadCost(from: Vector2, to: Vector2, speed: float) -> float:
 	if wet == INF: return 0.0
 	return p.waterNearCost * (1.0 - wet / (reach + WorldHooks.FINE)) * speed / 400.0
 
+#The semi's trailer along a plan: its axles follow the kingpin at the trailer's length, which is how a trailer
+#cuts inside a corner (CarTrailer does the same with grip and swing on top; this is the path without them)
+func towTrailer(axles: Vector2, at: Vector2, heading: Vector2) -> Vector2:
+	var kingpin: Vector2 = at + heading.normalized() * car.trailer.kingpin.x
+	var back := axles - kingpin
+	return kingpin + (back.normalized() if back.length_squared() > 1.0 else -heading.normalized()) * car.trailer.length
+
+#would the trailer, with its axles at `axles` behind a tractor at `at`, be in a rock or wall (things the car
+#smashes at this speed don't count)
+var trailerShape := RectangleShape2D.new()
+var trailerQuery := PhysicsShapeQueryParameters2D.new()
+func trailerSnags(axles: Vector2, at: Vector2, heading: Vector2, speed: float) -> bool:
+	var kingpin: Vector2 = at + heading.normalized() * car.trailer.kingpin.x
+	var along := (kingpin - axles).normalized()
+	var rect: Rect2 = car.trailer.bodyRect
+	if rect.size == Vector2.ZERO: rect = Rect2(-40.0, -halfSize.y, car.trailer.length + 40.0, halfSize.y * 2.0)
+	trailerShape.size = rect.size - Vector2(24, 16)
+	var box := trailerQuery
+	box.shape = trailerShape
+	box.transform = Transform2D(along.angle(), axles + along * rect.get_center().x + along.orthogonal() * rect.get_center().y)
+	box.collision_mask = 1
+	box.exclude = excludes
+	for hit in space.intersect_shape(box, 4):
+		if World.isWall(hit.collider) && not smashable(hit.collider, speed): return true
+	return false
+
 #a crush takes crushReward off a plan; bouncing off a goon too tough to crush costs like a light wall hit
 func metCost(met: Dictionary) -> float:
 	if met.is_empty(): return 0.0
@@ -971,9 +1231,11 @@ static func countMet(met: Dictionary) -> Vector2i:
 #does (it smashes it with no wall damage); sweepSmashes counts them for smashCost. Slower, or an
 #explosive (barrel, tank: never free), it is a wall. Speed 0 (the default) treats every prop as a wall.
 var sweepSmashes := 0
+var sweepKnocks := 0 #cones it would knock over, counted apart: a mode may charge for them (ModeBrief.knockCost)
 const SWEEP_PASSES = 4 #at most this many breakables are driven through in one sweep
 func sweep(from: Vector2, heading: Vector2, motion: Vector2, first: bool, speed := 0.0) -> float:
 	sweepSmashes = 0
+	sweepKnocks = 0
 	var pose = Transform2D(heading.angle(), from)
 	query.transform = pose
 	query.exclude = excludes
@@ -1007,16 +1269,26 @@ func passThrough(hits: Array, speed: float, passed: Array[RID]) -> bool:
 	if speed <= 0.0: return false
 	for hit in hits:
 		var collider = hit.get("collider") if hit.has("collider") else instance_from_id(hit.get("collider_id", 0))
-		if not smashableAt(collider, speed, p.smashMargin): return false
+		if not smashable(collider, speed): return false
 	for hit in hits:
 		passed.push_back(hit.rid)
-		sweepSmashes += 1
+		var collider = hit.get("collider") if hit.has("collider") else instance_from_id(hit.get("collider_id", 0))
+		if PropReactions.isKnockable(collider): sweepKnocks += 1
+		else: sweepSmashes += 1
 	var skip: Array[RID] = excludes.duplicate()
 	skip.append_array(passed)
 	query.exclude = skip
 	return true
 
-#would the car smash this prop at `speed` (with a margin over its smash speed)? Explosives never count:
+#would this car smash that prop at `speed`: smashableAt with the car's own threshold (the semi's Unstoppable
+#breaks anything but explosives at any speed, OverheadCarBody2D.smashThreshold)
+func smashable(collider: Object, speed: float) -> bool:
+	if collider == null || not is_instance_valid(collider) || PropReactions.isKnockable(collider): return smashableAt(collider, speed, p.smashMargin)
+	if not (collider.has_method("smash") || BreakableProp.isBreakable(collider)): return false
+	if collider.get_meta(&"explosive", false) || collider.get_meta(&"smashed", false): return false
+	return speed >= car.smashThreshold(collider) * p.smashMargin
+
+#would a car smash this prop at `speed` (with a margin over its smash speed)? Explosives never count:
 #driving into a barrel is a blast, not a shortcut. A cone counts too: it knocks over at
 #PropReactions.KNOCK_SPEED and the car keeps its speed.
 static func smashableAt(collider: Object, speed: float, margin := 1.15) -> bool:

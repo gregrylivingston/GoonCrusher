@@ -4,8 +4,8 @@ extends Node
 #The demo and the full game share this file: load_data() merges each save with the current defaults
 #(migrate()) before anything reads it.
 
-const SAVE_VERSION := 8 #6: the unlock system (Unlocks, meta.unlocks, meta.lifetime, car gem prices). 7: mode tiers (ModeTiers).
-#8: the road atlas (30 levels in 6 regions, the Marathon road, meta.carClears)
+const SAVE_VERSION := 12 #12: the mode menu (Modes: each level features three modes, any of which opens the next; openDueLevels). 11: most tree roots start locked (keepOldStarters). 10: the gift box games joined the Casino tree (mergePrizeUnlocks). 6: the unlock system (Unlocks, meta.unlocks, meta.lifetime, car gem prices). 7: mode tiers (ModeTiers).
+#8: the road atlas (30 levels in 6 regions, the Marathon road, meta.carClears). 9: the "audi" became the "supercar".
 #Saves older than FIRST_KEPT_VERSION start over (the author's call when the unlocks went in, and again for the road
 #atlas): the old file is copied beside the save as <name>.v<version>.tres, then a new save replaces it.
 const FIRST_KEPT_VERSION := 8
@@ -63,6 +63,9 @@ func migrate() -> bool:
 	var before = var_to_str([playerData.cars, playerData.levels, playerData.saveVersion, playerData.selectedCar, playerData.selectedLevel, playerData.gameMode, playerData.gameTier, playerData.meta])
 	for section in defaults.meta:
 		if not playerData.meta.get(section) is Dictionary: playerData.meta[section] = {}
+	for old in RENAMED_CARS: renameCar(old, RENAMED_CARS[old])
+	if playerData.saveVersion >= FIRST_KEPT_VERSION && playerData.saveVersion < 10: mergePrizeUnlocks()
+	if playerData.saveVersion >= FIRST_KEPT_VERSION && playerData.saveVersion < 11: keepOldStarters()
 	for defaultCar in defaults.cars:
 		var saved = playerData.cars.filter(func(c): return c.name == defaultCar.name)
 		if saved.is_empty():
@@ -79,12 +82,57 @@ func migrate() -> bool:
 			if not car.records.has(key): car.records[key] = 0
 	#levels were not saved before version 1, so older saves get the defaults here
 	playerData.levels = mergeLevels(playerData.levels)
+	if playerData.saveVersion < 12: openDueLevels()
 	playerData.selectedCar = clampi(playerData.selectedCar, 0, playerData.cars.size() - 1)
 	playerData.selectedLevel = clampi(playerData.selectedLevel, 0, playerData.levels.size() - 1)
 	playerData.gameMode = clampi(playerData.gameMode, 0, Root.gameModes.size() - 1)
 	playerData.gameTier = ModeTiers.clampTier(playerData.gameTier)
 	playerData.saveVersion = SAVE_VERSION
 	return before != var_to_str([playerData.cars, playerData.levels, playerData.saveVersion, playerData.selectedCar, playerData.selectedLevel, playerData.gameMode, playerData.gameTier, playerData.meta])
+
+#version 12: the next level opens on any of a level's featured modes (it was the Marathon everywhere), so a save
+#that had already won one of them gets the level it is now owed
+func openDueLevels() -> void:
+	for i in playerData.levels.size() - 1:
+		if playerData.levels[i].unlocked && Root.opensNextLevel(playerData.levels[i]): playerData.levels[i + 1].unlocked = true
+
+#version 11: only the Fuel Can, the Coin and the Claw Crane start open. These were open on every older save
+#without being saved, so such a save keeps them
+const OLD_STARTERS := ["health", "engine", "magnet", "horn", "nitro", "speedtrap", "ffwd"]
+
+func keepOldStarters() -> void:
+	for id in OLD_STARTERS: playerData.meta.unlocks["pickup:" + id] = true
+
+#version 10: the gift box games (old unlock "prize:<game>") became Casino pickups, one unlock for the drop and
+#the box game: old game id -> the pickup that now opens it (CrushPrizes.GAMES)
+const PRIZE_PICKUPS := {"claw": "claw", "shuffle": "shuffle", "scratch": "scratch", "press": "press", "deal": "deal", "pachinko": "pachinko", "slot": "slotmachine", "pusher": "pusher"}
+
+#a game bought on the old ladder opens its pickup, and the Slot Machine, which every save before version 10
+#started with as the Casino tree's root, stays open
+func mergePrizeUnlocks() -> void:
+	var unlocks: Dictionary = playerData.meta.unlocks
+	for game in PRIZE_PICKUPS:
+		if unlocks.has("prize:" + game): unlocks["pickup:" + PRIZE_PICKUPS[game]] = true
+		unlocks.erase("prize:" + game)
+	unlocks["pickup:slotmachine"] = true
+
+#cars whose id changed: old name -> new name (version 9)
+const RENAMED_CARS := {"audi": "supercar"}
+
+#moves a renamed car's save data to its new name: its garage entry (kept in place, so selectedCar still
+#points at it), its unlock and its clears on every level and mode
+func renameCar(old: String, new: String) -> void:
+	for car in playerData.cars:
+		if car.name == old: car.name = new
+	var unlocks = playerData.meta.get("unlocks", {})
+	if unlocks is Dictionary && unlocks.has("car:" + old):
+		unlocks["car:" + new] = unlocks["car:" + old]
+		unlocks.erase("car:" + old)
+	for byMode in playerData.meta.get("carClears", {}).values():
+		for byCar in byMode.values():
+			if byCar.has(old):
+				byCar[new] = maxi(int(byCar[old]), int(byCar.get(new, 0)))
+				byCar.erase(old)
 
 #The save's levels rebuilt from the registry (Levels.ORDER). A saved entry keeps its unlock, beaten modes and
 #best tiers (a mode beaten before the tiers, version 7, counts as Easy); entries for levels no longer in the
@@ -146,14 +194,14 @@ func unlockCar() -> bool:
 #upgrades each car can buy per stat. Saves from before the cap keep any levels above it (no refund).
 const MAX_UPGRADE_LEVEL := 20
 
-#how much the next upgrade will cost. `carIndex` -1 is the selected car (the Goonopedia's Cars tab names its own).
+#how much the next upgrade will cost. `carIndex` -1 is the selected car (the garage's bench, DriverBench, names its own).
 func requestStatCost(statString: Root.upgrade, carIndex := -1) -> int:
 	return upgradePrice(getUpgradeLevel(statString, carIndex), str(playerData.cars[playerData.selectedCar if carIndex < 0 else carIndex].name))
 
 ## An upgrade from `level` to the next: (level + 1)^1.6 x 15, x the car's scale. An upgrade is +1 to the stat
 ## on any car, so it is worth most on the entry cars' low stats; the advanced cars' upgrades are the long
 ## coin sink instead (package 1, B-4).
-const UPGRADE_COST_SCALE := {"sedan": 1.0, "van": 1.0, "taxi": 1.2, "pickup": 1.2, "semi": 1.6, "audi": 1.8,
+const UPGRADE_COST_SCALE := {"sedan": 1.0, "van": 1.0, "taxi": 1.2, "pickup": 1.2, "semi": 1.6, "supercar": 1.8,
 	"racer": 1.8, "police": 2.2, "ambulance": 2.5}
 static func upgradePrice(level: int, carName: String) -> int:
 	return int(pow(level + 1, 1.6) * 15 * UPGRADE_COST_SCALE.get(carName, 1.0))
@@ -209,7 +257,7 @@ func selectPreviousCar():
 #A won run: the mode is beaten on the RUN's level on the run's tier (and the tiers below it), and the run's car
 #clears it there (meta.carClears). The run's level, mode and tier come from the level that ran (Level.runLevel,
 #runMode, tier; the menu's selection may have moved since), else the menu's selection (tests, tools). Once the
-#Marathon is won (on Medium at a region's finale: Root.opensNextLevel) the next level opens and the menu moves
+#one of the level's featured modes is won (on Medium at a region's finale: Root.opensNextLevel) the next level opens and the menu moves
 #to it; until then the menu offers this level's next unbeaten mode. Levels already open stay open.
 #Returns the best tier before this run, for the first-clear bonus (ModeTiers.firstClear).
 func currentLevelPassed(levelIndex := -1, mode := -1, tier := -1) -> int:
@@ -226,9 +274,9 @@ func currentLevelPassed(levelIndex := -1, mode := -1, tier := -1) -> int:
 		#the demo unlocks the level for the full game but doesn't open the menu on a level it can't play
 		if not (Root.IS_DEMO && next >= Root.DEMO_LEVEL_COUNT):
 			playerData.selectedLevel = next
-			playerData.gameMode = Root.gameModes.GOONCRUSHER
+			playerData.gameMode = Root.FIRST_MODE
 	elif playerData.selectedLevel == levelIndex:
-		var unbeaten = Root.MODE_PATH.filter(func(m): return not level.gamemodeBeat.get(m, false) && Root.isModePlayable(level, m))
+		var unbeaten = Root.modePath(level).filter(func(m): return not level.gamemodeBeat.get(m, false) && Root.isModePlayable(level, m))
 		if not unbeaten.is_empty(): playerData.gameMode = unbeaten[0]
 	save_character_data()
 	return before
@@ -355,15 +403,25 @@ func setGameMode(mode: int):
 	save_character_data()
 	return playerData.gameMode
 
-func selectNextGameMode():
-	playerData.gameMode = wrap( playerData.gameMode + 1, 0 , Root.gameModes.size() )
-	save_character_data()
-	return playerData.gameMode
+#--- the record book of fixed courses (meta.records.course) ---------------------------------------
+#records.course[level id][mode id][car] = {"time": seconds, "splits": [seconds at each checkpoint], "version":
+#Course.VERSION}: the best won run of a fixed-map mode (Modes.isFixedMap), per car. Splits are only compared
+#within one course version.
 
-func selectPreviousGameMode():
-	playerData.gameMode = wrap( playerData.gameMode  -1, 0 , Root.gameModes.size() )
+## The car's best run of a level's course in a mode; {} when it has none
+func bestCourse(levelIndex: int, mode: int, carName: String) -> Dictionary:
+	var byLevel: Dictionary = playerData.meta.get("records", {}).get("course", {})
+	return byLevel.get(levelKey(playerData.levels[levelIndex]), {}).get(Modes.idOf(mode), {}).get(carName, {})
+
+## Records a won run; {"time": true} when it is the car's best here (a record from an older course version is replaced)
+func recordCourse(levelIndex: int, mode: int, carName: String, seconds: float, splits: Array) -> Dictionary:
+	var best := bestCourse(levelIndex, mode, carName)
+	var better: bool = best.is_empty() || int(best.get("version", -1)) != Course.VERSION || seconds < float(best.get("time", INF))
+	if not better: return {"time": false}
+	var byLevel: Dictionary = playerData.meta.records.get_or_add("course", {})
+	byLevel.get_or_add(levelKey(playerData.levels[levelIndex]), {}).get_or_add(Modes.idOf(mode), {})[carName] = {"time": seconds, "splits": splits.duplicate(), "version": Course.VERSION}
 	save_character_data()
-	return playerData.gameMode
+	return {"time": true}
 
 #--- per-level records (meta.records) -----------------------------------------------------------
 #Keyed by the level's id (Levels.ORDER), so reordering levels keeps them, then by car.

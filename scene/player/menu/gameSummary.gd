@@ -21,6 +21,7 @@ const STAMPS := {
 	Root.endCondition.NOTIME: ["TIME'S UP", Color(0.78, 0.14, 0.11)],
 	Root.endCondition.NOHEALTH: ["WRECKED", Color(0.78, 0.14, 0.11)],
 	Root.endCondition.BASEDESTROYED: ["OVERRUN", Color(0.78, 0.14, 0.11)],
+	Root.endCondition.OUTRUN: ["OUTRUN", Color(0.78, 0.14, 0.11)],
 }
 
 var summaryTimer: float = -2.0
@@ -179,10 +180,33 @@ func buildGameSummary():
 	var newBest = {"time": false, "score": false}
 	if gameMode == Root.gameModes.GOONPOCALYPSE:
 		newBest = SaveManager.recordGoonpocalypse(levelIndex, car.carId, int(level.elapsed), level.runScore())
-	addRow("Time", timer.text if is_instance_valid(timer) else "-", newBest.time)
+	if level.course: #a fixed course: the stage time goes in the record book when the stage is won
+		var stage := {"time": false}
+		var lapped: bool = gameMode == Root.gameModes.HOTLAP #its record is the best lap, not the run
+		if won: stage = SaveManager.recordCourse(levelIndex, gameMode, car.carId, level.course.bestLap() if lapped else level.elapsed, level.course.lapTimes if level.course.laps > 1 else level.course.splits)
+		addRow("Best lap" if lapped else "Stage time", Course.clock(level.course.bestLap() if lapped else level.elapsed), stage.time)
+		if level.course.laps > 1: addRow("Laps", "%d / %d" % [level.course.lap, level.course.laps], false)
+		if level.overshot: addRow("Too fast at the line", "+%d s" % int(ModeTiers.FLATOUT_PENALTY), false)
+		if level.rivals && level.finishPlace > 0: addRow("Place", "%s of %d" % [Rivals.placeWord(level.finishPlace).capitalize(), level.rivals.field()], false)
+		addRow(level.course.gateWord.capitalize() + "s", "%d / %d" % [level.course.next, level.course.total()], false)
+		if gameMode == Root.gameModes.CONES: addRow("Cones hit", str(level.course.conesHit), false)
+	elif level.trial: #a score Trial: the time to its target is the record
+		var quick := {"time": false}
+		if won: quick = SaveManager.recordCourse(levelIndex, gameMode, car.carId, level.elapsed, [])
+		addRow("Time", Course.clock(level.elapsed), quick.time)
+		addRow("Drift score" if gameMode == Root.gameModes.DRIFT else "Smashed", "%d / %d" % [level.trial.score, level.trial.target], false)
+	else: addRow("Time", timer.text if is_instance_valid(timer) else "-", newBest.time)
 	match gameMode: #one row for the mode's own goal
 		Root.gameModes.GOONPOCALYPSE: addRow("Score", str(level.runScore()), newBest.score)
 		Root.gameModes.MARATHON: addRow("Stations", "%d / %d" % [level.leg - (0 if reason == Root.endCondition.SUCCESS else 1), level.legs()], false)
+		Root.gameModes.DERBY: addRow("Wrecked", "%d / %d" % [level.wrecks, level.rivals.field() - 1] if level.rivals else "-", false)
+		Root.gameModes.KEEPCUP:
+			if level.cup: addRow("Cup held", "%d / %d s" % [int(level.cup.playerSeconds()), int(level.cup.need)], false)
+		Root.gameModes.PURSUIT: addRow("Runner", "Wrecked" if won else "Got away", false)
+		Root.gameModes.CANNONBALL:
+			if level.rivals: addRow("Place", "%s of %d" % [Rivals.placeWord(level.finishPlace).capitalize(), level.rivals.field()] if level.finishPlace > 0 else "Not placed", false)
+		Root.gameModes.BOUNTY:
+			if level.bounty: addRow("Marks", "%d / %d" % [level.bounty.caught, level.bounty.total], false)
 		Root.gameModes.DEFENSE:
 			if is_instance_valid(Root.station): addRow("Barrier", "%d%%" % ceili(100.0 * Root.station.barrier / Root.station.BARRIER_MAX), false)
 	addRow("Top speed", Settings.speed_text(car._highest_measured_speed), topSpeed > records.speed)
@@ -239,7 +263,7 @@ func buildGameSummary():
 	if not discovered.is_empty(): notes.push_back("New in the Goonopedia: " + listed(discovered, 4))
 	if not blueprinted.is_empty(): notes.push_back("Blueprint: a free upgrade to " + listed(blueprinted, 4))
 	var next := Unlocks.nextUnlock()
-	if unlocked.is_empty() && not next.is_empty() && Unlocks.canAfford(next.uid): notes.push_back("Ready to buy in the Goonopedia: " + next.name)
+	if unlocked.is_empty() && not next.is_empty() && Unlocks.canAfford(next.uid): notes.push_back("Ready to unlock in Pickups: " + next.name)
 	var advice = Settings.take_advisor_message()
 	if advice != "": notes.push_back(advice)
 	if not notes.is_empty(): addFooterNote("   -   ".join(notes))

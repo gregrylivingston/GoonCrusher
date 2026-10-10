@@ -9,7 +9,7 @@ extends SceneTree
 #speed kept); the stop from top speed; the top speed in reverse.
 #--up adds that many levels to engine, steering, traction and armor (20 is maxed).
 
-const CARS := ["sedan", "taxi", "van", "pickup", "semi", "ambulance", "audi", "police", "racer"]
+const CARS := ["sedan", "taxi", "van", "pickup", "semi", "ambulance", "supercar", "police", "racer"]
 const GROUNDS := {"grass": 0.13, "asphalt": 0.02}
 const DT := 1.0 / 60.0
 

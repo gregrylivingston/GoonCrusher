@@ -6,7 +6,7 @@ func _ready():
 	showTimer()
 	Settings.changed.connect(onSettingChanged)
 	#every mode counts down except Goonpocalypse, which counts up from 0
-	if SaveManager.playerData.gameMode == Root.gameModes.GOONPOCALYPSE: timeIsCountingDown = 1
+	if Modes.running() == Root.gameModes.GOONPOCALYPSE: timeIsCountingDown = 1
 
 	await get_tree().process_frame
 	showTime()
@@ -42,9 +42,12 @@ func _process(delta):
 	if share >= 0.0: nightByShare(share)
 	elif int(Root.levelRoot.seconds )% daylength == 0:dayNightCycle()
 
-#the level's rules.nightShare (LevelDef.rules): the share of each two-daylength cycle that is night, or -1
+#the level's rules.nightShare (LevelDef.rules): the share of each two-daylength cycle that is night (all of it
+#in a Blackout), or -1
 #when the level keeps the old cycle (night falls and lifts every daylength seconds)
 func nightShare() -> float:
+	if Root.levelRoot.runMode == Root.gameModes.BLACKOUT: return 1.0 #night from the start to the end
+	if Modes.isTrial(Root.levelRoot.runMode): return 0.0 #a Trial is driven by day
 	var def = Root.levelRoot.def
 	if def == null || not def.rules.has("nightShare"): return -1.0
 	return clampf(float(def.rules.nightShare), 0.0, 1.0)

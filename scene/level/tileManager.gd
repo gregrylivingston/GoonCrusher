@@ -41,6 +41,11 @@ var worldMap: WorldMap
 var skin: WorldSkin
 ## The map seed. -1 rolls one when the level starts; the playtest and bench harnesses set it first.
 var worldSeed := -1
+#The capture kit (docs/PROMO.md): streaming that doesn't depend on the clock. Each frame waits for the chunk
+#tasks it queued and applies every chunk in full, so the same run puts the same walls in the world on the same
+#tick on any machine, which is what lets a taped drive be replayed. It costs a hitch at chunk borders, so
+#never in a player's run.
+static var steady := false
 var buildTask := -1
 var buildJob := {}
 ## Route length (px, A* on the coarse map) to the station last placed: Sprint's and every Marathon leg's clock
@@ -96,15 +101,23 @@ func levelDef() -> LevelDef:
 #stall, hands the districts to Region, sets up the level's art, then has the start chunk's raster and recipe
 #built on the worker pool too.
 func buildWorld() -> void:
-	if worldSeed < 0: worldSeed = randi()
 	var def := levelDef()
+	var played: int = SaveManager.playerData.gameMode
+	#a fixed-map mode drives the same course every run (Course.seedFor); a harness that set the seed keeps its own
+	if worldSeed < 0: worldSeed = Course.seedFor(def.id, played) if Modes.isFixedMap(played) && def else randi()
 	var objective := ""
 	var offset := Vector2.ZERO
-	match SaveManager.playerData.gameMode:
+	var mode: int = Modes.running()
+	match mode:
 		Root.gameModes.SPRINT, Root.gameModes.MARATHON:
 			objective = "sprint"
-			offset = Level.sprintOffsetPx(Level.sprintDistance(def), WorldGen.hashf(worldSeed, WorldGen.TAG_SPRINT, 0, 0) * 2.0 - 1.0)
+			#a Sprint's station is further off on the harder tiers; a Marathon's legs are not (it has more of them)
+			#(nor is a Rally Stage: one course for bronze, silver and gold)
+			var sprintTier: int = SaveManager.getGameTier() if played == Root.gameModes.SPRINT else ModeTiers.NONE
+			var yRoll := 0.0 if played == Root.gameModes.FLATOUT else WorldGen.hashf(worldSeed, WorldGen.TAG_SPRINT, 0, 0) * 2.0 - 1.0 #Flat Out runs due east
+			offset = Level.sprintOffsetPx(Level.sprintDistance(def, sprintTier), yRoll, sprintTier)
 		Root.gameModes.DEFENSE: objective = "defense"
+		Root.gameModes.CONES: objective = "defense" #a cleared lot at the start for the cones; no station is placed on it (ConeCourse)
 	buildJob = WorldMap.jobFor(worldSeed, def, objective, offset)
 	var started := Time.get_ticks_msec()
 	buildTask = WorkerThreadPool.add_task(WorldGen.buildCoarse.bind(buildJob), false, "World map")
@@ -145,7 +158,7 @@ static func lotRect(chunk: Vector2i) -> Rect2:
 #The generator placed the station (WorldGen: in the start's component, on clear cells) and measured the
 #route to it; every station is pinned.
 func placeStations() -> void:
-	match SaveManager.playerData.gameMode:
+	match Modes.running():
 		Root.gameModes.SPRINT, Root.gameModes.MARATHON, Root.gameModes.DEFENSE:
 			var chunk := worldMap.stationChunk
 			if chunk == WorldGen.NO_CHUNK: chunk = worldMap.findStationChunk(startChunkOf(), WorldGen.NO_CHUNK)
@@ -284,7 +297,10 @@ func _process(delta):
 	if mapReady: updateChunks(delta)
 
 func updateChunks(delta: float = 1.0) -> void:
-	if worldMap != null: worldMap.poll()
+	if worldMap != null:
+		if steady:
+			for pendingChunk in worldMap.pending.keys(): worldMap.finish(pendingChunk)
+		worldMap.poll()
 	if not is_instance_valid(Root.playerCar): return
 	var frameStart := Time.get_ticks_usec()
 	var carPosition: Vector2 = Root.playerCar.global_position
@@ -339,7 +355,7 @@ static func distance(a: Vector2i, b: Vector2i) -> int:
 func processViews(frameStart: int) -> void:
 	framesSinceReady += 1
 	var budget := START_BUDGET_USEC if framesSinceReady < START_FRAMES else APPLY_BUDGET_USEC
-	var deadline := Time.get_ticks_usec() + budget
+	var deadline := Time.get_ticks_usec() + (60_000_000 if steady else budget)
 	var busy := not releaseQueue.is_empty() || not applyQueue.is_empty()
 	while not releaseQueue.is_empty() && Time.get_ticks_usec() < deadline:
 		if releaseQueue[0].release(skin, deadline):

@@ -9,6 +9,7 @@ displayName = "Blast Pits"
 poster = "res://world/art/posters/blastpits.png"
 region = &"works"
 stop = 1
+featured = Array[StringName]([&"bounty", &"smash", &"knockout"])
 order = 25
 blurb = "Pits full of barrels and fuel tanks. Everything explodes, including the goons."
 barrier = "The terraced pit and the junk fort's ring walls, with ramps and gates."
