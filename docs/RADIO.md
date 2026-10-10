@@ -64,6 +64,7 @@ Rules:
 
 - **Never add another music player.** Music is the radio, on the **Music** bus.
 - **Ducking is the bus's job:** anything that should pull the music down plays on the **Voice** bus (the Music bus compressor is keyed from it). No code.
+- **Spoken lines in a run go through `Audio.voice.say(kind, lines)`** (`scripts/global/voice_director.gd`, `VoiceDirector`): it ranks the kinds, spaces the lines, avoids repeats and sends the subtitle to the HUD (`HudChance.onSpoke`, setting `access/subtitles`). Never give a scene a voice player of its own. Tests: `tests/game/test_voice_director.gd`.
 - **Segment odds are data:** `segment_counts` (odds of 0, 1 or 2 segments between songs) and `weights` (ident, talk, ad) in `station.json`.
 - **`station.json` is not a resource:** the export preset's include filter (`sound/radio/*.json`) ships it.
 - **Headless runs** (tests, playtests, benches) scan and schedule but never load or play audio, and never write `user://radio.json`.

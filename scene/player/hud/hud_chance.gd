@@ -25,9 +25,27 @@ func _ready() -> void:
 	current = self
 	mouse_filter = MOUSE_FILTER_IGNORE
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	Audio.voice.spoke.connect(onSpoke)
 
 func _exit_tree() -> void:
 	if current == self: current = null
+
+#a spoken line's subtitle (VoiceDirector), shown above the dashboard for as long as the line lasts
+const SUBTITLE_MIN := 1.5     #s: a short line stays up long enough to read
+const SUBTITLE_RISE := 190.0  #px above the screen's bottom edge
+var subtitle := ""
+var subtitleT := 0.0
+
+func onSpoke(_kind: StringName, text: String, seconds: float) -> void:
+	subtitle = text if Settings.get_value("access/subtitles") else ""
+	subtitleT = maxf(seconds, SUBTITLE_MIN)
+	queue_redraw()
+
+func drawSubtitle() -> void:
+	var tw := HudTheme.textWidth(subtitle, 22, HudTheme.BODY)
+	var rect := Rect2(Vector2(size.x * 0.5 - tw * 0.5 - 18.0, size.y - SUBTITLE_RISE), Vector2(tw + 36.0, 38.0))
+	draw_rect(rect, HudTheme.PANEL)
+	HudTheme.text(self, rect.position + Vector2(18.0, 27.0), subtitle, 22, HudTheme.TEXT, HORIZONTAL_ALIGNMENT_LEFT, 0, HudTheme.OUTLINE, HudTheme.BODY)
 
 #--- the moments --------------------------------------------------------------------------------
 
@@ -169,6 +187,11 @@ func _process(delta: float) -> void:
 	if flashT > 0.0:
 		busy = true
 		flashT -= delta
+	if subtitle != "":
+		subtitleT -= delta
+		if subtitleT <= 0.0:
+			subtitle = ""
+			busy = true #one more redraw clears it
 	var car = Root.playerCar
 	var deep: bool = is_instance_valid(car) && car.deepTicks > 0 && not car.isDestroyed
 	if deep && deepShown == 0.0: deepLabel = deepWaterLabel()
@@ -200,6 +223,7 @@ func _draw() -> void:
 	drawGate()
 	drawQuarry()
 	if flashT > 0.0: drawShockwave(1.0 - flashT / SHOCK_SECONDS)
+	if subtitle != "": drawSubtitle()
 	deepDrawn = deepShown > 0.0
 	if deepDrawn: drawDeepWater(deepShown)
 

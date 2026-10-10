@@ -212,9 +212,6 @@ bus = &"FX"
 stream = ExtResource("5_pn0ef")
 bus = &"FX"
 
-[node name="AudioStream-Voice" type="AudioStreamPlayer" parent="."]
-bus = &"Voice"
-
 [node name="AudioStream-CarDamage" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("8_qq4uq")
 volume_db = -5.0

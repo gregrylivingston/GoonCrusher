@@ -105,6 +105,7 @@ const DEFAULTS := {
 	"access/hit_stop": true,
 	"access/hud_scale": 1.0,
 	"access/classic_dash": false,
+	"access/subtitles": true,
 }
 
 #allowed values for enumerated keys; numeric keys not listed here are clamped by RANGES

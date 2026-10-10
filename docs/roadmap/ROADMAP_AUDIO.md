@@ -4,11 +4,11 @@ How the radio works today: `docs/RADIO.md`. Lyrics, prompts and scripts: `sound/
 
 ## Planned
 - **[0.3 want] Mix, by ear in play.** Maybe clashing with the songs: the glockenspiel chime on pickups, the results ticket's impact, the wolf howl at nightfall. S + play.
-- **[0.3 want] Radio listening pass:** crossfade lengths, segment odds and ducking depth (`station.json`, the bus effects). S + play.
 - **[0.3 want] Content flags in the songs** (damn/hell, innuendo, beer with driving, brand and place names): decide before a public release (`writing/songs.md`, "Content flags"). S.
-- **[later] A `VoiceDirector`:** priorities (warning > win > record > jackpot > giant > award > region), a cooldown of about 5 s, no repeats in the last 3 lines, subtitles. S.
+- **[later] Lines for the `VoiceDirector`'s other kinds** (win, record, jackpot, giant, award, region): record them and call `Audio.voice.say` where each happens; only warnings and pickup lines speak today. S + recording.
+- **[later] Subtitle text:** no spoken line has a transcript yet, so Subtitles shows nothing: fill `VoiceDirector.SUBTITLES`. S.
 - **[later] Goon death sounds** are one shared set: a set per class. M.
-- **[later] More tracks** as they come; adding one needs no code.
+
 
 ## Suggestions
 Song ideas, an older brainstorm: several fall outside the three song categories, so check an idea against them first.
@@ -20,4 +20,3 @@ Song ideas, an older brainstorm: several fall outside the three song categories,
 - **Wild Things:** garage rock chant; the critters as a rival gang.
 - **Foreman's Lament:** metal parody from the goons' side.
 
-Also: interactive music layers; new voice lines.

@@ -211,6 +211,8 @@ func accessibilityRows() -> Array:
 			"info":"Size of the in-run HUD: counters, region panel, gift box bar and the car's bars. The view of the world is unchanged.", "perf":"None"},
 		{"type":"choice", "key":"access/classic_dash", "label":"Classic Dashboard", "options":onOff(),
 			"info":"Every car gets the same orange dials in place of its own dashboard, with no signature instrument.", "perf":"None"},
+		{"type":"choice", "key":"access/subtitles", "label":"Subtitles", "options":onOff(),
+			"info":"Shows what the driver says in a run as text above the dashboard.", "perf":"None"},
 	]
 
 func audioRow(bus: String, label: String) -> Dictionary:

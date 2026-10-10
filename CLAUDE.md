@@ -47,7 +47,7 @@ This file is the map and the rules. The code and data files are the source of tr
 | `Settings` | `scripts/global/settings.gd` | `settings.cfg` and `graphics.cfg`, presets, tier detection, the `gc_*` shader globals, rebinding, the F3 overlay, `menu_open` (blocks input under menus). Read with `Settings.get_value("gfx/smoke")`. |
 | `Root` | `scripts/global/root.gd` | Global enums (`gameModes`, `endCondition`, `upgrade`, `terrain`: all append only), shared refs (`playerCar` (null in the menu), `levelRoot`, `spawnManager`, `playerRoot`, `station`, `worldMap`), mode and level unlock rules, payout, `IS_DEMO`. |
 | `SaveManager` | `scripts/global/saveManager.gd` | Loading, migrating and saving `PlayerData` (debounced, flushed on scene change and exit), the economy, per-level records. |
-| `Audio` | `scripts/global/Audio.tscn` | The pooled FX player (`Audio.play`) and the radio (`Audio.radio`). |
+| `Audio` | `scripts/global/Audio.tscn` | The pooled FX player (`Audio.play`), the radio (`Audio.radio`) and spoken lines (`Audio.voice`, the `VoiceDirector`). |
 | `Region` | `scripts/global/Region.gd` | The run's districts (goons from the level's line-up) and the wave clock. Not the road atlas's regions: those are `Territories`. |
 | `Bench`, `Playtest`, `Capture`, `Console` | `scripts/debug/` | The harnesses and the dev console. `promo/` is not exported, so nothing shipped may name a class from it. |
 

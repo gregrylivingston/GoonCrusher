@@ -13,7 +13,7 @@ The HUD is `scene/player/playerRoot.tscn` (`GameUI`), with its widgets in `scene
 | `Tach`, `Speedo` | `hud_dial.gd` | bottom corners | Revs, gear, fuel; speed, hull; the system lamps |
 | `Instrument` | `hud_instrument.gd` | by the tach | The car's signature instrument |
 | `Items` | `hud_items.gd` | bottom edge | Held gadget and boost, counters, the ability, timed power-up rings |
-| `HudChance` | `hud_chance.gd` | full screen | Toasts, scratch card, Double or Nothing, combo, beacons, pointers, deep-water warning |
+| `HudChance` | `hud_chance.gd` | full screen | Toasts, scratch card, Double or Nothing, combo, beacons, pointers, deep-water warning, subtitles |
 
 `hud_theme.gd` (`HudTheme`) holds the colors, fonts and draw helpers; the menus build their theme from it. `GameUI` adds `Mirror`, `Instrument`, `Items` and `HudChance` in code.
 

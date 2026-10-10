@@ -95,6 +95,7 @@ The first update since the 0.1 demo, and close to a rebuilt game. Old demo saves
 - One station, GoonCrusher Radio, through menus and runs: 14 songs, 23 DJ segments, 10 ads, 9 idents.
 - Skip a song or switch the radio off from the pause menu or the menu's now-playing card.
 - The radio plays straight through: no jingles over it, and it ducks under voices.
+- Your driver talks less and says more: one line at a time, a pause between lines, no line twice in a row, and a low fuel or damage warning cuts in on anything else.
 
 ### Settings and performance
 

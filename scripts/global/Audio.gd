@@ -2,18 +2,23 @@ extends Node
 
 #Pool of one-shot sound players for goons, pickups and crushes. Settings audio_perf/max_sfx
 #sets how many of the pool's players may sound at once; starts per frame scale with it.
-#Music is the radio (Radio, docs/RADIO.md), a child made here: Audio.radio.
+#Music is the radio (Radio, docs/RADIO.md), a child made here: Audio.radio. Spoken lines are the
+#VoiceDirector's, another child: Audio.voice.
 const POOL_VOLUME_DB = 0.0
 
 var soundsStartedThisFrame: int = 0
 @onready var players = $enemy_sounds.get_children()
 var radio: Radio
+var voice: VoiceDirector #every spoken line in a run goes through Audio.voice.say
 
 
 func _ready():
 	radio = Radio.new()
 	radio.name = "Radio"
 	add_child(radio)
+	voice = VoiceDirector.new()
+	voice.name = "Voice"
+	add_child(voice)
 
 
 func _process(_delta):

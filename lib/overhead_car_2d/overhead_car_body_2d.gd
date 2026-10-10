@@ -287,10 +287,10 @@ func updateDamageLook() -> void:
 var gasWarningGiven = false
 func resetGasWarning(): gasWarningGiven = false
 
+#a warning the VoiceDirector can't speak yet (another warning has the floor) is tried again next tick
 func makeGasWarning():
+	if not Audio.voice.say(&"warning", lowGasAudio) && not lowGasAudio.is_empty(): return
 	gasWarningGiven = true
-	$"AudioStream-Voice".stream = lowGasAudio[ randi_range(0, lowGasAudio.size()-1)]
-	$"AudioStream-Voice".play()
 	await get_tree().create_timer(200).timeout
 	resetGasWarning()
 	
@@ -298,9 +298,8 @@ var healthWarningGiven = false
 func resetHealthWarning(): healthWarningGiven = false
 
 func makeHealthWarning():
+	if not Audio.voice.say(&"warning", lowHealthAudio) && not lowHealthAudio.is_empty(): return
 	healthWarningGiven = true
-	$"AudioStream-Voice".stream = lowHealthAudio[ randi_range(0, lowHealthAudio.size()-1)]
-	$"AudioStream-Voice".play()
 	$"AudioStream-CarDamage".play()
 	await get_tree().create_timer(200).timeout
 	resetHealthWarning()
@@ -321,8 +320,8 @@ func _physics_process(delta):
 	if fuel <= 0 && not isDestroyed: outOfFuel()
 	checkGround(global_position)
 	
-	if fuel <= 35 && not gasWarningGiven && not $"AudioStream-Voice".playing && isPlayer:makeGasWarning()
-	if health <= 50 && not healthWarningGiven && not $"AudioStream-Voice".playing && isPlayer:makeHealthWarning()
+	if fuel <= 35 && not gasWarningGiven && isPlayer:makeGasWarning()
+	if health <= 50 && not healthWarningGiven && isPlayer:makeHealthWarning()
 
 		
 
@@ -1087,10 +1086,7 @@ func reward(powerup: String , quantity, forShowOnly: bool = false):
 	if powerup == "health": updateDamageLook()
 	if powerup != "coin" && powerup != "health" && powerup != "fuel" && powerup != "currentGoonsCrushed": 
 		if powerup != "gem": powerupsCollected += 1
-		if  powerupAudio.size() > 0 && not $"AudioStream-Voice".playing:
-			await get_tree().create_timer(.25).timeout
-			$"AudioStream-Voice".stream = powerupAudio[ randi_range(0, powerupAudio.size()-1)]
-			$"AudioStream-Voice".play()
+		if isPlayer: Audio.voice.say(&"pickup", powerupAudio, VOICE_DELAY)
 	if Root.isRunActive:
 		if not is_instance_valid(ui): ui = get_tree().get_nodes_in_group("playerGameUi")[0]
 		ui.updateStats()
@@ -1147,11 +1143,10 @@ func setHeadlightStrength():
 static func tailLampEnergy(bright: bool, curve: float) -> float:
 	return (TAIL_BRIGHT if bright else TAIL_DIM) * (1.0 + TAIL_GLOW * curve)
 
+const VOICE_DELAY := 0.25 #s: a pickup's line lets its chime land first
+
 func playPurseRewardAudio():
-	if  purseAudio.size() > 0 && not $"AudioStream-Voice".playing:
-		$"AudioStream-Voice".stream = purseAudio[ randi_range(0, purseAudio.size()-1)]
-		await get_tree().create_timer(.25).timeout
-		$"AudioStream-Voice".play()
+	if isPlayer: Audio.voice.say(&"pickup", purseAudio, VOICE_DELAY)
 
 
 ## Health damage, armor applied once. `water` (soak): a shield or golden ride doesn't block it.
