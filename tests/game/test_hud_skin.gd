@@ -53,6 +53,55 @@ func test_the_scale_stays_above_the_screen_edge():
 		var skin := HudSkin.named(id)
 		assert_true(skin.sweep + HudDial.TILT <= 105.0, "%s: the scale's low end clears the bottom edge" % id)
 
+#the clock and the goal sit on the mirror's glass, and the luck and clover pickups fly to its charms
+func test_the_mirror_holds_the_clock_and_the_goal():
+	var hud = load(HUD_SCENE).instantiate()
+	hud.get_node("TopCenter/Timer").free()
+	add_child(hud)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var mirror: HudMirror = hud.get_node("Mirror")
+	var glass := Rect2(mirror.position + mirror.glass().position, mirror.glass().size)
+	for part in ["TopCenter", "Objective"]:
+		var node: Control = hud.get_node(part)
+		assert_true(glass.grow(4.0).encloses(Rect2(node.position, node.size)), "%s is on the glass" % part)
+	assert_true(hud.get_node("TopCenter").position.x + hud.get_node("TopCenter").size.x <= hud.get_node("Objective").position.x, "the clock is left of the goal")
+	for group in ["luckui", "cloverui"]: assert_true(mirror.is_ancestor_of(get_tree().get_first_node_in_group(group)), group)
+	assert_true(hud.get_child(0) == mirror, "drawn under them")
+	hud.free()
+
+#the dice show luck in pips: a die for every six, three at most
+func test_mirror_names():
+	var known := [&"", &"crack", &"checker", &"lights", &"clinic", &"console", &"keys", &"convex", &"screen"]
+	for id in HudSkin.SKINS: assert_true(known.has(HudSkin.named(id).mirror), "%s: mirror '%s'" % [id, HudSkin.named(id).mirror])
+	assert_eq(HudMirror.PIPS.size(), 7)
+	for face in range(1, 7): assert_eq(HudMirror.PIPS[face].size(), face, "a %d has %d pips" % [face, face])
+
+#a star every wave on one clock for the whole run: crossing into another district must not restart it
+func test_the_wave_clock_ignores_districts():
+	Region.resetRegions()
+	Region.runTime = 95.0
+	Region.wave = 2
+	var left := Region.waveSecondsLeft()
+	Region.updatePlayerRegion({"region": 911, "terrain": Root.terrain.GRASS})
+	Region.updatePlayerRegion({"region": 912, "terrain": Root.terrain.SAND})
+	assert_eq(Region.wave, 2)
+	assert_eq(Region.waveSecondsLeft(), left)
+	assert_almost_eq(Region.waveProgress(), 35.0 / 60.0, 0.001)
+	Region.resetRegions()
+
+#the visors hold what the corners did, and nothing is left in them that the player can't use
+func test_the_visors_replace_the_corner_panels():
+	var hud = load(HUD_SCENE).instantiate()
+	hud.get_node("TopCenter/Timer").free()
+	add_child(hud)
+	await get_tree().process_frame
+	for group in ["currentGoonsCrushedui", "slotmachineui"]: assert_true(hud.get_node("LeftVisor").is_ancestor_of(get_tree().get_first_node_in_group(group)), group)
+	for group in ["coinui", "starui", "gemui"]: assert_true(hud.get_node("RightVisor").is_ancestor_of(get_tree().get_first_node_in_group(group)), group)
+	for gone in ["TopLeft", "TopRight", "NowPlaying", "Systems"]: assert_true(hud.get_node_or_null(gone) == null, "%s is gone" % gone)
+	assert_eq(hud.find_children("*", "Button", true, false).size(), 0, "no pause button: Esc, Start and losing focus pause")
+	hud.free()
+
 func test_the_hud_with_no_car_is_the_house_dash():
 	var hud = load(HUD_SCENE).instantiate()
 	hud.get_node("TopCenter/Timer").free()

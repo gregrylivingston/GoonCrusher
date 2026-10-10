@@ -3,7 +3,8 @@ extends Node
 #One capture job (docs/PROMO.md): started by the Capture autoload (scripts/debug/capture.gd) from a job
 #file that promo/tools/capture.py wrote. A job is one shot at one size. Its fields (all optional):
 #  kind      "shot" (a run, filmed), "hand" (a person drives; the drive is taped), "stage" (an interface
-#            piece, a title or a line-up on a plain backdrop: promo/stages/)
+#            piece, a title or a line-up on a plain backdrop: promo/stages/), "survey" (a wide picture of
+#            the world round the start, in tiles: "tiles": [across, down], "zoom"; capture.py stitches them)
 #  out       where the files go, without an extension (an absolute path outside the repo)
 #  size      [w, h] pixels                     fps      60
 #  record    "frames" (every filmed frame is saved as a PNG, with transparency, in <out>_frames/) or "none".
@@ -18,7 +19,7 @@ extends Node
 #  hud       "full", "minimal" or "off" (CleanFeed)          god       true: the car can't be hurt or run dry
 #  camera    a DirectorCamera rig                            at        "water", "wall", "station" or "x,y"
 #  crowd     {"spawnTimer", "escalation", "progress", "giantOdds", "floor"} for the SpawnManager
-#  events    [{"t": seconds from the start of filming, "do": ..., ...}] (see `fire`)
+#  events    [{"t": seconds from the start of filming (negative: during the lead-in), "do": ..., ...}] (see `fire`)
 #  stills    [seconds from the start of filming, ...] saved as PNGs beside the clip
 #  set       {"gfx/smoke": 2, ...} settings for this run only        audio  {"music": false, ...} buses heard
 #While it runs it prints CAPTURE_* lines; at the end it writes <out>.json (the sidecar: the job, the
@@ -76,7 +77,7 @@ func _ready():
 	frameSize = Vector2i(int(size[0]), int(size[1]))
 	lead = float(job.get("lead", 3.0))
 	seconds = float(job.get("seconds", 10.0))
-	var driver := str(job.get("driver", "hand" if kind == "hand" else "ai"))
+	var driver := str(job.get("driver", "hand" if kind == "hand" else ("none" if kind == "survey" else "ai")))
 	driverKind = driver.get_slice(":", 0)
 	driverArg = driver.get_slice(":", 1) if driver.contains(":") else ""
 	pendingEvents = (job.get("events", []) as Array).duplicate()
@@ -220,6 +221,9 @@ func startStage() -> void:
 #a prize lab scene has its own dark fill and a corner panel of notes: the fill takes the job's backdrop, the panel goes
 func dressLab(lab: Node) -> void:
 	var backdrop := str(job.get("backdrop", "clear"))
+	if job.get("hatch", false): #the game skids in and its hatch rolls up, as in a run (the lab opens games at once)
+		PickupMenu.lab = false
+		Transition.forceShown = true
 	for child in lab.get_children():
 		if child is CanvasLayer && child.layer == -10: child.visible = false
 		elif child is CanvasLayer && child.layer == 30: child.visible = false
@@ -361,16 +365,25 @@ func _process(_delta):
 	if not started || done || not worldSeen: return
 	if kind == "stage": runTick += 1
 	if runTick < 0: return
+	#the tape banners and district signs hang on their own layer under the level, outside the HUD: a clean
+	#picture (HUD off, a survey) has none of them either
+	if (kind == "survey" || str(job.get("hud", "full")) == "off") && is_instance_valid(Root.levelRoot):
+		var banners = Root.levelRoot.get_node_or_null("Banners")
+		if banners && banners.visible: banners.visible = false
 	var t := float(runTick) / Engine.physics_ticks_per_second #the clock is ticks, so a slow machine films the same run
+	if kind == "survey":
+		if is_instance_valid(car) && t >= lead && not surveyBusy: surveyStep()
+		return
 	if kind == "hand":
 		if Engine.max_fps != fps: Engine.max_fps = fps #Settings sets its own cap when a run starts; a taped drive must run at the tape's pace
 		if is_instance_valid(label): label.text = "TAPING  %s   %d:%02d   F9 / R3 bookmark (%d)   F10 finish" % [str(job.tape).get_file(), int(t) / 60, int(t) % 60, tape.bookmarks.size()]
 		if job.has("seconds") && t >= seconds: finish() #a tape of a set length (the kit's own tests: a pattern drives)
 		return
 	if not filming && t >= lead: startFilming()
-	if not filming: return
 	var shotTime := t - lead
+	#an event's t counts from the start of filming; a negative one happens in the lead-in (opening a page, say)
 	while not pendingEvents.is_empty() && float(pendingEvents[0].get("t", 0.0)) <= shotTime: fire(pendingEvents.pop_front())
+	if not filming: return
 	if shotTime >= seconds: finish()
 
 func startFilming() -> void:
@@ -416,6 +429,7 @@ func saveLater(image: Image, path: String) -> void:
 #  hud       "mode": full, minimal or off
 #  press     "action": an input action tapped (ui_right, ui_accept, UseItem ...); "hold" seconds
 #  click     "at": [x, y]: a left click there
+#  isolate   leaves one piece of the interface in the picture, over nothing (see `isolate`)
 #  mark      "label": a marker for the editor, nothing happens in the game
 func fire(event: Dictionary) -> void:
 	var what := str(event.get("do", ""))
@@ -455,9 +469,80 @@ func fire(event: Dictionary) -> void:
 				click.position = Vector2(float(at[0]), float(at[1]))
 				click.global_position = click.position
 				Input.parse_input_event(click)
+		"isolate": isolate(event)
 		"mark": pass
 		_: print("CAPTURE_NOTE unknown event " + what)
 	note("event" if what != "mark" else "mark", str(event.get("label", what)))
+
+#One piece of the interface alone, with transparency: everything that isn't the piece, or inside it, leaves
+#the picture, and the nodes above it stop drawing themselves. The piece is found in the current scene by
+#  "class": a script class (DriverCard, DriverBench, PickupShop, Goonopedia ...); "nth": which one, or
+#           "selected" for the selected driver's card
+#  "name":  a node's name (the results ticket is "ticket")
+#  "var":   a variable of the main menu's script that holds the node (garage, map, bench ...)
+func isolate(spec: Dictionary) -> void:
+	var scene := get_tree().current_scene
+	var piece: Node = null
+	if spec.has("var") && is_instance_valid(Root.mainMenu): piece = Root.mainMenu.get(str(spec["var"])) as Node
+	elif spec.has("class"):
+		var found := scene.find_children("*", str(spec["class"]), true, false)
+		if str(spec.get("nth", "0")) == "selected" && is_instance_valid(Root.mainMenu) && "cards" in Root.mainMenu:
+			piece = Root.mainMenu.cards[SaveManager.playerData.selectedCar]
+		elif int(spec.get("nth", 0)) < found.size(): piece = found[int(spec.get("nth", 0))]
+	elif spec.has("name"):
+		var found := scene.find_children(str(spec["name"]), "", true, false)
+		if not found.is_empty(): piece = found[0]
+	if piece == null:
+		print("CAPTURE_NOTE nothing to isolate for " + str(spec))
+		return
+	get_tree().root.transparent_bg = true
+	var keep := piece
+	while keep != get_tree().root && keep.get_parent() != null:
+		var parent := keep.get_parent()
+		for sibling in parent.get_children():
+			if sibling != keep && sibling != get_parent(): CleanFeed.conceal(sibling)
+		if parent is CanvasItem: parent.self_modulate.a = 0.0 #its own panel or backdrop; what is inside it still draws
+		keep = parent
+	print("CAPTURE_ISOLATED " + str(piece.get_path()))
+
+#--- survey: the world round the start as a grid of stills -------------------------------------------
+const SURVEY_SETTLE := 45 #frames at each stop for the chunks to come in
+
+var surveyAt := -1
+var surveyWait := 0
+var surveyOrigin := Vector2.ZERO
+var surveyBusy := false #a tile is being saved
+
+func surveyStep() -> void:
+	var tiles = job.get("tiles", [3, 3])
+	var across := int(tiles[0])
+	var down := int(tiles[1])
+	var z := float(job.get("zoom", 0.25))
+	var view: Vector2 = car.get_viewport().get_visible_rect().size / z
+	var own: Camera2D = car.get_node_or_null("Camera2D")
+	if own: own.zoom = Vector2(z, z) #the world streams for what the car's own camera would see
+	if surveyAt < 0:
+		surveyOrigin = car.global_position
+		car.visible = false
+		camera = DirectorCamera.attach(car, {"rig": "follow", "zoom": z, "smooth": 1.0})
+		surveyAt = 0
+		surveyWait = 0
+	if surveyAt >= across * down:
+		finish()
+		return
+	var cell := Vector2(surveyAt % across - (across - 1) / 2.0, surveyAt / across - (down - 1) / 2.0)
+	car.global_position = surveyOrigin + cell * view
+	car.velocity = Vector2.ZERO
+	surveyWait += 1
+	if surveyWait >= SURVEY_SETTLE:
+		surveyBusy = true
+		var path := "%s_tile%03d.png" % [str(job.out), surveyAt]
+		await RenderingServer.frame_post_draw
+		get_window().get_texture().get_image().save_png(path)
+		print("CAPTURE_TILE " + path)
+		surveyAt += 1
+		surveyWait = 0
+		surveyBusy = false
 
 func _unhandled_key_input(event: InputEvent) -> void:
 	if kind != "hand" || not event.is_pressed() || event.is_echo() || not worldSeen: return

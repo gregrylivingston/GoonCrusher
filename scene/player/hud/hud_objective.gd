@@ -1,6 +1,6 @@
 class_name HudObjective extends Control
 
-#Top center, under the clock: what the mode wants, in every mode. Countdown: survive the clock. Sprint: the
+#Top center, on the mirror beside the clock (HudMirror): what the mode wants, in every mode. Countdown: survive the clock. Sprint: the
 #station and its distance. Marathon: the leg and its distance. Defense: the base's barrier, its rim flashing
 #red when a goon blows up at a pump. Goonpocalypse: the score and the survival target for its star. The
 #station's words and distance are in its own blue (HudTheme.STATION), like its pointer.
@@ -8,6 +8,7 @@ class_name HudObjective extends Control
 const STAR_ICON := preload("res://texture/icon/star.svg")
 
 var mode := -1
+var framed := true #its own panel; off on the mirror, whose glass is the panel (HudMirror)
 var shownKey := []
 
 func _ready() -> void:
@@ -55,7 +56,8 @@ func _draw() -> void:
 	var level = Root.levelRoot
 	if not is_instance_valid(level): return
 	var hit := HudTheme.stationHit() if mode == Root.gameModes.DEFENSE else 0.0
-	HudTheme.panel(self, Rect2(Vector2.ZERO, size), Color(HudTheme.BAD, 0.4 + 0.6 * hit) if hit > 0.0 else Color(0, 0, 0, 0))
+	if hit > 0.0: HudTheme.panel(self, Rect2(Vector2.ZERO, size), Color(HudTheme.BAD, 0.4 + 0.6 * hit), 8, HudTheme.PANEL if framed else Color(HudTheme.BAD, 0.12 * hit))
+	elif framed: HudTheme.panel(self, Rect2(Vector2.ZERO, size))
 	var mid = size.x * 0.5
 	var icon: Texture2D = HudTheme.MODE_ICONS.get(mode)
 	if icon && mode != Root.gameModes.GOONPOCALYPSE: HudTheme.icon(self, icon, Vector2(22, size.y * 0.5), 26)

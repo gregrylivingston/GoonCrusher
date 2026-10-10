@@ -9,8 +9,8 @@ func tuning() -> Dictionary:
 
 func personalities() -> Dictionary:
 	return {
-		#top speed first: saves less fuel, crushes what is in the way
-		"flatout": {"ecoMinSpeed": 350.0, "crushReward": 1.0},
 		#not a scratch on it
 		"precious": {"hitCost": 14.0, "flankCost": 4.0, "amongRocksMinValue": 40.0},
+		#top speed first: saves less fuel, crushes what is in the way
+		"flatout": {"ecoMinSpeed": 350.0, "crushReward": 1.0},
 	}

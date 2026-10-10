@@ -47,44 +47,45 @@ var weave := false                               #carbon hatching on the face
 var hullMonitor := false                         #the hull is a heart monitor beside the speedometer
 var lamp := Lamp.RING                             #how the system lamps are drawn
 var radius := 12                                 #corner radius of the HUD's panels
+var mirror: StringName = &""                     #HudMirror's dressing: crack, checker, lights, clinic, console, keys, convex, screen
 var instrument: StringName = &""                 #HudInstrument's kind
 var instrumentAt := []                           #its [left, top, right, bottom] offsets, where it can't sit in its usual bay
 var rects := {}                                  #HudDial.Kind -> [left, top, right, bottom] offsets, where a cluster is not a sunken dial
 
 const SKINS := {
 	&"house": {},
-	&"beater": {"instrument":&"beater"},
+	&"beater": {"mirror":&"crack", "instrument":&"beater"},
 	&"hack": {"bezel":Bezel.CHECKER, "face":Color(0.05, 0.05, 0.05, 0.9), "hub":Color(0.08, 0.08, 0.08), "rim":Color(0.965, 0.761, 0.102),
 		"text":Color.WHITE, "muted":Color(0.79, 0.76, 0.66), "needle":Color(0.965, 0.761, 0.102), "track":Color(0.165, 0.165, 0.165),
 		"accent":Color(0.965, 0.761, 0.102), "glow":Color(0.965, 0.761, 0.102), "bold":SAIRA, "body":SAIRA_BODY, "numScale":1.25, "taper":true,
-		"radius":4, "lamp":Lamp.TILE, "instrument":&"meter"},
+		"radius":4, "lamp":Lamp.TILE, "mirror":&"checker", "instrument":&"meter"},
 	&"interceptor": {"face":Color(0.02, 0.027, 0.051, 0.9), "hub":Color(0.067, 0.082, 0.102), "rim":Color(0.184, 0.482, 1.0),
 		"text":Color.WHITE, "muted":Color(0.56, 0.706, 1.0), "needle":Color.WHITE, "tip":HudTheme.BAD, "track":Color(0.075, 0.11, 0.2),
 		"accent":Color.WHITE, "glow":Color(0.184, 0.482, 1.0), "bold":SAIRA, "body":SAIRA_BODY, "numScale":1.25, "minor":10,
-		"radius":6, "lamp":Lamp.BLOCK, "instrument":&"radar"},
+		"radius":6, "lamp":Lamp.BLOCK, "mirror":&"lights", "instrument":&"radar"},
 	&"medic": {"face":Color(0.933, 0.945, 0.918, 0.96), "hub":Color.WHITE, "rim":Color(0.847, 0.149, 0.173), "text":Color(0.078, 0.094, 0.102),
 		"muted":Color(0.365, 0.4, 0.392), "needle":Color(0.847, 0.149, 0.173), "track":Color(0.81, 0.83, 0.8), "accent":Color(0.078, 0.094, 0.102),
 		"glow":Color(1.0, 0.45, 0.45), "ok":Color(0.122, 0.616, 0.302), "warn":Color(0.85, 0.54, 0.0), "bad":Color(0.847, 0.149, 0.173),
 		"bold":SAIRA, "body":SAIRA_BODY, "numScale":1.25, "light":true, "hullMonitor":true, "radius":14, "lamp":Lamp.VITAL,
-		"instrument":&"defib"},
+		"mirror":&"clinic", "instrument":&"defib"},
 	&"rig": {"bezel":Bezel.CHROME, "face":Color(0.039, 0.035, 0.031, 0.95), "hub":Color(0.1, 0.082, 0.07), "rim":Color(0.79, 0.8, 0.815),
 		"text":Color(0.953, 0.918, 0.824), "muted":Color(0.725, 0.68, 0.573), "needle":Color(1.0, 0.353, 0.122), "track":Color(0.15, 0.13, 0.106),
 		"accent":Color(1.0, 0.827, 0.42), "glow":Color(1.0, 0.7, 0.3), "bold":SAIRA, "body":SAIRA_BODY, "numScale":1.25, "taper":true,
-		"sweep":84.0, "tachUnits":10, "econ":Vector2(1.2, 1.8), "radius":10, "lamp":Lamp.GAUGE, "instrument":&"load"},
+		"sweep":84.0, "tachUnits":10, "econ":Vector2(1.2, 1.8), "radius":10, "lamp":Lamp.GAUGE, "mirror":&"console", "instrument":&"load"},
 	&"truck": {"style":Style.RIBBON, "face":Color(0.09, 0.094, 0.055, 0.95), "house":Color(0.204, 0.216, 0.122, 0.94), "rim":Color(0.4, 0.416, 0.255),
 		"text":Color(0.945, 0.902, 0.784), "muted":Color(0.72, 0.68, 0.533), "needle":Color(1.0, 0.353, 0.122), "track":Color(0.165, 0.173, 0.106),
-		"accent":Color(1.0, 0.827, 0.42), "glow":Color(0.8, 0.9, 0.4), "bold":ROKKITT, "weight":800, "numScale":1.15, "radius":8, "lamp":Lamp.PILL, "instrument":&"bed",
+		"accent":Color(1.0, 0.827, 0.42), "glow":Color(0.8, 0.9, 0.4), "bold":ROKKITT, "weight":800, "numScale":1.15, "radius":8, "lamp":Lamp.PILL, "mirror":&"keys", "instrument":&"bed",
 		"instrumentAt":[16.0, -220.0, 216.0, -124.0], "rects":{0:[16.0, -116.0, 388.0, -8.0], 1:[-388.0, -116.0, -16.0, -8.0]}},
 	&"delivery": {"bezel":Bezel.SQUARE, "face":Color(0.055, 0.07, 0.078, 0.95), "house":Color(0.169, 0.188, 0.2, 0.94), "hub":Color(0.09, 0.11, 0.122),
 		"rim":Color(0.36, 0.404, 0.43), "text":Color(0.85, 0.94, 0.89), "muted":Color(0.56, 0.64, 0.604), "needle":Color(1.0, 0.54, 0.122),
 		"track":Color(0.122, 0.15, 0.16), "accent":Color(0.85, 0.94, 0.89), "glow":Color(0.3, 1.0, 0.6), "bold":SAIRA, "body":SAIRA_BODY,
-		"numScale":1.25, "sweep":78.0, "radius":2, "lamp":Lamp.LCD, "instrument":&"tilt"},
+		"numScale":1.25, "sweep":78.0, "radius":2, "lamp":Lamp.LCD, "mirror":&"convex", "instrument":&"tilt"},
 	&"track_racer": {"style":Style.BAR, "face":Color(0.043, 0.039, 0.078, 0.92), "hub":Color(0.086, 0.075, 0.165), "rim":Color(1.0, 0.17, 0.84),
 		"text":Color(0.957, 0.95, 1.0), "muted":Color(0.616, 0.592, 0.77), "track":Color(0.133, 0.122, 0.22), "accent":Color(1.0, 0.17, 0.84),
-		"glow":Color(1.0, 0.17, 0.84), "bold":MICHROMA, "body":MICHROMA, "numScale":0.8, "rimWidth":1.5, "radius":20, "lamp":Lamp.LED, "instrument":&"shift"},
+		"glow":Color(1.0, 0.17, 0.84), "bold":MICHROMA, "body":MICHROMA, "numScale":0.8, "rimWidth":1.5, "radius":20, "lamp":Lamp.LED, "mirror":&"screen", "instrument":&"shift"},
 	&"track_super": {"style":Style.BAR, "face":Color(0.04, 0.04, 0.04, 0.94), "hub":Color(0.086, 0.086, 0.086), "rim":Color(1.0, 0.83, 0.0),
 		"text":Color.WHITE, "muted":Color(0.64, 0.64, 0.64), "track":Color(0.15, 0.15, 0.15), "accent":Color(1.0, 0.83, 0.0),
-		"glow":Color(1.0, 0.83, 0.0), "bold":MICHROMA, "body":MICHROMA, "numScale":0.8, "rimWidth":1.5, "weave":true, "radius":20, "lamp":Lamp.LED, "instrument":&"shift"},
+		"glow":Color(1.0, 0.83, 0.0), "bold":MICHROMA, "body":MICHROMA, "numScale":0.8, "rimWidth":1.5, "weave":true, "radius":20, "lamp":Lamp.LED, "mirror":&"screen", "instrument":&"shift"},
 }
 
 static var built := {}
@@ -113,6 +114,16 @@ static func current() -> HudSkin:
 	if not is_instance_valid(car) || Settings.get_value("access/classic_dash"): return named(&"house")
 	var skinId = car.get("hudSkin")
 	return named(skinId if skinId is StringName else &"house")
+
+## The frame of the things along the top (the mirror, the visors): the dashboard's material
+func frameColor() -> Color:
+	if light: return Color(face, 0.97)
+	if bezel == Bezel.CHROME: return Color(0.227, 0.145, 0.086, 0.97) #wood
+	if style == Style.RIBBON || bezel == Bezel.SQUARE: return Color(house, 0.97)
+	return Color(0.09, 0.078, 0.07, 0.97)
+
+func corner() -> int:
+	return 6 if style == Style.BAR else clampi(radius * 2, 4, 26)
 
 #green, amber or red for a 0-100 amount, in this face's shades
 func condition(value: float) -> Color:

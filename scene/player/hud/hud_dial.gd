@@ -27,7 +27,7 @@ const CRUSH_SPEED := 100.0   #px/s; goons die when hit faster than this (overhea
 const LOW := 25.0            #fuel and hull blink under this
 const BOOT_SECONDS := 1.1    #the ignition sweep at the start of a run: needles to the top of the scale and back
 const WORN := 40.0           #under this hull the speedometer's glass is cracked; under this engine condition the tach needle trembles
-const HUB := 30.0            #the hub disc that holds the gear or the speed, in face units
+const HUB := 27.0            #the hub disc that holds the gear or the speed, in face units
 const WING_FROM := 100.0     #fuel and hull arcs: from this many degrees round the inner side (empty)...
 const WING_TO := 40.0        #...up to this (full)
 const RIBBON_BOX := 92.0     #a ribbon's readout box, at its right end
@@ -317,15 +317,15 @@ func gearInk(car) -> Color:
 ## (and at the top, the speedometer's third); on a ribbon, in the row under it
 func lampAt(i: int) -> Vector2:
 	var count := systems().size()
-	if isRibbon(): return Vector2(size.x - 26.0 - (count - 1 - i) * 34.0, RIBBON_ROW + 19.0)
+	if isRibbon(): return Vector2(size.x - 28.0 - (count - 1 - i) * 40.0, RIBBON_ROW + 19.0)
 	var spread := 50.0 if isBar() else 62.0
 	return HudTheme.polar(center, lampReach(), lerpf(-spread, spread, float(i) / (count - 1)))
 
 func lampReach() -> float:
-	return (52.0 if isBar() else 47.0) * unit
+	return (52.0 if isBar() else 46.0) * unit
 
 func lampUnit() -> float:
-	return 1.15 if isRibbon() else unit
+	return 1.3 if isRibbon() else unit * (1.3 if isBar() else 1.2)
 
 #the horn lamp, on the tachometer: at the top of the face, between its two system lamps
 func hornAt() -> Vector2:
@@ -445,7 +445,7 @@ func drawBigFace(isTach: bool) -> void:
 		#a half turn has room for every number on the tach, and every other one on the speedometer
 		if major && (isTach || (i / minor) % 2 == 0):
 			var label = tachLabel(i / minor) if isTach else str(int(round(maxValue / 8.0 * (i / minor))))
-			s.write(self, HudTheme.polar(center, 70 * unit, d) + Vector2(0, 7) * unit, label, int(numerals * unit), color)
+			s.write(self, HudTheme.polar(center, 73 * unit, d) + Vector2(0, 7) * unit, label, int(numerals * unit), color)
 
 #--- Track: a segmented bar tach round the gear, and the speed in digits ---
 
@@ -575,7 +575,7 @@ func drawNeedle() -> void:
 			s.write(needle, center + Vector2(0, 22) * unit, gearText(car), int(58 * unit), Color.WHITE if hot else gearInk(car), HORIZONTAL_ALIGNMENT_CENTER, 8)
 		else:
 			drawPointer(angleFor(shownValue / rpmMax), 98 * unit, s.needle, 5 * unit)
-			if showsGear(): s.write(needle, center + Vector2(0, 14) * unit, gearText(car), int(40 * unit), gearInk(car), HORIZONTAL_ALIGNMENT_CENTER, 8)
+			if showsGear(): s.write(needle, center + Vector2(0, 13) * unit, gearText(car), int(37 * unit), gearInk(car), HORIZONTAL_ALIGNMENT_CENTER, 8)
 	else:
 		if isBar():
 			HudTheme.arc(needle, center, 100 * unit, sweepFrom(), angleFor(shownValue / speedMax), s.text, 6 * unit)
@@ -583,8 +583,8 @@ func drawNeedle() -> void:
 			s.write(needle, center + Vector2(0, 30) * unit, speedUnit(), int(9 * unit), s.muted, HORIZONTAL_ALIGNMENT_CENTER, 0)
 		else:
 			drawPointer(angleFor(shownValue / speedMax), 98 * unit, s.needle, 5 * unit)
-			s.write(needle, center + Vector2(0, 7) * unit, str(readout), int(27 * unit), s.text, HORIZONTAL_ALIGNMENT_CENTER, 6)
-			s.write(needle, center + Vector2(0, 20) * unit, speedUnit(), int(8 * unit), s.muted, HORIZONTAL_ALIGNMENT_CENTER, 0)
+			s.write(needle, center + Vector2(0, 6) * unit, str(readout), int(25 * unit), s.text, HORIZONTAL_ALIGNMENT_CENTER, 6)
+			s.write(needle, center + Vector2(0, 18) * unit, speedUnit(), int(8 * unit), s.muted, HORIZONTAL_ALIGNMENT_CENTER, 0)
 		if cracked(car):
 			var crack := PackedVector2Array()
 			for point in CRACK: crack.push_back(center + point * unit)

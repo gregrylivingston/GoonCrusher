@@ -11,8 +11,8 @@ func tuning() -> Dictionary:
 
 func personalities() -> Dictionary:
 	return {
-		#fills the bed: detours for pickups, even awkward ones
-		"hoarder": {"pickupScale": 1.4, "amongRocksMinValue": 12.0},
+		#fills the bed: detours for pickups
+		"hoarder": {"pickupScale": 1.4},
 		#straight through the rough after goons
 		"mudder": {"goonValue": 18.0, "crushReward": 1.2, "pickupScale": 0.9},
 	}

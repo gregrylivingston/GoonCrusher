@@ -5,9 +5,14 @@ extends Node
 #job whose kind is "stage"; job.stage picks what stands on it:
 #  title       job.text in the game's extruded 3D lettering; "sub": a smaller line under it; "font_size" (170);
 #              "spin": true lets the letters turn over now and then, as the menu's logo does
-#  lineup      job.what: "cars", "goons" (walking), "pickups"; "names": true labels them; "only": [ids];
+#  lineup      job.what: "cars", "goons" (walking), "pickups", "posters" (the 30 levels); "names": true labels
+#              them; "only": [ids];
 #              "columns": how many across (worked out from the frame's shape when left out)
-#  transition  the garage shutter coming down and going up: "label", "sub" (its sign), "hold" seconds shut
+#  transition  one of the game's own screen moves, by "which":
+#                shutter (default)  the garage door down and up: "label", "sub" (its sign), "hold" seconds shut
+#                stamp              stencil text slammed on: "label", "font_size" (96), "hold"
+#                banner             the hazard-tape strip sliding across: "label", "hold"
+#                sign               the highway sign swinging in: "label" (the place), "sub" (who holds it)
 #  keyart      store art: job.plate (a still's path) filling the frame under the GOONCRUSHER logo;
 #              "tagline", "logo_at" (0 top to 1 bottom, default 0.3), "dim" (0 to 1: how much the plate darkens)
 #  safezone    a guide to lay over a tall or square edit: the area the platform's own buttons and captions
@@ -80,8 +85,16 @@ func lineup() -> void:
 				var picture := TextureRect.new()
 				picture.texture = Pickups.texture(id)
 				items.push_back([Pickups.displayName(id), picture])
+		"posters":
+			for id in Levels.ORDER:
+				if not only.is_empty() && not String(id) in only: continue
+				var def: LevelDef = load(Levels.DEF_DIR + String(id) + ".tres")
+				if def == null || def.poster == "" || not ResourceLoader.exists(def.poster): continue
+				var picture := TextureRect.new()
+				picture.texture = load(def.poster)
+				items.push_back([def.displayName if def.displayName != "" else String(id).capitalize(), picture])
 		_:
-			push_error("CAPTURE lineup of what? cars, goons or pickups")
+			push_error("CAPTURE lineup of what? cars, goons, pickups or posters")
 			return
 	if items.is_empty(): return
 	var margin := screen * 0.06
@@ -122,9 +135,18 @@ func lineup() -> void:
 
 func transition() -> void:
 	Transition.forceShown = true
+	#banners and signs hang on the run's banner layer (TapeBanner.layer): a bare node stands in for the level
+	var stand := Node2D.new()
+	add_child(stand)
+	Root.levelRoot = stand
 	await get_tree().create_timer(0.3).timeout
 	var hold := float(job.get("hold", 0.6))
-	Transition.play(func(): await get_tree().create_timer(hold).timeout, str(job.get("label", "GOONCRUSHER")), str(job.get("sub", "")))
+	var text := str(job.get("label", "GOONCRUSHER"))
+	match str(job.get("which", "shutter")):
+		"stamp": Stamp.slam(ui, text, screen / 2.0, HudTheme.GOLD, int(job.get("font_size", 96)), maxf(hold, 1.2))
+		"banner": TapeBanner.post(text, maxf(hold, 1.4))
+		"sign": RoadSign.post(text, str(job.get("sub", "")))
+		_: Transition.play(func(): await get_tree().create_timer(hold).timeout, text, str(job.get("sub", "")))
 
 func keyart() -> void:
 	var platePath := str(job.get("plate", ""))

@@ -188,7 +188,7 @@ static func attach(target: OverheadCarBody2D, options: Dictionary = {}) -> AIDri
 	driver.sight = options.get("sight", "human")
 	driver.debug = options.get("debug", false)
 	driver.spec = options.get("profile", AIProfiles.BEST)
-	driver.setBrief(Root.levelRoot.runMode if is_instance_valid(Root.levelRoot) else Modes.running())
+	driver.setBrief(SaveManager.playerData.gameMode) #what Level.runMode is set from (the car can be ready before Root.levelRoot is)
 	if driver.p.planSlop > 0.0 || driver.p.shiftSlop > 0.0: driver.rng.seed = randi() #from the run's seed, so a seeded run replays
 	driver.name = "AIDriver"
 	driver.top_level = true #draws in world coordinates
@@ -373,7 +373,7 @@ func leadPoint(prey: Node2D) -> Vector2:
 #px the car needs to brake from its speed now down to `toSpeed`, by its own physics
 func brakeDistance(toSpeed: float) -> float:
 	if car.velocity.length() <= toSpeed: return 0.0
-	var rollout := simulate(PLANS[9], 150)
+	var rollout := simulate(PLANS[9], 420) #seven seconds: a car on Nitro takes most of that to shed its speed
 	var path: PackedVector2Array = rollout.path
 	var travelled := 0.0
 	for i in range(1, path.size()):

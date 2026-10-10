@@ -167,3 +167,13 @@ func test_a_car_hit_is_about_speed_and_where_it_lands_not_armour():
 	assert_true(car.CAR_WEIGHT_POWER < 0.5, "weight counts for little of the damage")
 	var heavy := pow(2.8 / 1.4, car.CAR_WEIGHT_POWER) #a semi against a racer
 	assert_true(heavy < 1.25, "a car twice the weight takes under a quarter less (x%.2f the other way)" % heavy)
+
+func test_a_race_starts_abreast_not_nose_to_tail():
+	var seen := [Vector2.ZERO]
+	for n in range(1, Rivals.COUNT + 1):
+		var spot := Rivals.gridSlot(n, 0, Vector2.ZERO, Vector2.RIGHT)
+		assert_eq(spot.x, 0.0, "rival %d starts on the line, not behind it" % n)
+		for other in seen: assert_true(spot.distance_to(other) >= Rivals.LINE_GAP - 0.01, "with room beside the next car")
+		seen.push_back(spot)
+	assert_true(Rivals.gridSlot(1, 0, Vector2.ZERO, Vector2.RIGHT).y * Rivals.gridSlot(2, 0, Vector2.ZERO, Vector2.RIGHT).y < 0.0, "either side of the player")
+	assert_eq(Rivals.gridSlot(1, 1, Vector2.ZERO, Vector2.RIGHT).x, -Rivals.LINE_BACK, "a blocked slot moves a line back")

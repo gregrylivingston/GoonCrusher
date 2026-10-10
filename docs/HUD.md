@@ -1,6 +1,6 @@
 # In-run HUD
 
-The HUD is `scene/player/playerRoot.tscn` (class `GameUI`): an instrument cluster sunk into each bottom corner, the held items along the bottom edge between them, and slim panels along the top. Damage shows on the car itself (docs/CAR_ART.md).
+The HUD is `scene/player/playerRoot.tscn` (class `GameUI`): an instrument cluster sunk into each bottom corner, the held items along the bottom edge between them, a rear-view mirror with the clock and the goal at top center, and slim panels in the top corners. Damage shows on the car itself (docs/CAR_ART.md).
 
 ## Layout (1600 x 900 canvas)
 
@@ -8,8 +8,9 @@ The HUD is `scene/player/playerRoot.tscn` (class `GameUI`): an instrument cluste
 |---|---|---|---|
 | `TopLeft/CrushPill` | `hud_crush.gd` | top left | The next gift box (docs/PICKUPS.md, "Gift boxes"): its tier in its colour, a crush XP bar and the XP still to go. Prize pickups fly to its box (`slotmachineui`). |
 | `TopLeft/RegionChip` | `hud_region.gd` | top left | District name, goon size (giantism) and the run's wave ring: "Wave n: survive m:ss for a star". Waves are one clock for the whole run (`Region.wave`, `waveProgress`), with no cap. |
-| `TopCenter/ModeLabel`, `TopCenter/Timer` | `Timer.gd` (unchanged) | top center | Mode name and run clock. `Timer` keeps group `runTimer`. |
-| `Objective` | `hud_objective.gd` | top center, under the clock | The mode's goal, in every mode, with its icon: Countdown "SURVIVE THE CLOCK", Sprint "REACH THE STATION" and Marathon "STATION n OF 5" with the distance in the station's blue, Defense the BASE bar and percent (the rim flashes red when a goon blows up at a pump), Goonpocalypse the score and time to the star. |
+| `Mirror` (added in code) | `hud_mirror.gd` | top center | The rear-view mirror: the frame behind the clock and the goal, and the dice and clover hanging from it (below). |
+| `TopCenter/ModeLabel`, `TopCenter/Timer` | `Timer.gd` (unchanged) | on the mirror, left | Mode name and run clock. `Timer` keeps group `runTimer`. |
+| `Objective` | `hud_objective.gd` | on the mirror, right | The mode's goal, in every mode, with its icon: Countdown "SURVIVE THE CLOCK", Sprint "REACH THE STATION" and Marathon "STATION n OF 5" with the distance in the station's blue, Defense the BASE bar and percent (it flashes red when a goon blows up at a pump), Goonpocalypse the score and time to the star. |
 | `TopRight` | `hud_payout.gd` | top right | Pause button, coins x the star multiplier (1 + 0.1 a star up to ×3, shown by the star) = payout (`Root.computePayout`), gems. |
 | `Tach` | `hud_dial.gd` | bottom left corner, two thirds on screen | Tachometer with the gear (`car.gear`) in its hub, the fuel as an arc round its inner side, the engine and tank lamps and the horn lamp on its face. Its look is the car's dashboard (below). |
 | `Speedo` | `hud_dial.gd` | bottom right corner, two thirds on screen | Speedometer with the speed in its hub, the hull as an arc round its inner side, and the steering, lights and tires lamps on its face. |
@@ -45,7 +46,7 @@ Each car has its own dashboard: a `HudSkin` (`hud_skin.gd`), named in `CarInfo.h
 | Van | `delivery` | Square housings, a shorter scale (78° either side) | `tilt`: how far it leans, red as it nears a roll (Top-Heavy), and Cargo Bay's two gadgets in bays 1 and 2 |
 | Racer, supercar | `track_racer`, `track_super` | A segmented bar tach round a big gear number, speed in digits; magenta, or yellow on carbon | `shift`: ten shift lights that fill through the gear and flash where a shift up earns its kick, then the drift charge's three tiers or the downforce |
 
-**What a skin sets:** colours (face, rim, numerals, needle, track, accent, night glow), fonts (Saira Condensed, Rokkitt, Michroma, and Share Tech Mono for LED digits, in `style/font/`), the bezel (`Bezel`: ring, checker, chrome, square), the style (`Style`: round, ribbon, bar), the sweep, the needle's shape, the speedometer's tick density, the tach's units, the lamps' style, where a cluster sits if it is not a sunken dial (`rects`, offsets by `HudDial.Kind`), and the instrument (and where it sits, `instrumentAt`). The panels' rim colour and corner radius follow it too (`HudTheme.panel` with no rim or radius given).
+**What a skin sets:** colours (face, rim, numerals, needle, track, accent, night glow), fonts (Saira Condensed, Rokkitt, Michroma, and Share Tech Mono for LED digits, in `style/font/`), the bezel (`Bezel`: ring, checker, chrome, square), the style (`Style`: round, ribbon, bar), the sweep, the needle's shape, the speedometer's tick density, the tach's units, the lamps' style, the mirror's dressing, where a cluster sits if it is not a sunken dial (`rects`, offsets by `HudDial.Kind`), and the instrument (and where it sits, `instrumentAt`). The panels' rim colour and corner radius follow it too (`HudTheme.panel` with no rim or radius given).
 
 **What a skin never changes:** the speed scale, the redline and the gear come from the car. Green is the speed that crushes a goon, red is the redline and danger, amber warns; a skin may only shade them for its face (`ok`, `warn`, `bad`). Revs stay left and speed right, fuel with revs and hull with speed, each lamp on its own side, and pickups still fly to the fuel, the hull and the lamps wherever a skin puts them. `tests/game/test_hud_skin.gd` checks these.
 
@@ -81,10 +82,17 @@ The widgets draw with `_draw()`, and each one redraws only when its numbers chan
 | health, armor | The hull's icon, by the speedometer |
 | fuel | The fuel's icon, by the tachometer |
 | coin (and purse), gem | The coin icon in the payout and the gem pill |
-| luck, clover | The payout (they change what goons drop) |
+| luck, clover | The mirror's dice and clover |
 | currentGoonsCrushed, slotmachine | The crush pill |
 
 `tests/game/test_hud.gd` checks that every powerup scene has a target inside the HUD.
+
+## The mirror
+
+`HudMirror` (`hud_mirror.gd`) is a 540 x 92 frame hanging 14 px under the top edge. It does not own the clock or the goal: it lays `TopCenter` and `Objective` out on its glass (clock left, goal right, `HudMirror.apply`), turns off the goal's own panel (`HudObjective.framed`) and dresses the clock in the dashboard's font and colour. Its dressing is the skin's (`HudSkin.mirror`): the beater's crack, the taxi's checker band and licence card, the police car's light strip (in step with its lightbar at night), the ambulance's white frame with a monitor-green clock, the pickup's keys, the van's blind-spot mirror, the Track cars' camera screen. The semi has no rear-view mirror, so it gets a console: 62 px tall, flush with the top edge, with no mode name over the clock.
+
+- **Dice and clover:** both hang from the middle of the frame and swing as the car turns (not with Reduce Motion). The dice are the luck stat in pips, a die for every six and three at most (18 is three sixes; above that the number is under them). The clover has the clover stat on it. Their pickups fly to them.
+- **Hurry:** in the last 15 s of a clock that loses the run when it runs out, the frame pulses red (`HudMirror.hurry`; steady with Reduce Flashing).
 
 ## System lamps
 

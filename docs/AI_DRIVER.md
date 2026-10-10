@@ -41,7 +41,7 @@ Handling traits live in `integrate()`, so every plan already feels them. A car's
 | Police (Nikita) | `interceptor`, `bythebook` | PIT: goons beside it matter a quarter as much (`flankScale`); the lightbar's 900 px of sight at night (`nightGlow`) |
 | Ambulance (Xavier) | `careful`, `codethree` | The unused defibrillator is 12 health in hand (`spareHealth`) |
 | Racer (Kim) | `showoff`, `lineholder` | Pulls the handbrake for smaller turns; the showoff slides for the boost (`driftReward`); a bigger health reserve |
-| Supercar (Snake) | `flatout`, `precious` | Walls cost more; a bigger health reserve |
+| Supercar (Snake) | `precious`, `flatout` | Walls cost more; a bigger health reserve |
 | Semi (Tiffany) | `bulldozer`, `trucker` | Drops the load on a pack behind it (`wantsAbility`); never pulls the handbrake |
 
 The shared driver also asks the car what it can smash (`OverheadCarBody2D.smashThreshold`, so the semi drives through fences from a standstill) and drags a trailer along every plan (`towTrailer`, `trailerSnags`, `trailerCost`).
@@ -80,7 +80,7 @@ The car reads all of these through `actionDown`, which asks the driver; nothing 
 | `flatout_brief` | Flat Out | No slow zone at the lot; brakes to 380 px/s from the point its own physics says it must (`brakeDistance`), under the 420 stop speed; Nitro on the straights |
 | `pursuit_brief` | Pursuit | The hunter aims where the runner will be (`leadPoint`) and leaves cars out of its sweeps; the runner races |
 | `lap_brief` | Hot Lap, Circuit Race, Knockout | The next gate; Nitro on the straights |
-| `cones_brief` | Cone Course | A knocked cone costs a plan 1.2 s (`knockCost`), not a passing touch; the handbrake for tighter turns |
+| `cones_brief` | Cone Course | A knocked cone costs a plan 2 s (`knockCost`), not a passing touch; the handbrake for tighter turns |
 | `drift_brief` | Drift Trial | Handbrake plans always weighed; 3 s off a plan per second of slide |
 | `smash_brief` | Smash Run | The nearest thing this car can smash; Nitro on the straights |
 | `defense_brief` | Defense | Patrol by the base; goons worth more the nearer the pumps |

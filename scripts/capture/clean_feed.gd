@@ -8,7 +8,7 @@ class_name CleanFeed
 
 const MODES := ["full", "minimal", "off"]
 const HIDDEN := &"cleanFeedHidden"
-const MINIMAL_HIDES := ["VersionTracker", "NowPlaying", "TopCenter", "Objective"]
+const MINIMAL_HIDES := ["VersionTracker", "Mirror", "TopCenter", "Objective"]
 
 static func apply(ui: CanvasLayer, mode: String) -> void:
 	if not is_instance_valid(ui): return

@@ -8,9 +8,9 @@ func _ready():
 	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
 	$VersionTracker.text = Root.versionText()
 	%ModeLabel.text = Root.gameModeDescription[SaveManager.playerData.gameMode].name
+	addMirror()
 	addPickupWidgets()
 	addInstrument()
-	addNowPlaying()
 	setupHudScale()
 	add_child(HudChance.new()) #toasts, the scratch card, beacons: over everything, not HUD-scaled
 	if is_instance_valid(Root.playerCar):
@@ -58,6 +58,18 @@ func addPickupWidgets() -> void:
 	items.offset_bottom = -6.0
 	add_child(items)
 
+#the rear-view mirror behind the clock and the goal, which it lays out on its glass (hud_mirror.gd)
+func addMirror() -> void:
+	var mirror = HudMirror.new()
+	mirror.name = "Mirror"
+	mirror.anchor_left = 0.5
+	mirror.anchor_right = 0.5
+	mirror.offset_left = -HudMirror.SIZE.x * 0.5
+	mirror.offset_right = HudMirror.SIZE.x * 0.5
+	mirror.offset_bottom = HudMirror.STALK + HudMirror.SIZE.y
+	add_child(mirror)
+	move_child(mirror, 0) #under the clock and the goal
+
 #the car's signature instrument, on the bottom edge just inside the tachometer's fuel arc (hud_instrument.gd); hidden on the house dash
 func addInstrument() -> void:
 	var instrument = HudInstrument.new()
@@ -69,18 +81,6 @@ func addInstrument() -> void:
 	instrument.offset_right = HudInstrument.OFFSETS[2]
 	instrument.offset_bottom = HudInstrument.OFFSETS[3]
 	add_child(instrument)
-
-#the radio's now-playing card, above the tachometer; shows for a few seconds at each song (docs/RADIO.md)
-func addNowPlaying() -> void:
-	var card = NowPlaying.new()
-	card.name = "NowPlaying"
-	card.anchor_top = 1.0
-	card.anchor_bottom = 1.0
-	card.offset_left = 32.0
-	card.offset_right = 32.0 + NowPlaying.SIZE.x
-	card.offset_top = -292.0
-	card.offset_bottom = -292.0 + NowPlaying.SIZE.y
-	add_child(card)
 
 #HUD Scale (Accessibility). Each authored HUD control is scaled about its point nearest its anchor,
 #so corner widgets stay in their corners. Menus added at runtime (pause, slots, countdown, summary)
@@ -109,7 +109,7 @@ func applyHudScale() -> void:
 
 #Gift boxes (CrushPrizes, docs/PICKUPS.md): crushes earn crush XP (car.crushXp) toward the next box, which
 #holds one unlocked prize game. Box `boxLevel + 1` opens at CrushPrizes.boxAt(boxLevel + 1) total XP, and
-#leftover XP carries on. HudCrush draws the bar.
+#leftover XP carries on. The left visor draws the ring (HudVisor).
 var boxLevel := 0        #boxes opened this run
 var boxStartXp := 0.0    #total XP where the current box's bar starts
 var nextBoxXp: float = CrushPrizes.boxAt(1)
@@ -127,23 +127,13 @@ func checkGiftBox() -> void:
 	nextBoxXp = CrushPrizes.boxAt(boxLevel + 1)
 	var tier := CrushPrizes.tierFor(boxLevel)
 	var id := CrushPrizes.pickGame(tier, randf(), CrushPrizes.openGames())
-	flashWidget($TopLeft/CrushPill)
+	flashWidget($LeftVisor)
 	GiftBox.open(id, tier)
 
-func updatePlayerRegion(tile) ->void:
-	%RegionChip.updatePlayerRegion(tile)
-
-#a wave survived in this region: the chip flashes and the star it paid flies to the star counter
+#a wave survived: the star it paid lands in its ring on the right visor, which flashes
 func waveSurvived() -> void:
-	flashWidget(%RegionChip)
+	flashWidget($RightVisor)
 	Transition.sound("pop", -10.0)
-	var flyers = RewardFlyers.instance()
-	if flyers: flyers.launch(HudTheme.STAR_ICON, Transform2D(0.0, Vector2(0.5, 0.5), 0.0, %RegionChip.get_global_transform_with_canvas() * Vector2(30, 27)), "starui")
-
-#a new district: a road sign swings in with its name and the faction that holds it
-func districtEntered(region: Dictionary) -> void:
-	flashWidget(%RegionChip)
-	RoadSign.post(str(region.get("name", "")), Goons.factionName(region.get("faction", 0)) + " turf")
 
 func flashWidget(widget: Control) -> void:
 	if not is_instance_valid(widget): return

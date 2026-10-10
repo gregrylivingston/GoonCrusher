@@ -11,8 +11,8 @@ How the kit works, for whoever maintains it. The people filming read `promo/READ
 | `scripts/capture/director_camera.gd` | `DirectorCamera`: follow, tripod, pan, free rigs | yes (photo mode will use it) |
 | `promo/capture/session.gd` | one capture job: starts the run or stage, drives, films, writes the sidecar | no |
 | `promo/capture/tape.gd` | `Tape`: a hand drive's inputs per tick | no |
-| `promo/stages/stage.gd` | title, lineup, transition, keyart, safezone, endcard on a plain backdrop | no |
-| `promo/tools/capture.py` | the command line: doctor, shot, quick, hand, replay, stock, seeds, stage, encode, reframe, slowmo, song, gallery | no |
+| `promo/stages/stage.gd` | title, lineup (cars, goons, pickups, posters), transition (shutter, stamp, banner, sign), keyart, safezone, endcard on a plain backdrop | no |
+| `promo/tools/capture.py` | the command line: doctor, shot, quick, hand, replay, stock, seeds, stage, panorama, encode, reframe, slowmo, song, gallery | no |
 | `promo/shots/*.json` | shot files | no |
 | `promo/tapes/*.tape` | taped drives | no |
 | `promo/seeds/hero_seeds.json` | each level's liveliest maps (`capture.py seeds`) | no |
@@ -58,6 +58,16 @@ A job of kind `stage` puts one thing on a backdrop: `clear` sets `root.transpare
 
 `"layer": "hud"` on a normal shot hides the `Level` node and makes the root transparent, leaving the HUD's `CanvasLayer`.
 
+The `transition` stage plays the game's own pieces by `which`: `Transition.play` (the shutter), `Stamp.slam`, `TapeBanner.post`, `RoadSign.post`. The last two hang on the run's banner layer, so the stage sets `Root.levelRoot` to a bare `Node2D`. `"hatch": true` on a prize lab scene turns `PickupMenu.lab` off so the `GameHatch` plays.
+
+**Isolating a piece** (`Session.isolate`, the `isolate` event): the piece is found in the current scene by class, name or a variable of `Root.mainMenu`; walking up from it, every sibling is concealed with `CleanFeed.conceal` and every ancestor's own drawing is switched off with `self_modulate`, then the root is made transparent. It works on the real menu and in a run (the results ticket), so a piece always looks exactly as it does in the game. Events with a negative `t` fire during the lead-in, which is how a shot opens the screen it wants before filming.
+
+A clean picture (`hud: off`, a survey) also hides the run's `Banners` layer each frame: the tape banners and district signs are not part of the HUD.
+
+## Panoramas
+
+A job of kind `survey` parks a hidden car at each cell of a grid round the start, waits `SURVEY_SETTLE` frames for the chunks, and saves a tile; `capture.py panorama` joins them with ffmpeg's `tile` filter. The car's own camera is held at the survey's zoom because `TileManager.queueNeededChunks` streams for that camera. `KEEP_RADIUS` (2 chunks) bounds how much world one tile can hold: below about zoom 0.12 the edges of a tile would be unloaded.
+
 To add a stage: a function in `stage.gd`, a line in its `match`, its fields in the header comment, and an example in `promo/shots/elements.json`.
 
 ## Events and the camera
@@ -84,6 +94,7 @@ To add a stage: a function in `stage.gd`, a line in its `match`, its fields in t
 - Speed: about 0.1 to 0.2 s a frame at 1080p and 0.5 s at 4K, most of it PNG encoding and Movie Maker's own (unused) picture. The lead-in frames cost render time too.
 - The `.avi` that carries the sound has a 4 GB limit: about 5 minutes of run, lead included. Replay long drives in stretches.
 - Slow motion is ffmpeg's motion interpolation after the fact. Real slow motion needs physics interpolation, which the project doesn't use.
-- `"layer": "hud"` leaves the odd world-space marker that draws on its own layer.
+- `"layer": "hud"` and an isolated results ticket leave the odd world-space marker that draws on its own layer.
+- The hatch reel and the full pages (Pickups, Goonopedia) come on the game's own dark background, not transparent: their backdrops are part of the piece.
 - The Steam sizes in `PROFILES` and the safe zones in `stage.gd` are from memory: check them before a final export.
 - A non-technical filmer can't build the native library. `doctor --native <folder>` copies in a prebuilt pair; publishing one per commit (a GitHub release) is the author's job and isn't automated.

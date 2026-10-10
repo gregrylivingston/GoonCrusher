@@ -431,7 +431,7 @@ def cmd_shot(args):
         job = {**defaults, **shot}
         profiles = args.profile.split(",") if args.profile else job.get("profiles", ["wide1080"])
         still = float(job.get("seconds", 10)) <= 0
-        element = job.get("kind") == "stage" or job.get("layer") == "hud"
+        element = job.get("kind") == "stage" or job.get("layer") == "hud" or job.get("alpha")
         dest = machine.folder(job.get("dest", "stills" if still else ("elements" if element else "masters")))
         for profile in profiles:
             film(machine, profile_job(job, profile), f"{set_name}_{shot['id']}_{profile}", dest, args, tags=[set_name] + job.get("tags", []))
@@ -616,6 +616,38 @@ def cmd_seeds(args):
         say(f"    best seed {best[level][0]['seed']} ({best[level][0]['crushed']} crushed)")
         seed_file.write_text(json.dumps(best, indent=1) + "\n", encoding="utf-8")
     say(f"Saved to {seed_file.relative_to(REPO)}. The stock library films these maps first.")
+
+
+def cmd_panorama(args):
+    """A wide picture of the world round a level's start: the game films it in tiles and ffmpeg joins them."""
+    machine = Machine().need(godot=True, ffmpeg=True)
+    across, down = (int(v) for v in args.tiles.lower().split("x"))
+    width, height = PROFILES[args.profile]
+    dest = machine.folder("stills")
+    stem = next_version(dest, f"panorama_{args.level}_{across}x{down}")
+    base = machine.folder("work") / stem
+    job = {"kind": "survey", "out": base.as_posix(), "size": [width, height], "profile": args.profile, "level": args.level, "car": "sedan",
+           "seed": args.seed, "time": args.time, "tiles": [across, down], "zoom": args.zoom, "lead": 1.0, "hud": "off", "god": True,
+           "record": "none", "crowd": {"floor": False, "spawnTimer": 9999.0, "escalation": 0.0}, "audio": {"music": False}}
+    if args.landscape:
+        job["landscape"] = args.landscape
+    say(f"  surveying {args.level}: {across}x{down} tiles of {width}x{height}")
+    log = Path(str(base) + ".log")
+    run_godot(machine, job, log)
+    tiles = sorted(base.parent.glob(stem + "_tile*.png"))
+    if len(tiles) != across * down:
+        raise Problem(f"Only {len(tiles)} of {across * down} tiles were filmed. The log is {log}")
+    target = dest / (stem + ".png")
+    ffmpeg_run(machine, ["-framerate", "1", "-i", str(base) + "_tile%03d.png", "-vf", f"tile={across}x{down}", "-frames:v", "1", str(target)], "joining the tiles")
+    for tile in tiles:
+        tile.unlink()
+    Path(str(base) + ".json").unlink(missing_ok=True)
+    log.unlink(missing_ok=True)
+    meta = {"name": stem, "job": job, "size": [width * across, height * down], "files": [target.name], "tags": ["panorama", args.level, args.time],
+            "commit": git("rev-parse", "--short", "HEAD"), "commit_time": int(git("log", "-1", "--format=%ct") or 0),
+            "filmed": datetime.datetime.now().isoformat(timespec="seconds")}
+    (dest / (stem + ".json")).write_text(json.dumps(meta), encoding="utf-8")
+    say(f"    {target}  ({width * across}x{height * down})")
 
 
 # --- interface pieces, titles and line-ups --------------------------------------------------------
@@ -965,6 +997,16 @@ def main():
     p.add_argument("--name")
     film_options(p)
     p.set_defaults(profile="wide1080", run=cmd_stage)
+
+    p = commands.add_parser("panorama", help="a wide still of the world round a level's start, joined from tiles")
+    p.add_argument("--level", default="prairie")
+    p.add_argument("--tiles", default="4x3", help="across x down")
+    p.add_argument("--zoom", type=float, default=0.25, help="smaller shows more world per tile (the game's own is 0.45)")
+    p.add_argument("--profile", default="wide1080", help="each tile's size")
+    p.add_argument("--seed", type=int, default=1)
+    p.add_argument("--time", default="day", choices=["day", "night"])
+    p.add_argument("--landscape")
+    p.set_defaults(run=cmd_panorama)
 
     p = commands.add_parser("encode", help="a finished cut (or any take) in a platform's upload format")
     p.add_argument("source", help="a file, or a take's name")

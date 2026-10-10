@@ -11,6 +11,7 @@ You are probably helping a **trailer maker who is not a programmer**. They have 
 - **After filming, tell them where the file is** (the command prints the path) and offer `gallery` to look at it. You can check a result yourself by pulling one frame with ffmpeg and reading the image.
 - **A shot they will want again goes in a shot file.** Add it to the right file in `promo/shots/` (or a new one) with a clear `id`, then film it with `shot <file> <id>`. One-offs can stay `quick` commands.
 - **A hand drive needs the person.** `hand <name> ...` opens the game for them to play; you can't drive it. Start it, tell them the keys (F9 bookmark, F10 finish), then film their bookmarks with `replay`.
+- **Isolating a new interface piece** means finding its node: look in `scene/player/menu/main/main2.gd` (the menu is built in code) for the class or the variable that holds it, then copy a `piece_` shot. The keys that open screens are input actions: `ui_upgrade` (the driver's bench), `ui_accept` (Drive, into run setup), `ui_pickups`, `ui_codex`, `ui_records`, `ui_cancel`. Reading the game's code for this is fine; changing it is not.
 - **Report in plain words.** They don't need the command's internals: what was filmed, where it is, and anything that went wrong.
 
 ## Words they use, and what they mean
@@ -27,6 +28,9 @@ You are probably helping a **trailer maker who is not a programmer**. They have 
 | green screen | `--backdrop magenta` (explain: the game is full of green, magenta keys cleanly) |
 | slow motion | `slowmo`, on a short stretch |
 | a different map | another `--seed` |
+| a map, an overview, a backdrop of the level | `panorama --level <id>` |
+| just the card / the ticket / one panel | a `piece_` shot in `promo/shots/elements.json`, or a new one with an `isolate` event |
+| the "CRUSHED" stamp, the tape, the road sign, the garage door | `stage transition --set which=<stamp, banner, sign or shutter> --set label=...` |
 | more goons | `"crowd": {"spawnTimer": 1.0, "progress": 150}` or a `crowd` event |
 
 Level ids, in game order: prairie, orchard, bayou, canyon, moosewoods (The Wilds); mudlick, stilttown, lantern, sawmill, quarry (Tribe Country); highway, ghosttown, saltflats, raiderpass, thunderroad (Raider Road); frostbite, frozenlake, timberline, tarpits, summit (Hunting Grounds); city, manhole, culdesac, gridlock, blockparty (The Sprawl); blastpits, tankfarm, slagfields, theline, crusher (The Works). Cars: sedan, taxi, pickup, police, ambulance, van, racer, supercar, semi.

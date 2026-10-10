@@ -8,7 +8,11 @@ class_name Rivals extends Node
 ## measured it (Playtest's ai_ms); not yet measured with five on the low-end target.
 
 const COUNT := 5
-const GRID := Vector2(170.0, 150.0) #the starting grid: px back per row, px between the two columns
+#The start line: every car abreast across the way they face, the player in the middle, so nobody starts behind
+#anybody. LINE_GAP is the px between cars side by side; a slot in water or a wall moves to a second line
+#LINE_BACK px behind (room for the semi and its trailer).
+const LINE_GAP := 210.0
+const LINE_BACK := 520.0
 const ENGINE_DB := -14.0            #a rival's engine under the player's own
 ## A rival's top pace as a share of the player's car's top speed, by tier: on Easy the field can be outrun,
 ## on Hard it is as quick as you are (and it has no goons after it and no tank to run dry)
@@ -54,14 +58,19 @@ func spawnRunner() -> void:
 func runner() -> OverheadCarBody2D:
 	return cars[0] if not cars.is_empty() && is_instance_valid(cars[0]) else null
 
-## Lines the rivals up behind and beside the player, facing the same way. `share` is their pace as a share of
+## Where the nth rival starts (1 is the first): beside the player, alternating sides and working outward, on the
+## start line (`row` 0) or a line behind it
+static func gridSlot(n: int, row: int, origin: Vector2, forward: Vector2) -> Vector2:
+	var out := ((n + 1) / 2) * (1.0 if n % 2 == 1 else -1.0)
+	return origin + forward.orthogonal() * LINE_GAP * out - forward * LINE_BACK * row
+
+## Lines the rivals up abreast of the player, facing the same way. `share` is their pace as a share of
 ## the player's car's top speed (PACE by tier when not given).
 func spawn(count: int = COUNT, share: float = -1.0) -> void:
 	var player = Root.playerCar
 	var level = Root.levelRoot
 	if not is_instance_valid(player) || not is_instance_valid(level): return
 	var forward := Vector2.from_angle(player.rotation)
-	var side := forward.orthogonal()
 	var slot := 0
 	var probe := AIDriver.new() #the player's car's top speed, the way a driver works it out
 	probe.car = player
@@ -75,12 +84,11 @@ func spawn(count: int = COUNT, share: float = -1.0) -> void:
 		car.fuelFree = true
 		var camera = car.get_node_or_null("Camera2D")
 		if camera: camera.enabled = false
-		var spot := Vector2.INF
-		while spot == Vector2.INF && slot < count * 4: #the next grid slot on ground a car can stand on
-			slot += 1
-			var at: Vector2 = player.global_position - forward * GRID.x * ((slot + 1) / 2) + side * GRID.y * (1.0 if slot % 2 == 0 else -1.0)
-			if World.spawnableAt(at): spot = at
-		if spot == Vector2.INF: spot = player.global_position - forward * GRID.x * slot
+		slot += 1
+		var spot := gridSlot(slot, 0, player.global_position, forward)
+		for row in 3: #back a line at a time until it is ground a car can stand on
+			spot = gridSlot(slot, row, player.global_position, forward)
+			if World.spawnableAt(spot): break
 		car.position = spot
 		car.rotation = player.rotation
 		level.add_child(car)

@@ -185,7 +185,7 @@ func _process(delta: float) -> void:
 func _draw() -> void:
 	var w := size.x
 	if not toasts.is_empty(): drawToast(toasts[0], w)
-	if not scratch.is_empty(): drawScratch(Vector2(w - 360.0, 150.0))
+	if not scratch.is_empty(): drawScratch(Vector2(w - 360.0, 104.0))
 	if doubleActive: drawDouble(Vector2(w - 360.0, 150.0 if scratch.is_empty() else 290.0))
 	if not combo.is_empty():
 		var a := clampf(combo.t / 0.3, 0.0, 1.0)

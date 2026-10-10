@@ -1,8 +1,8 @@
 class_name NowPlaying extends Control
 
-#The radio's now-playing card (docs/RADIO.md). In a run (the HUD, bottom left above the tachometer)
-#it slides in when a song starts or the station changes, holds a few seconds and fades. In the main
-#menu it is pinned (always shown) and a click changes station (right click goes back).
+#The radio's now-playing card (docs/RADIO.md). In the main menu it is pinned (always shown) and a click
+#changes station (right click goes back). In a run the radio is a line on the left sun visor (HudVisor);
+#unpinned, this card slides in when a song starts or the station changes, holds a few seconds and fades.
 #Drawn with _draw like the HUD widgets; redraws only while it moves or its little meter ticks.
 
 const ICON := preload("res://texture/icon/radio.svg")

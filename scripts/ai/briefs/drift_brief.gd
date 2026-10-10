@@ -6,7 +6,7 @@ extends ModeBrief
 #roams the open ground (or the course's gates if it has them).
 
 func tuning() -> Dictionary:
-	return {"driftReward": 3.0, "handbrakeFrom": 220.0, "roamMinPx": 2500.0}
+	return {"driftReward": 3.0, "handbrakeFrom": 220.0, "handbrakeTurn": 1.0, "roamMinPx": 2500.0} #handbrakeTurn: even the cars that never pull it (the van, the semi) must here
 
 func drifts() -> bool:
 	return true

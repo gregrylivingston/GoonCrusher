@@ -5,7 +5,7 @@ extends "res://scripts/ai/briefs/race_brief.gd"
 #straights, and brakes from the point where the car can still get under the stop speed.
 
 const LINE_SPEED := ModeTiers.FLATOUT_STOP_SPEED - 40.0 #what it brakes to, with a margin under the stop speed
-const LINE_MARGIN_PX := 250.0                           #it starts braking this much before it has to
+const LINE_MARGIN_PX := 400.0                           #it starts braking this much before it has to
 
 var brakeFrom := -1.0 #px from the driveway where braking starts; worked out again as the speed changes
 var brakeTick := -9999
@@ -15,7 +15,7 @@ func tuning() -> Dictionary:
 
 func brakeAbove() -> float:
 	var course = Root.levelRoot.get("course")
-	if not is_instance_valid(Root.station) || (course != null && course.target() != Vector2.INF): return INF #checkpoints still to come
+	if not is_instance_valid(Root.station) || (course != null && course.next < course.total() - 1): return INF #checkpoints still to come (the last one is inside the braking distance)
 	if d.tick - brakeTick >= AIDriver.GOAL_TICKS:
 		brakeTick = d.tick
 		brakeFrom = d.brakeDistance(LINE_SPEED) + LINE_MARGIN_PX
