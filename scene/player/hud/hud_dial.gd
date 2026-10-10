@@ -26,14 +26,24 @@ const RPM_HEADROOM := 0.75   #the dial runs to the next whole thousand past redl
 const CRUSH_SPEED := 100.0   #px/s; goons die when hit faster than this (overhead_car_body_2d)
 const LOW := 25.0            #fuel and hull blink under this
 const BOOT_SECONDS := 1.1    #the ignition sweep at the start of a run: needles to the top of the scale and back
-const WORN := 40.0           #under this hull the speedometer's glass is cracked; under this engine condition the tach needle trembles
+const SCUFFED := 70.0        #under this hull the glass gets its first crack (glassStage); it runs on under WORN and LOW
+const WORN := 40.0           #under this engine condition the tach needle trembles
 const HUB := 27.0            #the hub disc that holds the gear or the speed, in face units
 const WING_FROM := 100.0     #fuel and hull arcs: from this many degrees round the inner side (empty)...
 const WING_TO := 40.0        #...up to this (full)
 const RIBBON_BOX := 92.0     #a ribbon's readout box, at its right end
 const RIBBON_ROW := 62.0     #a ribbon's height; the fuel or hull bar and the lamps are a row under it
 const MONITOR := Vector2(210, 94) #the heart monitor, beside the speedometer
-const CRACK := [Vector2(-66, -61), Vector2(-49, -34), Vector2(-58, -20), Vector2(-35, -8)] #face units from the center
+const CRACK_AT := Vector2(-66, -61) #where the glass cracks from, in face units from the center (mirrored on the tach)
+#the cracks: [the glass stage it shows from, its line from CRACK_AT in face units]. Each runs on from an earlier one.
+const CRACKS := [
+	[1, [Vector2(0, 0), Vector2(17, 27)]],
+	[2, [Vector2(17, 27), Vector2(8, 41), Vector2(31, 53)]],
+	[2, [Vector2(8, 41), Vector2(-11, 53)]],
+	[3, [Vector2(17, 27), Vector2(40, 22), Vector2(52, 34)]],
+	[3, [Vector2(31, 53), Vector2(22, 70)]],
+	[3, [Vector2(0, 0), Vector2(-14, 12), Vector2(-12, 30)]],
+]
 const SCREEN := Color(0.016, 0.078, 0.047, 0.95) #the heart monitor
 
 const FUEL_ICON := preload("res://texture/icon/fuel.svg")
@@ -64,6 +74,7 @@ var readout := 0             #speedometer digits, refreshed 10 times a second
 var readoutTimer := 0.0
 var lastStats := {}
 var landsAt := {}            #system id -> msec when its pickup flyer arrives
+var tapeOn := false          #the beater's tape is on: from the first time Duct Tape patches this run
 
 func _ready() -> void:
 	mouse_filter = MOUSE_FILTER_IGNORE
@@ -180,14 +191,16 @@ func _process(delta: float) -> void:
 	if modulate.a != alpha: modulate.a = alpha
 	var key := [snappedf(wingShown, 0.25), wingShown < LOW && HudTheme.blinkOn(), car.myLights.visible]
 	if kind == Kind.TACH:
-		key.append_array([snappedf(shownValue, 0.02), gearText(car), gearColor(car), hornState(car), car.condition.tank < 50.0])
-		if taped(): key.push_back(taping(car) && HudTheme.blinkOn())
+		key.append_array([snappedf(shownValue, 0.02), gearText(car), gearColor(car), hornState(car), car.condition.tank < 50.0, cracks(car)])
+		if taped():
+			if taping(car): tapeOn = true
+			key.append_array([tapeOn, taping(car) && HudTheme.blinkOn()])
 	else:
 		readoutTimer -= delta
 		if readoutTimer <= 0.0:
 			readoutTimer = 0.1
 			readout = int(target) if boot < 0.0 else int(shownValue)
-		key.append_array([snappedf(shownValue, 0.2), readout, cracked(car)])
+		key.append_array([snappedf(shownValue, 0.2), readout, cracks(car)])
 		if isMonitor() && not calm: #the trace runs faster as the hull drops
 			beat += delta * lerpf(2.4, 0.9, wingShown / 100.0)
 			key.push_back(int(beat * 24.0))
@@ -258,7 +271,7 @@ static func hornState(car) -> int:
 	if car.hornCooldown > OverheadCarBody2D.HORN_COOLDOWN - HORN_LIT: return 2
 	return 0 if car.hornCooldown > 0 else 1
 
-#the beater's fuel arc has tape across its end, which lights up while Duct Tape is patching the car
+#the beater's fuel arc gets tape across its end the first time Duct Tape patches the car (tapeOn), lit while it is patching
 func taped() -> bool:
 	return kind == Kind.TACH && skin.id == &"beater"
 
@@ -273,9 +286,24 @@ func showsGear() -> bool:
 func hasHubDisc() -> bool:
 	return not isBar() && (kind == Kind.SPEEDO || showsGear())
 
-#a cracked glass: the beater's always is, and any car's under WORN hull
-func cracked(car) -> bool:
-	return skin.id == &"beater" || car.health < WORN
+## How broken the dashboard's glass is, by the hull: 0 on every dash at the start of a run, up to 3. It mends as the
+## hull is repaired. The dials and the mirror (HudMirror) both read it.
+static func glassStage(car) -> int:
+	if car.health >= SCUFFED: return 0
+	if car.health >= WORN: return 1
+	return 2 if car.health >= LOW else 3
+
+#the stage this dial's glass shows: the speedometer carries the hull, so it cracks first and the tachometer a stage later
+func cracks(car) -> int:
+	return glassStage(car) if kind == Kind.SPEEDO else maxi(glassStage(car) - 1, 0)
+
+#the cracks up to `stage`, from `at` and scaled `by`; `flip` -1 mirrors them
+func drawCracks(at: Vector2, by: float, flip: float, stage: int) -> void:
+	for crack in CRACKS:
+		if crack[0] > stage: continue
+		var line := PackedVector2Array()
+		for point in crack[1]: line.push_back(at + Vector2(point.x * flip, point.y) * by)
+		needle.draw_polyline(line, Color(1, 1, 1, 0.4 if crack[0] < 3 else 0.3), 1.3, true)
 
 #the scale: a half turn (the skin's sweep either side), leaning toward the middle of the screen
 func sweepFrom() -> float:
@@ -585,11 +613,7 @@ func drawNeedle() -> void:
 			drawPointer(angleFor(shownValue / speedMax), 98 * unit, s.needle, 5 * unit)
 			s.write(needle, center + Vector2(0, 6) * unit, str(readout), int(25 * unit), s.text, HORIZONTAL_ALIGNMENT_CENTER, 6)
 			s.write(needle, center + Vector2(0, 18) * unit, speedUnit(), int(8 * unit), s.muted, HORIZONTAL_ALIGNMENT_CENTER, 0)
-		if cracked(car):
-			var crack := PackedVector2Array()
-			for point in CRACK: crack.push_back(center + point * unit)
-			needle.draw_polyline(crack, Color(1, 1, 1, 0.4), 1.3, true)
-			needle.draw_line(crack[2], crack[2] + Vector2(-19, 12) * unit, Color(1, 1, 1, 0.3), 1.0, true)
+	drawCracks(center + Vector2(CRACK_AT.x * -inward(), CRACK_AT.y) * unit, unit, -inward(), cracks(car))
 
 #fuel is amber, the hull green to red; both blink red when low
 func wingColor() -> Color:
@@ -614,7 +638,7 @@ func drawWing(car) -> void:
 		wingArc(needle, wingShown / 100.0, color)
 		skin.write(needle, at + Vector2(0, 30) * unit, number, int(18 * unit), color, HORIZONTAL_ALIGNMENT_CENTER, 6)
 		if leaking(car): skin.write(needle, at + Vector2(0, 45) * unit, "LEAK", int(12 * unit), skin.bad, HORIZONTAL_ALIGNMENT_CENTER, 6)
-	if taped(): drawTape(taping(car) && HudTheme.blinkOn())
+	if taped() && tapeOn: drawTape(taping(car) && HudTheme.blinkOn())
 
 #the horn lamp: a glow as it sounds, dim until it can sound again
 func drawHorn(car, at: Vector2, lampSize: float) -> void:
@@ -648,6 +672,7 @@ func drawRibbon(car) -> void:
 	HudTheme.bar(needle, stripBar(), wingShown / 100.0, color, s.track)
 	s.write(needle, Vector2(stripBar().end.x + 10.0, RIBBON_ROW + 27.0), str(int(round(wingShown))), 22, color, HORIZONTAL_ALIGNMENT_LEFT, 6)
 	if leaking(car): s.write(needle, stripBar().get_center() + Vector2(0, 5), "LEAK", 13, s.bad, HORIZONTAL_ALIGNMENT_CENTER, 6)
+	drawCracks(Vector2(window.get_center().x - 60.0 * inward(), window.position.y), 0.9, -inward(), cracks(car)) #across the ribbon's window
 
 func drawMonitor() -> void:
 	var trace := monitorTrace()

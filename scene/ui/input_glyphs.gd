@@ -29,7 +29,9 @@ static func label(action: String, pad := usingPad) -> String:
 	for event in InputMap.action_get_events(action):
 		if pad:
 			if event is InputEventJoypadButton: return PAD_NAMES.get(event.button_index, "Btn %d" % event.button_index)
-			if event is InputEventJoypadMotion: return AXIS_NAMES.get(event.axis, "Stick")
+			if event is InputEventJoypadMotion:
+				if event.axis == JOY_AXIS_RIGHT_X: return "RS Left" if event.axis_value < 0.0 else "RS Right"
+				return AXIS_NAMES.get(event.axis, "Stick")
 		else:
 			if event is InputEventKey && event.keycode != KEY_MENU: return keyName(event) #Esc reads better than the Menu key
 			if event is InputEventMouseButton: return "Click"
@@ -49,14 +51,17 @@ static func keyName(event: InputEventKey) -> String:
 static func ensureMenuActions() -> void:
 	addEvent("ui_accept", pad(JOY_BUTTON_A))
 	addEvent("ui_cancel", pad(JOY_BUTTON_B))
-	addIfMissing("ui_upgrade", key(KEY_F), pad(JOY_BUTTON_Y)) #Upgrade in the garage, Gadget in run setup
+	#the launch bar's four slots (LaunchBar) have a key each on every screen: the triggers load the car
+	addIfMissing("ui_gadget", key(KEY_X), trigger(JOY_AXIS_TRIGGER_LEFT))
+	addIfMissing("ui_boost", key(KEY_V), trigger(JOY_AXIS_TRIGGER_RIGHT))
+	addIfMissing("ui_upgrade", key(KEY_F), pad(JOY_BUTTON_Y))
+	addIfMissing("ui_pickups", key(KEY_G), pad(JOY_BUTTON_BACK)) #the Pickups screen
 	addIfMissing("ui_records", key(KEY_R), pad(JOY_BUTTON_X))
 	addIfMissing("ui_buy", key(KEY_E), pad(JOY_BUTTON_A)) #buys the lit upgrade row in the garage's driver focus
-	addIfMissing("ui_pickups", key(KEY_G), pad(JOY_BUTTON_BACK)) #the Pickups screen
 	addIfMissing("ui_codex", key(KEY_B), pad(JOY_BUTTON_LEFT_STICK)) #the Goonopedia
-	addIfMissing("ui_boost", key(KEY_V), pad(JOY_BUTTON_RIGHT_STICK)) #run setup's Boost slot
-	addIfMissing("ui_region_prev", key(KEY_Z), trigger(JOY_AXIS_TRIGGER_LEFT)) #run setup's region tabs
-	addIfMissing("ui_region_next", key(KEY_C), trigger(JOY_AXIS_TRIGGER_RIGHT))
+	#run setup's regions and the level's fact tiles: a flick of the right stick, well past any drift
+	addIfMissing("ui_region_prev", key(KEY_Z), stick(JOY_AXIS_RIGHT_X, -1.0), 0.5)
+	addIfMissing("ui_region_next", key(KEY_C), stick(JOY_AXIS_RIGHT_X, 1.0), 0.5)
 	#hints show an action's first key, so the left-hand keys go first: Space (Enter still accepts), WASD
 	for pair in [["ui_accept", KEY_SPACE], ["ui_up", KEY_W], ["ui_left", KEY_A], ["ui_down", KEY_S], ["ui_right", KEY_D]]:
 		keyFirst(pair[0], pair[1])
@@ -81,9 +86,9 @@ static func digit(event: InputEvent) -> int:
 	if code >= KEY_KP_1 && code <= KEY_KP_9: return code - KEY_KP_0
 	return 0
 
-static func addIfMissing(action: String, keyEvent: InputEvent, padEvent: InputEvent) -> void:
+static func addIfMissing(action: String, keyEvent: InputEvent, padEvent: InputEvent, deadzone := 0.2) -> void:
 	if InputMap.has_action(action): return
-	InputMap.add_action(action)
+	InputMap.add_action(action, deadzone)
 	InputMap.action_add_event(action, keyEvent)
 	InputMap.action_add_event(action, padEvent)
 
@@ -96,9 +101,14 @@ static func key(code: int) -> InputEventKey:
 	return event
 
 static func trigger(axis: int) -> InputEventJoypadMotion:
+	return stick(axis, 1.0)
+
+#a stick pushed one way along `axis` (-1.0: left or up)
+static func stick(axis: int, direction: float) -> InputEventJoypadMotion:
 	var event = InputEventJoypadMotion.new()
 	event.axis = axis
-	event.axis_value = 1.0
+	event.axis_value = direction
+	event.device = -1
 	return event
 
 static func pad(button: int) -> InputEventJoypadButton:

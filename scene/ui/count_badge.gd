@@ -1,7 +1,7 @@
 class_name CountBadge extends PanelContainer
 
-#A gold count on a button's corner: how many things behind the button can be bought right now (the garage
-#dock's Upgrades and Pickups, docs/UI.md). Hidden at 0. It hops every couple of seconds and pops when the
+#A gold count on a button's corner: how many things behind the button can be bought right now (the launch
+#bar's Upgrades and Pickups, docs/UI.md). Hidden at 0. It hops every couple of seconds and pops when the
 #number changes; with Reduce Motion it sits still. Tween-driven, so frame caps don't change it.
 
 const HOP_EVERY := 2.2
@@ -31,16 +31,18 @@ func _init() -> void:
 	add_child(label)
 	resized.connect(func(): pivot_offset = Vector2(size.x / 2.0, size.y))
 
-## A badge on `button`'s top right corner
-static func on(button: Control, delay := 0.0) -> CountBadge:
+## A badge on `button`'s top right corner; a small button takes a lower one, sitting at `at`
+static func on(button: Control, delay := 0.0, height := HEIGHT, at := REST) -> CountBadge:
 	var badge := CountBadge.new()
 	badge.phase = delay
+	badge.rest = at
+	badge.label.add_theme_font_size_override("font_size", roundi(height * 0.6))
 	badge.anchor_left = 1.0
 	badge.anchor_right = 1.0
-	badge.offset_left = REST.x - HEIGHT
-	badge.offset_right = REST.x
-	badge.offset_top = REST.y
-	badge.offset_bottom = REST.y + HEIGHT
+	badge.offset_left = at.x - height
+	badge.offset_right = at.x
+	badge.offset_top = at.y
+	badge.offset_bottom = at.y + height
 	badge.grow_horizontal = GROW_DIRECTION_BEGIN #a wider number grows leftward, over the button
 	button.add_child(badge)
 	return badge

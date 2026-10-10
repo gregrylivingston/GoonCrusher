@@ -5,9 +5,9 @@ What a person must look at, because the automated tests and harnesses skip trans
 ## Flows
 
 1. **Garage and run setup.** The shutter slams and rolls up between them; mash Accept and Back during the slam and nothing double-switches. Level Options drops in; Back steps to the road map, then the garage. Esc never opens Settings in run setup.
-2. **Garage.** Cards flip when selected. Upgrades opens the driver focus; buy a stat, fail to buy one (shake), drive from a row, change driver and keep the row. Dock badges match what the bank covers. Unlock a car.
+2. **Garage.** Cards flip when selected. Upgrades opens the driver focus; buy a stat, fail to buy one (shake), drive from a row, change driver and keep the row. The launch bar's badges match what the bank covers. Unlock a car.
 3. **Road map.** Walk stops and regions with keys, pad triggers (a held trigger steps once), wheel and clicks. A locked region and a locked stop say what opens them.
-4. **Level Options.** Change mode, tier, level (1-5), driver, gadget and boost; walk the level's tiles; START keeps the focus throughout. A locked mode or tier says why. The car strip and records follow the mode, tier and driver.
+4. **Level Options.** Change mode, tier, level (1-5), driver, gadget and boost; walk the level's tiles; START keeps the focus throughout. Upgrades from here and from the road map opens the driver focus, and Back returns to the same step. A locked mode or tier says why. The car strip and records follow the mode, tier and driver.
 5. **Pickups and Goonopedia.** Open from the garage and run setup. Buy with Accept, with two clicks and with the card's button; the bank, the badges and the tab update.
 6. **Starting a run.** The loading door shows the level and its lamps; the run stays paused until the world is in, then the door rolls up on the car, then the start lamps, then GO and the briefing banner. Try a slow first load and 540p / 720p Render Resolution.
 7. **Pause.** Half shutter and card; Continue, Settings, radio, Abandon (into results), Quit. Spam Esc during the drop and the lift.

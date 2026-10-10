@@ -240,7 +240,7 @@ func test_the_pickups_screen_opens_where_there_is_something_to_buy():
 	assert_eq(page.badges[page.tab].count, buyable.size(), "and the tab's badge counts them")
 	var total := 0
 	for b in page.badges: total += b.count
-	assert_eq(total, Unlocks.buyableCount(), "the tabs' badges add up to the dock's")
+	assert_eq(total, Unlocks.buyableCount(), "the tabs' badges add up to the launch bar's")
 
 func test_the_pickups_screen_buys_pickups_and_the_bench_buys_upgrades():
 	var purse: int = Unlocks.pickupPrice("purse").coin
@@ -262,7 +262,7 @@ func test_the_pickups_screen_buys_pickups_and_the_bench_buys_upgrades():
 	bench.upgradeButton(Root.upgrade.ENGINE).pressed.emit()
 	assert_eq(int(data().cars[sedan].upgrades.get(Root.upgrade.ENGINE, 0)), level + 1, "an upgrade bought on the bench")
 	assert_eq(data().coin, before - cost, "at the garage's price")
-	assert_eq(bench.rowFor(Root.upgrade.ENGINE).plus.text, "+%d" % (level + 1), "the row shows it")
+	assert_eq(bench.rowFor(Root.upgrade.ENGINE).level.text, "%d / %d" % [level + 1, SaveManager.MAX_UPGRADE_LEVEL], "the row shows it")
 	var locked := data().cars.find(Unlocks.carEntry("ambulance"))
 	bench.setup(locked, load("res://scene/car/ambulance/ambulance_info.tres"), [])
 	assert_eq(bench.title.text, "STATS", "a locked car's sheet is read only")

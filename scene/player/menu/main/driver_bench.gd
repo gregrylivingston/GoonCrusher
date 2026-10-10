@@ -1,27 +1,32 @@
-class_name DriverBench extends PanelContainer
+class_name DriverBench extends Control
 
 #The garage's driver focus (main2.gd; docs/UI.md, "Driver focus"): the bench that opens beside the focused
-#driver's card while the other drivers are off screen. Top to bottom:
-#  head       UPGRADES, the car's strong and weak stats against the other cars, and the levels bought
-#  rows       the eight stats (DriverCard.STATS): icon, name and what it does, a bar against 100 (cream = the
-#             car's base stat, gold = upgrades bought), the value, the level and a button that buys the next
-#             one (the price in symbols, solid orange when the bank covers it, MAX at the cap)
-#  signature  the car's two features (CarTraits) with their full text, and its best run
-#A locked car shows the same sheet with no buttons (STATS); the dock's main button unlocks it.
-#Up and Down move between the buy buttons and Buy (E / A, `ui_buy`; main2 routes it) or a click buys; Accept
-#stays on Drive. `bought` follows each purchase.
+#driver's card while the other drivers are off screen. Two panels, so the launch bar keeps its place:
+#  stats      UPGRADES, the car's strong and weak stats against the other cars, its best run and the levels
+#             bought, over the eight stats (DriverCard.STATS): icon, name and what it does, a bar against 100
+#             (cream = the car's base stat, gold = upgrades bought), the value, the level and a button that
+#             buys the next one (the price in symbols, gold when the bank covers it, MAX at the cap). The
+#             row in focus is lit, shows what the next level makes the value and the Buy key.
+#  signature  in the bottom row, beside the launch bar: the car's two features (CarTraits) with their full text
+#A locked car shows the same sheet with no buttons (STATS); the launch bar's primary button unlocks it.
+#Up and Down move between the buy buttons and Buy (E / A, `ui_buy`; main2 routes it) or a click buys, one
+#level a press; a click anywhere on a row takes the focus there. Accept stays on Drive.
+#`bought` follows each purchase.
 
 signal bought(stat: int)
 
-const SIZE := Vector2(1008, 600)
+const SIZE := Vector2(1008, 672)
+const STATS_SIZE := Vector2(1008, 532)
+const SIGNATURE := Rect2(0, 544, 640, 128) #level with the launch bar, and as tall (main2.LAUNCH_POS, LaunchBar.SIZE)
 const BUY_WIDTH := 190.0
+const NEXT_TEXT := Color(0.6, 0.9, 0.45)
 const BUY_SOUND := preload("res://sound/fx/short-success-sound-glockenspie.mp3")
 const UPGRADE_ICON := preload("res://texture/icon/upgrade.svg")
 
 var index := -1
 var info: CarInfo
 var lastStat: int = Root.upgrade.ENGINE #the row the focus was on last: it stays there from driver to driver
-var rows: Array[Dictionary] = []     #per DriverCard.STATS: panel, bar, value, plus, level, button
+var rows: Array[Dictionary] = []     #per DriverCard.STATS: panel, bar, value, next, preview, level, button, key
 var title := Label.new()
 var summary := Label.new()
 var boughtLabel := Label.new()
@@ -31,10 +36,14 @@ var signature := HBoxContainer.new()
 func _ready() -> void:
 	size = SIZE
 	custom_minimum_size = SIZE
-	add_theme_stylebox_override("panel", MenuTheme.box(Color(HudTheme.PANEL, 0.93), HudTheme.RIM, 14, 3, Vector4(18, 12, 18, 12)))
+	mouse_filter = MOUSE_FILTER_IGNORE
+	var stats = PanelContainer.new()
+	stats.size = STATS_SIZE
+	stats.add_theme_stylebox_override("panel", MenuTheme.box(Color(HudTheme.PANEL, 0.93), HudTheme.RIM, 14, 3, Vector4(18, 12, 18, 12)))
+	add_child(stats)
 	var column = VBoxContainer.new()
 	column.add_theme_constant_override("separation", 8)
-	add_child(column)
+	stats.add_child(column)
 	var head = HBoxContainer.new()
 	head.add_theme_constant_override("separation", 16)
 	column.add_child(head)
@@ -46,36 +55,30 @@ func _ready() -> void:
 	summary.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	summary.clip_text = true
 	head.add_child(summary)
+	bestRow.mouse_filter = MOUSE_FILTER_IGNORE
+	head.add_child(bestRow)
 	boughtLabel.theme_type_variation = "MutedLabel"
 	boughtLabel.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	head.add_child(boughtLabel)
-	var list = VBoxContainer.new()
+	var list = VBoxContainer.new() #the rows share the panel's height
 	list.add_theme_constant_override("separation", 3)
+	list.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	column.add_child(list)
 	for s in DriverCard.STATS: list.add_child(makeRow(s))
-	var rule = ColorRect.new()
-	rule.color = Color(1, 1, 1, 0.14)
-	rule.custom_minimum_size.y = 2
-	rule.mouse_filter = MOUSE_FILTER_IGNORE
-	column.add_child(rule)
-	var signatureHead = HBoxContainer.new()
-	column.add_child(signatureHead)
-	var heading = Label.new()
-	heading.text = "SIGNATURE"
-	heading.theme_type_variation = "MutedLabel"
-	heading.add_theme_font_size_override("font_size", 15)
-	heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	signatureHead.add_child(heading)
-	bestRow.mouse_filter = MOUSE_FILTER_IGNORE
-	signatureHead.add_child(bestRow)
-	signature.add_theme_constant_override("separation", 24)
-	column.add_child(signature)
+	var panel = PanelContainer.new()
+	panel.position = SIGNATURE.position
+	panel.size = SIGNATURE.size
+	panel.add_theme_stylebox_override("panel", MenuTheme.box(Color(HudTheme.PANEL, 0.94), Color(1, 1, 1, 0.22), 16, 2, Vector4(16, 8, 16, 8)))
+	add_child(panel)
+	signature.add_theme_constant_override("separation", 20)
+	panel.add_child(signature)
 
-#a stat's row; `refresh` fills in its numbers and its button
+#a stat's row; `refresh` fills in its numbers and its button, `lightRows` lights the one in focus
 func makeRow(s: Array) -> PanelContainer:
 	var stat: int = s[1]
 	var panel = PanelContainer.new()
-	panel.add_theme_stylebox_override("panel", MenuTheme.box(Color(1, 1, 1, 0.035), Color(0, 0, 0, 0), 8, 2, Vector4(12, 3, 10, 3)))
+	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	panel.add_theme_stylebox_override("panel", rowBox(false))
 	var row = HBoxContainer.new()
 	row.add_theme_constant_override("separation", 14)
 	panel.add_child(row)
@@ -96,22 +99,24 @@ func makeRow(s: Array) -> PanelContainer:
 	what.text = DriverCard.STAT_TEXT[s[0]][1]
 	what.theme_type_variation = "MutedLabel"
 	what.add_theme_font_size_override("font_size", 13)
+	what.clip_text = true
 	names.add_child(what)
 	var bar = DriverCard.StatBar.new()
-	bar.custom_minimum_size = Vector2(120, 8)
+	bar.custom_minimum_size = Vector2(120, 14)
 	bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	bar.mouse_filter = MOUSE_FILTER_IGNORE
 	row.add_child(bar)
 	var value = Label.new()
 	value.add_theme_font_size_override("font_size", 20)
 	value.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	value.custom_minimum_size.x = 44
 	row.add_child(value)
-	var plus = Label.new()
-	plus.add_theme_font_size_override("font_size", 15)
-	plus.add_theme_color_override("font_color", HudTheme.GOLD)
-	plus.custom_minimum_size.x = 40
-	row.add_child(plus)
+	var next = Label.new() #what the next level makes it, on the row in focus
+	next.add_theme_font_size_override("font_size", 17)
+	next.add_theme_color_override("font_color", NEXT_TEXT)
+	next.custom_minimum_size.x = 56
+	row.add_child(next)
 	var level = Label.new()
 	level.theme_type_variation = "MutedLabel"
 	level.add_theme_font_size_override("font_size", 14)
@@ -120,12 +125,40 @@ func makeRow(s: Array) -> PanelContainer:
 	row.add_child(level)
 	var buy = MenuTheme.button("")
 	buy.custom_minimum_size = Vector2(BUY_WIDTH, 36)
+	buy.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	buy.set_meta("stat", stat)
 	buy.pressed.connect(buyUpgrade.bind(stat))
-	buy.focus_entered.connect(func(): lastStat = stat) #only the button shows the focus, not the row
+	buy.focus_entered.connect(onRowFocus.bind(stat))
+	buy.focus_exited.connect(lightRows)
+	var key = KeyHint.make(PackedStringArray(["ui_buy"]), "", 13)
+	key.set_anchors_and_offsets_preset(Control.PRESET_CENTER_LEFT)
+	key.grow_vertical = Control.GROW_DIRECTION_BOTH
+	key.offset_left = 10
+	key.visible = false
+	buy.add_child(key)
 	row.add_child(buy)
-	rows.push_back({"stat": stat, "panel": panel, "bar": bar, "value": value, "plus": plus, "level": level, "button": buy})
+	panel.gui_input.connect(onRowInput.bind(buy))
+	rows.push_back({"stat": stat, "panel": panel, "bar": bar, "value": value, "next": next, "preview": "", "level": level, "button": buy, "key": key})
 	return panel
+
+static func rowBox(lit: bool) -> StyleBoxFlat:
+	return MenuTheme.box(Color(HudTheme.RIM, 0.13) if lit else Color(1, 1, 1, 0.035), Color(HudTheme.RIM, 0.9 if lit else 0.0), 8, 2, Vector4(12, 3, 10, 3))
+
+func onRowFocus(stat: int) -> void:
+	lastStat = stat
+	lightRows()
+
+#the row in focus: lit, with its preview and the Buy key
+func lightRows() -> void:
+	for r in rows:
+		var lit: bool = r.button.has_focus()
+		r.panel.add_theme_stylebox_override("panel", rowBox(lit))
+		r.next.text = r.preview if lit else ""
+		r.key.visible = lit && not r.button.disabled && InputGlyphs.label("ui_buy") != ""
+
+#a click anywhere on a row takes the focus to its button (a click on the button itself buys)
+func onRowInput(event: InputEvent, button: Button) -> void:
+	if event is InputEventMouseButton && event.button_index == MOUSE_BUTTON_LEFT && event.pressed && button.visible: button.grab_focus()
 
 func rowFor(stat: int) -> Dictionary:
 	for r in rows:
@@ -164,22 +197,30 @@ func refresh() -> void:
 		r.bar.bought = level
 		r.bar.queue_redraw()
 		r.value.text = str(base + level)
-		r.plus.text = "+%d" % level if level > 0 else ""
 		r.level.text = "%d / %d" % [level, SaveManager.MAX_UPGRADE_LEVEL]
 		r.level.visible = not locked
 		var b: Button = r.button
 		b.visible = not locked
+		r.preview = ""
 		if locked: continue
 		var maxed := SaveManager.isUpgradeMaxed(s[1], index)
 		var cost := SaveManager.requestStatCost(s[1], index)
 		var affordable := not maxed && cost <= SaveManager.playerData.coin
+		r.preview = "" if maxed else "> %d" % (base + level + 1)
 		b.disabled = maxed
-		b.theme_type_variation = "PrimaryButton" if affordable else ""
-		MenuTheme.setButtonParts(b, ["MAX"] if maxed else [UPGRADE_ICON, {"coin": cost}], 17)
-		b.get_node("parts").offset_right = 0 #no key hint to clear
-		b.get_node("parts").modulate = Color.WHITE if affordable || maxed else Color(1, 1, 1, 0.55)
-		b.custom_minimum_size.x = BUY_WIDTH #the columns stay in line
+		#the price in gold when the bank covers it; only the launch bar's button is solid orange
+		var old = b.get_node_or_null("parts")
+		if old:
+			b.remove_child(old)
+			old.queue_free()
+		var parts := MenuTheme.symbolRow(["MAX"] if maxed else [UPGRADE_ICON, {"coin": cost}], 17, HudTheme.GOLD if affordable else HudTheme.MUTED)
+		parts.name = "parts"
+		parts.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		parts.offset_left = 26 #clear of the Buy key
+		parts.modulate = Color.WHITE if affordable else Color(1, 1, 1, 0.55)
+		b.add_child(parts)
 		b.tooltip_text = "" if maxed else "Next %s upgrade (%d / %d)" % [DriverCard.STAT_TEXT[s[0]][0], level + 1, SaveManager.MAX_UPGRADE_LEVEL]
+	lightRows()
 	boughtLabel.text = "" if locked else "%d / %d bought" % [total, rows.size() * SaveManager.MAX_UPGRADE_LEVEL]
 	for child in bestRow.get_children():
 		bestRow.remove_child(child)
@@ -202,7 +243,7 @@ func rowFocused() -> bool:
 	var focused := get_viewport().gui_get_focus_owner() if is_inside_tree() else null
 	return focused != null && rows.any(func(r): return r.button == focused)
 
-## Up from the first row stays there; Down from the last goes to `below` (the dock's main button) and back
+## Up from the first row stays there; Down from the last goes to `below` (the launch bar's primary button) and back
 func linkFocus(below: Control) -> void:
 	if rows.is_empty(): return
 	var first: Button = rows[0].button
@@ -228,30 +269,26 @@ func buyUpgrade(stat: int) -> void:
 	r.bar.create_tween().tween_property(r.bar, "glow", 0.0, 0.6)
 	bought.emit(stat)
 
-#a signature feature: its icon, name and kind (with the Ability key), and its full text
-func signatureBlock(id: StringName) -> HBoxContainer:
-	var block = HBoxContainer.new()
-	block.add_theme_constant_override("separation", 12)
+#a signature feature: its icon, name and kind (with the Ability key) over its full text
+func signatureBlock(id: StringName) -> VBoxContainer:
+	var block = VBoxContainer.new()
 	block.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var icon := MenuTheme.iconRect(CarTraits.texture(id), 40)
-	icon.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	block.add_child(icon)
-	var column = VBoxContainer.new()
-	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	column.add_theme_constant_override("separation", 0)
-	block.add_child(column)
+	block.add_theme_constant_override("separation", 0)
 	var head = HBoxContainer.new()
-	head.add_theme_constant_override("separation", 10)
-	column.add_child(head)
+	head.add_theme_constant_override("separation", 8)
+	block.add_child(head)
+	var icon := MenuTheme.iconRect(CarTraits.texture(id), 24)
+	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	head.add_child(icon)
 	var traitName = Label.new()
 	traitName.text = CarTraits.displayName(id)
 	traitName.theme_type_variation = "GoldLabel"
-	traitName.add_theme_font_size_override("font_size", 20)
+	traitName.add_theme_font_size_override("font_size", 17)
 	head.add_child(traitName)
 	var kind = Label.new()
 	kind.text = CarTraits.KIND_NAMES[CarTraits.kind(id)]
 	if CarTraits.kind(id) == CarTraits.Kind.ABILITY: kind.text += "  ·  " + InputGlyphs.label("Ability")
-	kind.add_theme_font_size_override("font_size", 12)
+	kind.add_theme_font_size_override("font_size", 11)
 	kind.add_theme_color_override("font_color", CarTraits.color(id))
 	kind.add_theme_constant_override("outline_size", 0)
 	kind.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -259,10 +296,11 @@ func signatureBlock(id: StringName) -> HBoxContainer:
 	var text = Label.new()
 	text.text = CarTraits.DATA[id].text
 	text.theme_type_variation = "BodyLabel"
-	text.add_theme_font_size_override("font_size", 15)
+	text.add_theme_font_size_override("font_size", 13)
+	text.add_theme_constant_override("line_spacing", -1)
 	text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	text.custom_minimum_size.x = 200
-	column.add_child(text)
+	block.add_child(text)
 	return block
 
 ## "Strong engine and armor. Weak lights." against the average of `infos`

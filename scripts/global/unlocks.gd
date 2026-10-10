@@ -173,7 +173,7 @@ static func canAfford(uid: String) -> bool:
 	var cost := price(uid)
 	return data() != null && data().coin >= int(cost.get("coin", 0)) && data().gem >= int(cost.get("gem", 0))
 
-## How many pickups the bank could buy right now, each on its own (the garage dock's badge)
+## How many pickups the bank could buy right now, each on its own (the launch bar's badge)
 static func buyableCount() -> int:
 	var uids := []
 	for id in Pickups.DATA: uids.push_back("pickup:" + str(id))

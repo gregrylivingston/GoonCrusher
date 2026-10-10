@@ -47,14 +47,14 @@ var weave := false                               #carbon hatching on the face
 var hullMonitor := false                         #the hull is a heart monitor beside the speedometer
 var lamp := Lamp.RING                             #how the system lamps are drawn
 var radius := 12                                 #corner radius of the HUD's panels
-var mirror: StringName = &""                     #HudMirror's dressing: crack, checker, lights, clinic, console, keys, convex, screen
+var mirror: StringName = &""                     #HudMirror's dressing: checker, lights, clinic, console, keys, convex, screen
 var instrument: StringName = &""                 #HudInstrument's kind
 var instrumentAt := []                           #its [left, top, right, bottom] offsets, where it can't sit in its usual bay
 var rects := {}                                  #HudDial.Kind -> [left, top, right, bottom] offsets, where a cluster is not a sunken dial
 
 const SKINS := {
 	&"house": {},
-	&"beater": {"mirror":&"crack", "instrument":&"beater"},
+	&"beater": {"instrument":&"beater"},
 	&"hack": {"bezel":Bezel.CHECKER, "face":Color(0.05, 0.05, 0.05, 0.9), "hub":Color(0.08, 0.08, 0.08), "rim":Color(0.965, 0.761, 0.102),
 		"text":Color.WHITE, "muted":Color(0.79, 0.76, 0.66), "needle":Color(0.965, 0.761, 0.102), "track":Color(0.165, 0.165, 0.165),
 		"accent":Color(0.965, 0.761, 0.102), "glow":Color(0.965, 0.761, 0.102), "bold":SAIRA, "body":SAIRA_BODY, "numScale":1.25, "taper":true,

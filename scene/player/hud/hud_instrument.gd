@@ -56,7 +56,7 @@ func _process(delta: float) -> void:
 		&"beater":
 			odo += speed * delta
 			swing = lerpf(swing, 0.0 if calm else clampf(-car.spinRate * 0.2, -0.35, 0.35), 1.0 - exp(-delta * 4.0))
-			key = [int(odo / 1000.0), car.secondWindUsed, car.condition.engine < HudDial.WORN && HudTheme.blinkOn(), snappedf(swing, 0.02)]
+			key = [int(odo / 1000.0), car.secondWindUsed, car.condition.engine < HudDial.SCUFFED, car.condition.engine < HudDial.WORN && HudTheme.blinkOn(), snappedf(swing, 0.02)]
 		&"meter":
 			if rig: key = [rig.meterFare, rig.meterMult, rig.meterTicks > 0]
 		&"radar":
@@ -144,7 +144,7 @@ func _draw() -> void:
 		&"tilt": drawTilt(car)
 		&"shift": drawShift(car)
 
-#the sedan: an odometer that keeps counting, a check-engine lamp that never goes out, Second Wind's lamp and an air freshener
+#the sedan: an odometer that keeps counting, a check-engine lamp that comes on as the engine wears, Second Wind's lamp and an air freshener
 func drawBeater(car) -> void:
 	var s := skin
 	s.write(self, Vector2(10, 14), "ODOMETER", 10, s.muted, HORIZONTAL_ALIGNMENT_LEFT, 0)
@@ -156,7 +156,7 @@ func drawBeater(car) -> void:
 		draw_rect(cell, Color(0.23, 0.2, 0.18), false, 1.5)
 		HudTheme.text(self, cell.get_center() + Vector2(0, 7), digits[i], 20, Color(0.1, 0.09, 0.08) if tenths else s.text, HORIZONTAL_ALIGNMENT_CENTER, 0)
 	var worn: bool = car.condition.engine < HudDial.WORN
-	lamp(Rect2(8, 62, 92, 26), "CHECK ENGINE", s.bad if worn else s.warn, not worn || HudTheme.blinkOn())
+	lamp(Rect2(8, 62, 92, 26), "CHECK ENGINE", s.bad if worn else s.warn, car.condition.engine < HudDial.SCUFFED && (not worn || HudTheme.blinkOn()))
 	if car.tSecondWind: lamp(Rect2(106, 62, 86, 26), "2ND WIND", s.ok, not car.secondWindUsed)
 	draw_set_transform(Vector2(180, -4), swing)
 	draw_line(Vector2.ZERO, Vector2(0, 10), Color(0.55, 0.51, 0.47), 1.2, true)

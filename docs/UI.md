@@ -23,7 +23,7 @@ The theme's variations (`PrimaryButton`, `TabButton`, the panels and labels) are
 3. A `KeyHint` for every key that does something. **Never write "A" or "Enter" into a label.**
 4. A hint shows an action's first key, and the left hand comes first: Space on `ui_accept`, WASD before the arrows (`keyFirst`).
 5. **Mouse:** everything must work with the mouse alone. Bottom bars are clickable (`KeyHint.bar`). Inside a clickable row, set every child that isn't the button to `MOUSE_FILTER_IGNORE` (`main2.setMouseIgnore`): a plain `Control` defaults to `STOP` and swallows the click. A clickable hint fires its action through `KeyHint.fire`, which must never leave the action stuck pressed.
-6. **Pad:** everything must work on a pad alone, including with reassigned keys. Triggers are axes that send events while held: count only the first press (`main2.triggerEdge`).
+6. **Pad:** everything must work on a pad alone, including with reassigned keys. Triggers and sticks are axes that send events while held: count only the first press (`main2.triggerEdge`).
 7. Honor Reduce Motion (fade instead of move) and Reduce Flashing.
 8. A full-screen overlay joins group `menuOverlay`, so the main menu ignores input under it. A pausing in-run menu joins `slotMachine`, so the harnesses tap through it.
 
@@ -67,29 +67,41 @@ One language for every screen change (`scene/ui/transitions/`): a corrugated gar
 
 | Screen | Built by | Notes |
 |---|---|---|
-| Garage | `main2.buildGarage`, `driver_card.gd` (`DriverCard`) | Driver cards; the dock (`actionDock`) holds the focused card's buttons |
+| Garage | `main2.buildGarage`, `driver_card.gd` (`DriverCard`) | Driver cards |
 | Driver focus | `main2.setFocusOpen`, `driver_bench.gd` (`DriverBench`) | The bench beside the card, where upgrades are bought |
 | Run setup: road map | `main2.buildMap`, `makePoster` | One region at a time, five stops |
-| Run setup: Level Options | `main2.buildOptions`, `buildLaunch`, `refreshSetup` | Mode, tier, driver, loadout, START |
+| Run setup: Level Options | `main2.buildOptions`, `refreshSetup` | Mode, tier, the level's facts, records |
+| Launch bar | `launch_bar.gd` (`LaunchBar`), `main2.buildLaunch`, `refreshLaunch` | On all three screens: driver, loadout, Upgrades, Pickups, the primary button |
 | Pickups | `pickups/pickup_shop.gd` (`PickupShop`) | A `CodexPage` |
 | Goonopedia | `goonopedia/goonopedia.gd` | A `CodexPage` |
 
 - **Input** runs in `main2._input`, before the GUI, so Left/Right switch cards instead of moving focus. It returns early while `Settings.menu_open`, a `menuOverlay` or `Transition.busy()`.
 - Cards and posters load their art on a worker thread only when they come into view.
-- **Other scripts call:** `startLevel(path)` (bench), `animateCoins` and `statUpdatesUiUpdate()` (SaveManager), `add_child(menu)`; the career harness reads `lockReason` and presses `loadoutButton`.
+- **Other scripts call:** `startLevel(path)` (bench), `animateCoins` and `statUpdatesUiUpdate()` (SaveManager), `add_child(menu)`; the career harness reads `lockReason` and presses `goButton`, `upgradeButton`, `loadoutButton` and `boostButton`.
 
 ### Driver card
 
-`STATS` and `STAT_TEXT` are the one list of stats, which the bench and the pause menu reuse. A card's buttons (`actions`) are re-parented into the dock; the side buttons never take the focus, and their badges count what the bank covers (`affordableUpgrades`, `Unlocks.buyableCount`).
+`STATS` and `STAT_TEXT` are the one list of stats, which the bench and the pause menu reuse. A card has no buttons: Drive, Unlock and Upgrades are on the launch bar.
+
+### Launch bar
+
+One bar, the same in the garage, on the road map and in Level Options, so a key means one thing everywhere: every slot has its own action (`LaunchBar.SLOT_ACTIONS`) and `test_menus.gd` fails if two of the menu's actions share a key or a pad button.
+
+- It sits in one place on every screen (`LAUNCH_POS`) and closes the bottom row: beside the records in Level Options and beside the bench's signature panel in the driver focus. Anything new at the bottom right must leave that rectangle free.
+- Only the primary button takes the focus (`goButton`: Drive or Unlock, Select, Start; `onGoPressed`). The slots work by key or click.
+- The pad has no spare button, so the triggers are the gadget and boost and the regions and fact tiles are a flick of the right stick. A new menu action needs a free button on both devices first.
+- Upgrades from run setup changes screen to the driver focus and remembers the step it left (`focusReturn`); Back, Upgrades again or Drive returns there.
+- The badges count what the bank covers (`DriverCard.affordableUpgrades`, `Unlocks.buyableCount`). The gem badge on the primary button shows only in Level Options, where Start spends them.
+- Why the primary button is locked is written beside the bar (`setGoNote`), in symbols.
 
 ### Driver focus
 
-On a bench row Buy (`ui_buy`, E / pad A) buys and Accept still drives, so `main2._input` reads Buy first. Because pad A buys on a row, Down from the last row reaches Drive: keep that path when changing the bench's focus (`linkFocus`). E is also next-driver elsewhere, so the hint shows A/D here.
+On a bench row Buy (`ui_buy`, E / pad A) buys and Accept still drives, so `main2._input` reads Buy first. Because pad A buys on a row, Down from the last row reaches Drive: keep that path when changing the bench's focus (`linkFocus`). E is also next-driver elsewhere, so the launch bar's driver shows A/D here. The buy buttons are never `PrimaryButton`: the row in focus is lit instead.
 
 ### Run setup
 
 - Mode order, unlocks and what a win opens are not the menu's rules: it asks `Root.modePath`, `Root.isModePlayable`, `ModeTiers` and `SaveManager` (CLAUDE.md "Flow", docs/MODES.md).
-- SELECT on the road map and START in Level Options hold the focus (`focusSetup`), so Accept always goes on; nothing else there takes it.
+- The launch bar's primary button holds the focus on both steps (`focusSetup`), so Accept always goes on; nothing else there takes it.
 - Esc is both `ui_cancel` and `ui_menu`: in run setup Back is read first, so Esc never opens Settings there (the gear button and Start on a pad do).
 - The level's fact tiles are generated from the `LevelDef`, `props.json` and `World.TERRAIN` (`fillFacts`); only `EVENT_FACTS` holds words.
 - The loadout slots sell only unlocked gadgets and boosts (`Pickups.openLoadout`) and are paid at Start, the gadget first (`slotPurchase`); choices are kept in `meta.records.loadout` and `boostLoadout`.

@@ -21,7 +21,11 @@ func test_prompts_name_the_key_or_button_for_the_device():
 	assert_eq(InputGlyphs.label("ui_tab_next", true), "RB")
 	assert_eq(InputGlyphs.label("ui_menu", false), "Esc", "the Menu key is skipped for Esc")
 	assert_eq(InputGlyphs.label("ui_upgrade", false), "F")
+	assert_eq(InputGlyphs.label("ui_gadget", false), "X", "the launch bar's slots have a key each")
 	assert_eq(InputGlyphs.label("ui_boost", false), "V")
+	assert_eq(InputGlyphs.label("ui_gadget", true), "LT", "the triggers load the car")
+	assert_eq(InputGlyphs.label("ui_boost", true), "RT")
+	assert_eq(InputGlyphs.label("ui_region_next", true), "RS Right", "a stick says which way")
 	assert_eq(InputGlyphs.label("ui_buy", false), "E", "buys an upgrade row; Space stays on Drive")
 	assert_eq(InputGlyphs.label("ui_buy", true), "A")
 	assert_eq(InputGlyphs.label("ui_up", false), "W", "WASD before the arrows")
@@ -93,10 +97,7 @@ func test_a_locked_driver_is_a_silhouette_with_a_price():
 	assert_true(card.isLocked())
 	assert_eq(card.portrait.modulate.r, 0.0, "silhouette")
 	assert_false(card.statLine.visible, "no stats on a locked card")
-	assert_eq(card.upgradeButton.text, "DETAILS", "its sheet can be read; nothing to upgrade yet")
-	assert_false(card.upgradeBadge.visible, "no count on a locked car")
 	assert_eq(card.traitList.get_child_count(), 2, "its features still show")
-	assert_true(card.mainButton.text == "UNLOCK" || card.mainButton.has_node("parts"), "UNLOCK, or NEED (coin) MORE in symbols")
 	assert_eq(card.priceLine.get_child_count(), 1, "the price shows where the stats would be, in symbols")
 	card.free()
 
@@ -106,23 +107,11 @@ func test_an_owned_driver_shows_stats_and_drive():
 	var info = load("res://scene/car/sedan/sedan_info.tres")
 	card.setup({"name": "sedan", "cost": 0, "upgrades": {}, "records": {}}, info, 0)
 	card.setFocused(true)
-	assert_eq(card.mainButton.text, "DRIVE")
 	assert_almost_eq(card.portrait.position.x + card.portrait.size.x, DriverCard.SIZE.x, 0.5, "the portrait sits against the right edge")
-	assert_eq(card.upgradeButton.text, "UPGRADES")
-	assert_eq(card.pickupsButton.text, "PICKUPS")
-	assert_eq(card.upgradeBadge.visible, DriverCard.affordableUpgrades(0) > 0, "the badge shows only when the bank covers an upgrade")
-	assert_eq(card.upgradeBadge.count, DriverCard.affordableUpgrades(0))
-	card.benchOpen = true
-	card.refresh()
-	assert_eq(card.upgradeButton.text, "DRIVERS", "in driver focus it goes back to the list")
-	assert_false(card.upgradeBadge.visible, "the bench shows what can be bought")
-	card.benchOpen = false
-	card.refresh()
 	assert_true(card.statLine.visible)
 	assert_true(card.progress.visible)
 	assert_eq(card.statRows.size(), 8, "every upgradeable stat")
 	card.setFocused(false)
-	assert_false(card.actions.visible, "side cards have no buttons")
 	assert_false(card.statLine.visible || card.traitList.visible || card.progress.visible, "side cards show their back: no details")
 	assert_eq(card.art.size, DriverCard.SIZE, "the back is all art")
 	card.free()
@@ -139,20 +128,40 @@ func test_every_card_lists_two_features_with_their_short_text():
 			assert_true(texts.any(func(t): return CarTraits.DATA.values().any(func(d): return d.short == t)), "%s: a feature shows its short line" % id)
 		card.free()
 
-func test_upgrades_asks_for_no_particular_stat():
-	var card = DriverCard.new()
-	add_child(card)
-	card.setup({"name": "sedan", "cost": 0, "upgrades": {}, "records": {}}, load("res://scene/car/sedan/sedan_info.tres"), 0)
-	card.setFocused(true)
+func test_the_launch_bar_has_every_part_and_one_focus():
+	var bar = LaunchBar.new()
+	add_child(bar)
+	assert_eq(bar.slotButtons.keys(), LaunchBar.SLOTS, "the gadget, the boost, Upgrades and Pickups")
+	for slot in LaunchBar.SLOTS:
+		assert_true(InputMap.has_action(LaunchBar.SLOT_ACTIONS[slot]), "%s has a key" % slot)
+		assert_eq(bar.slotButtons[slot].focus_mode, Control.FOCUS_NONE, "the focus stays on the primary button")
+		assert_true(bar.get_rect().encloses(Rect2(bar.position + bar.slotButtons[slot].position, bar.slotButtons[slot].size)), "%s sits inside the bar" % slot)
+	var keys := {}
+	for action in LaunchBar.SLOT_ACTIONS.values() + ["ui_tab_prev", "ui_tab_next", "ui_accept", "ui_cancel", "ui_records", "ui_codex", "ui_region_prev", "ui_region_next"]:
+		for pad in [false, true]:
+			var label := "%s %s" % ["pad" if pad else "key", InputGlyphs.label(action, pad)]
+			assert_false(keys.has(label), "%s is %s, which %s already uses" % [action, label, keys.get(label, "")])
+			keys[label] = action
+	assert_eq(bar.driverButton.focus_mode, Control.FOCUS_NONE)
+	assert_true(bar.goButton.focus_mode != Control.FOCUS_NONE)
+	bar.setGo("START", true)
+	assert_false(bar.goButton.disabled)
+	bar.setGo("LOCKED", false)
+	assert_true(bar.goButton.disabled)
 	var asked = []
-	card.upgradesRequested.connect(func(stat): asked.push_back(stat))
-	card.upgradeButton.pressed.emit()
-	assert_eq(asked, [-1])
-	var pickups = []
-	card.pickupsRequested.connect(func(): pickups.push_back(true))
-	card.pickupsButton.pressed.emit()
-	assert_eq(pickups.size(), 1, "Pickups asks for the Pickups screen")
-	card.free()
+	bar.slotPressed.connect(func(slot): asked.push_back(slot))
+	bar.slotButtons["upgrades"].pressed.emit()
+	bar.slotButtons["loadout"].pressed.emit()
+	assert_eq(asked, ["upgrades", "loadout"], "a slot says which it is")
+	bar.setSlot("loadout", null)
+	assert_true(bar.slotButtons["loadout"].get_node("plus").visible, "an empty slot is a plus")
+	bar.setGems(3)
+	assert_true(bar.gemBadge.visible, "START shows the gems the loadout takes")
+	bar.setGems(0)
+	assert_false(bar.gemBadge.visible)
+	bar.badges["pickups"].setCount(2)
+	assert_true(bar.badges["pickups"].visible)
+	bar.free()
 
 func test_a_count_badge_hides_at_zero():
 	var button = Button.new()

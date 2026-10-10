@@ -61,7 +61,7 @@ function rrect(ctx,x,y,w,h,r,noBegin){ if(!noBegin) ctx.beginPath(); r=Math.min(
 /* ---------- car roster ----------
  Each part: y0/y1 front/rear, W width, rim = visible side band, pf/pr = corner squareness, tf/tr = nose/tail taper.
  Every feature listed in a car's feats is drawn on all of its sheets.
- side: the heights the side view adds (renderSide): sill, nose (top of the front face), hood (at the windshield base),
+ side: the heights the side view adds (renderSide): sill, nose (top of the front face; keep it well above the front tire), hood (at the windshield base),
  belt (bottom of the side glass), roof, deck and tail (behind the back glass), corner radii, winR (where the side glass
  ends when there is no back glass, top-down y), box ([bottom, top] of a trailer or box part) and rim (steel, white, dark). */
 const CARS = {
@@ -70,7 +70,7 @@ sedan:{ name:'Sedan', driver:'Anthony', cost:0, seed:11, paint:'#c95a2a', clean:
 		cabin:{wf:-30,rf:-15,rr:33,wr:50,gi:3,side:4.4,bowF:5,bowR:3,cp:7,bp:9},doors:[-13,12,38],hood:1,trunk:1,filler:[1,60]}],
 	wheels:[[-62,37,10,26],[62,37,10,26]], lights:{f:'quad',r:'rect',grille:1}, bumper:{f:'chrome',r:'chrome',w:.9}, mirrors:-27,
 	feats:['primerHood'],
-	side:{sill:10,nose:31,hood:38,belt:42,roof:63,deck:42,tail:41,noseR:10,tailR:8,roofR:12,rim:'steel'}},
+	side:{sill:10,nose:36,hood:41,belt:44,roof:64,deck:43,tail:41,noseR:6,tailR:7,roofR:12,rim:'steel'}},
 van:{ name:'Van', driver:'Lester', cost:1000, seed:23, paint:'#d9d6cc', clean:'#f2f0ea', grime:{dirt:.5,rust:.45,fade:.2,moss:.75},
 	parts:[{y0:-100,y1:100,W:90,rim:6,rimF:6,rimR:3,pf:5.5,pr:12,tf:.93,tr:.99,arches:[[-66,.8,14],[64,.8,14]],front:1,rear:1,
 		cabin:{wf:-60,rf:-46,rr:96,wr:96,gi:3,side:5,bowF:4,bowR:0,cp:0,bp:-30},doors:[-38,12],hood:1,trunk:0,filler:[-1,40],
@@ -83,7 +83,7 @@ taxi:{ name:'Taxi', driver:'Andrew', cost:2000, seed:37, paint:'#d9a51f', clean:
 		cabin:{wf:-27,rf:-11,rr:31,wr:46,gi:3,side:4.4,bowF:6,bowR:4,cp:6,bp:10},doors:[-10,13,36],hood:1,trunk:1,filler:[-1,58]}],
 	wheels:[[-60,37,10,25],[60,37,10,25]], lights:{f:'round',r:'round',grille:1}, bumper:{f:'chrome',r:'chrome',w:.86,guards:1}, mirrors:-24,
 	feats:['checker','taxiSign'],
-	side:{sill:10,nose:31,hood:38,belt:42,roof:62,deck:42,tail:41,noseR:10,tailR:8,roofR:12,rim:'steel'}},
+	side:{sill:10,nose:36,hood:41,belt:44,roof:63,deck:43,tail:41,noseR:6,tailR:7,roofR:12,rim:'steel'}},
 pickup:{ name:'Pickup', driver:'Karen', cost:2500, seed:41, paint:'#2c5a94', clean:'#2f6fc4', grime:{dirt:.6,rust:.5,fade:.4,moss:0},
 	parts:[{y0:-107,y1:107,W:90,rim:6.5,rimF:5,rimR:4,pf:7,pr:12,tf:.97,tr:.99,arches:[[-68,1.6,15],[70,1.6,15]],front:1,rear:1,
 		cabin:{wf:-38,rf:-26,rr:4,wr:8,gi:3,side:5,bowF:4,bowR:1,cp:0,bp:0},doors:[-24],hood:1,trunk:0,filler:[-1,40],bed:[14,103]}],
@@ -113,19 +113,19 @@ supercar:{ name:'Supercar', driver:'Snake', cost:10000, seed:67, paint:'#a8202c'
 		cabin:{wf:-24,rf:-9,rr:18,wr:30,gi:3.5,side:6,bowF:7,bowR:5,cp:9,bp:null},doors:[-6],hood:1,trunk:0,filler:[-1,26]}],
 	wheels:[[-58,38,11,26],[56,39,12,27]], lights:{f:'led',r:'strip'}, bumper:{f:'none',r:'none',w:.8}, mirrors:-20,
 	feats:['vents','intakes','wing','splitter'],
-	side:{sill:8,nose:18,hood:27,belt:34,roof:47,deck:41,tail:31,noseR:8,tailR:6,roofR:14,rim:'dark'}},
+	side:{sill:8,nose:22,hood:32,belt:37,roof:49,deck:43,tail:35,noseR:6,tailR:6,roofR:14,rim:'dark'}},
 racer:{ name:'Racer', driver:'Kim', cost:10000, seed:71, paint:'#222326', clean:'#1c1d22', stripe:'#d8641c', grime:{dirt:.6,rust:.35,fade:.25,moss:0},
 	parts:[{y0:-99,y1:99,W:94,rim:8.5,rimF:5,rimR:5,pf:4.2,pr:5.4,tf:.82,tr:.9,arches:[[-60,4.6,15],[60,5.2,16]],front:1,rear:1,
 		cabin:{wf:-18,rf:-3,rr:28,wr:44,gi:3,side:4.4,bowF:6,bowR:4,cp:8,bp:null},doors:[2],hood:1,trunk:1,filler:[-1,52]}],
 	wheels:[[-60,40,12,26],[60,41,13,27]], lights:{f:'round',r:'strip'}, bumper:{f:'none',r:'none',w:.8}, mirrors:-15,
 	feats:['stripes','scoop','splitter'],
-	side:{sill:9,nose:26,hood:35,belt:39,roof:55,deck:37,tail:37,noseR:8,tailR:6,roofR:12,rim:'dark'}},
+	side:{sill:9,nose:33,hood:39,belt:42,roof:57,deck:40,tail:39,noseR:6,tailR:6,roofR:12,rim:'dark'}},
 police:{ name:'Police', driver:'Nikita', cost:25000, seed:83, paint:'#1d2129', clean:'#14181f', roof:'#e3e2dc', grime:{dirt:.55,rust:.45,fade:.3,moss:0},
 	parts:[{y0:-105,y1:105,W:88,rim:7,rimF:5,rimR:5,pf:5,pr:5.5,tf:.95,tr:.96,arches:[[-63,1.4,14],[63,1.4,14]],front:1,rear:1,
 		cabin:{wf:-31,rf:-16,rr:33,wr:50,gi:3,side:4.4,bowF:5,bowR:3,cp:7,bp:9},doors:[-14,12,38],hood:1,trunk:1,filler:[1,62]}],
 	wheels:[[-63,37,10,26],[63,37,10,26]], lights:{f:'quad',r:'rect',grille:1}, bumper:{f:'chrome',r:'chrome',w:.9}, mirrors:-28,
 	feats:['twoTone','lightbar','roofNumber'],
-	side:{sill:10,nose:31,hood:38,belt:42,roof:63,deck:42,tail:41,noseR:10,tailR:8,roofR:12,rim:'steel'}},
+	side:{sill:10,nose:36,hood:41,belt:44,roof:64,deck:43,tail:41,noseR:6,tailR:7,roofR:12,rim:'steel'}},
 ambulance:{ name:'Ambulance', driver:'Xavier', cost:35000, seed:97, paint:'#dedcd5', clean:'#f6f5f1', grime:{dirt:.55,rust:.35,fade:.2,moss:0},
 	parts:[{y0:-113,y1:-36,W:90,rim:6,rimF:5,rimR:1,pf:6,pr:30,tf:.95,tr:1,arches:[[-90,1.8,14]],front:1,rear:0,
 		cabin:{wf:-76,rf:-64,rr:-36,wr:-36,gi:3,side:5,bowF:4,bowR:0,cp:0,bp:null},doors:[-58],hood:1,trunk:0,filler:null,cabStripe:1},
@@ -637,7 +637,7 @@ function sceneGeometry(key){
  cabin, doors, filler, wheels, lights, bumpers, mirrors, paint and feats are the top-down's; `side` adds the heights.
  renderSide fits each car into SIDE.W×SIDE.H with SIDE.PAD clear on every side, tires on the bottom pad and centered
  across, draws it SIDE.SS times larger and halves it down, so the alpha edge stays clean for the menu's silhouette. */
-const SIDE={W:256,H:96,PAD:2,SS:4};
+const SIDE={W:256,H:96,PAD:2,SS:4,FENDER:4.5};
 const SIDE_RIMS={steel:[146,143,134],white:[206,202,190],dark:[62,63,68]};
 const DUST=[150,128,98];
 /* a closed polygon with rounded corners; pts are [x,y,radius], each radius clamped to fit its two edges */
@@ -651,7 +651,7 @@ function rpoly(ctx,pts,noBegin){
 	ctx.closePath(); }
 function lerpZ(a,b,z){ return a[0]+(b[0]-a[0])*(z-a[1])/(b[1]-a[1]); }
 /* each part's outline, glass, door seams, handles and pillars in side space */
-function sideGeo(sp){
+function sideGeo(sp,wheels){
 	const S=sp.side;
 	return sp.parts.map(p=>{
 		const xf=-p.y0, xr=-p.y1;
@@ -663,6 +663,10 @@ function sideGeo(sp){
 		if(back) g.pts.push([-c.rr,S.roof,S.roofR],[-c.wr,S.deck,3],[xr+1.5,S.tail,S.tailR]); else g.pts.push([xr,S.roof,S.tailR]);
 		g.pts.push([xr,S.sill+1.5,3]);
 		g.hoodAt=x=>S.nose+(S.hood-S.nose)*(xf-1.5-x)/(xf-1.5-cowl[0]);
+		/* a hood lower than a front wheel's arch gets a fender swell over it, so SIDE.FENDER of metal always covers the tire */
+		let at=2; for(const wh of wheels){ const zt=wh.R*2+2.6+SIDE.FENDER; if(wh.x<=cowl[0]||wh.x>=xf||g.hoodAt(wh.x)>=zt) continue;
+			const xa=Math.min(wh.x+wh.R+9,xf-4), xb=Math.max(wh.x-wh.R-9,cowl[0]+2);
+			g.pts.splice(at,0,[xa,g.hoodAt(xa),6],[wh.x+wh.R*.5,zt,8],[wh.x-wh.R*.5,zt,8],[xb,g.hoodAt(xb),6]); at+=4; }
 		g.deckAt=x=>back?S.deck+(S.tail-S.deck)*(-c.wr-x)/(-c.wr-xr-1.5):S.roof;
 		/* the side glass sits inside the pillars, between the belt and the roof rail */
 		const A=z=>lerpZ(cowl,top,z)-4.2, B=back?(z=>lerpZ([-c.wr,S.deck],[-c.rr,S.roof],z)+4.8):(()=>-S.winR);
@@ -850,7 +854,7 @@ function drawSide(C){
 function renderSide(key,o){
 	o=o||{}; const sp=CARS[key]; if(!sp||!sp.side) throw new Error('no side view for '+key);
 	const W=o.w||SIDE.W, H=o.h||SIDE.H, PAD=o.pad==null?SIDE.PAD:o.pad, SS=o.ss||SIDE.SS, style=o.style||'A';
-	const G=sideGeo(sp), wheels=sp.wheels.map(([y,,,l])=>({x:-y,R:l/2+.5}));
+	const wheels=sp.wheels.map(([y,,,l])=>({x:-y,R:l/2+.5})), G=sideGeo(sp,wheels);
 	const B={x0:Math.min(...G.map(g=>g.xr))-30,x1:Math.max(...G.map(g=>g.xf))+30,z0:-4,z1:Math.max(...G.map(g=>g.hi))+30};
 	const make=(w,h,k,ox,oy,measure)=>{ const cv=document.createElement('canvas'); cv.width=w; cv.height=h; const ctx=cv.getContext('2d');
 		ctx.setTransform(k,0,0,-k,ox,oy); ctx.lineJoin='round';

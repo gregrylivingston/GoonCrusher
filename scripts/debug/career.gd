@@ -231,7 +231,7 @@ func menuVisit() -> bool:
 	if not await selectMode(run.mode): return false
 	if not await selectTier(run.get("tier", ModeTiers.EASY)): return false
 	var gadget := Personas.chooseLoadout(persona, SaveManager.playerData.gem, rng)
-	await chooseSlot("loadout", gadget, m.loadoutButton, "ui_upgrade")
+	await chooseSlot("loadout", gadget, m.loadoutButton, "ui_gadget")
 	var boost := Personas.chooseBoost(persona, SaveManager.playerData.gem - Pickups.LOADOUT.get(m.slotPurchase("loadout"), 0), rng)
 	await chooseSlot("boostLoadout", boost, m.boostButton, "ui_boost")
 	return await start(run, car, gadget, boost)
@@ -273,10 +273,11 @@ func unlock(index: int) -> bool:
 	var coins := data.coin
 	var gems := data.gem
 	if not card.isLocked(): return true
-	if card.mainButton.disabled:
+	var go: Button = menu().goButton
+	if go.disabled:
 		issue("ui", "the Unlock button for %s is disabled with %d coins against a price of %d" % [data.cars[index].name, coins, price])
 		return false
-	await activate(card.mainButton, "ui_accept")
+	await activate(go, "ui_accept")
 	await think(0.3)
 	if data.cars[index].cost != 0 || data.coin != coins - price || data.gem != gems - gemPrice:
 		issue("economy", "unlocking %s: cost %d + %d gems, bank %d -> %d, gems %d -> %d" % [data.cars[index].name, price, gemPrice, coins, data.coin, gems, data.gem])
@@ -349,14 +350,13 @@ func pickupShop() -> PickupShop:
 		if node is PickupShop && not node.is_queued_for_deletion(): return node
 	return null
 
-## Buys one upgrade the way a player does: Upgrades in the garage's dock opens the driver focus, then a click
+## Buys one upgrade the way a player does: Upgrades on the launch bar opens the driver focus, then a click
 ## on the stat's buy button on the bench (or Up/Down to it and Buy), then Back to the drivers.
 func upgrade(index: int, stat: int) -> bool:
 	var data := SaveManager.playerData
 	if not await selectCar(index): return false
 	var m := menu()
-	var card: DriverCard = m.cards[index]
-	await activate(card.upgradeButton, "ui_upgrade")
+	await activate(m.upgradeButton, "ui_upgrade")
 	if not await waitFor(func(): return m.focusOpen, 3.0, "Upgrades to open the driver focus"): return false
 	await think(0.3) #the bench slides in
 	var statName := String(DriverCard.STATS.filter(func(s): return s[1] == stat)[0][0])
@@ -400,11 +400,10 @@ func closeFocus(result: bool) -> bool:
 	return result
 
 func openSetup() -> bool:
-	var card: DriverCard = menu().cards[SaveManager.playerData.selectedCar]
-	await activate(card.mainButton, "ui_accept")
+	await activate(menu().goButton, "ui_accept")
 	return await waitFor(func(): return menu() != null && menu().screen == SETUP && not Transition.busy(), 5.0, "Drive to open run setup")
 
-## Run setup's road map: the region (the buttons at the road's ends, or Z / C), then the stop (a click, or Q / E)
+## Run setup's road map: the region (the buttons at the road's ends, or Z / C), then the stop (a click, or Left / Right)
 func selectLevel(index: int) -> bool:
 	var m := menu()
 	var data := SaveManager.playerData
@@ -419,7 +418,7 @@ func selectLevel(index: int) -> bool:
 		else:
 			var stop: Control = m.posters[index].get_node("catcher")
 			if useMouse() && stop.is_visible_in_tree(): await click(stop)
-			else: await press("ui_tab_next" if index > before else "ui_tab_prev")
+			else: await press("ui_right" if index > before else "ui_left")
 		if data.selectedLevel == before:
 			issue("block", "run setup didn't move along the road map")
 			return false
@@ -428,10 +427,10 @@ func selectLevel(index: int) -> bool:
 ## The road map's SELECT (a click, or Accept): on to Level Options for the selected stop
 func openOptions() -> bool:
 	var m := menu()
-	if m.selectButton.disabled:
+	if m.goButton.disabled:
 		issue("block", "SELECT is disabled for %s though the save says it is open" % Levels.ORDER[SaveManager.playerData.selectedLevel])
 		return false
-	await activate(m.selectButton, "ui_accept")
+	await activate(m.goButton, "ui_accept")
 	return await waitFor(func(): return menu() != null && menu().optionsOpen, 3.0, "Select to open Level Options")
 
 func selectMode(mode: int) -> bool:
@@ -476,7 +475,7 @@ func chooseSlot(slot: String, id: String, button: Button, action: String) -> voi
 func start(run: Dictionary, car: int, gadget: String, boost: String) -> bool:
 	var m := menu()
 	var data := SaveManager.playerData
-	if m.startButton.disabled:
+	if m.goButton.disabled:
 		issue("block", "START is disabled for %s %s (%s) though the mode rules say it is playable" % [
 			Levels.ORDER[run.level], Root.gameModeDescription[run.mode].name, m.lockReason])
 		return false
@@ -491,7 +490,7 @@ func start(run: Dictionary, car: int, gadget: String, boost: String) -> bool:
 	if abandonThisRun: pauseAt = minf(pauseAt, rng.randf_range(20.0, 90.0))
 	note("CAREER_RUN session=%d %s %s %s %s gadget=%s boost=%s bank=%d gems=%d" % [session, Levels.ORDER[run.level], ModeTiers.NAMES[runPlan.tier], Root.gameModeDescription[run.mode].name,
 		data.cars[car].name, gadget if gadget != "" else "-", boost if boost != "" else "-", data.coin, data.gem])
-	await activate(m.startButton, "ui_accept")
+	await activate(m.goButton, "ui_accept")
 	if not await waitFor(func(): return menu() == null || menu().loadingLevel, 5.0, "START to begin loading the run (focus on %s)" % focusName()):
 		runActive = false
 		return false

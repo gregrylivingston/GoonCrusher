@@ -92,9 +92,37 @@ func test_charms_swing_apart():
 	assert_eq(HudMirror.diceFor(18), 3)
 	assert_eq(HudMirror.diceFor(50), 3)
 
+#a jolt throws the charms up their strings; they bounce, land on them and come to rest hanging
+func test_charms_bounce():
+	var mirror := HudMirror.new()
+	add_child(mirror)
+	mirror.jolt(Vector2(-20.0, 0.0))
+	mirror.stepCharms(0.0, 0.0, 1.0 / 60.0)
+	for i in HudMirror.CHARMS.size(): assert_eq(mirror.drops[i], 0.0, "ordinary driving is no jolt (charm %d)" % i)
+	mirror.jolt(Vector2(-500.0, 0.0))
+	var highest := 0.0
+	var landings := 0
+	var wasUp := false
+	for frame in 40:
+		mirror.stepCharms(0.0, 0.0, 1.0 / 60.0)
+		highest = minf(highest, mirror.drops[0])
+		if wasUp && mirror.drops[0] == 0.0: landings += 1
+		wasUp = mirror.drops[0] < 0.0
+		for i in HudMirror.CHARMS.size(): assert_true(mirror.drops[i] <= 0.0 && mirror.drops[i] >= -HudMirror.LIFT_MAX, "a string never stretches (charm %d)" % i)
+	assert_true(highest < -8.0, "a crash hops the die up its string")
+	assert_true(landings > 0, "it lands on its string")
+	for frame in 600: mirror.stepCharms(0.0, 0.0, 1.0 / 60.0)
+	for i in HudMirror.CHARMS.size():
+		assert_eq(mirror.drops[i], 0.0, "charm %d comes to rest" % i)
+		assert_true(absf(mirror.angles[i] - HudMirror.CHARMS[i][0]) < 0.01, "charm %d hangs where it rests" % i)
+	#braking or pulling away holds them up
+	for frame in 120: mirror.stepCharms(0.0, -HudMirror.LIFT_ACCEL, 1.0 / 60.0)
+	assert_true(mirror.drops[0] < -HudMirror.LIFT * 0.5, "a hard stop lifts them")
+	mirror.free()
+
 #the dice show luck in pips: a die for every six, three at most
 func test_mirror_names():
-	var known := [&"", &"crack", &"checker", &"lights", &"clinic", &"console", &"keys", &"convex", &"screen"]
+	var known := [&"", &"checker", &"lights", &"clinic", &"console", &"keys", &"convex", &"screen"]
 	for id in HudSkin.SKINS: assert_true(known.has(HudSkin.named(id).mirror), "%s: mirror '%s'" % [id, HudSkin.named(id).mirror])
 	assert_eq(HudMirror.PIPS.size(), 7)
 	for face in range(1, 7): assert_eq(HudMirror.PIPS[face].size(), face, "a %d has %d pips" % [face, face])
@@ -147,6 +175,30 @@ func test_tach_numbers_follow_the_dial():
 	assert_eq(dial.tachLabel(dial.tachMajors()), "40")
 	assert_eq(dial.tachCaption(), "RPM x100")
 	dial.free()
+
+#every dash starts a run pristine: the glass cracks with the hull, the speedometer's first, and mends with it
+func test_the_glass_cracks_as_the_hull_drops():
+	var car = load("res://scene/car/sedan/sedan.tscn").instantiate()
+	var speedo := HudDial.new()
+	var tach := HudDial.new()
+	tach.kind = HudDial.Kind.TACH
+	for dial in [speedo, tach]: dial.skin = HudSkin.named(car.hudSkin)
+	car.health = 100.0
+	assert_eq(HudDial.glassStage(car), 0, "a whole car has whole glass")
+	assert_eq(speedo.cracks(car), 0, "the sedan's too")
+	assert_false(tach.tapeOn, "and no tape until Duct Tape patches")
+	var last := 0
+	for hull in [HudDial.SCUFFED - 1.0, HudDial.WORN - 1.0, HudDial.LOW - 1.0]:
+		car.health = hull
+		assert_eq(HudDial.glassStage(car), last + 1, "one more stage under %d hull" % int(hull + 1.0))
+		assert_eq(tach.cracks(car), last, "the tachometer is a stage behind")
+		last += 1
+	for crack in HudDial.CRACKS: assert_true(crack[0] >= 1 && crack[0] <= last, "a crack shows at a stage the hull reaches")
+	car.health = 100.0
+	assert_eq(speedo.cracks(car), 0, "repaired")
+	speedo.free()
+	tach.free()
+	car.free()
 
 func test_heart_monitor_beats():
 	assert_eq(HudDial.heartbeat(0.0), 0.0)

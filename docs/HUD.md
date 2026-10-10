@@ -52,6 +52,8 @@ Each car has its own dashboard: a `HudSkin` (`hud_skin.gd`) named in `CarInfo.hu
 - what green (the speed that crushes a goon), red (redline, danger) and amber (warning) mean; a skin may only shade them (`ok`, `warn`, `bad`);
 - revs left and speed right, fuel with revs and hull with speed, each lamp on its own side, and the flyer groups.
 
+**Every dash starts a run pristine.** Wear is the car's state, never a skin's dressing: the glass on the dials and the mirror cracks in stages as the hull drops and mends as it is repaired (`HudDial.glassStage`), and a skin's own damage props (the sedan's tape and check-engine lamp) come on from what happens in the run.
+
 **To add a dashboard:**
 1. Add an entry to `HudSkin.SKINS` with only what differs from the house look.
 2. Name it in the car's `<car>_info.tres` (`hudSkin`).
@@ -60,7 +62,7 @@ Each car has its own dashboard: a `HudSkin` (`hud_skin.gd`) named in `CarInfo.hu
 
 ## The mirror
 
-`HudMirror` does not own the clock or the goal: it lays `TopCenter` and `Objective` out on its glass (`apply`), turns off the goal's own panel (`HudObjective.framed`) and dresses the clock in the skin's font. Its dressing is `HudSkin.mirror`; the semi gets a console. The dice are the luck stat in pips and the clover carries the clover stat; they hang from the top of the frame on strings that run behind it (`charms`, drawn behind the frame), and what lights up over the frame is on `front`. The start lamps' layer is under the HUD's, so the rack comes down behind the mirror too. The frame pulses red in the last seconds of a clock that loses the run (`hurry`).
+`HudMirror` does not own the clock or the goal: it lays `TopCenter` and `Objective` out on its glass (`apply`), turns off the goal's own panel (`HudObjective.framed`) and dresses the clock in the skin's font. Its dressing is `HudSkin.mirror`; the semi gets a console. The dice are the luck stat in pips and the clover carries the clover stat; they hang from the top of the frame on strings that run behind it (`charms`, drawn behind the frame). Each is a pendulum plus a bounce along its string (`stepCharms`), driven by the car's turn and by its change of velocity each frame (`swingCharms`, `jolt`), and what lights up over the frame is on `front`. The start lamps' layer is under the HUD's, so the rack comes down behind the mirror too. The frame pulses red in the last seconds of a clock that loses the run (`hurry`).
 
 ## The visors
 

@@ -66,7 +66,7 @@ The first update since the 0.1 demo, and close to a rebuilt game. Old demo saves
 ### Pickups and prize games
 
 - Nine kinds of pickup: supplies, tune-ups, power-ups, gadgets, boosts, loot, casino, skill challenges and mode specials.
-- Gadgets (Fire) and boosts (Boost / Hop) sit in two slots with their own buttons. Buy a starting loadout in run setup.
+- Gadgets (Fire) and boosts (Boost / Hop) sit in two slots with their own buttons. Buy a starting loadout on the launch bar.
 - Most of what goons drop is coins, however lucky your car; the better pickups stay a treat.
 - The Claw Crane is one play: when your grabs are gone you collect what you won.
 - Gift boxes come in five tiers, Cardboard to Diamond; better boxes play better versions of a game.
@@ -85,9 +85,12 @@ The first update since the 0.1 demo, and close to a rebuilt game. Old demo saves
 ### HUD and menus
 
 - Each car has its own dashboard: two dials in the bottom corners and one signature instrument.
-- A rear-view mirror holds the clock and the goal, with your dice and clover hanging behind it; two sun visors hold the gift box, radio, stars, coins and payout.
+- A rear-view mirror holds the clock and the goal, with your dice and clover hanging behind it: they swing in the turns, and hop and jiggle on their strings when you brake hard, pull away or hit something; two sun visors hold the gift box, radio, stars, coins and payout.
 - Five system lamps on the dials show what is damaged.
+- Every dashboard starts a run clean. The glass on the dials and the mirror cracks further as the hull drops, and mends when you repair.
 - Garage with driver cards; run setup with the road map, mode rows, tier switch and loadout.
+- One launch bar at the bottom right of the garage, the road map and Level Options: driver, gadget, boost, Upgrades, Pickups and the Drive / Select / Start button, with the same keys on every screen. Upgrades opened from run setup comes back to where you were.
+- Upgrades view: the stat in focus is lit and shows what the next level makes it; the car's two features sit in their own panel beside the launch bar.
 - Screens change behind a garage shutter. Amounts use the game's symbols.
 
 ### Radio and sound

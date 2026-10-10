@@ -1,7 +1,7 @@
 class_name PickupShop extends CodexPage
 
 #The Pickups screen (docs/UI.md): where pickups and prize games are unlocked (Unlocks), opened from the
-#garage dock's Pickups button or G / View. Seven tabs on the shared page frame (CodexPage), each holding
+#launch bar's Pickups slot or G / View. Seven tabs on the shared page frame (CodexPage), each holding
 #one or two kinds' unlock trees side by side (TABS). The gift box games are Casino pickups (CrushPrizes.GAMES).
 #An open pickup shows in full; one whose
 #parent is open shows dimmed with its price or PLAY; the rest are "???". Accept on a tile (a second click,
@@ -62,7 +62,7 @@ static func tabOf(uid: String) -> int:
 		if tabUids(i).has(uid): return i
 	return -1
 
-## Ready, with a price the bank covers (what the dock's badge counts, Unlocks.buyableCount)
+## Ready, with a price the bank covers (what the launch bar's badge counts, Unlocks.buyableCount)
 static func isBuyable(uid: String) -> bool:
 	return Unlocks.state(uid) == Unlocks.S.READY && not Unlocks.price(uid).is_empty() && Unlocks.canAfford(uid)
 

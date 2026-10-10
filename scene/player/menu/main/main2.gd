@@ -4,23 +4,25 @@ extends CanvasLayer
 #  GARAGE     a carousel of driver cards (DriverCard). LB/RB or Left/Right picks a driver, Accept
 #             drives or unlocks, Records shows the driver's bests. Upgrades opens the driver focus: the
 #             other drivers leave, the card moves to the left and its bench (DriverBench) opens beside it,
-#             where upgrades are bought (Up/Down, then E / A; Accept still drives); Upgrades or Back returns to the drivers. The
-#             dock under the card holds Upgrades, Drive and Pickups.
+#             where upgrades are bought (Up/Down, then E / A; Accept still drives); Upgrades or Back returns to the drivers.
 #  RUN SETUP  two steps. The road map picks the level: one region (Territories) at a time, its five stops
-#             on a winding road (Q/E, LB/RB, Left/Right or 1-5), each with a glyph per mode in the color
+#             on a winding road (Left/Right or 1-5), each with a glyph per mode in the color
 #             of the best medal won there and a bar under it for the current driver's own. A button at each
-#             end of the road leads to the region before and after (Z/C or LT/RT; locked until that region
-#             is open). SELECT, Accept or a click on the selected stop opens LEVEL OPTIONS
+#             end of the road leads to the region before and after (Z/C or the right stick; locked until
+#             that region is open). SELECT, Accept or a click on the selected stop opens LEVEL OPTIONS
 #             (optionsOpen): under the title, the region and its five stops (1-5 or a click changes level
 #             here). The level across the top (its poster, and its goons, ground, props and rules as
-#             tiles: Z/C, LT/RT or the mouse walks them and the card beside them says what each is), its
-#             five modes as rows down the left (Up/Down) and one pane for the selected mode: its rule, a
-#             three-way tier switch (Left/Right; ModeTiers: Easy, Medium, Hard) with each tier's goal and
-#             pay, what a win opens and the first-clear bonus, and the car strip (which cars have won this
-#             mode, level and tier). Bottom left, the records here: this driver's and the best by any car.
-#             Bottom right, the launch cluster: the driver (Q/E), the gadget (F) and boost (V) slots and a
-#             round START, which keeps the focus. Back (Esc / B) returns to the road map, then to the
-#             garage. Medals (bronze, silver, gold) show the best tier beaten.
+#             tiles: Z/C, the right stick or the mouse walks them and the card beside them says what each
+#             is), its five modes as rows down the left (Up/Down) and one pane for the selected mode: its
+#             rule, a three-way tier switch (Left/Right; ModeTiers: Easy, Medium, Hard) with each tier's
+#             goal and pay, what a win opens and the first-clear bonus, and the car strip (which cars have
+#             won this mode, level and tier). Bottom left, the records here: this driver's and the best by
+#             any car. Back (Esc / B) returns to the road map, then to the garage. Medals (bronze, silver,
+#             gold) show the best tier beaten.
+#  LAUNCH BAR bottom right on all three (LaunchBar), always the same: the driver (Q/E, LB/RB), the gadget
+#             (X / LT) and boost (V / RT) the run starts with, Upgrades (F / Y: the driver focus, from run
+#             setup too, and back to where it was opened), Pickups (G / View) and the round primary
+#             button, which keeps the focus: DRIVE, SELECT, then START.
 #The save holds every selection; this only draws it. Built in code with MenuTheme.
 #  G / View opens the Pickups screen (pickup_shop.gd) and B / L3 the Goonopedia (goonopedia.gd), over either screen.
 #Other scripts call: startLevel(path), animateCoins(from, to), statUpdatesUiUpdate(), add_child(menu).
@@ -34,8 +36,8 @@ const CARD_SLOTS := {
 	-1: [Vector2(333, 246), 0.7], 1: [Vector2(1001, 246), 0.7],
 	-2: [Vector2(92, 290), 0.58], 2: [Vector2(1288, 290), 0.58],
 }
-const DOCK_SIZE := Vector2(840, 84)  #the tray under the focused card: Upgrades, Drive, Pickups
-const DOCK_BOTTOM := 68.0            #its foot above the screen's, clear of the hint bar
+const LAUNCH_POS := Vector2(1164, 686) #the launch bar (LaunchBar.SIZE), bottom right on every screen: it closes the bottom row, beside Level Options' records and the bench's signature panel
+const GO_NOTE := Rect2(448, 770, 700, 28) #beside it: why its primary button is locked
 const FOCUS_CARD_POS := Vector2(80, 146) #the card in driver focus, with its bench at BENCH_POS
 const BENCH_POS := Vector2(512, 142)
 const POSTER_SIZE := Vector2(204, 196) #a stop on the road map: its art, the name band, then a glyph per mode
@@ -46,24 +48,18 @@ const REGION_BUTTON := Vector2(124, 124) #the buttons at the road's ends: the re
 const REGION_SPOTS := [Vector2(78, 296), Vector2(1522, 296)] #their centers; the road runs from one to the other
 const ROAD_BEND := 150.0 #the road's handles at each stop, flat, so it swings between them
 const STOP_FOCUS_SCALE := 1.14
-const LEVEL_BAND := Rect2(60, 152, 1480, 124) #Level Options, top section, under the title row: the level
-const MODE_LIST_POS := Vector2(60, 324)  #middle section: the mode rows, as tall as the pane beside them
+const LEVEL_BAND := Rect2(60, 148, 1480, 86) #Level Options, top section, under the title row: the level
+const MODE_LIST_POS := Vector2(60, 282)  #middle section: the mode rows, as tall as the pane beside them
 const MODE_ROW := Vector2(440, 46) #at least; the rows share the pane's height
-const OPTIONS_PANE := Rect2(520, 324, 1020, 302) #middle section: the selected mode and tier
-const LEVEL_ART := Vector2(176, 100)
+const OPTIONS_PANE := Rect2(520, 282, 1020, 380) #middle section: the selected mode and tier
+const LEVEL_ART := Vector2(176, 70)
 const FACT_ICON := 46.0 #a goon, a ground, a prop or a rule's tile in the level's facts
 const FACT_CAPS := {"goons": 5, "ground": 4, "props": 4, "rules": 4}
-const RECORDS_PANEL := Rect2(60, 674, 440, 112) #bottom section, under the mode rows: this driver's record here and the best
-const LAUNCH_PLATE := Rect2(520, 674, 1020, 112) #bottom section, under the pane: driver, loadout, START, evenly spaced
-const SLOT_SPOTS := [Vector2(884, 698), Vector2(1144, 698)] #the gadget's and the boost's round buttons on it
+const RECORDS_PANEL := Rect2(60, 686, 1084, 128) #bottom section, up to the launch bar: this driver's record here and the best
 const PANEL_EDGE := Color(1, 1, 1, 0.22)
 const TITLE_ROW := Rect2(60, 88, 1480, 44) #the level's name, its region and the stop buttons, on the sections' left edge
-const TIER_SEGMENT := 126.0
+const TIER_SEGMENT := 196.0
 const OPENS_TEXT := Color(0.6, 0.9, 0.45)
-const START_SIZE := 100.0 #the round START (and the road map's SELECT), at the right end of the launch plate
-const START_POS := Vector2(1404, 680)
-const SLOT_SIZE := 64.0
-const DRIVER_BUTTON := Rect2(554, 692, 296, 76)
 const LOCK_TEXT := Color(1.0, 0.62, 0.55)
 #a mode icon in one color (a medal's): its light and dark kept as shades of the tint
 const GLYPH_SHADER := "shader_type canvas_item;
@@ -103,8 +99,13 @@ var ui := Control.new()
 var backgrounds: Array[TextureRect] = []
 var frontBackground := 0
 var garage := Control.new()
-var actionDock := Panel.new() #the focused card's Upgrades, Drive and Pickups, in a tray at the bottom center
+var launch: LaunchBar        #bottom right of every screen: the driver, the loadout, Upgrades, Pickups and the primary button
+var goButton: Button         #its primary button: DRIVE or UNLOCK, SELECT, START (onGoPressed); it keeps the focus
+var upgradeButton: Button    #its Upgrades and Pickups slots (the career harness presses them)
+var pickupsButton: Button
+var goNote := HBoxContainer.new() #beside the bar: why the primary button is locked
 var focusOpen := false       #driver focus: the selected card at the left with its bench, the other drivers off screen
+var focusReturn := -1        #the driver focus was opened from run setup and closes back to it: 0 the road map, 1 Level Options (-1: from the garage)
 var bench := DriverBench.new()
 var benchTween: Tween
 var setup := Control.new()
@@ -119,13 +120,9 @@ var optionsOpen := false     #run setup's second step: Level Options in place of
 var map := Control.new()     #the road map: region tabs, the stops, the level panel
 var options := Control.new() #Level Options: the mode rows, the pane (tier switch, goal, pay, car strip, the level), START
 var glyphMaterials: Array[ShaderMaterial] = []
-var levelLock := Label.new() #what opens the highlighted stop, under SELECT
-var selectButton: Button
 var regionTitle := Label.new()
 var regionButtons: Array[Button] = [] #[the region before, the region after]
 var legendCar := Label.new()
-var driverPic := TextureRect.new() #the current driver, top right of run setup: whose bars the glyphs carry
-var driverName := Label.new()
 var optionsTitle := Label.new()
 var optionsRegion := Label.new()
 var optionsArt := TextureRect.new()
@@ -139,7 +136,6 @@ var stopRow := HBoxContainer.new() #under the title: the region, then a button p
 var stopButtons: Array[Button] = []
 var stakes := HBoxContainer.new() #under the tier switch: why it can't start, what a win opens, the first clear
 var recordsBox := HBoxContainer.new()
-var startBadge := PanelContainer.new() #on START: the gems the loadout will take
 var optionsPane: PanelContainer #the pane; its edge takes the mode's category color
 var paneBody: VBoxContainer
 var paneTween: Tween
@@ -149,11 +145,6 @@ var factChips := HBoxContainer.new()
 var backButton: Button       #bottom left of run setup: to the road map, then the garage
 var radioBar := NowPlaying.new() #top left, beside the buttons
 var radioInline := Vector2.ZERO
-var driverChip: PanelContainer #the road map's "DRIVER (car) Name"; Level Options has driverButton
-var driverButton: Button     #the launch cluster's driver: a press takes the next car owned
-var driverSide := TextureRect.new()
-var driverLabel := Label.new()
-var slotCaptions := {}       #loadout slot -> the lines beside its round button
 var posters: Array[Control] = [] #one stop per level; only the selected region's five show
 var pendingPosters := {}     #poster index -> level image path still loading
 var regionBlurb := Label.new()
@@ -169,7 +160,6 @@ var tierRow := HBoxContainer.new() #Easy, Medium, Hard (ModeTiers): a three-way 
 var tierButtons: Array[Button] = []
 var modeText := Label.new()
 var lockReason := ""         #why START is locked ("" when it isn't; the career harness reads it)
-var startButton: Button
 var buyPlayer := AudioStreamPlayer.new()
 
 func _ready():
@@ -231,6 +221,7 @@ func buildUi() -> void:
 		ui.add_child(layer)
 	buildLogo()
 	buildTopBar()
+	buildLaunch()
 	buildGarage()
 	buildSetup()
 	var bar = PanelContainer.new()
@@ -365,10 +356,6 @@ func buildGarage() -> void:
 	for i in cars.size():
 		var card = DriverCard.new()
 		garage.add_child(card)
-		card.drivePressed.connect(goToSetup)
-		card.unlockPressed.connect(onUnlockPressed)
-		card.upgradesRequested.connect(toggleFocus)
-		card.pickupsRequested.connect(openPickups)
 		card.selectRequested.connect(selectCar.bind(i))
 		cards.push_back(card)
 		card.car = cars[i]
@@ -376,25 +363,46 @@ func buildGarage() -> void:
 	bench.position = BENCH_POS
 	bench.visible = false
 	garage.add_child(bench)
-	#every card's Upgrades, Drive and Pickups sit in one tray at the bottom center; only the focused card's show
-	var tray := MenuTheme.box(Color(HudTheme.PANEL, 0.92), Color(HudTheme.RIM, 0.6), 14, 2)
-	tray.border_width_top = 4
-	actionDock.add_theme_stylebox_override("panel", tray)
-	actionDock.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
-	actionDock.offset_left = -DOCK_SIZE.x / 2.0
-	actionDock.offset_right = DOCK_SIZE.x / 2.0
-	actionDock.offset_top = -DOCK_BOTTOM - DOCK_SIZE.y
-	actionDock.offset_bottom = -DOCK_BOTTOM
-	actionDock.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	garage.add_child(actionDock)
-	for card in cards:
-		card.remove_child(card.actions)
-		actionDock.add_child(card.actions)
-		card.actions.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		card.actions.offset_left = 12
-		card.actions.offset_right = -12
-		card.actions.offset_top = 11
-		card.actions.offset_bottom = -9
+
+#the launch bar, over the garage and run setup alike, and the line beside it that says why its primary
+#button is locked
+func buildLaunch() -> void:
+	launch = LaunchBar.new()
+	launch.position = LAUNCH_POS
+	launch.goPressed.connect(onGoPressed)
+	launch.driverPressed.connect(onDriverPressed)
+	launch.slotPressed.connect(onSlotPressed)
+	ui.add_child(launch)
+	goButton = launch.goButton
+	loadoutButton = launch.slotButtons["loadout"]
+	boostButton = launch.slotButtons["boostLoadout"]
+	upgradeButton = launch.slotButtons["upgrades"]
+	pickupsButton = launch.slotButtons["pickups"]
+	pickupsButton.tooltip_text = "Unlock pickups and prize games"
+	goNote.position = GO_NOTE.position
+	goNote.size = GO_NOTE.size
+	goNote.alignment = BoxContainer.ALIGNMENT_END
+	goNote.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ui.add_child(goNote)
+
+#the primary button: Drive (or Unlock) in the garage, Select on the road map, Start in Level Options
+func onGoPressed() -> void:
+	if screen == Screen.GARAGE:
+		if cards[SaveManager.playerData.selectedCar].isLocked(): onUnlockPressed()
+		else: goToSetup()
+	elif optionsOpen: onStartPressed()
+	else: openOptions()
+
+#the bar's driver: the next card in the garage, the next car owned in run setup
+func onDriverPressed() -> void:
+	if screen == Screen.GARAGE: selectCar(SaveManager.playerData.selectedCar + 1)
+	else: stepDriver(1)
+
+func onSlotPressed(slot: String) -> void:
+	match slot:
+		"upgrades": openUpgrades()
+		"pickups": openPickups()
+		_: cycleSlot(slot)
 
 func buildSetup() -> void:
 	setup.visible = false
@@ -411,7 +419,6 @@ func buildSetup() -> void:
 		glyphMaterials.push_back(material)
 	buildMap()
 	buildOptions()
-	buildDriverChip()
 	backButton = MenuTheme.button("BACK", PackedStringArray(["ui_cancel"]))
 	backButton.position = Vector2(176, 826) #bottom left, beside the links, on both steps
 	backButton.size = Vector2(132, 52)
@@ -451,17 +458,6 @@ func buildMap() -> void:
 		poster.visible = false
 		map.add_child(poster)
 		posters.push_back(poster)
-	selectButton = roundPrimary("SELECT") #round, bottom right: where START is on the next step
-	selectButton.pressed.connect(openOptions)
-	map.add_child(selectButton)
-	levelLock.theme_type_variation = "BodyLabel"
-	levelLock.add_theme_font_size_override("font_size", 17)
-	levelLock.add_theme_color_override("font_color", Color(1.0, 0.62, 0.55))
-	levelLock.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	levelLock.position = Vector2(560, 750)
-	levelLock.size = Vector2(856, 26)
-	levelLock.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	map.add_child(levelLock)
 	#what the glyphs on the stops say
 	var legend = HBoxContainer.new()
 	legend.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -487,7 +483,7 @@ func buildMap() -> void:
 	map.add_child(legend)
 
 #run setup's second step, for the level picked on the road map: the level across the top, its modes down
-#the left, one pane for the selected mode and tier, and the launch cluster at the bottom right
+#the left, one pane for the selected mode and tier, and the records here at the bottom
 func buildOptions() -> void:
 	options.visible = false
 	var scrim = ColorRect.new() #keeps the level's art out from under the text
@@ -528,7 +524,7 @@ func buildOptions() -> void:
 	var band = PanelContainer.new()
 	band.position = LEVEL_BAND.position
 	band.size = LEVEL_BAND.size
-	band.add_theme_stylebox_override("panel", MenuTheme.box(Color(HudTheme.PANEL, 0.94), Color(1, 1, 1, 0.22), 16, 2, Vector4(14, 12, 14, 12)))
+	band.add_theme_stylebox_override("panel", MenuTheme.box(Color(HudTheme.PANEL, 0.94), Color(1, 1, 1, 0.22), 16, 2, Vector4(14, 6, 14, 6)))
 	band.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var strip = HBoxContainer.new()
 	strip.add_theme_constant_override("separation", 22)
@@ -618,7 +614,6 @@ func buildOptions() -> void:
 	body.add_child(paneRule())
 	buildCarStrip()
 	body.add_child(carStrip)
-	buildLaunch()
 	var records = PanelContainer.new()
 	records.position = RECORDS_PANEL.position
 	records.size = RECORDS_PANEL.size
@@ -628,94 +623,6 @@ func buildOptions() -> void:
 	recordsBox.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	records.add_child(recordsBox)
 	options.add_child(records)
-
-#the launch plate, the bottom section's right part, left to right in the order they are set: the driver, the
-#gadget and boost slots, each with what it holds written beside it, and a round START with a badge for the
-#gems the loadout takes
-func buildLaunch() -> void:
-	var plate = Panel.new()
-	plate.position = LAUNCH_PLATE.position
-	plate.size = LAUNCH_PLATE.size
-	plate.add_theme_stylebox_override("panel", MenuTheme.box(Color(HudTheme.PANEL, 0.94), PANEL_EDGE, 16, 2, Vector4.ZERO))
-	plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	options.add_child(plate)
-	driverButton = Button.new()
-	MenuTheme.addSounds(driverButton)
-	driverButton.position = DRIVER_BUTTON.position
-	driverButton.size = DRIVER_BUTTON.size
-	driverButton.tooltip_text = "Next driver"
-	driverButton.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	driverButton.focus_mode = Control.FOCUS_NONE
-	roundStyles(driverButton, DRIVER_BUTTON.size.y / 2.0)
-	driverButton.pressed.connect(stepDriver.bind(1))
-	var row = HBoxContainer.new()
-	row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	row.offset_left = 20
-	row.offset_right = -16
-	row.add_theme_constant_override("separation", 10)
-	driverSide.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	driverSide.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	driverSide.custom_minimum_size = Vector2(92, 36)
-	driverSide.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	row.add_child(driverSide)
-	var words = VBoxContainer.new()
-	words.alignment = BoxContainer.ALIGNMENT_CENTER
-	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	words.add_theme_constant_override("separation", -4)
-	words.add_child(paneTag("DRIVER"))
-	driverLabel.add_theme_font_size_override("font_size", 18)
-	driverLabel.clip_text = true
-	driverLabel.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	words.add_child(driverLabel)
-	row.add_child(words)
-	var keys = KeyHint.make(PackedStringArray(["ui_tab_prev", "ui_tab_next"]), "", 13)
-	keys.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	row.add_child(keys)
-	driverButton.add_child(row)
-	setMouseIgnore(row)
-	options.add_child(driverButton)
-	loadoutButton = loadoutSlotButton("loadout", "ui_upgrade", SLOT_SPOTS[0], cycleLoadout)
-	boostButton = loadoutSlotButton("boostLoadout", "ui_boost", SLOT_SPOTS[1], cycleBoost)
-	startButton = roundPrimary("START")
-	startButton.pressed.connect(onStartPressed)
-	options.add_child(startButton)
-	startBadge.add_theme_stylebox_override("panel", MenuTheme.box(Color(0.06, 0.07, 0.09), Color(0.3, 0.72, 1.0), 13, 2, Vector4(9, 0, 9, 0)))
-	startBadge.position = Vector2(START_POS.x + START_SIZE - 60.0, START_POS.y - 8.0)
-	startBadge.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	startBadge.visible = false
-	options.add_child(startBadge)
-
-#the round primary button of run setup, bottom right on both steps (SELECT, then START): its word over its key
-func roundPrimary(text: String) -> Button:
-	var b := MenuTheme.button(text, PackedStringArray(), true)
-	b.position = START_POS
-	b.size = Vector2(START_SIZE, START_SIZE)
-	b.add_theme_font_size_override("font_size", 22)
-	for state in ["normal", "hover", "pressed", "disabled", "focus"]:
-		var style: StyleBox = MenuTheme.theme().get_stylebox(state, "PrimaryButton").duplicate()
-		if style is StyleBoxFlat:
-			style.set_corner_radius_all(int(START_SIZE / 2.0))
-			style.corner_detail = 16
-			style.content_margin_left = 4
-			style.content_margin_right = 4
-			style.content_margin_top = 0
-			style.content_margin_bottom = 24 #the word sits over its key
-		b.add_theme_stylebox_override(state, style)
-	var key = KeyHint.make(PackedStringArray(["ui_accept"]), "", 13)
-	key.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-	key.offset_top = -40
-	key.offset_bottom = -15
-	key.alignment = BoxContainer.ALIGNMENT_CENTER
-	b.add_child(key)
-	setMouseIgnore(key)
-	return b
-
-#a dark round (or pill) button: its rim lights on hover
-static func roundStyles(b: Button, radius: float) -> void:
-	for state in ["normal", "hover", "pressed"]:
-		var style = MenuTheme.box(Color(HudTheme.PANEL, 0.94), Color(HudTheme.RIM, 0.9) if state == "hover" else Color(1, 1, 1, 0.3), int(radius), 2, Vector4.ZERO)
-		style.corner_detail = 12
-		b.add_theme_stylebox_override(state, style)
 
 #a small muted heading in the pane ("GOAL", "GOONS")
 static func paneTag(text: String) -> Label:
@@ -731,78 +638,6 @@ static func paneRule() -> ColorRect:
 	rule.custom_minimum_size = Vector2(0, 2)
 	rule.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return rule
-
-#"DRIVER (side view) Name", top right under the bank, on the road map
-func buildDriverChip() -> void:
-	var chip = PanelContainer.new()
-	chip.theme_type_variation = "QuietPanel"
-	chip.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
-	chip.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	chip.offset_right = -24
-	chip.offset_top = 88
-	chip.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var row = HBoxContainer.new()
-	row.add_theme_constant_override("separation", 10)
-	var tag = Label.new()
-	tag.text = "DRIVER"
-	tag.theme_type_variation = "MutedLabel"
-	tag.add_theme_font_size_override("font_size", 14)
-	row.add_child(tag)
-	driverPic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	driverPic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	driverPic.custom_minimum_size = Vector2(84, 32)
-	row.add_child(driverPic)
-	driverName.add_theme_font_size_override("font_size", 18)
-	row.add_child(driverName)
-	chip.add_child(row)
-	setup.add_child(chip)
-	driverChip = chip
-
-#a loadout slot on the launch plate: a round button showing the pickup it holds (or a plus) over its key,
-#with what it holds written to its right (refreshLoadout). F / Y (V / RS for the boost) and clicks cycle it.
-func loadoutSlotButton(slot: String, action: String, at: Vector2, onPress: Callable) -> Button:
-	var b := Button.new()
-	MenuTheme.addSounds(b)
-	b.position = at
-	b.size = Vector2(SLOT_SIZE, SLOT_SIZE)
-	b.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	b.focus_mode = Control.FOCUS_NONE #the focus stays on START
-	roundStyles(b, SLOT_SIZE / 2.0)
-	b.pressed.connect(onPress)
-	var pic = TextureRect.new()
-	pic.name = "pic"
-	pic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	pic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	pic.position = Vector2((SLOT_SIZE - 34.0) / 2.0, 6)
-	pic.size = Vector2(34, 34)
-	b.add_child(pic)
-	var plus = Label.new()
-	plus.name = "plus"
-	plus.text = "+"
-	plus.add_theme_font_size_override("font_size", 28)
-	plus.add_theme_color_override("font_color", HudTheme.MUTED)
-	plus.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	plus.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	plus.position = pic.position
-	plus.size = pic.size
-	b.add_child(plus)
-	var key = KeyHint.make(PackedStringArray([action]), "", 13)
-	key.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-	key.offset_top = -24
-	key.offset_bottom = 2
-	key.alignment = BoxContainer.ALIGNMENT_CENTER
-	b.add_child(key)
-	for child in [pic, plus, key]: setMouseIgnore(child)
-	options.add_child(b)
-	var caption = VBoxContainer.new()
-	caption.position = Vector2(at.x + SLOT_SIZE + 12.0, at.y)
-	caption.size = Vector2(180, SLOT_SIZE)
-	caption.alignment = BoxContainer.ALIGNMENT_CENTER
-	caption.add_theme_constant_override("separation", -2)
-	caption.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	options.add_child(caption)
-	slotCaptions[slot] = caption
-	return b
 
 #---------- the loadout ----------
 #Banked gems buy a consumable for each of the car's two slots to start a run with: a gadget for the
@@ -852,49 +687,60 @@ func cycleSlot(slot: String) -> void:
 	SaveManager.save_character_data()
 	refreshLoadout()
 
-#each slot: the chosen pickup's icon on the button (a plus when empty), and beside it the pickup's name over
-#its uses and price, or "GADGET" over "from 1 (gem)"; the tooltip has the pickup's text and the key that
-#fires it in the run. START's badge shows the gems both will take.
+#each slot: the chosen pickup's icon on its button (a plus when empty); its tooltip has the pickup's name,
+#uses, price and text and the key that fires it in the run. START's badge shows the gems both will take.
 func refreshLoadout() -> void:
-	for pair in [[loadoutButton, "loadout", "UseItem", "GADGET"], [boostButton, "boostLoadout", "UseMove", "BOOST"]]:
-		var button: Button = pair[0]
-		if not is_instance_valid(button): continue
-		var id := slotPurchase(pair[1])
-		var prices := slotPrices(pair[1])
-		var key := InputGlyphs.label(pair[2])
-		button.get_node("pic").texture = Pickups.texture(id) if id != "" else null
-		button.get_node("plus").visible = id == ""
-		var title: String = pair[3]
-		var parts: Array
+	for pair in [["loadout", "UseItem", "gadget"], ["boostLoadout", "UseMove", "boost"]]:
+		var slot: String = pair[0]
+		var button: Button = launch.slotButtons[slot]
+		var id := slotPurchase(slot)
+		var prices := slotPrices(slot)
+		var key := InputGlyphs.label(pair[1])
+		launch.setSlot(slot, Pickups.texture(id) if id != "" else null)
 		if id != "":
 			var uses: int = Pickups.DATA[id].get("charges", 1)
-			title = Pickups.displayName(id).to_upper()
-			parts = ["x%d   " % uses if uses > 1 else "", {"gem": prices[id]}]
-			button.tooltip_text = "%s\nIn the run: press %s" % [Pickups.DATA[id].get("text", ""), key]
-		elif prices.is_empty():
-			parts = ["none unlocked"]
-			button.tooltip_text = "Unlock one in Pickups (%s)" % InputGlyphs.label("ui_pickups")
-		else:
-			parts = ["from ", {"gem": prices.values().min()}]
-			button.tooltip_text = "Start the run with one. In the run: press %s" % key
-		var caption: VBoxContainer = slotCaptions[pair[1]]
-		for child in caption.get_children():
-			caption.remove_child(child)
-			child.queue_free()
-		var head := stakeLabel(title, HudTheme.TEXT if id != "" else HudTheme.MUTED, 16)
-		head.clip_text = true
-		caption.add_child(head)
-		var line := MenuTheme.symbolRow(parts, 15, HudTheme.MUTED)
-		line.alignment = BoxContainer.ALIGNMENT_BEGIN
-		caption.add_child(line)
-	#the gems Start will take, on the button
+			button.tooltip_text = "%s%s: %d gems
+%s
+In the run: press %s" % [Pickups.displayName(id), " x%d" % uses if uses > 1 else "", prices[id], Pickups.DATA[id].get("text", ""), key]
+		elif prices.is_empty(): button.tooltip_text = "No %s unlocked yet. Unlock one in Pickups (%s)" % [pair[2], InputGlyphs.label("ui_pickups")]
+		else: button.tooltip_text = "Start the run with a %s, from %d gems. In the run: press %s" % [pair[2], prices.values().min(), key]
+	#the gems Start will take, on START
 	var cost := 0
 	for slot in SLOTS: cost += int(slotPrices(slot).get(slotPurchase(slot), 0))
-	for child in startBadge.get_children():
-		startBadge.remove_child(child)
+	launch.setGems(cost if screen == Screen.SETUP && optionsOpen else 0)
+
+#the launch bar's driver, loadout and counts (how many upgrades and pickups the bank covers), and in the
+#garage its primary button: Drive, or Unlock with what the bank is short of beside the bar. Run setup's
+#primary button is set by refreshSetup.
+func refreshLaunch() -> void:
+	var data = SaveManager.playerData
+	var card := cards[data.selectedCar]
+	var inGarage := screen == Screen.GARAGE
+	var locked := card.isLocked()
+	if card.info: launch.setDriver(card.info.sidePic, card.info.charName)
+	launch.setDriverKeys(PackedStringArray(["ui_left", "ui_right"] if focusOpen else ["ui_tab_prev", "ui_tab_next"])) #E buys on the bench
+	refreshLoadout()
+	var ready := 0 if locked || focusOpen else DriverCard.affordableUpgrades(data.selectedCar) #the bench shows what can be bought
+	launch.badges["upgrades"].setCount(ready)
+	upgradeButton.tooltip_text = ("Back to run setup" if focusReturn >= 0 else "Back to the drivers") if focusOpen else ("This driver's stats and features" if locked else "Buy upgrades for this driver")
+	var buyable := Unlocks.buyableCount()
+	launch.badges["pickups"].setCount(buyable)
+	if not inGarage: return
+	var short := {}
+	var car: Dictionary = data.cars[data.selectedCar]
+	if int(car.cost) > data.coin: short.coin = int(car.cost) - data.coin
+	if int(car.get("gems", 0)) > data.gem: short.gem = int(car.gems) - data.gem
+	if card.demoLocked: launch.setGo("NOT IN\nDEMO", false)
+	elif locked: launch.setGo("UNLOCK" if short.is_empty() else "LOCKED", short.is_empty())
+	else: launch.setGo("DRIVE", true)
+	setGoNote(["NEED", short, "MORE"] if locked && not card.demoLocked && not short.is_empty() else [])
+
+#beside the launch bar: why its primary button is locked, as text and the game's symbols; [] clears it
+func setGoNote(parts: Array) -> void:
+	for child in goNote.get_children():
+		goNote.remove_child(child)
 		child.queue_free()
-	startBadge.visible = cost > 0
-	if cost > 0: startBadge.add_child(MenuTheme.symbolRow(["-", {"gem": cost}], 15))
+	if not parts.is_empty(): goNote.add_child(MenuTheme.symbolRow(parts, 17, LOCK_TEXT))
 
 #the level at a save index as the registry describes it (Levels): poster art, name and scene
 static func levelDef(index: int) -> LevelDef:
@@ -1775,10 +1621,10 @@ func layoutCards(animate: bool) -> void:
 	stackByDistance(garage, cards, selected)
 	if screen == Screen.GARAGE: focusGarage()
 
-#the garage's focus: the bench's row in driver focus (the one it was on last), else the dock's main button
+#the garage's focus: the bench's row in driver focus (the one it was on last), else the launch bar's primary button
 func focusGarage() -> void:
 	var button: Button = bench.focusButton() if focusOpen else null
-	if button == null: button = cards[SaveManager.playerData.selectedCar].mainButton
+	if button == null: button = goButton
 	button.grab_focus()
 
 #draws the selected item last and the farthest first, by child order (z_index would also lift the
@@ -1822,23 +1668,38 @@ func showBackground(texture: Texture2D, animate := true) -> void:
 	tween.tween_property(front, "modulate:a", 0.0, SLIDE_SECONDS if animate else 0.0)
 
 #---------- driver focus ----------
-#Upgrades (F / Y, or the dock's button) opens it on the selected driver and closes it again: the other cards
-#drive off, the card skids to the left and its bench slides in beside it. Q/E still change driver.
+#Upgrades (F / Y, or the launch bar's slot) opens it on the selected driver and closes it again: the other
+#cards drive off, the card skids to the left and its bench slides in beside it. Q/E still change driver.
+#From run setup it changes screen to get there, and closing it goes back to the step it was opened on.
 
-func toggleFocus(_stat := -1) -> void:
-	if screen != Screen.GARAGE || overlayOpen(): return
-	setFocusOpen(not focusOpen)
+func openUpgrades() -> void:
+	if overlayOpen(): return
+	if screen == Screen.GARAGE:
+		if focusOpen: closeFocus()
+		else: setFocusOpen(true)
+	else: Transition.play(showUpgrades.bind(1 if optionsOpen else 0), "GOONCRUSHER", "GARAGE 07")
+
+#the garage, already in driver focus, for run setup's Upgrades; `step` is where Back returns to (focusReturn)
+func showUpgrades(step: int) -> void:
+	showGarage()
+	focusReturn = step
+	setFocusOpen(true, false)
+
+#Upgrades again, or Back: to the drivers, or to run setup when it opened the focus (a locked driver can't go there)
+func closeFocus() -> void:
+	if focusReturn >= 0 && not cards[SaveManager.playerData.selectedCar].isLocked(): goToSetup()
+	else:
+		focusReturn = -1
+		setFocusOpen(false)
 
 func setFocusOpen(open: bool, animate := true) -> void:
 	if open == focusOpen: return
 	focusOpen = open
-	for card in cards: card.benchOpen = open
 	if open:
 		for i in cards.size(): #the strong and weak line compares every car
 			if cards[i].info == null && not pendingInfos.has(i): requestCarInfo(i)
 		refreshBench()
-	else:
-		for card in cards: card.mainButton.focus_neighbor_top = NodePath() #linked to the bench's last row while it was open
+	else: goButton.focus_neighbor_top = NodePath() #linked to the bench's last row while it was open
 	slideBench(animate)
 	layoutCards(animate)
 	statUpdatesUiUpdate()
@@ -1847,7 +1708,7 @@ func refreshBench() -> void:
 	var card := cards[SaveManager.playerData.selectedCar]
 	if card.info == null: return
 	bench.setup(card.index, card.info, cards.filter(func(c): return c.info != null).map(func(c): return c.info))
-	bench.linkFocus(card.mainButton)
+	bench.linkFocus(goButton)
 
 #in from the right behind the card, and back out; a fade with Reduce Motion, at once in the harnesses
 func slideBench(animate: bool) -> void:
@@ -1880,21 +1741,24 @@ func onUnlockPressed() -> void:
 		animateCoins(before, SaveManager.playerData.coin)
 		Juice.flash(card, HudTheme.GOLD, 0.6, 18)
 		Juice.pop(card.portrait, 1.08, 0.4)
-		card.mainButton.grab_focus()
-	else: Juice.shake(card.mainButton)
+		goButton.grab_focus()
+	else: Juice.shake(goButton)
 
 #---------- run setup ----------
 
 #the garage and run setup swap behind the shutter (Transition)
+#Drive, and Back out of a driver focus that run setup opened (focusReturn: back to the step it was on)
 func goToSetup() -> void:
 	if cards[SaveManager.playerData.selectedCar].isLocked() || screen == Screen.SETUP: return
-	Transition.play(showSetup, "GOONCRUSHER", "RUN SETUP")
+	Transition.play(showSetup.bind(focusReturn == 1), "GOONCRUSHER", "RUN SETUP")
 
-func showSetup() -> void:
+func showSetup(toOptions := false) -> void:
 	setFocusOpen(false, false) #back from run setup, the garage shows its drivers
+	focusReturn = -1
 	screen = Screen.SETUP
 	SaveManager.setGameMode(defaultGameMode())
-	optionsOpen = false
+	optionsOpen = toOptions && isLevelSelectable(SaveManager.playerData.selectedLevel)
+	options.position = Vector2.ZERO #a drop cut short left it part-way
 	switchLayer(setup, garage)
 	refreshSetup(false)
 	focusSetup()
@@ -1903,7 +1767,7 @@ func showSetup() -> void:
 func openOptions() -> void:
 	if screen != Screen.SETUP || optionsOpen: return
 	if not isLevelSelectable(SaveManager.playerData.selectedLevel):
-		Juice.shake(selectButton)
+		Juice.shake(goButton)
 		return
 	optionsOpen = true
 	SaveManager.setGameMode(defaultGameMode())
@@ -1918,9 +1782,9 @@ func closeOptions() -> void:
 	refreshSetup(false)
 	focusSetup()
 
-#run setup's focus: START in Level Options, SELECT on the road map, so Accept always goes on
+#run setup's focus: the launch bar's primary button (SELECT, then START), so Accept always goes on
 func focusSetup() -> void:
-	(startButton if optionsOpen else selectButton).grab_focus()
+	goButton.grab_focus()
 
 func goToGarage() -> void:
 	if screen == Screen.GARAGE: return
@@ -1928,9 +1792,10 @@ func goToGarage() -> void:
 
 func showGarage() -> void:
 	screen = Screen.GARAGE
+	focusReturn = -1
 	switchLayer(garage, setup)
 	showBackground(Root.carInfo.backgroundPic)
-	updateHints()
+	statUpdatesUiUpdate()
 	focusGarage()
 
 func switchLayer(show: Control, hide: Control) -> void:
@@ -1992,16 +1857,9 @@ func refreshSetup(animate := true) -> void:
 	var data = SaveManager.playerData
 	var driver := cards[data.selectedCar]
 	var driverCar := str(data.cars[data.selectedCar].name)
-	if driver.info:
-		driverPic.texture = driver.info.sidePic
-		driverName.text = driver.info.charName.to_upper()
-		legendCar.text = "won with %s" % driver.info.charName
-	var title := "%d  %s" % [selected % Territories.STOPS + 1, levelName(selected).to_upper()]
+	if driver.info: legendCar.text = "won with %s" % driver.info.charName
+	var title := "%d·%d  %s" % [region + 1, selected % Territories.STOPS + 1, levelName(selected).to_upper()] #region and stop, as the road atlas numbers them
 	var def := levelDef(selected)
-	levelLock.text = "" if open else ("Not in the demo." if isDemoLockedLevel(selected) else Root.openRuleText(levels[selected - 1] if selected > 0 else {}) + ".")
-	selectButton.disabled = not open
-	selectButton.text = "SELECT" if open else "LOCKED"
-	selectButton.add_theme_font_size_override("font_size", 22 if open else 17)
 	for stop in stopButtons.size(): #the region's stops under the title: the current one lit, a locked one dim
 		var at: int = first + stop
 		var here: bool = at == selected
@@ -2018,10 +1876,6 @@ func refreshSetup(animate := true) -> void:
 	optionsRegion.add_theme_color_override("font_color", territory.get("color", HudTheme.RIM))
 	optionsArt.texture = posters[selected].get_node("art").texture
 	backButton.tooltip_text = "Back to the road map" if optionsOpen else "Back to the garage"
-	driverChip.visible = not optionsOpen #Level Options has the driver in its launch cluster
-	if driver.info:
-		driverSide.texture = driver.info.sidePic
-		driverLabel.text = driver.info.charName.to_upper()
 	if optionsOpen:
 		fillFacts(selected)
 		restoreFact()
@@ -2049,9 +1903,13 @@ func refreshSetup(animate := true) -> void:
 		else: Juice.pop(tierButtons[maxi(ModeTiers.TIERS.find(tier), 0)], 1.04, 0.2)
 	shownPick = pick
 	var playable = isLevelSelectable(selected) && Root.isModePlayable(forModes, mode) && ModeTiers.isOpen(forModes, mode, tier)
-	startButton.disabled = not playable
-	startButton.text = "START" if playable else ("COMING\nSOON" if reason == "Coming Soon" else "LOCKED")
-	startButton.add_theme_font_size_override("font_size", 22 if playable else 16)
+	refreshLaunch()
+	if optionsOpen: #the pane says why a mode or tier is locked (stakes)
+		launch.setGo("START" if playable else ("COMING\nSOON" if reason == "Coming Soon" else "LOCKED"), playable)
+		setGoNote([])
+	else:
+		launch.setGo("SELECT" if open else "LOCKED", open)
+		setGoNote([] if open else ["Not in the demo." if isDemoLockedLevel(selected) else Root.openRuleText(levels[selected - 1] if selected > 0 else {}) + "."])
 	updateHints()
 
 func refreshPoster(index: int, isFocused: bool) -> void:
@@ -2193,16 +2051,18 @@ func _input(event: InputEvent) -> void:
 		#on a bench row E (or A) buys it and Accept drives; E is also the next-driver key, so Buy is read first
 		var onRow := focusOpen && bench.rowFocused()
 		if onRow && event.is_action_pressed("ui_buy"): bench.buyUpgrade(bench.lastStat)
-		elif onRow && event.is_action_pressed("ui_accept"): cards[SaveManager.playerData.selectedCar].onMainPressed()
+		elif onRow && event.is_action_pressed("ui_accept"): onGoPressed()
 		elif event.is_action_pressed("ui_tab_prev") || event.is_action_pressed("ui_left"): selectCar(SaveManager.playerData.selectedCar - 1)
 		elif event.is_action_pressed("ui_tab_next") || event.is_action_pressed("ui_right"): selectCar(SaveManager.playerData.selectedCar + 1)
-		elif event.is_action_pressed("ui_upgrade"): toggleFocus()
-		elif focusOpen && (event.is_action_pressed("ui_cancel") || event.is_action_pressed("ui_menu")): setFocusOpen(false)
+		elif event.is_action_pressed("ui_upgrade"): openUpgrades()
+		elif focusOpen && (event.is_action_pressed("ui_cancel") || event.is_action_pressed("ui_menu")): closeFocus()
+		elif event.is_action_pressed("ui_gadget") && triggerEdge(event, "ui_gadget"): cycleLoadout()
+		elif event.is_action_pressed("ui_boost") && triggerEdge(event, "ui_boost"): cycleBoost()
 		elif event.is_action_pressed("ui_records"): openRecords()
 		elif event.is_action_pressed("ui_pickups"): openPickups()
 		elif event.is_action_pressed("ui_codex"): openGoonopedia()
 		elif event.is_action_pressed("ui_menu"): openSettings()
-		elif event.is_action_pressed("ui_accept") && get_viewport().gui_get_focus_owner() == null: cards[SaveManager.playerData.selectedCar].onMainPressed()
+		elif event.is_action_pressed("ui_accept") && get_viewport().gui_get_focus_owner() == null: onGoPressed()
 		else: handled = false
 	else:
 		#Back before Settings: Esc is both ui_cancel and ui_menu, and here it goes back (Settings has the gear
@@ -2212,6 +2072,12 @@ func _input(event: InputEvent) -> void:
 		elif event.is_action_pressed("ui_pickups"): openPickups()
 		elif event.is_action_pressed("ui_codex"): openGoonopedia()
 		elif event.is_action_pressed("ui_menu"): openSettings()
+		#the launch bar's keys, the same on both steps
+		elif event.is_action_pressed("ui_tab_prev"): stepDriver(-1)
+		elif event.is_action_pressed("ui_tab_next"): stepDriver(1)
+		elif event.is_action_pressed("ui_upgrade"): openUpgrades()
+		elif event.is_action_pressed("ui_gadget") && triggerEdge(event, "ui_gadget"): cycleLoadout()
+		elif event.is_action_pressed("ui_boost") && triggerEdge(event, "ui_boost"): cycleBoost()
 		elif optionsOpen:
 			if event.is_action_pressed("ui_up"): stepMode(-1)
 			elif event.is_action_pressed("ui_down"): stepMode(1)
@@ -2220,14 +2086,10 @@ func _input(event: InputEvent) -> void:
 			elif event.is_action_pressed("ui_region_prev") && triggerEdge(event, "ui_region_prev"): stepFact(-1, Input.is_key_pressed(KEY_SHIFT))
 			elif event.is_action_pressed("ui_region_next") && triggerEdge(event, "ui_region_next"): stepFact(1, Input.is_key_pressed(KEY_SHIFT))
 			elif InputGlyphs.digit(event) > 0 && InputGlyphs.digit(event) <= Territories.STOPS: optionsStop(InputGlyphs.digit(event) - 1) #the stop's number
-			elif event.is_action_pressed("ui_tab_prev"): stepDriver(-1)
-			elif event.is_action_pressed("ui_tab_next"): stepDriver(1)
-			elif event.is_action_pressed("ui_upgrade"): cycleLoadout()
-			elif event.is_action_pressed("ui_boost"): cycleBoost()
 			elif event.is_action_pressed("ui_accept") && get_viewport().gui_get_focus_owner() == null: onStartPressed()
 			else: handled = false
-		elif event.is_action_pressed("ui_tab_prev") || event.is_action_pressed("ui_left"): stepLevelTo(SaveManager.playerData.selectedLevel - 1)
-		elif event.is_action_pressed("ui_tab_next") || event.is_action_pressed("ui_right"): stepLevelTo(SaveManager.playerData.selectedLevel + 1)
+		elif event.is_action_pressed("ui_left"): stepLevelTo(SaveManager.playerData.selectedLevel - 1)
+		elif event.is_action_pressed("ui_right"): stepLevelTo(SaveManager.playerData.selectedLevel + 1)
 		elif event.is_action_pressed("ui_region_prev") && triggerEdge(event, "ui_region_prev"): stepRegion(-1)
 		elif event.is_action_pressed("ui_region_next") && triggerEdge(event, "ui_region_next"): stepRegion(1)
 		elif event.is_action_pressed("ui_accept") && get_viewport().gui_get_focus_owner() == null: openOptions()
@@ -2235,8 +2097,8 @@ func _input(event: InputEvent) -> void:
 		else: handled = false
 	if handled: get_viewport().set_input_as_handled()
 
-#a clicked stop, a number key, Q/E or the mouse wheel: select that level (Q/E past a region's ends move
-#into the next region when it is open; the road wraps)
+#a clicked stop, a number key, Left/Right or the mouse wheel: select that level (Left/Right past a region's
+#ends move into the next region when it is open; the road wraps)
 func stepLevelTo(index: int) -> void:
 	index = wrapi(index, 0, SaveManager.playerData.levels.size())
 	var region := index / Territories.STOPS
@@ -2246,7 +2108,7 @@ func stepLevelTo(index: int) -> void:
 		SaveManager.save_character_data()
 	refreshSetup()
 
-#LT/RT are axes, sending events while held: only the press that first crosses the deadzone counts
+#the triggers and the sticks are axes, sending events while held: only the press that first crosses the deadzone counts
 func triggerEdge(event: InputEvent, action: String) -> bool:
 	return not event is InputEventJoypadMotion || Input.is_action_just_pressed(action)
 
@@ -2267,7 +2129,7 @@ func selectTier(tier: int) -> void:
 	SaveManager.setGameTier(tier)
 	refreshSetup(false)
 
-#Q/E in Level Options: the next car owned drives, so its wins here can be compared without the garage
+#Q/E (or the launch bar's driver) in run setup: the next car owned drives, so its wins here can be compared without the garage
 func stepDriver(direction: int) -> void:
 	var count: int = SaveManager.playerData.cars.size()
 	var at: int = SaveManager.playerData.selectedCar
@@ -2291,18 +2153,13 @@ func updateHints() -> void:
 		child.queue_free()
 	var hints: Array
 	if screen == Screen.SETUP:
-		if optionsOpen: hints = [[["ui_up", "ui_down"], "Mode"], [["ui_left", "ui_right"], "Tier"], [["ui_region_prev", "ui_region_next"], "Level Info"], [["ui_records"], "Records"], [["ui_pickups"], "Pickups"]] #Start, Driver, Gadget, Boost and Back show their keys themselves
-		else: hints = [[["ui_region_prev", "ui_region_next"], "Region"], [["ui_tab_prev", "ui_tab_next"], "Stop"], [["ui_accept"], "Select"], [["ui_records"], "Records"], [["ui_pickups"], "Pickups"], [["ui_codex"], "Goonopedia"]]
-	else:
-		var locked = cards[SaveManager.playerData.selectedCar].isLocked()
-		hints = [[["ui_left", "ui_right"] if focusOpen else ["ui_tab_prev", "ui_tab_next"], "Driver"]]
-		if focusOpen:
-			if locked: hints.push_back([["ui_accept"], "Unlock"])
-			else: hints.append_array([[["ui_up", "ui_down"], "Stat"], [["ui_buy"], "Buy"], [["ui_accept"], "Drive"]])
-			hints.append_array([[["ui_upgrade"], "Drivers"], [["ui_pickups"], "Pickups"], [["ui_records"], "Records"], [["ui_cancel"], "Back"]])
-		else:
-			hints.append_array([[["ui_accept"], "Unlock" if locked else "Drive"], [["ui_upgrade"], "Details" if locked else "Upgrades"],
-				[["ui_pickups"], "Pickups"], [["ui_records"], "Records"], [["ui_codex"], "Goonopedia"], [["ui_menu"], "Settings"]])
+		#the launch bar shows its own keys: the driver, the gadget and boost, Upgrades, Pickups and the primary button
+		if optionsOpen: hints = [[["ui_up", "ui_down"], "Mode"], [["ui_left", "ui_right"], "Tier"], [["ui_region_prev", "ui_region_next"], "Level Info"], [["ui_records"], "Records"]]
+		else: hints = [[["ui_region_prev", "ui_region_next"], "Region"], [["ui_left", "ui_right"], "Stop"], [["ui_records"], "Records"], [["ui_codex"], "Goonopedia"]]
+	elif focusOpen:
+		if not cards[SaveManager.playerData.selectedCar].isLocked(): hints = [[["ui_up", "ui_down"], "Stat"], [["ui_buy"], "Buy"]]
+		hints.append_array([[["ui_records"], "Records"], [["ui_cancel"], "Back"]])
+	else: hints = [[["ui_records"], "Records"], [["ui_codex"], "Goonopedia"], [["ui_menu"], "Settings"]]
 	for hint in hints: hintBar.add_child(KeyHint.make(PackedStringArray(hint[0]), hint[1], 16, true))
 
 #---------- overlays and runs ----------
@@ -2361,7 +2218,7 @@ func statUpdatesUiUpdate() -> void:
 	shownCoins = SaveManager.playerData.coin
 	coinsLabel.text = DriverCard.formatCoins(shownCoins)
 	gemsLabel.text = str(SaveManager.playerData.gem)
-	refreshLoadout()
+	refreshLaunch()
 	for card in cards: card.refresh()
 	if focusOpen: bench.refresh()
 	updateHints()
