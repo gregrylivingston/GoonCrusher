@@ -92,14 +92,12 @@ static func nextPurchase(persona: Dictionary, data: PlayerData, history: Array, 
 static func canBuyCar(data: PlayerData, index: int) -> bool:
 	return data.coin >= int(data.cars[index].cost) && data.gem >= int(data.cars[index].get("gems", 0))
 
-## A ready unlock the bank covers within `budget` coins, sold in the Goonopedia: a pickup id, or a prize game
-## as "prize:<game>" (CrushPrizes). The cheapest, the most useful per coin, or any. "" when there is none.
+## A ready unlock the bank covers within `budget` coins, sold on the Pickups screen, as a pickup id. The cheapest, the most useful per coin, or any. "" when there is none.
 static func pickupToBuy(data: PlayerData, how: String, budget: int, rng: RandomNumberGenerator) -> String:
 	var options := []
 	var keys: Array = Pickups.DATA.keys()
-	for g in CrushPrizes.GAMES: keys.push_back(CrushPrizes.uid(g.id))
 	for key in keys:
-		var uid: String = key if str(key).begins_with("prize:") else "pickup:" + key
+		var uid: String = "pickup:" + key
 		var cost := Unlocks.price(uid)
 		if cost.is_empty() || Unlocks.state(uid) != Unlocks.S.READY || not Unlocks.canAfford(uid): continue
 		if int(cost.get("coin", 0)) > budget: continue
@@ -112,13 +110,13 @@ static func pickupToBuy(data: PlayerData, how: String, budget: int, rng: RandomN
 	return options[0]
 
 static func priceOf(key: String) -> Dictionary:
-	return Unlocks.price(key if key.begins_with("prize:") else "pickup:" + key)
+	return Unlocks.price("pickup:" + key)
 
-## Worth per coin: a pickup's `ai` value; a prize game counts by its place on the ladder (each one up is
-## worth about another two pickups' rarity points a box)
+## Worth per coin: a pickup's `ai` value, or for a gift box game its place on the ladder if that is more (each
+## one up is worth about another two pickups' rarity points a box)
 static func worth(key: String) -> float:
 	var cost := priceOf(key)
-	var value: float = 30.0 * (CrushPrizes.rank(key.trim_prefix("prize:")) + 1) if key.begins_with("prize:") else float(Pickups.DATA[key].get("ai", 10))
+	var value := maxf(float(Pickups.DATA[key].get("ai", 10)), 30.0 * (CrushPrizes.rank(CrushPrizes.forPickup(key)) + 1))
 	return value / (1.0 + float(cost.get("coin", 0)) + 500.0 * float(cost.get("gem", 0)))
 
 static func cheapestUpgrade(data: PlayerData, car: int, stats: Array, coins: int) -> Dictionary:
@@ -211,7 +209,8 @@ static func chooseLevelAndMode(persona: Dictionary, data: PlayerData, history: A
 	if next.is_empty(): return playable[0]
 	if losingStreak(history, next, persona.retreat):
 		#stuck: farm Countdown on the level before for a run (a player grinding coins to upgrade)
-		return {"level": maxi(next.level - 1, 0), "mode": G.GOONCRUSHER}
+		var back := maxi(next.level - 1, 0)
+		return {"level": back, "mode": G.GOONCRUSHER if Root.isModePlayable(data.levels[back], G.GOONCRUSHER) else Root.FIRST_MODE}
 	return next
 
 ## Every {level, mode} the menu would start: the level is open and the mode unlocked and available.
@@ -224,10 +223,10 @@ static func playableRuns(data: PlayerData) -> Array:
 	return out
 
 ## The obvious next run, heading for the Marathon on the furthest open level (Root.MODE_PATH puts the road,
-## Countdown, Sprint and Marathon, first): that level's first unbeaten mode; at a finale whose Marathon was won
+## Sprint, Countdown and Marathon, first): that level's first unbeaten mode; at a finale whose Marathon was won
 ## below Medium, the Marathon again (chooseTier picks Medium); then Goonpocalypse and Defense where they are
 ## open, furthest first; then a mode with a tier left to win (up to the persona's cap); else the furthest
-## level's Countdown. Modes this persona keeps losing there are skipped while another is left.
+## level's Sprint. Modes this persona keeps losing there are skipped while another is left.
 static func pathRun(data: PlayerData, history: Array, persona: Dictionary) -> Dictionary:
 	var playable := playableRuns(data)
 	if playable.is_empty(): return {}
@@ -248,7 +247,7 @@ static func pathRun(data: PlayerData, history: Array, persona: Dictionary) -> Di
 	for level in range(furthest, -1, -1): #everything beaten on Easy: go for medals
 		for run in playable:
 			if run.level == level && ModeTiers.best(data.levels[level], run.mode) < cap && not losingStreak(history, run, persona.retreat): return run
-	return {"level": furthest, "mode": G.GOONCRUSHER}
+	return {"level": furthest, "mode": Root.FIRST_MODE}
 
 ## The last `count` runs of this level and mode were all lost.
 static func losingStreak(history: Array, run: Dictionary, count: int) -> bool:

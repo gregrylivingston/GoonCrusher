@@ -10,6 +10,7 @@ const REST := Vector2(6, -16) #how far its right and top edges sit outside the b
 const HEIGHT := 32.0
 
 var count := 0
+var rest := REST #where it sits; a button with text in that corner lifts it (PickupShop's tabs)
 var phase := 0.0 #seconds before its first hop, so two badges side by side don't land together
 var label := Label.new()
 var tween: Tween
@@ -63,7 +64,7 @@ func still() -> void:
 	if tween: tween.kill()
 	tween = null
 	scale = Vector2.ONE
-	position.y = REST.y
+	position.y = rest.y
 
 #the number changed: it swells and settles, then goes back to hopping
 func pop() -> void:
@@ -84,8 +85,8 @@ func hop(delay: float) -> void:
 	tween = create_tween().set_loops()
 	tween.tween_interval(HOP_EVERY - 0.5)
 	tween.tween_property(self, "scale", Vector2(1.18, 0.8), 0.08)
-	tween.tween_property(self, "position:y", REST.y - 12.0, 0.14).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(self, "position:y", rest.y - 12.0, 0.14).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tween.parallel().tween_property(self, "scale", Vector2(0.92, 1.14), 0.14)
-	tween.tween_property(self, "position:y", REST.y, 0.12).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tween.tween_property(self, "position:y", rest.y, 0.12).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	tween.tween_property(self, "scale", Vector2(1.12, 0.9), 0.06)
 	tween.tween_property(self, "scale", Vector2.ONE, 0.1)

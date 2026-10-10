@@ -57,7 +57,7 @@ func test_migrate_adds_and_updates_without_losing_progress():
 	assert_eq(data.saveVersion, SaveManager.SAVE_VERSION)
 
 func test_saves_from_before_the_road_atlas_start_over():
-	assert_eq(SaveManager.SAVE_VERSION, 9)
+	assert_eq(SaveManager.SAVE_VERSION, 10)
 	assert_eq(SaveManager.FIRST_KEPT_VERSION, 8)
 	for version in [0, 4, 5, 6, 7]:
 		var data = PlayerData.new()
@@ -133,6 +133,22 @@ func test_car_clears_credit_the_tier_and_below_and_pay_once():
 	assert_true(Unlocks.isValidNeed("carclears:20") && Unlocks.isValidNeed("garages:1"))
 	assert_eq(Unlocks.progressOf("carclears:20").have, data.cars.size())
 	assert_true(Unlocks.needsMet(["garages:1"]))
+
+#version 10 made the gift box games Casino pickups: a game bought on the old ladder opens its pickup, and the
+#Slot Machine every older save started with stays open
+func test_old_prize_game_unlocks_become_casino_pickups():
+	var data = PlayerData.new()
+	data.saveVersion = 9
+	data.meta["unlocks"] = {"prize:shuffle": true, "prize:slot": true, "pickup:purse": true}
+	SaveManager.playerData = data
+	SaveManager.migrate()
+	assert_eq(data.meta.unlocks.keys().filter(func(k): return str(k).begins_with("prize:")).size(), 0, "no old ids left")
+	assert_true(data.meta.unlocks.has("pickup:shuffle") && data.meta.unlocks.has("pickup:purse"), "bought games and pickups are kept")
+	assert_true(data.meta.unlocks.has("pickup:slotmachine"), "the Slot Machine stays open")
+	var fresh = PlayerData.new()
+	SaveManager.playerData = fresh
+	SaveManager.migrate()
+	assert_false(fresh.meta.unlocks.has("pickup:slotmachine"), "a new save starts without it")
 
 #version 9 renamed the "audi" to the "supercar": its garage entry, unlock and clears follow it, in place
 func test_a_renamed_car_keeps_its_progress():

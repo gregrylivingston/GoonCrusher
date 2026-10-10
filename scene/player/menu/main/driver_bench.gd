@@ -75,7 +75,7 @@ func _ready() -> void:
 func makeRow(s: Array) -> PanelContainer:
 	var stat: int = s[1]
 	var panel = PanelContainer.new()
-	panel.add_theme_stylebox_override("panel", rowBox(false))
+	panel.add_theme_stylebox_override("panel", MenuTheme.box(Color(1, 1, 1, 0.035), Color(0, 0, 0, 0), 8, 2, Vector4(12, 3, 10, 3)))
 	var row = HBoxContainer.new()
 	row.add_theme_constant_override("separation", 14)
 	panel.add_child(row)
@@ -122,18 +122,10 @@ func makeRow(s: Array) -> PanelContainer:
 	buy.custom_minimum_size = Vector2(BUY_WIDTH, 36)
 	buy.set_meta("stat", stat)
 	buy.pressed.connect(buyUpgrade.bind(stat))
-	buy.focus_entered.connect(onRowFocus.bind(stat, true))
-	buy.focus_exited.connect(onRowFocus.bind(stat, false))
+	buy.focus_entered.connect(func(): lastStat = stat) #only the button shows the focus, not the row
 	row.add_child(buy)
 	rows.push_back({"stat": stat, "panel": panel, "bar": bar, "value": value, "plus": plus, "level": level, "button": buy})
 	return panel
-
-static func rowBox(lit: bool) -> StyleBoxFlat:
-	return MenuTheme.box(Color(HudTheme.RIM, 0.13) if lit else Color(1, 1, 1, 0.035), HudTheme.RIM if lit else Color(0, 0, 0, 0), 8, 2, Vector4(12, 3, 10, 3))
-
-func onRowFocus(stat: int, lit: bool) -> void:
-	if lit: lastStat = stat
-	rowFor(stat).panel.add_theme_stylebox_override("panel", rowBox(lit))
 
 func rowFor(stat: int) -> Dictionary:
 	for r in rows:

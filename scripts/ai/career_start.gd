@@ -17,7 +17,7 @@ class_name CareerStart extends RefCounted
 #           down from its root, so no pickup is open while its parent is locked
 const G := Root.gameModes
 const ALL_MODES := Root.MODE_PATH
-const ROAD := [G.GOONCRUSHER, G.SPRINT, G.MARATHON]
+const ROAD := [G.SPRINT, G.GOONCRUSHER, G.MARATHON]
 const TIERS := {
 	"fresh": {},
 	#an hour or two in: The Wilds done (Tribe Country's first level open), a second car, a few upgrades
@@ -32,7 +32,7 @@ const TIERS := {
 #one line per tier, for the console's `start` and the docs
 const TIER_TEXT := {
 	"fresh": "a new save",
-	"early": "The Wilds done on Medium (Countdown, Sprint, Marathon; Mudlick Marsh open), 2 cars, upgrades at 3, 1,500 coins, Common pickups",
+	"early": "The Wilds done on Medium (Sprint, Countdown, Marathon; Mudlick Marsh open), 2 cars, upgrades at 3, 1,500 coins, Common pickups",
 	"mid": "3 regions done on Medium with Goonpocalypse (Frostbite Pass open), 4 cars, upgrades at 8, 8,000 coins, pickups up to Uncommon",
 	"late": "5 regions fully beaten on Medium (Blast Pits open), 7 cars, upgrades at 14, 40,000 coins, pickups up to Epic",
 	"maxed": "all 30 levels beaten on Hard by every car, everything owned and unlocked, every upgrade maxed, 1,000,000 coins",
@@ -87,7 +87,7 @@ static func build(tier: String, overrides: Dictionary = {}) -> PlayerData:
 	data.gem = int(spec.get("gems", 0))
 	data.selectedCar = data.cars.find(byPrice[owned - 1]) if owned > 0 else 0 #the best car owned, as a player would drive
 	data.selectedLevel = 0
-	data.gameMode = G.GOONCRUSHER
+	data.gameMode = Root.FIRST_MODE
 	data.saveVersion = SaveManager.SAVE_VERSION
 	return data
 

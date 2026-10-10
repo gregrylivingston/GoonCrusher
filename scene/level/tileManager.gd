@@ -100,10 +100,13 @@ func buildWorld() -> void:
 	var def := levelDef()
 	var objective := ""
 	var offset := Vector2.ZERO
-	match SaveManager.playerData.gameMode:
+	var mode: int = SaveManager.playerData.gameMode
+	match mode:
 		Root.gameModes.SPRINT, Root.gameModes.MARATHON:
 			objective = "sprint"
-			offset = Level.sprintOffsetPx(Level.sprintDistance(def), WorldGen.hashf(worldSeed, WorldGen.TAG_SPRINT, 0, 0) * 2.0 - 1.0)
+			#a Sprint's station is further off on the harder tiers; a Marathon's legs are not (it has more of them)
+			var sprintTier: int = SaveManager.getGameTier() if mode == Root.gameModes.SPRINT else ModeTiers.NONE
+			offset = Level.sprintOffsetPx(Level.sprintDistance(def, sprintTier), WorldGen.hashf(worldSeed, WorldGen.TAG_SPRINT, 0, 0) * 2.0 - 1.0, sprintTier)
 		Root.gameModes.DEFENSE: objective = "defense"
 	buildJob = WorldMap.jobFor(worldSeed, def, objective, offset)
 	var started := Time.get_ticks_msec()

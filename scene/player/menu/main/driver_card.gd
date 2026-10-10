@@ -14,7 +14,7 @@ class_name DriverCard extends Panel
 #Under the focused card, outside its frame, a pill says what this car has won (SaveManager.carProgress):
 #medals by tier and levels won. Its buttons are `actions`, which main2 docks in a tray at the bottom centre;
 #only the focused card's show: Upgrades (opens the driver focus, where upgrades are bought, and reads
-#DRIVERS while it is open; DETAILS on a locked car), Drive (or Unlock) and Pickups (the Goonopedia's Pickups
+#DRIVERS while it is open; DETAILS on a locked car), Drive (or Unlock) and Pickups (the Pickups screen, PickupShop;
 #tab). Upgrades and Pickups carry a CountBadge: how many the bank could buy right now.
 #Locked drivers show as a silhouette with their unlock price over the foot of the art, and no stats.
 #Portraits sit against the right edge, clear of the rail: the art's drivers stand at the right of their
@@ -226,8 +226,8 @@ func _ready() -> void:
 	mainButton.add_theme_font_size_override("font_size", 28)
 	mainButton.pressed.connect(onMainPressed)
 	actions.add_child(mainButton)
-	pickupsButton = sideButton("PICKUPS", "ui_codex", PICKUPS_ICON)
-	pickupsButton.tooltip_text = "Unlock pickups and prize games in the Goonopedia"
+	pickupsButton = sideButton(PickupShop.TITLE, "ui_pickups", PICKUPS_ICON)
+	pickupsButton.tooltip_text = "Unlock pickups and prize games"
 	pickupsButton.pressed.connect(func(): pickupsRequested.emit())
 	pickupsBadge = CountBadge.on(pickupsButton, 0.35)
 

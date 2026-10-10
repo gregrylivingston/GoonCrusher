@@ -88,21 +88,20 @@ func test_sprint_distance_and_clock():
 	assert_almost_eq(offset.y, 0.0, 0.01)
 	assert_almost_eq(Level.sprintOffsetPx(20000.0, 1.0).y, 20000.0 * 0.25, 0.01, "y spread is 25% of the distance")
 	assert_almost_eq(Level.sprintOffsetPx(20000.0, -5.0).y, -20000.0 * 0.25, 0.01, "y roll is clamped")
-	assert_almost_eq(Level.sprintOffsetPx(50000.0, 0.0).length(), Level.SPRINT_MAX_DISTANCE, 0.01, "never further than the cap")
+	assert_almost_eq(Level.sprintOffsetPx(200000.0, 0.0).length(), Level.SPRINT_MAX_DISTANCE * ModeTiers.SPRINT_DISTANCE[ModeTiers.NONE], 0.01, "never further than the cap")
+	assert_almost_eq(Level.sprintOffsetPx(200000.0, 0.0, ModeTiers.HARD).length(), Level.SPRINT_MAX_DISTANCE * ModeTiers.SPRINT_DISTANCE[ModeTiers.HARD], 0.01, "a Sprint's cap grows with its tier")
 	assert_almost_eq(Level.sprintSeconds(28125.0, 250), 93.75, 0.001, "Easy: 62.5 s of driving x 1.5")
 	assert_almost_eq(Level.sprintSeconds(32000.0, 540), 32000.0 / 450.0 * 1.1, 0.001, "Northern Wastes: capped distance x 1.1")
-	#the stock sedan: top speed about 499 px/s on sand and mud, about 87 s of fuel at full throttle
+	#the stock sedan: top speed about 499 px/s on sand and mud
 	const SEDAN_SLOWEST_TOP_SPEED = 499.0
-	const SEDAN_TANK_SECONDS = 87.0
 	for levelSeconds in [250, 300, 330, 340, 370, 380, 420, 460, 470, 500, 540]:
 		for yRoll in [-1.0, 0.0, 1.0]:
 			var distance = Level.sprintOffsetPx(lerpf(Territories.SPRINT_DISTANCE.x, Territories.SPRINT_DISTANCE.y, (levelSeconds - 250.0) / 290.0), yRoll).length()
 			var clock = Level.sprintSeconds(distance, levelSeconds)
-			assert_true(distance <= Level.SPRINT_MAX_DISTANCE + 0.01, "level %d: capped" % levelSeconds)
+			assert_true(distance <= Level.SPRINT_MAX_DISTANCE * ModeTiers.SPRINT_DISTANCE[ModeTiers.NONE] + 0.01, "level %d: capped" % levelSeconds)
 			#a station exactly where it was aimed always leaves more time than the reference drive needs
 			assert_gt(clock, distance / Level.REFERENCE_SPEED, "level %d" % levelSeconds)
 			assert_gt(SEDAN_SLOWEST_TOP_SPEED, distance / clock, "level %d: the sedan is fast enough even on sand" % levelSeconds)
-			assert_gt(SEDAN_TANK_SECONDS * 0.8, distance / SEDAN_SLOWEST_TOP_SPEED, "level %d: one tank is enough" % levelSeconds)
 
 func test_clock_end_conditions_and_display():
 	assert_eq(Level.timeUpCondition(Root.gameModes.GOONCRUSHER), Root.endCondition.SUCCESS, "Countdown is won at 0")

@@ -29,10 +29,10 @@ func test_every_kind_has_one_tree_inside_it():
 		if d.rarity == Pickups.R.SYSTEM:
 			assert_false(d.has("parent") || d.has("start"), "%s is always on, outside the trees" % id)
 			continue
-		if d.get("start", false):
+		if not d.has("parent"):
 			roots.get_or_add(d.kind, []).push_back(id)
-			assert_false(d.has("parent"), "root %s has no parent" % id)
 			continue
+		assert_false(d.has("start"), "%s: only a root can start open" % id)
 		assert_true(Pickups.DATA.has(d.get("parent", "")), "%s has a real parent" % id)
 		assert_eq(Pickups.DATA[d.parent].kind, d.kind, "%s's parent is of its kind" % id)
 		var seen := {}
@@ -42,7 +42,8 @@ func test_every_kind_has_one_tree_inside_it():
 			at = Pickups.DATA[at].get("parent", "")
 		assert_eq(at, "", "%s climbs to a root" % id)
 	for kind in Pickups.K.values(): assert_true(roots.has(kind), "kind %d has a root" % kind)
-	assert_eq(roots[Pickups.K.SUPPLY].size(), 2, "Supplies start with the Fuel Can and the Repair Kit")
+	assert_eq(roots[Pickups.K.SUPPLY], ["fuel", "health"], "Supplies have two roots, the Fuel Can and the Repair Kit")
+	assert_eq(Pickups.DATA.keys().filter(func(id): return Pickups.DATA[id].get("start", false)), ["fuel", "coin", "claw"], "what a new save starts with")
 	assert_eq(roots[Pickups.K.LOOT], ["coin"], "Loot starts with the Coin")
 	var listed := 0
 	for kind in Pickups.KIND_ORDER: listed += Unlocks.treeOrder(kind).size()
@@ -58,7 +59,34 @@ func test_a_new_save_opens_only_the_roots():
 		assert_eq(Unlocks.isPickupOpen(id), d.get("start", false) || d.rarity == Pickups.R.SYSTEM, id)
 	assert_eq(Unlocks.state("pickup:purse"), Unlocks.S.READY, "the Coin's children can be bought")
 	assert_eq(Unlocks.state("pickup:strongbox"), Unlocks.S.HIDDEN, "the Purse's are still ???")
+	for id in ["health", "engine", "magnet", "horn", "nitro", "speedtrap", "ffwd"]:
+		assert_eq(Unlocks.state("pickup:" + id), Unlocks.S.READY, "%s: a locked root is for sale from the start" % id)
+		assert_false(Unlocks.pickupPrice(id).is_empty(), "%s has a price" % id)
+	assert_eq(Unlocks.state("pickup:emp"), Unlocks.S.HIDDEN, "what is under a locked root is still ???")
+	Unlocks.grant("pickup:horn")
 	assert_eq(Unlocks.state("pickup:emp"), Unlocks.S.SHOWN, "a play unlock waits for its condition")
+
+func test_prices_are_spread_out_inside_a_rarity():
+	var byRarity := {}
+	for id in Pickups.DATA:
+		var cost := Unlocks.pickupPrice(id)
+		if cost.is_empty() || Pickups.DATA[id].has("price"): continue
+		byRarity.get_or_add(Pickups.rarity(id), []).push_back(int(cost.get("coin", 0)) + 100000 * int(cost.get("gem", 0)))
+	var commons: Array = byRarity[Pickups.R.COMMON]
+	assert_eq(commons.min(), 20, "the cheapest Common is pocket change")
+	assert_eq(commons.max(), 1000, "and the dearest about a thousand")
+	for r in [Pickups.R.COMMON, Pickups.R.UNCOMMON, Pickups.R.RARE]:
+		var seen := {}
+		for p in byRarity[r]: seen[p] = true
+		assert_eq(seen.size(), byRarity[r].size(), "no two %s pickups cost the same" % Pickups.RARITY_NAMES[r])
+	assert_true(byRarity[Pickups.R.UNCOMMON].min() > commons.max() && byRarity[Pickups.R.RARE].min() > byRarity[Pickups.R.UNCOMMON].max(), "a rarer pickup costs more")
+	for id in Pickups.DATA: #inside a rarity, deeper in a tree never costs less
+		var parent: String = Pickups.DATA[id].get("parent", "")
+		if parent == "" || Pickups.DATA[id].has("price") || Pickups.DATA[parent].has("price"): continue
+		var mine := Unlocks.pickupPrice(id)
+		var above := Unlocks.pickupPrice(parent)
+		if mine.is_empty() || above.is_empty() || Pickups.rarity(id) != Pickups.rarity(parent): continue
+		assert_true(int(mine.get("coin", 0)) >= int(above.get("coin", 0)), "%s costs at least what %s does" % [id, parent])
 
 func test_locked_pickups_never_drop_or_get_offered():
 	for i in 400:
@@ -148,7 +176,7 @@ func test_next_unlock_names_something_to_aim_for():
 	var next := Unlocks.nextUnlock()
 	assert_false(next.is_empty(), "a new save has something next")
 	assert_true(Unlocks.state(next.uid) in [Unlocks.S.READY, Unlocks.S.SHOWN])
-	data().coin = int(Unlocks.PICKUP_PRICE[Pickups.R.COMMON].coin)
+	data().coin = 1000
 	next = Unlocks.nextUnlock()
 	assert_true(Unlocks.canAfford(next.uid), "an affordable one comes first: %s" % next.name)
 
@@ -162,31 +190,62 @@ func test_career_tiers_open_pickups_down_each_tree():
 	assert_true(CareerStart.build("fresh").meta.unlocks.is_empty(), "a fresh save has only the roots")
 	assert_eq(CareerStart.pickupsOpen(CareerStart.build("maxed")), Pickups.DATA.size(), "maxed has everything")
 
-func test_the_goonopedia_draws_each_kind_as_a_tree():
-	var page = add_child_autofree(Goonopedia.new())
-	assert_eq(page.tab, Goonopedia.Tab.PICKUPS, "the Goonopedia opens on Pickups, the first page with unlocks")
-	assert_eq(page.tiles.size(), Pickups.DATA.size() + CrushPrizes.GAMES.size(), "one tile per pickup and per prize game")
+func test_the_pickups_screen_draws_each_kind_as_a_tree_on_its_tab():
+	var page = add_child_autofree(PickupShop.new())
+	assert_eq(page.tabButtons.size(), PickupShop.TABS.size())
+	assert_eq(page.tabNames()[0], "LOOT", "Loot comes first")
+	var kinds := []
+	for t in PickupShop.TABS: kinds.append_array(t.kinds)
+	kinds.sort()
+	var every: Array = Pickups.KIND_ORDER.duplicate()
+	every.sort()
+	assert_eq(kinds, every, "every kind is on exactly one tab")
+	assert_eq(PickupShop.tabOf("pickup:hop"), PickupShop.tabOf("pickup:horn"), "boosts share the gadgets' tab")
+	assert_eq(PickupShop.tabOf("pickup:ffwd"), PickupShop.tabOf("pickup:magnet"), "mode specials share the power-ups' tab")
+	for g in CrushPrizes.GAMES: assert_eq(PickupShop.tabOf(CrushPrizes.uid(g.id)), PickupShop.tabOf("pickup:claw"), "%s is on the Casino tab" % g.id)
 	var at := {}
-	for b in page.tiles: at[b.get_meta("key")] = b.position
+	for i in PickupShop.tabCount():
+		page.setTab(i)
+		assert_eq(page.tiles.size(), PickupShop.tabUids(i).size(), "%s: one tile per unlock" % page.tabNames()[i])
+		for b in page.tiles:
+			at[b.get_meta("key")] = b.get_global_rect()
+			b.focus_entered.emit()
+			assert_true(page.detail.get_child_count() > 0, "a card for %s" % b.get_meta("key"))
+	assert_eq(at.size(), Pickups.DATA.size(), "one tile per pickup over the tabs")
 	for id in Pickups.DATA:
-		var parent: String = Pickups.DATA[id].get("parent", "")
-		if parent == "": continue
-		assert_gt(at[id].y, at[parent].y, "%s sits below %s" % [id, parent])
-	for kind in Pickups.KIND_ORDER: #no two tiles of a tree overlap
-		var ids := Unlocks.treeOrder(kind)
-		for i in ids.size():
-			for j in range(i + 1, ids.size()):
-				var a := Rect2(at[ids[i]], Goonopedia.TREE_TILE)
-				assert_false(a.intersects(Rect2(at[ids[j]], Goonopedia.TREE_TILE)), "%s and %s overlap" % [ids[i], ids[j]])
+		for above in Unlocks.prerequisites(id): assert_gt(at[id].position.y, at[above].position.y, "%s sits below %s" % [id, above])
+	for i in PickupShop.tabCount(): #no two tiles on a tab overlap
+		var keys: Array = PickupShop.tabUids(i).map(PickupShop.keyOf)
+		for a in keys.size():
+			for b in range(a + 1, keys.size()):
+				assert_false(at[keys[a]].intersects(at[keys[b]]), "%s and %s overlap" % [keys[a], keys[b]])
 
-func test_the_goonopedia_buys_pickups_and_the_bench_buys_upgrades():
+func test_the_pickups_screen_opens_where_there_is_something_to_buy():
+	data().coin = 0
+	data().gem = 0
+	var broke = add_child_autofree(PickupShop.new())
+	assert_true(PickupShop.tabUids(broke.tab).any(PickupShop.isReady), "with an empty bank, the first tab with something to work toward")
+	assert_eq(broke.badges.filter(func(b): return b.count > 0).size(), 0, "and no tab wears a badge")
+	data().coin = int(Unlocks.pickupPrice("purse").coin)
+	var page = add_child_autofree(PickupShop.new())
+	var buyable: Array = PickupShop.tabUids(page.tab).filter(PickupShop.isBuyable)
+	assert_false(buyable.is_empty(), "the screen opens on a tab the bank can buy from")
+	assert_eq(str(page.firstFocus().get_meta("key")), PickupShop.keyOf(buyable[0]), "on a tile it can buy")
+	assert_eq(page.badges[page.tab].count, buyable.size(), "and the tab's badge counts them")
+	var total := 0
+	for b in page.badges: total += b.count
+	assert_eq(total, Unlocks.buyableCount(), "the tabs' badges add up to the dock's")
+
+func test_the_pickups_screen_buys_pickups_and_the_bench_buys_upgrades():
 	var purse: int = Unlocks.pickupPrice("purse").coin
 	data().coin = purse + 1000
-	var page = add_child_autofree(Goonopedia.new())
-	assert_false(Goonopedia.TAB_NAMES.has("CARS"), "cars live in the garage, not the Goonopedia")
+	var page = add_child_autofree(PickupShop.new())
+	assert_false(Goonopedia.TAB_NAMES.has("CARS") || Goonopedia.TAB_NAMES.has("PICKUPS"), "cars live in the garage and pickups on their own screen, not in the Goonopedia")
+	page.setTab(PickupShop.tabOf("pickup:purse"))
 	page.buyPickup("purse")
 	assert_true(Unlocks.isPickupOpen("purse"), "a pickup bought on its tile")
 	assert_eq(data().coin, 1000)
+	assert_eq(page.tab, PickupShop.tabOf("pickup:purse"), "buying stays on the tab")
 	var bench: DriverBench = add_child_autofree(DriverBench.new())
 	var sedan := data().cars.find(Unlocks.carEntry("sedan"))
 	bench.setup(sedan, load("res://scene/car/sedan/sedan_info.tres"), [])
@@ -221,22 +280,49 @@ func test_the_dock_badges_count_what_the_bank_can_buy():
 	var ready := 0
 	for id in Pickups.DATA:
 		if Unlocks.state("pickup:" + str(id)) == Unlocks.S.READY && not Unlocks.pickupPrice(str(id)).is_empty(): ready += 1
-	for game in CrushPrizes.GAMES:
-		if Unlocks.state("prize:" + str(game.id)) == Unlocks.S.READY: ready += 1
 	assert_gt(ready, 0, "a new save has something ready to unlock")
 	assert_eq(Unlocks.buyableCount(), ready, "every ready pickup and prize game a full bank covers")
 
-func test_the_goonopedia_sells_prize_games_in_ladder_order():
+func test_the_demo_can_unlock_the_casino_trees_first_tier():
+	for id in ["scratch", "mystery", "shuffle"]: assert_true(Unlocks.inDemo(id), "%s: straight under the Claw Crane" % id)
+	for id in ["press", "double", "lottery", "deal", "slotmachine", "pusher"]: assert_false(Unlocks.inDemo(id), "%s: the full game" % id)
+	assert_true(Unlocks.inDemo("purse") && not Unlocks.inDemo("strongbox"), "elsewhere the demo stops at Uncommon")
+	assert_false(Pickups.DATA.slotmachine.get("start", false) || Unlocks.pickupPrice("slotmachine").is_empty(), "the Slot Machine is bought, not given")
+
+func test_the_toolbox_needs_all_four_system_parts():
+	data().coin = 1000000
+	assert_eq(Pickups.displayName("tyre"), "Spare Tire")
+	var parts := ["tyre", "bulb", "sparkplug", "tierod"]
+	assert_eq(Unlocks.prerequisites("toolbox"), parts)
+	assert_eq(Unlocks.state("pickup:toolbox"), Unlocks.S.HIDDEN, "hidden until the Wrench and a part are open")
+	Unlocks.grant("pickup:wrench")
+	for i in parts.size():
+		assert_false(Unlocks.buy("pickup:toolbox"), "not for sale with %d of 4 parts" % i)
+		assert_true(Unlocks.buy("pickup:" + parts[i]))
+	assert_eq(Unlocks.state("pickup:toolbox"), Unlocks.S.READY, "for sale once all four are open")
+	assert_true(Unlocks.buy("pickup:toolbox"))
+	for p in parts: data().meta.unlocks.erase("pickup:" + p)
+	data().meta.unlocks.erase("pickup:toolbox")
+	data().meta.unlocks.erase("pickup:wrench")
+
+func test_a_casino_unlock_opens_the_drop_and_the_gift_box_game():
 	data().coin = 100000
-	var page = add_child_autofree(Goonopedia.new())
-	assert_true(page.tileFor("prize:claw") != null, "the ladder is on the Pickups tab")
-	assert_eq(Unlocks.state("prize:claw"), Unlocks.S.OPEN, "the Claw Crane starts open")
-	assert_eq(Unlocks.state("prize:scratch"), Unlocks.S.SHOWN, "the Scratch Card waits for the Hubcap Shuffle")
-	page.buyPrize("scratch")
-	assert_false(CrushPrizes.isOpen("scratch"), "the ladder opens in order")
-	page.buyPrize("shuffle")
-	assert_true(CrushPrizes.isOpen("shuffle"))
-	assert_eq(data().coin, 100000 - int(CrushPrizes.price("shuffle").coin), "at its price")
-	assert_eq(Unlocks.state("prize:scratch"), Unlocks.S.READY, "and the next one is for sale")
-	assert_true(Unlocks.price("prize:shuffle").is_empty(), "an open game has no price")
+	var page = add_child_autofree(PickupShop.new())
+	page.setTab(PickupShop.tabOf("pickup:claw"))
+	assert_true(Unlocks.isPickupOpen("claw") && CrushPrizes.isOpen("claw"), "the Claw Crane, the tree's root, starts open")
+	assert_eq(Unlocks.state("pickup:slotmachine"), Unlocks.S.HIDDEN, "the Slot Machine is at the far end")
+	assert_eq(Unlocks.state("pickup:press"), Unlocks.S.HIDDEN, "the Goon Press waits for the Hubcap Shuffle")
+	page.buyPickup("press")
+	assert_false(CrushPrizes.isOpen("press"), "a hidden game can't be bought")
+	page.buyPickup("shuffle")
+	assert_true(CrushPrizes.isOpen("shuffle"), "one purchase puts the game in the boxes")
+	assert_eq(data().coin, 100000 - int(Pickups.DATA.shuffle.price.coin), "at its price")
+	assert_eq(Unlocks.state("pickup:press"), Unlocks.S.READY, "and the next one is for sale")
+	assert_eq(Pickups.candidates(Pickups.R.RARE, 0, false).get("shuffle", 0.0), 0.0, "a box-only game never drops")
+	page.buyPickup("scratch")
+	assert_true(CrushPrizes.isOpen("scratch") && Pickups.candidates(Pickups.R.RARE, 0, false).has("scratch"), "the Scratch Card: the drop and the box game in one")
+	for id in Unlocks.treeOrder(Pickups.K.CASINO): #least valuable first: nothing costs less than what it follows
+		var parent: String = Pickups.DATA[id].get("parent", "")
+		if parent == "" || Pickups.DATA[parent].get("start", false): continue
+		assert_true(int(Unlocks.pickupPrice(id).get("coin", 0)) >= int(Unlocks.pickupPrice(parent).get("coin", 0)), "%s costs at least what %s does" % [id, parent])
 	assert_eq(Pickups.rarity("claw"), Pickups.R.RARE, "the weakest prize game is a Rare drop")

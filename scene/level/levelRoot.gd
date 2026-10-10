@@ -27,14 +27,16 @@ var endReason: int = -1 #Root.endCondition once the run has ended
 var startPosition: Vector2 #where the car starts; objectives are placed relative to it
 var clockReady := false #true once the clock holds its final starting value (Sprint sets it from the station distance)
 
-#Sprint: the station is placed by distance (by region: Territories.sprintDistance) and the clock is derived
+#Sprint: the station is placed by distance (by region: Territories.sprintDistance, x the tier's:
+#ModeTiers.SPRINT_DISTANCE) and the clock is derived
 #from the real distance.
 const SPRINT_DRIVE_FRACTION = 0.25 #ModeTiers' pay estimate: share of the level's seconds spent driving at REFERENCE_SPEED
 #px/s; a fixed baseline, not the selected car, so fast cars feel fast. The stock sedan tops out at about
 #744 on grass, 615 on snow and 499 on sand and mud, so 450 leaves room for rocks, goons and turns.
 const REFERENCE_SPEED = 450.0
-#the station is never further than this (px): about 0.8 of the stock sedan's tank (87 s at full throttle)
-#at its sand and mud top speed, so a run is possible without fuel pickups
+#the last region's distance (px): about 0.8 of the stock sedan's tank (87 s at full throttle) at its sand and
+#mud top speed. A station is never further than this x ModeTiers.SPRINT_DISTANCE (a Sprint's tier, or a
+#Marathon leg), so every race needs fuel pickups or oil upgrades on the way.
 const SPRINT_MAX_DISTANCE = 34000.0
 const SPRINT_Y_SPREAD = 0.25 #the station's y offset is up to this share of the distance, either way
 #The clock is set from the A* route on the coarse map (1280 px cells), which is shorter than the drive: the
@@ -49,6 +51,9 @@ const STATION_APPROACH_PX = 1500.0
 #Marathon: a relay of Sprint-length legs (ModeTiers.LEGS by tier). Each station but the last adds that leg's
 #clock, refuels, patches the car up and opens the pit shop; the last one wins.
 const MARATHON_TURN = PI / 3 #each leg heads off within this of the last leg's heading
+#a leg that would leave the map (WorldGen.CHUNK_LIMIT, less this margin of the leg's length for its y spread)
+#heads back toward the map's centre instead
+const MARATHON_EDGE_MARGIN = 0.3
 const MARATHON_HEAL = 35.0   #health restored at each station
 var leg := 1
 var legHeading := 0.0
@@ -225,13 +230,16 @@ func burnout(_fx: TransitionFx) -> void:
 	Transition.sound("screech", -8.0)
 
 #Sprint station offset from the car start, in px: `distance` straight ahead (+x), with a y offset of up
-#to SPRINT_Y_SPREAD of the distance, never further than SPRINT_MAX_DISTANCE. yRoll is -1..1.
-static func sprintOffsetPx(distance: float, yRoll: float) -> Vector2:
-	return Vector2(distance, distance * SPRINT_Y_SPREAD * clampf(yRoll, -1.0, 1.0)).limit_length(SPRINT_MAX_DISTANCE)
+#to SPRINT_Y_SPREAD of the distance, never further than SPRINT_MAX_DISTANCE (x the tier's distance for a
+#Sprint; without a tier, a Marathon leg). yRoll is -1..1.
+static func sprintOffsetPx(distance: float, yRoll: float, sprintTier: int = ModeTiers.NONE) -> Vector2:
+	var cap: float = SPRINT_MAX_DISTANCE * ModeTiers.SPRINT_DISTANCE[clampi(sprintTier, ModeTiers.NONE, ModeTiers.HARD)]
+	return Vector2(distance, distance * SPRINT_Y_SPREAD * clampf(yRoll, -1.0, 1.0)).limit_length(cap)
 
-#how far a level's Sprint station (and each Marathon leg) is: by its region (Territories.sprintDistance)
-static func sprintDistance(levelDef: LevelDef) -> float:
-	return Territories.sprintDistance(levelDef.region if levelDef else &"")
+#how far a level's Sprint station is: by its region (Territories.sprintDistance), x the tier's
+#(ModeTiers.SPRINT_DISTANCE). Without a tier, a Marathon leg.
+static func sprintDistance(levelDef: LevelDef, sprintTier: int = ModeTiers.NONE) -> float:
+	return Territories.sprintDistance(levelDef.region if levelDef else &"") * ModeTiers.SPRINT_DISTANCE[clampi(sprintTier, ModeTiers.NONE, ModeTiers.HARD)]
 
 #time allowed per second of reference driving: 1.5 on Easy (250 s) down to 1.1 on Northern Wastes (540 s)
 static func sprintSlack(levelSeconds: float) -> float:
@@ -362,10 +370,22 @@ func stationReached(station: Node2D) -> void:
 	var from = station.global_position
 	var tileManager = $TileManager
 	var turn := (WorldGen.hashf(tileManager.worldSeed, WorldGen.TAG_LEG, leg, 0) * 2.0 - 1.0) * MARATHON_TURN
-	var next = tileManager.placeNextStation(from, legHeading + turn, sprintDistance(def))
+	var next = tileManager.placeNextStation(from, legHeadingFrom(from, legHeading, turn, sprintDistance(def)), sprintDistance(def))
 	legHeading = (next.global_position - from).angle()
 	seconds += sprintSeconds(driveLength(maxf(tileManager.lastRouteLength, from.distance_to(next.global_position))), levelSeconds, slack())
 	call_deferred("openPitShop")
+
+#the heading of a leg `distance` px long from `from`: the last heading plus `turn`, unless that leaves the
+#map; then toward the map's centre (plus the turn if that fits), which always does
+static func legHeadingFrom(from: Vector2, lastHeading: float, turn: float, distance: float) -> float:
+	if legFits(from, lastHeading + turn, distance): return lastHeading + turn
+	var home := (-from).angle()
+	return home + turn if legFits(from, home + turn, distance) else home
+
+static func legFits(from: Vector2, heading: float, distance: float) -> bool:
+	var reach: Vector2 = Vector2(WorldGen.CHUNK_LIMIT * WorldGen.CHUNK_PX) - Vector2.ONE * distance * MARATHON_EDGE_MARGIN
+	var to := from + Vector2.from_angle(heading) * distance
+	return absf(to.x) <= reach.x && absf(to.y) <= reach.y
 
 #Marathon stations: the pit shop sells pickups for run coins
 func openPitShop() -> void:

@@ -151,7 +151,7 @@ func test_upgrades_asks_for_no_particular_stat():
 	var pickups = []
 	card.pickupsRequested.connect(func(): pickups.push_back(true))
 	card.pickupsButton.pressed.emit()
-	assert_eq(pickups.size(), 1, "Pickups asks for the Goonopedia's Pickups tab")
+	assert_eq(pickups.size(), 1, "Pickups asks for the Pickups screen")
 	card.free()
 
 func test_a_count_badge_hides_at_zero():

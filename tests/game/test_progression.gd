@@ -21,32 +21,32 @@ func level(unlocked: bool, beaten: Array) -> Dictionary:
 	return {"name": "test", "unlocked": unlocked, "gamemodeBeat": beat}
 
 func test_unlock_chain():
-	assert_eq(Root.MODE_PATH, [M.GOONCRUSHER, M.SPRINT, M.MARATHON, M.GOONPOCALYPSE, M.DEFENSE], "the road, then the extras")
+	assert_eq(Root.MODE_PATH, [M.SPRINT, M.GOONCRUSHER, M.MARATHON, M.GOONPOCALYPSE, M.DEFENSE], "the road, then the extras")
 	var fresh = level(true, [])
-	assert_true(Root.isModeUnlocked(fresh, M.GOONCRUSHER), "Countdown is open on an unlocked level")
-	for mode in [M.SPRINT, M.MARATHON, M.DEFENSE, M.GOONPOCALYPSE]:
+	assert_true(Root.isModeUnlocked(fresh, M.SPRINT), "Sprint is open on an unlocked level")
+	for mode in [M.GOONCRUSHER, M.MARATHON, M.DEFENSE, M.GOONPOCALYPSE]:
 		assert_false(Root.isModeUnlocked(fresh, mode), "%s starts locked" % M.find_key(mode))
-	var countdown = level(true, [M.GOONCRUSHER])
-	assert_true(Root.isModeUnlocked(countdown, M.SPRINT), "Countdown beaten opens Sprint")
-	for mode in [M.MARATHON, M.GOONPOCALYPSE, M.DEFENSE]: assert_false(Root.isModeUnlocked(countdown, mode))
+	var sprint = level(true, [M.SPRINT])
+	assert_true(Root.isModeUnlocked(sprint, M.GOONCRUSHER), "Sprint beaten opens Countdown")
+	for mode in [M.MARATHON, M.GOONPOCALYPSE, M.DEFENSE]: assert_false(Root.isModeUnlocked(sprint, mode))
 	var both = level(true, [M.GOONCRUSHER, M.SPRINT])
-	assert_true(Root.isModeUnlocked(both, M.MARATHON), "Sprint beaten opens Marathon")
+	assert_true(Root.isModeUnlocked(both, M.MARATHON), "Countdown beaten opens Marathon")
 	assert_false(Root.isModeUnlocked(both, M.GOONPOCALYPSE), "Goonpocalypse waits for the Marathon")
 	assert_false(Root.isModeUnlocked(both, M.DEFENSE), "so does Defense")
 	var road = level(true, [M.GOONCRUSHER, M.SPRINT, M.MARATHON])
 	for mode in M.values(): assert_true(Root.isModeUnlocked(road, mode), "%s is open once the Marathon is won" % M.find_key(mode))
 	assert_eq(Root.modeLockReason(both, M.DEFENSE), "Win Marathon Here To Unlock" if Root.isModeAvailable(M.DEFENSE) else Root.modeLockReason(both, M.DEFENSE))
-	var sprintOnly = level(true, [M.SPRINT]) #only reachable by an edited save
-	assert_true(Root.isModeUnlocked(sprintOnly, M.MARATHON))
-	assert_true(Root.isModeUnlocked(sprintOnly, M.SPRINT), "a beaten mode stays open")
+	var countdownOnly = level(true, [M.GOONCRUSHER]) #a save from when Countdown came first
+	assert_true(Root.isModeUnlocked(countdownOnly, M.MARATHON))
+	assert_true(Root.isModeUnlocked(countdownOnly, M.GOONCRUSHER), "a beaten mode stays open")
 	var locked = level(false, [M.GOONCRUSHER, M.SPRINT, M.MARATHON])
 	for mode in M.values(): assert_false(Root.isModeUnlocked(locked, mode), "nothing is open on a locked level")
 
 func test_missing_keys_read_as_not_beaten():
 	var old = {"unlocked": true, "gamemodeBeat": {M.GOONCRUSHER: true, M.SPRINT: true, M.MARATHON: true}} #no GOONPOCALYPSE key
 	assert_true(Root.isModeUnlocked(old, M.GOONPOCALYPSE))
-	assert_false(Root.isModeUnlocked({"unlocked": true}, M.SPRINT), "no gamemodeBeat at all")
-	assert_false(Root.isModeUnlocked({}, M.GOONCRUSHER), "no unlocked key means locked")
+	assert_false(Root.isModeUnlocked({"unlocked": true}, M.GOONCRUSHER), "no gamemodeBeat at all")
+	assert_false(Root.isModeUnlocked({}, M.SPRINT), "no unlocked key means locked")
 
 func test_unavailable_modes_cant_be_played_whatever_the_unlocks():
 	var all = level(true, M.values())
@@ -58,9 +58,10 @@ func test_unavailable_modes_cant_be_played_whatever_the_unlocks():
 	assert_true(Root.isModeAvailable(M.SPRINT))
 	assert_eq(Root.isModeAvailable(M.GOONPOCALYPSE), not Root.IS_DEMO, "Goonpocalypse is full-game only")
 	assert_eq(Root.modeLockReason(all, M.MARATHON), "Not Available In Demo" if Root.IS_DEMO else "")
-	assert_eq(Root.modeLockReason(all, M.GOONCRUSHER), "")
-	assert_eq(Root.modeLockReason(level(true, []), M.SPRINT), "Beat Countdown To Unlock")
-	assert_false(Root.modeLockReason(level(true, [M.GOONCRUSHER]), M.GOONPOCALYPSE) == "", "a locked mode always has a reason")
+	assert_eq(Root.modeLockReason(all, M.SPRINT), "")
+	assert_eq(Root.modeLockReason(level(true, []), M.GOONCRUSHER), "Beat Sprint To Unlock")
+	assert_eq(Root.modeLockReason(level(true, [M.SPRINT]), M.MARATHON), "Beat Countdown To Unlock")
+	assert_false(Root.modeLockReason(level(true, [M.SPRINT]), M.GOONPOCALYPSE) == "", "a locked mode always has a reason")
 
 func test_every_default_level_has_every_mode_key():
 	for lvl in PlayerData.new().levels:
@@ -84,19 +85,19 @@ func test_the_marathon_opens_the_next_level():
 	data.selectedLevel = 2
 	data.levels[2].unlocked = true #reached by play
 	assert_false(data.levels[3].unlocked)
-	data.gameMode = M.GOONCRUSHER
+	data.gameMode = M.SPRINT
 	SaveManager.currentLevelPassed()
-	assert_true(data.levels[2].gamemodeBeat[M.GOONCRUSHER], "the mode is marked beaten")
-	assert_false(data.levels[3].unlocked, "Countdown isn't enough")
-	assert_eq(data.gameMode, M.SPRINT, "the menu offers the mode it opened")
+	assert_true(data.levels[2].gamemodeBeat[M.SPRINT], "the mode is marked beaten")
+	assert_false(data.levels[3].unlocked, "Sprint isn't enough")
+	assert_eq(data.gameMode, M.GOONCRUSHER, "the menu offers the mode it opened")
 	assert_eq(SaveManager.openLeft(2), "Win the Marathon here")
 	SaveManager.currentLevelPassed()
-	assert_false(data.levels[3].unlocked, "nor Sprint")
+	assert_false(data.levels[3].unlocked, "nor Countdown")
 	assert_eq(data.gameMode, M.MARATHON, "then the road on")
 	SaveManager.currentLevelPassed()
 	assert_true(data.levels[3].unlocked, "the Marathon opens the next level")
 	assert_eq(data.selectedLevel, 3, "and it is selected")
-	assert_eq(data.gameMode, M.GOONCRUSHER, "starting from Countdown")
+	assert_eq(data.gameMode, M.SPRINT, "starting from Sprint")
 	assert_eq(SaveManager.openLeft(2), "")
 	assert_true(Root.isModePlayable(data.levels[2], M.GOONPOCALYPSE) || not Root.isModeAvailable(M.GOONPOCALYPSE), "Goonpocalypse is open behind it")
 	SaveManager.playerData = keep

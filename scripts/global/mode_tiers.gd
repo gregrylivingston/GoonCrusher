@@ -18,7 +18,9 @@ const M := Root.gameModes
 ## The goal, by tier (index 1-3). Countdown: the clock x the level's seconds. Goonpocalypse: survive this x
 ## the level's seconds. Defense: hold the station this many seconds (not scaled by the level: its goons
 ## already come faster, and the barrier's wear grows with the square of the hold). Sprint and Marathon: the
-## clock's slack x the level's. Marathon: legs.
+## clock's slack x the level's. Sprint: the station's distance x the region's (index 0 is a Marathon leg, a
+## little shorter than an Easy Sprint). Marathon: legs, few enough that the longest relay is about as long as a
+## Hard Countdown.
 const CLOCK := [0.0, 1.0, 1.6, 2.2]
 const POCALYPSE_TARGET := [0.0, 1.0, 1.75, 2.5]
 const DEFENSE_HOLD := [0.0, 150.0, 210.0, 270.0]
@@ -26,7 +28,8 @@ const DEFENSE_HOLD := [0.0, 150.0, 210.0, 270.0]
 ## pile up at the walls, since one car can't crush them as fast as Countdown's spawners send them
 const DEFENSE_SPAWN_SCALE := 2.5
 const SLACK := [0.0, 1.15, 1.0, 0.85]
-const LEGS := [0, 3, 5, 7]
+const SPRINT_DISTANCE := [2.5, 2.875, 3.25, 3.75]
+const LEGS := [0, 2, 3, 4]
 
 ## The world, by tier: escalation speed x, giant odds + (percent points), spawn interval x
 const ESCALATION := [1.0, 1.0, 1.3, 1.6]
@@ -57,7 +60,8 @@ static func winBonus(mode: int, tier: int, levelIndex: int) -> int:
 	return roundi(WIN_RATE.get(mode, 0.0) * seconds / 60.0 * TIER_BONUS[clampTier(tier)] * levelFactor(levelIndex))
 
 ## How long the tier's goal runs, for its pay: the clock or target, or for the races the clock the planned
-## drive gets (Level.SPRINT_DRIVE_FRACTION of the level's seconds at REFERENCE_SPEED, x the slack; x the legs)
+## drive gets (Level.SPRINT_DRIVE_FRACTION of the level's seconds at REFERENCE_SPEED, x the slack; x Sprint's
+## distance or the legs)
 static func goalSeconds(mode: int, tier: int, levelSeconds: float, sprintSlack: float) -> float:
 	tier = clampTier(tier)
 	var sprint: float = levelSeconds * Level.SPRINT_DRIVE_FRACTION * sprintSlack * SLACK[tier]
@@ -65,8 +69,8 @@ static func goalSeconds(mode: int, tier: int, levelSeconds: float, sprintSlack: 
 		M.GOONCRUSHER: return levelSeconds * CLOCK[tier]
 		M.GOONPOCALYPSE: return levelSeconds * POCALYPSE_TARGET[tier]
 		M.DEFENSE: return DEFENSE_HOLD[tier]
-		M.SPRINT: return sprint
-		M.MARATHON: return sprint * LEGS[tier]
+		M.SPRINT: return sprint * SPRINT_DISTANCE[tier]
+		M.MARATHON: return sprint * SPRINT_DISTANCE[NONE] * LEGS[tier]
 	return 0.0
 
 ## {coin, gem} for beating `tier` when `before` was the best so far: every tier newly credited pays once
@@ -108,7 +112,7 @@ static func goalText(mode: int, tier: int, levelSeconds: float) -> String:
 		M.GOONCRUSHER: return "Survive %s" % clock(levelSeconds * CLOCK[tier])
 		M.GOONPOCALYPSE: return "Survive %s" % clock(levelSeconds * POCALYPSE_TARGET[tier])
 		M.DEFENSE: return "Hold the station for %s" % clock(DEFENSE_HOLD[tier])
-		M.SPRINT: return "Beat a %s clock to the station" % ["", "loose", "fair", "tight"][tier]
+		M.SPRINT: return "Beat a %s clock to the station" % ["", "loose", "fair", "tight"][tier] + ["", "", ", further off", ", furthest off"][tier]
 		M.MARATHON: return "Reach %d stations" % LEGS[tier]
 	return ""
 

@@ -34,7 +34,7 @@ const IS_DEMO := false
 const GAME_VERSION := "0.1"
 const DEMO_CAR_COUNT := 3 #the demo offers the first 3 cars and the first 2 regions (10 levels)
 const DEMO_LEVEL_COUNT := 10
-const DEMO_MODES = [gameModes.GOONCRUSHER, gameModes.SPRINT, gameModes.MARATHON]
+const DEMO_MODES = [gameModes.SPRINT, gameModes.GOONCRUSHER, gameModes.MARATHON]
 
 #modes that are finished enough to play. An unavailable mode shows "Coming soon" whatever its
 #unlocks, can't be started, and doesn't count toward unlocking other modes.
@@ -57,23 +57,25 @@ static func isModeAvailable(mode: int) -> bool:
 	if IS_DEMO && mode not in DEMO_MODES: return false
 	return MODE_AVAILABLE.get(mode, false)
 
-#The order a player meets the modes on every level, and the order the menus show them: Countdown, Sprint and
+#The order a player meets the modes on every level, and the order the menus show them: Sprint, Countdown and
 #Marathon are the road (Marathon opens the next level), then Goonpocalypse and Defense open behind it. The one
 #list every menu, harness and test reads.
-const MODE_PATH := [gameModes.GOONCRUSHER, gameModes.SPRINT, gameModes.MARATHON, gameModes.GOONPOCALYPSE, gameModes.DEFENSE]
+const MODE_PATH := [gameModes.SPRINT, gameModes.GOONCRUSHER, gameModes.MARATHON, gameModes.GOONPOCALYPSE, gameModes.DEFENSE]
+#the mode open on every unlocked level: the shortest and easiest, where a new level starts
+const FIRST_MODE := gameModes.SPRINT
 #the mode whose win opens the next level (Medium at a region's finale)
 const ROAD_MODE := gameModes.MARATHON
 
-#the per-level unlock chain, ignoring availability. Countdown is open on any unlocked level, Sprint needs
-#Countdown beaten, Marathon needs Sprint, and Goonpocalypse and Defense need Marathon.
+#the per-level unlock chain, ignoring availability. Sprint is open on any unlocked level, Countdown needs
+#Sprint beaten, Marathon needs Countdown, and Goonpocalypse and Defense need Marathon.
 static func isModeUnlocked(level: Dictionary, mode: int) -> bool:
 	if not level.get("unlocked", false): return false
 	var beat: Dictionary = level.get("gamemodeBeat", {})
 	if beat.get(mode, false): return true #a mode already beaten stays open
 	match mode:
-		gameModes.GOONCRUSHER: return true
-		gameModes.SPRINT: return beat.get(gameModes.GOONCRUSHER, false)
-		gameModes.MARATHON: return beat.get(gameModes.SPRINT, false)
+		gameModes.SPRINT: return true
+		gameModes.GOONCRUSHER: return beat.get(gameModes.SPRINT, false)
+		gameModes.MARATHON: return beat.get(gameModes.GOONCRUSHER, false)
 		gameModes.GOONPOCALYPSE, gameModes.DEFENSE: return beat.get(gameModes.MARATHON, false)
 	return false
 
@@ -117,8 +119,8 @@ static func modeLockReason(level: Dictionary, mode: int) -> String:
 	if isModeUnlocked(level, mode): return ""
 	if not level.get("unlocked", false): return "Level Locked"
 	match mode:
-		gameModes.SPRINT: return "Beat Countdown To Unlock"
-		gameModes.MARATHON: return "Beat Sprint To Unlock"
+		gameModes.GOONCRUSHER: return "Beat Sprint To Unlock"
+		gameModes.MARATHON: return "Beat Countdown To Unlock"
 		gameModes.GOONPOCALYPSE, gameModes.DEFENSE: return "Win Marathon Here To Unlock"
 	return "Locked"
 
@@ -194,6 +196,15 @@ func getSpecificPowerup(pName: upgrade) -> Powerup:
 
 func getGoon():return spawnManager.getGoon()
 
+
+#how a run in each mode is won and lost: Level Options shows it after the mode's description
+const MODE_RULES := {
+	gameModes.GOONCRUSHER: "The clock counts down from the level's time. Still driving when it hits zero? You win.",
+	gameModes.SPRINT: "Reach the gas station before the clock runs out. The further away the station, the more time you get.",
+	gameModes.MARATHON: "A relay of stations against the clock. Each one refuels and repairs you, and its pit shop sells pickups for run coins.",
+	gameModes.DEFENSE: "Barricade Kits patch the station's walls and Sentry Turrets help guard them.",
+	gameModes.GOONPOCALYPSE: "No finish line. The clock counts up, and the run lasts as long as you do.",
+}
 
 var gameModeDescription: Dictionary = {
 	Root.gameModes.GOONCRUSHER:{

@@ -58,11 +58,11 @@ Run flows 1 to 6 under each of these:
 
 ## Mouse pass
 
-- Every bottom hint bar is clickable: the main menu (Back included), Goonopedia, pause, Deal, Claw and Pit Shop. Also the Q/E tab chips in Settings and Goonopedia.
+- Every bottom hint bar is clickable: the main menu (Back included), Goonopedia, Pickups, pause, Deal, Claw and Pit Shop. Also the Q/E tab chips in Settings, Goonopedia and Pickups.
 - Driver card:
   - Upgrades (F, or its button) opens the driver focus: the other drivers slide off, the card moves left and the bench slides in with the Engine row focused. The stat rail ignores the mouse.
   - In driver focus: Up/Down move between rows, E buys (gold wash, the number pops, the coins count down), a stat the coins don't cover shakes, Space drives from any row, Down from Dice reaches Drive, A/D change driver and keep the row, and Upgrades, Back or Esc returns to the drivers. A locked driver's bench has no buy buttons and UNLOCK has the focus.
-  - The Upgrades and Pickups badges show how many the bank covers, hop every couple of seconds, pop when the number changes, hide at 0 and sit still with Reduce Motion. Pickups opens the Goonopedia on Pickups; neither badge shows through it.
+  - The Upgrades and Pickups badges show how many the bank covers, hop every couple of seconds, pop when the number changes, hide at 0 and sit still with Reduce Motion. Pickups opens the Pickups screen on the first tab with something the bank covers, on that tile, and each tab wears its own badge; neither dock badge shows through it. G / View (and Back) closes it; B / L3 opens the Goonopedia.
   - Hovering a feature shows its full text.
   - Side cards show only their art; selecting one flips it to its front (a crossfade with Reduce Motion), and the old one flips back.
   - Upgrades, Drive and Pickups sit in a tray at the bottom centre and follow the selected card.
@@ -70,7 +70,13 @@ Run flows 1 to 6 under each of these:
 - The mouse wheel scrolls the carousels.
 - Run setup's road map:
   - Clicking a region tab opens that region at its furthest open stop; Z/C (LT/RT) step regions, and a held trigger steps once.
-  - Clicking another stop selects it; Q/E (LB/RB) walk the road and cross into the next region at either end; 1-5 pick a stop.
+  - Clicking another stop selects it; Q/E (LB/RB) and A/D walk the road and cross into the next region at either end; 1-5 pick a stop.
+  - Each stop shows five mode glyphs: grey when open, faint when locked, bronze, silver or gold for the best medal by any car. The bar under a glyph is the current driver's own medal; change driver in the garage and the bars change.
+  - The panel under the road follows the highlighted stop; a locked stop says what opens it and SELECT reads LOCKED (pressing it shakes the button).
+  - SELECT, Accept or a click on the selected stop opens Level Options; Back returns to the road map, and Back again to the garage.
+- Level Options:
+  - A/D change mode, W/S change tier, and both work by clicking a medallion or a tier card. It opens on the mode and tier last used.
+  - Each tier card shows its goal, win bonus, first-clear bonus (or "paid"), whether the current driver has won it and the cars count.
   - The car strip: cleared cars in colour, owned-but-not-cleared dark, unowned as outlines, the driver bigger over an orange bar. It updates with the mode and tier. "FULL GARAGE" shows in gold when all 9 have won. Clicking an owned car makes it the driver; clicking an unowned one does nothing.
 - The medallions have hover states.
 - Check that a synthetic action fired by a click never leaves an action stuck "pressed" (`KeyHint.fire`).

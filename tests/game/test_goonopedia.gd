@@ -50,15 +50,7 @@ func test_crushes_are_credited_and_first_ones_named():
 	assert_eq(found.size(), 0, "already known")
 	assert_eq(SaveManager.playerData.goonsCrushed[String(ids[0])], 7)
 
-func test_level_numbers_come_from_the_def():
-	var def := Levels.get_def(&"prairie")
-	var stats = Goonopedia.levelStats(def)
-	assert_eq(int(stats.seconds), def.seconds)
-	assert_eq(stats.spawn, def.spawnTimer)
-	assert_eq(stats.giants, def.giantOdds)
-	assert_eq(Goonopedia.levelName(0), def.displayName, "names come from the registry")
-
-func test_level_tab_names_the_region_class_and_line_up():
+func test_region_rows_name_the_region_class_and_line_up():
 	var rows: Array = Goonopedia.regionRows(Levels.get_def(&"prairie"))
 	assert_eq(rows[0][1], "The Wilds  (1 of 5)")
 	assert_eq(rows[1][1], "Wild Things")
@@ -70,18 +62,12 @@ func test_level_tab_names_the_region_class_and_line_up():
 func test_drop_shares_add_up_in_every_mode():
 	for mode in Root.gameModes.values():
 		var total := 0.0
-		for id in Pickups.DATA: total += Goonopedia.dropShare(id, mode)
+		for id in Pickups.DATA: total += PickupShop.dropShare(id, mode)
 		assert_true(absf(total - 100.0) < 0.01, "mode %d: shares sum to 100%%, got %f" % [mode, total])
 
-func test_every_level_card_names_its_region_barrier_and_surfaces():
-	var page = add_child_autofree(Goonopedia.new())
-	page.setTab(Goonopedia.Tab.LEVELS)
+func test_levels_and_modes_are_described_in_run_setup_not_here():
+	assert_eq(Goonopedia.TAB_NAMES, ["GOONS", "SYSTEMS"])
 	for i in Levels.count():
 		var def := Levels.defAt(i)
-		assert_true(def.barrier != "" && def.surfaces != "", "%s: barrier and surfaces text" % def.id)
-		page.showDetail({"kind": "level", "key": i})
-		var texts := PackedStringArray()
-		for node in page.detail.find_children("*", "Label", true, false): texts.push_back(node.text)
-		var all := "\n".join(texts)
-		for want in [Territories.displayName(def.region).to_upper(), "WHO LIVES HERE", "BARRIER", "SURFACES", def.barrier, def.surfaces]:
-			assert_true(all.contains(want), "%s card shows %s" % [def.id, want])
+		assert_true(def.barrier != "" && def.surfaces != "", "%s: barrier and surfaces text for Level Options" % def.id)
+	for mode in Root.MODE_PATH: assert_true(Root.MODE_RULES.get(mode, "") != "", "mode %d: a win rule for Level Options" % mode)

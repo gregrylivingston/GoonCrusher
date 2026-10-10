@@ -35,7 +35,7 @@ func test_every_tier_is_reachable_by_play():
 				if not level.gamemodeBeat[mode]: continue
 				assert_true(level.unlocked, "%s: a level with a beaten mode is open" % tier)
 				if i + 1 < data.levels.size() && Root.opensNextLevel(level): assert_true(data.levels[i + 1].unlocked, "%s: level %d's beaten modes opened the next" % [tier, i])
-				#the chain: Sprint needs Countdown, and so on, so every beaten mode was playable when it was beaten
+				#the chain: Countdown needs Sprint, and so on, so every beaten mode was playable when it was beaten
 				var without := level.duplicate(true)
 				without.gamemodeBeat[mode] = false
 				assert_true(Root.isModeUnlocked(without, mode), "%s: %s on level %d was unlocked before it was beaten" % [tier, Root.gameModeDescription[mode].name, i])
@@ -93,10 +93,10 @@ func test_rookie_follows_the_path():
 	var rookie := Personas.get_def("rookie")
 	var data := CareerStart.build("fresh")
 	var next := Personas.chooseRun(rookie, data, [], rng())
-	assert_eq(next.mode, G.GOONCRUSHER, "a new player starts with Countdown")
+	assert_eq(next.mode, G.SPRINT, "a new player starts with Sprint")
 	assert_eq(next.level, 0, "on the only open level")
-	data.levels[next.level].gamemodeBeat[G.GOONCRUSHER] = true
-	assert_eq(Personas.chooseRun(rookie, data, [], rng()).mode, G.SPRINT, "then the mode it opened")
+	data.levels[next.level].gamemodeBeat[G.SPRINT] = true
+	assert_eq(Personas.chooseRun(rookie, data, [], rng()).mode, G.GOONCRUSHER, "then the mode it opened")
 
 func test_a_losing_streak_sends_the_rookie_back_to_farm():
 	var rookie := Personas.get_def("rookie")

@@ -239,7 +239,7 @@ func buildGameSummary():
 	if not discovered.is_empty(): notes.push_back("New in the Goonopedia: " + listed(discovered, 4))
 	if not blueprinted.is_empty(): notes.push_back("Blueprint: a free upgrade to " + listed(blueprinted, 4))
 	var next := Unlocks.nextUnlock()
-	if unlocked.is_empty() && not next.is_empty() && Unlocks.canAfford(next.uid): notes.push_back("Ready to buy in the Goonopedia: " + next.name)
+	if unlocked.is_empty() && not next.is_empty() && Unlocks.canAfford(next.uid): notes.push_back("Ready to unlock in Pickups: " + next.name)
 	var advice = Settings.take_advisor_message()
 	if advice != "": notes.push_back(advice)
 	if not notes.is_empty(): addFooterNote("   -   ".join(notes))

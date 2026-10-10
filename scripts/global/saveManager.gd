@@ -4,7 +4,7 @@ extends Node
 #The demo and the full game share this file: load_data() merges each save with the current defaults
 #(migrate()) before anything reads it.
 
-const SAVE_VERSION := 9 #6: the unlock system (Unlocks, meta.unlocks, meta.lifetime, car gem prices). 7: mode tiers (ModeTiers).
+const SAVE_VERSION := 11 #11: most tree roots start locked (keepOldStarters). 10: the gift box games joined the Casino tree (mergePrizeUnlocks). 6: the unlock system (Unlocks, meta.unlocks, meta.lifetime, car gem prices). 7: mode tiers (ModeTiers).
 #8: the road atlas (30 levels in 6 regions, the Marathon road, meta.carClears). 9: the "audi" became the "supercar".
 #Saves older than FIRST_KEPT_VERSION start over (the author's call when the unlocks went in, and again for the road
 #atlas): the old file is copied beside the save as <name>.v<version>.tres, then a new save replaces it.
@@ -64,6 +64,8 @@ func migrate() -> bool:
 	for section in defaults.meta:
 		if not playerData.meta.get(section) is Dictionary: playerData.meta[section] = {}
 	for old in RENAMED_CARS: renameCar(old, RENAMED_CARS[old])
+	if playerData.saveVersion >= FIRST_KEPT_VERSION && playerData.saveVersion < 10: mergePrizeUnlocks()
+	if playerData.saveVersion >= FIRST_KEPT_VERSION && playerData.saveVersion < 11: keepOldStarters()
 	for defaultCar in defaults.cars:
 		var saved = playerData.cars.filter(func(c): return c.name == defaultCar.name)
 		if saved.is_empty():
@@ -86,6 +88,26 @@ func migrate() -> bool:
 	playerData.gameTier = ModeTiers.clampTier(playerData.gameTier)
 	playerData.saveVersion = SAVE_VERSION
 	return before != var_to_str([playerData.cars, playerData.levels, playerData.saveVersion, playerData.selectedCar, playerData.selectedLevel, playerData.gameMode, playerData.gameTier, playerData.meta])
+
+#version 11: only the Fuel Can, the Coin and the Claw Crane start open. These were open on every older save
+#without being saved, so such a save keeps them
+const OLD_STARTERS := ["health", "engine", "magnet", "horn", "nitro", "speedtrap", "ffwd"]
+
+func keepOldStarters() -> void:
+	for id in OLD_STARTERS: playerData.meta.unlocks["pickup:" + id] = true
+
+#version 10: the gift box games (old unlock "prize:<game>") became Casino pickups, one unlock for the drop and
+#the box game: old game id -> the pickup that now opens it (CrushPrizes.GAMES)
+const PRIZE_PICKUPS := {"claw": "claw", "shuffle": "shuffle", "scratch": "scratch", "press": "press", "deal": "deal", "pachinko": "pachinko", "slot": "slotmachine", "pusher": "pusher"}
+
+#a game bought on the old ladder opens its pickup, and the Slot Machine, which every save before version 10
+#started with as the Casino tree's root, stays open
+func mergePrizeUnlocks() -> void:
+	var unlocks: Dictionary = playerData.meta.unlocks
+	for game in PRIZE_PICKUPS:
+		if unlocks.has("prize:" + game): unlocks["pickup:" + PRIZE_PICKUPS[game]] = true
+		unlocks.erase("prize:" + game)
+	unlocks["pickup:slotmachine"] = true
 
 #cars whose id changed: old name -> new name (version 9)
 const RENAMED_CARS := {"audi": "supercar"}
@@ -245,7 +267,7 @@ func currentLevelPassed(levelIndex := -1, mode := -1, tier := -1) -> int:
 		#the demo unlocks the level for the full game but doesn't open the menu on a level it can't play
 		if not (Root.IS_DEMO && next >= Root.DEMO_LEVEL_COUNT):
 			playerData.selectedLevel = next
-			playerData.gameMode = Root.gameModes.GOONCRUSHER
+			playerData.gameMode = Root.FIRST_MODE
 	elif playerData.selectedLevel == levelIndex:
 		var unbeaten = Root.MODE_PATH.filter(func(m): return not level.gamemodeBeat.get(m, false) && Root.isModePlayable(level, m))
 		if not unbeaten.is_empty(): playerData.gameMode = unbeaten[0]

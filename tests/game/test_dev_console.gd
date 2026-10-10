@@ -43,7 +43,7 @@ func test_unlock_levels_and_modes():
 		assert_true(level.unlocked, "%s unlocked" % level.name)
 		for mode in [M.GOONCRUSHER, M.SPRINT, M.GOONPOCALYPSE, M.MARATHON, M.DEFENSE]:
 			assert_true(Root.isModeUnlocked(level, mode), "%s open on %s" % [M.find_key(mode), level.name])
-	assert_true(Root.isModePlayable(SaveManager.playerData.levels[0], M.MARATHON), "Marathon opens with Sprint beaten")
+	assert_true(Root.isModePlayable(SaveManager.playerData.levels[0], M.MARATHON), "Marathon opens with Countdown beaten")
 	assert_true(SaveManager.playerData.levels[0].gamemodeBeat[M.MARATHON], "unlock modes credits the Marathon too")
 	Console.execute("unfinished on")
 	assert_true(Root.isModePlayable(SaveManager.playerData.levels[0], M.DEFENSE), "unfinished on lets any mode start")
@@ -51,7 +51,7 @@ func test_unlock_levels_and_modes():
 	var defaults = PlayerData.new().levels
 	for i in defaults.size():
 		assert_eq(SaveManager.playerData.levels[i].unlocked, defaults[i].unlocked, "level %d back to the default" % i)
-		assert_false(Root.isModeUnlocked(SaveManager.playerData.levels[i], M.SPRINT), "level %d: Sprint locked again" % i)
+		assert_false(Root.isModeUnlocked(SaveManager.playerData.levels[i], M.GOONCRUSHER), "level %d: Countdown locked again" % i)
 
 func test_levels_by_id():
 	var levels = SaveManager.playerData.levels

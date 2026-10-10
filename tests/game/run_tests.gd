@@ -3,7 +3,7 @@ extends SceneTree
 #Runs every test_*.gd in tests/game and exits with the number of failed tests.
 #  Godot_console.exe --headless --path . -s res://tests/game/run_tests.gd
 #Autoloads (Settings, Root, SaveManager...) are loaded as usual. Tests must not write the save
-#or the settings files. `-- --only=world_recipe` runs only the files whose names contain that text.
+#or the settings files; anything one does save goes to a scratch file (SaveManager.save_path). `-- --only=world_recipe` runs only the files whose names contain that text.
 #Every test starts with every pickup unlocked (Unlocks.allOpen), whatever the save has opened; tests of
 #the unlocks themselves turn it off.
 
@@ -14,6 +14,7 @@ func _initialize():
 
 func run() -> void:
 	await process_frame #let the autoloads finish _ready
+	root.get_node("SaveManager").save_path = "user://test_scratch_save.tres" #a test that buys through a menu flushes the save: never onto the player's
 	var unlocks = load("res://scripts/global/unlocks.gd") #loaded, not named: naming it here compiles it before the autoloads exist
 	var failed := 0
 	var passed := 0

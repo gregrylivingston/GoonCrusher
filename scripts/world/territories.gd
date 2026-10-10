@@ -68,7 +68,8 @@ const DATA := {
 		"blurb": "Pits, foundries and yards. Everything that shoots, burns or blows up. Close the gap fast."},
 }
 
-## Sprint's station distance (px) by region, first to last (Level.sprintDistance): the drive grows with the road
+## Sprint's station distance (px) by region, first to last (Level.sprintDistance): the drive grows with the road.
+## A Sprint is this x its tier's ModeTiers.SPRINT_DISTANCE, a Marathon leg this x its index 0.
 const SPRINT_DISTANCE := Vector2(20000.0, 34000.0)
 const NO_STEP := {"speed": 1.0, "damage": 1.0, "crush": 1.0}
 
