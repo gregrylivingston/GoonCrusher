@@ -55,7 +55,6 @@ func test_the_record_book_keeps_each_cars_best():
 func test_a_trial_has_no_goons_drops_or_night():
 	for mode in Modes.inCategory(Modes.Category.TRIAL):
 		assert_false(Modes.hasGoons(mode), "%s has no goons" % M.find_key(mode))
-		assert_true(Modes.isFixedMap(mode), "%s drives a fixed course" % M.find_key(mode))
 		assert_true(Modes.drops(mode) != Modes.Drops.ALL, "%s rolls no drops" % M.find_key(mode))
 		assert_false(Modes.fillsBoxes(mode))
 	for mode in [M.GOONCRUSHER, M.SPRINT, M.BOUNTY, M.BLACKOUT]:
@@ -74,15 +73,19 @@ func test_bounty_and_rally_tiers_ask_more():
 	assert_true(ModeTiers.goalText(M.RALLY, ModeTiers.HARD, 300.0).contains("gold"))
 
 func test_the_cone_course_fits_its_lot():
-	var gates := ConeCourse.layout(Vector2.ZERO)
-	assert_eq(gates.size(), ConeCourse.LANES.size() * ConeCourse.PER_LANE)
+	var made := ConeCourse.gates(Vector2.ZERO)
+	var gates: PackedVector2Array = made[0]
+	assert_gt(gates.size(), 30, "a course's worth of gates")
 	var lot := Rect2(WorldGen.LOT_RECT)
-	for gate in gates:
-		for side in [-1.0, 1.0]: assert_true(lot.has_point(gate + Vector2(0.0, ConeCourse.GATE_HALF * side)), "a cone at %s is on the lot" % gate)
+	var turned := 0.0
+	for i in gates.size():
+		for side in [-1.0, 1.0]: assert_true(lot.has_point(gates[i] + made[1][i] * ConeCourse.GATE_HALF * side), "a cone at %s is on the lot" % gates[i])
+		if i > 0: assert_gt(gates[i].distance_to(gates[i - 1]), ConeCourse.GATE_HALF * 2.0, "gate %d is clear of the one before" % i)
+		if i > 1: turned += absf((gates[i - 1] - gates[i - 2]).angle_to(gates[i] - gates[i - 1]))
+		for other in i - 3: assert_gt(gates[i].distance_to(gates[other]), ConeCourse.GATE_HALF * 3.0, "gates %d and %d don't share cones" % [i, other])
 	assert_true(lot.has_point(ConeCourse.START), "the car starts on it too")
 	assert_gt(ConeCourse.GATE_HALF, ConeCourse.PASS_RADIUS, "the car has to go between the cones")
-	assert_gt(gates[1].x, gates[0].x, "the first lane runs east")
-	assert_gt(gates[ConeCourse.PER_LANE].x, gates[ConeCourse.PER_LANE + 1].x, "the second comes back")
+	assert_gt(turned, TAU * 2.0, "it winds: slaloms and two hairpins")
 
 func test_score_trials_have_a_target_and_a_clock():
 	for tier in range(ModeTiers.EASY, ModeTiers.HARD):
@@ -177,3 +180,7 @@ func test_a_race_starts_abreast_not_nose_to_tail():
 		seen.push_back(spot)
 	assert_true(Rivals.gridSlot(1, 0, Vector2.ZERO, Vector2.RIGHT).y * Rivals.gridSlot(2, 0, Vector2.ZERO, Vector2.RIGHT).y < 0.0, "either side of the player")
 	assert_eq(Rivals.gridSlot(1, 1, Vector2.ZERO, Vector2.RIGHT).x, -Rivals.LINE_BACK, "a blocked slot moves a line back")
+
+func test_only_the_time_trials_drive_the_same_map_every_run():
+	for mode in M.values():
+		assert_eq(Modes.isFixedMap(mode), mode in [M.RALLY, M.FLATOUT, M.HOTLAP, M.CONES], "%s" % M.find_key(mode))

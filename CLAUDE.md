@@ -93,7 +93,8 @@ This file is the map and the rules. The code and data files are the source of tr
 - **Walls:** `World.isWall(collider)`, mirrored in `GoonBody::advance`; any `CharacterBody2D` is treated as a goon.
 - **Terrain** is described once, in `World.TERRAIN`. Use `World.isPassable/isLethal/...`, never compare against a terrain value. `World`'s runtime queries are called from `integrate()` and must stay allocation-free; they answer from the native `WorldGrid`, so a rule change goes in both the GDScript and `native/src/world_grid.cpp` (parity tests compare them).
 - **World workers** (`WorldGen`, `WorldField`, `ChunkRecipe`) touch only their job Dictionary: no nodes, autoloads or global RNG (use `WorldGen.ihash`). Never build a raster or recipe on the main thread in a run; keep `ChunkView` steps inside `TileManager.APPLY_BUDGET_USEC`.
-- **Explosions:** `Root.levelRoot.explode(pos)` (pooled); never instantiate `explosionScene` per blast.
+- **Explosions:** `Root.levelRoot.explode(pos, size)` (pooled; `Fx.Size`); never instantiate `explosionScene` per blast. Everything round the fireball is `Fx` (`scene/fx/fx.gd`), the level's one door for event effects.
+- **Particles** go through `FxParticles` (`scene/fx/fx_particles.gd`): add a `Kind` there, not another particle class. Effects are show only, with their own `RandomNumberGenerator`.
 - **Stats:** `clover` is labeled "Clover" (drop chance), `luck` "Dice" (prize quality). Oil goes through `fuelBurn()`, armor once inside `damage()`.
 - Goon animations are one PNG per frame (an atlas was measured and dropped). Pickup materials are shared; don't set `resource_local_to_scene` on them.
 - `randi() % n - 1` indexing in `Region.gd` and `gameSummary.gd` looks wrong but works (index -1 wraps).

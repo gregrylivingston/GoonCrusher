@@ -15,7 +15,8 @@ func _init(explosionScene: PackedScene) -> void:
 	name = "Explosions"
 	z_index = 2 #over goons and the car, as when they were the car's children
 
-func explode(worldPosition: Vector2) -> AnimatedSprite2D:
+## `size` scales the fireball (Fx.BLAST "core")
+func explode(worldPosition: Vector2, size := 1.0) -> AnimatedSprite2D:
 	var e: AnimatedSprite2D
 	if not idle.is_empty(): e = idle.pop_back()
 	elif live.size() >= MAX_LIVE: e = live.pop_front()
@@ -26,7 +27,7 @@ func explode(worldPosition: Vector2) -> AnimatedSprite2D:
 		add_child(e)
 	live.push_back(e)
 	e.global_position = worldPosition
-	e.fire()
+	e.fire(size)
 	return e
 
 func onFinished(e: AnimatedSprite2D) -> void:

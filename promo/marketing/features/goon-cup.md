@@ -5,7 +5,7 @@
 ## What it is
 - **Cannonball:** five rivals, one station, no set route.
 - **Circuit Race:** three laps of a track cut through the level.
-- **Demolition Derby:** six cars inside a painted line.
+- **Demolition Derby:** six cars in a walled stadium.
 - **Knockout:** last place is cut every lap.
 - **Keep the Cup:** one trophy; whoever holds it banks time.
 - **Pursuit:** one driver runs for the station with a head start.

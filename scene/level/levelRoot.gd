@@ -4,6 +4,7 @@ var spawnerScene = preload("res://scene/player/spawner.tscn")
 var explosionScene = preload("res://scene/fx/explosion.tscn") #loaded with the level, not with every car
 const BEACON_MATERIAL := preload("res://shader/world_beacon.tres") #shared by every landmark's beacon: dim by day
 var explosions: ExplosionPool
+var fx: Fx #everything round a blast, and the ground's burn marks (scene/fx/fx.gd)
 var playerCar: OverheadCarBody2D
 ## The level's LevelDef (Levels, res://world/levels/<id>.tres). Its clock, spawn tuning and start position
 ## are copied in when the level enters the tree (applyDef). Old scenes without one keep their own values.
@@ -122,6 +123,8 @@ func _ready():
 	BEACON_MATERIAL.set_shader_parameter("night", 0.0) #runs start by day
 	explosions = ExplosionPool.new(explosionScene)
 	add_child(explosions)
+	fx = Fx.new()
+	add_child(fx)
 
 	#add my car
 	var newPosition = def.startPosition if def else $Car.position
@@ -553,7 +556,7 @@ func briefing() -> Array[String]:
 		Root.gameModes.HOTLAP: return ["%d LAPS. YOUR BEST ONE COUNTS" % ModeTiers.HOTLAP_LAPS, "BEAT %s" % Course.clock(lapTarget)]
 		Root.gameModes.CIRCUIT: return ["%d LAPS" % ModeTiers.CIRCUIT_LAPS, "FIRST" if tier >= ModeTiers.HARD else "FINISH IN THE TOP %d" % ModeTiers.CUP_PLACE[tier]]
 		Root.gameModes.KNOCKOUT: return ["LAST PLACE IS OUT EVERY LAP", "BE THE ONE LEFT"]
-		Root.gameModes.DERBY: return ["WRECK THEM ALL", "STAY INSIDE THE LINE"]
+		Root.gameModes.DERBY: return ["WRECK THEM ALL", "HIT THEIR SIDES AND TAILS, NOT THE NOSE"]
 		Root.gameModes.PURSUIT: return ["WRECK THE RUNNER", "RAM THEM BEFORE THEY REACH THE STATION"]
 		Root.gameModes.KEEPCUP: return ["HOLD THE CUP FOR %d SECONDS" % ModeTiers.CUP_HOLD[tier], "GET CLOSE TO WHOEVER HAS IT TO TAKE IT"]
 		Root.gameModes.CANNONBALL: return ["FIRST TO THE STATION" if tier >= ModeTiers.HARD else "TOP %d TO THE STATION" % ModeTiers.CUP_PLACE[tier], "ANY ROUTE. RAM WHO YOU LIKE"]
@@ -730,6 +733,7 @@ func endLevel(levelCompleted: bool, reason, then := ""):  #reason takes Root.end
 	get_tree().paused = true
 
 
-#a pooled explosion at a world position
-func explode(worldPosition: Vector2) -> void:
-	explosions.explode(worldPosition)
+#a pooled explosion at a world position, with its flash, debris, smoke, scorch mark, boom and shake (Fx.blast)
+func explode(worldPosition: Vector2, size: int = Fx.Size.BLAST) -> void:
+	explosions.explode(worldPosition, Fx.BLAST[size].core)
+	fx.blast(worldPosition, size)

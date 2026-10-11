@@ -15,7 +15,8 @@ func _ready():
 func _on_area_2d_body_entered(body):
 	if body is CharacterBody2D:
 		if not body.has_method("getIsPlayer"): return
-		var taker = Coop.creditTo(body) #a friendly guest (Coop) picks it up for the player; a rival guest keeps it
+		var own = get("id") #a GenericPickup's
+		var taker = Coop.pickupFor(body, own if own is String && own != "" else Pickups.idForScene(scene_file_path), powerup) #a friendly guest (Coop) keeps what its car uses and hands the player the rest
 		if taker.getIsPlayer() || taker.isGuest: #a rival car (Rivals) leaves it
 			WorldMap.takeNode(self) #a chunk's own pickup stays gone when the chunk loads again
 			var coins: int = taker.coin

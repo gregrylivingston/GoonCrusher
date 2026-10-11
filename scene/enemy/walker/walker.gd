@@ -127,6 +127,11 @@ static func levelRule(key: String) -> bool:
 	return rules is Dictionary && bool(rules.get(key, false))
 
 const RING_TEXTURE = preload("res://texture/fx/circle_05.png")
+static var RING_MATERIAL := ringMaterial()
+static func ringMaterial() -> CanvasItemMaterial:
+	var m := CanvasItemMaterial.new()
+	m.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	return m
 
 #Giant Marker Style "Tint + ground ring": a ring in the marker color under the giant
 func addGroundRing() -> void:
@@ -136,6 +141,7 @@ func addGroundRing() -> void:
 	var peak = maxf(tint.r, maxf(tint.g, tint.b))
 	ring.modulate = Color(tint.r / peak, tint.g / peak, tint.b / peak, 0.7)
 	ring.z_index = -1
+	ring.material = RING_MATERIAL #the texture is a glow on black: added, the black shows nothing
 	ring.scale = Vector2.ONE * 300.0 / RING_TEXTURE.get_width()
 	add_child(ring)
 

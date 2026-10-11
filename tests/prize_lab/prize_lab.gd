@@ -80,7 +80,7 @@ func _ready() -> void:
 	play.call_deferred()
 
 ## A Level's blast (the Nuke and others): nothing to blow up here
-func explode(_pos: Vector2) -> void: pass
+func explode(_pos: Vector2, _size := 1) -> void: pass
 
 func _exit_tree() -> void:
 	PickupMenu.lab = false

@@ -13,7 +13,7 @@ class_name CarJuice extends Node2D
 ##   - D-4 sound: engine pitch through the gears (the controller's gear rule), tire squeal from slip and a
 ##     backfire pop on lift-off.
 ## Reduce Motion drops the jolts and bounces and calms the lean; Car Shake Off drops the bounces;
-## Driving Effects (gfx/driving_fx) sizes the particles. Particles are pooled, drawn by two nodes.
+## Driving Effects (gfx/driving_fx) sizes the particles. Particles are pooled, drawn by two nodes (FxParticles).
 
 #--- body (D-1, D-2) ---
 const ACCEL_FILTER := 0.3        #share of each tick's acceleration reading kept (a low-pass)
@@ -63,7 +63,7 @@ const BACKFIRE_CHANCE := 0.55
 const BACKFIRE_GAP := 0.8        #seconds between pops
 
 #--- ground and sparks (D-3) ---
-enum Kind { PUFF, BITS, SPRAY }
+const Kind = FxParticles.Kind #the kit's kinds; the trails use PUFF, BITS and SPRAY
 ## Per surface name (World.TERRAIN): [color, amount, kind]. Missing surfaces leave no trail.
 const TRAILS := {
 	"SAND": [Color(0.86, 0.76, 0.55, 0.5), 1.0, Kind.PUFF],
@@ -140,8 +140,8 @@ var flameColor := Color.WHITE
 var flameTier := 0
 var backfireLeft := 0.0
 
-var dust: Particles
-var sparks: Particles
+var dust: FxParticles
+var sparks: FxParticles
 
 var sink := 0.0                  #0 afloat to 1 sunk: deep water under the car (show only)
 var wasDeep := false
@@ -169,8 +169,8 @@ func _ready() -> void:
 	glow.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
 	glow.light_mode = CanvasItemMaterial.LIGHT_MODE_UNSHADED
 	material = glow
-	dust = Particles.new(false, 0)
-	sparks = Particles.new(true, 2)
+	dust = FxParticles.new(false, 0)
+	sparks = FxParticles.new(true, 2)
 	sparks.material = glow
 	for n in [dust, sparks]: add_child(n)
 	var def := Levels.current()
@@ -503,106 +503,9 @@ func _draw() -> void:
 			draw_colored_polygon(PackedVector2Array([Vector2(rearX, y - 11), Vector2(rearX - length, y), Vector2(rearX, y + 11)]), Color(flameColor, 0.9 * t))
 			draw_colored_polygon(PackedVector2Array([Vector2(rearX, y - 5), Vector2(rearX - length * 0.55, y), Vector2(rearX, y + 5)]), Color(1, 1, 1, 0.8 * t))
 		var r := 70.0 + 30.0 * flameTier
-		draw_texture_rect(Particles.SOFT, Rect2(Vector2(rearX - r * 0.6, -r), Vector2(r, r) * 2.0), false, Color(flameColor, 0.55 * t))
+		draw_texture_rect(FxParticles.SOFT, Rect2(Vector2(rearX - r * 0.6, -r), Vector2(r, r) * 2.0), false, Color(flameColor, 0.55 * t))
 	if backfireLeft > 0.0:
 		var t := backfireLeft / BACKFIRE_SECS
 		var at: Vector2 = to_local(car.smoke.global_position) + Vector2(-10, 0)
-		draw_texture_rect(Particles.SOFT, Rect2(at - Vector2(28, 28), Vector2(56, 56)), false, Color(1.0, 0.6, 0.2, 0.9 * t))
+		draw_texture_rect(FxParticles.SOFT, Rect2(at - Vector2(28, 28), Vector2(56, 56)), false, Color(1.0, 0.6, 0.2, 0.9 * t))
 		draw_circle(at, 8.0 * t, Color(1.0, 0.95, 0.7, t))
-
-#--- pooled particles -----------------------------------------------------------------------------
-
-## A ring of particles in world space, drawn by one node. Puffs grow and slow, bits and spray fly and
-## fade, sparks (`streaks`) draw as short lines.
-class Particles extends Node2D:
-	static var SOFT := softDot() #white, fading to clear at the rim
-
-	static func softDot() -> GradientTexture2D:
-		var g := Gradient.new()
-		g.set_color(0, Color(1, 1, 1, 1))
-		g.set_color(1, Color(1, 1, 1, 0))
-		g.add_point(0.45, Color(1, 1, 1, 0.6))
-		var t := GradientTexture2D.new()
-		t.gradient = g
-		t.fill = GradientTexture2D.FILL_RADIAL
-		t.fill_from = Vector2(0.5, 0.5)
-		t.fill_to = Vector2(1.0, 0.5)
-		t.width = 64
-		t.height = 64
-		return t
-	var streaks := false
-	var pos := PackedVector2Array()
-	var vel := PackedVector2Array()
-	var age := PackedFloat32Array()
-	var life := PackedFloat32Array()
-	var size := PackedFloat32Array()
-	var col := PackedColorArray()
-	var kind := PackedByteArray()
-	var next := 0
-	var alive := 0
-
-	func _init(isStreaks: bool, z: int) -> void:
-		streaks = isStreaks
-		top_level = true
-		z_as_relative = false
-		z_index = z
-		set_process(false)
-
-	func resize(n: int) -> void:
-		pos.resize(n)
-		vel.resize(n)
-		age.resize(n)
-		life.resize(n)
-		size.resize(n)
-		col.resize(n)
-		kind.resize(n)
-		life.fill(0.0)
-		age.fill(0.0)
-		next = 0
-		alive = 0
-		queue_redraw()
-
-	func spawn(at: Vector2, v: Vector2, seconds: float, s: float, c: Color, k := 0) -> void:
-		var n := pos.size()
-		if n == 0: return
-		if life[next] <= 0.0: alive += 1
-		pos[next] = at
-		vel[next] = v
-		age[next] = 0.0
-		life[next] = seconds
-		size[next] = s
-		col[next] = c
-		kind[next] = k
-		next = (next + 1) % n
-		set_process(true)
-
-	func _process(delta: float) -> void:
-		for i in pos.size():
-			if life[i] <= 0.0: continue
-			age[i] += delta
-			if age[i] >= life[i]:
-				life[i] = 0.0
-				alive -= 1
-				continue
-			pos[i] += vel[i] * delta
-			vel[i] *= 1.0 - minf((3.0 if kind[i] == CarJuice.Kind.PUFF else 1.5) * delta, 1.0)
-		queue_redraw()
-		if alive <= 0:
-			alive = 0
-			set_process(false)
-
-	func _draw() -> void:
-		for i in pos.size():
-			if life[i] <= 0.0: continue
-			var t := age[i] / life[i]
-			var c := col[i]
-			if streaks:
-				c.a = 1.0 - t
-				draw_line(pos[i], pos[i] - vel[i] * 0.03, c, size[i])
-			elif kind[i] == CarJuice.Kind.PUFF:
-				c.a *= (1.0 - t) * minf(t * 6.0, 1.0)
-				var r := size[i] * (1.0 + 2.0 * t)
-				draw_texture_rect(SOFT, Rect2(pos[i] - Vector2(r, r), Vector2(r, r) * 2.0), false, c)
-			else:
-				c.a *= 1.0 - t * t
-				draw_circle(pos[i], size[i] * (1.0 - 0.4 * t), c)

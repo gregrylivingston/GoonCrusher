@@ -1,6 +1,6 @@
 class_name TrialScore extends Node
 ## A Trial won by reaching a score before the clock runs out (docs/MODES.md), on a
-## fixed map with no goons: Smash Run counts the breakables the car smashes (Level.propSmashed), Drift Trial
+## map with no goons, new every run: Smash Run counts the breakables the car smashes (Level.propSmashed), Drift Trial
 ## scores slides. Reaching the target wins; the time it took goes in the record book (SaveManager.recordCourse).
 ## Level adds one in those modes; HudObjective shows the score.
 ##

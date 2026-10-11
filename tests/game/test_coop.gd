@@ -194,3 +194,22 @@ func test_the_leash_warns_before_it_pulls():
 	assert_almost_eq(CoopRun.leashShare(Vector2(CoopRun.LEASH.x * 0.5, 0)), 0.5, 0.001)
 	assert_almost_eq(CoopRun.leashShare(Vector2(10, -CoopRun.LEASH.y)), 1.0, 0.001, "the nearer limit counts")
 	assert_true(HudChance.LEASH_WARN < 1.0)
+
+func test_a_friend_keeps_what_its_car_uses():
+	var player = add_child_autofree(load("res://scene/car/sedan/sedan.tscn").instantiate())
+	var guest = load("res://scene/car/sedan/sedan.tscn").instantiate()
+	guest.isPlayer = false
+	guest.isGuest = true
+	add_child_autofree(guest)
+	Coop.join(1)
+	for id in ["horn", "nitro", "wrench", "health"]: assert_eq(Coop.pickupFor(guest, id, id), guest, "%s is the guest's to use" % id)
+	for id in ["fuel", "jerry", "purse", "gem"]: assert_eq(Coop.pickupFor(guest, id, id), player, "%s goes to the player" % id)
+	assert_eq(Coop.pickupFor(guest, "", "coin"), player)
+	assert_eq(Coop.pickupFor(guest, "", "engine"), guest, "a stat pickup tunes the car that took it")
+	assert_eq(Coop.pickupFor(player, "horn", "horn"), player)
+	var gadget = add_child_autofree(Pickups.make("horn"))
+	gadget._on_area_2d_body_entered(guest)
+	assert_eq(guest.heldItem, "horn", "the gadget is in the guest's own Fire slot")
+	assert_eq(player.heldItem, "")
+	runOf(Root.gameModes.CANNONBALL)
+	assert_eq(Coop.pickupFor(guest, "fuel", "fuel"), guest, "a rival keeps everything")

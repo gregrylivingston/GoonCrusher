@@ -103,6 +103,19 @@ static func creditTo(by: OverheadCarBody2D) -> OverheadCarBody2D:
 	if by.isGuest && not isRival(runMode()) && is_instance_valid(Root.playerCar): return Root.playerCar
 	return by
 
+## The car that gets a pickup `by` drove over. A rival guest keeps everything. A friendly guest keeps what a
+## car uses (repairs, tuning, boosts, gadgets) and hands the player what a run pays or only the player needs
+## (coins, stars, gems, loot, fuel: the guest burns none).
+const KEPT_KINDS := [Pickups.K.TUNE, Pickups.K.BOOST, Pickups.K.GADGET, Pickups.K.MOVE]
+const PLAYERS_SUPPLIES := ["fuel", "jerry"]
+static func pickupFor(by: OverheadCarBody2D, id: String, powerup: String) -> OverheadCarBody2D:
+	if not by.isGuest: return by
+	if Pickups.has(id):
+		var kind: int = Pickups.def(id).kind
+		if kind in KEPT_KINDS || (kind == Pickups.K.SUPPLY && id not in PLAYERS_SUPPLIES): return by
+	elif powerup == "health" || powerup in OverheadCarBody2D.UPGRADEABLE_STATS: return by
+	return creditTo(by)
+
 ## The car a goon at `from` goes for: the nearer of the two
 static func prey(from: Vector2) -> OverheadCarBody2D:
 	var player: OverheadCarBody2D = Root.playerCar

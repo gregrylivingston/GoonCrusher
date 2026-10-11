@@ -35,6 +35,8 @@ The first update since the 0.1 demo, and close to a rebuilt game. Old demo saves
 - The Wilds has world events: a stampede and a flash flood. The Hay Wagon and the Bandit Barge join them (full game).
 - Water has depth: shallows slow you, wading depth drags and chips the hull, deep water hurts fast. Goons drown in it.
 - Tree crowns pass over the car and can hide goons.
+- Tire marks take the color of the ground, fade out instead of vanishing, and show in any slide. Sand, mud and snow keep your ruts.
+- Explosions hit harder: a flash, a shockwave, flames, flying debris, smoke that hangs and a scorch mark left on the ground, in three sizes. They boom, and the nearer you are the more the screen shakes and the pad rumbles.
 - Raider Road, Hunting Grounds, The Sprawl and The Works: 20 more levels (full game).
 
 ### Modes
@@ -111,6 +113,7 @@ The first update since the 0.1 demo, and close to a rebuilt game. Old demo saves
 - Presets: Potato, Low, Medium, High. The game picks one on first run and can step down after measuring.
 - Render Resolution down to 540p, a frame rate limit, a simple headlight option and effect levels for low-end PCs.
 - Safe mode: if the game fails to reach the menu twice, it starts on the lightest settings and asks whether to keep them.
+- A Blast Effects level joins the other effect levels.
 - Effect levels never change rewards or results.
 
 ### Controls and accessibility

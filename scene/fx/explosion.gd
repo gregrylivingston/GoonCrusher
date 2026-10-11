@@ -10,21 +10,23 @@ const FRAMES = [
 ]
 
 var pooled := false
+var size := 1.0 #scales the whole fireball
 signal finished_burning(explosion: AnimatedSprite2D)
 
 func _ready():
 	if not pooled: fire()
 
-func fire() -> void:
+func fire(fireSize := 1.0) -> void:
+	size = fireSize
 	sprite_frames = FRAMES[randi() % FRAMES.size()]
-	var myScale = randf_range(0.2,0.5)
+	var myScale = randf_range(0.2,0.5) * size
 	scale = Vector2( myScale , myScale )
 	rotation = 0.0
 	visible = true
 	play(&"default")
 
 func _on_animation_finished():
-	if scale.x < 1.2:
+	if scale.x < 1.2 * size:
 		create_tween().tween_property(self , "scale" , scale * randf_range(1.02,1.08) , 0.1)
 		play()
 	elif pooled:

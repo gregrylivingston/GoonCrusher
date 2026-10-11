@@ -43,7 +43,7 @@ const SMASH_QUOTA := [0, 30, 50, 70]
 const SMASH_SECONDS := [0.0, 90.0, 90.0, 90.0]
 const DRIFT_TARGET := [0, 1500, 3000, 5000]
 const DRIFT_SECONDS := [0.0, 120.0, 120.0, 120.0]
-const CONES_SECONDS := [0.0, 90.0, 70.0, 55.0]
+const CONES_SECONDS := [0.0, 75.0, 60.0, 48.0]
 ## The Goon Cup: the place a win needs, of the six cars (Rivals.COUNT rivals and the player)
 const CUP_PLACE := [0, 3, 2, 1]
 ## Loops (Course.loopRoute): laps of Hot Lap (the best one counts) and Circuit Race; Knockout runs one fewer

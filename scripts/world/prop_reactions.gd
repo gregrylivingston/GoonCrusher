@@ -89,7 +89,7 @@ var springs: Array = []  #[target Node2D, kind, age, amplitude, local direction,
 var sprays: Array = []   #[world position, seconds left]
 var flights: Array = []  #[sprite, from, to, spin, age] knocked cones in the air
 var bits: Bits
-var dust: CarJuice.Particles
+var dust: FxParticles
 var tags: SmashTags #hero props and their MPH smash tags (R-12)
 var particleScale := 1.0
 var calm := false
@@ -105,7 +105,7 @@ func _ready() -> void:
 	bits = Bits.new()
 	bits.resize(BIT_POOL)
 	add_child(bits)
-	dust = CarJuice.Particles.new(false, DUST_Z)
+	dust = FxParticles.new(false, DUST_Z)
 	dust.resize(96)
 	add_child(dust)
 	tags = SmashTags.new()
@@ -392,21 +392,21 @@ func splash(at: Vector2, radius: float) -> void:
 	var n := roundi(70.0 * particleScale)
 	for i in n:
 		var v := Vector2.from_angle(TAU * i / maxi(n, 1) + randf_range(-0.1, 0.1)) * radius * randf_range(1.2, 2.0)
-		dust.spawn(at, v, randf_range(0.5, 0.9), randf_range(3.0, 6.0), WATER, CarJuice.Kind.SPRAY)
-	for i in roundi(10 * particleScale): dust.spawn(at + Vector2.from_angle(randf() * TAU) * radius * 0.5, Vector2.ZERO, 0.9, 30.0, Color(WATER, 0.35), CarJuice.Kind.PUFF)
+		dust.spawn(at, v, randf_range(0.5, 0.9), randf_range(3.0, 6.0), WATER, FxParticles.Kind.SPRAY)
+	for i in roundi(10 * particleScale): dust.spawn(at + Vector2.from_angle(randf() * TAU) * radius * 0.5, Vector2.ZERO, 0.9, 30.0, Color(WATER, 0.35), FxParticles.Kind.PUFF)
 
 ## A burst of wet bits thrown along `dir` (a pumpkin splat, Spill)
 func splatter(at: Vector2, dir: Vector2, col: Color) -> void:
 	for i in roundi(16.0 * particleScale):
 		var v := (dir * randf_range(40.0, 180.0)).rotated(randf_range(-1.1, 1.1)) + Vector2.from_angle(randf() * TAU) * 30.0
-		dust.spawn(at, v, randf_range(0.4, 0.8), randf_range(4.0, 9.0), col, CarJuice.Kind.SPRAY)
+		dust.spawn(at, v, randf_range(0.4, 0.8), randf_range(4.0, 9.0), col, FxParticles.Kind.SPRAY)
 
 func puff(at: Vector2, dir: Vector2, k: float, heavy: bool) -> void:
 	var n := roundi((5.0 if heavy else 3.0) * (0.5 + k) * particleScale)
 	var col := SNOW_DUST if snowy else DUST
 	for i in n:
 		var v := (-dir * randf_range(20.0, 70.0)).rotated(randf_range(-1.2, 1.2))
-		dust.spawn(at + Vector2(randf_range(-14, 14), randf_range(-14, 14)), v, randf_range(0.5, 0.9), randf_range(10.0, 18.0) * (1.0 + k * 0.5), col, CarJuice.Kind.PUFF)
+		dust.spawn(at + Vector2(randf_range(-14, 14), randf_range(-14, 14)), v, randf_range(0.5, 0.9), randf_range(10.0, 18.0) * (1.0 + k * 0.5), col, FxParticles.Kind.PUFF)
 
 func updateSprays(delta: float) -> void:
 	for i in range(sprays.size() - 1, -1, -1):
@@ -419,7 +419,7 @@ func updateSprays(delta: float) -> void:
 		var whole := int(n) + (1 if randf() < n - int(n) else 0)
 		for j in whole:
 			var v := Vector2.from_angle(randf() * TAU) * randf_range(60.0, 160.0)
-			dust.spawn(s[0], v, randf_range(0.4, 0.8), randf_range(2.0, 4.0), WATER, CarJuice.Kind.SPRAY)
+			dust.spawn(s[0], v, randf_range(0.4, 0.8), randf_range(2.0, 4.0), WATER, FxParticles.Kind.SPRAY)
 
 ## Where the player's car is, for the decor that bends away from it (world_decor.gdshader)
 const FAR := Vector2(1e6, 1e6)

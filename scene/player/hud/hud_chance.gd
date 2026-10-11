@@ -224,6 +224,7 @@ func _draw() -> void:
 	drawMark()
 	drawGate()
 	drawQuarry()
+	drawRivals()
 	drawPartner()
 	if flashT > 0.0: drawShockwave(1.0 - flashT / SHOCK_SECONDS)
 	if subtitle != "": drawSubtitle()
@@ -386,6 +387,15 @@ func drawQuarry() -> void:
 		drawPointer(level.cup.cupPosition(), "CUP", HudTheme.GOLD, HudTheme.MODE_ICONS.get(Root.gameModes.KEEPCUP), 0.0, Vector2.ZERO, 0.0)
 	elif level.runMode == Root.gameModes.PURSUIT && level.get("rivals") != null && level.rivals.runner() != null:
 		drawPointer(level.rivals.runner().global_position, "RUNNER", HudTheme.BAD, HudTheme.MODE_ICONS.get(Root.gameModes.PURSUIT), 0.0, Vector2.ZERO, 0.0)
+
+#Demolition Derby: an arrow at every rival that is off screen
+func drawRivals() -> void:
+	var level = Root.levelRoot
+	if not is_instance_valid(level) || level.get("derby") == null || level.get("rivals") == null || not is_instance_valid(GameUI.carOf(self)): return
+	for rival in level.rivals.cars:
+		if not is_instance_valid(rival) || rival.isDestroyed: continue
+		if Rect2(Vector2.ZERO, size).grow(-40.0).has_point(GameUI.canvasOf(self) * rival.global_position): continue
+		drawPointer(rival.global_position, "RIVAL", HudTheme.BAD, HudTheme.MODE_ICONS.get(Root.gameModes.DERBY), 0.0, Vector2.ZERO, 0.0)
 
 #a course with no station (Cone Course): the pointer at its next gate, when that is off screen
 func drawGate() -> void:

@@ -1019,14 +1019,17 @@ func activeCarEffects(delta):
 
 
 	##FX and Audio (the player's squeal follows the tires' slip: CarJuice)
-	if ( (_car_input.braking || _car_input.handbrake) && velocity.length() > 200.0) || ( velocity.length() > 500.0 && abs(_car_input.steering) > 0.2):
-		match Settings.get_value("gfx/tire_marks"):
-			1: for i in [tires[0], tires[1]]: createTiremarks(i, 6.0) #Short: rear tires only
-			2: for i in tires: createTiremarks(i, 20.0)
+	var speedNow := velocity.length()
+	var braked: bool = ( (_car_input.braking || _car_input.handbrake) && speedNow > 200.0) || ( speedNow > 500.0 && abs(_car_input.steering) > 0.2)
+	var skidding: bool = braked || (speedNow > Tiremark.SLIP_SPEED && CarJuice.slipAngle(velocity, rotation) > Tiremark.SLIP)
+	var marks: int = Settings.get_value("gfx/tire_marks")
+	if marks > 0 && airborneTicks == 0:
+		#Short: rear tires only. Out of a skid only soft ground marks, and only under the rear tires (Tiremark.marks)
+		for i in (tires if marks == 2 && skidding else [tires[0], tires[1]]): createTiremarks(i, 20.0 if marks == 2 else 6.0, skidding, speedNow)
+	else: tiremark.clear()
+	if braked:
 		if not tiresAudio.playing && not is_instance_valid(juice): tiresAudio.play()
-	else:
-		if not is_instance_valid(juice): tiresAudio.stop()
-		tiremark = {}
+	elif not is_instance_valid(juice): tiresAudio.stop()
 
 	var bright = _car_input.braking || _car_input.handbrake || gear == -1
 	if bright != tailLampsBright:
@@ -1068,14 +1071,20 @@ var tiremarkScene = preload("res://scene/fx/tiremark.tscn")
 var tiremark = {}
 
 @onready var tires = [$sprite/tireLocation, $sprite/tireLocation2, $sprite/tireLocation3, $sprite/tireLocation4]
-func createTiremarks(i, lifetime: float):
+func createTiremarks(i, lifetime: float, skidding: bool, speed: float):
 	var id = i.get_instance_id()
+	var surface := World.surfaceAt(i.global_position)
+	if not Tiremark.marks(surface, skidding, speed):
+		tiremark.erase(id)
+		return
 	var start = i.global_position
-	if tiremark.has(id) && is_instance_valid(tiremark[id]):
-		if tiremark[id].update(i.global_position): return
-		start = tiremark[id].lastGlobalPoint() #segment full: the next one continues from its end
+	var last = tiremark.get(id)
+	if is_instance_valid(last) && last.surface == surface: #new ground starts a new segment, in its own color
+		if last.update(i.global_position): return
+		start = last.lastGlobalPoint() #segment full: the next one continues from its end
 	var mark = tiremarkScene.instantiate()
 	mark.lifetime = lifetime
+	mark.surface = surface
 	mark.position = start
 	get_parent().add_child(mark)
 	tiremark[id] = mark
@@ -1217,7 +1226,7 @@ func destroy():
 		isDestroyed = true
 		for system in condition: setCondition(system, 0.0) #the art goes fully wrecked
 		for i in randi_range(1,2):
-			Root.levelRoot.explode(to_global(Vector2( randi_range( 50,90 ) , randi_range( -50,20 ))))
+			Root.levelRoot.explode(to_global(Vector2( randi_range( 50,90 ) , randi_range( -50,20 ))), Fx.Size.BIG if isPlayer && i == 0 else Fx.Size.POP) #the player's wreck is the big one
 			var modColor = 1.0 - (i/10.0)
 			$sprite.modulate = Color(modColor,modColor,modColor,1.0)
 			await get_tree().create_timer(randf_range(0.01 , 1.0)).timeout

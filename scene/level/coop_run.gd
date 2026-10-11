@@ -71,6 +71,7 @@ func spawn(atStart := false) -> void:
 	car.fuelFree = true #the pumps are the player's
 	car.coin = coins
 	car.currentGoonsCrushed = crushes
+	car.ui = hud #its own dials redraw when a pickup changes a stat (null until buildHud: set there too)
 	var own = car.get_node_or_null("Camera2D") #it still works out the zoom and look-ahead; the view's camera copies it
 	if own: own.enabled = false
 	#at the start, at the end of the line the rivals are on; later, behind the player
@@ -248,6 +249,7 @@ func buildHud() -> void:
 	hud.remove_from_group("playerGameUi")
 	hud.get_node("TopCenter/Timer").drives = false
 	level.add_child(hud)
+	if is_instance_valid(car): car.ui = hud
 	if is_instance_valid(Root.playerRoot): Root.playerRoot.widget("LeftVisor").visible = false #no gift boxes with two players
 
 #the right half of the level's viewport, drawn at that viewport's own pixel density (RunView may have lowered it)

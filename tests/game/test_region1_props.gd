@@ -13,7 +13,7 @@ class UiStub extends RefCounted:
 class LevelStub extends Node2D:
 	var def: LevelDef
 	var hasEnded := false
-	func explode(_pos: Vector2) -> void: pass
+	func explode(_pos: Vector2, _size := 1) -> void: pass
 
 ## A stand-in TileManager: the once-only record (Spill.markUsed / isUsed), chunk-local like the real one
 class TmStub extends Node:

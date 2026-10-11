@@ -19,6 +19,7 @@ const RADIUS := 650.0  #the car passes a checkpoint inside this
 const LOOP_RADIUS := 5200.0 #a loop's two far corners are this far from the start
 const GATE_COLOR := Color(0.35, 0.78, 1.0)
 const DONE_COLOR := Color(1, 1, 1, 0.22)
+const LINE_AHEAD := 4    #gates: the route is drawn through this many of the next ones
 
 var radius := RADIUS     #Cone Course's gates are far tighter (ConeCourse.PASS_RADIUS)
 var finishes := false    #the last checkpoint ends the course (gates and loops: there is no station)
@@ -184,8 +185,18 @@ static func clock(seconds: float) -> String:
 	var tenths := roundi(maxf(seconds, 0.0) * 10.0)
 	return "%d:%02d.%d" % [tenths / 600, (tenths / 10) % 60, tenths % 10]
 
-#a ring on the ground at each checkpoint, with its number of pips; passed ones fade
+#a ring on the ground at each checkpoint, with its number of pips; passed ones fade. Gates also get the
+#route: a line through the next LINE_AHEAD of them with an arrowhead on each stretch, fading with distance.
 func _draw() -> void:
+	if radius < RADIUS:
+		for i in range(next, mini(next + LINE_AHEAD, points.size() - 1)):
+			var col := Color(GATE_COLOR, 0.7 * (1.0 - float(i - next) / LINE_AHEAD))
+			var a := points[i]
+			var b := points[i + 1]
+			var dir := (b - a).normalized()
+			draw_line(a, b, col, 8.0)
+			var tip := a.lerp(b, 0.55)
+			draw_colored_polygon(PackedVector2Array([tip + dir * 30.0, tip - dir * 14.0 + dir.orthogonal() * 24.0, tip - dir * 14.0 - dir.orthogonal() * 24.0]), col)
 	for i in points.size():
 		var col := DONE_COLOR if i < next else GATE_COLOR
 		if radius < RADIUS: #a gate: a spot between its cones, the next one brighter
