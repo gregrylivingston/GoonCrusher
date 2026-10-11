@@ -20,7 +20,7 @@ The first update since the 0.1 demo, and close to a rebuilt game. Old demo saves
 - **Goon achievements.** Every goon has three: your first crush, then two bigger counts. Each pays coins or a gem, claimed in the Goonopedia; a badge on its button shows when a reward is waiting.
 - **83 pickups in unlock trees,** with a gadget slot and a boost slot on the car.
 - **GoonCrusher Radio:** 14 original songs, a DJ, ads and station idents.
-- **Two players on one screen.** In Level Options a second player presses Start on a controller, picks a car, a gadget, a boost and a side (friend or rival), and drives on a split screen with a dashboard of their own. Rewards and records stay player one's.
+- **Two players on one screen.** In Level Options a second player presses Start on a controller, picks a car, a gadget and a boost, and drives on a split screen with a dashboard of their own. You race each other in the Goon Cup and team up everywhere else, where a wrecked car comes back as long as the other is still driving. Rewards and records stay player one's.
 - **A dashboard per car, a new garage and a full settings menu** with four quality presets.
 
 ### World and levels

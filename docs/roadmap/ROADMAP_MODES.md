@@ -16,14 +16,13 @@ The demo's 10 levels play all 19 modes. Sprint, Countdown, Marathon, Defense and
 - **[0.3 want] Cannonball's rules** written into `docs/MODES.md`. S.
 - **[0.3 want] A start briefing check:** every mode has one (`meta.hints.briefings`); read each for accuracy. S.
 
-### Two players (first version is in; docs/MODES.md "Two players")
+### Two players (docs/MODES.md "Two players")
 
-- **[0.3 want] Play it with two people.** Nothing here has been driven by a second person yet: the join in Level Options, every mode as friend and as rival, the tow, a friend's respawn. M + play.
-- **[0.3 want] The two HUDs, finished.** Each half has its own, at a fixed scale picked by eye. Left: a look at every dashboard at that size, banners (`TapeBanner`) still cross the divider, the guest's goal is the player's except its race place, a warning before the tow, and the radio's track name is gone with the left visor. S + play.
-- **[0.3 want] The tow in a race, played.** Whoever is behind is towed up to the leader and takes its place on the course; nobody has raced with it yet. Check that it isn't a way to skip a lap. S + play.
-- **[later] A rival's crushes drop nothing** and pay it no coins: only pickups lying in the world count for it. S.
-- **[0.3 want] The guest's rules per mode:** what a rival means outside the Goon Cup (it only shares the road now), whether a friend's wreck should end some modes, a guest crossing checkpoints for the player, and the guest in Pursuit as the runner. M + play.
-- **[later] Loose ends:** a mouse or first-player way to remove the guest, the guest's pad unplugged mid-run, rumble on the guest's pad, the guest's own sounds and crush feel, `gc_car_pos` (one car's position for shaders), and performance at night with two views (not measured). M.
+- **[0.3 need] Play it with two people.** Still not driven by a second person: every mode as the side the mode picks, the tow (can it skip a lap?), a wrecked car coming back, the car-to-car crash sound and sparks, the guest's pad pulled out mid-run. M + play.
+- **[0.3 want] Every dashboard at half a screen.** The scale (`CoopRun.HUD_FIT`) was picked by eye on three cars; banners (`TapeBanner`) still cross the divider, which may be fine for news both players share. S + play.
+- **[0.3 want] The guest in each mode's own rules:** the guest's goal text is the player's except its race place; a friend crossing checkpoints for the player; gadget and special pickups for the guest (only stat pickups, purses and coins were moved); the guest as a Pursuit's runner. M + play.
+- **[0.3 want] Achievements, records and unlock counters with two players:** a friend's crushes and pickups count as the player's everywhere, which makes medals easier. Decide what still counts. S.
+- **[later] Loose ends:** rumble on the guest's pad, the guest's own crush feel and voice lines, `gc_car_pos` (one car's position for shaders), performance at night with two views (not measured), an AI driver for the guest in the playtest harness. M.
 
 ### After 0.3
 - **[later] Par times:** Rally Stage and Flat Out want a par time per course in place of one slack per mode (Prairie is loose, Frostbite's gold is out of a stock sedan's reach). Smash Run wants a quota per level. M.

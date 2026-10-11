@@ -1,15 +1,18 @@
 class_name BountyHunt extends Node
-## Bounty Hunt (Modes, Root.gameModes.BOUNTY): marked goons, one at a time, each further off and tougher than
-## the last, on Countdown's map and spawners. The HUD points at the mark (HudChance.drawMark); crushing every
+## Bounty Hunt (Modes, Root.gameModes.BOUNTY): marked goons, one at a time, each a long drive from the last
+## and tougher than it, on Countdown's map and spawners: drive out, crush the mark, drive to the next. The HUD points at the mark (HudChance.drawMark); crushing every
 ## mark before the clock runs out wins (Level.timeUpCondition loses it). Level adds one of these in a Bounty run.
 ##
-## A mark is a giant from the level's line-up, weakest first, with a red ring under it and an escort. It is never
+## A mark is a giant from the level's line-up, weakest first, with a red ring under it and an escort that
+## turns up when the car gets within ESCORT_RANGE. It is never
 ## swept (the "bounty" meta, SpawnManager.despawnSweep). Only a death the car caused counts (Walker.deathCause):
 ## a mark that drowns or blows itself up is replaced by another.
 ## Every number is a first guess (docs/MODES.md).
 
-const FIRST_DISTANCE := 3200.0 #px from the car to the first mark
-const STEP_DISTANCE := 500.0   #each later mark is this much further
+const FIRST_DISTANCE := 20000.0 #px from the car to the first mark: two miles on the HUD
+const STEP_DISTANCE := 1000.0   #each later mark is this much further
+const ESCORT_RANGE := 3000.0    #the escort spawns once the car is this near (further off it would be swept)
+const RING_RADIUS := 170.0
 const ESCORT := 2              #goons around the first mark; one more for each mark after
 const RING_COLOR := Color(1.0, 0.22, 0.16, 0.85)
 const NO_CREDIT := [&"", &"drown", &"self"] #deaths the car didn't cause
@@ -19,6 +22,12 @@ const STEP := {"speed": 0.05, "damage": 0.15, "crush": 0.04}
 var total := 3
 var caught := 0
 var mark: Walker
+var escorted := false
+
+## The red ring on the ground under a mark
+class MarkRing extends Node2D:
+	func _draw() -> void:
+		draw_arc(Vector2.ZERO, RING_RADIUS, 0.0, TAU, 64, RING_COLOR, 10.0)
 
 func _ready() -> void:
 	total = ModeTiers.BOUNTY_MARKS[ModeTiers.clampTier(Root.levelRoot.tier)]
@@ -60,15 +69,20 @@ func spawnMark() -> void:
 	sm.registerGoon(mark)
 	Root.levelRoot.add_child(mark)
 	mark.applyStrength({"speed": 1.0 + STEP.speed * caught, "damage": 1.0 + STEP.damage * caught, "crush": 1.0 + STEP.crush * caught})
-	var ring := Sprite2D.new()
-	ring.texture = Walker.RING_TEXTURE
-	ring.modulate = RING_COLOR
+	var ring := MarkRing.new()
 	ring.z_index = -1
-	ring.scale = Vector2.ONE * 380.0 / Walker.RING_TEXTURE.get_width()
 	mark.add_child(ring)
 	mark.tree_exiting.connect(onMarkGone.bind(mark))
+	escorted = false
+
+func _physics_process(_delta: float) -> void:
+	var car = Root.playerCar
+	var sm = Root.spawnManager
+	if escorted || not is_instance_valid(mark) || mark.dead || not is_instance_valid(car) || not is_instance_valid(sm): return
+	if car.global_position.distance_squared_to(mark.global_position) > ESCORT_RANGE * ESCORT_RANGE: return
+	escorted = true
 	var lineup := LevelRoster.lineupFor(Root.levelRoot.def)
-	if not lineup.is_empty(): sm.spawnGroup(lineup[0], spot + Vector2(90.0, 0.0), ESCORT + caught)
+	if not lineup.is_empty(): sm.spawnGroup(lineup[0], mark.global_position + Vector2(90.0, 0.0), ESCORT + caught)
 
 func onMarkGone(goon: Walker) -> void:
 	var level = Root.levelRoot

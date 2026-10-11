@@ -18,6 +18,7 @@ func _init() -> void:
 	size = SIZE
 	custom_minimum_size = SIZE
 	mouse_filter = MOUSE_FILTER_IGNORE
+	clip_contents = true #the launch bar is beside it
 	add_theme_stylebox_override("panel", MenuTheme.box(Color(HudTheme.PANEL, 0.94), Color(1, 1, 1, 0.22), 16, 2, Vector4(16, 8, 16, 8)))
 	body.alignment = BoxContainer.ALIGNMENT_CENTER
 	body.add_theme_constant_override("separation", 2)
@@ -73,7 +74,7 @@ func refresh(info: CarInfo, mode: int) -> void:
 	who.size_flags_horizontal = SIZE_EXPAND_FILL
 	who.add_theme_constant_override("separation", -4)
 	var rival := Coop.isRival(mode)
-	var side := label("PLAYER 2  -  %s" % ("RIVAL" if rival else "FRIEND"), "MutedLabel", 13)
+	var side := label("P2 %s" % ("RIVAL" if rival else "FRIEND"), "MutedLabel", 13)
 	side.add_theme_color_override("font_color", SIDE_COLORS[not rival])
 	side.tooltip_text = "The mode picks player two's side: against you in the Goon Cup, with you everywhere else."
 	who.add_child(side)
@@ -93,8 +94,8 @@ func refresh(info: CarInfo, mode: int) -> void:
 		slot.add_child(ring)
 		top.add_child(slot)
 	body.add_child(top)
-	body.add_child(hints([[[JOY_BUTTON_LEFT_SHOULDER, JOY_BUTTON_RIGHT_SHOULDER], "Car"], [[JOY_BUTTON_X], "Gadget"], [[JOY_BUTTON_Y], "Boost"], [[JOY_BUTTON_B], "Leave"]]))
+	body.add_child(hints([[[JOY_BUTTON_LEFT_SHOULDER, JOY_BUTTON_RIGHT_SHOULDER], "Car"], [[JOY_BUTTON_X], "Gadget"], [[JOY_BUTTON_Y], "Boost"]]))
+	var last := hints([[[JOY_BUTTON_B], "Leave"]]) #the guest's way out, then the first player's own: its key, or a click
+	body.add_child(last)
 	for child in body.get_children(): LaunchBar.ignoreMouse(child)
-	var remove := KeyHint.make(PackedStringArray([LEAVE_ACTION]), "Remove player 2", 12, true) #the first player's own way: its key, or a click
-	remove.alignment = BoxContainer.ALIGNMENT_BEGIN
-	body.add_child(remove)
+	last.add_child(KeyHint.make(PackedStringArray([LEAVE_ACTION]), "Remove", 12, true))

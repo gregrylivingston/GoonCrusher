@@ -10,6 +10,7 @@ Everything that is not built yet lives in this folder: nowhere else. The area do
 | `ROADMAP_PICKUPS.md` | Pickups, unlock trees, prize games, gift boxes, gems |
 | `ROADMAP_MODES.md` | The 19 game modes and their tiers, two players |
 | `ROADMAP_CARS.md` | Handling, driving feel, upgrades, perks, cosmetics |
+| `ROADMAP_JUICE.md` | In-run effects: particles, decals, fire, water, the camera, screen effects, weather, effect sounds |
 | `ROADMAP_UI_HUD.md` | Menus, HUD, hints, records, Steam features |
 | `ROADMAP_AUDIO.md` | Voice, the mix, the radio, songs |
 | `ROADMAP_BALANCE.md` | The economy, pacing and the play passes that fit them |

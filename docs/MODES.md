@@ -34,12 +34,13 @@ What is left to do on the modes: `docs/roadmap/ROADMAP_MODES.md` (it links the a
 A second person on a controller joins in Level Options and drives a car of the garage's on a split screen. `Coop` (`scripts/global/coop.gd`) holds who joined and what they picked; `CoopRun` (`scene/level/coop_run.gd`) is the guest's car, their half of the screen and the leash; `PadDriver` reads their controller by device.
 
 - **The run is the first player's.** The save, rewards, records, HUD and goal are theirs. The guest's car has `isGuest` set and `isPlayer` off, so `Root.playerCar` and every `isPlayer` check still mean the first player. Give the guest a behavior with `isGuest`, never by turning `isPlayer` on.
-- **Friend or rival.** A friend's crushes, pickups and arrival at the station count for the player (`Coop.creditTo`), with the coins also counted on the guest's own visor, and a wrecked friend comes back. A rival keeps the pickups it drives over. A rival joins the mode's field (`Rivals.cars`) in a Goon Cup mode and is out once wrecked; a Pursuit has no rival guest. Goons go for the nearer car (`Coop.prey`).
+- **The mode picks the guest's side** (`Coop.isRival`): a rival in a Goon Cup mode, a friend everywhere else, Pursuit included (both chase the runner). A friend's crushes, pickups and arrival at the station count for the player (`Coop.creditTo`), with the coins also counted on the guest's own visor. A rival joins the mode's field (`Rivals.cars`) and keeps the pickups and chain coins it earns.
+- **Wrecks.** With a friend, one car still going is enough: whichever car is wrecked comes back beside the other (`CoopRun.revives`, `holdsWreck`, `OverheadCarBody2D.revive`), and the run is lost when both are down at once. Nobody comes back in Goonpocalypse, which is about lasting. A wrecked rival is out, and the player's wreck ends the run as it does alone.
 - **The leash.** The world streams round the first player, so the two stay within `CoopRun.LEASH` of each other, which must stay under one chunk each way. The guest is towed to the player; in a race between the two, whoever is behind is towed up to the leader (`CoopRun.leads`) and takes the leader's place on the course (`Course.matchProgress`). A towed player's course time is not recorded (`Course.towed`).
 - **One screen, covered.** The level's viewport still draws the whole window (menus and results are full width) with its camera shifted to the left half; a second viewport on the same world covers the right half. Each half has its own HUD (docs/HUD.md, "Two HUDs").
 - **The pads.** While a guest is in, every pad binding in the `InputMap` points at the first player's device (`Coop.claimPads`); anything that adds pad bindings later must run it again.
 - **No prize games** with two players: no gift boxes and no prize-game pickups, since each stops the run for both.
-- Try it without a second pad: `-- --coop=friend` or `--coop=rival`.
+- Try it without a second pad: `-- --coop` (and `--coop-car=<index>` for the guest's car).
 
 ## Run rank
 

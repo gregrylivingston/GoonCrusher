@@ -70,7 +70,7 @@ func test_bounty_and_rally_tiers_ask_more():
 		assert_gt(ModeTiers.BOUNTY_MARKS[tier + 1], ModeTiers.BOUNTY_MARKS[tier], "more marks")
 		assert_gt(ModeTiers.BOUNTY_MARK_SECONDS[tier], ModeTiers.BOUNTY_MARK_SECONDS[tier + 1], "less time for each")
 		assert_gt(ModeTiers.RALLY_SLACK[tier], ModeTiers.RALLY_SLACK[tier + 1], "a tighter stage clock")
-	assert_eq(ModeTiers.bountySeconds(ModeTiers.EASY), 180.0)
+	assert_eq(ModeTiers.bountySeconds(ModeTiers.EASY), 240.0)
 	assert_true(ModeTiers.goalText(M.RALLY, ModeTiers.HARD, 300.0).contains("gold"))
 
 func test_the_cone_course_fits_its_lot():

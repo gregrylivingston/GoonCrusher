@@ -310,9 +310,9 @@ func buildGameSummary():
 			if level.rivals: addRow("Place", "%s of %d" % [Rivals.placeWord(level.finishPlace).capitalize(), level.rivals.field()] if level.finishPlace > 0 else "Not placed", false)
 		Root.gameModes.BOUNTY:
 			if level.bounty: addRow("Marks", "%d / %d" % [level.bounty.caught, level.bounty.total], false)
-	if level.coop: addGuestRow(level.coop.tally())
 		Root.gameModes.DEFENSE:
 			if is_instance_valid(Root.station): addRow("Barrier", "%d%%" % ceili(100.0 * Root.station.barrier / Root.station.BARRIER_MAX), false)
+	if level.coop: addGuestRow(level.coop.tally())
 	#then the run's numbers, two to a line: the ones that happened
 	body.add_child(Dashes.new())
 	stats.columns = 2

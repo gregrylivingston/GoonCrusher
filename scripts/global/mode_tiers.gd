@@ -68,9 +68,9 @@ const RUNNER_PACE := [0.0, 0.78, 0.86, 0.94]
 const PURSUIT_BUMP := 2.5
 ## its goons, where it has any ("light": Modes.lightGoons), come this much less often
 const LIGHT_SPAWN_SCALE := 3.0
-## Bounty Hunt: marks to crush, and the clock's seconds for each one (the drive out to it and the fight)
+## Bounty Hunt: marks to crush, and the clock's seconds for each one (the drive out to it, BountyHunt.FIRST_DISTANCE, and the fight)
 const BOUNTY_MARKS := [0, 3, 4, 5]
-const BOUNTY_MARK_SECONDS := [0.0, 60.0, 50.0, 45.0]
+const BOUNTY_MARK_SECONDS := [0.0, 80.0, 70.0, 60.0]
 
 ## The world, by tier: escalation speed x, giant odds + (percent points), spawn interval x
 const ESCALATION := [1.0, 1.0, 1.3, 1.6]

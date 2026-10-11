@@ -96,7 +96,7 @@ One bar, the same in the garage, on the road map and in Level Options, so a key 
 
 ### Second player
 
-`coop_panel.gd` (`CoopPanel`) sits between the records and the launch bar in Level Options. The guest works it with their own pad buttons (`Coop.menuInput`, read first in `main2._input`); it is the one plate the mouse and the first player's pad do not work.
+`coop_panel.gd` (`CoopPanel`) sits between the records and the launch bar in Level Options, and must stay narrower than the gap (it clips). The guest works it with their own pad buttons (`Coop.menuInput`, read first in `main2._input`), drawn as pad chips whatever the first player holds. The first player's one control over it is `ui_coop_leave` (its hint is clickable), which removes the guest; a guest whose pad is unplugged leaves by itself (`onPadsChanged`). The mode picks the guest's side, so the plate is refreshed with the mode.
 
 ### Driver focus
 
