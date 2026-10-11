@@ -16,6 +16,7 @@ var daylength = 60
 var reset: bool = true  #prevents level from switching immediately, reset timer on daytimeaa
 var timeIsCountingDown = -1 #set to negative one for a countdown game
 
+var drives := true #the second player's HUD (Coop) has a clock too: it shows the run's time and never moves it
 var clockReady := false #the clock waits for the level's final starting time (Level.onWorldReady)
 
 var shownSecond = -1
@@ -27,6 +28,9 @@ func onClockReady() -> void:
 
 func _process(delta):
 	if not clockReady: return
+	if not drives:
+		showTime()
+		return
 	Root.levelRoot.seconds += delta * timeIsCountingDown
 	Root.levelRoot.elapsed += delta
 	Root.levelRoot.onClockTick()

@@ -21,6 +21,10 @@ func isPressed(_action: String) -> bool:
 func justPressed(_action: String) -> bool:
 	return false
 
+#where the wheel is held, -1 (left) to 1: the keys' by default; a driver with a stick says how far
+func steerAim() -> float:
+	return -1.0 if isPressed("TurnLeft") else (1.0 if isPressed("TurnRight") else 0.0)
+
 #does this driver work a geared car's lever itself (OverheadCarBody2D.isManual); otherwise the box is automatic
 func shiftsByHand() -> bool:
 	return false

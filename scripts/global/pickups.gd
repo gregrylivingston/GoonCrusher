@@ -250,17 +250,17 @@ const DATA := {
 		"text":"For 30 s: the horde stops getting worse. The clock keeps counting. Goonpocalypse."},
 }
 
-## The run setup's loadout, bought with banked gems (main2): a gadget for the Fire slot (LOADOUT) and a
-## boost for the Boost slot (BOOST_LOADOUT), each with its price in gems.
-const LOADOUT := {"horn": 1, "oilslick": 1, "mine": 2, "emp": 2, "bait": 2, "hubcap": 4, "airstrike": 4}
-const BOOST_LOADOUT := {"hop": 1, "nitro": 2, "jets": 4}
+## The run setup's loadout (main2), free once unlocked: a gadget for the Fire slot (LOADOUT) and a
+## boost for the Boost slot (BOOST_LOADOUT).
+const LOADOUT := ["horn", "oilslick", "mine", "emp", "bait", "hubcap", "airstrike"]
+const BOOST_LOADOUT := ["hop", "nitro", "jets"]
 
 ## Kinds in the order the Pickups screen lists them.
 const KIND_ORDER := [K.SUPPLY, K.TUNE, K.BOOST, K.GADGET, K.MOVE, K.LOOT, K.CASINO, K.SKILL, K.MODE]
 
 #--- run state ----------------------------------------------------------------------------------
 static var dropsSinceRare := 0
-static var loadout := "" #a gadget bought in run setup; the player's car takes it in _ready
+static var loadout := "" #a gadget chosen in run setup; the player's car takes it in _ready
 static var boostLoadout := "" #...and a boost
 static var textures := {}
 static var timeWarp := false #Time Warp: goons skip most physics ticks (Walker._physics_process)
@@ -378,6 +378,7 @@ static func ticks(id: String) -> int:
 ## Can this pickup turn up in `mode` (a Root.gameModes value)?
 static func allowedIn(id: String, mode: int) -> bool:
 	var modes: Array = def(id).get("modes", [])
+	if Coop.active && uiGroup(id) == "slotmachineui": return false #a prize game stops the run for both players: none with two
 	if not Modes.allowsKind(mode, KIND_KEYS[def(id).get("kind", K.LOOT)]) && def(id).get("rarity", 0) != R.SYSTEM: return false #only what is useful there
 	return modes.is_empty() || Modes.plays(mode) in modes #a variant drops what its base mode does
 
@@ -478,11 +479,8 @@ static func openOr(id: String) -> String:
 	return id if id != "" else "coin"
 
 ## The run setup's gadgets or boosts that are open (id -> gem price), in their listed order.
-static func openLoadout(table: Dictionary) -> Dictionary:
-	var out := {}
-	for id in table:
-		if Unlocks.isPickupOpen(id): out[id] = table[id]
-	return out
+static func openLoadout(table: Array) -> Array:
+	return table.filter(func(id): return Unlocks.isPickupOpen(id))
 
 ## Prize games (every PickupMenu game and the Pit Shop) never pay these: each
 ## is a game of its own, or a box that could roll one. Every Casino pickup.

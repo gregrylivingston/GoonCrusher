@@ -887,6 +887,7 @@ func vibrate(weak: float, strong: float, seconds: float) -> void:
 	if level == 0: return
 	var gain = 0.5 if level == 1 else 1.0
 	for device in Input.get_connected_joypads():
+		if Coop.active && device == Coop.device: continue #the player's car, not the guest's
 		Input.start_joy_vibration(device, weak * gain, strong * gain, seconds)
 
 func speed_text(pixelsPerSecond: float) -> String:

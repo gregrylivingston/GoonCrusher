@@ -31,11 +31,11 @@ func onSettingChanged(key: String, _value) -> void:
 	if key == "access/classic_dash": set = false
 
 func _process(delta: float) -> void:
-	var car = Root.playerCar
+	var car = GameUI.carOf(self)
 	if not is_instance_valid(car): return
 	if not set:
 		set = true
-		skin = HudSkin.current()
+		skin = HudSkin.of(self)
 		kind = skin.instrument
 		visible = kind != &""
 		var to: Array = OFFSETS if skin.instrumentAt.is_empty() else skin.instrumentAt
@@ -127,7 +127,7 @@ func lamp(rect: Rect2, word: String, color: Color, lit: bool, filled := false) -
 	HudTheme.text(self, rect.get_center() + Vector2(0, 4), word, 11, ink, HORIZONTAL_ALIGNMENT_CENTER, 0, HudTheme.OUTLINE, skin.body)
 
 func _draw() -> void:
-	var car = Root.playerCar
+	var car = GameUI.carOf(self)
 	if not is_instance_valid(car): return
 	var rig: CarTraitRig = car.traitRig
 	match kind:

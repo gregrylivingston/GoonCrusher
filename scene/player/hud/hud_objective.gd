@@ -24,18 +24,18 @@ func _process(_delta: float) -> void:
 		Root.gameModes.GOONPOCALYPSE: key = [level.runScore(), level.targetReached, int(level.pocalypseTarget() - level.seconds)]
 		Root.gameModes.SMASH, Root.gameModes.DRIFT: key = [level.trial.score, int(level.trial.chain)] if level.trial else [0]
 		Root.gameModes.CONES: key = [level.course.next, level.course.conesHit] if level.course else [0]
-		Root.gameModes.RALLY: key = [level.course.next, HudTheme.distanceTo(level.course.target()), HudTheme.stationDistance()] if level.course else [0]
-		Root.gameModes.CANNONBALL: key = [racePlace(level), HudTheme.stationDistance()]
-		Root.gameModes.HOTLAP, Root.gameModes.CIRCUIT, Root.gameModes.KNOCKOUT: key = [level.course.lap, level.course.next, loopPlace(level), level.rivals.cars.size() if level.rivals else 0] if level.course else [0]
+		Root.gameModes.RALLY: key = [level.course.next, HudTheme.distanceFrom(GameUI.carOf(self), level.course.target()), HudTheme.stationDistance(GameUI.carOf(self))] if level.course else [0]
+		Root.gameModes.CANNONBALL: key = [racePlace(level, GameUI.carOf(self)), HudTheme.stationDistance(GameUI.carOf(self))]
+		Root.gameModes.HOTLAP, Root.gameModes.CIRCUIT, Root.gameModes.KNOCKOUT: key = [level.course.lap, level.course.next, loopPlace(level, GameUI.carOf(self)), level.rivals.cars.size() if level.rivals else 0] if level.course else [0]
 		Root.gameModes.DERBY: key = [level.rivals.cars.size() if level.rivals else 0]
-		Root.gameModes.FLATOUT: key = [level.course.next, HudTheme.stationDistance()] if level.course else [0]
+		Root.gameModes.FLATOUT: key = [level.course.next, HudTheme.stationDistance(GameUI.carOf(self))] if level.course else [0]
 		Root.gameModes.KEEPCUP: key = [int(level.cup.playerSeconds()), int(level.cup.rivalBest()), level.cup.playerHolds()] if level.cup else [0]
 		Root.gameModes.PURSUIT:
 			var prey = level.rivals.runner() if level.rivals else null
 			key = [int(prey.health) if prey else -1]
-		Root.gameModes.SPRINT: key = [HudTheme.stationDistance()]
-		Root.gameModes.MARATHON: key = [level.leg, HudTheme.stationDistance()]
-		Root.gameModes.BOUNTY: key = [level.bounty.caught, HudTheme.distanceTo(level.bounty.markPosition())] if level.bounty else [0]
+		Root.gameModes.SPRINT: key = [HudTheme.stationDistance(GameUI.carOf(self))]
+		Root.gameModes.MARATHON: key = [level.leg, HudTheme.stationDistance(GameUI.carOf(self))]
+		Root.gameModes.BOUNTY: key = [level.bounty.caught, HudTheme.distanceFrom(GameUI.carOf(self), level.bounty.markPosition())] if level.bounty else [0]
 		Root.gameModes.DEFENSE: key = [int(Root.station.barrier) if is_instance_valid(Root.station) else -1, snappedf(HudTheme.stationHit(), 0.1)]
 		_: key = [mode]
 	if key != shownKey:
@@ -43,14 +43,14 @@ func _process(_delta: float) -> void:
 		queue_redraw()
 
 #the player's place on a loop, among the cars still running
-static func loopPlace(level) -> int:
-	if level.course == null || level.rivals == null || not is_instance_valid(Root.playerCar): return 1
-	return level.course.placeOf(Root.playerCar, level.rivals.cars)
+static func loopPlace(level, car = Root.playerCar) -> int:
+	if level.course == null || level.rivals == null || not is_instance_valid(car): return 1
+	return level.course.placeOf(car, level.rivals.cars + ([] if car == Root.playerCar else [Root.playerCar]))
 
 #the player's place in a race against rivals, by distance to the station
-static func racePlace(level) -> int:
+static func racePlace(level, car = Root.playerCar) -> int:
 	if level.rivals == null || not is_instance_valid(Root.station): return 1
-	return level.rivals.placeBy(Root.station.drivewayPoint())
+	return level.rivals.placeBy(Root.station.drivewayPoint(), car)
 
 func _draw() -> void:
 	var level = Root.levelRoot
@@ -84,7 +84,7 @@ func _draw() -> void:
 			var stage: Course = level.course
 			var gates := stage != null && not stage.complete()
 			HudTheme.text(self, Vector2(42, 28), "CHECKPOINT %d OF %d" % [stage.next + 1, stage.total()] if gates else "TO THE FINISH", 17)
-			HudTheme.text(self, Vector2(size.x - 14, 28), HudTheme.distanceTo(stage.target()) if gates else HudTheme.stationDistance(), 17, HudTheme.STATION, HORIZONTAL_ALIGNMENT_RIGHT)
+			HudTheme.text(self, Vector2(size.x - 14, 28), HudTheme.distanceFrom(GameUI.carOf(self), stage.target()) if gates else HudTheme.stationDistance(GameUI.carOf(self)), 17, HudTheme.STATION, HORIZONTAL_ALIGNMENT_RIGHT)
 		Root.gameModes.HOTLAP:
 			var ring: Course = level.course
 			if ring:
@@ -93,7 +93,7 @@ func _draw() -> void:
 		Root.gameModes.CIRCUIT, Root.gameModes.KNOCKOUT:
 			var track: Course = level.course
 			if track && level.rivals:
-				var at := loopPlace(level)
+				var at := loopPlace(level, GameUI.carOf(self))
 				var cars: int = level.rivals.cars.size() + 1
 				HudTheme.text(self, Vector2(42, 28), "%s OF %d" % [Rivals.placeWord(at), cars], 18, HudTheme.BAD if mode == Root.gameModes.KNOCKOUT && at >= cars else HudTheme.TEXT)
 				HudTheme.text(self, Vector2(size.x - 14, 28), "LAP %d/%d" % [mini(track.lap + 1, track.laps), track.laps], 16, HudTheme.MUTED, HORIZONTAL_ALIGNMENT_RIGHT)
@@ -103,7 +103,7 @@ func _draw() -> void:
 			var strip: Course = level.course
 			var more := strip != null && not strip.complete()
 			HudTheme.text(self, Vector2(42, 28), "NITRO %d OF %d" % [strip.next + 1, strip.total()] if more else "STOP AT THE LINE", 17)
-			HudTheme.text(self, Vector2(size.x - 14, 28), HudTheme.stationDistance(), 17, HudTheme.STATION, HORIZONTAL_ALIGNMENT_RIGHT)
+			HudTheme.text(self, Vector2(size.x - 14, 28), HudTheme.stationDistance(GameUI.carOf(self)), 17, HudTheme.STATION, HORIZONTAL_ALIGNMENT_RIGHT)
 		Root.gameModes.KEEPCUP:
 			var c: KeepCup = level.cup
 			if c:
@@ -115,19 +115,19 @@ func _draw() -> void:
 			HudTheme.text(self, Vector2(42, 28), "RUNNER", 17)
 			HudTheme.bar(self, Rect2(124, 15, size.x - 144, 12), left, HudTheme.BAD)
 		Root.gameModes.CANNONBALL:
-			var place := racePlace(level)
+			var place := racePlace(level, GameUI.carOf(self))
 			HudTheme.text(self, Vector2(42, 28), "%s OF %d" % [Rivals.placeWord(place), level.rivals.field()] if level.rivals else "REACH THE STATION", 18, HudTheme.GOLD if place <= ModeTiers.CUP_PLACE[level.tier] else HudTheme.TEXT)
-			HudTheme.text(self, Vector2(size.x - 14, 28), HudTheme.stationDistance(), 17, HudTheme.STATION, HORIZONTAL_ALIGNMENT_RIGHT)
+			HudTheme.text(self, Vector2(size.x - 14, 28), HudTheme.stationDistance(GameUI.carOf(self)), 17, HudTheme.STATION, HORIZONTAL_ALIGNMENT_RIGHT)
 		Root.gameModes.SPRINT:
 			HudTheme.text(self, Vector2(42, 28), "REACH THE STATION", 17)
-			HudTheme.text(self, Vector2(size.x - 14, 28), HudTheme.stationDistance(), 17, HudTheme.STATION, HORIZONTAL_ALIGNMENT_RIGHT)
+			HudTheme.text(self, Vector2(size.x - 14, 28), HudTheme.stationDistance(GameUI.carOf(self)), 17, HudTheme.STATION, HORIZONTAL_ALIGNMENT_RIGHT)
 		Root.gameModes.MARATHON:
 			HudTheme.text(self, Vector2(42, 28), "STATION %d OF %d" % [level.leg, level.legs()], 18)
-			HudTheme.text(self, Vector2(size.x - 14, 28), HudTheme.stationDistance(), 17, HudTheme.STATION, HORIZONTAL_ALIGNMENT_RIGHT)
+			HudTheme.text(self, Vector2(size.x - 14, 28), HudTheme.stationDistance(GameUI.carOf(self)), 17, HudTheme.STATION, HORIZONTAL_ALIGNMENT_RIGHT)
 		Root.gameModes.BOUNTY:
 			var hunt: BountyHunt = level.bounty
 			HudTheme.text(self, Vector2(42, 28), "MARK %d OF %d" % [mini(hunt.caught + 1, hunt.total), hunt.total] if hunt else "FIND THE MARK", 18)
-			if hunt: HudTheme.text(self, Vector2(size.x - 14, 28), HudTheme.distanceTo(hunt.markPosition()), 17, HudTheme.BAD, HORIZONTAL_ALIGNMENT_RIGHT)
+			if hunt: HudTheme.text(self, Vector2(size.x - 14, 28), HudTheme.distanceFrom(GameUI.carOf(self), hunt.markPosition()), 17, HudTheme.BAD, HORIZONTAL_ALIGNMENT_RIGHT)
 		Root.gameModes.DEFENSE:
 			var fraction = Root.station.barrier / Root.station.BARRIER_MAX if is_instance_valid(Root.station) else 1.0
 			HudTheme.text(self, Vector2(42, 28), "BASE", 17, HudTheme.TEXT.lerp(HudTheme.BAD, hit))

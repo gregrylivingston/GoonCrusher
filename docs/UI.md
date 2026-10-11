@@ -91,8 +91,12 @@ One bar, the same in the garage, on the road map and in Level Options, so a key 
 - Only the primary button takes the focus (`goButton`: Drive or Unlock, Select, Start; `onGoPressed`). The slots work by key or click.
 - The pad has no spare button, so the triggers are the gadget and boost and the regions and fact tiles are a flick of the right stick. A new menu action needs a free button on both devices first.
 - Upgrades from run setup changes screen to the driver focus and remembers the step it left (`focusReturn`); Back, Upgrades again or Drive returns there.
-- The badges count what the bank covers (`DriverCard.affordableUpgrades`, `Unlocks.buyableCount`). The gem badge on the primary button shows only in Level Options, where Start spends them.
+- The badges count what the bank covers (`DriverCard.affordableUpgrades`, `Unlocks.buyableCount`).
 - Why the primary button is locked is written beside the bar (`setGoNote`), in symbols.
+
+### Second player
+
+`coop_panel.gd` (`CoopPanel`) sits between the records and the launch bar in Level Options. The guest works it with their own pad buttons (`Coop.menuInput`, read first in `main2._input`); it is the one plate the mouse and the first player's pad do not work.
 
 ### Driver focus
 
@@ -104,7 +108,7 @@ On a bench row Buy (`ui_buy`, E / pad A) buys and Accept still drives, so `main2
 - The launch bar's primary button holds the focus on both steps (`focusSetup`), so Accept always goes on; nothing else there takes it.
 - Esc is both `ui_cancel` and `ui_menu`: in run setup Back is read first, so Esc never opens Settings there (the gear button and Start on a pad do).
 - The level's fact tiles are generated from the `LevelDef`, `props.json` and `World.TERRAIN` (`fillFacts`); only `EVENT_FACTS` holds words.
-- The loadout slots sell only unlocked gadgets and boosts (`Pickups.openLoadout`) and are paid at Start, the gadget first (`slotPurchase`); choices are kept in `meta.records.loadout` and `boostLoadout`.
+- The loadout slots offer only unlocked gadgets and boosts (`Pickups.openLoadout`), free; choices are kept in `meta.records.loadout` and `boostLoadout`.
 
 ## Pickups
 
@@ -112,7 +116,9 @@ On a bench row Buy (`ui_buy`, E / pad A) buys and Accept still drives, so `main2
 
 ## Goonopedia
 
-Two tabs, Goons and Systems, generated from `Goons.DATA` and the car's systems. Only plain-language text lives in the script (`VERB_TEXT`, `ACT_TEXT`, `TRAIT_TEXT`, `SYSTEMS`); a goon's DATA may override it with `"blurb"` and `"tip"`. `test_goonopedia.gd` fails if a goon uses a verb or act with no text. Goons are silhouettes until crushed (`PlayerData.goonsCrushed`; `REVEAL_ALL` shows everything).
+One tab per faction, generated from `Goons.DATA`. Only plain-language text lives in the script (`VERB_TEXT`, `ACT_TEXT`, `TRAIT_TEXT`); a goon's DATA may override it with `"blurb"` and `"tip"`. `test_goonopedia.gd` fails if a goon uses a verb or act with no text. Goons are silhouettes until crushed (`PlayerData.goonsCrushed`; `REVEAL_ALL` shows everything). A goon's "Found in" line lists the levels whose line-up fields it; in the demo a goon none of its levels field is tagged FULL GAME (`isMeetable`) and left out of the totals.
+
+It is also where achievements are claimed. `Achievements` (`scripts/global/achievements.gd`) is the registry: every goon has one with three tiers, goals by rank and a reward per tier. What is earned is read from the save's counters; the save keeps only the tiers claimed (`meta.achievements`), so a reward is credited by the claim and nowhere else. Accept on a goon's tile, the card's button or Claim All pays it. Waiting rewards show as a `CountBadge` on the main menu's Goonopedia button and on each tab, a chip on the results ticket, and a tape banner in the run when a tier is reached (`Achievements.onCrush`, counting both cars of a two-player run). A new kind of achievement adds its ids and cases to `Achievements` and a place on this page. Steam achievements will mirror them by `Achievements.steamId`.
 
 **`CodexPage`** (`goonopedia/codex_page.gd`) is the frame both pages extend: header, tab row, tile panel, detail card, the tab keys and Back. A page sets `title`, `icon`, `listWidth`, `hints` and `sellsThings` in `_init` and supplies `tabNames()`, `buildTab(index)`, `drawDetail(entry)`, and `startTab()` / `firstFocus()` if the defaults won't do. Use it for any new reference or shop page.
 

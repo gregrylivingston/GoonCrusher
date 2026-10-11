@@ -141,6 +141,9 @@ var isDestroyed: bool = false #wrecked or out of fuel; the run is about to end
 var isWrecked: bool = false #destroyed (health, water), not just out of fuel; a wrecked car can't win
 
 func getIsPlayer():return isPlayer
+## The second player's car in a two-player run (Coop): a person drives it (PadDriver) and it crushes, slides and
+## fires gadgets as the player's does, but the save, the rewards and the HUD are the player's (`isPlayer` is off)
+var isGuest := false
 
 var profilePic: Texture2D  #from `info`
 var backgroundPic: Texture2D
@@ -217,17 +220,21 @@ func _ready():
 	if isPlayer:
 		add_to_group("playerCar")
 		Root.playerCar = self
-		var thisCar = SaveManager.getCarByName(carId)
-		engine += SaveManager.getUpgradeLevel(Root.upgrade.ENGINE)
-		steering += SaveManager.getUpgradeLevel(Root.upgrade.STEERING)
-		traction += SaveManager.getUpgradeLevel(Root.upgrade.TRACTION)
-		armor += SaveManager.getUpgradeLevel(Root.upgrade.ARMOR)
-		headlights += SaveManager.getUpgradeLevel(Root.upgrade.HEADLIGHTS)
-		oil += SaveManager.getUpgradeLevel(Root.upgrade.OIL)
-		clover += SaveManager.getUpgradeLevel(Root.upgrade.CLOVER)
-		luck += SaveManager.getUpgradeLevel(Root.upgrade.LUCK)
+	if isPlayer || isGuest:
+		var mine := Coop.car if isGuest else -1 #the garage's upgrades for this car
+		engine += SaveManager.getUpgradeLevel(Root.upgrade.ENGINE, mine)
+		steering += SaveManager.getUpgradeLevel(Root.upgrade.STEERING, mine)
+		traction += SaveManager.getUpgradeLevel(Root.upgrade.TRACTION, mine)
+		armor += SaveManager.getUpgradeLevel(Root.upgrade.ARMOR, mine)
+		headlights += SaveManager.getUpgradeLevel(Root.upgrade.HEADLIGHTS, mine)
+		oil += SaveManager.getUpgradeLevel(Root.upgrade.OIL, mine)
+		clover += SaveManager.getUpgradeLevel(Root.upgrade.CLOVER, mine)
+		luck += SaveManager.getUpgradeLevel(Root.upgrade.LUCK, mine)
 	for stat in UPGRADEABLE_STATS: runStartStats[stat] = self[stat]
 	setupGearbox()
+	if isGuest:
+		buffFx = CarBuffFx.new()
+		add_child(buffFx)
 	if isPlayer:
 		buffFx = CarBuffFx.new()
 		add_child(buffFx)
@@ -235,7 +242,7 @@ func _ready():
 		add_child(crushFeel)
 		juice = CarJuice.new()
 		add_child(juice)
-		for id in [Pickups.loadout, Pickups.boostLoadout]: #bought with gems in run setup
+		for id in [Pickups.loadout, Pickups.boostLoadout]: #chosen in run setup
 			if id != "": giveItem(id)
 		Pickups.loadout = ""
 		Pickups.boostLoadout = ""
@@ -314,7 +321,7 @@ func _physics_process(delta):
 		_car_input.acceleration = 0.0
 		_car_input.steering = 0.0
 	if not zoneCooldown.is_empty(): tickZoneCooldowns()
-	if isPlayer:
+	if isPlayer || isGuest:
 		tickPickups()
 		tickHorn()
 	if fuel <= 0 && not isDestroyed: outOfFuel()
@@ -333,7 +340,7 @@ func _physics_process(delta):
 	velocity = next[1]
 	if shiftCut > 0: shiftCut -= 1
 	if shiftKick > 0: shiftKick -= 1
-	if isPlayer: tickDriftCharge()
+	if isPlayer || isGuest: tickDriftCharge()
 	var hitVelocity = velocity #before the slide, for a wall hit's impact angle and a breakable's speed
 	move_and_slide()
 	_do_update_output(_car_input.acceleration)
@@ -371,14 +378,14 @@ func _physics_process(delta):
 		#else: print(collider.get_class())
 	if trailer: trailer.follow(delta)
 	if traitRig: traitRig.tick(delta)
-	if isPlayer && (velocity.length() > SLAM_MIN_SPEED || absf(spinRate) > 1.5): slamGoons()
-	if isPlayer && trailer && (trailer.axleVel.length() > SLAM_MIN_SPEED || absf(trailer.spin) > 1.5): trailer.slamGoons()
+	if (isPlayer || isGuest) && (velocity.length() > SLAM_MIN_SPEED || absf(spinRate) > 1.5): slamGoons()
+	if (isPlayer || isGuest) && trailer && (trailer.axleVel.length() > SLAM_MIN_SPEED || absf(trailer.spin) > 1.5): trailer.slamGoons()
 
 	if velocity.length() == 0:
 		stopCarFX()
 	else:
 		activeCarEffects(delta)
-	if isPlayer: updateLookAhead(delta)
+	if isPlayer || isGuest: updateLookAhead(delta)
 
 #One physics tick of the bicycle model, without moving the body: returns [new heading (unit
 #Vector2), new velocity]. `forward` is transform.x. The AI driver (scripts/ai/ai_driver.gd) runs it
@@ -806,6 +813,7 @@ func bumpCar(other: OverheadCarBody2D, normal: Vector2, moving: Vector2) -> void
 	other.bumpedAt = now
 	var closing := -(moving - other.velocity).dot(normal)
 	if closing <= 0.0: return
+	if closing >= CAR_BUMP_LOUD && (isPlayer || isGuest || other.isPlayer || other.isGuest): bumpFx(other) #a person's car is in it
 	var mine := 1.0 + weight / 50.0
 	var theirs := 1.0 + other.weight / 50.0
 	var impulse := closing * (1.0 + CAR_BOUNCE) / (1.0 / mine + 1.0 / theirs)
@@ -818,6 +826,17 @@ func bumpCar(other: OverheadCarBody2D, normal: Vector2, moving: Vector2) -> void
 	if isPlayer || other.isPlayer:
 		Settings.vibrate(0.4, 0.6, 0.12)
 		if is_instance_valid(crushFeel): crushFeel.kick += normal * minf(closing / 40.0, 14.0)
+
+## Two cars meeting: the crash and sparks a wall hit gets, between the two (show only)
+const CAR_BUMP_LOUD := 60.0 #closing speed (px/s) from which a bump is heard
+func bumpFx(other: OverheadCarBody2D) -> void:
+	var crash = $"AudioStream-Crash"
+	if crash.playing: return
+	crash.play()
+	var spark = sparks.instantiate()
+	spark.global_position = (global_position + other.global_position) * 0.5
+	if is_instance_valid(Root.levelRoot): Root.levelRoot.add_child(spark)
+	else: spark.queue_free()
 
 ## The share of a bump a car takes when the contact lies `toContact` from it: its nose shrugs most of it off
 static func bumpShare(heading: float, toContact: Vector2) -> float:
@@ -834,14 +853,16 @@ func crushGoon(collider, speed := -1.0) -> bool:
 		if not collider.tryCrush(self, speed * crushWeight()): return false
 	else: collider.destroy()
 	if isPlayer: Settings.vibrate(0.4, 0.0, 0.08)
-	creditGoon(collider)
-	if collider.get("isGiant"): giantsCrushed += 1
-	reward("currentGoonsCrushed", 1) #credited now; the flying icon is only for show
+	var who := Coop.creditTo(self) #a friendly guest's crushes are the player's
+	if who != self: currentGoonsCrushed += 1 #...and counted on the guest too, for the results
+	who.creditGoon(collider)
+	if collider.get("isGiant"): who.giantsCrushed += 1
+	who.reward("currentGoonsCrushed", 1) #credited now; the flying icon is only for show
 	RewardFlyers.flyUpgrade(Root.upgrade.CURRENTGOONSCRUSHED, collider.global_position)
-	if isPlayer:
-		PickupEffects.onCrush(self, collider.global_position)
-		addCrushXp(collider, isStyleCrush(speed))
-		if is_instance_valid(crushFeel): crushFeel.onCrush(collider, speed)
+	if who.isPlayer || who.isGuest: PickupEffects.onCrush(who, collider.global_position) #the chain's coins: a rival guest's are its own
+	if who.isPlayer:
+		who.addCrushXp(collider, isStyleCrush(speed))
+		if isPlayer && is_instance_valid(crushFeel): crushFeel.onCrush(collider, speed)
 	return true
 
 #Crush XP (CrushPrizes): every crush earns XP toward the next gift box, which GameUI opens. Credited at
@@ -953,11 +974,13 @@ func driftSpark(color: Color) -> void:
 	Root.levelRoot.add_child(spark)
 
 #a goon this car killed, by its bumper or anything it set off (SpawnManager.creditCrush: blasts, shells,
-#drownings): the Goonopedia's per-goon count (gameSummary)
+#drownings): the Goonopedia's per-goon count (gameSummary), and a banner when it reaches an achievement tier
 func creditGoon(goon: Object) -> void:
 	if goon == null || not is_instance_valid(goon): return
 	var id = goon.get("goonId")
-	if id: crushedById[id] = crushedById.get(id, 0) + 1
+	if not id: return
+	crushedById[id] = crushedById.get(id, 0) + 1
+	Achievements.onCrush(self, id)
 
 var isVibratingLeft = 4
 var vibrationSteps = 0
@@ -1030,7 +1053,7 @@ var cameraAdjustmentSpeed: float = 0.0008
 const SPEED_ZOOM_FLOOR := 0.5 #the furthest the speed zoom goes: half the default zoom
 func updateCameraZoom():
 	var targetZoomFactor: float
-	if velocity.length() > 450.0 && isPlayer && is_instance_valid(camera):
+	if velocity.length() > 450.0 && (isPlayer || isGuest) && is_instance_valid(camera):
 		#pulls back with speed, but never past SPEED_ZOOM_FLOOR of the default: further out, the car and goons got too small to read
 		targetZoomFactor = maxf(defaultZoomLevel + 0.08 - velocity.length() / 5500.0, defaultZoomLevel * SPEED_ZOOM_FLOOR)
 	else:
@@ -1201,6 +1224,8 @@ func destroy():
 		if isPlayer:
 			$sprite.modulate = Color(0.8,0.8,0.8,1.0)
 			await get_tree().create_timer(1).timeout
+			var coop = Root.levelRoot.get("coop")
+			if coop && coop.holdsWreck(): return #two players: the other is still going, so this car comes back (CoopRun)
 			Root.levelRoot.endLevel( false ,  Root.endCondition.NOHEALTH )
 		else:
 			queue_free()
@@ -1218,6 +1243,17 @@ func wreckSmoke() -> void:
 	fx.z_index = 5
 	Root.levelRoot.add_child(fx)
 	for i in 4: fx.burst(Vector2.ZERO, 7, Vector2.RIGHT.rotated(randf() * TAU) * 160.0, 320.0, 280.0, 1.8, i * 0.12)
+
+## Back on the road after a wreck (two players: CoopRun.revivePlayer), patched up to REVIVE_HEALTH
+const REVIVE_HEALTH := 60.0
+func revive() -> void:
+	isWrecked = false
+	isDestroyed = false
+	drowned = false
+	health = REVIVE_HEALTH
+	repairAll()
+	updateDamageLook()
+	$sprite.modulate = Color.WHITE
 
 @onready var myLights = $headlamps
 func turnOnHeadlights(status: bool):

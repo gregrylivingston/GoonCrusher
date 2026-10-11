@@ -55,7 +55,8 @@ const OPTIONS_PANE := Rect2(520, 282, 1020, 380) #middle section: the selected m
 const LEVEL_ART := Vector2(176, 70)
 const FACT_ICON := 46.0 #a goon, a ground, a prop or a rule's tile in the level's facts
 const FACT_CAPS := {"goons": 5, "ground": 4, "props": 4, "rules": 4}
-const RECORDS_PANEL := Rect2(60, 686, 1084, 128) #bottom section, up to the launch bar: this driver's record here and the best
+const RECORDS_PANEL := Rect2(60, 686, 716, 128) #bottom section: this driver's record here and the best
+const COOP_POS := Vector2(796, 686) #between the records and the launch bar: the second player's plate (CoopPanel.SIZE)
 const PANEL_EDGE := Color(1, 1, 1, 0.22)
 const TITLE_ROW := Rect2(60, 88, 1480, 44) #the level's name, its region and the stop buttons, on the sections' left edge
 const TIER_SEGMENT := 196.0
@@ -112,6 +113,7 @@ var setup := Control.new()
 var logo := Label.new()
 var cards: Array[DriverCard] = []
 var pendingInfos := {}       #card index -> CarInfo path still loading on a worker thread
+var codexBadge: CountBadge
 var coinsLabel := Label.new()
 var gemsLabel := Label.new()
 var shownCoins := 0
@@ -136,6 +138,7 @@ var stopRow := HBoxContainer.new() #under the title: the region, then a button p
 var stopButtons: Array[Button] = []
 var stakes := HBoxContainer.new() #under the tier switch: why it can't start, what a win opens, the first clear
 var recordsBox := HBoxContainer.new()
+var coopPanel := CoopPanel.new() #Level Options: the second player joins and picks here (Coop)
 var optionsPane: PanelContainer #the pane; its edge takes the mode's category color
 var paneBody: VBoxContainer
 var paneTween: Tween
@@ -298,6 +301,8 @@ func buildTopBar() -> void:
 			[SETTINGS_ICON, "Settings", openSettings],
 			[Goonopedia.ICON, "Goonopedia", openGoonopedia]]:
 		left.add_child(barButton(item[0], item[1], item[2]))
+	codexBadge = CountBadge.on(left.get_child(left.get_child_count() - 1), 0.0, 24.0, Vector2(8, -6)) #rewards to claim in the Goonopedia
+	codexBadge.setCount(Achievements.claimableCount())
 	ui.add_child(left)
 	radioBar.pinned = true
 	radioBar.width = 270.0
@@ -626,6 +631,9 @@ func buildOptions() -> void:
 	recordsBox.add_theme_constant_override("separation", 28)
 	recordsBox.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	records.add_child(recordsBox)
+	coopPanel.position = COOP_POS
+	options.add_child(coopPanel)
+	Input.joy_connection_changed.connect(onPadsChanged)
 	options.add_child(records)
 
 #a small muted heading in the pane ("GOAL", "GOONS")
@@ -644,23 +652,18 @@ static func paneRule() -> ColorRect:
 	return rule
 
 #---------- the loadout ----------
-#Banked gems buy a consumable for each of the car's two slots to start a run with: a gadget for the
+#Each of the car's two slots can start a run with a consumable, free once it is unlocked: a gadget for the
 #Fire slot (Pickups.LOADOUT, kept in meta.records.loadout) and a boost for the Boost slot
 #(Pickups.BOOST_LOADOUT, meta.records.boostLoadout). Each button says which key fires it in the run.
-#The gems are spent when the run starts, the gadget's first.
 const SLOTS := RunLauncher.SLOTS
 var loadoutButton: Button #the gadget's (the career harness presses it)
 var boostButton: Button
 
-static func slotPrices(slot: String) -> Dictionary:
-	return RunLauncher.slotPrices(slot)
+static func slotOptions(slot: String) -> Array:
+	return RunLauncher.slotOptions(slot)
 
 static func slotChoice(slot: String) -> String:
 	return RunLauncher.slotChoice(slot)
-
-## What the slot will really buy at Start (RunLauncher.slotPurchase)
-static func slotPurchase(slot: String) -> String:
-	return RunLauncher.slotPurchase(slot)
 
 func cycleLoadout() -> void:
 	cycleSlot("loadout")
@@ -668,41 +671,29 @@ func cycleLoadout() -> void:
 func cycleBoost() -> void:
 	cycleSlot("boostLoadout")
 
-## The next choice the gems cover alongside the other slot's, or none
+## The slot's next choice, or none after the last
 func cycleSlot(slot: String) -> void:
-	var prices := slotPrices(slot)
-	var other: String = SLOTS[1 - SLOTS.find(slot)]
-	var budget: int = SaveManager.playerData.gem - slotPrices(other).get(slotPurchase(other), 0)
-	var options := [""] + prices.keys()
-	var at := options.find(slotChoice(slot))
-	for i in options.size():
-		at = wrapi(at + 1, 0, options.size())
-		if options[at] == "" || budget >= prices[options[at]]: break
-	SaveManager.playerData.meta.records[slot] = options[at]
+	var options := [""] + slotOptions(slot)
+	SaveManager.playerData.meta.records[slot] = options[wrapi(options.find(slotChoice(slot)) + 1, 0, options.size())]
 	SaveManager.save_character_data()
 	refreshLoadout()
 
 #each slot: the chosen pickup's icon on its button (a plus when empty); its tooltip has the pickup's name,
-#uses, price and text and the key that fires it in the run. START's badge shows the gems both will take.
+#uses and text and the key that fires it in the run
 func refreshLoadout() -> void:
 	for pair in [["loadout", "UseItem", "gadget"], ["boostLoadout", "UseMove", "boost"]]:
 		var slot: String = pair[0]
 		var button: Button = launch.slotButtons[slot]
-		var id := slotPurchase(slot)
-		var prices := slotPrices(slot)
+		var id := slotChoice(slot)
 		var key := InputGlyphs.label(pair[1])
 		launch.setSlot(slot, Pickups.texture(id) if id != "" else null)
 		if id != "":
 			var uses: int = Pickups.DATA[id].get("charges", 1)
-			button.tooltip_text = "%s%s: %d gems
+			button.tooltip_text = "%s%s
 %s
-In the run: press %s" % [Pickups.displayName(id), " x%d" % uses if uses > 1 else "", prices[id], Pickups.DATA[id].get("text", ""), key]
-		elif prices.is_empty(): button.tooltip_text = "No %s unlocked yet. Unlock one in Pickups (%s)" % [pair[2], InputGlyphs.label("ui_pickups")]
-		else: button.tooltip_text = "Start the run with a %s, from %d gems. In the run: press %s" % [pair[2], prices.values().min(), key]
-	#the gems Start will take, on START
-	var cost := 0
-	for slot in SLOTS: cost += int(slotPrices(slot).get(slotPurchase(slot), 0))
-	launch.setGems(cost if screen == Screen.SETUP && optionsOpen else 0)
+In the run: press %s" % [Pickups.displayName(id), " x%d" % uses if uses > 1 else "", Pickups.DATA[id].get("text", ""), key]
+		elif slotOptions(slot).is_empty(): button.tooltip_text = "No %s unlocked yet. Unlock one in Pickups (%s)" % [pair[2], InputGlyphs.label("ui_pickups")]
+		else: button.tooltip_text = "Start the run with a %s. In the run: press %s" % [pair[2], key]
 
 #the launch bar's driver, loadout and counts (how many upgrades and pickups the bank covers), and in the
 #garage its primary button: Drive, or Unlock with what the bank is short of beside the bar. Run setup's
@@ -1767,11 +1758,24 @@ func openOptions() -> void:
 		Juice.shake(goButton)
 		return
 	optionsOpen = true
+	if Coop.padGone(): Coop.leave()
+	refreshCoop()
 	SaveManager.setGameMode(defaultGameMode())
 	refreshSetup(false)
 	options.position = Vector2.ZERO #a drop cut short by Back left it part-way
 	if not Transition.instant(): Juice.dropIn(options, 30.0)
 	focusSetup()
+
+#the second player's plate: their car's info comes from its garage card (loaded now if it wasn't yet)
+func refreshCoop() -> void:
+	if Coop.active && cards[Coop.car].info == null: finishCarLoad(Coop.car, true)
+	coopPanel.refresh(cards[Coop.car].info if Coop.active else null, SaveManager.getGameMode())
+
+#a controller was plugged in or pulled out: a guest whose pad is gone leaves
+func onPadsChanged(_device: int, _connected: bool) -> void:
+	if not Coop.padGone(): return
+	Coop.leave()
+	refreshCoop()
 
 func closeOptions() -> void:
 	if not optionsOpen: return
@@ -1894,6 +1898,7 @@ func refreshSetup(animate := true) -> void:
 	lockReason = reason
 	refreshTiers(forModes, mode, selected, reason)
 	refreshRecords(selected, mode)
+	if optionsOpen: refreshCoop() #the mode picks the second player's side
 	var pick := [selected, mode, tier]
 	if optionsOpen && animate && not shownPick.is_empty() && pick != shownPick && not Transition.instant() && not Settings.reduce_motion():
 		if pick[1] != shownPick[1] || pick[0] != shownPick[0]: slidePane()
@@ -1999,7 +2004,7 @@ func refreshFreeRow(level: Dictionary, mode: int) -> void:
 func onStartPressed() -> void:
 	var index = SaveManager.playerData.selectedLevel
 	if screen == Screen.SETUP && optionsOpen && isLevelSelectable(index) && Root.isModePlayable(selectedLevelForModes(), SaveManager.getGameMode()) && ModeTiers.isOpen(selectedLevelForModes(), SaveManager.getGameMode(), SaveManager.getGameTier()):
-		RunLauncher.buyLoadout()
+		RunLauncher.takeLoadout()
 		startLevel(levelScene(index))
 
 #the mode shown when run setup opens: the saved one if it can be started here, else the level's first
@@ -2029,6 +2034,16 @@ func _process(_delta):
 #menu navigation runs before the GUI so Left/Right switch cards instead of moving focus
 func _input(event: InputEvent) -> void:
 	if Settings.menu_open || loadingLevel || overlayOpen() || Transition.busy() || not event.is_pressed() || event.is_echo(): return
+	if screen == Screen.SETUP && optionsOpen && Coop.menuInput(event): #the second player's own buttons
+		refreshCoop()
+		get_viewport().set_input_as_handled()
+		return
+	Coop.note(event)
+	if screen == Screen.SETUP && optionsOpen && Coop.active && event.is_action_pressed(CoopPanel.LEAVE_ACTION): #the first player removes the guest
+		Coop.leave()
+		refreshCoop()
+		get_viewport().set_input_as_handled()
+		return
 	if event is InputEventMouseButton:
 		if (event.button_index == MOUSE_BUTTON_WHEEL_UP || event.button_index == MOUSE_BUTTON_WHEEL_DOWN):
 			var step = -1 if event.button_index == MOUSE_BUTTON_WHEEL_UP else 1
@@ -2190,6 +2205,7 @@ func statUpdatesUiUpdate() -> void:
 	shownCoins = SaveManager.playerData.coin
 	coinsLabel.text = DriverCard.formatCoins(shownCoins)
 	gemsLabel.text = str(SaveManager.playerData.gem)
+	codexBadge.setCount(Achievements.claimableCount())
 	refreshLaunch()
 	for card in cards: card.refresh()
 	if focusOpen: bench.refresh()

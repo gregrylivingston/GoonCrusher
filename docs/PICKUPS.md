@@ -99,7 +99,7 @@ Every game that pauses the run extends `PickupMenu` (`pickup_menu.gd`): one card
 
 - `meta.pickups`: discovered pickups (`Pickups.discover`). Written in memory only; the run's save at the results ticket writes it.
 - `meta.unlocks`: opened ids. `meta.lifetime`: the counters play unlocks read.
-- `meta.records.loadout`, `boostLoadout`: the run setup's starting gadget and boost (`Pickups.LOADOUT`, `BOOST_LOADOUT`). Gems are spent at Start and the car takes both in `_ready`.
+- `meta.records.loadout`, `boostLoadout`: the run setup's starting gadget and boost (`Pickups.LOADOUT`, `BOOST_LOADOUT`). They are free; the car takes both in `_ready`.
 - `meta` sections are created on use (`get_or_add`), so a new one needs no `SAVE_VERSION` bump.
 
 ## Hooks in shared files

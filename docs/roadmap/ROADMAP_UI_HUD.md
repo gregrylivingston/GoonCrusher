@@ -12,7 +12,7 @@ How they work today: `docs/UI.md`, `docs/HUD.md`. Tags and effort: `ROADMAP.md`.
 - **[0.3 want] The results screen by hand:** every ending on keyboard, mouse and pad; a long win (first clear, new car, Full Garage, unlocks) still fits; 720p and 540p Render Resolution. S + play.
 - **[later] Results extras:** the car's route drawn on a small map on the ticket; a Pickups shortcut on the "Ready to unlock" chip. S to M.
 - **[later] Records:** per-level records for the modes without a course record; a "Next up" panel. M.
-- **[later] Steam:** a `SteamService` autoload guarded by `Engine.has_singleton("Steam")`; achievements mirrored into `meta.achievements`; `steam_appid.txt` only in dev builds. The addon loads; no game code calls it. M.
+- **[later] Steam:** a `SteamService` autoload guarded by `Engine.has_singleton("Steam")`; mirror the game's achievements (`Achievements.steamId`; not every goon tier needs a Steam entry); `steam_appid.txt` only in dev builds. The addon loads; no game code calls it. M.
 
 ## Suggestions
 - **Contracts:** three date-seeded contracts, reroll for a gem (needs Steam or a clock rule). M.

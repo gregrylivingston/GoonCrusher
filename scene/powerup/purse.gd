@@ -13,6 +13,9 @@ func sendReward(body, forShowOnly: bool = false):
 	var coinsToReward = randi_range( MIN_COINS , MAX_COINS )
 	body.reward("coin", coinsToReward * RewardFlyers.infoFor(Root.upgrade.COIN).get("quantity", 1), forShowOnly)
 	body.playPurseRewardAudio()
+	if body.get("isGuest"): #the coins fly to the player's HUD: not a rival guest's
+		queue_free()
+		return
 	for i in coinsToReward:
 		#the show stops if the run ends or the chunk unloads under it (the coins are already credited)
 		if not is_instance_valid(Root.playerCar) || not is_inside_tree(): break

@@ -241,6 +241,19 @@ func tile(parent: Control, entry: Dictionary, picture: Texture2D, caption: Strin
 	tiles.push_back(b)
 	return b
 
+func tileFor(key) -> Button:
+	for b in tiles:
+		if is_instance_valid(b) && b.has_meta("key") && sameKey(b.get_meta("key"), key): return b
+	return null
+
+## Tile keys differ in type between pages (String, StringName, int); == between two types is an error
+static func sameKey(a, b) -> bool:
+	return typeof(a) == typeof(b) && a == b
+
+## Is this press the mouse click that picked tile `key` (it had no focus when the button went down)?
+func isPickingClick(key) -> bool:
+	return Time.get_ticks_msec() - mouseDownMsec < 1000 && not sameKey(mouseDownOn, key)
+
 #---------- detail card helpers ----------
 
 func clearDetail() -> void:

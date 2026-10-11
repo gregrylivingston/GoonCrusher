@@ -15,6 +15,7 @@ Tags and effort: `ROADMAP.md`. Tools: career playtests (`scripts/ai/career.py`, 
   - Unlock prices: `Unlocks.PRICE_RANGE` (placeholders). Target: a Rookie opens about 20 pickups by the end of Prairie and sees every mode before the demo ends.
   - Gift boxes (`CrushPrizes.XP_BASE`, `XP_EXP`): first box in under a minute of decent play, then one every 2 to 4 minutes.
   - The drop mix, pickup odds and timers, fuel pressure, wall damage, the water costs.
+  - Achievement goals and rewards: `Achievements.GOON_GOALS`, `GOON_REWARDS` (placeholders). Check with careers that the coins don't outrun the unlock prices and what the gems add to a demo playthrough.
 - **[0.3 want] About 30 runs by hand** across the 3 demo cars and the modes, with notes.
 
 ### After 0.3

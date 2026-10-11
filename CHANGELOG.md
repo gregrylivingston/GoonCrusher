@@ -17,8 +17,10 @@ The first update since the 0.1 demo, and close to a rebuilt game. Old demo saves
 - **A new cast of 44 goons** in three factions, each with one trick of its own, a tell before it acts and a moment when it can be punished.
 - **Driving with more to it:** a handbrake, powerslides that charge a drift boost, weight that matters, a horn, and two signature traits per car.
 - **Prize games and gift boxes.** Crushing fills a gift box; each box holds a prize game. Eight games in all, three in the demo.
+- **Goon achievements.** Every goon has three: your first crush, then two bigger counts. Each pays coins or a gem, claimed in the Goonopedia; a badge on its button shows when a reward is waiting.
 - **83 pickups in unlock trees,** with a gadget slot and a boost slot on the car.
 - **GoonCrusher Radio:** 14 original songs, a DJ, ads and station idents.
+- **Two players on one screen.** In Level Options a second player presses Start on a controller, picks a car, a gadget, a boost and a side (friend or rival), and drives on a split screen with a dashboard of their own. Rewards and records stay player one's.
 - **A dashboard per car, a new garage and a full settings menu** with four quality presets.
 
 ### World and levels
@@ -63,13 +65,13 @@ The first update since the 0.1 demo, and close to a rebuilt game. Old demo saves
 - Goons use the world: Bandits carry loot home to a den, Jackalopes hide in burrows, others cut log piles loose at you.
 - Crushes land harder: splats, flings, hood rides, a short hit-stop and camera shake (all adjustable).
 - Critter Chain: kills you set up with logs, bees, floods or blasts join your crush combo, and mixing kinds pays more.
-- The Goonopedia lists every goon you have crushed and how to beat it.
+- The Goonopedia lists every goon you have crushed, how to beat it and the levels where it lives.
 - Three tougher mixed classes in the later regions (full game).
 
 ### Pickups and prize games
 
 - Nine kinds of pickup: supplies, tune-ups, power-ups, gadgets, boosts, loot, casino, skill challenges and mode specials.
-- Gadgets (Fire) and boosts (Boost / Hop) sit in two slots with their own buttons. Buy a starting loadout on the launch bar.
+- Gadgets (Fire) and boosts (Boost / Hop) sit in two slots with their own buttons. Pick a starting gadget and boost on the launch bar, free once unlocked.
 - Most of what goons drop is coins, however lucky your car; the better pickups stay a treat.
 - The Claw Crane is one play: when your grabs are gone you collect what you won.
 - Gift boxes come in five tiers, Cardboard to Diamond; better boxes play better versions of a game.

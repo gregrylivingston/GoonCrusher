@@ -390,8 +390,15 @@ func processViews(frameStart: int) -> void:
 
 #every chunk the camera can see now, or will see after PREFETCH_SECONDS of travel; the rasters and recipes
 #of the car's 3x3 and of what the camera will see RASTER_PREFETCH_SECONDS ahead are queued on the worker pool
+#With two players (Coop) the guest's camera counts too; the guest is leashed inside the player's 3x3 (CoopRun).
 func queueNeededChunks() -> void:
-	var car = Root.playerCar
+	loadQueue.clear()
+	queueChunksFor(Root.playerCar)
+	if Coop.guest != null: queueChunksFor(Coop.guest)
+	loadQueue.sort_custom(func(a, b): return (a - playerChunk).length_squared() < (b - playerChunk).length_squared())
+	for c in worldMap.keep: worldMap.request(c)
+
+func queueChunksFor(car: Node2D) -> void:
 	var zoom = car.get_node("Camera2D").zoom if car.has_node("Camera2D") else Vector2.ONE
 	var half = get_viewport().get_visible_rect().size / zoom / 2.0 + Vector2(256, 256)
 	var view = Rect2(car.global_position - half, half * 2.0)
@@ -399,14 +406,11 @@ func queueNeededChunks() -> void:
 	view = view.merge(Rect2(view.position + car.velocity * PREFETCH_SECONDS, view.size))
 	var first = chunkOf(view.position)
 	var last = chunkOf(view.end)
-	loadQueue.clear()
 	for y in range(first.y, last.y + 1):
 		for x in range(first.x, last.x + 1):
 			var c = Vector2i(x, y)
-			if not views.has(c) && WorldMap.chunkInMap(c) && distance(c, playerChunk) <= KEEP_RADIUS + 1:
+			if not views.has(c) && not loadQueue.has(c) && WorldMap.chunkInMap(c) && distance(c, playerChunk) <= KEEP_RADIUS + 1:
 				loadQueue.push_back(c)
-	loadQueue.sort_custom(func(a, b): return (a - playerChunk).length_squared() < (b - playerChunk).length_squared())
-	for c in worldMap.keep: worldMap.request(c)
 	var aheadFirst = chunkOf(ahead.position)
 	var aheadLast = chunkOf(ahead.end)
 	for y in range(aheadFirst.y, aheadLast.y + 1):

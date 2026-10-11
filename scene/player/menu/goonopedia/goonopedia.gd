@@ -1,22 +1,24 @@
 class_name Goonopedia extends CodexPage
 
-#The Goonopedia (docs/UI.md): what's in the game, opened from the main menu's book button or B / L3.
-#Tabs GOONS and SYSTEMS on the shared page frame (CodexPage); pickups are unlocked on their own screen
+#The Goonopedia (docs/UI.md): the goons and their achievements, opened from the main menu's book button or
+#B / L3. A tab per faction on the shared page frame (CodexPage); pickups are unlocked on their own screen
 #(PickupShop), cars live in the garage (its driver focus, DriverBench) and levels and modes are described
 #in run setup (main2: the road map's level panel and Level Options, which use regionRows). The entries and
-#their numbers come from the game's own tables (Goons.DATA, the car's systems), so new goons show up by
+#their numbers come from the game's own tables (Goons.DATA), so new goons show up by
 #themselves; only the plain-language text is written here. A goon's DATA can carry "blurb" and "tip" strings to replace the text its verb gives it.
 #Goons show as silhouettes until the player crushes one (PlayerData.goonsCrushed, credited by gameSummary).
+#Each goon has an achievement with three tiers (Achievements); a tier's reward is claimed here: Accept on the
+#goon's tile (a second click, or the card's button), or CLAIM ALL. Badges count what waits on each tab.
 
-enum Tab { GOONS, SYSTEMS }
-const TAB_NAMES := ["GOONS", "SYSTEMS"]
 const REVEAL_ALL := false #true shows every goon without crushing one first
 const ICON := preload("res://texture/icon/goonopedia.svg")
+const CLAIM_ALL_ACTION := "ui_upgrade"
+const PIP_SIZE := Vector2(14, 6) #a tile's three tier marks
+const PIP_UNEARNED := Color(0.25, 0.22, 0.2)
 
 #---------- text ----------
 
 const RANK_NAMES := {0: "SPAWN", 1: "FODDER", 2: "SPECIAL", 3: "HEAVY"}
-const TERRAIN_NAMES := ["Grass", "Sand", "Mud", "Water", "Hills", "Moss", "Dirt", "Snow"] #Goons.T order
 const FACTION_COLORS := [Color(0.533, 0.776, 0.388), Color(0.604, 0.541, 0.659), Color(0.69, 0.718, 0.745)]
 const FACTION_TEXT := [
 	"Critters of the open country. You meet them near the start and on the early levels.",
@@ -63,19 +65,10 @@ const TRAIT_TEXT := {
 	"log": "Lies still as a log until you pass.", "flank": "Circles round to hit you from the side.",
 }
 
-#system -> [icon, what wear does]. The car's CONDITION_FLOOR supplies the numbers.
-const SYSTEMS := [
-	["hull", preload("res://texture/icon/health.svg"), "Your car's health. Goon attacks and crashes take it down, Armor softens every hit, and at zero the car is wrecked."],
-	["tires", preload("res://texture/icon/traction.svg"), "Worn tires grip less."],
-	["engine", preload("res://texture/icon/engine.svg"), "A damaged engine pulls less."],
-	["steering", preload("res://texture/icon/steering.svg"), "Damaged steering turns less."],
-	["lights", preload("res://texture/icon/headlights.svg"), "Broken lights reach less far, which matters at night."],
-	["tank", preload("res://texture/icon/fuel.svg"), "A damaged tank makes Oil count for less, and below half it leaks fuel."],
-]
-const SYSTEM_STAT_NAMES := {"lights": "headlight reach", "engine": "engine power", "steering": "steering", "tires": "traction", "tank": "Oil"}
-
 var preview: GoonPreview
 var pending := {}        #resource path -> Callable(resource) to run once it has loaded on a worker thread
+var badges: Array[CountBadge] = [] #one per tab: the rewards waiting there
+var claimAllButton: Button
 
 static func open(parent: Node) -> Goonopedia:
 	var page = Goonopedia.new()
@@ -85,19 +78,70 @@ static func open(parent: Node) -> Goonopedia:
 func _init() -> void:
 	title = "GOONOPEDIA"
 	icon = ICON
+	sellsThings = true #rewards land in the bank
+	hints = [[["ui_tab_prev", "ui_tab_next"], "Faction"], [["ui_up", "ui_down"], "Browse"], [["ui_accept"], "Claim"], [[CLAIM_ALL_ACTION], "Claim all"], [["ui_cancel"], "Back"]]
+
+#---------- tabs ----------
+
+## One tab per faction (Goons.faction)
+static func tabTitles() -> Array:
+	return Goons.FACTION_NAMES.map(func(n): return n.to_upper())
 
 func tabNames() -> Array:
-	return TAB_NAMES
+	return tabTitles()
+
+## A faction's goons, weakest rank first
+static func tabGoons(index: int) -> Array:
+	var ids = Goons.DATA.keys().filter(func(id): return Goons.DATA[id].faction == index)
+	ids.sort_custom(func(a, b): return Goons.DATA[a].rank < Goons.DATA[b].rank if Goons.DATA[a].rank != Goons.DATA[b].rank else String(a) < String(b))
+	return ids
+
+## The first tab with a reward to claim
+func startTab() -> int:
+	for i in tabTitles().size():
+		if Achievements.claimableCount(tabGoons(i).map(Achievements.forGoon)) > 0: return i
+	return 0
+
+## A tab opens on a goon with a reward waiting
+func firstFocus() -> Button:
+	for id in tabGoons(tab):
+		if Achievements.claimable(Achievements.forGoon(id)) > 0 && tileFor(id): return tileFor(id)
+	return super()
+
+## The tabs with a badge each, and CLAIM ALL at the end of the row
+func buildTabs() -> Control:
+	var row := super()
+	for i in tabButtons.size(): badges.push_back(CountBadge.on(tabButtons[i], i * 0.2))
+	claimAllButton = MenuTheme.button("", PackedStringArray([CLAIM_ALL_ACTION]))
+	claimAllButton.focus_mode = Control.FOCUS_NONE
+	claimAllButton.custom_minimum_size = Vector2(240, 44)
+	claimAllButton.pressed.connect(claimAll)
+	row.add_child(claimAllButton)
+	var holder = MarginContainer.new() #room above the tabs for their badges
+	holder.add_theme_constant_override("margin_top", 16)
+	holder.add_child(row)
+	return holder
+
+func refreshTabs() -> void:
+	for i in badges.size(): badges[i].setCount(Achievements.claimableCount(tabGoons(i).map(Achievements.forGoon)))
+	var waiting := Achievements.claimableCount()
+	claimAllButton.disabled = waiting == 0
+	MenuTheme.setButtonParts(claimAllButton, ["CLAIM ALL", waiting] if waiting > 0 else ["CLAIM ALL"], 18)
 
 func buildTab(index: int) -> void:
-	match index:
-		Tab.GOONS: buildGoons()
-		Tab.SYSTEMS: buildSystems()
+	buildGoons(index)
+	refreshTabs()
 
 func drawDetail(entry: Dictionary) -> void:
 	match entry.kind:
 		"goon": goonDetail(entry)
-		"system": systemDetail(entry)
+
+func _input(event: InputEvent) -> void:
+	if not Settings.menu_open && event.is_action_pressed(CLAIM_ALL_ACTION) && not event.is_echo():
+		claimAll()
+		get_viewport().set_input_as_handled()
+		return
+	super(event)
 
 func clearDetail() -> void:
 	preview = null
@@ -185,20 +229,105 @@ static func goonArt(id: StringName, pose := "idle0") -> String:
 static func goonFrames(id: StringName) -> String:
 	return "res://scene/enemy/goons/%s/%s_frames.tres" % [id, id]
 
-func buildGoons() -> void:
-	var found := 0
-	for f in Goons.FACTION_NAMES.size():
-		var ids = Goons.DATA.keys().filter(func(id): return Goons.DATA[id].faction == f)
-		ids.sort_custom(func(a, b): return Goons.DATA[a].rank < Goons.DATA[b].rank if Goons.DATA[a].rank != Goons.DATA[b].rank else String(a) < String(b))
-		var here = ids.filter(isDiscovered).size()
-		found += here
-		section(Goons.factionName(f).to_upper(), "%d / %d found" % [here, ids.size()], FACTION_COLORS[f])
-		var g = grid(5)
-		for id in ids:
-			var known = isDiscovered(id)
-			var b = tile(g, {"kind": "goon", "key": id}, null, Goons.DATA[id].name if known else "???", Vector2(124, 124), not known)
-			loadThen(goonArt(id), setGoonTileArt.bind(b))
-	progressLabel.text = "GOONS FOUND  %d / %d" % [found, Goons.DATA.size()]
+func buildGoons(f: int) -> void:
+	var ids := tabGoons(f)
+	section(Goons.factionName(f).to_upper(), "%d / %d found.  %s" % [ids.filter(isDiscovered).size(), ids.filter(isMeetable).size(), FACTION_TEXT[f]], FACTION_COLORS[f])
+	var g = grid(5)
+	for id in ids:
+		var known = isDiscovered(id)
+		var b = tile(g, {"kind": "goon", "key": id}, null, Goons.DATA[id].name if known else "???", Vector2(124, 124), not known)
+		loadThen(goonArt(id), setGoonTileArt.bind(b))
+		addTierPips(b, Achievements.forGoon(id))
+		if Achievements.claimable(Achievements.forGoon(id)) > 0: PickupShop.addTileTag(b, ["CLAIM"], HudTheme.GOLD)
+		elif not known && not isMeetable(id): PickupShop.addTileTag(b, ["FULL GAME"], HudTheme.MUTED)
+		b.pressed.connect(onGoonTilePressed.bind(id))
+	progressLabel.text = "GOONS FOUND  %d / %d" % [Goons.DATA.keys().filter(isDiscovered).size(), Goons.DATA.keys().filter(isMeetable).size()]
+
+## Three marks in a tile's top left corner, one per tier: gold once claimed, white while its reward waits
+static func addTierPips(b: Button, id: String) -> void:
+	var row = HBoxContainer.new()
+	row.name = "pips"
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_theme_constant_override("separation", 3)
+	row.position = Vector2(7, 7)
+	for tier in Achievements.TIER_NAMES.size():
+		var pip = ColorRect.new()
+		pip.custom_minimum_size = PIP_SIZE
+		pip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		pip.color = HudTheme.GOLD if tier < Achievements.claimed(id) else (Color.WHITE if tier < Achievements.earned(id) else PIP_UNEARNED)
+		row.add_child(pip)
+	b.add_child(row)
+
+#---------- claiming ----------
+
+## Accept on a goon's tile claims its reward. A click that only just focused the tile just shows it.
+func onGoonTilePressed(id: StringName) -> void:
+	if isPickingClick(id): return
+	claimGoon(id)
+
+## Claims a goon's waiting tiers, else shakes its tile
+func claimGoon(id: StringName) -> void:
+	if Achievements.claim(Achievements.forGoon(id)).is_empty():
+		if tileFor(id): Juice.shake(tileFor(id))
+		return
+	claimedSomething(id)
+
+func claimAll() -> void:
+	if Achievements.claimAll().is_empty(): return
+	var focused := get_viewport().gui_get_focus_owner()
+	claimedSomething(focused.get_meta("key") if focused != null && focused.has_meta("key") else null)
+
+## After a claim: the sound, the save, the garage behind the page, and the tab redrawn with `key`'s tile lit
+func claimedSomething(key) -> void:
+	Audio.play(PickupShop.BUY_SOUND)
+	SaveManager.flush()
+	if is_instance_valid(Root.mainMenu): Root.mainMenu.statUpdatesUiUpdate()
+	var scroll := listScroll.scroll_vertical
+	setTab(tab)
+	listScroll.scroll_vertical = scroll
+	var b := tileFor(key)
+	if b == null: return
+	b.grab_focus()
+	Juice.flash(b, HudTheme.GOLD, 0.6, 18)
+	Juice.pop(b, 1.08, 0.4)
+
+## A goon's three tiers on its card: the goal, how far along, the reward, and CLAIM when one waits
+func tierRows(goon: StringName) -> void:
+	var id := Achievements.forGoon(goon)
+	var count := Achievements.progress(id)
+	var goals := Achievements.goals(id)
+	var table = GridContainer.new()
+	table.columns = 4
+	table.add_theme_constant_override("h_separation", 14)
+	table.add_theme_constant_override("v_separation", 6)
+	for tier in goals.size():
+		var done: bool = tier < Achievements.claimed(id)
+		var ready: bool = not done && tier < Achievements.earned(id)
+		var color: Color = HudTheme.GOLD if done || ready else HudTheme.MUTED
+		table.add_child(chip(Achievements.TIER_NAMES[tier], color))
+		var bar = DriverCard.StatBar.new()
+		bar.base = roundi(100.0 * clampf(float(count) / goals[tier], 0.0, 1.0))
+		bar.custom_minimum_size = Vector2(barWidth, 7)
+		bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		table.add_child(bar)
+		var progress = Label.new()
+		progress.text = "%s / %s" % [DriverCard.formatCoins(mini(count, goals[tier])), DriverCard.formatCoins(goals[tier])]
+		progress.add_theme_font_size_override("font_size", 18)
+		progress.custom_minimum_size.x = 150
+		table.add_child(progress)
+		var pay := MenuTheme.symbolRow([Achievements.reward(id, tier), "CLAIMED" if done else ("READY" if ready else "")], 18, color)
+		pay.alignment = BoxContainer.ALIGNMENT_BEGIN
+		table.add_child(pay)
+	into.add_child(table)
+	var waiting := Achievements.pending(id)
+	if waiting.is_empty(): return
+	var button = MenuTheme.button("", PackedStringArray(["ui_accept"]), true)
+	button.focus_mode = Control.FOCUS_NONE
+	button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	button.custom_minimum_size = Vector2(320, 58)
+	MenuTheme.setButtonParts(button, ["CLAIM", waiting], 24)
+	button.pressed.connect(claimGoon.bind(goon))
+	into.add_child(button)
 
 func goonDetail(entry: Dictionary) -> void:
 	var id: StringName = entry.key
@@ -216,11 +345,12 @@ func goonDetail(entry: Dictionary) -> void:
 	paragraph(habitat(id), "MutedLabel")
 	if not known:
 		paragraph(FACTION_TEXT[faction])
-		tipRow("Crush one to fill in this page.")
+		if isMeetable(id): tipRow("Crush one to fill in this page.")
 		return
 	paragraph(behavior(d))
 	tipRow(tip(d))
 	endShowcase()
+	tierRows(id)
 	var rows = [["Speed", "%d" % d.get("speed", 110), d.get("speed", 110) / 3.2]]
 	if d.has("dmg"): rows.push_back(["Hits for", str(d.dmg), d.dmg * 100.0 / 12.0])
 	var crush: float = d.get("crush", 100.0)
@@ -235,14 +365,28 @@ func goonDetail(entry: Dictionary) -> void:
 	rows.push_back(["You've crushed", DriverCard.formatCoins(SaveManager.playerData.goonsCrushed.get(String(id), 0))])
 	statTable(rows)
 
+## The levels whose line-up fields a goon (LevelRoster), in road order; the demo's levels only in the demo
+static func levelsOf(id: StringName) -> Array:
+	var out := []
+	for i in (mini(Levels.count(), Root.DEMO_LEVEL_COUNT) if Root.IS_DEMO else Levels.count()):
+		if id in LevelRoster.lineupFor(Levels.defAt(i)): out.push_back(Levels.defAt(i))
+	return out
+
+## The goons that burst into `id` when crushed
+static func parentsOf(id: StringName) -> Array:
+	return Goons.DATA.keys().filter(func(other): return Goons.DATA[other].get("split", &"") == id)
+
+## Can this goon be met in this build? In the demo, only the goons of its levels and what they burst into.
+static func isMeetable(id: StringName) -> bool:
+	return not Root.IS_DEMO || not levelsOf(id).is_empty() || parentsOf(id).any(func(p): return not levelsOf(p).is_empty())
+
 #where a goon lives, or what it comes out of
 static func habitat(id: StringName) -> String:
-	var d: Dictionary = Goons.DATA[id]
-	if d.rank == 0 || d.biomes.is_empty():
-		var parents = Goons.DATA.keys().filter(func(other): return Goons.DATA[other].get("split", &"") == id)
-		if parents.is_empty(): return "Only turns up in special places."
-		return "Only appears when a %s is crushed." % " or ".join(parents.map(func(p): return Goons.DATA[p].name))
-	return "Found on " + ", ".join(d.biomes.map(func(t): return TERRAIN_NAMES[t] if t < TERRAIN_NAMES.size() else "?"))
+	var levels := levelsOf(id)
+	if not levels.is_empty(): return "Found in " + ", ".join(levels.map(func(def): return def.displayName))
+	var parents := parentsOf(id)
+	if not parents.is_empty(): return "Only appears when a %s is crushed." % " or ".join(parents.map(func(p): return Goons.DATA[p].name))
+	return "In the full game." if Root.IS_DEMO else "Only turns up in special places."
 
 static func behavior(d: Dictionary) -> String:
 	if d.has("blurb"): return d.blurb
@@ -279,37 +423,6 @@ static func regionRows(def: LevelDef) -> Array:
 		if x > 1.0: parts.push_back("+%d%% %s" % [roundi((x - 1.0) * 100.0), key[1]])
 	if not parts.is_empty(): rows.push_back(["Elite", ", ".join(parts)])
 	return rows
-
-#---------- systems ----------
-
-func buildSystems() -> void:
-	progressLabel.text = "CAR SYSTEMS  %d" % SYSTEMS.size()
-	section("YOUR CAR", "what goons and walls break")
-	var g = grid(3)
-	for s in SYSTEMS:
-		tile(g, {"kind": "system", "key": s[0], "inset": 30.0}, s[1], SYSTEM_NAMES[s[0]], Vector2(216, 150))
-
-#goons whose attack wears `system` (attacks without a "sys" wear the hull)
-static func attacks(d: Dictionary, system: String) -> bool:
-	return d.rank > 0 && d.get("sys", "hull") == system && (d.has("sys") || d.has("dmg"))
-
-func systemDetail(entry: Dictionary) -> void:
-	var system: String = entry.key
-	var s = SYSTEMS.filter(func(x): return x[0] == system)[0]
-	var panel = showcase(220.0, HudTheme.RIM)
-	heroPicture(panel, s[1], TextureRect.STRETCH_KEEP_ASPECT_CENTERED, 50.0)
-	titleRow(SYSTEM_NAMES[system].to_upper())
-	paragraph(s[2])
-	endShowcase()
-	if OverheadCarBody2D.CONDITION_FLOOR.has(system):
-		paragraph("At 0%% it still keeps %d%% of your %s." % [roundi(OverheadCarBody2D.CONDITION_FLOOR[system] * 100.0), SYSTEM_STAT_NAMES.get(system, system)], "MutedLabel")
-		tipRow("Wall hits wear the side that hit. A Wrench, a Toolbox or the system's own part repairs it on the road; the gas station repairs everything in modes where it isn't the finish.")
-	var attackers = Goons.DATA.keys().filter(func(id): return attacks(Goons.DATA[id], system))
-	var known = attackers.filter(isDiscovered).map(func(id): return Goons.DATA[id].name)
-	var hidden = attackers.size() - known.size()
-	var line = ", ".join(known) if not known.is_empty() else ""
-	if hidden > 0: line += (" and " if line != "" else "") + "%d you haven't met" % hidden
-	if line != "": statTable([["Goons that hit it", line]])
 
 #---------- drawing ----------
 

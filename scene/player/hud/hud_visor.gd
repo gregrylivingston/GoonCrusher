@@ -72,11 +72,11 @@ func gemTab() -> Rect2:
 	return Rect2(SIZE.x - 104.0, SIZE.y + 4.0, 96, 30)
 
 func _process(delta: float) -> void:
-	var car = Root.playerCar
+	var car = GameUI.carOf(self)
 	if not is_instance_valid(car): return
 	if not set:
 		set = true
-		skin = HudSkin.current()
+		skin = HudSkin.of(self)
 		shownKey = []
 	var key: Array
 	if kind == Kind.PRIZE:
@@ -108,10 +108,19 @@ func drawRing(fraction: float, color: Color) -> void:
 	HudTheme.arc(self, RING, 19, 0.0, 360.0 * clampf(fraction, 0.0, 1.0), color, 4.0)
 
 func _draw() -> void:
-	var car = Root.playerCar
+	var car = GameUI.carOf(self)
 	if not is_instance_valid(car): return
 	if kind == Kind.PRIZE: drawPrize(car)
+	elif car.isGuest: drawGuestCoins(car)
 	else: drawPay(car)
+
+#the second player's (Coop): the coins they picked up. The stars and the payout are the player's.
+func drawGuestCoins(car) -> void:
+	drawSlab(SIZE.x)
+	drawRing(0.0, HudTheme.GAIN)
+	HudTheme.icon(self, HudTheme.COIN_ICON, RING, 28)
+	HudTheme.text(self, Vector2(SIZE.x - 14, 16), "COINS", 9, HudTheme.MUTED, HORIZONTAL_ALIGNMENT_RIGHT, 3, HudTheme.OUTLINE, HudTheme.BODY)
+	HudTheme.text(self, Vector2(SIZE.x - 14, 46), str(car.coin), 30, HudTheme.GOLD, HORIZONTAL_ALIGNMENT_RIGHT, 9, HudTheme.DEEP)
 
 func drawPrize(car) -> void:
 	var ui = owner

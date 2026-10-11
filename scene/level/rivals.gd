@@ -127,14 +127,15 @@ func eliminate(car: Node) -> void:
 func nextPlace() -> int:
 	return finishOrder.size() + 1
 
-## The player's place in the running: the finished cars, then everyone nearer `target` than the player
-func placeBy(target: Vector2) -> int:
-	var player = Root.playerCar
-	if not is_instance_valid(player): return nextPlace()
-	var mine: float = player.global_position.distance_squared_to(target)
+## A car's place in the running (the player's unless `of` is given: a guest has a HUD too): the finished cars,
+## then everyone nearer `target` than it
+func placeBy(target: Vector2, of = Root.playerCar) -> int:
+	if not is_instance_valid(of): return nextPlace()
+	var mine: float = of.global_position.distance_squared_to(target)
 	var place := nextPlace()
-	for car in cars:
-		if is_instance_valid(car) && not car.isDestroyed && car.global_position.distance_squared_to(target) < mine: place += 1
+	var field: Array = cars if of == Root.playerCar || not is_instance_valid(Root.playerCar) else cars + [Root.playerCar]
+	for car in field:
+		if car != of && is_instance_valid(car) && not car.isDestroyed && car.global_position.distance_squared_to(target) < mine: place += 1
 	return place
 
 ## Cars in the event, the player included

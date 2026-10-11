@@ -14,7 +14,8 @@ class_name PlayerData extends Resource
 @export var goonsCrushed := {}
 #Everything that isn't a car or a level, one section per feature. migrate() adds any section an
 #older save lacks. records: best runs per level and car (SaveManager.recordGoonpocalypse); hints: one-time
-#tips already shown; lifetime: totals over every run; medals and achievements: earned ids.
+#tips already shown; lifetime: totals over every run; medals: earned ids;
+#achievements: achievement id -> tiers whose reward was claimed (Achievements).
 #unlocks: opened unlock ids (Unlocks.saved); lifetime also holds the counters unlock conditions read (Unlocks.countRun).
 #carClears: level id -> mode -> car name -> the best tier that car has won it on (SaveManager.creditCarClear).
 @export var meta := {"records":{}, "hints":{}, "lifetime":{}, "medals":{}, "achievements":{}, "unlocks":{}, "carClears":{}}

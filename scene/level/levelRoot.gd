@@ -85,6 +85,8 @@ func readRun() -> void:
 	tier = SaveManager.getGameTier()
 	runMode = SaveManager.playerData.gameMode
 	runLevel = SaveManager.playerData.selectedLevel
+	Coop.readArgs()
+	if Coop.padGone(): Coop.leave()
 	freePlay = Root.isFreePlay(runLevel, runMode)
 
 func applyDef() -> void:
@@ -173,6 +175,7 @@ func _ready():
 var bounty: BountyHunt #Bounty Hunt's marks; null in every other mode
 var course: Course #a fixed-map mode's checkpoints or gates; null in every other mode
 var rivals: Rivals #the Goon Cup's other drivers; null in every other mode
+var coop: CoopRun #a two-player run's guest and split screen (Coop); null with one player
 var finishPlace := 0 #the player's place at the finish of a race against rivals (0: didn't finish)
 
 ## The player reached the finish (station.gd): a win, or in a race against rivals the place that the tier asks for
@@ -309,6 +312,9 @@ func onWorldReady() -> void:
 		add_child(rivals)
 		if runMode == Root.gameModes.PURSUIT: rivals.spawnRunner()
 		else: rivals.spawn()
+	if Coop.active: #before the mode sets up: a rival guest is one of its field
+		coop = CoopRun.new()
+		add_child(coop)
 	if runMode == Root.gameModes.KEEPCUP:
 		cup = KeepCup.new()
 		add_child(cup)
@@ -715,6 +721,7 @@ func endLevel(levelCompleted: bool, reason, then := ""):  #reason takes Root.end
 	if rivals: print("RUN_RACE mode=%s won=%s t=%.1f place=%d field=%d finished=%s rivals_left=%d wrecks=%d cup=%s" % [Modes.idOf(runMode), levelCompleted, elapsed, finishPlace, rivals.field(), rivals.finishOrder, rivals.cars.size(), wrecks,
 		"%.0f/%.0f rival %.0f" % [cup.playerSeconds(), cup.need, cup.rivalBest()] if cup else "-"])
 	if is_instance_valid(Root.playerCar): Root.playerCar.isDestroyed = true
+	if coop: coop.close() #the results have the whole screen
 	var gameSummary = load("res://scene/player/menu/gameSummary.tscn").instantiate()
 	gameSummary.reason = reason
 	gameSummary.autoAction = then

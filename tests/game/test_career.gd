@@ -174,14 +174,10 @@ func test_in_run_choices_are_valid():
 		assert_true(target >= 0 && target < prizes.size(), "%s aims at a prize" % id)
 		var buys := Personas.pitBuys(persona, ["jerry", "", "fuel"], [60, 0, 30], 70)
 		for i in buys: assert_true(i != 1, "%s doesn't buy a sold slot" % id)
-		var gadget := Personas.chooseLoadout(persona, 0, rng())
-		assert_eq(gadget, "", "%s buys no gadget without gems" % id)
-		assert_eq(Personas.chooseBoost(persona, 0, rng()), "", "%s buys no boost without gems" % id)
-		for gems in [1, 3, 9, 99]:
-			var g := Personas.chooseLoadout(persona, gems, rng())
-			if g != "": assert_true(Pickups.LOADOUT[g] <= gems, "%s's gadget is affordable" % id)
-			var b := Personas.chooseBoost(persona, gems, rng())
-			if b != "": assert_true(Pickups.BOOST_LOADOUT[b] <= gems, "%s's boost is affordable" % id)
+		var g := Personas.chooseLoadout(persona, rng())
+		assert_true(g == "" || Unlocks.isPickupOpen(g), "%s's gadget is unlocked" % id)
+		var b := Personas.chooseBoost(persona, rng())
+		assert_true(b == "" || Unlocks.isPickupOpen(b), "%s's boost is unlocked" % id)
 	assert_eq(AIProfiles.parse(Personas.get_def("rookie").profile).skill, "rookie")
 	for id in Personas.DATA: assert_eq(AIProfiles.problemWith(Personas.get_def(id).profile), "", "%s drives a real spec" % id)
 

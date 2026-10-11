@@ -14,9 +14,13 @@ func _ready():
 
 func _on_area_2d_body_entered(body):
 	if body is CharacterBody2D:
-		if body.has_method("getIsPlayer") && body.getIsPlayer(): #a rival car (Rivals) leaves it
+		if not body.has_method("getIsPlayer"): return
+		var taker = Coop.creditTo(body) #a friendly guest (Coop) picks it up for the player; a rival guest keeps it
+		if taker.getIsPlayer() || taker.isGuest: #a rival car (Rivals) leaves it
 			WorldMap.takeNode(self) #a chunk's own pickup stays gone when the chunk loads again
-			sendReward(body)
+			var coins: int = taker.coin
+			sendReward(taker)
+			if taker != body: body.coin += taker.coin - coins #the guest's own count of what they brought in (their HUD)
 
 @export var awardSound: Array[AudioStreamMP3]
 
@@ -28,5 +32,5 @@ func sendReward(body, forShowOnly: bool = false):
 		Pickups.discover(Pickups.idForScene(scene_file_path)) #the Goonopedia shows it from now on
 		Pickups.countCollected(body, Pickups.idForScene(scene_file_path))
 	body.reward(powerup , quantity, forShowOnly)
-	RewardFlyers.flyPowerup(self)
+	if not body.get("isGuest"): RewardFlyers.flyPowerup(self) #it flies to the player's HUD
 	queue_free()

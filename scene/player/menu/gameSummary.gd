@@ -286,7 +286,7 @@ func buildGameSummary():
 	if level.course: #a fixed course: the stage time goes in the record book when the stage is won
 		var stage := {"time": false}
 		var lapped: bool = gameMode == Root.gameModes.HOTLAP #its record is the best lap, not the run
-		if won && counts: stage = SaveManager.recordCourse(levelIndex, gameMode, car.carId, level.course.bestLap() if lapped else level.elapsed, level.course.lapTimes if level.course.laps > 1 else level.course.splits)
+		if won && counts && not level.course.towed: stage = SaveManager.recordCourse(levelIndex, gameMode, car.carId, level.course.bestLap() if lapped else level.elapsed, level.course.lapTimes if level.course.laps > 1 else level.course.splits)
 		addRow("Best lap" if lapped else "Stage time", Course.clock(level.course.bestLap() if lapped else level.elapsed), stage.time)
 		if level.course.laps > 1: addRow("Laps", "%d / %d" % [level.course.lap, level.course.laps], false)
 		if level.overshot: addRow("Too fast at the line", "+%d s" % int(ModeTiers.FLATOUT_PENALTY), false)
@@ -310,6 +310,7 @@ func buildGameSummary():
 			if level.rivals: addRow("Place", "%s of %d" % [Rivals.placeWord(level.finishPlace).capitalize(), level.rivals.field()] if level.finishPlace > 0 else "Not placed", false)
 		Root.gameModes.BOUNTY:
 			if level.bounty: addRow("Marks", "%d / %d" % [level.bounty.caught, level.bounty.total], false)
+	if level.coop: addGuestRow(level.coop.tally())
 		Root.gameModes.DEFENSE:
 			if is_instance_valid(Root.station): addRow("Barrier", "%d%%" % ceili(100.0 * Root.station.barrier / Root.station.BARRIER_MAX), false)
 	#then the run's numbers, two to a line: the ones that happened
@@ -347,7 +348,10 @@ func buildGameSummary():
 	records.combo = maxi(records.get("combo", 0), car.bestCombo)
 	var ranked := {"best": false, "before": int(SaveManager.bestRank(levelIndex, gameMode).get("score", 0))}
 	if counts: ranked = SaveManager.recordRank(levelIndex, gameMode, str(car.carId), level.tier, grade.score, grade.rank)
+	var tiersBefore := Achievements.earnedCount()
 	var discovered = Goonopedia.creditCrushes(car.crushedById)
+	if is_instance_valid(Coop.guest) && Coop.guest != car: discovered.append_array(Goonopedia.creditCrushes(Coop.guest.crushedById)) #a rival guest's crushes count too
+	var tiersEarned := Achievements.earnedCount() - tiersBefore
 	if counts: Unlocks.countRun(won, gameMode, level.nightsSeen, car.giantsCrushed, Root.playerRoot.boxLevel if is_instance_valid(Root.playerRoot) else 0)
 	if OS.is_debug_build(): RunLog.append(car, level, reason, paid)
 
@@ -371,6 +375,7 @@ func buildGameSummary():
 	if roadOpened != "": addChip("Road open: " + roadOpened)
 	if not unlocked.is_empty(): addChip("New pickup: " + listed(unlocked.map(Pickups.displayName), 3))
 	if not discovered.is_empty(): addChip("Goonopedia: " + listed(discovered, 3))
+	if tiersEarned > 0: addChip("%d reward%s to claim in the Goonopedia" % [tiersEarned, "" if tiersEarned == 1 else "s"])
 	if not blueprinted.is_empty(): addChip("Blueprint: " + listed(blueprinted, 3))
 	var next := Unlocks.nextUnlock()
 	if unlocked.is_empty() && not next.is_empty() && Unlocks.canAfford(next.uid): addChip("Ready to unlock: " + str(next.name), FADED_INK)
@@ -584,6 +589,18 @@ func makeRow(name: String, value: String, isBest: bool, badgeText: String, nameS
 #a full-width row in the ticket's first group: the mode's own result (or, for records, every row)
 func addRow(name: String, value: String, isBest: bool, badgeText := "NEW BEST") -> void:
 	var row := makeRow(name, value, isBest, badgeText, 19, 21, 33)
+	rows.add_child(row)
+	conceal(row)
+
+#the second player's run (Coop): what they crushed and the coins they picked up
+func addGuestRow(tally: Dictionary) -> void:
+	var row := makeRow("%s crushed %d" % [CoopRun.NAME.capitalize(), tally.crushes], "", false, "", 19, 21, 33)
+	var value := row.get_child(row.get_child_count() - 1)
+	row.remove_child(value)
+	value.queue_free()
+	var symbols := MenuTheme.symbolRow([{"coin": tally.coins}], 19, INK, 0)
+	symbols.alignment = BoxContainer.ALIGNMENT_END
+	row.add_child(symbols)
 	rows.add_child(row)
 	conceal(row)
 
@@ -827,7 +844,7 @@ func nextText() -> String:
 	var mode: String = Root.gameModeDescription[nextUp.mode].name
 	return mode if nextUp.level == runLevel else "%s, %s" % [RunLauncher.levelName(nextUp.level).to_upper(), mode]
 
-#under the buttons: what a new run will take for the gadget and boost, and the graphics advisor's note
+#under the buttons: the graphics advisor's note
 func addFooter(advice: String) -> void:
 	var column = VBoxContainer.new()
 	footer = column
@@ -836,11 +853,6 @@ func addFooter(advice: String) -> void:
 	column.size.x = 900
 	column.add_theme_constant_override("separation", 0)
 	column.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var cost := RunLauncher.loadoutCost()
-	if cost > 0:
-		var line := MenuTheme.symbolRow(["A new run starts with your gadget and boost:", {"gem": cost}], 16, HudTheme.MUTED)
-		line.alignment = BoxContainer.ALIGNMENT_BEGIN
-		column.add_child(line)
 	if advice != "":
 		var label = Label.new()
 		label.theme_type_variation = "HintLabel"
@@ -860,7 +872,7 @@ func act(kind: String) -> void:
 	if kind == "retry" || kind == "next":
 		var run: Dictionary = nextUp if kind == "next" && not nextUp.is_empty() else {"level": runLevel, "mode": runMode, "tier": runTier}
 		RunLauncher.select(run.level, run.mode, run.tier)
-		RunLauncher.buyLoadout()
+		RunLauncher.takeLoadout()
 		RunLauncher.start(self, RunLauncher.levelScene(run.level), RunLauncher.levelName(run.level).to_upper())
 		return
 	if kind == "options":

@@ -554,6 +554,7 @@ func setGoons(unlock: bool) -> String:
 	var crushed: Dictionary = SaveManager.playerData.goonsCrushed
 	if not unlock:
 		crushed.clear()
+		for id in Achievements.all(): SaveManager.playerData.meta.get("achievements", {}).erase(id) #their rewards can be earned again
 		return "Goons: Goonopedia back to a new save's (none discovered)"
 	for id in Goons.DATA: crushed[String(id)] = maxi(crushed.get(String(id), 0), 1)
 	return "Goons: all %d revealed in the Goonopedia" % Goons.DATA.size()

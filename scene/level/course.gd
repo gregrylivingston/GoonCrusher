@@ -149,6 +149,18 @@ func _physics_process(_delta: float) -> void:
 	elif radius >= RADIUS && next > 0: TapeBanner.post("%s %d OF %d%s" % [gateWord, next, points.size(), splitText(splits.size() - 1)], 1.0) #gates come too fast for a banner each
 	queue_redraw()
 
+## Puts `car` where `to` is on the course: the same lap and next checkpoint (a tow, CoopRun). A towed
+## player's time is no record (`towed`).
+var towed := false
+func matchProgress(car: Node, to: Node) -> void:
+	var at: Array = [lap, next] if to == Root.playerCar else progress.get(to.get_instance_id(), [0, 0]).duplicate()
+	if car == Root.playerCar:
+		lap = at[0]
+		next = at[1]
+		towed = true
+		queue_redraw()
+	else: progress[car.get_instance_id()] = at
+
 func stepRival(rival: Node, level) -> void:
 	var at: Array = progress.get_or_add(rival.get_instance_id(), [0, 0])
 	if at[0] >= laps || at[1] >= points.size(): return

@@ -111,4 +111,4 @@ Every kill the player sets up (logs, bees, a flood, a fall, a blast, a trample, 
 ## Known gaps
 
 - Nothing is tuned by hand: speeds, crush thresholds, timings, giants, the elite steps.
-- The Goonopedia shows a goon once crushed; the console's `unlock goons` / `lock goons` override that.
+- The Goonopedia shows a goon once crushed; the console's `unlock goons` / `lock goons` override that (`lock goons` also forgets the claimed achievement rewards).

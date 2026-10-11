@@ -29,6 +29,18 @@ What is left to do on the modes: `docs/roadmap/ROADMAP_MODES.md` (it links the a
 - **A fixed-map mode** takes its world seed from the level and mode (`Course.seedFor`), so records compare like with like.
 - Every run with a course, a score or marks prints a `RUN_GOAL` line when it ends, for the harnesses' logs.
 
+## Two players
+
+A second person on a controller joins in Level Options and drives a car of the garage's on a split screen. `Coop` (`scripts/global/coop.gd`) holds who joined and what they picked; `CoopRun` (`scene/level/coop_run.gd`) is the guest's car, their half of the screen and the leash; `PadDriver` reads their controller by device.
+
+- **The run is the first player's.** The save, rewards, records, HUD and goal are theirs. The guest's car has `isGuest` set and `isPlayer` off, so `Root.playerCar` and every `isPlayer` check still mean the first player. Give the guest a behavior with `isGuest`, never by turning `isPlayer` on.
+- **Friend or rival.** A friend's crushes, pickups and arrival at the station count for the player (`Coop.creditTo`), with the coins also counted on the guest's own visor, and a wrecked friend comes back. A rival keeps the pickups it drives over. A rival joins the mode's field (`Rivals.cars`) in a Goon Cup mode and is out once wrecked; a Pursuit has no rival guest. Goons go for the nearer car (`Coop.prey`).
+- **The leash.** The world streams round the first player, so the two stay within `CoopRun.LEASH` of each other, which must stay under one chunk each way. The guest is towed to the player; in a race between the two, whoever is behind is towed up to the leader (`CoopRun.leads`) and takes the leader's place on the course (`Course.matchProgress`). A towed player's course time is not recorded (`Course.towed`).
+- **One screen, covered.** The level's viewport still draws the whole window (menus and results are full width) with its camera shifted to the left half; a second viewport on the same world covers the right half. Each half has its own HUD (docs/HUD.md, "Two HUDs").
+- **The pads.** While a guest is in, every pad binding in the `InputMap` points at the first player's device (`Coop.claimPads`); anything that adds pad bindings later must run it again.
+- **No prize games** with two players: no gift boxes and no prize-game pickups, since each stops the run for both.
+- Try it without a second pad: `-- --coop=friend` or `--coop=rival`.
+
 ## Run rank
 
 Every run gets a score and one of 25 ranks, shown on the results (`RunRank`, `Level.runRank`). Each part of the score (the mode's goal, carnage, style, haul) is measured against a par for the run's level, mode and tier, so every mode shares one ladder; the tier scales the total, and a lost run tops out mid-ladder. The best score of a mode on a level is kept in `meta.records.rank` (`SaveManager.recordRank`) and shown in Level Options; Free Play is ranked but not recorded.

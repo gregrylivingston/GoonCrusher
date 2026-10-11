@@ -111,7 +111,13 @@ static func named(skinId: StringName) -> HudSkin:
 
 ## The skin of the car being driven: the house look with no car, or with Classic Dashboard on
 static func current() -> HudSkin:
-	var car = Root.playerCar
+	return forCar(Root.playerCar)
+
+## The skin a HUD widget wears: its own HUD's car's (GameUI.carOf; the second player has a HUD too)
+static func of(node: Node) -> HudSkin:
+	return forCar(GameUI.carOf(node))
+
+static func forCar(car) -> HudSkin:
 	if not is_instance_valid(car) || Settings.get_value("access/classic_dash"): return named(&"house")
 	var skinId = car.get("hudSkin")
 	return named(skinId if skinId is StringName else &"house")

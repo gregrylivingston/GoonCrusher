@@ -174,7 +174,7 @@ func takeOverRun() -> void:
 	attachDriver(Root.playerCar)
 	var data := SaveManager.playerData
 	runPlan = {"level": data.selectedLevel, "mode": data.gameMode, "tier": SaveManager.getGameTier(), "car": data.selectedCar, "gadget": "", "boost": ""}
-	bankBefore = {"coin": data.coin, "gem": data.gem, "gadget_cost": 0}
+	bankBefore = {"coin": data.coin, "gem": data.gem}
 	runRow = {}
 	runActive = true
 	pauseAt = INF
@@ -230,9 +230,9 @@ func menuVisit() -> bool:
 	if not await openOptions(): return false
 	if not await selectMode(run.mode): return false
 	if not await selectTier(run.get("tier", ModeTiers.EASY)): return false
-	var gadget := Personas.chooseLoadout(persona, SaveManager.playerData.gem, rng)
+	var gadget := Personas.chooseLoadout(persona, rng)
 	await chooseSlot("loadout", gadget, m.loadoutButton, "ui_gadget")
-	var boost := Personas.chooseBoost(persona, SaveManager.playerData.gem - Pickups.LOADOUT.get(m.slotPurchase("loadout"), 0), rng)
+	var boost := Personas.chooseBoost(persona, rng)
 	await chooseSlot("boostLoadout", boost, m.boostButton, "ui_boost")
 	return await start(run, car, gadget, boost)
 
@@ -467,10 +467,10 @@ func selectTier(tier: int) -> bool:
 
 func chooseSlot(slot: String, id: String, button: Button, action: String) -> void:
 	var m := menu()
-	for i in m.slotPrices(slot).size() + 1:
+	for i in m.slotOptions(slot).size() + 1:
 		if m.slotChoice(slot) == id: return
 		await activate(button, action)
-	if id != "": issue("ui", "the %s button never offered %s with %d gems" % [slot, id, SaveManager.playerData.gem])
+	if id != "": issue("ui", "the %s button never offered %s" % [slot, id])
 
 func start(run: Dictionary, car: int, gadget: String, boost: String) -> bool:
 	var m := menu()
@@ -479,8 +479,7 @@ func start(run: Dictionary, car: int, gadget: String, boost: String) -> bool:
 		issue("block", "START is disabled for %s %s (%s) though the mode rules say it is playable" % [
 			Levels.ORDER[run.level], Root.gameModeDescription[run.mode].name, m.lockReason])
 		return false
-	var paid: int = Pickups.LOADOUT.get(m.slotPurchase("loadout"), 0) + Pickups.BOOST_LOADOUT.get(m.slotPurchase("boostLoadout"), 0)
-	bankBefore = {"coin": data.coin, "gem": data.gem, "gadget_cost": paid} #what Start will take for the gadget and boost
+	bankBefore = {"coin": data.coin, "gem": data.gem}
 	runPlan = {"level": run.level, "mode": run.mode, "tier": run.get("tier", ModeTiers.EASY), "car": car, "gadget": gadget, "boost": boost}
 	runRow = {}
 	runActive = true
@@ -510,12 +509,17 @@ func sideTrips() -> void:
 	var trips := ["goonopedia", "pickups", "records", "settings"]
 	trips.shuffle()
 	if persona.overlays < 1.0: trips = [trips[0]] if trips[0] != "settings" else ["goonopedia"]
+	if Achievements.claimableCount() > 0 && not trips.has("goonopedia"): trips.push_back("goonopedia") #the badge draws everyone in
 	for trip in trips:
 		match trip:
 			"goonopedia":
 				await press("ui_codex")
 				if not await waitFor(func(): return menu().overlayOpen(), 3.0, "G to open the Goonopedia"): continue
-				for tab in 6:
+				var waiting := Achievements.claimableCount()
+				if waiting > 0:
+					await press(Goonopedia.CLAIM_ALL_ACTION, 0.3)
+					if Achievements.claimableCount() > 0: issue("ui", "Claim all left %d of %d Goonopedia rewards unclaimed" % [Achievements.claimableCount(), waiting])
+				for tab in Goonopedia.tabTitles().size() + 1:
 					for i in rng.randi_range(1, 4): await press("ui_down", 0.12)
 					await press("ui_tab_next", 0.2)
 				await press("ui_cancel")
@@ -787,7 +791,7 @@ func retryRun(ticket: Node) -> Node:
 		issue("ui", "the results of a lost run have no Retry button")
 		return null
 	checkRun()
-	bankBefore = {"coin": data.coin, "gem": data.gem, "gadget_cost": RunLauncher.loadoutCost()} #what Retry will take for the gadget and boost
+	bankBefore = {"coin": data.coin, "gem": data.gem}
 	runRow = {}
 	runTime = 0.0
 	pauseAt = INF
@@ -808,7 +812,7 @@ func retryRun(ticket: Node) -> Node:
 	await think(0.4)
 	return next
 
-## The checks after each run: the bank grew by the payout, gems by the run's gems less the gadget, a win
+## The checks after each run: the bank grew by the payout, gems by the run's gems, a win
 ## marked the mode beaten (and with enough beaten, opened the next level), and the save on disk matches.
 func checkRun() -> void:
 	var data := SaveManager.playerData
@@ -818,8 +822,8 @@ func checkRun() -> void:
 	if data.coin - bankBefore.coin != paid:
 		issue("economy", "the bank went %d -> %d after a run that paid %d" % [bankBefore.coin, data.coin, paid])
 	var gems := int(row.get("gem", 0)) + int(row.get("first_clear_gem", 0))
-	if data.gem - bankBefore.gem != gems - bankBefore.gadget_cost:
-		issue("economy", "gems went %d -> %d after a run that ended with %d gems (gadget %d)" % [bankBefore.gem, data.gem, gems, bankBefore.gadget_cost])
+	if data.gem - bankBefore.gem != gems:
+		issue("economy", "gems went %d -> %d after a run that ended with %d gems" % [bankBefore.gem, data.gem, gems])
 	if row.get("won", false):
 		if not data.levels[level].gamemodeBeat.get(runPlan.mode, false): issue("progress", "a won %s on %s isn't marked beaten" % [row.mode, Levels.ORDER[level]])
 		if level + 1 < data.levels.size() && not data.levels[level + 1].unlocked && Root.opensNextLevel(data.levels[level]):

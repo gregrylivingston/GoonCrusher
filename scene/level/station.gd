@@ -131,6 +131,7 @@ func drivewayPoint() -> Vector2:
 #still rolling may coast in (its NOGAS ending is still pending); a wrecked car (health <= 0, or water) may not.
 func _on_driveway_body_entered(body):
 	if not body.has_method("getIsPlayer"): return
+	body = Coop.creditTo(body) #a friendly guest's arrival is the player's
 	if not body.getIsPlayer(): #a rival (Rivals): it takes its place; the level's rules decide what that means
 		if active && is_instance_valid(Root.levelRoot) && Root.levelRoot.rivals: Root.levelRoot.rivalFinished(body)
 		return

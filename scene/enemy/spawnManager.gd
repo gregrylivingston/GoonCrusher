@@ -55,6 +55,7 @@ func onGoonExiting(goon: Node) -> void:
 
 func _physics_process(_delta):
 	physicsView = (get_viewport().get_canvas_transform().affine_inverse() * get_viewport().get_visible_rect()).grow(LOD_MARGIN)
+	if Coop.guest != null: physicsView = physicsView.merge(Rect2(Coop.guest.global_position, Vector2.ZERO).grow_individual(physicsView.size.x / 2.0, physicsView.size.y / 2.0, physicsView.size.x / 2.0, physicsView.size.y / 2.0)) #the guest's screen too
 	if Root.spawnManager == self: GoonBody.setPhysicsView(physicsView)
 
 func _exit_tree() -> void:
@@ -268,19 +269,12 @@ func creditCrush(pos: Vector2, goon: Object = null, source: StringName = &"blast
 	if near && Root.playerCar.get("isPlayer"): PickupEffects.onCrush(Root.playerCar, pos, source)
 	if goon != null && Root.playerCar.has_method("creditGoon"):
 		Root.playerCar.creditGoon(goon)
-		announceNewGoon(goon)
 		Root.playerCar.addCrushXp(goon)
 	Root.playerCar.reward("currentGoonsCrushed", 1)
 	RewardFlyers.flyUpgrade(Root.upgrade.CURRENTGOONSCRUSHED, pos)
 	var feel = Root.playerCar.get("crushFeel")
 	if is_instance_valid(feel): feel.onIndirect(pos) #a blast through a crowd is a multi-crush too
 	return true
-
-#the first crush ever of a kind of goon unlocks its Goonopedia page: say so with a tape banner
-func announceNewGoon(goon: Object) -> void:
-	var id = goon.get("goonId")
-	if not id || Root.playerCar.crushedById.get(id, 0) != 1 || SaveManager.playerData.goonsCrushed.has(String(id)): return
-	TapeBanner.post("NEW GOON  -  " + str(Goons.DATA.get(id, {}).get("name", id)).to_upper(), 1.0)
 
 ## The first goon of the current region, for the level's shader warmup.
 func warmupScene() -> PackedScene:

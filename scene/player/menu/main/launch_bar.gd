@@ -3,10 +3,10 @@ class_name LaunchBar extends Panel
 #The launch bar (docs/UI.md): one plate at the bottom right of the garage, the road map and Level Options,
 #the same on all three. On the left the driver's car (a click or Q/E takes the next driver) over four slots,
 #each with its key hanging off its foot, in two pairs: round, what the run starts with (the gadget and the
-#boost, bought with gems at Start; a plus when empty), and square, where the bank is spent (Upgrades and
+#boost; a plus when empty), and square, where the bank is spent (Upgrades and
 #Pickups, with a count of what it covers). On the right the round primary button, the only thing here that
 #takes the focus, so Accept always goes on: DRIVE, SELECT or START. Nothing is written under the slots:
-#their tooltips say what they hold and cost, and START's badge has the gems the loadout takes.
+#their tooltips say what they hold.
 #This builds and draws it; main2 says what each part does and fills it in (refreshLaunch, refreshLoadout).
 
 signal goPressed
@@ -33,7 +33,6 @@ var driverPic := TextureRect.new()
 var driverKeys: KeyHint
 var slotButtons := {} #slot -> its round button
 var badges := {}      #"upgrades", "pickups" -> how many the bank could buy right now
-var gemBadge := PanelContainer.new() #on the primary button: the gems the loadout takes at Start
 
 func _init() -> void:
 	size = SIZE
@@ -128,7 +127,7 @@ func buildSlot(slot: String, at: Vector2, square: bool) -> void:
 	add_child(b)
 	slotButtons[slot] = b
 
-#the round primary button: its word over its key, and the gem badge on its shoulder
+#the round primary button: its word over its key
 func buildGo() -> void:
 	goButton = MenuTheme.button("DRIVE", PackedStringArray(), true)
 	goButton.position = Vector2(SIZE.x - PAD.x - GO_SIZE, (SIZE.y - GO_SIZE) / 2.0)
@@ -152,11 +151,6 @@ func buildGo() -> void:
 	ignoreMouse(key)
 	goButton.pressed.connect(func(): goPressed.emit())
 	add_child(goButton)
-	gemBadge.add_theme_stylebox_override("panel", MenuTheme.box(Color(0.06, 0.07, 0.09), Color(0.3, 0.72, 1.0), 13, 2, Vector4(9, 0, 9, 0)))
-	gemBadge.position = goButton.position + Vector2(GO_SIZE - 60.0, -8.0)
-	gemBadge.mouse_filter = MOUSE_FILTER_IGNORE
-	gemBadge.visible = false
-	add_child(gemBadge)
 
 ## The primary button's word, and whether it can be pressed; a long or locked one is set smaller
 func setGo(text: String, enabled: bool) -> void:
@@ -179,14 +173,6 @@ func setSlot(slot: String, texture: Texture2D) -> void:
 	var b: Button = slotButtons[slot]
 	b.get_node("pic").texture = texture
 	b.get_node("plus").visible = texture == null
-
-## The gems Start will take for the loadout, on the primary button; hidden at 0
-func setGems(cost: int) -> void:
-	for child in gemBadge.get_children():
-		gemBadge.remove_child(child)
-		child.queue_free()
-	gemBadge.visible = cost > 0
-	if cost > 0: gemBadge.add_child(MenuTheme.symbolRow(["-", {"gem": cost}], 15))
 
 #children of a button let the click through (docs/UI.md, "Mouse")
 static func ignoreMouse(node: Node) -> void:

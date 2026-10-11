@@ -100,6 +100,13 @@ func build() -> void:
 	runLine.text = runSummary()
 	body.add_child(runLine)
 	if is_instance_valid(Root.playerCar): body.add_child(statRow(Root.playerCar))
+	if is_instance_valid(Coop.guest): #two players: the second car's stats under the first's
+		var guestLine = Label.new()
+		guestLine.theme_type_variation = "MutedLabel"
+		guestLine.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		guestLine.text = CoopRun.NAME
+		body.add_child(guestLine)
+		body.add_child(statRow(Coop.guest))
 	body.add_child(KeyHint.bar([[["ui_up", "ui_down"], "Choose"], [["ui_left", "ui_right"], "Radio"], [["ui_accept"], "Select"], [["ui_menu"], "Continue"]], 15, 22))
 
 #the radio (docs/RADIO.md): a settings-style row (left/right or its arrows turn it on and off), a Skip

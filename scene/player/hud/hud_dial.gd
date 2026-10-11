@@ -111,7 +111,7 @@ func wingIsBar() -> bool:
 
 #the car's dashboard: its look, and the place the skin gives this dial
 func applySkin() -> void:
-	skin = HudSkin.current()
+	skin = HudSkin.of(self)
 	var to: Array = skin.rects.get(int(kind), baseOffsets)
 	offset_left = to[0]
 	offset_top = to[1]
@@ -147,8 +147,8 @@ static func speedScaleFor(car) -> int:
 	return clampi(ceili(topSpeed(car) * 1.1 * unitsPerPx() / 40.0) * 40, 80, 320)
 
 func setSpeedScale() -> void:
-	if not is_instance_valid(Root.playerCar): return
-	speedMax = speedScaleFor(Root.playerCar)
+	if not is_instance_valid(GameUI.carOf(self)): return
+	speedMax = speedScaleFor(GameUI.carOf(self))
 	queue_redraw()
 	needle.queue_redraw()
 
@@ -163,7 +163,7 @@ func fullScale() -> float:
 	return rpmMax if kind == Kind.TACH else float(speedMax)
 
 func _process(delta: float) -> void:
-	var car = Root.playerCar
+	var car = GameUI.carOf(self)
 	if not is_instance_valid(car): return
 	var calm: bool = Settings.reduce_motion()
 	if not scaled:
@@ -584,7 +584,7 @@ func drawPointer(degrees: float, length: float, color: Color, width: float) -> v
 	needle.draw_arc(center, hub, 0.0, TAU, 32, skin.text if skin.taper else color, (1.5 if skin.taper else 3.0) * unit, true)
 
 func drawNeedle() -> void:
-	var car = Root.playerCar
+	var car = GameUI.carOf(self)
 	if not is_instance_valid(car): return
 	var s := skin
 	var now := Time.get_ticks_msec()

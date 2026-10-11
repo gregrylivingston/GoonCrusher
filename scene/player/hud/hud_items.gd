@@ -29,10 +29,10 @@ func _ready() -> void:
 	if top: HudTheme.marker(top, "clockui", Vector2(top.size.x * 0.5, 40.0))
 
 func _process(_delta: float) -> void:
-	var car = Root.playerCar
+	var car = GameUI.carOf(self)
 	if not is_instance_valid(car): return
 	var key := [car.heldItem, car.heldCharges, car.moveItem, car.moveCharges, car.starFragments, car.lotteryTickets.size(), car.hasParcel, car.barricades, InputGlyphs.usingPad,
-		car.spareItem, car.spareCharges, HudSkin.current().id]
+		car.spareItem, car.spareCharges, HudSkin.of(self).id]
 	var rig: CarTraitRig = car.traitRig
 	if rig: key.append_array([rig.meterMult if rig.meterTicks > 0 else 0, rig.bedCrates, int(rig.abilityReady() * 24.0)])
 	for id in car.buffs: key.append_array([id, car.buffs[id] / 6, car.buffs[id] < 120 && HudTheme.blinkOn()])
@@ -41,7 +41,7 @@ func _process(_delta: float) -> void:
 		queue_redraw()
 
 func _draw() -> void:
-	var car = Root.playerCar
+	var car = GameUI.carOf(self)
 	if not is_instance_valid(car): return
 	drawSlot(box, car.heldItem, car.heldCharges, "UseItem")
 	drawSlot(moveBox, car.moveItem, car.moveCharges, "UseMove")
@@ -52,7 +52,7 @@ func _draw() -> void:
 			HudTheme.icon(self, HudTheme.STAR_ICON, Vector2(x - (2 - i) * 22.0, box.y - 14.0), 22.0, Color.WHITE if i < car.starFragments else Color(0.3, 0.3, 0.3, 0.6))
 	var counters := [] #[icon, count] in a row under the pips, right to left; count may be text
 	var rig: CarTraitRig = car.traitRig
-	var shown := HudSkin.current().instrument #the van's bays, the taximeter and the truck bed show these themselves
+	var shown := HudSkin.of(self).instrument #the van's bays, the taximeter and the truck bed show these themselves
 	if car.spareItem != "" && shown != &"tilt": counters.push_back([Pickups.texture(car.spareItem), car.spareCharges]) #Cargo Bay's second gadget
 	if rig && car.tMeter && rig.meterTicks > 0 && shown != &"meter": counters.push_back([CarTraits.texture(&"meter"), "x%d" % rig.meterMult])
 	if rig && car.tLoadedBed && rig.bedCrates > 0 && shown != &"bed": counters.push_back([CarTraits.texture(&"loaded_bed"), rig.bedCrates])

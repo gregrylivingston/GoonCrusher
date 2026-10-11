@@ -23,7 +23,7 @@ func _provide_input(_input):
 	_input.handbrake = pressed("Handbrake") #a powerslide (OverheadCarBody2D.HANDBRAKE_*)
 	if car.gears > 0:
 		gearbox(_input)
-		var aim := Input.get_axis("TurnLeft", "TurnRight") if not driver else steerTarget(pressed("TurnLeft"), pressed("TurnRight"))
+		var aim: float = Input.get_axis("TurnLeft", "TurnRight") if not driver else driver.steerAim()
 		_input.steering = steerToward(_input.steering, aim, car.steerRate())
 		return _input
 	if pressed("Accelerate"):
@@ -35,7 +35,7 @@ func _provide_input(_input):
 		_input.acceleration = 0.0
 
 	#the AI holds keys; a player's stick steers part of the way (the keyboard gives -1, 0 or 1)
-	var target := Input.get_axis("TurnLeft", "TurnRight") if not driver else steerTarget(pressed("TurnLeft"), pressed("TurnRight"))
+	var target: float = Input.get_axis("TurnLeft", "TurnRight") if not driver else driver.steerAim()
 	_input.steering = steerToward(_input.steering, target, car.steerRate())
 
 	if pressed("Brake"):

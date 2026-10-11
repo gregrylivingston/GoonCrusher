@@ -59,6 +59,7 @@ static func ensureMenuActions() -> void:
 	addIfMissing("ui_records", key(KEY_R), pad(JOY_BUTTON_X))
 	addIfMissing("ui_buy", key(KEY_E), pad(JOY_BUTTON_A)) #buys the lit upgrade row in the garage's driver focus
 	addIfMissing("ui_codex", key(KEY_B), pad(JOY_BUTTON_LEFT_STICK)) #the Goonopedia
+	addIfMissing("ui_coop_leave", key(KEY_T), pad(JOY_BUTTON_RIGHT_STICK)) #Level Options: removes the second player (CoopPanel)
 	#run setup's regions and the level's fact tiles: a flick of the right stick, well past any drift
 	addIfMissing("ui_region_prev", key(KEY_Z), stick(JOY_AXIS_RIGHT_X, -1.0), 0.5)
 	addIfMissing("ui_region_next", key(KEY_C), stick(JOY_AXIS_RIGHT_X, 1.0), 0.5)

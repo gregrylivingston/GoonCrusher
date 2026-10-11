@@ -331,10 +331,6 @@ func onPickupTilePressed(id: String) -> void:
 	if isPickingClick(id): return
 	buyPickup(id)
 
-## Is this press the mouse click that picked tile `key` (it had no focus when the button went down)?
-func isPickingClick(key) -> bool:
-	return Time.get_ticks_msec() - mouseDownMsec < 1000 && not sameKey(mouseDownOn, key)
-
 ## Buys a pickup when it is ready and paid for, else shakes its tile
 func buyPickup(id: String) -> void:
 	var b := tileFor(id)
@@ -351,15 +347,6 @@ func buyPickup(id: String) -> void:
 		b.grab_focus()
 		Juice.flash(b, HudTheme.GOLD, 0.6, 18)
 		Juice.pop(b, 1.08, 0.4)
-
-func tileFor(key) -> Button:
-	for b in tiles:
-		if is_instance_valid(b) && b.has_meta("key") && sameKey(b.get_meta("key"), key): return b
-	return null
-
-## Tile keys are pickup ids (String) or car indices (int); == between the two is an error
-static func sameKey(a, b) -> bool:
-	return typeof(a) == typeof(b) && a == b
 
 ## A pickup's share of goon drops in `mode` (a Root.gameModes value; -1: the selected mode), before
 ## Dice, faction and the pity counter, counting night-only pickups as if it were night.

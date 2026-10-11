@@ -8,7 +8,7 @@ Everything that is not built yet lives in this folder: nowhere else. The area do
 | `ROADMAP_WORLD.md` | Levels by region, props, the world generator |
 | `ROADMAP_GOONS.md` | Goons, giants, bosses, waves |
 | `ROADMAP_PICKUPS.md` | Pickups, unlock trees, prize games, gift boxes, gems |
-| `ROADMAP_MODES.md` | The 19 game modes and their tiers |
+| `ROADMAP_MODES.md` | The 19 game modes and their tiers, two players |
 | `ROADMAP_CARS.md` | Handling, driving feel, upgrades, perks, cosmetics |
 | `ROADMAP_UI_HUD.md` | Menus, HUD, hints, records, Steam features |
 | `ROADMAP_AUDIO.md` | Voice, the mix, the radio, songs |
@@ -62,7 +62,6 @@ The sorting below is a proposal. These are the calls most worth a second look:
 | A listening pass on the mix and the radio | `ROADMAP_AUDIO.md` |
 | Gameplay timers off the wall clock, so taped drives replay exactly for the trailer | `ROADMAP_TECH.md` |
 | Fix what the performance measurements find | `ROADMAP_TECH.md` |
-| The Goonopedia's "Found on" line, which no longer matches where goons spawn | `ROADMAP_GOONS.md` |
 | Missing capture shots and a devlog series | `ROADMAP_MARKETING.md` |
 
 ### After 0.3

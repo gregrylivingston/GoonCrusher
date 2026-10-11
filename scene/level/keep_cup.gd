@@ -106,4 +106,4 @@ func setPace(car: Node2D, share: float) -> void:
 	var level = Root.levelRoot
 	if car == Root.playerCar || level.rivals == null: return
 	var driver = car.myController.driver if car.get("myController") else null
-	if driver: driver.paceCap = level.rivals.pace * share
+	if driver is AIDriver: driver.paceCap = level.rivals.pace * share #a guest (Coop) is a rival with no cap

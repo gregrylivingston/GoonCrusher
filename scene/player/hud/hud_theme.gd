@@ -56,14 +56,18 @@ const STATION_HIT_SECONDS := 1.2
 
 ## The car's distance to the station, "2.3 km" or "1.4 mi" (Settings' units, one decimal under 10),
 ## or "" with no station
-static func stationDistance() -> String:
+static func stationDistance(car = Root.playerCar) -> String:
 	if not is_instance_valid(Root.station): return ""
-	return distanceTo(Root.station.drivewayPoint())
+	return distanceFrom(car, Root.station.drivewayPoint())
 
 ## The car's distance to a point in the world, the same way; "" with no car or for Vector2.INF
 static func distanceTo(point: Vector2) -> String:
-	if point == Vector2.INF || not is_instance_valid(Root.playerCar): return ""
-	var miles: float = Root.playerCar.global_position.distance_to(point) / 10000.0
+	return distanceFrom(Root.playerCar, point)
+
+## ...from `car` (a HUD's own: GameUI.carOf)
+static func distanceFrom(car, point: Vector2) -> String:
+	if point == Vector2.INF || not is_instance_valid(car): return ""
+	var miles: float = car.global_position.distance_to(point) / 10000.0
 	if Settings.distance_unit() == "km": miles *= 1.609
 	var shown := "%.1f" % maxf(miles, 0.1) if miles < 10.0 else str(int(miles))
 	return "%s %s" % [shown, Settings.distance_unit()]
@@ -108,8 +112,8 @@ static func textWidth(value: String, fontSize: int, font: Font = BOLD) -> float:
 #the smoked, rimmed backing every HUD panel shares
 #with no rim or radius given it takes the dashboard's (HudSkin): the car's rim color and corner shape
 static func panel(item: CanvasItem, rect: Rect2, rim := Color(0, 0, 0, 0), radius := -1, fill := PANEL) -> void:
-	if rim.a == 0.0: rim = Color(HudSkin.current().rim, 0.55)
-	if radius < 0: radius = HudSkin.current().radius
+	if rim.a == 0.0: rim = Color(HudSkin.of(item).rim, 0.55)
+	if radius < 0: radius = HudSkin.of(item).radius
 	var key = rim.to_html() + str(radius) + fill.to_html()
 	if not boxes.has(key):
 		var box = StyleBoxFlat.new()
@@ -140,6 +144,7 @@ static func marker(parent: Control, group: String, pos: Vector2) -> Control:
 	point.name = group
 	point.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	point.position = pos
-	point.add_to_group(group)
+	var ui := GameUI.of(parent)
+	if ui == null || not ui.guest: point.add_to_group(group) #pickups fly to the player's HUD, never the second player's
 	parent.add_child(point)
 	return point

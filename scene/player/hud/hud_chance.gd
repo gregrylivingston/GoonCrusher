@@ -22,9 +22,11 @@ var combo := {}               #{text, t, count, pop}
 var flashT := 0.0
 
 func _ready() -> void:
-	current = self
 	mouse_filter = MOUSE_FILTER_IGNORE
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var ui := GameUI.of(self)
+	if ui != null && ui.guest: return #the second player's (Coop): pointers and warnings only; the moments are the player's
+	current = self
 	Audio.voice.spoke.connect(onSpoke)
 
 func _exit_tree() -> void:
@@ -92,7 +94,7 @@ var shockAt := Vector2.ZERO
 func flash() -> void:
 	flashT = SHOCK_SECONDS
 	shockAt = size * 0.5
-	if is_instance_valid(Root.playerCar): shockAt = Root.playerCar.get_global_transform_with_canvas().origin
+	if is_instance_valid(GameUI.carOf(self)): shockAt = GameUI.carOf(self).get_global_transform_with_canvas().origin
 	Transition.sound("thud")
 	Transition.sound("hiss", -6.0, 0.7)
 	if Settings.reduce_motion(): return
@@ -118,7 +120,7 @@ func startScratch(tier := 0) -> void:
 	scratch = {"cells": [first, second, third], "shown": 0, "t": 0.0, "tier": tier}
 
 func payScratch() -> void:
-	var car = Root.playerCar
+	var car = GameUI.carOf(self)
 	var cells: Array = scratch.cells
 	var tier: int = scratch.get("tier", 0)
 	scratch = {}
@@ -144,7 +146,7 @@ func startDouble(car) -> void:
 
 func resolveDouble(bet: bool) -> void:
 	doubleActive = false
-	var car = Root.playerCar
+	var car = GameUI.carOf(self)
 	if not is_instance_valid(car): return
 	car.coinsSinceBet = 0
 	if not bet:
@@ -192,16 +194,16 @@ func _process(delta: float) -> void:
 		if subtitleT <= 0.0:
 			subtitle = ""
 			busy = true #one more redraw clears it
-	var car = Root.playerCar
+	var car = GameUI.carOf(self)
 	var deep: bool = is_instance_valid(car) && car.deepTicks > 0 && not car.isDestroyed
 	if deep && deepShown == 0.0: deepLabel = deepWaterLabel()
 	deepShown = move_toward(deepShown, 1.0 if deep else 0.0, DEEP_FADE * delta)
 	if deepShown > 0.0: busy = true
 	elif deepDrawn: busy = true #one more redraw clears it
 	PickupWorld.beacons = PickupWorld.beacons.filter(func(b): return is_instance_valid(b[0]) && not b[0].is_queued_for_deletion())
-	var stationOn: bool = is_instance_valid(Root.station) && is_instance_valid(Root.playerCar) && Root.station.active
+	var stationOn: bool = is_instance_valid(Root.station) && is_instance_valid(GameUI.carOf(self)) && Root.station.active
 	var hunting: bool = is_instance_valid(Root.levelRoot) && (Root.levelRoot.get("bounty") != null || Root.levelRoot.get("course") != null || Root.levelRoot.get("rivals") != null) #Bounty Hunt points at its mark, a course at its next gate
-	if busy || not PickupWorld.beacons.is_empty() || stationOn || stationShown || hunting || markShown: queue_redraw()
+	if busy || not PickupWorld.beacons.is_empty() || stationOn || stationShown || hunting || markShown || Coop.guest != null: queue_redraw()
 	stationShown = stationOn
 	markShown = hunting
 
@@ -222,6 +224,7 @@ func _draw() -> void:
 	drawMark()
 	drawGate()
 	drawQuarry()
+	drawPartner()
 	if flashT > 0.0: drawShockwave(1.0 - flashT / SHOCK_SECONDS)
 	if subtitle != "": drawSubtitle()
 	deepDrawn = deepShown > 0.0
@@ -296,8 +299,8 @@ func drawDouble(at: Vector2) -> void:
 	HudTheme.bar(self, Rect2(at + Vector2(72.0, 74.0), Vector2(230.0, 8.0)), doubleT / Pickups.DATA["double"]["secs"], HudTheme.GOLD)
 
 func drawBeacons() -> void:
-	if PickupWorld.beacons.is_empty() || not is_instance_valid(Root.playerCar): return
-	var canvas := get_viewport().get_canvas_transform()
+	if PickupWorld.beacons.is_empty() || not is_instance_valid(GameUI.carOf(self)): return
+	var canvas := GameUI.canvasOf(self)
 	var screen := Rect2(Vector2.ZERO, size)
 	var inner := Rect2(Vector2(EDGE, 165.0), size - Vector2(EDGE * 2.0, 165.0 + 175.0)) #clear of the mirror, the visors and the dials
 	var center := inner.get_center()
@@ -316,7 +319,7 @@ func drawBeacons() -> void:
 		if b[2]: HudTheme.icon(self, b[2], at, 38.0)
 		var tip := at + dir * 44.0
 		draw_colored_polygon(PackedVector2Array([tip, at + dir * 32.0 + dir.orthogonal() * 10.0, at + dir * 32.0 - dir.orthogonal() * 10.0]), col)
-		var meters: float = Root.playerCar.global_position.distance_to(b[0].global_position) / 100.0
+		var meters: float = GameUI.carOf(self).global_position.distance_to(b[0].global_position) / 100.0
 		HudTheme.text(self, at + Vector2(0, 48.0), "%dm" % int(meters), 14, HudTheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER, 4)
 
 func drawShockwave(k: float) -> void:
@@ -335,7 +338,7 @@ var stationShown := false
 var markShown := false
 
 func drawStation() -> void:
-	if not is_instance_valid(Root.station) || not is_instance_valid(Root.playerCar): return
+	if not is_instance_valid(Root.station) || not is_instance_valid(GameUI.carOf(self)): return
 	var mode: int = SaveManager.playerData.gameMode
 	var defense := mode == Root.gameModes.DEFENSE
 	var hit := HudTheme.stationHit()
@@ -355,17 +358,30 @@ func drawStation() -> void:
 	if gate != Vector2.INF: drawPointer(gate, "CHECKPOINT", col, icon, pulse, shake, hit)
 	else: drawPointer(Root.station.drivewayPoint(), "FINISH" if is_instance_valid(level) && level.get("course") != null else label, col, icon, pulse, shake, hit)
 
+#Two players (Coop): the pointer at the other car once it is off this half of the screen. It turns red and
+#pulses as the leash runs out (CoopRun.LEASH), before the tow.
+const LEASH_WARN := 0.75
+func drawPartner() -> void:
+	var mine = GameUI.carOf(self)
+	var other = Root.playerCar if mine == Coop.guest else Coop.guest
+	if Coop.guest == null || not is_instance_valid(mine) || not is_instance_valid(other) || other.isDestroyed: return
+	if Rect2(Vector2.ZERO, size).grow(-40.0).has_point(GameUI.canvasOf(self) * other.global_position): return
+	var tight := CoopRun.leashShare(other.global_position - mine.global_position) >= LEASH_WARN
+	var pulse := 0.0
+	if tight: pulse = 1.0 if Settings.get_value("access/reduce_flashing") else 0.5 + 0.5 * sin(Time.get_ticks_msec() * 0.012)
+	drawPointer(other.global_position, "TOO FAR" if tight else ("PLAYER 1" if other == Root.playerCar else CoopRun.NAME), HudTheme.BAD if tight else HudTheme.TEXT, null, pulse, Vector2.ZERO, 0.0)
+
 #Bounty Hunt: the same pointer at the mark, in red
 func drawMark() -> void:
 	var level = Root.levelRoot
-	if not is_instance_valid(level) || level.get("bounty") == null || not is_instance_valid(Root.playerCar): return
+	if not is_instance_valid(level) || level.get("bounty") == null || not is_instance_valid(GameUI.carOf(self)): return
 	var at: Vector2 = level.bounty.markPosition()
 	if at != Vector2.INF: drawPointer(at, "MARK", HudTheme.BAD, HudTheme.MODE_ICONS.get(Root.gameModes.BOUNTY), 0.0, Vector2.ZERO, 0.0)
 
 #Pursuit: at the runner, in red, over the station's own pointer. Keep the Cup: at the cup, in gold.
 func drawQuarry() -> void:
 	var level = Root.levelRoot
-	if not is_instance_valid(level) || not is_instance_valid(Root.playerCar): return
+	if not is_instance_valid(level) || not is_instance_valid(GameUI.carOf(self)): return
 	if level.get("cup") != null && not level.cup.playerHolds():
 		drawPointer(level.cup.cupPosition(), "CUP", HudTheme.GOLD, HudTheme.MODE_ICONS.get(Root.gameModes.KEEPCUP), 0.0, Vector2.ZERO, 0.0)
 	elif level.runMode == Root.gameModes.PURSUIT && level.get("rivals") != null && level.rivals.runner() != null:
@@ -374,18 +390,18 @@ func drawQuarry() -> void:
 #a course with no station (Cone Course): the pointer at its next gate, when that is off screen
 func drawGate() -> void:
 	var level = Root.levelRoot
-	if not is_instance_valid(level) || level.get("course") == null || is_instance_valid(Root.station) || not is_instance_valid(Root.playerCar): return
+	if not is_instance_valid(level) || level.get("course") == null || is_instance_valid(Root.station) || not is_instance_valid(GameUI.carOf(self)): return
 	var at: Vector2 = level.course.target()
-	if at != Vector2.INF && not Rect2(Vector2.ZERO, size).grow(-40.0).has_point(get_viewport().get_canvas_transform() * at):
+	if at != Vector2.INF && not Rect2(Vector2.ZERO, size).grow(-40.0).has_point(GameUI.canvasOf(self) * at):
 		drawPointer(at, level.course.gateWord, HudTheme.STATION, HudTheme.MODE_ICONS.get(level.runMode), 0.0, Vector2.ZERO, 0.0)
 
 #a world point as the HUD shows it: on screen a tag over it that fades as the car arrives (`hit` keeps it lit);
 #off screen a pill on the screen edge with an arrow, the label and the distance
 func drawPointer(point: Vector2, label: String, col: Color, icon: Texture2D, pulse: float, shake: Vector2, hit: float) -> void:
 	var calm := Settings.reduce_motion()
-	var target: Vector2 = get_viewport().get_canvas_transform() * point
+	var target: Vector2 = GameUI.canvasOf(self) * point
 	if Rect2(Vector2.ZERO, size).grow(-40.0).has_point(target):
-		var fade := clampf((Root.playerCar.global_position.distance_to(point) - 400.0) / 600.0, 0.0, 1.0)
+		var fade := clampf((GameUI.carOf(self).global_position.distance_to(point) - 400.0) / 600.0, 0.0, 1.0)
 		if fade > 0.0 || hit > 0.0: drawStationTag(target + shake, label, Color(col, maxf(fade, hit)), icon)
 		return
 	var inner := Rect2(Vector2(EDGE + 60.0, 190.0), size - Vector2((EDGE + 60.0) * 2.0, 190.0 + 300.0)) #clear of the mirror, the visors and the dials
@@ -404,7 +420,7 @@ func drawPointer(point: Vector2, label: String, col: Color, icon: Texture2D, pul
 	HudTheme.panel(self, rect, col.lerp(Color.WHITE, pulse * 0.8), 26)
 	if icon: HudTheme.icon(self, icon, rect.position + Vector2(32.0, rect.size.y * 0.5), 36.0)
 	HudTheme.text(self, rect.position + Vector2(60.0, 23.0), label, 16, HudTheme.TEXT)
-	HudTheme.text(self, rect.position + Vector2(60.0, 46.0), HudTheme.distanceTo(point), 20, col, HORIZONTAL_ALIGNMENT_LEFT, 5)
+	HudTheme.text(self, rect.position + Vector2(60.0, 46.0), HudTheme.distanceFrom(GameUI.carOf(self), point), 20, col, HORIZONTAL_ALIGNMENT_LEFT, 5)
 
 #on screen: a small pill over the driveway with a notch pointing down at it
 func drawStationTag(at: Vector2, label: String, col: Color, icon: Texture2D) -> void:

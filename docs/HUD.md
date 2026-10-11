@@ -26,6 +26,11 @@ The HUD is `scene/player/playerRoot.tscn` (`GameUI`), with its widgets in `scene
 - **Accessibility:** flashes hold steady with Reduce Flashing; swings, sweeps and swelling stop with Reduce Motion. A new effect must honor both.
 - **Pausing** is Esc / Start or losing focus (`GameUI.openPause`); there is no HUD button.
 - **Districts show nothing:** entering one only changes who spawns.
+- **A widget never names the player's car.** It asks its HUD: `GameUI.carOf(self)` for the car, `HudSkin.of(self)` for the dashboard, `GameUI.canvasOf(self)` for world-to-screen. A run can have two HUDs (below).
+
+## Two HUDs
+
+In a two-player run (docs/MODES.md, "Two players") each half of the screen has a HUD: `GameUI.setFrame(rect, fit)` reparents the widgets under a frame laid over that half and scaled to fit (`CoopRun.HUD_FIT`), so anchors mean the half's corners and center; `GameUI.widget(name)` finds one wherever it is. `CoopRun` adds a second `playerRoot.tscn` with `guest` set for the second player: the guest's car and dashboard on the dials, the same clock (its `Timer` only shows the time: `drives` is off) and goal, its own coins on the right visor, no gift boxes, no pause. A frame clips its widgets, so a dial that hangs off its corner never reaches the other half. It is in no group and its markers join no flyer group, and `HudChance.current` stays the player's, so pickups, toasts and prompts go to the player's HUD only.
 
 ## Pickups fly to their widget
 

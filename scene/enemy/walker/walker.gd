@@ -141,7 +141,7 @@ func addGroundRing() -> void:
 
 func _physics_process(delta):
 	if dead: return
-	var car = Root.playerCar
+	var car = Root.playerCar if Coop.guest == null else Coop.prey(global_position) #with two players, the nearer car
 	if not is_instance_valid(car): return
 	if Pickups.goonTickSkipped(): return #Time Warp
 	if beginTick(delta, car): #the state clock; true when it stands in deep water

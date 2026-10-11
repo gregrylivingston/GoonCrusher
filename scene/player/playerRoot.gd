@@ -4,15 +4,70 @@ extends CanvasLayer
 #The in-run HUD. The widgets in scene/player/hud each read Root.playerCar and redraw only when their
 #numbers change (see docs/HUD.md); this script owns the gift boxes, pausing and HUD Scale.
 
+## The second player's HUD in a two-player run (CoopRun adds it): the guest's car on the dials, the same clock
+## and goal, the coins they picked up on the right visor, and nothing of the save's (no payout, gift boxes or pause). It joins no group, so everything that
+## looks for the HUD finds the player's.
+var guest := false
+var view: Viewport #the viewport this HUD's half of the world is drawn in, when that isn't its own (the guest's)
+var host: Control  #with a frame (setFrame): the widgets' parent, laid over the frame and scaled to fit it
+var plain: Control #...and HudChance's, over the same frame at full size
+
+## The HUD a widget belongs to, or null (a widget built alone in a test)
+static func of(node: Node) -> GameUI:
+	while node != null && not node is GameUI: node = node.get_parent()
+	return node as GameUI
+
+## The car a widget shows: its HUD's (the guest's on the second player's HUD)
+static func carOf(node: Node) -> OverheadCarBody2D:
+	var ui := of(node)
+	return Coop.guest if ui != null && ui.guest else Root.playerCar
+
+## World to this widget's HUD: its HUD's own camera
+static func canvasOf(node: CanvasItem) -> Transform2D:
+	var ui := of(node)
+	return ui.view.get_canvas_transform() if ui != null && is_instance_valid(ui.view) else node.get_viewport().get_canvas_transform()
+
+## A widget by its name, wherever a frame has put it
+func widget(widgetName: String) -> Node:
+	return (host if host else self).get_node_or_null(widgetName)
+
+## Lays the HUD over `rect` of the screen (a half, with two players) with every widget scaled by `fit`; an empty
+## rect is the whole screen again. Anchors then mean the frame's corners and center.
+func setFrame(rect: Rect2, fit := 1.0) -> void:
+	if host == null:
+		host = Control.new()
+		host.name = "Frame"
+		plain = Control.new()
+		plain.name = "PlainFrame"
+		for frame in [host, plain]:
+			frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			frame.clip_contents = true #a dial hangs off its corner: past the frame's edge is the other player's half
+			add_child(frame)
+		for control in hudControls: control.reparent(host, false)
+		var chance = get_node_or_null("HudChance")
+		if chance: chance.reparent(plain, false)
+	if not rect.has_area(): rect = get_viewport().get_visible_rect()
+	host.position = rect.position
+	host.size = rect.size / fit
+	host.scale = Vector2(fit, fit)
+	plain.position = rect.position
+	plain.size = rect.size
+	applyHudScale()
+
 func _ready():
-	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
+	if not guest: Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
 	$VersionTracker.text = Root.versionText()
-	%ModeLabel.text = Root.gameModeDescription[SaveManager.playerData.gameMode].name
+	%ModeLabel.text = CoopRun.NAME if guest else Root.gameModeDescription[SaveManager.playerData.gameMode].name
 	addMirror()
 	addPickupWidgets()
 	addInstrument()
 	setupHudScale()
-	add_child(HudChance.new()) #toasts, the scratch card, beacons: over everything, not HUD-scaled
+	var chance := HudChance.new() #toasts, the scratch card, beacons: over everything, not HUD-scaled
+	chance.name = "HudChance"
+	add_child(chance)
+	if guest:
+		for hidden in ["LeftVisor", "VersionTracker"]: get_node(hidden).visible = false
+		return
 	if is_instance_valid(Root.playerCar):
 		updateStats()
 	else: await get_tree().create_timer(1).timeout
@@ -29,6 +84,7 @@ func addCountdown() -> void:
 	add_child(lamps)
 
 func _process(_delta):
+	if guest: return
 	if Input.is_action_just_pressed("ui_menu"): openPause()
 	if not get_tree().paused: checkGiftBox() #a box earned under a paused tree opens once it unpauses
 
@@ -41,7 +97,7 @@ func openPause() -> void:
 
 #car.reward() calls this when a stat changes; the dials' lamps show stats, so redraw them now
 func updateStats():
-	for dial in [$Tach, $Speedo]: dial.needle.queue_redraw()
+	for dial in [widget("Tach"), widget("Speedo")]: dial.needle.queue_redraw()
 
 #the held gadget and the timed power-up rings, along the bottom edge between the dials (hud_items.gd)
 func addPickupWidgets() -> void:
@@ -101,7 +157,7 @@ func onSettingChanged(key: String, _value) -> void:
 
 func applyHudScale() -> void:
 	var hudScale: float = Settings.get_value("access/hud_scale")
-	var screen = get_viewport().get_visible_rect().size
+	var screen = host.size if host else get_viewport().get_visible_rect().size
 	for control in hudControls:
 		var anchor = Vector2((control.anchor_left + control.anchor_right) * 0.5 * screen.x, (control.anchor_top + control.anchor_bottom) * 0.5 * screen.y)
 		control.pivot_offset = (anchor - control.position).clamp(Vector2.ZERO, control.size)
@@ -119,6 +175,7 @@ func updateGoonsCrushed():
 	checkGiftBox()
 
 func checkGiftBox() -> void:
+	if Coop.active: return #a prize game stops the run for both players: none with two
 	var car = Root.playerCar
 	if not is_instance_valid(car) || car.isDestroyed || car.crushXp < nextBoxXp || get_tree().paused: return
 	if not is_instance_valid(Root.levelRoot) || Root.levelRoot.get("hasEnded"): return
@@ -127,12 +184,12 @@ func checkGiftBox() -> void:
 	nextBoxXp = CrushPrizes.boxAt(boxLevel + 1)
 	var tier := CrushPrizes.tierFor(boxLevel)
 	var id := CrushPrizes.pickGame(tier, randf(), CrushPrizes.openGames())
-	flashWidget($LeftVisor)
+	flashWidget(widget("LeftVisor"))
 	GiftBox.open(id, tier)
 
 #a wave survived: the star it paid lands in its ring on the right visor, which flashes
 func waveSurvived() -> void:
-	flashWidget($RightVisor)
+	flashWidget(widget("RightVisor"))
 	Transition.sound("pop", -10.0)
 
 func flashWidget(widget: Control) -> void:

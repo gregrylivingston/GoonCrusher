@@ -191,7 +191,7 @@ static func onCrush(car, pos: Vector2, source: StringName = &"car") -> void:
 	if mult > 0:
 		Pickups.discover("combo")
 		car.reward("coin", mult)
-	if (mult > 0 || sources.size() > 1) && is_instance_valid(HudChance.current): HudChance.current.showCombo(car.comboCount, mult, sources)
+	if (mult > 0 || sources.size() > 1) && car.isPlayer && is_instance_valid(HudChance.current): HudChance.current.showCombo(car.comboCount, mult, sources)
 	if car.hasBuff("golden"): car.reward("coin", Pickups.DATA["golden"]["coins"])
 	if car.hasBuff("frenzy") && is_instance_valid(Root.spawnManager) && Root.spawnManager.fx:
 		Root.spawnManager.fx.dropAt(pos, "res://scene/powerup/coin.tscn")

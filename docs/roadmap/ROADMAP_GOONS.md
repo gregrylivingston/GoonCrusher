@@ -3,7 +3,6 @@
 How goons work today: `docs/GOONS.md`. Tags and effort: `ROADMAP.md`.
 
 ## Planned
-- **[0.3 want] The Goonopedia's "Found on <biomes>" line** no longer matches where a goon spawns (line-ups decide that now). Show the levels whose line-up has the goon, or drop the line. S.
 - **[0.3 want] Crush feel by hand:** `GoonFx.STYLE_WEIGHTS`, `FLING_SPEED`, trauma, hit-stop. S + play.
 - **[later] Giants and a boss:** giants get hp 3; a Warlord at wave 4 with a health bar, minions and charges (start from the Foreman's `Boss` verb). Needs `hp` on goons. M.
 - **[later] Giant odds** from the district's `giantism` and the run's wave (the value is rolled today and read by nothing). S.

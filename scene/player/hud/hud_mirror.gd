@@ -134,7 +134,7 @@ static func diceFor(luck: int) -> int:
 
 #the dashboard's mirror: its frame, and the clock and the goal laid out on its glass and dressed to match
 func apply() -> void:
-	skin = HudSkin.current()
+	skin = HudSkin.of(self)
 	strings = CHARMS + HANGS.slice(0, skin.hangs.size())
 	if angles.size() != strings.size(): restCharms()
 	var middle := body().get_center().y
@@ -177,7 +177,7 @@ func apply() -> void:
 	front.queue_redraw()
 
 func _process(delta: float) -> void:
-	var car = Root.playerCar
+	var car = GameUI.carOf(self)
 	if not is_instance_valid(car): return
 	if not set:
 		set = true
@@ -326,7 +326,7 @@ func _draw() -> void:
 #---------- what moves over the frame: the hurry pulse, the lights ----------
 
 func drawFront() -> void:
-	var car = Root.playerCar
+	var car = GameUI.carOf(self)
 	var b := body()
 	var pulse := hurry()
 	if pulse > 0.0: HudTheme.panel(front, b, Color(HudTheme.BAD, pulse), corner(), Color(HudTheme.BAD, 0.08 * pulse))
@@ -354,7 +354,7 @@ func drawFront() -> void:
 #---------- what moves behind it: the dice and the clover ----------
 
 func drawCharms() -> void:
-	var car = Root.playerCar
+	var car = GameUI.carOf(self)
 	if not is_instance_valid(car): return
 	var origin := hook()
 	for n in mini(skin.hangs.size(), strings.size() - CHARMS.size()): #the dashboard's own, under the dice and the clover

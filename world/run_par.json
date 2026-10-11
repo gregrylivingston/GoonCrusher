@@ -1,0 +1,1352 @@
+{
+	"bayou/blackout/1": {
+		"combo": 7.5,
+		"crushed": 38.0,
+		"paid": 327.5,
+		"runs": 2,
+		"speed": 661.5,
+		"time": 99.0,
+		"won": 2
+	},
+	"bayou/blackout/2": {
+		"combo": 15.5,
+		"crushed": 90.5,
+		"paid": 976.0,
+		"runs": 2,
+		"speed": 613.5,
+		"time": 167.0,
+		"won": 2
+	},
+	"bayou/blackout/3": {
+		"combo": 21.0,
+		"crushed": 206.0,
+		"paid": 1791.0,
+		"runs": 2,
+		"speed": 778.0,
+		"time": 229.0,
+		"won": 1
+	},
+	"bayou/countdown/1": {
+		"combo": 7.0,
+		"crushed": 46.0,
+		"paid": 294.0,
+		"runs": 2,
+		"speed": 634.5,
+		"time": 104.0,
+		"won": 2
+	},
+	"bayou/countdown/2": {
+		"combo": 20.0,
+		"crushed": 114.5,
+		"paid": 964.5,
+		"runs": 2,
+		"speed": 636.5,
+		"time": 167.0,
+		"won": 2
+	},
+	"bayou/countdown/3": {
+		"combo": 49.0,
+		"crushed": 532.0,
+		"paid": 4225.0,
+		"runs": 2,
+		"speed": 553.0,
+		"time": 229.0,
+		"won": 1
+	},
+	"bayou/hotlap/1": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 499.0,
+		"runs": 2,
+		"speed": 716.0,
+		"time": 68.6,
+		"won": 2
+	},
+	"bayou/hotlap/2": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 648.0,
+		"runs": 2,
+		"speed": 716.0,
+		"time": 68.6,
+		"won": 2
+	},
+	"bayou/hotlap/3": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 800.0,
+		"runs": 2,
+		"speed": 710.0,
+		"time": 65.1,
+		"won": 1
+	},
+	"bayou/keepcup/1": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 4.0,
+		"runs": 2,
+		"speed": 719.5,
+		"time": 0.0,
+		"won": 0
+	},
+	"bayou/keepcup/2": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 4.0,
+		"runs": 2,
+		"speed": 717.5,
+		"time": 0.0,
+		"won": 0
+	},
+	"bayou/keepcup/3": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 24.5,
+		"runs": 2,
+		"speed": 723.5,
+		"time": 0.0,
+		"won": 0
+	},
+	"bayou/rally/1": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 560.5,
+		"runs": 2,
+		"speed": 750.5,
+		"time": 122.1,
+		"won": 2
+	},
+	"bayou/rally/2": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 580.0,
+		"runs": 2,
+		"speed": 752.0,
+		"time": 115.3,
+		"won": 1
+	},
+	"bayou/rally/3": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 2.5,
+		"runs": 2,
+		"speed": 750.5,
+		"time": 0.0,
+		"won": 0
+	},
+	"canyon/bounty/1": {
+		"combo": 4.0,
+		"crushed": 20.0,
+		"paid": 517.0,
+		"runs": 2,
+		"speed": 712.0,
+		"time": 32.7,
+		"won": 1
+	},
+	"canyon/bounty/2": {
+		"combo": 9.5,
+		"crushed": 80.5,
+		"paid": 1010.0,
+		"runs": 2,
+		"speed": 674.5,
+		"time": 105.6,
+		"won": 2
+	},
+	"canyon/bounty/3": {
+		"combo": 9.5,
+		"crushed": 64.5,
+		"paid": 1162.5,
+		"runs": 2,
+		"speed": 715.5,
+		"time": 76.2,
+		"won": 2
+	},
+	"canyon/defense/1": {
+		"combo": 7.0,
+		"crushed": 23.5,
+		"paid": 614.5,
+		"runs": 2,
+		"speed": 720.5,
+		"time": 150.0,
+		"won": 2
+	},
+	"canyon/defense/2": {
+		"combo": 8.0,
+		"crushed": 37.5,
+		"paid": 1108.0,
+		"runs": 2,
+		"speed": 680.0,
+		"time": 175.0,
+		"won": 2
+	},
+	"canyon/defense/3": {
+		"combo": 10.5,
+		"crushed": 101.0,
+		"paid": 1725.5,
+		"runs": 2,
+		"speed": 695.0,
+		"time": 205.0,
+		"won": 2
+	},
+	"canyon/drift/1": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 427.0,
+		"runs": 2,
+		"speed": 580.0,
+		"time": 11.2,
+		"won": 2
+	},
+	"canyon/drift/2": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 555.0,
+		"runs": 2,
+		"speed": 580.0,
+		"time": 11.2,
+		"won": 2
+	},
+	"canyon/drift/3": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 683.0,
+		"runs": 2,
+		"speed": 580.0,
+		"time": 16.4,
+		"won": 2
+	},
+	"canyon/pursuit/1": {
+		"combo": 2.5,
+		"crushed": 5.0,
+		"paid": 16.5,
+		"runs": 2,
+		"speed": 683.0,
+		"time": 0.0,
+		"won": 0
+	},
+	"canyon/pursuit/2": {
+		"combo": 3.0,
+		"crushed": 5.0,
+		"paid": 29.0,
+		"runs": 2,
+		"speed": 731.5,
+		"time": 0.0,
+		"won": 0
+	},
+	"canyon/pursuit/3": {
+		"combo": 1.5,
+		"crushed": 2.5,
+		"paid": 11.5,
+		"runs": 2,
+		"speed": 754.0,
+		"time": 0.0,
+		"won": 0
+	},
+	"canyon/sprint/1": {
+		"combo": 1.5,
+		"crushed": 13.5,
+		"paid": 769.5,
+		"runs": 2,
+		"speed": 737.5,
+		"time": 136.2,
+		"won": 2
+	},
+	"canyon/sprint/2": {
+		"combo": 11.0,
+		"crushed": 40.0,
+		"paid": 1322.0,
+		"runs": 2,
+		"speed": 718.0,
+		"time": 183.8,
+		"won": 1
+	},
+	"canyon/sprint/3": {
+		"combo": 5.0,
+		"crushed": 86.0,
+		"paid": 161.5,
+		"runs": 2,
+		"speed": 972.0,
+		"time": 0.0,
+		"won": 0
+	},
+	"lantern/blackout/1": {
+		"combo": 113.0,
+		"crushed": 334.0,
+		"paid": 2647.0,
+		"runs": 2,
+		"speed": 694.0,
+		"time": 113.0,
+		"won": 1
+	},
+	"lantern/blackout/2": {
+		"combo": 103.5,
+		"crushed": 268.5,
+		"paid": 1738.5,
+		"runs": 2,
+		"speed": 564.0,
+		"time": 0.0,
+		"won": 0
+	},
+	"lantern/blackout/3": {
+		"combo": 166.5,
+		"crushed": 433.0,
+		"paid": 3003.0,
+		"runs": 2,
+		"speed": 572.5,
+		"time": 0.0,
+		"won": 0
+	},
+	"lantern/cones/1": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 407.0,
+		"runs": 2,
+		"speed": 574.0,
+		"time": 75.9,
+		"won": 1
+	},
+	"lantern/cones/2": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 0.0,
+		"runs": 2,
+		"speed": 554.0,
+		"time": 0.0,
+		"won": 0
+	},
+	"lantern/cones/3": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 0.0,
+		"runs": 2,
+		"speed": 554.0,
+		"time": 0.0,
+		"won": 0
+	},
+	"lantern/knockout/1": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 0.0,
+		"runs": 2,
+		"speed": 717.5,
+		"time": 0.0,
+		"won": 0
+	},
+	"lantern/knockout/2": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 0.0,
+		"runs": 2,
+		"speed": 641.5,
+		"time": 0.0,
+		"won": 0
+	},
+	"lantern/knockout/3": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 0.0,
+		"runs": 2,
+		"speed": 716.0,
+		"time": 0.0,
+		"won": 0
+	},
+	"lantern/smash/1": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 21.5,
+		"runs": 2,
+		"speed": 639.0,
+		"time": 0.0,
+		"won": 0
+	},
+	"lantern/smash/2": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 20.0,
+		"runs": 2,
+		"speed": 639.0,
+		"time": 0.0,
+		"won": 0
+	},
+	"lantern/smash/3": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 18.5,
+		"runs": 2,
+		"speed": 639.0,
+		"time": 0.0,
+		"won": 0
+	},
+	"lantern/sprint/1": {
+		"combo": 15.0,
+		"crushed": 110.0,
+		"paid": 1505.0,
+		"runs": 2,
+		"speed": 723.0,
+		"time": 164.0,
+		"won": 1
+	},
+	"lantern/sprint/2": {
+		"combo": 19.0,
+		"crushed": 160.5,
+		"paid": 744.5,
+		"runs": 2,
+		"speed": 690.5,
+		"time": 0.0,
+		"won": 0
+	},
+	"lantern/sprint/3": {
+		"combo": 22.5,
+		"crushed": 197.5,
+		"paid": 773.0,
+		"runs": 2,
+		"speed": 632.0,
+		"time": 0.0,
+		"won": 0
+	},
+	"moosewoods/bounty/1": {
+		"combo": 53.0,
+		"crushed": 281.0,
+		"paid": 2064.0,
+		"runs": 2,
+		"speed": 660.0,
+		"time": 160.3,
+		"won": 1
+	},
+	"moosewoods/bounty/2": {
+		"combo": 34.0,
+		"crushed": 225.0,
+		"paid": 1128.5,
+		"runs": 2,
+		"speed": 633.0,
+		"time": 0.0,
+		"won": 0
+	},
+	"moosewoods/bounty/3": {
+		"combo": 115.0,
+		"crushed": 456.5,
+		"paid": 2343.5,
+		"runs": 2,
+		"speed": 620.5,
+		"time": 0.0,
+		"won": 0
+	},
+	"moosewoods/countdown/1": {
+		"combo": 67.0,
+		"crushed": 232.0,
+		"paid": 1637.0,
+		"runs": 2,
+		"speed": 650.0,
+		"time": 109.0,
+		"won": 1
+	},
+	"moosewoods/countdown/2": {
+		"combo": 127.0,
+		"crushed": 540.0,
+		"paid": 5570.0,
+		"runs": 2,
+		"speed": 739.0,
+		"time": 175.0,
+		"won": 1
+	},
+	"moosewoods/countdown/3": {
+		"combo": 109.0,
+		"crushed": 483.5,
+		"paid": 3268.5,
+		"runs": 2,
+		"speed": 603.5,
+		"time": 0.0,
+		"won": 0
+	},
+	"moosewoods/derby/1": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 503.0,
+		"runs": 2,
+		"speed": 670.0,
+		"time": 98.1,
+		"won": 1
+	},
+	"moosewoods/derby/2": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 1.0,
+		"runs": 2,
+		"speed": 609.5,
+		"time": 0.0,
+		"won": 0
+	},
+	"moosewoods/derby/3": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 3.5,
+		"runs": 2,
+		"speed": 611.0,
+		"time": 0.0,
+		"won": 0
+	},
+	"moosewoods/goonpocalypse/1": {
+		"combo": 90.0,
+		"crushed": 528.0,
+		"paid": 3806.0,
+		"runs": 2,
+		"speed": 621.0,
+		"time": 182.3,
+		"won": 1
+	},
+	"moosewoods/goonpocalypse/2": {
+		"combo": 133.0,
+		"crushed": 419.0,
+		"paid": 2583.5,
+		"runs": 2,
+		"speed": 657.0,
+		"time": 0.0,
+		"won": 0
+	},
+	"moosewoods/goonpocalypse/3": {
+		"combo": 89.5,
+		"crushed": 337.0,
+		"paid": 2313.0,
+		"runs": 2,
+		"speed": 602.5,
+		"time": 0.0,
+		"won": 0
+	},
+	"moosewoods/smash/1": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 22.0,
+		"runs": 2,
+		"speed": 629.5,
+		"time": 0.0,
+		"won": 0
+	},
+	"moosewoods/smash/2": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 22.0,
+		"runs": 2,
+		"speed": 629.5,
+		"time": 0.0,
+		"won": 0
+	},
+	"moosewoods/smash/3": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 20.5,
+		"runs": 2,
+		"speed": 626.5,
+		"time": 0.0,
+		"won": 0
+	},
+	"mudlick/cannonball/1": {
+		"combo": 8.0,
+		"crushed": 27.0,
+		"paid": 967.0,
+		"runs": 2,
+		"speed": 720.0,
+		"time": 120.5,
+		"won": 1
+	},
+	"mudlick/cannonball/2": {
+		"combo": 5.0,
+		"crushed": 26.5,
+		"paid": 118.0,
+		"runs": 2,
+		"speed": 681.5,
+		"time": 0.0,
+		"won": 0
+	},
+	"mudlick/cannonball/3": {
+		"combo": 8.0,
+		"crushed": 27.0,
+		"paid": 83.0,
+		"runs": 2,
+		"speed": 715.0,
+		"time": 0.0,
+		"won": 0
+	},
+	"mudlick/countdown/1": {
+		"combo": 29.0,
+		"crushed": 204.0,
+		"paid": 1195.5,
+		"runs": 2,
+		"speed": 691.5,
+		"time": 108.0,
+		"won": 2
+	},
+	"mudlick/countdown/2": {
+		"combo": 28.5,
+		"crushed": 193.0,
+		"paid": 841.0,
+		"runs": 2,
+		"speed": 637.0,
+		"time": 0.0,
+		"won": 0
+	},
+	"mudlick/countdown/3": {
+		"combo": 30.5,
+		"crushed": 278.5,
+		"paid": 1165.5,
+		"runs": 2,
+		"speed": 605.0,
+		"time": 0.0,
+		"won": 0
+	},
+	"mudlick/defense/1": {
+		"combo": 9.0,
+		"crushed": 97.5,
+		"paid": 1028.0,
+		"runs": 2,
+		"speed": 707.5,
+		"time": 150.0,
+		"won": 2
+	},
+	"mudlick/defense/2": {
+		"combo": 12.0,
+		"crushed": 137.0,
+		"paid": 1687.5,
+		"runs": 2,
+		"speed": 693.5,
+		"time": 175.0,
+		"won": 2
+	},
+	"mudlick/defense/3": {
+		"combo": 18.0,
+		"crushed": 244.0,
+		"paid": 2902.0,
+		"runs": 2,
+		"speed": 839.0,
+		"time": 210.0,
+		"won": 1
+	},
+	"mudlick/rally/1": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 717.0,
+		"runs": 2,
+		"speed": 748.5,
+		"time": 104.5,
+		"won": 2
+	},
+	"mudlick/rally/2": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 746.0,
+		"runs": 2,
+		"speed": 748.5,
+		"time": 104.5,
+		"won": 2
+	},
+	"mudlick/rally/3": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 754.0,
+		"runs": 2,
+		"speed": 748.0,
+		"time": 101.9,
+		"won": 1
+	},
+	"mudlick/sprint/1": {
+		"combo": 11.0,
+		"crushed": 84.0,
+		"paid": 284.5,
+		"runs": 2,
+		"speed": 690.5,
+		"time": 0.0,
+		"won": 0
+	},
+	"mudlick/sprint/2": {
+		"combo": 11.0,
+		"crushed": 108.0,
+		"paid": 336.5,
+		"runs": 2,
+		"speed": 680.5,
+		"time": 0.0,
+		"won": 0
+	},
+	"mudlick/sprint/3": {
+		"combo": 16.5,
+		"crushed": 175.0,
+		"paid": 765.5,
+		"runs": 2,
+		"speed": 648.0,
+		"time": 0.0,
+		"won": 0
+	},
+	"orchard/bounty/1": {
+		"combo": 4.0,
+		"crushed": 23.0,
+		"paid": 453.0,
+		"runs": 2,
+		"speed": 642.0,
+		"time": 30.9,
+		"won": 1
+	},
+	"orchard/bounty/2": {
+		"combo": 116.0,
+		"crushed": 371.0,
+		"paid": 3001.0,
+		"runs": 2,
+		"speed": 616.0,
+		"time": 130.8,
+		"won": 1
+	},
+	"orchard/bounty/3": {
+		"combo": 15.5,
+		"crushed": 92.0,
+		"paid": 401.5,
+		"runs": 2,
+		"speed": 615.0,
+		"time": 0.0,
+		"won": 0
+	},
+	"orchard/circuit/1": {
+		"combo": 0.5,
+		"crushed": 0.5,
+		"paid": 415.0,
+		"runs": 2,
+		"speed": 716.0,
+		"time": 95.6,
+		"won": 2
+	},
+	"orchard/circuit/2": {
+		"combo": 0.5,
+		"crushed": 0.5,
+		"paid": 5.5,
+		"runs": 2,
+		"speed": 752.5,
+		"time": 0.0,
+		"won": 0
+	},
+	"orchard/circuit/3": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 660.0,
+		"runs": 2,
+		"speed": 729.0,
+		"time": 100.2,
+		"won": 1
+	},
+	"orchard/cones/1": {
+		"combo": 1.0,
+		"crushed": 2.0,
+		"paid": 280.0,
+		"runs": 2,
+		"speed": 579.0,
+		"time": 78.2,
+		"won": 1
+	},
+	"orchard/cones/2": {
+		"combo": 1.0,
+		"crushed": 1.5,
+		"paid": 1.5,
+		"runs": 2,
+		"speed": 564.0,
+		"time": 0.0,
+		"won": 0
+	},
+	"orchard/cones/3": {
+		"combo": 1.0,
+		"crushed": 1.5,
+		"paid": 1.5,
+		"runs": 2,
+		"speed": 564.0,
+		"time": 0.0,
+		"won": 0
+	},
+	"orchard/countdown/1": {
+		"combo": 19.5,
+		"crushed": 84.5,
+		"paid": 560.0,
+		"runs": 2,
+		"speed": 591.0,
+		"time": 103.0,
+		"won": 2
+	},
+	"orchard/countdown/2": {
+		"combo": 66.0,
+		"crushed": 206.5,
+		"paid": 1289.5,
+		"runs": 2,
+		"speed": 635.0,
+		"time": 0.0,
+		"won": 0
+	},
+	"orchard/countdown/3": {
+		"combo": 115.5,
+		"crushed": 307.5,
+		"paid": 2117.5,
+		"runs": 2,
+		"speed": 587.5,
+		"time": 0.0,
+		"won": 0
+	},
+	"orchard/smash/1": {
+		"combo": 1.0,
+		"crushed": 2.5,
+		"paid": 26.0,
+		"runs": 2,
+		"speed": 618.5,
+		"time": 0.0,
+		"won": 0
+	},
+	"orchard/smash/2": {
+		"combo": 1.0,
+		"crushed": 2.5,
+		"paid": 27.0,
+		"runs": 2,
+		"speed": 618.5,
+		"time": 0.0,
+		"won": 0
+	},
+	"orchard/smash/3": {
+		"combo": 1.0,
+		"crushed": 2.5,
+		"paid": 16.5,
+		"runs": 2,
+		"speed": 618.5,
+		"time": 0.0,
+		"won": 0
+	},
+	"prairie/cannonball/1": {
+		"combo": 1.5,
+		"crushed": 4.5,
+		"paid": 507.0,
+		"runs": 2,
+		"speed": 770.0,
+		"time": 82.6,
+		"won": 2
+	},
+	"prairie/cannonball/2": {
+		"combo": 2.0,
+		"crushed": 4.0,
+		"paid": 726.0,
+		"runs": 2,
+		"speed": 760.0,
+		"time": 97.6,
+		"won": 1
+	},
+	"prairie/cannonball/3": {
+		"combo": 1.0,
+		"crushed": 2.0,
+		"paid": 945.0,
+		"runs": 2,
+		"speed": 790.0,
+		"time": 79.0,
+		"won": 1
+	},
+	"prairie/countdown/1": {
+		"combo": 9.0,
+		"crushed": 75.0,
+		"paid": 394.5,
+		"runs": 2,
+		"speed": 671.0,
+		"time": 101.0,
+		"won": 2
+	},
+	"prairie/countdown/2": {
+		"combo": 26.5,
+		"crushed": 150.5,
+		"paid": 859.0,
+		"runs": 2,
+		"speed": 702.0,
+		"time": 161.0,
+		"won": 2
+	},
+	"prairie/countdown/3": {
+		"combo": 142.0,
+		"crushed": 495.0,
+		"paid": 3518.0,
+		"runs": 2,
+		"speed": 659.0,
+		"time": 222.0,
+		"won": 1
+	},
+	"prairie/marathon/1": {
+		"combo": 3.0,
+		"crushed": 29.5,
+		"paid": 628.5,
+		"runs": 2,
+		"speed": 742.0,
+		"time": 206.2,
+		"won": 2
+	},
+	"prairie/marathon/2": {
+		"combo": 5.5,
+		"crushed": 85.0,
+		"paid": 985.5,
+		"runs": 2,
+		"speed": 758.5,
+		"time": 245.1,
+		"won": 2
+	},
+	"prairie/marathon/3": {
+		"combo": 6.0,
+		"crushed": 102.0,
+		"paid": 1431.0,
+		"runs": 2,
+		"speed": 753.0,
+		"time": 257.3,
+		"won": 1
+	},
+	"prairie/rally/1": {
+		"combo": 2.5,
+		"crushed": 2.5,
+		"paid": 467.5,
+		"runs": 2,
+		"speed": 765.0,
+		"time": 86.7,
+		"won": 2
+	},
+	"prairie/rally/2": {
+		"combo": 2.5,
+		"crushed": 2.5,
+		"paid": 485.5,
+		"runs": 2,
+		"speed": 765.0,
+		"time": 86.7,
+		"won": 2
+	},
+	"prairie/rally/3": {
+		"combo": 5.0,
+		"crushed": 5.0,
+		"paid": 511.0,
+		"runs": 2,
+		"speed": 763.0,
+		"time": 80.7,
+		"won": 1
+	},
+	"prairie/sprint/1": {
+		"combo": 4.5,
+		"crushed": 23.0,
+		"paid": 533.5,
+		"runs": 2,
+		"speed": 762.0,
+		"time": 113.8,
+		"won": 2
+	},
+	"prairie/sprint/2": {
+		"combo": 4.0,
+		"crushed": 20.0,
+		"paid": 751.5,
+		"runs": 2,
+		"speed": 757.0,
+		"time": 121.1,
+		"won": 2
+	},
+	"prairie/sprint/3": {
+		"combo": 4.5,
+		"crushed": 60.5,
+		"paid": 1179.5,
+		"runs": 2,
+		"speed": 756.5,
+		"time": 174.8,
+		"won": 2
+	},
+	"quarry/cones/1": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 0.0,
+		"runs": 2,
+		"speed": 584.0,
+		"time": 0.0,
+		"won": 0
+	},
+	"quarry/cones/2": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 0.0,
+		"runs": 2,
+		"speed": 584.0,
+		"time": 0.0,
+		"won": 0
+	},
+	"quarry/cones/3": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 0.0,
+		"runs": 2,
+		"speed": 567.0,
+		"time": 0.0,
+		"won": 0
+	},
+	"quarry/countdown/1": {
+		"combo": 7.0,
+		"crushed": 51.0,
+		"paid": 437.0,
+		"runs": 2,
+		"speed": 704.0,
+		"time": 98.0,
+		"won": 1
+	},
+	"quarry/countdown/2": {
+		"combo": 10.0,
+		"crushed": 100.5,
+		"paid": 170.0,
+		"runs": 2,
+		"speed": 666.5,
+		"time": 0.0,
+		"won": 0
+	},
+	"quarry/countdown/3": {
+		"combo": 2.5,
+		"crushed": 56.0,
+		"paid": 174.0,
+		"runs": 2,
+		"speed": 558.5,
+		"time": 0.0,
+		"won": 0
+	},
+	"quarry/derby/1": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 40.0,
+		"runs": 2,
+		"speed": 664.5,
+		"time": 0.0,
+		"won": 0
+	},
+	"quarry/derby/2": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 860.0,
+		"runs": 2,
+		"speed": 657.0,
+		"time": 101.0,
+		"won": 1
+	},
+	"quarry/derby/3": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 1.0,
+		"runs": 2,
+		"speed": 674.0,
+		"time": 0.0,
+		"won": 0
+	},
+	"quarry/drift/1": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 600.0,
+		"runs": 2,
+		"speed": 651.0,
+		"time": 12.2,
+		"won": 2
+	},
+	"quarry/drift/2": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 780.0,
+		"runs": 2,
+		"speed": 651.0,
+		"time": 12.2,
+		"won": 2
+	},
+	"quarry/drift/3": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 960.0,
+		"runs": 2,
+		"speed": 651.0,
+		"time": 26.9,
+		"won": 2
+	},
+	"quarry/goonpocalypse/1": {
+		"combo": 13.0,
+		"crushed": 77.0,
+		"paid": 406.0,
+		"runs": 2,
+		"speed": 759.0,
+		"time": 135.0,
+		"won": 1
+	},
+	"quarry/goonpocalypse/2": {
+		"combo": 7.5,
+		"crushed": 59.5,
+		"paid": 81.0,
+		"runs": 2,
+		"speed": 737.5,
+		"time": 0.0,
+		"won": 0
+	},
+	"quarry/goonpocalypse/3": {
+		"combo": 10.0,
+		"crushed": 72.5,
+		"paid": 103.5,
+		"runs": 2,
+		"speed": 735.0,
+		"time": 0.0,
+		"won": 0
+	},
+	"sawmill/circuit/1": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 630.0,
+		"runs": 2,
+		"speed": 737.0,
+		"time": 78.1,
+		"won": 2
+	},
+	"sawmill/circuit/2": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 820.0,
+		"runs": 2,
+		"speed": 738.0,
+		"time": 77.5,
+		"won": 1
+	},
+	"sawmill/circuit/3": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 0.0,
+		"runs": 2,
+		"speed": 733.0,
+		"time": 0.0,
+		"won": 0
+	},
+	"sawmill/countdown/1": {
+		"combo": 37.0,
+		"crushed": 180.0,
+		"paid": 1111.0,
+		"runs": 2,
+		"speed": 673.0,
+		"time": 104.0,
+		"won": 1
+	},
+	"sawmill/countdown/2": {
+		"combo": 24.0,
+		"crushed": 186.0,
+		"paid": 644.5,
+		"runs": 2,
+		"speed": 576.5,
+		"time": 0.0,
+		"won": 0
+	},
+	"sawmill/countdown/3": {
+		"combo": 50.5,
+		"crushed": 283.5,
+		"paid": 1556.5,
+		"runs": 2,
+		"speed": 598.5,
+		"time": 0.0,
+		"won": 0
+	},
+	"sawmill/marathon/1": {
+		"combo": 14.0,
+		"crushed": 68.0,
+		"paid": 1184.0,
+		"runs": 2,
+		"speed": 927.0,
+		"time": 169.7,
+		"won": 1
+	},
+	"sawmill/marathon/2": {
+		"combo": 14.5,
+		"crushed": 115.0,
+		"paid": 183.5,
+		"runs": 2,
+		"speed": 803.5,
+		"time": 0.0,
+		"won": 0
+	},
+	"sawmill/marathon/3": {
+		"combo": 13.5,
+		"crushed": 167.0,
+		"paid": 249.5,
+		"runs": 2,
+		"speed": 755.5,
+		"time": 0.0,
+		"won": 0
+	},
+	"sawmill/rally/1": {
+		"combo": 1.5,
+		"crushed": 1.5,
+		"paid": 950.5,
+		"runs": 2,
+		"speed": 764.5,
+		"time": 97.9,
+		"won": 2
+	},
+	"sawmill/rally/2": {
+		"combo": 1.5,
+		"crushed": 1.5,
+		"paid": 987.5,
+		"runs": 2,
+		"speed": 764.5,
+		"time": 97.9,
+		"won": 2
+	},
+	"sawmill/rally/3": {
+		"combo": 3.0,
+		"crushed": 3.0,
+		"paid": 1009.0,
+		"runs": 2,
+		"speed": 758.0,
+		"time": 83.6,
+		"won": 1
+	},
+	"sawmill/smash/1": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 22.0,
+		"runs": 2,
+		"speed": 670.5,
+		"time": 0.0,
+		"won": 0
+	},
+	"sawmill/smash/2": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 19.0,
+		"runs": 2,
+		"speed": 666.0,
+		"time": 0.0,
+		"won": 0
+	},
+	"sawmill/smash/3": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 22.0,
+		"runs": 2,
+		"speed": 666.0,
+		"time": 0.0,
+		"won": 0
+	},
+	"stilttown/bounty/1": {
+		"combo": 4.0,
+		"crushed": 25.5,
+		"paid": 621.0,
+		"runs": 2,
+		"speed": 541.0,
+		"time": 22.1,
+		"won": 2
+	},
+	"stilttown/bounty/2": {
+		"combo": 4.5,
+		"crushed": 41.0,
+		"paid": 900.5,
+		"runs": 2,
+		"speed": 559.0,
+		"time": 42.7,
+		"won": 2
+	},
+	"stilttown/bounty/3": {
+		"combo": 9.0,
+		"crushed": 75.5,
+		"paid": 1367.0,
+		"runs": 2,
+		"speed": 554.0,
+		"time": 59.5,
+		"won": 2
+	},
+	"stilttown/countdown/1": {
+		"combo": 8.0,
+		"crushed": 57.0,
+		"paid": 383.0,
+		"runs": 2,
+		"speed": 624.0,
+		"time": 111.0,
+		"won": 2
+	},
+	"stilttown/countdown/2": {
+		"combo": 22.5,
+		"crushed": 166.5,
+		"paid": 605.0,
+		"runs": 2,
+		"speed": 449.5,
+		"time": 0.0,
+		"won": 0
+	},
+	"stilttown/countdown/3": {
+		"combo": 56.0,
+		"crushed": 298.5,
+		"paid": 1032.0,
+		"runs": 2,
+		"speed": 475.5,
+		"time": 0.0,
+		"won": 0
+	},
+	"stilttown/flatout/1": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 756.5,
+		"runs": 2,
+		"speed": 849.5,
+		"time": 102.4,
+		"won": 2
+	},
+	"stilttown/flatout/2": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 784.5,
+		"runs": 2,
+		"speed": 843.5,
+		"time": 98.1,
+		"won": 2
+	},
+	"stilttown/flatout/3": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 13.0,
+		"runs": 2,
+		"speed": 849.5,
+		"time": 0.0,
+		"won": 0
+	},
+	"stilttown/hotlap/1": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 642.0,
+		"runs": 2,
+		"speed": 648.5,
+		"time": 79.5,
+		"won": 2
+	},
+	"stilttown/hotlap/2": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 0.0,
+		"runs": 2,
+		"speed": 648.5,
+		"time": 0.0,
+		"won": 0
+	},
+	"stilttown/hotlap/3": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 0.0,
+		"runs": 2,
+		"speed": 648.5,
+		"time": 0.0,
+		"won": 0
+	},
+	"stilttown/keepcup/1": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 0.0,
+		"runs": 2,
+		"speed": 620.0,
+		"time": 0.0,
+		"won": 0
+	},
+	"stilttown/keepcup/2": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 640.0,
+		"runs": 2,
+		"speed": 640.0,
+		"time": 90.5,
+		"won": 1
+	},
+	"stilttown/keepcup/3": {
+		"combo": 0.0,
+		"crushed": 0.0,
+		"paid": 4.5,
+		"runs": 2,
+		"speed": 663.5,
+		"time": 0.0,
+		"won": 0
+	}
+}

@@ -288,21 +288,19 @@ static func averagePayout(history: Array, last: int) -> float:
 	for r in recent: total += float(r.payout)
 	return total / recent.size()
 
-## The starting gadget to buy with gems (Pickups.LOADOUT), or "".
-static func chooseLoadout(persona: Dictionary, gems: int, rng: RandomNumberGenerator) -> String:
-	if not persona.gems: return ""
-	var options := Pickups.LOADOUT.keys().filter(func(id): return Pickups.LOADOUT[id] <= gems && Unlocks.isPickupOpen(id))
+## The starting gadget (Pickups.LOADOUT), or "".
+static func chooseLoadout(persona: Dictionary, rng: RandomNumberGenerator) -> String:
+	var options := Pickups.openLoadout(Pickups.LOADOUT)
 	if options.is_empty(): return ""
 	if persona.runs == "coverage": return options[rng.randi() % options.size()] if rng.randf() < 0.5 else ""
-	return options[0] if gems >= 6 else "" #the grinder keeps a reserve
+	return options[0]
 
-## The boost to buy with the gems left after the gadget (Pickups.BOOST_LOADOUT), or "".
-static func chooseBoost(persona: Dictionary, gems: int, rng: RandomNumberGenerator) -> String:
-	if not persona.gems: return ""
-	var options := Pickups.BOOST_LOADOUT.keys().filter(func(id): return Pickups.BOOST_LOADOUT[id] <= gems && Unlocks.isPickupOpen(id))
+## The starting boost (Pickups.BOOST_LOADOUT), or "".
+static func chooseBoost(persona: Dictionary, rng: RandomNumberGenerator) -> String:
+	var options := Pickups.openLoadout(Pickups.BOOST_LOADOUT)
 	if options.is_empty(): return ""
 	if persona.runs == "coverage": return options[rng.randi() % options.size()] if rng.randf() < 0.5 else ""
-	return "nitro" if "nitro" in options && gems >= 8 else "" #the grinder keeps a reserve
+	return "nitro" if "nitro" in options else options[0]
 
 #---------- in a run ----------
 
