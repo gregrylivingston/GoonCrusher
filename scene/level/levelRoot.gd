@@ -217,7 +217,7 @@ var lapFinishers := {} #Knockout: laps done -> the cars that have finished that 
 #Hot Lap, Circuit Race, Knockout: a loop out of the start and back along the world's routes (Course.loopRoute),
 #and the clock for its laps. Hot Lap asks for a lap under lapTarget; the races have a Sprint's slack a lap.
 func setupLoop() -> void:
-	var loop := Course.loopRoute($TileManager.worldMap, startPosition)
+	var loop := Course.loopRoute($TileManager.worldMap, startPosition, Course.CIRCUIT_RADIUS if runMode == Root.gameModes.CIRCUIT else Course.LOOP_RADIUS)
 	if loop.is_empty(): #no way round from here: a square of open-map checkpoints, so the mode still runs
 		var s := startPosition
 		loop = {"route": PackedVector2Array([s, s + Vector2(4000, 0), s + Vector2(4000, 3200), s + Vector2(0, 3200), s]), "length": 14400.0}

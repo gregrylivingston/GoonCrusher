@@ -4,8 +4,9 @@ class_name CrushFeel extends Node
 ##   - the camera: trauma shake (squared, so small crushes barely move it and crowds and giants hit hard),
 ##     a kick along the car's heading and a zoom punch on giants. Screen Shake and Reduce Motion scale it;
 ##     it shares Camera2D.offset with Juice.rumble and stands aside while a rumble runs.
-##   - hit-stop: Engine.time_scale dips for a few hundredths of a second on giants, bosses and the third goon
-##     of a crowd (once a crowd, and a crowd's waits HIT_STOP_COOLDOWN after the last stop). A pause or a
+##   - hit-stop: Engine.time_scale dips for a few hundredths of a second on giants and the third goon
+##     of a crowd (once a crowd, and a crowd's waits HIT_STOP_COOLDOWN after the last stop), and for a longer
+##     beat of slow motion on a boss and on the MEGA_CRUSH-th goon of a crowd. A pause or a
 ##     menu (a pickup event, the slot machine) ends it at once, so nothing that pops up runs slowed.
 ##     The Hit-Stop setting; never under the harnesses, Transition.instant().
 ##   - a crush tick that rises in pitch with the Crush Combo, a thud and rumble for giants.
@@ -22,7 +23,12 @@ const KICK_PX := 12.0         #a crush shoves the view this far along the headin
 const KICK_RETURN := 0.0004   #share of the kick left after a second
 const ZOOM_PUNCH := 0.035     #a giant pushes the zoom in this much; updateCameraZoom eases it back
 const HIT_STOP_GIANT := [0.045, 0.1] #[real seconds, time scale]
-const HIT_STOP_BOSS := [0.06, 0.1]
+const HIT_STOP_BOSS := [0.3, 0.2]   #a boss gets a real beat of slow motion...
+const HIT_STOP_MEGA := [0.18, 0.25] #...and so does the MEGA_CRUSH-th goon of a crowd
+const MEGA_CRUSH := 5
+const HEAT_TRAUMA := 0.5      #share of extra shake per crush at full heat (Fx.heat: the Crush Combo)
+const FLASH_GIANT := 0.25     #screen flash (ScreenFx.flash)
+const FLASH_BOSS := 0.45
 const HIT_STOP_MULTI := [0.025, 0.3] #a light catch on the third goon of a crowd, once per crowd
 const HIT_STOP_COOLDOWN := 0.6 #real seconds after a stop before a crowd may stop time again
 const GIANT_SPEED_KEEP := 0.9 #a giant is heavy: the car keeps this much of its speed through it
@@ -89,11 +95,13 @@ func onCrush(goon: Node2D, speed: float) -> void:
 		car.velocity *= GIANT_SPEED_KEEP
 		Transition.sound("thud", -3.0, 0.65 if boss else 0.8)
 		Settings.vibrate(0.8, 1.0, 0.25)
+		var fx := Fx.current()
+		if fx: fx.screen.flash(FLASH_BOSS if boss else FLASH_GIANT)
 		var coins := BOSS_COINS if boss else GIANT_COINS
 		car.reward("coin", coins)
 		label(pos, ("BOSS CRUSHED  +%d" if boss else "GIANT SLAIN  +%d") % coins, 30, HudTheme.GOLD)
 	else:
-		addTrauma(TRAUMA_GOON * clampf(speed / 500.0, 0.6, 1.3))
+		addTrauma(TRAUMA_GOON * clampf(speed / 500.0, 0.6, 1.3) * (1.0 + HEAT_TRAUMA * Fx.heatNow()))
 		kick += heading * KICK_PX
 	var slip := absf(angle_difference(car.velocity.angle(), car.rotation))
 	if slam == Vector2.ZERO && speed >= DRIFT_SPEED && slip > DRIFT_ANGLE && slip < PI - 0.6: #sliding, not reversing
@@ -122,6 +130,9 @@ func countMulti(pos: Vector2) -> void:
 	if multi == 3:
 		hitStop(HIT_STOP_MULTI, true)
 		addTrauma(0.08)
+	elif multi == MEGA_CRUSH:
+		hitStop(HIT_STOP_MEGA, false)
+		addTrauma(0.2)
 
 func payMulti() -> void:
 	if multi >= 2:

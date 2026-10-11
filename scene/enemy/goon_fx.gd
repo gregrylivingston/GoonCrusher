@@ -34,6 +34,7 @@ var treadTexture: ImageTexture
 var telegraphs: Array = []
 var projectiles: Array = []
 var hazards: Array = []
+var flamesByFx := false #this frame's fires were drawn by Fx.burn (else the plain flames in drawGround)
 var blasts: Array = []
 var pendingBlasts: Array = []
 var tethers: Array = []
@@ -336,6 +337,7 @@ func splat(pos: Vector2, dir: Vector2, faction: int, big: bool) -> void:
 func layDown(c: Dictionary, at: Vector2, dir: Vector2, tread := false) -> void:
 	if World.lethalAt(at):
 		ring(at, 40.0)
+		if Fx.current(): Fx.current().splash(at, 0.5)
 		return
 	addDecal(c.decal, at, c.s.global_rotation, c.base.x, dir.angle() if not tread else c.get("treadHeading", dir.angle()), tread)
 	dust(at)
@@ -386,6 +388,7 @@ func stepShove(c: Dictionary, s: Sprite2D, delta: float) -> bool:
 		c.smear.drops = drops
 	if World.lethalAt(s.global_position):
 		ring(s.global_position, 40.0)
+		if Fx.current(): Fx.current().splash(s.global_position, 0.5)
 		return true
 	if bonk || speed < 40.0 || c.t >= c.T:
 		layDown(c, s.global_position, c.dir)
@@ -582,6 +585,7 @@ func _physics_process(delta: float) -> void:
 		h.age += delta
 		h.cd = maxf(0.0, h.cd - delta)
 		if h.age > h.life:
+			if h.kind == "fire" && Fx.current(): Fx.current().scorch(h.pos, h.r * 0.9)
 			hazards.erase(h)
 			continue
 		if slimeTick && h.kind == "slime": slowGoons(h)
@@ -674,6 +678,11 @@ func _process(delta: float) -> void:
 	for m in impacts.duplicate():
 		m.age += delta
 		if m.age > IMPACT_LIFE: impacts.erase(m)
+	var levelFx := Fx.current()
+	flamesByFx = false
+	if levelFx:
+		for h in hazards:
+			if h.kind == "fire": flamesByFx = levelFx.burn(h.pos, h.r * clampf((h.life - h.age) * 2.0, 0.0, 1.0), delta)
 	ground.queue_redraw()
 	top.queue_redraw()
 
@@ -704,6 +713,9 @@ func drawGround() -> void:
 		match h.kind:
 			"fire":
 				g.draw_circle(h.pos, h.r, Color(0.12, 0.08, 0.04, 0.35 * fade))
+				if flamesByFx: #Fx.burn draws the flames; the ring keeps the fire's edge readable
+					g.draw_arc(h.pos, h.r, 0.0, TAU, 32, Color(1.0, 0.5, 0.12, 0.5 * fade), 3.0)
+					continue
 				var tt := Time.get_ticks_msec() / 1000.0
 				for i in 7:
 					var a := i * TAU / 7.0 + tt * 0.6

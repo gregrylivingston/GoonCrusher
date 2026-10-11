@@ -33,7 +33,8 @@ const PRESET := {
 	"gfx/reward_fx":       [0, 1, 2, 2],
 	"gfx/crush_fx":        [0, 1, 2, 2],        #crush effects (CrushFeel, GoonFx): minimal, reduced, full
 	"gfx/driving_fx":      [0, 1, 2, 2],        #driving effects (CarJuice): ground trails, sparks
-	"gfx/blast_fx":        [0, 1, 2, 2],        #blast effects (Fx): flash, ring, debris, smoke, embers
+	"gfx/blast_fx":        [0, 1, 2, 2],        #blast effects (Fx): flash, ring, debris, smoke, embers, fire
+	"gfx/screen_fx":       [0, 1, 1, 1],        #screen effects (ScreenFx): flash, hurt edge, speed streaks
 	"gfx/ground":          [0, 1, 1, 1],        #ground detail (gc_ground_quality): simple, full
 	"audio_perf/max_sfx":  [8, 12, 24, 24],
 }
@@ -71,6 +72,7 @@ const DEFAULTS := {
 	"gfx/crush_fx": 2,
 	"gfx/driving_fx": 2,
 	"gfx/blast_fx": 2,
+	"gfx/screen_fx": 1,
 	"gfx/ground": 1,
 	"audio_perf/max_sfx": 24,
 
@@ -129,6 +131,7 @@ const OPTIONS := {
 	"gfx/crush_fx": [0, 1, 2],
 	"gfx/driving_fx": [0, 1, 2],
 	"gfx/blast_fx": [0, 1, 2],
+	"gfx/screen_fx": [0, 1],
 	"gfx/ground": [0, 1],
 	"audio_perf/max_sfx": [8, 12, 24],
 	"gameplay/speed_units": ["mph", "kmh"],

@@ -148,6 +148,19 @@ func test_a_loop_comes_back_to_the_start():
 	assert_true(absf(loop.length - 15000.0) < 1.0, "three legs of 5,000 px: an equilateral loop")
 	assert_true(Course.loopRoute(NoRoutes.new(), Vector2.ZERO).is_empty(), "no loop where the legs don't connect")
 
+func test_a_loop_leads_its_drivers_along_the_track():
+	var start := Vector2(100, 100)
+	var loop := Course.loopRoute(FlatMap.new(), start, Course.CIRCUIT_RADIUS)
+	assert_gt(loop.length, Course.loopRoute(FlatMap.new(), start).length * 1.5, "Circuit Race's loop is the bigger one")
+	var course := Course.new()
+	course.track = loop.route
+	for i in course.track.size(): course.trackAlong.push_back(0.0 if i == 0 else course.trackAlong[i - 1] + course.track[i - 1].distance_to(course.track[i]))
+	assert_almost_eq(course.pointAt(0.0).distance_to(start), 0.0, 0.01, "the track starts at the start")
+	assert_almost_eq(course.pointAt(loop.length).distance_to(start), 0.0, 0.01, "and ends there")
+	assert_almost_eq(course.headingAt(100.0).length(), 1.0, 0.001)
+	assert_true(Course.LOOP_GATE < Course.RADIUS * 0.6, "a loop's gate is far narrower than a stage's checkpoint")
+	course.free()
+
 func test_every_mode_of_the_menu_is_built():
 	for mode in M.values(): assert_true(Root.isModeAvailable(mode), "%s can be played" % M.find_key(mode))
 	for i in Levels.count(): assert_eq(Root.roadModes(i), Root.featuredModes(i), "%s: all three featured modes open the road" % Levels.ORDER[i])

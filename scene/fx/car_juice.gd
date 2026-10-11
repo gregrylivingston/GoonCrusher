@@ -95,10 +95,16 @@ const LAVA_TINT := Color(1.0, 0.55, 0.4)
 const SMOKE := Color(0.82, 0.82, 0.84, 0.45) #tire smoke in a slide or up on two wheels
 const SPARK := Color(1.0, 0.75, 0.35)
 const SLIDE_SMOKE_SLIP := 0.35   #rad of slip before the tires smoke
+const SMOKE_GROUND := 0.3        #the tires smoke on bare ground and on surfaces whose trail is this thin or thinner (grass)
+const BURNOUT_SPEED := 170.0     #px/s under which a launch spins the rear tires into smoke
+const SMOKE_TIER_TINT := 0.65    #share of the drift tier's color a charged slide's smoke takes
+const WAKE := Color(0.9, 0.97, 1.0, 0.5)
+const WAKE_SPEED := 150.0        #px/s before the car leaves a wake in water
+const WAKE_RATE := 0.7           #foam puffs per rear corner per tick at 500 px/s (times the trail rate)
 const ROUGH_FRICTION := 0.25     #surfaces at least this draggy count as rough ground for bumps
 const TRAIL_MIN_SPEED := 120.0
 ## Per Driving Effects level (Minimal, Reduced, Full): [dust pool, spark pool, trail rate]
-const LEVELS := [[0, 12, 0.0], [48, 24, 0.5], [128, 48, 1.0]]
+const LEVELS := [[0, 12, 0.0], [72, 24, 0.5], [192, 48, 1.0]]
 const FLAME_SECS := 0.45
 const BACKFIRE_SECS := 0.12
 
@@ -266,6 +272,8 @@ func water(surface: int, speed: float, airborne: bool, delta: float) -> void:
 		shadow.self_modulate.a = shadowAlpha * (1.0 - SINK_SHADOW * sink)
 	if deep && not wasDeep:
 		groundBurst(surface, int(clampf(speed / 30.0, 8.0, 30.0)))
+		var fx := Fx.current()
+		if fx: fx.splash(car.global_position, clampf(speed / 350.0, 0.6, 2.0), LAVA_SPRAY if lava else Fx.WATER)
 		Audio.play(Transition.SOUNDS["hiss"], -8.0, 0.7)
 		if speed > 300.0: Audio.play(Transition.SOUNDS["thud"], -6.0, 0.7)
 		bump(-clampf(speed / 500.0, 0.4, 1.6))
@@ -274,6 +282,7 @@ func water(surface: int, speed: float, airborne: bool, delta: float) -> void:
 	var rate: float = level[2]
 	var wet := deep || surface == Root.terrain.WADE
 	if wet && speed > BOW_SPEED: bowWave(surface, speed, rate)
+	if trailKind(surface) == Kind.SPRAY && speed > WAKE_SPEED: wake(speed, rate, LAVA_SPRAY if lava && deep else WAKE)
 	if sink > 0.3 && rng.randf() < BUBBLE_RATE * rate * sink: bubble()
 
 func bowWave(surface: int, speed: float, rate: float) -> void:
@@ -285,6 +294,15 @@ func bowWave(surface: int, speed: float, rate: float) -> void:
 		var corner: Vector2 = car.to_global(Vector2(front, s * car.bodyRect.size.y * 0.45))
 		var side: Vector2 = fwd.orthogonal() * s
 		dust.spawn(corner, (side * rng.randf_range(0.45, 0.8) + fwd * rng.randf_range(0.1, 0.35)) * speed * 0.6, rng.randf_range(0.3, 0.55), rng.randf_range(5.0, 8.0), t[0], Kind.SPRAY)
+
+## The wake: foam left off the rear corners, spreading into a V behind the car
+func wake(speed: float, rate: float, color: Color) -> void:
+	var side := Vector2.from_angle(car.rotation).orthogonal()
+	var rear: float = car.bodyRect.position.x
+	for s in [-1.0, 1.0]:
+		if rng.randf() >= WAKE_RATE * rate * clampf(speed / 500.0, 0.3, 1.0): continue
+		var corner: Vector2 = car.to_global(Vector2(rear, s * car.bodyRect.size.y * 0.4))
+		dust.spawn(corner, side * s * rng.randf_range(25.0, 55.0), rng.randf_range(0.9, 1.5), rng.randf_range(7.0, 11.0), color, Kind.PUFF)
 
 ## A bubble or a fleck of foam on the waterline round the sunk car
 func bubble() -> void:
@@ -416,19 +434,41 @@ func innerTires() -> Array:
 	return car.tires.filter(func(t): return car.to_local(t.global_position).y * lean < 0.0)
 
 func emitTrail(surface: int, speed: float, slip: float) -> void:
-	if level[0] == 0 || speed < TRAIL_MIN_SPEED: return
+	if level[0] == 0: return
 	var rate: float = level[2]
 	var back := -Vector2.from_angle(car.rotation)
+	tireSmoke(surface, speed, slip, rate, back)
+	if speed < TRAIL_MIN_SPEED: return
 	if trailBySurface.has(surface):
 		var t: Array = trailFor(surface)
 		var chance: float = t[1] * rate * clampf(speed / 700.0, 0.2, 1.0) * (1.0 + 2.0 * slip)
 		var tires: Array = car.tires if t[2] == Kind.SPRAY else rearTires()
 		for tire in tires:
 			if rng.randf() < chance * 0.5: groundParticle(t, tire.global_position, back, speed)
-	elif (slip > SLIDE_SMOKE_SLIP && speed > 200.0) || twoWheels:
-		var from: Array = car.tires.filter(func(t): return car.to_local(t.global_position).y * lean > 0.0) if twoWheels else rearTires()
-		for tire in from:
-			if rng.randf() < 0.35 * rate: dust.spawn(tire.global_position + Vector2(rng.randf_range(-6, 6), rng.randf_range(-6, 6)), car.velocity * 0.15 + back * 30.0, 0.9, 14.0, SMOKE, Kind.PUFF)
+
+## Tire smoke, on ground hard enough to burn rubber on: billows off the rear tires in a slide (thicker the
+## further sideways the car is) and when a launch spins them, and off the outer tires up on two wheels. A
+## charged slide's smoke takes the color of its drift tier.
+func tireSmoke(surface: int, speed: float, slip: float, rate: float, back: Vector2) -> void:
+	if not smokes(surface): return
+	var sliding := (slip > SLIDE_SMOKE_SLIP && speed > 200.0) || twoWheels
+	var launching: bool = car._car_input.acceleration > 0.5 && speed > 10.0 && speed < BURNOUT_SPEED && car.velocity.dot(back) < 0.0
+	if not sliding && not launching: return
+	var chance := (0.3 + 0.4 * clampf(slip, 0.0, 1.0)) * rate if sliding else 0.45 * rate
+	var color := smokeColor(car.tierFor(car.driftCharge) if car.driftCharge > 0 else -1)
+	var from: Array = car.tires.filter(func(t): return car.to_local(t.global_position).y * lean > 0.0) if twoWheels else rearTires()
+	for tire in from:
+		if rng.randf() < chance: dust.spawn(tire.global_position + Vector2(rng.randf_range(-6, 6), rng.randf_range(-6, 6)), car.velocity * 0.15 + back * 30.0, rng.randf_range(1.0, 1.7), rng.randf_range(14.0, 22.0), color, Kind.SMOKE)
+
+## Whether tires smoke on `surface`: bare ground (no trail of its own) and thin-trailed ground like grass
+static func smokes(surface: int) -> bool:
+	return not trailBySurface.has(surface) || (trailBySurface[surface][1] <= SMOKE_GROUND && trailBySurface[surface][2] != Kind.SPRAY)
+
+## Tire smoke's color: plain, or tinted by the drift tier (`tier` -1 for none) of a charged slide
+func smokeColor(tier: int) -> Color:
+	if tier < 0: return SMOKE
+	var c: Color = car.tierData(tier)[2]
+	return Color(Color.WHITE.lerp(c, SMOKE_TIER_TINT), 0.55)
 
 func groundParticle(t: Array, at: Vector2, back: Vector2, speed: float) -> void:
 	var jitter := Vector2(rng.randf_range(-8, 8), rng.randf_range(-8, 8))

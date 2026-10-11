@@ -562,7 +562,7 @@ func objectiveGoal() -> Dictionary:
 func gateObjective() -> Dictionary:
 	var gates = Root.levelRoot.get("course")
 	if gates != null && not is_instance_valid(Root.station) && gates.targetFor(car) != Vector2.INF:
-		return {"kind":"gate", "pos":gates.targetFor(car), "value":200.0, "key":"gate%d" % gates.next}
+		return {"kind":"gate", "pos":gates.guideFor(car), "value":200.0, "key":"gate%d" % gates.next} #on a loop, a point along its track
 	return {}
 
 #a race's goal: the station (a course's next checkpoint first), worth more the less time there is to spare; {}

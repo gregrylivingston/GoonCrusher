@@ -18,7 +18,7 @@ class_name CoopRun extends Node
 
 const LEASH := Vector2(4200, 2300)
 const RESPAWN_TICKS := 4 * Pickups.TICKS
-const VIEW_LAYER := 2    #over the world, under the HUD (GameUI)
+const VIEW_LAYER := 1    #over the world, under the start lamps (Countdown.LAYER) and the HUD (GameUI)
 const ENGINE_DB := -6.0  #the guest's engine under the player's own
 const DIVIDER := 4.0
 const HUD_FIT := 0.64    #a HUD's scale on half a screen: the mirror and a visor side by side just fit

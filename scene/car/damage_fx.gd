@@ -10,12 +10,13 @@ const FIRE_BELOW := 15.0    #engine or tank condition where small flames start
 const DRIP_BELOW := 50.0    #tank condition where fuel drips (the fuel dial says LEAK there too)
 const SPARK_BELOW := 40.0   #steering condition where a front wheel scrapes
 const FLICKER_BELOW := 50.0 #lights condition where the headlights cut out now and then
+const FIRE_RADIUS := 20.0    #the fire on a failing engine or tank (Fx.burn)...
+const WRECK_FIRE := 2.2      #...and how much bigger it burns on a wreck
 const PUFF_POOL := 16
 const DRIP_POOL := 24
 
 var car
 var puffScene := preload("res://texture/animation/smoke.tscn")
-var sparkScene := preload("res://scene/fx/spark/spark.tscn")
 var dripTexture := preload("res://texture/fx/circle_05.png")
 var fireMaterial: CanvasItemMaterial #flames glow through the night
 var puffs := []
@@ -49,19 +50,20 @@ func _process(delta):
 	if c.engine < SMOKE_BELOW && timers.smoke <= 0.0:
 		timers.smoke = lerpf(0.08, 0.35, c.engine / SMOKE_BELOW)
 		puff(car.art.hood, Color(0.12, 0.11, 0.1, 0.6) if c.engine < 30.0 else Color(0.75, 0.74, 0.72, 0.45), 3.0, 1.6, false)
-	if full && (c.engine < FIRE_BELOW || c.tank < FIRE_BELOW) && timers.fire <= 0.0:
-		timers.fire = 0.05
-		puff(car.art.hood if c.engine < FIRE_BELOW else car.art.tank, Color(1.8, 0.95, 0.3, 1.0), 1.1, 0.45, true)
+	if full && (c.engine < FIRE_BELOW || c.tank < FIRE_BELOW):
+		var spot: Vector2 = car.art.hood if c.engine < FIRE_BELOW else car.art.tank
+		var fx := Fx.current()
+		var burning: bool = fx != null && fx.burn(car.to_global(spot), FIRE_RADIUS * (WRECK_FIRE if car.isDestroyed else 1.0), delta)
+		if not burning && timers.fire <= 0.0: #Blast Effects Minimal: the plain flame
+			timers.fire = 0.05
+			puff(spot, Color(1.8, 0.95, 0.3, 1.0), 1.1, 0.45, true)
 	if full && c.tank < DRIP_BELOW && timers.drip <= 0.0:
 		timers.drip = lerpf(0.12, 0.6, c.tank / DRIP_BELOW)
 		drip()
 	if full && c.steering < SPARK_BELOW && car.velocity.length() > 150.0 && timers.spark <= 0.0:
 		timers.spark = randf_range(0.3, 1.2) * (0.4 + c.steering / SPARK_BELOW)
 		var w: Vector2 = car.art.frontWheel
-		var spark = sparkScene.instantiate()
-		spark.global_position = car.to_global(Vector2(w.x, w.y if randf() < 0.5 else -w.y))
-		spark.scale = Vector2(1.2, 1.2)
-		Root.levelRoot.add_child(spark)
+		car.sparkAt(car.to_global(Vector2(w.x, w.y if randf() < 0.5 else -w.y)), 10)
 	flicker(delta, c.lights)
 
 #a pooled puff of the exhaust's smoke flipbook, tinted, growing and fading in the level

@@ -35,6 +35,11 @@ The first update since the 0.1 demo, and close to a rebuilt game. Old demo saves
 - The Wilds has world events: a stampede and a flash flood. The Hay Wagon and the Bandit Barge join them (full game).
 - Water has depth: shallows slow you, wading depth drags and chips the hull, deep water hurts fast. Goons drown in it.
 - Tree crowns pass over the car and can hide goons.
+- Fire looks like fire: flames, embers and smoke, and a burn mark when it dies. A failing engine burns, and a wreck burns harder.
+- Tires smoke properly in a slide and off the line, and a charged drift colors its smoke. Sparks fly off walls, scrapes and other cars.
+- Water answers: a wake behind the car, and a crown of spray with ripples when the car or a goon goes in.
+- The screen reacts: a flash on a near blast or a giant, a red edge when you are hurt or nearly wrecked, streaks at speed, and a warm glow that builds with your combo. The longer the combo, the harder everything hits.
+- A boss crush and a five-goon crush get a beat of slow motion, and the view closes in on your wreck.
 - Tire marks take the color of the ground, fade out instead of vanishing, and show in any slide. Sand, mud and snow keep your ruts.
 - Explosions hit harder: a flash, a shockwave, flames, flying debris, smoke that hangs and a scorch mark left on the ground, in three sizes. They boom, and the nearer you are the more the screen shakes and the pad rumbles.
 - Raider Road, Hunting Grounds, The Sprawl and The Works: 20 more levels (full game).
@@ -113,7 +118,7 @@ The first update since the 0.1 demo, and close to a rebuilt game. Old demo saves
 - Presets: Potato, Low, Medium, High. The game picks one on first run and can step down after measuring.
 - Render Resolution down to 540p, a frame rate limit, a simple headlight option and effect levels for low-end PCs.
 - Safe mode: if the game fails to reach the menu twice, it starts on the lightest settings and asks whether to keep them.
-- A Blast Effects level joins the other effect levels.
+- Blast Effects and Screen Effects join the other effect levels.
 - Effect levels never change rewards or results.
 
 ### Controls and accessibility

@@ -125,7 +125,9 @@ func _draw() -> void:
 		var c := col[i]
 		if streaks:
 			c.a = 1.0 - t
-			draw_line(pos[i], pos[i] - vel[i] * 0.03, c, size[i])
+			var tail := pos[i] - vel[i] * 0.045
+			draw_line(pos[i], tail, c, size[i])
+			draw_line(pos[i], pos[i].lerp(tail, 0.5), Color(1, 1, 1, c.a * 0.8), size[i] * 0.45) #the hot head
 			continue
 		match kind[i]:
 			Kind.PUFF:

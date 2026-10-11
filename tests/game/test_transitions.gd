@@ -108,7 +108,10 @@ func test_a_banner_outside_a_run_is_dropped():
 func test_the_start_lamps_scene_is_the_new_countdown():
 	var lamps = load("res://scene/player/countdown.tscn").instantiate()
 	assert_true("dropIn" in lamps, "run start drops the rack in")
-	assert_eq(lamps.layer, 128)
+	var hud = load("res://scene/player/playerRoot.tscn").instantiate()
+	assert_true(lamps.layer < hud.layer, "under the HUD: the rack comes down behind the mirror")
+	assert_true(lamps.layer > CoopRun.VIEW_LAYER, "and over the second player's half of the screen")
+	hud.free()
 	lamps.free()
 
 func test_reduce_flashing_holds_blinks_steady():

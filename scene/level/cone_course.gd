@@ -76,6 +76,7 @@ static func build(level: Node, center: Vector2) -> Course:
 			level.add_child(cone)
 	var course := Course.new()
 	course.radius = PASS_RADIUS
+	course.look = &"dot"
 	course.finishes = true
 	course.gateWord = "GATE"
 	level.add_child(course)

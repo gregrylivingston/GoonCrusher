@@ -610,17 +610,18 @@ static func smashSpeedOf(breakable: Object) -> float:
 	if need != null: return float(need)
 	return BreakableProp.speedOf(breakable) if BreakableProp.isBreakable(breakable) else 0.0
 
-var sparks = preload("res://scene/fx/spark/spark.tscn")
+## Sparks at a world point (Fx.sparks): any car's, the player's or not
+func sparkAt(at: Vector2, count := 8, color := Fx.SPARK) -> void:
+	var fx := Fx.current()
+	if fx: fx.sparks(at, Vector2.ZERO, count, color)
+
 #`respond` false: the hit was the trailer's, so the car itself doesn't bounce or turn; `zone` names the
 #system it wears instead of the side of the car that hit
 func collideWithFixedObject( collision, hitVelocity = null, respond := true, zone := "" ):
 	if not $"AudioStream-Crash".playing: 
 		$"AudioStream-Crash".play()
 		if isPlayer: Settings.vibrate(0.3, 0.6, 0.15)
-		var spark = sparks.instantiate()
-		spark.global_position = collision.get_position()
-		if is_instance_valid(Root.levelRoot): Root.levelRoot.add_child(spark)
-		else: spark.queue_free()
+		sparkAt(collision.get_position())
 	var moving: Vector2 = hitVelocity if hitVelocity != null else velocity
 	var hurt := wallTick(collision.get_normal(), moving, Engine.get_physics_frames())
 	if traitRig: traitRig.onWall(absf(collision.get_normal().dot(moving)), lastWallHitTick == lastWallTick)
@@ -833,10 +834,7 @@ func bumpFx(other: OverheadCarBody2D) -> void:
 	var crash = $"AudioStream-Crash"
 	if crash.playing: return
 	crash.play()
-	var spark = sparks.instantiate()
-	spark.global_position = (global_position + other.global_position) * 0.5
-	if is_instance_valid(Root.levelRoot): Root.levelRoot.add_child(spark)
-	else: spark.queue_free()
+	sparkAt((global_position + other.global_position) * 0.5, 12)
 
 ## The share of a bump a car takes when the contact lies `toContact` from it: its nose shrugs most of it off
 static func bumpShare(heading: float, toContact: Vector2) -> float:
@@ -967,11 +965,7 @@ func tickDriftCharge() -> void:
 func driftSpark(color: Color) -> void:
 	if not is_instance_valid(Root.levelRoot): return
 	var tire: Node2D = tires[driftCharge / 5 % 2] #the rear pair, in turn
-	var spark = sparks.instantiate()
-	spark.global_position = tire.global_position
-	spark.modulate = color
-	spark.scale = Vector2.ONE * 0.6
-	Root.levelRoot.add_child(spark)
+	sparkAt(tire.global_position, 4, color)
 
 #a goon this car killed, by its bumper or anything it set off (SpawnManager.creditCrush: blasts, shells,
 #drownings): the Goonopedia's per-goon count (gameSummary), and a banner when it reaches an achievement tier
@@ -1215,6 +1209,7 @@ static func armorFactor(armorValue: float) -> float:
 	return ARMOR_FLOOR + (1.0 - ARMOR_FLOOR) * ARMOR_KNEE / (ARMOR_KNEE + maxf(armorValue, 0.0))
 
 
+const WRECK_ZOOM := 1.2
 func destroy():
 	isWrecked = true #even after running out of fuel: it can no longer win
 	if not isDestroyed:
@@ -1223,6 +1218,9 @@ func destroy():
 		if isPlayer:
 			Settings.vibrate(1.0, 1.0, 0.6)
 			wreckSmoke()
+			#the view closes in on the wreck before the results pull back from it
+			if not Settings.reduce_motion() && not Transition.instant() && is_instance_valid(camera):
+				create_tween().tween_property(camera, "zoom", camera.zoom * WRECK_ZOOM, 0.7).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
 		isDestroyed = true
 		for system in condition: setCondition(system, 0.0) #the art goes fully wrecked
 		for i in randi_range(1,2):

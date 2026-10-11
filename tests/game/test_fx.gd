@@ -5,7 +5,7 @@ extends GameTest
 
 var savedCar
 var savedSettings := {}
-const KEYS := ["gfx/blast_fx", "access/reduce_flashing"]
+const KEYS := ["gfx/blast_fx", "gfx/screen_fx", "access/reduce_flashing"]
 
 func before_each():
 	savedCar = Root.playerCar
@@ -156,3 +156,100 @@ func test_a_mark_takes_its_surfaces_look_and_no_map_marks_too():
 	assert_eq(mark.default_color, Tiremark.LOOK["SNOW"][0])
 	assert_eq(mark.width, Tiremark.LOOK["SNOW"][1])
 	assert_true(Tiremark.marks(World.UNKNOWN, true, 300.0), "before a map is loaded a skid still marks")
+
+#--- sparks, fire, splashes -----------------------------------------------------------------------
+
+func test_sparks_fly_and_the_heat_adds_more():
+	Settings.set_value("gfx/blast_fx", 2, false)
+	var fx := makeFx()
+	fx.sparks(Vector2.ZERO, Vector2.RIGHT, 6)
+	assert_eq(fx.streaks.alive, 6)
+	fx.heat = 1.0
+	fx.sparks(Vector2.ZERO, Vector2.ZERO, 6)
+	assert_eq(fx.streaks.alive, 18, "twice as many at full heat")
+
+func test_minimal_keeps_a_few_sparks():
+	Settings.set_value("gfx/blast_fx", 0, false)
+	var fx := makeFx()
+	fx.sparks(Vector2.ZERO)
+	assert_gt(fx.streaks.alive, 0, "a wall hit still sparks")
+
+func test_a_fire_burns_through_fx_unless_minimal():
+	Settings.set_value("gfx/blast_fx", 2, false)
+	var fx := makeFx()
+	var burning := true
+	for i in 30: burning = fx.burn(Vector2.ZERO, 40.0, 1.0 / 60.0) && burning
+	assert_true(burning)
+	assert_gt(fx.fire.alive, 10, "half a second of fire is well alight")
+	Settings.set_value("gfx/blast_fx", 0, false)
+	assert_false(makeFx().burn(Vector2.ZERO, 40.0, 1.0 / 60.0), "Minimal: the caller draws its plain fire")
+
+func test_a_bigger_fire_makes_more_flames():
+	Settings.set_value("gfx/blast_fx", 2, false)
+	var small := makeFx()
+	var big := makeFx()
+	for i in 20:
+		small.burn(Vector2.ZERO, 15.0, 1.0 / 60.0)
+		big.burn(Vector2.ZERO, 60.0, 1.0 / 60.0)
+	assert_gt(big.fire.alive, small.fire.alive)
+
+func test_a_splash_ripples_and_ends():
+	Settings.set_value("gfx/blast_fx", 2, false)
+	var fx := makeFx()
+	for i in Fx.MAX_RIPPLES + 3: fx.splash(Vector2(i, 0), 1.0)
+	assert_eq(fx.ripples.size(), Fx.MAX_RIPPLES)
+	assert_gt(fx.smoke.alive, 0, "droplets and foam")
+	fx._process(Fx.RIPPLE_LIFE + 0.1)
+	assert_true(fx.ripples.is_empty())
+
+func test_without_a_level_there_is_no_fx_and_no_heat():
+	var saved = Root.levelRoot
+	Root.levelRoot = null
+	assert_null(Fx.current())
+	assert_eq(Fx.heatNow(), 0.0)
+	Root.levelRoot = saved
+
+#--- the screen layer -----------------------------------------------------------------------------
+
+func test_the_heat_follows_the_combo():
+	assert_eq(ScreenFx.heatFor(0), 0.0)
+	assert_eq(ScreenFx.heatFor(int(ScreenFx.HEAT_COMBO)), 1.0)
+	assert_eq(ScreenFx.heatFor(500), 1.0)
+	assert_gt(ScreenFx.heatFor(10), ScreenFx.heatFor(3))
+
+func test_a_crushs_chip_never_reddens_the_edge():
+	assert_eq(ScreenFx.hurtFor(0.35), 0.0, "the chip of a crush")
+	assert_eq(ScreenFx.hurtFor(-5.0), 0.0, "a repair")
+	assert_gt(ScreenFx.hurtFor(10.0), 0.0)
+
+func test_reduce_flashing_and_the_setting_stop_the_flash():
+	var fx := makeFx()
+	Settings.set_value("gfx/screen_fx", 1, false)
+	fx.screen.readSettings()
+	fx.screen.flash(0.8)
+	assert_gt(fx.screen.flashLeft, 0.0)
+	fx.screen.flashLeft = 0.0
+	Settings.set_value("access/reduce_flashing", true, false)
+	fx.screen.flash(0.8)
+	assert_eq(fx.screen.flashLeft, 0.0)
+	Settings.set_value("access/reduce_flashing", false, false)
+	Settings.set_value("gfx/screen_fx", 0, false)
+	fx.screen.readSettings()
+	fx.screen.flash(0.8)
+	assert_eq(fx.screen.flashLeft, 0.0, "Screen Effects off")
+
+func test_the_screen_layer_reads_the_car_and_never_writes_it():
+	var car = add_child_autofree(load("res://scene/car/sedan/sedan.tscn").instantiate())
+	var fx: Fx = add_child_autofree(Fx.new())
+	Root.playerCar = car
+	var health: float = car.health
+	var vel: Vector2 = car.velocity
+	car.comboCount = 40
+	for i in 90: fx.screen._process(1.0 / 60.0)
+	assert_eq(fx.heat, 1.0, "a long combo is full heat")
+	assert_eq(car.health, health)
+	assert_eq(car.velocity, vel)
+	car.health -= 20.0
+	fx.screen._process(1.0 / 60.0)
+	assert_gt(fx.screen.hurt, 0.0, "a real hit reddens the edge")
+	car.comboCount = 0

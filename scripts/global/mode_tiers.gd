@@ -107,7 +107,8 @@ static func winBonus(mode: int, tier: int, levelIndex: int) -> int:
 static func goalSeconds(mode: int, tier: int, levelSeconds: float, sprintSlack: float) -> float:
 	tier = clampTier(tier)
 	if mode == M.FLATOUT: return levelSeconds * Level.SPRINT_DRIVE_FRACTION * sprintSlack * FLATOUT_SLACK[tier] * SPRINT_DISTANCE[NONE]
-	if mode in [M.HOTLAP, M.CIRCUIT, M.KNOCKOUT]: return 150.0 #about three laps of a loop; the real clock comes from the loop's length (Level.setupLoop)
+	if mode == M.CIRCUIT: return 260.0 #three laps of its bigger loop (Course.CIRCUIT_RADIUS)
+	if mode in [M.HOTLAP, M.KNOCKOUT]: return 150.0 #about three laps of a loop; the real clock comes from the loop's length (Level.setupLoop)
 	if mode == M.DERBY: return DERBY_SECONDS[tier]
 	if mode == M.RALLY: return levelSeconds * Level.SPRINT_DRIVE_FRACTION * sprintSlack * RALLY_SLACK[tier] * SPRINT_DISTANCE[NONE]
 	var sprint: float = levelSeconds * Level.SPRINT_DRIVE_FRACTION * sprintSlack * SLACK[tier]
